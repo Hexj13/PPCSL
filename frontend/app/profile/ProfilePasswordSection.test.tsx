@@ -12,7 +12,8 @@ describe('ProfilePasswordSection', () => {
     'auth.passwordRequirements.lowercase': 'At least one lowercase letter',
   } as const;
 
-  const t = (key: string) => translations[key] || key;
+  const t = (key: string) =>
+    key in translations ? translations[key as keyof typeof translations] : key;
 
   it('sets password manager ignore attributes for both password fields', () => {
     render(
