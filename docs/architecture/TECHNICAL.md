@@ -350,6 +350,8 @@ POST /api/auth/request-password-reset # Request password reset
 POST /api/auth/reset-password         # Reset password
 ```
 
+Refresh tokens rotate on each successful refresh (the previous refresh token is revoked). The Axios client persists the new pair in `localStorage`; Zustand must stay aligned with those values after awaits that may trigger silent refresh—see [cross-tab-sync.md](../features/cross-tab-sync.md#auth-refresh-and-token-rotation).
+
 **Profile password change (`/profile`):** The form uses **two fields only** (current + new password). There is no duplicate “confirm new password” field by product choice—to keep the UI light. The client validates length (max 100) and strength before calling `POST /api/auth/change-password`.
 
 **Profile email input hardening (`/profile`):** The client sanitizes prefilled values before submit:

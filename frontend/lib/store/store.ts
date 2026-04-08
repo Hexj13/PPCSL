@@ -105,8 +105,9 @@ export const useAuthStore = create<AuthState>()(
         if (actualToken) {
           try {
             const response = await authApi.me();
-            const storedRefreshToken = localStorageGetItem('refresh_token');
-            get().setAuth(response.data, actualToken, refreshToken || storedRefreshToken);
+            const currentToken = localStorageGetItem('token') || actualToken;
+            const currentRefreshToken = localStorageGetItem('refresh_token') || refreshToken;
+            get().setAuth(response.data, currentToken, currentRefreshToken);
           } catch {
             const storedRefreshToken = localStorageGetItem('refresh_token');
             if (storedRefreshToken) {

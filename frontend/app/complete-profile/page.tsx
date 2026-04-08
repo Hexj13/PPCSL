@@ -26,6 +26,9 @@ import {
   getFilledFields,
   hasCompleteProfileEmailNotificationsEnabled,
   processPendingData,
+  validateCompleteProfileCompanyWebsiteUrl,
+  validateCompleteProfileEmail,
+  validateCompleteProfileName,
 } from './utils';
 
 function CompleteProfileContent() {
@@ -113,55 +116,11 @@ function CompleteProfileContent() {
     }
   }, [isInitialized, user, t]);
 
-  const validateName = (name: string): string => {
-    if (!name) {
-      return '';
-    }
-    const nameRegex = /^[a-zA-Z\u0400-\u04FF\s-]+$/;
-    if (!nameRegex.test(name)) {
-      return t('register.firstNameInvalid');
-    }
-    if (name.trim().length < 2) {
-      return t('register.firstNameMinLength');
-    }
-    if (name.trim().length > 50) {
-      return t('register.firstNameMaxLength');
-    }
-    return '';
-  };
-
-  const validateEmail = (email: string): string => {
-    if (!email) {
-      return '';
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return t('register.emailInvalid');
-    }
-    return '';
-  };
-
-  const validateCompanyWebsiteUrl = (value: string): string => {
-    if (!value.trim()) {
-      return '';
-    }
-    const trimmed = value.trim();
-    if (!/^https?:\/\//i.test(trimmed)) {
-      return t('profile.invalidCompanyWebsiteUrl');
-    }
-    try {
-      new URL(trimmed);
-      return '';
-    } catch {
-      return t('profile.invalidCompanyWebsiteUrl');
-    }
-  };
-
   const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^a-zA-Z\u0400-\u04FF\s-]/g, '');
     setFormData({ ...formData, firstName: value });
     if (touched.firstName) {
-      setErrors({ ...errors, firstName: validateName(value) });
+      setErrors({ ...errors, firstName: validateCompleteProfileName(value, t) });
     }
   };
 
@@ -169,7 +128,7 @@ function CompleteProfileContent() {
     const value = e.target.value.replace(/[^a-zA-Z\u0400-\u04FF\s-]/g, '');
     setFormData({ ...formData, lastName: value });
     if (touched.lastName) {
-      setErrors({ ...errors, lastName: validateName(value) });
+      setErrors({ ...errors, lastName: validateCompleteProfileName(value, t) });
     }
   };
 
@@ -191,7 +150,7 @@ function CompleteProfileContent() {
     }
     previousEmailRef.current = value;
     if (touched.email) {
-      setErrors({ ...errors, email: validateEmail(value) });
+      setErrors({ ...errors, email: validateCompleteProfileEmail(value, t) });
     }
   };
 
@@ -204,24 +163,27 @@ function CompleteProfileContent() {
 
   const handleFirstNameBlur = () => {
     setTouched({ ...touched, firstName: true });
-    setErrors({ ...errors, firstName: validateName(formData.firstName) });
+    setErrors({ ...errors, firstName: validateCompleteProfileName(formData.firstName, t) });
   };
 
   const handleLastNameBlur = () => {
     setTouched({ ...touched, lastName: true });
-    setErrors({ ...errors, lastName: validateName(formData.lastName) });
+    setErrors({ ...errors, lastName: validateCompleteProfileName(formData.lastName, t) });
   };
 
   const handleEmailBlur = () => {
     setTouched({ ...touched, email: true });
-    setErrors({ ...errors, email: validateEmail(formData.email) });
+    setErrors({ ...errors, email: validateCompleteProfileEmail(formData.email, t) });
   };
 
   const handleCompanyWebsiteUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFormData({ ...formData, companyWebsiteUrl: value });
     if (touched.companyWebsiteUrl) {
-      setErrors({ ...errors, companyWebsiteUrl: validateCompanyWebsiteUrl(value) });
+      setErrors({
+        ...errors,
+        companyWebsiteUrl: validateCompleteProfileCompanyWebsiteUrl(value, t),
+      });
     }
   };
 
@@ -229,7 +191,7 @@ function CompleteProfileContent() {
     setTouched({ ...touched, companyWebsiteUrl: true });
     setErrors({
       ...errors,
-      companyWebsiteUrl: validateCompanyWebsiteUrl(formData.companyWebsiteUrl),
+      companyWebsiteUrl: validateCompleteProfileCompanyWebsiteUrl(formData.companyWebsiteUrl, t),
     });
   };
 
@@ -281,8 +243,8 @@ function CompleteProfileContent() {
       const newErrors = {
         firstName: '',
         lastName: '',
-        email: validateEmail(formData.email),
-        companyWebsiteUrl: validateCompanyWebsiteUrl(formData.companyWebsiteUrl),
+        email: validateCompleteProfileEmail(formData.email, t),
+        companyWebsiteUrl: validateCompleteProfileCompanyWebsiteUrl(formData.companyWebsiteUrl, t),
         additionalPhone: validateAdditionalPhoneField(formData.additionalPhone),
       };
       setErrors(newErrors);
@@ -295,9 +257,9 @@ function CompleteProfileContent() {
       return !!(newErrors.companyWebsiteUrl || newErrors.email || newErrors.additionalPhone);
     }
     const newErrors = {
-      firstName: validateName(formData.firstName),
-      lastName: validateName(formData.lastName),
-      email: validateEmail(formData.email),
+      firstName: validateCompleteProfileName(formData.firstName, t),
+      lastName: validateCompleteProfileName(formData.lastName, t),
+      email: validateCompleteProfileEmail(formData.email, t),
       companyWebsiteUrl: '',
       additionalPhone: '',
     };
@@ -341,7 +303,11 @@ function CompleteProfileContent() {
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
       let redirected = false;
       try {
-        setAuth(response.data, useAuthStore.getState().token);
+        setAuth(
+          response.data,
+          localStorageGetItem('token') || useAuthStore.getState().token,
+          localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
+        );
         redirected = await processPendingData(user, t, returnUrl);
       } finally {
         releaseComparisonHold();

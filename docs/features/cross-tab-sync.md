@@ -28,6 +28,14 @@ Favorites, comparison, listing status, and auth session changes sync across brow
 
 Auth does not use `BroadcastChannel`; it relies on `localStorage` (`auth-storage`, `token`, `refresh_token`) and the browser `storage` event so other tabs rehydrate Zustand and run `initAuth()`.
 
+## Auth refresh and token rotation
+
+- Each successful `POST /api/auth/refresh` returns a new refresh token and revokes the previous one server-side. Reusing an old refresh token yields `errors.refreshTokenRevoked` (or equivalent API error).
+- The Axios response interceptor writes the current access and refresh strings to `localStorage` keys `token` and `refresh_token` after a silent refresh.
+- After any `await` that can trigger that interceptor (for example `authApi.me()` or profile mutations), callers must pass the **current** access and refresh into `setAuth` from `localStorage` (with Zustand as fallback), not stale values captured from the store before the await—otherwise memory state can keep a revoked refresh while storage already holds the new pair.
+- `initAuth()` follows the same rule: after `authApi.me()` succeeds, it reads `token` and `refresh_token` from storage again before calling `setAuth`.
+- If a refresh attempt fails with the in-memory refresh token but `localStorage` already contains a **different** `refresh_token` (another tab refreshed first), the client retries refresh once with the stored token before clearing the session and redirecting to sign-in.
+
 ## Persistence keys
 
 `AuthProvider` listens for `storage` on `favorites-storage`, `comparison-storage`, `auth-storage`, `token`, and `refresh_token` and calls Zustand `persist.rehydrate()` (and `initAuth()` for auth keys) so guest/local state and signed-in session match other tabs.

@@ -68,7 +68,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [image-preview.md](./features/image-preview.md) — Image preview system (card carousel vs listing hero layers, modal; blurhash; `image_blur_hashes` + backfill scripts)
 - [infocar-history-section.md](./features/infocar-history-section.md) — Infocar report card + on-site VIN history (two cards, RO/RU links)
 - [loading-states.md](./features/loading-states.md) — Loading states
-- [cross-tab-sync.md](./features/cross-tab-sync.md) — Favorites, comparison, listing status, and auth session (UI events: `BroadcastChannel` + storage; auth: `storage` on auth keys — see doc)
+- [cross-tab-sync.md](./features/cross-tab-sync.md) — Favorites, comparison, listing status, auth session, and refresh-token rotation across tabs (UI: `BroadcastChannel` + storage; auth: `storage` on auth keys — see doc)
 - [paid-promotion.md](./features/paid-promotion.md) — Paid promotion
 - [partner-program.md](./features/partner-program.md) — Platform partners, bonus balance, partner promotion flow, footer partners
 - [my-listings-page.md](./features/my-listings-page.md) — My listings filters, badge counts, loading behavior

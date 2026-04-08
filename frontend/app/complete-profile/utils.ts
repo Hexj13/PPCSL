@@ -152,3 +152,50 @@ export function getFilledFields(
         email: !!formData.email?.trim(),
       };
 }
+
+export function validateCompleteProfileName(name: string, t: (key: string) => string): string {
+  if (!name) {
+    return '';
+  }
+  const nameRegex = /^[a-zA-Z\u0400-\u04FF\s-]+$/;
+  if (!nameRegex.test(name)) {
+    return t('register.firstNameInvalid');
+  }
+  if (name.trim().length < 2) {
+    return t('register.firstNameMinLength');
+  }
+  if (name.trim().length > 50) {
+    return t('register.firstNameMaxLength');
+  }
+  return '';
+}
+
+export function validateCompleteProfileEmail(email: string, t: (key: string) => string): string {
+  if (!email) {
+    return '';
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return t('register.emailInvalid');
+  }
+  return '';
+}
+
+export function validateCompleteProfileCompanyWebsiteUrl(
+  value: string,
+  t: (key: string) => string,
+): string {
+  if (!value.trim()) {
+    return '';
+  }
+  const trimmed = value.trim();
+  if (!/^https?:\/\//i.test(trimmed)) {
+    return t('profile.invalidCompanyWebsiteUrl');
+  }
+  try {
+    new URL(trimmed);
+    return '';
+  } catch {
+    return t('profile.invalidCompanyWebsiteUrl');
+  }
+}

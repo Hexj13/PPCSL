@@ -42,7 +42,11 @@ export class RegisterFormComponent {
     await this.page.getByTestId(this.testIds.registerPhoneInput).fill(phone);
     await this.page.getByTestId(this.testIds.registerPasswordInput).fill(password);
     await this.acceptTerms();
-    await this.page.getByTestId(this.testIds.registerSubmit).click();
+    const submit = this.page.getByTestId(this.testIds.registerSubmit);
+    await Promise.all([
+      this.page.waitForURL(/\/verify-phone\?phone=/, { timeout: 30_000 }),
+      submit.click(),
+    ]);
   }
 
   async submitBusiness(companyName: string, phone: string, password: string): Promise<void> {
@@ -52,6 +56,10 @@ export class RegisterFormComponent {
     await this.ensureBusinessMode(companyName);
     await this.acceptTerms();
     await this.ensureBusinessMode(companyName);
-    await this.page.getByTestId(this.testIds.registerSubmit).click();
+    const submit = this.page.getByTestId(this.testIds.registerSubmit);
+    await Promise.all([
+      this.page.waitForURL(/\/verify-phone\?phone=/, { timeout: 30_000 }),
+      submit.click(),
+    ]);
   }
 }

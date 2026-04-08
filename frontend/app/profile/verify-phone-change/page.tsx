@@ -5,6 +5,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
+import { localStorageGetItem } from '@/lib/browser-local-storage';
 import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
@@ -174,7 +175,11 @@ function VerifyPhoneChangeContent() {
         phone: phoneNumber,
         code: fullCode,
       });
-      setAuth(response.data, useAuthStore.getState().token);
+      setAuth(
+        response.data,
+        localStorageGetItem('token') || useAuthStore.getState().token,
+        localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
+      );
       toast.success(t('profile.verifyPhoneChange.phoneChangedSuccess'));
       router.push('/profile');
     } catch (err: unknown) {

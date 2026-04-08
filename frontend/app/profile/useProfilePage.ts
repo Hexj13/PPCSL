@@ -18,6 +18,7 @@ import { isPasswordValid, validatePassword } from '@/app/reset-password/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
+import { localStorageGetItem } from '@/lib/browser-local-storage';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
@@ -216,7 +217,10 @@ export function useProfilePage() {
         if (!user) setLoadingProfile(true);
         const response = await authApi.me();
         const profileUser = response.data;
-        setAuth(profileUser, useAuthStore.getState().token, useAuthStore.getState().refreshToken);
+        const currentToken = localStorageGetItem('token') || useAuthStore.getState().token;
+        const currentRefreshToken =
+          localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken;
+        setAuth(profileUser, currentToken, currentRefreshToken);
         const formDataToSet = {
           firstName: profileUser.firstName || '',
           lastName: profileUser.lastName || '',
@@ -340,8 +344,8 @@ export function useProfilePage() {
           const response = await authApi.updateProfile(formData);
           setAuth(
             response.data,
-            useAuthStore.getState().token,
-            useAuthStore.getState().refreshToken,
+            localStorageGetItem('token') || useAuthStore.getState().token,
+            localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
           );
           toast.success(t('profile.updateSuccess'));
         }
@@ -350,8 +354,8 @@ export function useProfilePage() {
           const profileResponse = await authApi.me();
           setAuth(
             profileResponse.data,
-            useAuthStore.getState().token,
-            useAuthStore.getState().refreshToken,
+            localStorageGetItem('token') || useAuthStore.getState().token,
+            localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
           );
           toast.success(t('profile.emailChangeLinkSent'));
         }

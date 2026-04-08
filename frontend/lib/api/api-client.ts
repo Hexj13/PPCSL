@@ -417,6 +417,16 @@ api.interceptors.response.use(
         isRefreshing = false;
         return result;
       } catch (refreshError) {
+        const freshRefresh = localStorageGetItem('refresh_token');
+        if (freshRefresh && freshRefresh !== refreshToken) {
+          try {
+            const retryResult = await doRefreshAndRetry(originalRequest, freshRefresh);
+            isRefreshing = false;
+            return retryResult;
+          } catch {
+            /* second refresh also failed, fall through */
+          }
+        }
         processQueue(refreshError as AxiosError);
         isRefreshing = false;
         clearAuthSetReturnUrlAndRedirect();
