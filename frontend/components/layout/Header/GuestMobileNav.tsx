@@ -53,16 +53,14 @@ export function GuestMobileNav({
     }
   };
 
-  const compareLinkClassName = `${mobileNavLinkClasses} justify-center !pl-0 px-4`;
-
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <CreateListingButton variant="mobile" onClick={onClose} className="py-3.5!" />
       <Link href="/sign" onClick={handleSignClick} className={guestLinkClasses}>
         <span suppressHydrationWarning>{t('header.loginAndRegister')}</span>
       </Link>
-      <div className="flex w-full justify-center">
-        <Link href="/compare" onClick={onClose} className={compareLinkClassName}>
+      <div className="flex flex-col gap-4 border-t border-primary-700 pt-4">
+        <Link href="/compare" onClick={onClose} className={mobileNavLinkClasses}>
           <ScaleIcon className={iconClass} />
           <span suppressHydrationWarning>{t('header.compare')}</span>
           {comparisonCount > 0 && (
@@ -71,9 +69,7 @@ export function GuestMobileNav({
             </span>
           )}
         </Link>
-      </div>
-      <div>
-        <div className="flex justify-center">
+        <div className="w-full">
           <LanguageSwitcher variant="mobile" context="header" />
         </div>
       </div>

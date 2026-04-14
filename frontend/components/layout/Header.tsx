@@ -2,9 +2,12 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { isHideFooterPath } from '@/components/layout/header-flow-paths';
+import { useMenuDrawerPresence } from '@/hooks/useMenuDrawerPresence';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { useComparisonStore } from '@/lib/store';
 
 import { DesktopNavActions, DesktopNavMenuArea } from './Header/DesktopNav';
@@ -42,6 +45,11 @@ export function Header() {
   const showInlineMobileLanguage = isHideFooterPath(pathname) && !isErrorPage;
   const hideMobileCreateListing = isHideFooterPath(pathname);
 
+  const menuWantOpen = isMobileMenuOpen && showNav;
+  const { mounted: drawerMounted, exiting: drawerExiting } = useMenuDrawerPresence(menuWantOpen);
+
+  useScrollLock(drawerMounted);
+
   useEffect(() => {
     if (pathname === '/sign' && isMobileMenuOpen) {
       handleMobileMenuClose();
@@ -49,7 +57,7 @@ export function Header() {
   }, [pathname, isMobileMenuOpen, handleMobileMenuClose]);
 
   useEffect(() => {
-    if (!isMobileMenuOpen) return;
+    if (!drawerMounted) return;
     const handleClick = (e: MouseEvent) => {
       const target = e.target as Node;
       if (headerRef.current && !headerRef.current.contains(target)) {
@@ -58,16 +66,16 @@ export function Header() {
     };
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
-  }, [isMobileMenuOpen, handleMobileMenuClose]);
+  }, [drawerMounted, handleMobileMenuClose]);
 
   useEffect(() => {
-    if (!isMobileMenuOpen) return;
+    if (!drawerMounted) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleMobileMenuClose();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isMobileMenuOpen, handleMobileMenuClose]);
+  }, [drawerMounted, handleMobileMenuClose]);
 
   useEffect(() => {
     if (prevMenuOpenRef.current && !isMobileMenuOpen) {
@@ -80,107 +88,124 @@ export function Header() {
     setIsTelegramWebView('TelegramWebviewProxy' in window);
   }, []);
 
-  return (
-    <header
-      ref={headerRef}
-      className={`bg-bg-base shadow-lg h-[72px] z-50 ${isTelegramWebView ? 'relative' : 'sticky top-0'}`}
-      suppressHydrationWarning
-    >
+  const backdropMotionClass = drawerExiting
+    ? 'mobile-menu-backdrop-leave'
+    : 'mobile-menu-backdrop-enter';
+
+  const mobileMenuBackdrop =
+    drawerMounted &&
+    showNav &&
+    typeof document !== 'undefined' &&
+    createPortal(
       <div
-        className="container relative z-[1] mx-auto px-3 sm:px-4 h-full border-b border-primary-700"
+        className={`${backdropMotionClass} fixed inset-0 z-40 lg:hidden bg-dark-900/35`}
+        aria-hidden
+        onClick={handleMobileMenuClose}
+        onPointerDown={handleMobileMenuClose}
+      />,
+      document.body,
+    );
+
+  return (
+    <>
+      {mobileMenuBackdrop}
+      <header
+        ref={headerRef}
+        className={`flex flex-col bg-bg-base shadow-lg z-50 ${isTelegramWebView ? 'relative' : 'sticky top-0'}`}
         suppressHydrationWarning
       >
-        <div
-          className="flex justify-between items-center h-full w-full min-w-0 gap-2"
-          suppressHydrationWarning
-        >
-          <HeaderLogo brandAlt={t('header.brandName')} />
+        <div className="relative z-20 shrink-0 h-[72px] bg-bg-base">
+          <div
+            className="container relative mx-auto px-3 sm:px-4 h-full border-b border-primary-700"
+            suppressHydrationWarning
+          >
+            <div
+              className="flex justify-between items-center h-full w-full min-w-0 gap-2"
+              suppressHydrationWarning
+            >
+              <HeaderLogo brandAlt={t('header.brandName')} />
 
-          <div className="flex items-center justify-end shrink-0 min-w-0 gap-2 xl:gap-4">
-            {showInlineMobileLanguage && (
-              <div className="flex lg:hidden items-center shrink-0">
-                {showSkeleton ? (
-                  <NavSkeleton variant="mobileSignGuest" />
-                ) : (
-                  <LanguageSwitcher variant="mobile" context="header" />
+              <div className="flex items-center justify-end shrink-0 min-w-0 gap-2 xl:gap-4">
+                {showInlineMobileLanguage && (
+                  <div className="flex lg:hidden items-center shrink-0">
+                    {showSkeleton ? (
+                      <NavSkeleton variant="mobileSignGuest" />
+                    ) : (
+                      <LanguageSwitcher variant="mobile" context="header" />
+                    )}
+                  </div>
                 )}
-              </div>
-            )}
-            {!showNav && !isErrorPage && (
-              <div className="hidden lg:flex items-center shrink-0">
-                {showSkeleton ? (
-                  <NavSkeleton variant="desktopSignGuest" />
-                ) : (
-                  <LanguageSwitcher variant="desktop" context="header" />
+                {!showNav && !isErrorPage && (
+                  <div className="hidden lg:flex items-center shrink-0">
+                    {showSkeleton ? (
+                      <NavSkeleton variant="desktopSignGuest" />
+                    ) : (
+                      <LanguageSwitcher variant="desktop" context="header" />
+                    )}
+                  </div>
                 )}
+                {showNav && (
+                  <MobileToolbar
+                    showSkeleton={showSkeleton}
+                    isMobileMenuOpen={isMobileMenuOpen}
+                    onToggle={handleMobileMenuToggle}
+                    toggleAriaLabel={t('header.toggleMenu')}
+                    toggleId={MOBILE_MENU_TOGGLE_ID}
+                    drawerId={MOBILE_DRAWER_ID}
+                    showMenuToggle={pathname !== '/sign'}
+                    showCreateListing={!hideMobileCreateListing}
+                  />
+                )}
+                <DesktopNavMenuArea
+                  user={user}
+                  showSkeleton={showSkeleton}
+                  showNav={showNav}
+                  comparisonCount={comparisonCount}
+                  navLinkClasses={navLinkClasses}
+                  onLogout={handleLogout}
+                  t={t}
+                />
+                {showNav && user && (
+                  <div
+                    className="hidden lg:block mx-1 h-6 w-px shrink-0 bg-primary-700/30"
+                    aria-hidden
+                  />
+                )}
+                <DesktopNavActions
+                  user={user}
+                  showSkeleton={showSkeleton}
+                  showNav={showNav}
+                  comparisonCount={comparisonCount}
+                  navLinkClasses={navLinkClasses}
+                  isAuthPage={isAuthPage}
+                  isErrorPage={isErrorPage}
+                  onSetReturnUrl={handleSetReturnUrl}
+                  t={t}
+                />
               </div>
-            )}
-            {showNav && (
-              <MobileToolbar
-                showSkeleton={showSkeleton}
-                isMobileMenuOpen={isMobileMenuOpen}
-                onToggle={handleMobileMenuToggle}
-                toggleAriaLabel={t('header.toggleMenu')}
-                toggleId={MOBILE_MENU_TOGGLE_ID}
-                drawerId={MOBILE_DRAWER_ID}
-                showMenuToggle={pathname !== '/sign'}
-                showCreateListing={!hideMobileCreateListing}
-              />
-            )}
-            <DesktopNavMenuArea
-              user={user}
-              showSkeleton={showSkeleton}
-              showNav={showNav}
-              comparisonCount={comparisonCount}
-              navLinkClasses={navLinkClasses}
-              onLogout={handleLogout}
-              t={t}
-            />
-            {showNav && user && (
-              <div
-                className="hidden lg:block mx-1 h-6 w-px shrink-0 bg-primary-700/30"
-                aria-hidden
-              />
-            )}
-            <DesktopNavActions
-              user={user}
-              showSkeleton={showSkeleton}
-              showNav={showNav}
-              comparisonCount={comparisonCount}
-              navLinkClasses={navLinkClasses}
-              isAuthPage={isAuthPage}
-              isErrorPage={isErrorPage}
-              onSetReturnUrl={handleSetReturnUrl}
-              t={t}
-            />
+            </div>
           </div>
         </div>
-      </div>
 
-      {isMobileMenuOpen && showNav && (
-        <div
-          className="lg:hidden fixed inset-0 z-0 bg-transparent"
-          aria-hidden
-          onClick={handleMobileMenuClose}
-          onPointerDown={handleMobileMenuClose}
-        />
-      )}
-
-      <MobileNavDrawer
-        id={MOBILE_DRAWER_ID}
-        isOpen={isMobileMenuOpen}
-        user={user}
-        showSkeleton={showSkeleton}
-        showNav={showNav}
-        comparisonCount={comparisonCount}
-        isAuthPage={isAuthPage}
-        isErrorPage={isErrorPage}
-        mobileNavLinkClasses={mobileNavLinkClasses}
-        onLogout={handleLogout}
-        onClose={handleMobileMenuClose}
-        onSetReturnUrl={handleSetReturnUrl}
-        t={t}
-      />
-    </header>
+        <div className="relative z-10 h-0 w-full overflow-visible lg:hidden">
+          <MobileNavDrawer
+            id={MOBILE_DRAWER_ID}
+            presenceMounted={drawerMounted}
+            presenceClosing={drawerExiting}
+            user={user}
+            showSkeleton={showSkeleton}
+            showNav={showNav}
+            comparisonCount={comparisonCount}
+            isAuthPage={isAuthPage}
+            isErrorPage={isErrorPage}
+            mobileNavLinkClasses={mobileNavLinkClasses}
+            onLogout={handleLogout}
+            onClose={handleMobileMenuClose}
+            onSetReturnUrl={handleSetReturnUrl}
+            t={t}
+          />
+        </div>
+      </header>
+    </>
   );
 }

@@ -77,8 +77,12 @@ export function BrandsModelsFilters({
             {t('admin.brandsModelsTab.filterTires')}
           </button>
         </div>
-        <div className="flex flex-row flex-wrap gap-2 md:gap-3 justify-end shrink-0 sm:ml-2">
-          <LoadMoreButton variant="inline" className="justify-center" onClick={onAddBrand}>
+        <div className="flex w-full shrink-0 flex-col gap-2 md:gap-3 sm:ml-2 md:w-auto md:flex-row md:flex-wrap md:justify-end">
+          <LoadMoreButton
+            variant="inline"
+            className="w-full justify-center md:w-auto"
+            onClick={onAddBrand}
+          >
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -89,7 +93,11 @@ export function BrandsModelsFilters({
             </svg>
             {t('admin.brandsModelsTab.addBrand')}
           </LoadMoreButton>
-          <LoadMoreButton variant="inline" className="justify-center" onClick={onAddModel}>
+          <LoadMoreButton
+            variant="inline"
+            className="w-full justify-center md:w-auto"
+            onClick={onAddModel}
+          >
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"

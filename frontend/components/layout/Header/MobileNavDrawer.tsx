@@ -8,7 +8,8 @@ import { UserMobileNav } from './UserMobileNav';
 
 type MobileNavDrawerProps = {
   id: string;
-  isOpen: boolean;
+  presenceMounted: boolean;
+  presenceClosing: boolean;
   user: User | null;
   showSkeleton: boolean;
   showNav: boolean;
@@ -24,7 +25,8 @@ type MobileNavDrawerProps = {
 
 export function MobileNavDrawer({
   id,
-  isOpen,
+  presenceMounted,
+  presenceClosing,
   user,
   showSkeleton,
   showNav,
@@ -37,12 +39,14 @@ export function MobileNavDrawer({
   onSetReturnUrl,
   t,
 }: MobileNavDrawerProps) {
-  if (!isOpen || !showNav) return null;
+  if (!presenceMounted || !showNav) return null;
+
+  const motionClass = presenceClosing ? 'mobile-nav-drawer-leave' : 'mobile-nav-drawer-enter';
 
   return (
     <nav
       id={id}
-      className="lg:hidden relative z-[1] pb-4 pt-4 bg-bg-base w-full border-b border-primary-700"
+      className={`${motionClass} absolute left-0 right-0 top-0 z-[15] pb-4 pt-4 bg-bg-base shadow-lg border-b border-primary-700 max-h-[calc(100dvh-4.5rem)] w-full overflow-y-auto scrollbar-custom ${presenceClosing ? 'pointer-events-none' : ''}`}
     >
       <div className="container mx-auto px-3 sm:px-4">
         {showSkeleton ? (

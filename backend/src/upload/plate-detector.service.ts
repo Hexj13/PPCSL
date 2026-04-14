@@ -7,9 +7,10 @@ import sharp from 'sharp';
 
 import type { PlateDetection } from './plate-detector.types';
 
-const MODEL_INPUT_SIZE = 384;
+const METADATA_FALLBACK_SPATIAL_SIZE = 384;
+const REQUIRED_PLATE_MODEL_SPATIAL_SIZE = 608;
 const DETECTION_TIMEOUT_MS = 10000;
-const MIN_CONFIDENCE = 0.5;
+const MIN_CONFIDENCE = 0.75;
 const MIN_PLATE_WIDTH_PX = 40;
 const LETTERBOX_PAD = { r: 114, g: 114, b: 114 };
 
@@ -24,6 +25,7 @@ interface PreprocessResult {
 export class PlateDetectorService implements OnModuleInit {
   private readonly logger = new Logger(PlateDetectorService.name);
   private session: ort.InferenceSession | null = null;
+  private modelInputSize = REQUIRED_PLATE_MODEL_SPATIAL_SIZE;
   private readonly modelPath: string;
 
   constructor() {
@@ -38,10 +40,22 @@ export class PlateDetectorService implements OnModuleInit {
       return;
     }
     try {
-      this.session = await ort.InferenceSession.create(this.modelPath, {
+      const session = await ort.InferenceSession.create(this.modelPath, {
         executionProviders: ['cpu'],
       });
-      this.logger.log('Plate detector model loaded successfully');
+      const spatial = this.resolveSpatialInputSize(session);
+      if (spatial !== REQUIRED_PLATE_MODEL_SPATIAL_SIZE) {
+        this.logger.error(
+          `Plate detector ONNX must be yolo-v9-s-608 (input ${REQUIRED_PLATE_MODEL_SPATIAL_SIZE}x${REQUIRED_PLATE_MODEL_SPATIAL_SIZE}); got ${spatial}x${spatial}. Replace plate-detector.onnx per assets/plate-mask/README.md.`,
+        );
+        await session.release().catch(() => undefined);
+        return;
+      }
+      this.session = session;
+      this.modelInputSize = spatial;
+      this.logger.log(
+        `Plate detector model loaded successfully (input ${this.modelInputSize}x${this.modelInputSize})`,
+      );
     } catch (err) {
       this.logger.warn(
         `Failed to load plate detector model: ${err instanceof Error ? err.message : String(err)}`,
@@ -93,16 +107,35 @@ export class PlateDetectorService implements OnModuleInit {
     return this.session !== null;
   }
 
+  private resolveSpatialInputSize(session: ort.InferenceSession): number {
+    for (const meta of session.inputMetadata) {
+      if (!meta.isTensor || meta.shape.length < 4) continue;
+      const h = meta.shape[2];
+      const w = meta.shape[3];
+      if (typeof h === 'number' && h > 0 && typeof w === 'number' && w > 0 && h === w) {
+        return h;
+      }
+      if (typeof h === 'number' && h > 0) {
+        return h;
+      }
+    }
+    this.logger.warn(
+      `Could not read plate model spatial input size from metadata; using ${METADATA_FALLBACK_SPATIAL_SIZE}`,
+    );
+    return METADATA_FALLBACK_SPATIAL_SIZE;
+  }
+
   private async preprocess(
     imageBuffer: Buffer,
     imageWidth: number,
     imageHeight: number,
   ): Promise<PreprocessResult> {
-    const scale = Math.min(MODEL_INPUT_SIZE / imageHeight, MODEL_INPUT_SIZE / imageWidth);
+    const side = this.modelInputSize;
+    const scale = Math.min(side / imageHeight, side / imageWidth);
     const newW = Math.round(imageWidth * scale);
     const newH = Math.round(imageHeight * scale);
-    const dw = (MODEL_INPUT_SIZE - newW) / 2;
-    const dh = (MODEL_INPUT_SIZE - newH) / 2;
+    const dw = (side - newW) / 2;
+    const dh = (side - newH) / 2;
     const padTop = Math.floor(dh);
     const padBottom = Math.ceil(dh);
     const padLeft = Math.floor(dw);
@@ -121,18 +154,18 @@ export class PlateDetectorService implements OnModuleInit {
       .raw()
       .toBuffer();
 
-    const float32 = new Float32Array(3 * MODEL_INPUT_SIZE * MODEL_INPUT_SIZE);
+    const float32 = new Float32Array(3 * side * side);
     for (let c = 0; c < 3; c++) {
-      for (let y = 0; y < MODEL_INPUT_SIZE; y++) {
-        for (let x = 0; x < MODEL_INPUT_SIZE; x++) {
-          const srcIdx = (y * MODEL_INPUT_SIZE + x) * 3 + c;
-          const dstIdx = c * (MODEL_INPUT_SIZE * MODEL_INPUT_SIZE) + y * MODEL_INPUT_SIZE + x;
+      for (let y = 0; y < side; y++) {
+        for (let x = 0; x < side; x++) {
+          const srcIdx = (y * side + x) * 3 + c;
+          const dstIdx = c * (side * side) + y * side + x;
           float32[dstIdx] = rawPixels[srcIdx] / 255.0;
         }
       }
     }
 
-    const tensor = new ort.Tensor('float32', float32, [1, 3, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE]);
+    const tensor = new ort.Tensor('float32', float32, [1, 3, side, side]);
     return { tensor, scale, dw, dh };
   }
 

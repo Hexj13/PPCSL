@@ -49,11 +49,11 @@ Automatic license plate masking on listing photo upload. When the user uploads p
 ### Plate detector (`PlateDetectorService`)
 
 - **Model path:** `core/backend/assets/plate-mask/plate-detector.onnx`
-- **Model family:** YOLOv9 end-to-end plate detector (`384x384`)
-- **Input:** letterboxed `384x384`, RGB, float32, normalized by `/255`
+- **Model family:** YOLOv9-S end-to-end plate detector only: `yolo-v9-s-608-license-plate-end2end` (`608`×`608`); other ONNX inputs are rejected at startup
+- **Input:** letterboxed `608`×`608`, RGB, float32, normalized by `/255`
 - **Output:** `[N, 7]` rows with box coordinates and score
-- **Thresholds:** `MIN_CONFIDENCE = 0.5`, `MIN_PLATE_WIDTH_PX = 40`
-- **Startup behavior:** if the model file is missing, backend still starts, but masking requests fail when used
+- **Thresholds:** `MIN_CONFIDENCE = 0.75`, `MIN_PLATE_WIDTH_PX = 40`
+- **Startup behavior:** if the model file is missing, or the file is not the S-608 weights, backend still starts but the detector session is not loaded and masking requests fail when used
 
 ### Plate mask (`PlateMaskService`)
 

@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useScrollLock } from '@/hooks/useScrollLock';
+
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,6 +25,8 @@ export function Modal({
 
   const pointerStartedOnBackdropRef = useRef(false);
 
+  useScrollLock(isOpen);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -34,25 +38,8 @@ export function Modal({
 
     document.addEventListener('keydown', handleEscape);
 
-    const scrollY = window.scrollY;
-    const body = document.body;
-    const originalPosition = body.style.position;
-    const originalTop = body.style.top;
-    const originalWidth = body.style.width;
-    const originalLeft = body.style.left;
-
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.width = '100%';
-
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      body.style.position = originalPosition;
-      body.style.top = originalTop;
-      body.style.width = originalWidth;
-      body.style.left = originalLeft;
-      window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
 
