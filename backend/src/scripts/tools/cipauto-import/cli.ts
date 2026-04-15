@@ -23,6 +23,13 @@ import {
 } from '../partner-import-shared/mapping/field-mapper';
 import { estimateHorsepower } from '../partner-import-shared/mapping/hp-estimator';
 import { isPartnerImportDebugEnabled } from '../partner-import-shared/partner-import-debug';
+import {
+  finalizeRegistryAfterPlpScan,
+  normalizeSourceStatus,
+  resolveClosedPdpErrorReason,
+  selectImportCandidates,
+  selectRunReportItems,
+} from '../partner-import-shared/registry-lifecycle';
 import { Logger } from '../partner-import-shared/utils/logger';
 import { sleep } from '../partner-import-shared/utils/sleep';
 
@@ -47,13 +54,6 @@ import type {
   ScanCommandOptions,
   SourceCloseReason,
 } from './types';
-import {
-  finalizeRegistryAfterPlpScan,
-  normalizeSourceStatus,
-  resolveClosedPdpErrorReason,
-  selectImportCandidates,
-  selectRunReportItems,
-} from './workflow/registry-lifecycle';
 
 const program = new Command();
 const logger = new Logger(isPartnerImportDebugEnabled());
@@ -618,7 +618,7 @@ function getImportCandidates(items: RegistryItem[], options: ImportCommandOption
   }
 
   const sourceIds = loadSourceIdsFromPlpFile(options.plpFilePath);
-  return selected.filter((item) => sourceIds.has(item.sourceListingId));
+  return selected.filter((item: RegistryItem) => sourceIds.has(item.sourceListingId));
 }
 
 function loadSourceIdsFromPlpFile(plpFilePath: string): Set<string> {

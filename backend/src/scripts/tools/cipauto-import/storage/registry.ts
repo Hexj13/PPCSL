@@ -2,14 +2,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import type { ParsedPlpItem } from '../../partner-import-shared/listing-types';
+import type { PlpSnapshotData } from '../../partner-import-shared/plp-snapshot-types';
+import {
+  buildActivePlpSnapshot,
+  normalizeSourceStatus,
+} from '../../partner-import-shared/registry-lifecycle';
 import { JsonRegistryStore } from '../../partner-import-shared/storage/json-registry-store';
-import type {
-  CurrentPlpSnapshotData,
-  RegistryItem,
-  SourceCloseOutcome,
-  SourceCloseReason,
-} from '../types';
-import { buildActivePlpSnapshot, normalizeSourceStatus } from '../workflow/registry-lifecycle';
+import type { RegistryItem, SourceCloseOutcome, SourceCloseReason } from '../types';
 
 export class RegistryStore extends JsonRegistryStore<RegistryItem> {
   constructor(registryPath: string) {
@@ -60,7 +59,7 @@ export class RegistryStore extends JsonRegistryStore<RegistryItem> {
     this.replaceAll(items);
   }
 
-  writeCurrentPlpSnapshot(snapshotPath: string): CurrentPlpSnapshotData {
+  writeCurrentPlpSnapshot(snapshotPath: string): PlpSnapshotData<RegistryItem> {
     const snapshot = buildActivePlpSnapshot(this.getAll());
     const dirPath = path.dirname(snapshotPath);
     if (!fs.existsSync(dirPath)) {

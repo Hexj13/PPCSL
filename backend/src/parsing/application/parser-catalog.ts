@@ -1,4 +1,4 @@
-import type { ParserAvailabilityProbeConfig } from '../../common/config/parsers';
+import type { ParserAvailabilityProbeConfig, ParserConfigItem } from '../../common/config/parsers';
 import { parsersConfig } from '../../common/config/parsers';
 import type { ParserAdminAvailability, ParserReleaseStage, ParserRunType } from '../domain/types';
 
@@ -21,7 +21,7 @@ export interface ParserCatalogItem {
   availabilityProbe?: ParserAvailabilityProbeConfig;
 }
 
-const parserCatalog: ParserCatalogItem[] = parsersConfig.map((item) => ({
+const parserCatalog: ParserCatalogItem[] = parsersConfig.map((item: ParserConfigItem) => ({
   code: item.code,
   label: item.label,
   domain: item.domain,

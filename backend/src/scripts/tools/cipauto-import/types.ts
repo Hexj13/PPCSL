@@ -96,16 +96,6 @@ export interface RegistryData {
   };
 }
 
-export interface CurrentPlpSnapshotData {
-  items: Record<string, RegistryItem>;
-  meta: {
-    lastUpdatedAt: string;
-    activeItemsCount: number;
-    missingCandidatesCount: number;
-    closedItemsCount: number;
-  };
-}
-
 export interface CipautoBrandModelPair {
   brand: string;
   model: string;
