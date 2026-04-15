@@ -20,7 +20,11 @@ function pushViewListingsIfNeeded(
   t: UsersTabTranslate,
   h: UsersTabMenuHandlers,
 ) {
-  if ((user.listings?.length ?? 0) === 0) {
+  const hasActiveListings =
+    typeof user.listingCountActive === 'number'
+      ? user.listingCountActive > 0
+      : (user.listings?.some((listing) => listing.status === 'Active') ?? false);
+  if (!hasActiveListings) {
     return;
   }
   items.push({

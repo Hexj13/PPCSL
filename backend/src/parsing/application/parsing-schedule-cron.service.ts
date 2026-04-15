@@ -87,11 +87,7 @@ export class ParsingScheduleCronService implements OnApplicationBootstrap {
       driverError?: { code?: string; message?: string };
     };
     const code = typedError.code ?? typedError.driverError?.code;
-    const message = (
-      typedError.message ??
-      typedError.driverError?.message ??
-      ''
-    ).toLowerCase();
+    const message = (typedError.message ?? typedError.driverError?.message ?? '').toLowerCase();
     const referencesParsingTables =
       message.includes('parser_runs') ||
       message.includes('parser_schedules') ||

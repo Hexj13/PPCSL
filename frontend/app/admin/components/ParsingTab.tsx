@@ -25,6 +25,7 @@ import type {
 } from '@/lib/api/admin-parsing';
 import { citiesApi } from '@/lib/api/api-cities';
 import type { City } from '@/lib/api/api-types';
+import type { ParserConfigItem, ParserPdpDefaultsConfig } from '@/lib/config/parsers';
 import { registrationTypes } from '@/lib/constants';
 import { toast } from '@/lib/toast';
 import { formatAdminTableDateTime } from '@/lib/utils';
@@ -62,7 +63,8 @@ const tableCellClassName = 'py-3 px-4 text-sm';
 const tableCenteredCellClassName = `${tableCellClassName} text-center`;
 const tableCenteredSecondaryCellClassName = `${tableCenteredCellClassName} text-text-secondary`;
 const tablePrimaryButtonClassName = 'h-auto px-3 py-1.5 text-sm';
-const parserCatalogDefaultCode = parsersConfig[0]?.code ?? '';
+const parserConfigItems: ParserConfigItem[] = parsersConfig;
+const parserCatalogDefaultCode = parserConfigItems[0]?.code ?? '';
 const cipautoParserCode = 'cipauto';
 
 function getDefaultPlpScanMode(parserCode: string): PlpScanMode {
@@ -177,7 +179,7 @@ function normalizeCityName(value: string): string {
 }
 
 const parserPreferredPdpCityNames = new Map(
-  parsersConfig.map((parser) => [
+  parserConfigItems.map((parser) => [
     parser.code,
     new Set(
       [parser.defaultPdpCity, ...(parser.defaultPdpCityNames ?? [])]
@@ -188,7 +190,7 @@ const parserPreferredPdpCityNames = new Map(
   ]),
 );
 const parserStaticPlpFileNameByCode = new Map(
-  parsersConfig
+  parserConfigItems
     .filter(
       (parser) => typeof parser.plpDataPath === 'string' && parser.plpDataPath.trim().length > 0,
     )
@@ -207,8 +209,11 @@ interface ParserPdpDefaults {
   updateExisting: boolean;
 }
 
-const parserPdpDefaultsByCode = new Map(
-  parsersConfig.map((parser) => [parser.code, parser.pdpDefaults ?? {}]),
+const parserPdpDefaultsByCode = new Map<string, ParserPdpDefaultsConfig>(
+  parserConfigItems.map((parser): [string, ParserPdpDefaultsConfig] => [
+    parser.code,
+    parser.pdpDefaults ?? {},
+  ]),
 );
 
 function getParserPdpDefaults(parserCode: string): ParserPdpDefaults {

@@ -80,11 +80,7 @@ describe('ParsingScheduleCronService', () => {
     const driverError = Object.assign(new Error('relation "parser_runs" does not exist'), {
       code: '42P01',
     });
-    const missingTableError = new QueryFailedError(
-      'SELECT * FROM "parser_runs"',
-      [],
-      driverError,
-    );
+    const missingTableError = new QueryFailedError('SELECT * FROM "parser_runs"', [], driverError);
     (orchestrator.reconcileStaleActiveRunsOnStartup as jest.Mock).mockRejectedValue(
       missingTableError,
     );
