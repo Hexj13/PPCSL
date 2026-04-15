@@ -25,7 +25,7 @@ import type {
 } from '@/lib/api/admin-parsing';
 import { citiesApi } from '@/lib/api/api-cities';
 import type { City } from '@/lib/api/api-types';
-import type { ParserConfigItem, ParserPdpDefaultsConfig } from '@/lib/config/parsers';
+import type { ParserConfigItem, ParserPdpDefaultsConfig } from '@/lib/config/parser-types';
 import { registrationTypes } from '@/lib/constants';
 import { toast } from '@/lib/toast';
 import { formatAdminTableDateTime } from '@/lib/utils';

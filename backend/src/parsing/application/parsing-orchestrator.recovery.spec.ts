@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { AdminAuditService } from '../../admin/admin-audit.service';
 import { AdminService } from '../../admin/admin.service';
 import { CliParserRunnerService } from '../infrastructure/cli-parser-runner.service';
+import { PlpStorageService } from '../infrastructure/plp-storage.service';
 import { ParserLogChunk } from '../infrastructure/persistence/parser-log-chunk.entity';
 import { ParserRun } from '../infrastructure/persistence/parser-run.entity';
 import { ParserSchedule } from '../infrastructure/persistence/parser-schedule.entity';
@@ -49,6 +50,7 @@ describe('ParsingOrchestratorService recovery', () => {
     const logChunkRepo = {} as Repository<ParserLogChunk>;
     const scheduleRepo = {} as Repository<ParserSchedule>;
     const cliRunner = {} as CliParserRunnerService;
+    const plpStorage = { useS3: false } as PlpStorageService;
     const adminAudit = {} as AdminAuditService;
     const adminService = {} as AdminService;
     const service = new ParsingOrchestratorService(
@@ -56,6 +58,7 @@ describe('ParsingOrchestratorService recovery', () => {
       logChunkRepo,
       scheduleRepo,
       cliRunner,
+      plpStorage,
       adminAudit,
       adminService,
     );

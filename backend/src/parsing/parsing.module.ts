@@ -13,6 +13,7 @@ import { CliParserRunnerService } from './infrastructure/cli-parser-runner.servi
 import { ParserLogChunk } from './infrastructure/persistence/parser-log-chunk.entity';
 import { ParserRun } from './infrastructure/persistence/parser-run.entity';
 import { ParserSchedule } from './infrastructure/persistence/parser-schedule.entity';
+import { PlpStorageService } from './infrastructure/plp-storage.service';
 import { AdminParsingController } from './presentation/admin-parsing.controller';
 
 @Module({
@@ -25,6 +26,7 @@ import { AdminParsingController } from './presentation/admin-parsing.controller'
   controllers: [AdminParsingController],
   providers: [
     CliParserRunnerService,
+    PlpStorageService,
     ParsingAvailabilityService,
     ParsingOrchestratorService,
     ParsingScheduleService,

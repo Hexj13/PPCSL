@@ -16,6 +16,7 @@ import { CliParserRunnerService } from '../infrastructure/cli-parser-runner.serv
 import { ParserLogChunk } from '../infrastructure/persistence/parser-log-chunk.entity';
 import { ParserRun } from '../infrastructure/persistence/parser-run.entity';
 import { ParserSchedule } from '../infrastructure/persistence/parser-schedule.entity';
+import { PlpStorageService } from '../infrastructure/plp-storage.service';
 
 import { getParserCatalog, getParserCatalogItem } from './parser-catalog';
 import {
@@ -83,6 +84,7 @@ export class ParsingOrchestratorService {
     @InjectRepository(ParserSchedule)
     private readonly scheduleRepo: Repository<ParserSchedule>,
     private readonly cliRunner: CliParserRunnerService,
+    private readonly plpStorage: PlpStorageService,
     private readonly adminAudit: AdminAuditService,
     private readonly adminService: AdminService,
   ) {}
@@ -165,6 +167,18 @@ export class ParsingOrchestratorService {
     if (run.run_type !== 'plp') {
       throw new BadRequestException('errors.parserRunNotFound');
     }
+    const fileKey = this.resolvePlpOutputFileKey(run.parser_code, run.config_snapshot);
+    const s3Path = this.resolveS3RelativePath(run.parser_code, fileKey);
+    const fileName = path.basename(s3Path);
+
+    if (this.plpStorage.useS3) {
+      const content = await this.plpStorage.downloadFile(s3Path);
+      if (content === null) {
+        return { fileName, missing: true, content: null };
+      }
+      return { fileName, missing: false, content };
+    }
+
     const filePath = this.resolveCurrentPlpFilePath(run);
     if (!fs.existsSync(filePath)) {
       return {
@@ -616,6 +630,9 @@ export class ParsingOrchestratorService {
       this.logger.log(
         `[PLP][finish] runId=${runId} parser=${latest.parser_code} status=${latest.status} exitCode=${exitCode} counters=${JSON.stringify(latest.counters ?? {})}`,
       );
+      if (exitCode === 0 && !dryRun) {
+        await this.syncPlpFileToS3(latest);
+      }
       await this.bumpScheduleAfterRun(latest.schedule_id, latest.started_at);
     } catch (error) {
       await this.failRun(runId, error);
@@ -680,8 +697,67 @@ export class ParsingOrchestratorService {
   }
 
   async listAllPlpFiles(): Promise<ParserPlpFileInfo[]> {
+    if (this.plpStorage.useS3) {
+      return this.listAllPlpFilesFromS3();
+    }
+    return this.listAllPlpFilesFromLocal();
+  }
+
+  private async listAllPlpFilesFromS3(): Promise<ParserPlpFileInfo[]> {
     const result: ParserPlpFileInfo[] = [];
-    const parsers = getParserCatalog().filter((parser) => parser.supportedRunTypes.includes('plp'));
+    const parsers = getParserCatalog().filter((p) => p.supportedRunTypes.includes('plp'));
+
+    for (const parser of parsers) {
+      if (parser.scanInputMode === 'profile_login') {
+        const files = await this.plpStorage.listFiles('999md/current-plp/');
+        for (const relPath of files) {
+          const content = await this.plpStorage.downloadFile(relPath);
+          if (content === null) {
+            continue;
+          }
+          const fileName = path.basename(relPath);
+          const meta = await this.plpStorage.getFileMetadata(relPath);
+          result.push(
+            this.buildPlpFileInfoFromContent(
+              parser.code,
+              parser.label,
+              fileName,
+              fileName,
+              content,
+              meta?.size ?? content.length,
+            ),
+          );
+        }
+        continue;
+      }
+      if (!parser.plpDataPath) {
+        continue;
+      }
+      const s3Path = this.resolveS3RelativePath(parser.code, 'default');
+      const content = await this.plpStorage.downloadFile(s3Path);
+      if (content === null) {
+        continue;
+      }
+      const meta = await this.plpStorage.getFileMetadata(s3Path);
+      const fileName = path.basename(parser.plpDataPath);
+      result.push(
+        this.buildPlpFileInfoFromContent(
+          parser.code,
+          parser.label,
+          fileName,
+          'default',
+          content,
+          meta?.size ?? content.length,
+        ),
+      );
+    }
+
+    return this.sortPlpFileInfoList(result);
+  }
+
+  private async listAllPlpFilesFromLocal(): Promise<ParserPlpFileInfo[]> {
+    const result: ParserPlpFileInfo[] = [];
+    const parsers = getParserCatalog().filter((p) => p.supportedRunTypes.includes('plp'));
 
     for (const parser of parsers) {
       if (parser.scanInputMode === 'profile_login') {
@@ -695,7 +771,7 @@ export class ParsingOrchestratorService {
         for (const fileName of files) {
           const rawPath = path.join(dirPath, fileName);
           result.push(
-            await this.buildParserPlpFileInfo(
+            await this.buildParserPlpFileInfoFromPath(
               parser.code,
               parser.label,
               fileName,
@@ -716,11 +792,21 @@ export class ParsingOrchestratorService {
       }
       const fileName = path.basename(parser.plpDataPath);
       result.push(
-        await this.buildParserPlpFileInfo(parser.code, parser.label, fileName, 'default', rawPath),
+        await this.buildParserPlpFileInfoFromPath(
+          parser.code,
+          parser.label,
+          fileName,
+          'default',
+          rawPath,
+        ),
       );
     }
 
-    return result.sort((a, b) => {
+    return this.sortPlpFileInfoList(result);
+  }
+
+  private sortPlpFileInfoList(list: ParserPlpFileInfo[]): ParserPlpFileInfo[] {
+    return list.sort((a, b) => {
       const left = a.lastUpdatedAt ? new Date(a.lastUpdatedAt).getTime() : 0;
       const right = b.lastUpdatedAt ? new Date(b.lastUpdatedAt).getTime() : 0;
       if (right !== left) {
@@ -741,22 +827,44 @@ export class ParsingOrchestratorService {
     missing: boolean;
     content: string | null;
   }> {
-    const filePath = this.resolvePdpPlpFilePath(parserCode, fileKey);
-    if (!fs.existsSync(filePath)) {
+    const s3Path = this.resolveS3RelativePath(parserCode, fileKey);
+    const fileName = path.basename(s3Path);
+
+    if (this.plpStorage.useS3) {
+      const content = await this.plpStorage.downloadFile(s3Path);
+      if (content === null) {
+        return { fileName, missing: true, content: null };
+      }
+      return { fileName, missing: false, content };
+    }
+
+    try {
+      const filePath = this.resolvePdpPlpFilePath(parserCode, fileKey);
+      if (!fs.existsSync(filePath)) {
+        return { fileName: path.basename(filePath), missing: true, content: null };
+      }
       return {
         fileName: path.basename(filePath),
-        missing: true,
-        content: null,
+        missing: false,
+        content: await fsp.readFile(filePath, 'utf-8'),
       };
+    } catch {
+      return { fileName, missing: true, content: null };
     }
-    return {
-      fileName: path.basename(filePath),
-      missing: false,
-      content: await fsp.readFile(filePath, 'utf-8'),
-    };
   }
 
   async deletePlpFile(parserCode: string, fileKey: string): Promise<void> {
+    const s3Path = this.resolveS3RelativePath(parserCode, fileKey);
+
+    if (this.plpStorage.useS3) {
+      const exists = (await this.plpStorage.getFileMetadata(s3Path)) !== null;
+      if (!exists) {
+        throw new BadRequestException('errors.parsingPlpFileInvalid');
+      }
+      await this.plpStorage.deleteFile(s3Path);
+      return;
+    }
+
     const rawPath = this.resolvePdpPlpFilePath(parserCode, fileKey);
     if (!fs.existsSync(rawPath)) {
       throw new BadRequestException('errors.parsingPlpFileInvalid');
@@ -799,6 +907,7 @@ export class ParsingOrchestratorService {
       const delayMs = Number(cfg.delayMs ?? 3000);
       const removeClosed = Boolean(cfg.removeClosed);
       const plpFileKey = String(cfg.plpFileKey ?? '').trim();
+      await this.ensurePlpFileLocal(run.parser_code, plpFileKey);
       const plpFilePath = this.resolvePdpPlpFilePath(run.parser_code, plpFileKey);
       const userId = run.assigned_user_id;
       if (!userId) {
@@ -1210,60 +1319,81 @@ export class ParsingOrchestratorService {
     return path.join(process.cwd(), 'src', 'scripts', 'tools', plpDataPath);
   }
 
-  private async buildParserPlpFileInfo(
+  private async buildParserPlpFileInfoFromPath(
     parserCode: string,
     parserLabel: string,
     fileName: string,
     fileKey: string,
     rawPath: string,
   ): Promise<ParserPlpFileInfo> {
+    let content: string | null = null;
+    let fileSizeBytes = 0;
+    try {
+      content = await fsp.readFile(rawPath, 'utf-8');
+      fileSizeBytes = (await fsp.stat(rawPath)).size;
+    } catch {
+      content = null;
+    }
+    return this.buildPlpFileInfoFromContent(
+      parserCode,
+      parserLabel,
+      fileName,
+      fileKey,
+      content,
+      fileSizeBytes,
+    );
+  }
+
+  private buildPlpFileInfoFromContent(
+    parserCode: string,
+    parserLabel: string,
+    fileName: string,
+    fileKey: string,
+    content: string | null,
+    fileSizeBytes: number,
+  ): ParserPlpFileInfo {
     let label = fileName;
     let lastUpdatedAt: string | null = null;
     let itemsCount = 0;
     let errorItemsCount = 0;
     let missingCandidatesCount = 0;
 
-    try {
-      const parsed = JSON.parse(await fsp.readFile(rawPath, 'utf-8')) as {
-        login?: unknown;
-        items?: Record<string, unknown>;
-        meta?: Record<string, unknown>;
-      };
-      const meta = parsed.meta ?? {};
-      const login = typeof parsed.login === 'string' ? parsed.login.trim() : '';
-      if (login.length > 0) {
-        label = `${login} (${fileName})`;
-      }
-      if (typeof meta.lastUpdatedAt === 'string' && meta.lastUpdatedAt.trim().length > 0) {
-        lastUpdatedAt = meta.lastUpdatedAt;
-      }
-      const rawItems = parsed.items && typeof parsed.items === 'object' ? parsed.items : {};
-      const itemList = Object.values(rawItems);
-      const metaItemsCount =
-        typeof meta.activeItemsCount === 'number'
-          ? Number(meta.activeItemsCount)
-          : typeof meta.totalItems === 'number'
-            ? Number(meta.totalItems)
-            : null;
-      itemsCount = metaItemsCount ?? itemList.length;
-      errorItemsCount = itemList.filter((item) => {
-        if (!item || typeof item !== 'object') {
-          return false;
+    if (content) {
+      try {
+        const parsed = JSON.parse(content) as {
+          login?: unknown;
+          items?: Record<string, unknown>;
+          meta?: Record<string, unknown>;
+        };
+        const meta = parsed.meta ?? {};
+        const login = typeof parsed.login === 'string' ? parsed.login.trim() : '';
+        if (login.length > 0) {
+          label = `${login} (${fileName})`;
         }
-        const errorValue = (item as { error?: unknown }).error;
-        return typeof errorValue === 'string' && errorValue.trim().length > 0;
-      }).length;
-      missingCandidatesCount =
-        typeof meta.missingCandidatesCount === 'number' ? Number(meta.missingCandidatesCount) : 0;
-    } catch {
-      label = fileName;
-    }
-
-    let fileSizeBytes = 0;
-    try {
-      fileSizeBytes = (await fsp.stat(rawPath)).size;
-    } catch {
-      fileSizeBytes = 0;
+        if (typeof meta.lastUpdatedAt === 'string' && meta.lastUpdatedAt.trim().length > 0) {
+          lastUpdatedAt = meta.lastUpdatedAt;
+        }
+        const rawItems = parsed.items && typeof parsed.items === 'object' ? parsed.items : {};
+        const itemList = Object.values(rawItems);
+        const metaItemsCount =
+          typeof meta.activeItemsCount === 'number'
+            ? Number(meta.activeItemsCount)
+            : typeof meta.totalItems === 'number'
+              ? Number(meta.totalItems)
+              : null;
+        itemsCount = metaItemsCount ?? itemList.length;
+        errorItemsCount = itemList.filter((item) => {
+          if (!item || typeof item !== 'object') {
+            return false;
+          }
+          const errorValue = (item as { error?: unknown }).error;
+          return typeof errorValue === 'string' && errorValue.trim().length > 0;
+        }).length;
+        missingCandidatesCount =
+          typeof meta.missingCandidatesCount === 'number' ? Number(meta.missingCandidatesCount) : 0;
+      } catch {
+        label = fileName;
+      }
     }
 
     return {
@@ -1286,6 +1416,71 @@ export class ParsingOrchestratorService {
       return 'unknown-login';
     }
     return normalized.replace(/[^a-z0-9_-]+/g, '-');
+  }
+
+  resolveS3RelativePath(parserCode: string, fileKey: string): string {
+    if (parserCode === '999md') {
+      const safeKey = fileKey === 'default' ? 'default.json' : path.basename(fileKey);
+      return `999md/current-plp/${safeKey}`;
+    }
+    const parser = getParserCatalogItem(parserCode);
+    if (parser?.plpDataPath) {
+      const parts = parser.plpDataPath.replace(/^runtime\/parsing\//, '');
+      return parts;
+    }
+    return `${parserCode}/${fileKey}.json`;
+  }
+
+  private async ensurePlpFileLocal(parserCode: string, plpFileKey: string): Promise<void> {
+    if (!this.plpStorage.useS3) {
+      return;
+    }
+    const s3Path = this.resolveS3RelativePath(parserCode, plpFileKey);
+    const localAbsPath = this.resolveLocalPlpPath(parserCode, plpFileKey);
+    if (fs.existsSync(localAbsPath)) {
+      return;
+    }
+    this.logger.log(
+      `[PDP][s3-download] downloading PLP file before import: ${s3Path} → ${localAbsPath}`,
+    );
+    const ok = await this.plpStorage.downloadToLocal(s3Path, localAbsPath);
+    if (!ok) {
+      throw new BadRequestException('errors.parsingPlpFileInvalid');
+    }
+  }
+
+  private resolveLocalPlpPath(parserCode: string, plpFileKey: string): string {
+    if (parserCode === '999md') {
+      const key = plpFileKey.trim();
+      const safeFileName = path.basename(key);
+      return path.join(this.get999mdCurrentPlpDir(), safeFileName || `${key}.json`);
+    }
+    const parser = getParserCatalogItem(parserCode);
+    if (parser?.plpDataPath) {
+      return this.resolveParserPlpDataPath(parser.plpDataPath);
+    }
+    return path.join(this.getParsingRuntimeRoot(), parserCode, `${plpFileKey}.json`);
+  }
+
+  private async syncPlpFileToS3(run: ParserRun): Promise<void> {
+    try {
+      const localFilePath = this.resolveCurrentPlpFilePath(run);
+      if (!fs.existsSync(localFilePath)) {
+        this.logger.warn(`[PLP][s3-sync] skipped — local file not found: ${localFilePath}`);
+        return;
+      }
+      const content = await fsp.readFile(localFilePath, 'utf-8');
+      const fileKey = this.resolvePlpOutputFileKey(run.parser_code, run.config_snapshot);
+      const s3Path = this.resolveS3RelativePath(run.parser_code, fileKey);
+      await this.plpStorage.uploadFile(s3Path, content);
+      this.logger.log(
+        `[PLP][s3-sync] uploaded runId=${run.id} parser=${run.parser_code} s3Path=${s3Path} size=${content.length}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `[PLP][s3-sync] failed runId=${run.id} parser=${run.parser_code} error=${this.stringifyError(error)}`,
+      );
+    }
   }
 
   private async failRun(runId: string, error: unknown): Promise<void> {
