@@ -1953,9 +1953,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                       {t('admin.parsing.colAssignedUser')}
                     </th>
                     <th className={`text-center ${tableHeaderClassName}`}>
-                      {t('admin.parsing.colEnv')}
-                    </th>
-                    <th className={`text-center ${tableHeaderClassName}`}>
                       {t('admin.parsing.colFrequency')}
                     </th>
                     <th className={`text-center ${tableHeaderClassName}`}>
@@ -1991,9 +1988,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                         >
                           {s.assigned_user_id || '—'}
                         </div>
-                      </td>
-                      <td className={tableCenteredSecondaryCellClassName}>
-                        {getTranslatedParsingValue('env', s.target_env)}
                       </td>
                       <td className={`${tableCenteredSecondaryCellClassName} max-w-52`}>
                         <div className="truncate" title={s.cron_expression}>
