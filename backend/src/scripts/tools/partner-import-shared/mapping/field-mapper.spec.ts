@@ -8,6 +8,7 @@ function minimalParsed(overrides: Partial<ParsedPdpData>): ParsedPdpData {
     sourceListingId: '1',
     sourceUrl: 'https://example.com/1',
     canonicalUrl: 'https://example.com/1',
+    sourceStatus: 'active',
     creditAvailable: false,
     images: ['https://img/a.jpg', 'https://img/b.jpg'],
     equipmentOptions: [],

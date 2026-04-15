@@ -2,11 +2,18 @@
 
 import { Fragment } from 'react';
 
-import { CopyButton } from '@/components/common/CopyButton';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { AdminBrand, AdminModel } from '@/lib/api';
 import { Button, ChevronRightIcon, EditIcon, Pagination } from '@/ui';
 
+import { AdminActionButton } from './AdminButtons';
+import {
+  AdminCopyValueCell,
+  adminTableCenteredCellClassName,
+  adminTableCenteredSecondaryCellClassName,
+  adminTableHeaderClassName,
+  adminTablePrimaryButtonClassName,
+} from './AdminTableShared';
 import type { ArchiveTarget } from './ArchiveConfirmModal';
 import type { CatalogMode } from './BrandsModelsFilters';
 
@@ -57,7 +64,7 @@ function BrandRow({
   return (
     <Fragment>
       <tr className="border-b border-primary-700/10">
-        <td className="py-2 px-4">
+        <td className="py-2 px-4 text-center">
           {filteredModels.length > 0 ? (
             <button
               type="button"
@@ -75,8 +82,9 @@ function BrandRow({
             </button>
           ) : null}
         </td>
-        <td className="py-2 px-4">
-          <div className="flex items-center gap-2">
+        <td className={adminTableCenteredCellClassName}>
+          <div className="flex items-center justify-center gap-2">
+            <span className="font-medium">{brand.name}</span>
             <button
               type="button"
               onClick={onEditBrand}
@@ -85,48 +93,42 @@ function BrandRow({
             >
               <EditIcon className="w-4 h-4" />
             </button>
-            <span className="font-medium">{brand.name}</span>
           </div>
         </td>
-        <td className="py-2 px-4 min-w-[200px]" />
-        <td className="py-2 px-4 text-center">{brand.activeListingsCount}</td>
-        <td className="py-2 px-4 text-sm text-text-secondary">
+        <td className={`${adminTableCenteredCellClassName} min-w-[200px]`} />
+        <td className={adminTableCenteredCellClassName}>{brand.activeListingsCount}</td>
+        <td className={adminTableCenteredSecondaryCellClassName}>
           {catalog === 'tire'
             ? t('admin.brandsModelsTab.catalogTires')
             : formatVehicleTypes(brand.vehicleTypes)}
         </td>
-        <td className="py-2 px-4">
-          <div className="flex items-center gap-2">
-            <span
-              className="font-mono text-xs text-text-secondary truncate max-w-[140px]"
-              title={brand.id}
-            >
-              {brand.id}
-            </span>
-            <CopyButton text={brand.id} label={t('admin.brandsModelsTab.columnId')} />
+        <td className={adminTableCenteredCellClassName}>
+          <div title={brand.id}>
+            <AdminCopyValueCell value={brand.id} label={t('admin.brandsModelsTab.columnId')} />
           </div>
         </td>
-        <td className="py-2 px-4 text-center">
-          {brand.isArchived ? (
-            <Button type="button" variant="outline" size="xs" onClick={onUnarchiveBrand}>
-              {t('admin.brandsModelsTab.unarchiveButton')}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="xs"
-              disabled={brand.activeListingsCount > 0}
-              title={
-                brand.activeListingsCount > 0
-                  ? t('admin.brandsModelsTab.archiveDisabledHasListings')
-                  : undefined
-              }
-              onClick={() => setArchiveTarget({ type: 'brand', id: brand.id, name: brand.name })}
-            >
-              {t('admin.brandsModelsTab.archiveConfirm')}
-            </Button>
-          )}
+        <td className={adminTableCenteredCellClassName}>
+          <div className="flex justify-center items-center">
+            {brand.isArchived ? (
+              <Button type="button" variant="outline" size="xs" onClick={onUnarchiveBrand}>
+                {t('admin.brandsModelsTab.unarchiveButton')}
+              </Button>
+            ) : (
+              <AdminActionButton
+                variant="secondary"
+                className={adminTablePrimaryButtonClassName}
+                disabled={brand.activeListingsCount > 0}
+                title={
+                  brand.activeListingsCount > 0
+                    ? t('admin.brandsModelsTab.archiveDisabledHasListings')
+                    : undefined
+                }
+                onClick={() => setArchiveTarget({ type: 'brand', id: brand.id, name: brand.name })}
+              >
+                {t('admin.brandsModelsTab.archiveConfirm')}
+              </AdminActionButton>
+            )}
+          </div>
         </td>
       </tr>
       {isExpanded &&
@@ -135,10 +137,11 @@ function BrandRow({
             key={model.id}
             className="admin-expand-row border-b border-primary-700/10 bg-primary-500/5"
           >
-            <td className="py-2 px-4" />
-            <td className="py-2 px-4 pl-10 text-text-secondary" />
-            <td className="py-2 px-4 min-w-[200px]">
-              <div className="flex items-center gap-2">
+            <td className={adminTableCenteredCellClassName} />
+            <td className={adminTableCenteredSecondaryCellClassName} />
+            <td className={`${adminTableCenteredCellClassName} min-w-[200px]`}>
+              <div className="flex items-center justify-center gap-2">
+                <span>{model.name}</span>
                 <button
                   type="button"
                   onClick={() => onEditModel(model)}
@@ -147,56 +150,50 @@ function BrandRow({
                 >
                   <EditIcon className="w-4 h-4" />
                 </button>
-                <span>{model.name}</span>
               </div>
             </td>
-            <td className="py-2 px-4 text-center">{model.activeListingsCount}</td>
-            <td className="py-2 px-4 text-sm text-text-secondary">
+            <td className={adminTableCenteredCellClassName}>{model.activeListingsCount}</td>
+            <td className={adminTableCenteredSecondaryCellClassName}>
               {catalog === 'tire'
                 ? model.isOther
                   ? t('admin.brandsModelsTab.fieldIsOtherTireModel')
                   : t('admin.brandsModelsTab.emptyCell')
                 : formatVehicleTypes(model.vehicleTypes)}
             </td>
-            <td className="py-2 px-4">
-              <div className="flex items-center gap-2">
-                <span
-                  className="font-mono text-xs text-text-secondary truncate max-w-[140px]"
-                  title={model.id}
-                >
-                  {model.id}
-                </span>
-                <CopyButton text={model.id} label={t('admin.brandsModelsTab.columnId')} />
+            <td className={adminTableCenteredCellClassName}>
+              <div title={model.id}>
+                <AdminCopyValueCell value={model.id} label={t('admin.brandsModelsTab.columnId')} />
               </div>
             </td>
-            <td className="py-2 px-4 text-center">
-              {model.isArchived ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onClick={() => onUnarchiveModel(model.id)}
-                >
-                  {t('admin.brandsModelsTab.unarchiveButton')}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  disabled={model.activeListingsCount > 0}
-                  title={
-                    model.activeListingsCount > 0
-                      ? t('admin.brandsModelsTab.archiveDisabledHasListings')
-                      : undefined
-                  }
-                  onClick={() =>
-                    setArchiveTarget({ type: 'model', id: model.id, name: model.name })
-                  }
-                >
-                  {t('admin.brandsModelsTab.archiveConfirm')}
-                </Button>
-              )}
+            <td className={adminTableCenteredCellClassName}>
+              <div className="flex justify-center items-center">
+                {model.isArchived ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="xs"
+                    onClick={() => onUnarchiveModel(model.id)}
+                  >
+                    {t('admin.brandsModelsTab.unarchiveButton')}
+                  </Button>
+                ) : (
+                  <AdminActionButton
+                    variant="secondary"
+                    className={adminTablePrimaryButtonClassName}
+                    disabled={model.activeListingsCount > 0}
+                    title={
+                      model.activeListingsCount > 0
+                        ? t('admin.brandsModelsTab.archiveDisabledHasListings')
+                        : undefined
+                    }
+                    onClick={() =>
+                      setArchiveTarget({ type: 'model', id: model.id, name: model.name })
+                    }
+                  >
+                    {t('admin.brandsModelsTab.archiveConfirm')}
+                  </AdminActionButton>
+                )}
+              </div>
             </td>
           </tr>
         ))}
@@ -225,26 +222,26 @@ export function BrandsModelsTable({
   return (
     <>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse [&_tbody_tr:nth-child(even)]:bg-primary-500/5">
           <thead>
             <tr className="border-b border-primary-700/30">
-              <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900 w-10" />
-              <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900">
+              <th className={`${adminTableHeaderClassName} text-center w-10`} />
+              <th className={`${adminTableHeaderClassName} text-center`}>
                 {t('admin.brandsModelsTab.columnBrand')}
               </th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900 min-w-[200px]">
+              <th className={`${adminTableHeaderClassName} text-center min-w-[200px]`}>
                 {t('admin.brandsModelsTab.columnModel')}
               </th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
+              <th className={`${adminTableHeaderClassName} text-center`}>
                 {t('admin.brandsModelsTab.columnListings')}
               </th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900">
+              <th className={`${adminTableHeaderClassName} text-center`}>
                 {t('admin.brandsModelsTab.columnCategory')}
               </th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900">
+              <th className={`${adminTableHeaderClassName} text-center`}>
                 {t('admin.brandsModelsTab.columnId')}
               </th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
+              <th className={`${adminTableHeaderClassName} text-center`}>
                 {t('admin.brandsModelsTab.columnArchive')}
               </th>
             </tr>

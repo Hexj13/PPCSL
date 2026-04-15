@@ -1,16 +1,13 @@
 import type { ListingStatus, RegistrationType } from '../../../common/types';
 
 import type { CliStatus, RuntimeEnv } from './kupito-import-types';
-import type { ImportFailedItem, ImportManualReviewItem } from './listing-types';
+import type {
+  ImportFailedItem,
+  ImportManualReviewItem,
+  RegistryImportState,
+} from './listing-types';
 
-export type ImportState =
-  | 'discovered'
-  | 'pdp_parsed'
-  | 'created'
-  | 'updated'
-  | 'failed'
-  | 'skipped'
-  | 'manual_review';
+export type ImportState = RegistryImportState;
 
 export interface ImportCommandOptions {
   userId: string;
@@ -19,9 +16,11 @@ export interface ImportCommandOptions {
   limit?: number;
   resume?: boolean;
   dryRun?: boolean;
+  removeClosed?: boolean;
   onlyFailed?: boolean;
   updateExisting?: boolean;
   sourceId?: string;
+  plpFilePath?: string;
   registrationType: RegistrationType;
   defaultHp: number;
   city: string;
@@ -47,6 +46,7 @@ export interface ImportReport {
     pdpParsed: number;
     created: number;
     updated: number;
+    closedSynced: number;
     skipped: number;
     failed: number;
     manualReview: number;

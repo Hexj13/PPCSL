@@ -8,6 +8,8 @@ import type { AdminBrand, CreateTireBrandPayload, UpdateTireBrandPayload } from 
 import { adminApi } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
+import { AdminActionButton } from './AdminButtons';
+
 interface TireBrandFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -87,29 +89,24 @@ export function TireBrandFormModal({ isOpen, onClose, onSuccess, brand }: TireBr
               setNameError(null);
             }}
             placeholder={t('admin.brandsModelsTab.namePlaceholderBrand')}
-            className={`w-full px-4 py-2.5 rounded-lg border-2 bg-bg-secondary text-text-primary focus:outline-hidden focus:border-primary-900 ${
-              nameError ? 'border-red-500' : 'border-primary-700'
-            }`}
+            className={[
+              'input-field w-full',
+              nameError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
             maxLength={100}
             required
           />
           {nameError && <p className="mt-1 text-sm text-red-600">{nameError}</p>}
         </div>
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <AdminActionButton variant="secondary" className="flex-1" onClick={onClose}>
             {t('common.cancel')}
-          </button>
-          <button
-            type="submit"
-            disabled={submitting || !name.trim()}
-            className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          </AdminActionButton>
+          <AdminActionButton type="submit" className="flex-1" disabled={submitting || !name.trim()}>
             {t('common.save')}
-          </button>
+          </AdminActionButton>
         </div>
       </form>
     </Modal>

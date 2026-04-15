@@ -278,6 +278,14 @@ export class ListingsService {
     return this.getListingHistoryUseCase.execute(listingId);
   }
 
+  isReportProviderEnabled(): boolean {
+    return this.getReportUrlUseCase.isProviderEnabled();
+  }
+
+  getReportFallbackUrl(locale?: string): string {
+    return this.getReportUrlUseCase.getFallbackUrl(locale);
+  }
+
   async getReportUrl(listingId: string, locale?: string): Promise<{ url: string }> {
     return this.getReportUrlUseCase.execute(listingId, locale);
   }

@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { TireVehicleType } from '../common/types';
+import { buildPaginationMeta } from '../common/utils/pagination.utils';
 import { normalizeForComparison } from '../common/utils/slug.utils';
 import { IListingCache } from '../listings/application/ports/listing-cache.port';
 import { LISTING_CACHE } from '../listings/application/ports/listing-cache.port';
@@ -104,7 +105,7 @@ export class AdminTireBrandsModelsService {
     if (brands.length === 0) {
       return {
         data: [],
-        meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+        meta: buildPaginationMeta(total, page, limit),
       };
     }
     const brandIds = brands.map((b) => b.id);
@@ -147,12 +148,7 @@ export class AdminTireBrandsModelsService {
     }));
     return {
       data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: buildPaginationMeta(total, page, limit),
     };
   }
 

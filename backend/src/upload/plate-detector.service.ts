@@ -7,7 +7,6 @@ import sharp from 'sharp';
 
 import type { PlateDetection } from './plate-detector.types';
 
-const METADATA_FALLBACK_SPATIAL_SIZE = 384;
 const REQUIRED_PLATE_MODEL_SPATIAL_SIZE = 608;
 const DETECTION_TIMEOUT_MS = 10000;
 const MIN_CONFIDENCE = 0.75;
@@ -44,6 +43,13 @@ export class PlateDetectorService implements OnModuleInit {
         executionProviders: ['cpu'],
       });
       const spatial = this.resolveSpatialInputSize(session);
+      if (spatial === null) {
+        this.logger.error(
+          `Could not validate plate detector ONNX input size from metadata. Replace plate-detector.onnx per assets/plate-mask/README.md.`,
+        );
+        await session.release().catch(() => undefined);
+        return;
+      }
       if (spatial !== REQUIRED_PLATE_MODEL_SPATIAL_SIZE) {
         this.logger.error(
           `Plate detector ONNX must be yolo-v9-s-608 (input ${REQUIRED_PLATE_MODEL_SPATIAL_SIZE}x${REQUIRED_PLATE_MODEL_SPATIAL_SIZE}); got ${spatial}x${spatial}. Replace plate-detector.onnx per assets/plate-mask/README.md.`,
@@ -107,7 +113,7 @@ export class PlateDetectorService implements OnModuleInit {
     return this.session !== null;
   }
 
-  private resolveSpatialInputSize(session: ort.InferenceSession): number {
+  private resolveSpatialInputSize(session: ort.InferenceSession): number | null {
     for (const meta of session.inputMetadata) {
       if (!meta.isTensor || meta.shape.length < 4) continue;
       const h = meta.shape[2];
@@ -119,10 +125,8 @@ export class PlateDetectorService implements OnModuleInit {
         return h;
       }
     }
-    this.logger.warn(
-      `Could not read plate model spatial input size from metadata; using ${METADATA_FALLBACK_SPATIAL_SIZE}`,
-    );
-    return METADATA_FALLBACK_SPATIAL_SIZE;
+    this.logger.warn(`Could not read plate model spatial input size from metadata`);
+    return null;
   }
 
   private async preprocess(

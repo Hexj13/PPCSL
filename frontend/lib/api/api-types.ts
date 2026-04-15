@@ -145,7 +145,10 @@ export interface User {
   boardSlug?: string;
   active?: boolean;
   listings?: Listing[];
+  listingCountTotal?: number;
+  listingCountActive?: number;
   created_at?: string;
+  last_login_at?: string | null;
   emailNotifications?: boolean;
   emailNotificationListingRefreshReminders?: boolean;
   emailNotificationWeeklyViewsDigest?: boolean;
@@ -355,8 +358,16 @@ export interface PaginationMeta {
   limit?: number;
   total?: number;
   totalPages?: number;
+  activeTotal?: number;
+  inactiveTotal?: number;
+  totalAll?: number;
   last_listing_refresh_at?: string | null;
   refreshCooldownMs?: number;
+}
+
+export interface PaginatedResponse<T, M extends PaginationMeta = PaginationMeta> {
+  data: T[];
+  meta: M;
 }
 
 export interface PromotionHistory {

@@ -1,3 +1,9 @@
+export interface ReportProviderConfig {
+  baseUrls: Record<string, string>;
+  demoUrls: Record<string, string>;
+  partnerFrom: string;
+}
+
 export interface SiteConfig {
   country: string;
   name: string;
@@ -9,6 +15,7 @@ export interface SiteConfig {
   supportEmail: string;
   siteUrl: string;
   assetVersion?: string;
+  footerPartnerLogoSurfaceDefault?: 'light' | 'transparent';
   footerPartners?: Array<{
     name: string;
     href: string;
@@ -18,6 +25,7 @@ export interface SiteConfig {
     logoSurface?: 'light' | 'transparent';
     descriptionKey?: string;
   }>;
+  reportProvider?: ReportProviderConfig;
 }
 
 let config: SiteConfig | null = null;

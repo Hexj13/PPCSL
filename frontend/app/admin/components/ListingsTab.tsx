@@ -9,6 +9,7 @@ import { StatusFilterButtons } from '@/components/listing/StatusFilterButtons';
 import { PromotionModal } from '@/components/modals/PromotionModal';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
+import { useRefreshWhenVisible } from '@/hooks/useRefreshWhenVisible';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { adminApi } from '@/lib/api';
@@ -16,7 +17,10 @@ import { localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { toast } from '@/lib/toast';
 import { Pagination } from '@/ui';
 
+import { AdminSearchInput } from './AdminTableShared';
+
 interface ListingsTabProps {
+  isActive: boolean;
   initialSearchQuery?: string;
 }
 
@@ -26,7 +30,7 @@ interface ListingsFilters {
   searchQuery: string;
 }
 
-export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
+export function ListingsTab({ isActive, initialSearchQuery = '' }: ListingsTabProps) {
   const { t } = useTranslation();
   const [statusCounts, setStatusCounts] = useState({
     Active: 0,
@@ -67,12 +71,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
       );
       return {
         data: response.data.data,
-        meta: {
-          total: response.data.meta.total || 0,
-          page: response.data.meta.page || 1,
-          limit: response.data.meta.limit || limitNum,
-          totalPages: response.data.meta.totalPages || 1,
-        },
+        meta: response.data.meta,
       };
     },
     limit: 50,
@@ -134,6 +133,11 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
   useEffect(() => {
     void loadStatusCounts(filters.searchQuery);
   }, [loadStatusCounts, filters.searchQuery]);
+
+  useRefreshWhenVisible(isActive, () => {
+    reload(true);
+    void loadStatusCounts(filters.searchQuery);
+  });
 
   const handleAction = useCallback(
     async (id: string, action: 'publish' | 'pause' | 'close') => {
@@ -210,8 +214,7 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
   return (
     <div>
       <div className="mb-4 md:mb-6 flex flex-col gap-4">
-        <input
-          type="text"
+        <AdminSearchInput
           value={filters.searchQuery}
           onChange={(e) =>
             setFilters((prev) => ({
@@ -220,7 +223,6 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
             }))
           }
           placeholder={t('admin.listingsTab.searchByIdPlaceholder')}
-          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
         />
 
         <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">
@@ -283,8 +285,12 @@ export function ListingsTab({ initialSearchQuery = '' }: ListingsTabProps) {
             ))}
           </div>
 
-          {meta && meta.totalPages > 1 && (
-            <Pagination currentPage={page} totalPages={meta.totalPages} onPageChange={setPage} />
+          {(meta?.totalPages ?? 0) > 1 && (
+            <Pagination
+              currentPage={page}
+              totalPages={meta?.totalPages ?? 1}
+              onPageChange={setPage}
+            />
           )}
         </>
       )}

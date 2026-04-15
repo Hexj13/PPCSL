@@ -44,7 +44,10 @@
     "brandIdsMustBeArray": "brandIds trebuie să fie un tablou",
     "brandIdUuid": "Fiecare brandId trebuie să fie un UUID valid",
     "vehicleTypeFilterEnum": "vehicleType trebuie să fie car, truck, moto sau tire",
-    "vehicleTypeCategoryEnum": "vehicleType trebuie să fie car, truck sau moto"
+    "vehicleTypeCategoryEnum": "vehicleType trebuie să fie car, truck sau moto",
+    "parsingCronExpressionRequired": "Expresia cron este obligatorie pentru presetul personalizat.",
+    "parsingEveryNHoursRequired": "Intervalul în ore este obligatoriu și trebuie să fie cel puțin 1.",
+    "parsingCronInvalid": "Expresie cron sau fus orar nevalid."
   },
   "errors": {
     "serverError": "Eroare pe server. Încercați mai târziu.",
@@ -169,7 +172,22 @@
     "imageBlurHashesLengthMismatch": "Datele blur trebuie să corespundă numărului de poze",
     "imageBlurHashesInvalidEntry": "Hash blur nevalid pentru una dintre poze",
     "searchBrandIdsLimit": "Puteți selecta cel mult {max} mărci.",
-    "searchModelIdsLimit": "Puteți selecta cel mult {max} modele."
+    "searchModelIdsLimit": "Puteți selecta cel mult {max} modele.",
+    "invalidListingStatus": "Stare anunț invalidă.",
+    "parserRunNotFound": "Rularea parserului nu a fost găsită",
+    "parsingScheduleNotFound": "Programarea parserului nu a fost găsită",
+    "parsingParserNotAvailablePlp": "Acest parser nu este disponibil pentru rulări manuale PLP.",
+    "parsingParserNotAvailablePdp": "Acest parser nu este disponibil pentru rulări manuale PDP.",
+    "parsingParserNotAvailableSchedule": "Acest parser nu este disponibil pentru programare.",
+    "parsingPagesFirstInvalid": "Numărul de pagini trebuie să fie un număr pozitiv.",
+    "parsingPageRangeInvalid": "Interval de pagini nevalid. Verificați valorile de la și până la.",
+    "parsingLoginRequired": "Loginul profilului este obligatoriu.",
+    "parsingPlpFileRequired": "Selectarea fișierului PLP este obligatorie.",
+    "parsingPlpFileInvalid": "Fișierul PLP selectat este invalid sau indisponibil.",
+    "parsingPlpModeMonoSingleFileOnly": "Acest parser permite doar un singur fișier PLP.",
+    "parsingPlpFileNameAlreadyUsed": "Un fișier PLP cu acest nume este deja folosit de o altă programare activă.",
+    "parsingRunCannotCancel": "Această rulare nu poate fi anulată.",
+    "parsingActiveRunExists": "Există deja o rulare activă a parserului pentru acest parser și mod."
   },
   "vehicleOptions": {
     "transmission": {

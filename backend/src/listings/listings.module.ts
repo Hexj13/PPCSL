@@ -15,6 +15,7 @@ import { UsersModule } from '../users/users.module';
 import { LISTING_CACHE } from './application/ports/listing-cache.port';
 import { LISTING_REPOSITORY } from './application/ports/listing.repository.port';
 import { PROMOTION_HISTORY_WRITER } from './application/ports/promotion-history.port';
+import { REPORT_URL_PROVIDER } from './application/ports/report-url-provider.port';
 import { AutoCloseOldListingsUseCase } from './application/use-cases/auto-close-old-listings.use-case';
 import { CloseAllUserListingsUseCase } from './application/use-cases/close-all-user-listings.use-case';
 import { CloseListingUseCase } from './application/use-cases/close-listing.use-case';
@@ -48,6 +49,7 @@ import { Listing } from './entities/listing.entity';
 import { PromotionHistory } from './entities/promotion-history.entity';
 import { Vehicle } from './entities/vehicle.entity';
 import { RedisListingCache } from './infrastructure/cache/redis-listing-cache';
+import { InfocarReportUrlProvider } from './infrastructure/infocar-report-url.provider';
 import { TypeOrmPromotionHistoryWriter } from './infrastructure/persistence/promotion-history-writer';
 import { TypeOrmListingRepository } from './infrastructure/persistence/typeorm-listing.repository';
 import { ListingsService } from './listings.service';
@@ -87,8 +89,10 @@ import { ListingsController } from './presentation/listings.controller';
     SimilarListingsRankingService,
     TypeOrmListingRepository,
     RedisListingCache,
+    InfocarReportUrlProvider,
     { provide: LISTING_REPOSITORY, useExisting: TypeOrmListingRepository },
     { provide: LISTING_CACHE, useExisting: RedisListingCache },
+    { provide: REPORT_URL_PROVIDER, useExisting: InfocarReportUrlProvider },
     TypeOrmPromotionHistoryWriter,
     { provide: PROMOTION_HISTORY_WRITER, useExisting: TypeOrmPromotionHistoryWriter },
     CreateListingUseCase,

@@ -44,7 +44,10 @@
     "brandIdsMustBeArray": "brandIds must be an array",
     "brandIdUuid": "Each brandId must be a valid UUID",
     "vehicleTypeFilterEnum": "vehicleType must be car, truck, moto, or tire",
-    "vehicleTypeCategoryEnum": "vehicleType must be car, truck, or moto"
+    "vehicleTypeCategoryEnum": "vehicleType must be car, truck, or moto",
+    "parsingCronExpressionRequired": "Cron expression is required for the custom preset.",
+    "parsingEveryNHoursRequired": "Interval in hours is required and must be at least 1.",
+    "parsingCronInvalid": "Invalid cron expression or timezone."
   },
   "errors": {
     "serverError": "Server error. Please try again later.",
@@ -174,7 +177,22 @@
     "imageBlurHashesLengthMismatch": "Image blur data must match the number of photos",
     "imageBlurHashesInvalidEntry": "Invalid blur hash for one of the photos",
     "searchBrandIdsLimit": "You can select up to {max} brands.",
-    "searchModelIdsLimit": "You can select up to {max} models."
+    "searchModelIdsLimit": "You can select up to {max} models.",
+    "invalidListingStatus": "Invalid listing status.",
+    "parserRunNotFound": "Parser run not found",
+    "parsingScheduleNotFound": "Parser schedule not found",
+    "parsingParserNotAvailablePlp": "This parser is not available for manual PLP runs.",
+    "parsingParserNotAvailablePdp": "This parser is not available for manual PDP runs.",
+    "parsingParserNotAvailableSchedule": "This parser is not available for scheduling.",
+    "parsingPagesFirstInvalid": "Page count must be a positive number.",
+    "parsingPageRangeInvalid": "Invalid page range. Check from and to values.",
+    "parsingLoginRequired": "Profile login is required.",
+    "parsingPlpFileRequired": "PLP file selection is required.",
+    "parsingPlpFileInvalid": "Selected PLP file is invalid or unavailable.",
+    "parsingPlpModeMonoSingleFileOnly": "This parser supports only one PLP file.",
+    "parsingPlpFileNameAlreadyUsed": "A PLP file with this name is already used by another active schedule.",
+    "parsingRunCannotCancel": "This run cannot be cancelled.",
+    "parsingActiveRunExists": "An active parser run already exists for this parser and mode."
   },
   "vehicleOptions": {
     "transmission": {

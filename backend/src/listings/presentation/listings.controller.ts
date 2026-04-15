@@ -36,7 +36,7 @@ import { SimilarListingsQueryDto } from './dto/similar-listings.dto';
 import { TogglePromotionDto } from './dto/toggle-promotion.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 
-function normalizeInfocarLocale(locale?: string): 'ro' | 'ru' {
+function normalizeReportLocale(locale?: string): 'ro' | 'ru' {
   return locale?.trim().toLowerCase() === 'ru' ? 'ru' : 'ro';
 }
 
@@ -311,31 +311,41 @@ export class ListingsController {
     return this.listingsService.getListingHistory(id);
   }
 
-  @ApiOperation({ summary: 'Get Infocar report URL with signed VIN' })
+  @ApiOperation({ summary: 'Get report URL with signed VIN' })
   @ApiParam({ name: 'id', description: 'Listing UUID' })
-  @ApiQuery({ name: 'locale', required: false, description: 'Locale for Infocar domain (ro | ru)' })
+  @ApiQuery({
+    name: 'locale',
+    required: false,
+    description: 'Locale for report provider (ro | ru)',
+  })
   @ApiResponse({ status: 200, description: 'Report URL' })
   @ApiResponse({ status: 404, description: 'Listing not found or no VIN' })
   @Get(':id/report-url')
   async getReportUrl(@Param('id', ParseUUIDPipe) id: string, @Query('locale') locale?: string) {
-    return this.listingsService.getReportUrl(id, normalizeInfocarLocale(locale));
+    return this.listingsService.getReportUrl(id, normalizeReportLocale(locale));
   }
 
-  @ApiOperation({ summary: 'Redirect to Infocar report (for direct link, iOS Safari)' })
+  @ApiOperation({ summary: 'Redirect to report provider (for direct link, iOS Safari)' })
   @ApiParam({ name: 'id', description: 'Listing UUID' })
-  @ApiQuery({ name: 'locale', required: false, description: 'Locale for Infocar domain (ro | ru)' })
-  @ApiResponse({ status: 302, description: 'Redirect to Infocar' })
+  @ApiQuery({
+    name: 'locale',
+    required: false,
+    description: 'Locale for report provider (ro | ru)',
+  })
+  @ApiResponse({ status: 302, description: 'Redirect to report provider' })
+  @ApiResponse({ status: 404, description: 'Report provider is not configured' })
   @Get(':id/report-redirect')
   async getReportRedirect(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() res: Response,
     @Query('locale') locale?: string,
   ) {
-    const normalizedLocale = normalizeInfocarLocale(locale);
-    const fallbackUrl =
-      normalizedLocale === 'ru'
-        ? 'https://ru.infocar.md/?from=kupito'
-        : 'https://infocar.md/?from=kupito';
+    const normalizedLocale = normalizeReportLocale(locale);
+    if (!this.listingsService.isReportProviderEnabled()) {
+      throw new NotFoundException('errors.listingNotFound');
+    }
+
+    const fallbackUrl = this.listingsService.getReportFallbackUrl(normalizedLocale);
     try {
       const { url } = await this.listingsService.getReportUrl(id, normalizedLocale);
       res.redirect(302, url);

@@ -1,4 +1,5 @@
 import {
+  formatAdminTableDateTime,
   formatBodyType,
   formatDate,
   formatDateLong,
@@ -94,6 +95,19 @@ describe('utils', () => {
     it('should pad single digit day and month', () => {
       const date = new Date('2024-01-05');
       expect(formatDateShort(date)).toBe('05.01.2024');
+    });
+  });
+
+  describe('formatAdminTableDateTime', () => {
+    it('should format local date and time with dashes and 24-hour clock', () => {
+      const date = new Date(2024, 0, 15, 14, 5, 9);
+      expect(formatAdminTableDateTime(date)).toBe('15-01-2024 14:05:09');
+    });
+
+    it('should return em dash for null, undefined, and invalid values', () => {
+      expect(formatAdminTableDateTime(null)).toBe('—');
+      expect(formatAdminTableDateTime(undefined)).toBe('—');
+      expect(formatAdminTableDateTime('not-a-date')).toBe('—');
     });
   });
 

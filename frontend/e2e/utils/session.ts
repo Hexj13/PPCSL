@@ -14,11 +14,11 @@ async function dismissCookieConsentIfPresent(page: Page): Promise<void> {
 
 export async function clearBrowserState(page: Page): Promise<void> {
   await page.context().clearCookies();
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.goto('/', { waitUntil: 'load' });
   await page.evaluate(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
   });
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.reload({ waitUntil: 'load' });
   await dismissCookieConsentIfPresent(page);
 }

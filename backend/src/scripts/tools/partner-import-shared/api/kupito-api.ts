@@ -59,6 +59,14 @@ export class KupitoApiClient {
     );
   }
 
+  async closeListing(listingId: string): Promise<KupitoListingResponse> {
+    return this.authorizedRequest<KupitoListingResponse>(
+      `${this.config.kupitoApiUrl}/api/admin/listings/${listingId}/status`,
+      'PATCH',
+      { status: ListingStatus.Closed },
+    );
+  }
+
   async publishListing(listingId: string): Promise<void> {
     await this.authorizedRequest(
       `${this.config.kupitoApiUrl}/api/listings/${listingId}/publish`,
@@ -69,6 +77,10 @@ export class KupitoApiClient {
   async enforceStatus(listingId: string, status: ListingStatus): Promise<void> {
     if (status === ListingStatus.Active) {
       await this.publishListing(listingId);
+      return;
+    }
+    if (status === ListingStatus.Closed) {
+      await this.closeListing(listingId);
       return;
     }
     if (status === ListingStatus.Paused) {

@@ -40,6 +40,7 @@ export function buildImportReport(input: BuildImportReportInput): ImportReport {
 
   let created = 0;
   let updated = 0;
+  let closedSynced = 0;
   let skipped = 0;
   let failed = 0;
   let manualReview = 0;
@@ -53,6 +54,7 @@ export function buildImportReport(input: BuildImportReportInput): ImportReport {
     if (item.state === 'pdp_parsed') pdpParsed += 1;
     if (item.state === 'created') created += 1;
     if (item.state === 'updated') updated += 1;
+    if (item.state === 'closed') closedSynced += 1;
     if (item.state === 'skipped') skipped += 1;
     if (item.state === 'failed') {
       failed += 1;
@@ -91,6 +93,7 @@ export function buildImportReport(input: BuildImportReportInput): ImportReport {
       pdpParsed,
       created,
       updated,
+      closedSynced,
       skipped,
       failed,
       manualReview,

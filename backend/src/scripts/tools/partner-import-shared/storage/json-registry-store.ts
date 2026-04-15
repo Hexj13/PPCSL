@@ -2,16 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import type { ImportState } from '../import-workflow-types';
+import type { BaseRegistryItem } from '../listing-types';
 
-export interface JsonRegistryItemShape {
-  source: string;
-  sourceListingId: string;
-  url: string;
-  canonicalUrl: string;
-  state: ImportState;
-  discoveredAt: string;
-  updatedAt: string;
-}
+export type JsonRegistryItemShape = BaseRegistryItem<string>;
 
 export interface JsonRegistryData<TItem> {
   items: Record<string, TItem>;
@@ -77,6 +70,13 @@ export class JsonRegistryStore<TItem extends JsonRegistryItemShape> {
     this.data.items[sourceListingId] = merged;
     this.touch();
     return merged;
+  }
+
+  replaceAll(items: TItem[]): void {
+    this.data.items = Object.fromEntries(
+      items.map((item) => [item.sourceListingId, item]),
+    ) as Record<string, TItem>;
+    this.touch();
   }
 
   save(): void {

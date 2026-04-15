@@ -24,6 +24,8 @@ export interface ParsedPdpData {
   sourceListingId: string;
   sourceUrl: string;
   canonicalUrl: string;
+  sourceStatus: 'active' | 'closed';
+  sourceStatusReason?: string;
   sourcePostId?: string;
   title?: string;
   brand?: string;
@@ -58,6 +60,60 @@ export interface ParsedPdpData {
 export interface ParsedPdpEquipmentOption {
   slug?: string;
   label: string;
+}
+
+export type RegistryImportState =
+  | 'discovered'
+  | 'pdp_parsed'
+  | 'created'
+  | 'updated'
+  | 'closed'
+  | 'failed'
+  | 'skipped'
+  | 'manual_review';
+
+export type SourceStatus = 'active' | 'missing_candidate' | 'closed';
+
+export type SourceCloseReason =
+  | 'plp_missing_candidate'
+  | 'pdp_closed_template'
+  | 'pdp_http_404'
+  | 'pdp_http_410';
+
+export type SourceCloseOutcome = 'listing_closed' | 'source_only';
+
+export interface BaseRegistryItem<TSource extends string> {
+  source: TSource;
+  sourceListingId: string;
+  sourcePostId?: string;
+  url: string;
+  canonicalUrl: string;
+  sourceStatus?: SourceStatus;
+  title?: string;
+  brand?: string;
+  model?: string;
+  year?: number;
+  price?: number;
+  currency?: string;
+  parsedData?: ParsedPdpData;
+  state: RegistryImportState;
+  kupitoListingId?: string;
+  ownerUserId?: string;
+  createdStatus?: ListingStatus;
+  imageCount?: number;
+  imageFailures?: number;
+  error?: string;
+  warnings?: string[];
+  retryCount?: number;
+  lastSeenAt?: string;
+  lastImportedAt?: string;
+  missingSince?: string;
+  missingCount?: number;
+  closedAt?: string;
+  closeReason?: SourceCloseReason;
+  closeOutcome?: SourceCloseOutcome;
+  discoveredAt: string;
+  updatedAt: string;
 }
 
 export interface BrandInfo {

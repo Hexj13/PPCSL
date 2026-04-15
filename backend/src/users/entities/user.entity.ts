@@ -104,6 +104,9 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   last_login_ip: string | null;
 
+  @Column({ type: 'timestamptz', nullable: true, name: 'last_login_at' })
+  last_login_at: Date | null;
+
   @Column({ type: 'timestamptz', nullable: true, name: 'last_listing_refresh_at' })
   last_listing_refresh_at: Date | null;
 

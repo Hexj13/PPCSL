@@ -520,14 +520,14 @@ export const analytics = {
     });
   },
 
-  infocarCheck: (
+  reportCheck: (
     listingId: string,
     hasVin: boolean,
     brand?: string,
     model?: string,
     year?: number,
   ) => {
-    trackEvent('click_infocar_check', {
+    trackEvent('click_report_check', {
       listing_id: listingId,
       has_vin: hasVin,
       ...(brand && { brand }),
@@ -536,8 +536,8 @@ export const analytics = {
     });
   },
 
-  infocarSampleClick: (listingId: string) => {
-    trackEvent('click_infocar_sample', { listing_id: listingId });
+  reportSampleClick: (listingId: string) => {
+    trackEvent('click_report_sample', { listing_id: listingId });
   },
 
   vinRevealClick: (listingId: string) => {

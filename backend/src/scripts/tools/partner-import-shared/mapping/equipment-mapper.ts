@@ -156,6 +156,14 @@ const EQUIPMENT_MAP: Record<string, string> = {
   wintertires: 'tires_winter',
   farurixenon: 'xenon_lights',
   trapasolara: 'sunroof',
+  sistemantiblocareafranelorabs: 'abs',
+  jantedinaliajusor: 'alloy_wheels',
+  anvelopeallseason: 'tires_all_season',
+  trapa: 'sunroof',
+  sistemaudiobluetooth: 'premium_audio',
+  ventilatieascaunelor: 'ventilated_seats',
+  computerdebord: 'board_computer',
+  sistemdenavigaretvdvd: 'navigation',
 };
 
 export function mapEquipmentOptions(options: ParsedPdpEquipmentOption[]): {

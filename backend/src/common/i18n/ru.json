@@ -44,7 +44,10 @@
     "brandIdsMustBeArray": "brandIds должен быть массивом",
     "brandIdUuid": "Каждый brandId должен быть действительным UUID",
     "vehicleTypeFilterEnum": "vehicleType должен быть car, truck, moto или tire",
-    "vehicleTypeCategoryEnum": "vehicleType должен быть car, truck или moto"
+    "vehicleTypeCategoryEnum": "vehicleType должен быть car, truck или moto",
+    "parsingCronExpressionRequired": "Для пользовательского пресета требуется cron-выражение.",
+    "parsingEveryNHoursRequired": "Требуется интервал в часах, не менее 1.",
+    "parsingCronInvalid": "Некорректное cron-выражение или часовой пояс."
   },
   "errors": {
     "serverError": "Ошибка на сервере. Попробуйте позже.",
@@ -169,7 +172,22 @@
     "imageBlurHashesLengthMismatch": "Данные blur должны соответствовать количеству фотографий",
     "imageBlurHashesInvalidEntry": "Некорректный blur hash для одной из фотографий",
     "searchBrandIdsLimit": "Можно выбрать не более {max} марок.",
-    "searchModelIdsLimit": "Можно выбрать не более {max} моделей."
+    "searchModelIdsLimit": "Можно выбрать не более {max} моделей.",
+    "invalidListingStatus": "Некорректный статус объявления.",
+    "parserRunNotFound": "Запуск парсера не найден",
+    "parsingScheduleNotFound": "Расписание парсера не найдено",
+    "parsingParserNotAvailablePlp": "Этот парсер недоступен для ручных запусков PLP.",
+    "parsingParserNotAvailablePdp": "Этот парсер недоступен для ручных запусков PDP.",
+    "parsingParserNotAvailableSchedule": "Этот парсер недоступен для планирования.",
+    "parsingPagesFirstInvalid": "Число страниц должно быть положительным.",
+    "parsingPageRangeInvalid": "Некорректный диапазон страниц. Проверьте значения «от» и «до».",
+    "parsingLoginRequired": "Необходимо указать логин профиля.",
+    "parsingPlpFileRequired": "Необходимо выбрать PLP-файл.",
+    "parsingPlpFileInvalid": "Выбранный PLP-файл недоступен или некорректен.",
+    "parsingPlpModeMonoSingleFileOnly": "Для этого парсера доступен только один PLP-файл.",
+    "parsingPlpFileNameAlreadyUsed": "PLP-файл с таким именем уже используется другим активным расписанием.",
+    "parsingRunCannotCancel": "Этот запуск нельзя отменить.",
+    "parsingActiveRunExists": "Уже есть активный запуск парсера для этого парсера и режима."
   },
   "vehicleOptions": {
     "transmission": {

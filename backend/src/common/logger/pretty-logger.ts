@@ -7,6 +7,32 @@ const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
 const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
 const bold = (s: string) => `\x1b[1m${s}\x1b[0m`;
 
+const stripAnsi = (s: string): string => {
+  const esc = String.fromCharCode(0x1b);
+  let r = '';
+  for (let i = 0; i < s.length; ) {
+    if (s.startsWith(`${esc}[`, i)) {
+      const end = s.indexOf('m', i + 2);
+      if (end === -1) break;
+      i = end + 1;
+      continue;
+    }
+    r += s[i];
+    i += 1;
+  }
+  return r;
+};
+
+const boxSuccessBanner = (inner: string): string => {
+  const w = stripAnsi(inner).length;
+  const horiz = '─'.repeat(w + 2);
+  const pad = w - stripAnsi(inner).length;
+  const top = `  ${dim('┌' + horiz + '┐')}`;
+  const mid = `  ${dim('│')} ${inner}${' '.repeat(pad)} ${dim('│')}`;
+  const bot = `  ${dim('└' + horiz + '┘')}`;
+  return `${top}\n${mid}\n${bot}\n`;
+};
+
 const ROUTE_MAPPED = /^Mapped \{([^,]+),\s*(\w+)\} route/;
 const CONTROLLER_MAPPING = /^(\w+Controller) \{([^}]+)\}:?$/;
 
@@ -85,7 +111,8 @@ export class PrettyLogger implements LoggerService {
     if (msg.includes('Nest application successfully started')) {
       this.flushRoutes(this.currentController);
       this.currentController = '';
-      console.log(green('  ✓ ') + bold('Application is running') + '\n');
+      const line = green('  ✓ ') + bold('Application is running');
+      console.log(boxSuccessBanner(line));
       return;
     }
 

@@ -19,8 +19,25 @@ import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 
 type FooterPartner = NonNullable<SiteConfig['footerPartners']>[number];
+type FooterPartnerLogoSurface = NonNullable<SiteConfig['footerPartnerLogoSurfaceDefault']>;
 
-function FooterPartnerCard({ partner, t }: { partner: FooterPartner; t: (key: string) => string }) {
+function getPartnerLogoSurfaceClasses(surface: FooterPartnerLogoSurface): string {
+  if (surface === 'transparent') {
+    return 'flex h-14 w-full items-center justify-center rounded-lg bg-transparent px-2';
+  }
+  return 'flex h-14 w-full items-center justify-center rounded-lg bg-bg-partnerLogo/95 px-2';
+}
+
+function FooterPartnerCard({
+  partner,
+  logoSurfaceDefault,
+  t,
+}: {
+  partner: FooterPartner;
+  logoSurfaceDefault: FooterPartnerLogoSurface;
+  t: (key: string) => string;
+}) {
+  const effectiveLogoSurface = partner.logoSurface ?? logoSurfaceDefault;
   return (
     <a
       href={partner.href}
@@ -28,13 +45,7 @@ function FooterPartnerCard({ partner, t }: { partner: FooterPartner; t: (key: st
       rel="noopener noreferrer"
       className="group flex w-[156px] shrink-0 sm:w-[172px] flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-3 transition-transform duration-200 hover-only:hover:-translate-y-1 hover-only:hover:bg-white/10"
     >
-      <div
-        className={
-          partner.logoSurface === 'transparent'
-            ? 'flex h-14 w-full items-center justify-center rounded-lg bg-transparent px-2'
-            : 'flex h-14 w-full items-center justify-center rounded-lg bg-white/95 px-2'
-        }
-      >
+      <div className={getPartnerLogoSurfaceClasses(effectiveLogoSurface)}>
         <Image
           src={partner.logoSrc}
           alt={partner.name}
@@ -83,9 +94,11 @@ function useMobileViewport() {
 
 function FooterPartnersRow({
   partners,
+  logoSurfaceDefault,
   t,
 }: {
   partners: NonNullable<SiteConfig['footerPartners']>;
+  logoSurfaceDefault: FooterPartnerLogoSurface;
   t: (key: string) => string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -125,7 +138,12 @@ function FooterPartnersRow({
 
   const renderCards = (suffix: string) =>
     partners.map((partner, index) => (
-      <FooterPartnerCard key={`${partner.href}-${index}-${suffix}`} partner={partner} t={t} />
+      <FooterPartnerCard
+        key={`${partner.href}-${index}-${suffix}`}
+        partner={partner}
+        logoSurfaceDefault={logoSurfaceDefault}
+        t={t}
+      />
     ));
 
   const containerClassName = mobileCarousel
@@ -162,6 +180,7 @@ export function Footer() {
   const { t } = useTranslation();
   const siteConfig = loadSiteConfigSync(getCountry());
   const footerPartners = siteConfig.footerPartners ?? [];
+  const footerPartnerLogoSurfaceDefault = siteConfig.footerPartnerLogoSurfaceDefault ?? 'light';
 
   return (
     <footer className="bg-primary-700 shadow-lg text-white mt-auto border-t-2 border-primary-500/20 backdrop-blur-xs">
@@ -178,7 +197,11 @@ export function Footer() {
               <div className="text-sm sm:text-base font-semibold text-white/90 mb-4">
                 {t('footer.partnersTitle')}
               </div>
-              <FooterPartnersRow partners={footerPartners} t={t} />
+              <FooterPartnersRow
+                partners={footerPartners}
+                logoSurfaceDefault={footerPartnerLogoSurfaceDefault}
+                t={t}
+              />
             </div>
           )}
 

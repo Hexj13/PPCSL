@@ -11,10 +11,11 @@ import { toast } from '@/lib/toast';
 
 import { BrandsModelsTab } from './components/BrandsModelsTab';
 import { ListingsTab } from './components/ListingsTab';
+import { ParsingTab } from './components/ParsingTab';
 import { PromotionsTab } from './components/PromotionsTab';
 import { UsersTab } from './components/UsersTab';
 
-type AdminTab = 'listings' | 'users' | 'promotions' | 'brandsModels';
+type AdminTab = 'listings' | 'users' | 'promotions' | 'brandsModels' | 'parsing';
 
 const ADMIN_ACTIVE_TAB_STORAGE_KEY = 'adminActiveTab';
 
@@ -23,6 +24,7 @@ const ADMIN_TAB_VALUES: readonly AdminTab[] = [
   'users',
   'promotions',
   'brandsModels',
+  'parsing',
 ] as const;
 
 function parseStoredAdminTab(raw: string | null): AdminTab | null {
@@ -41,12 +43,14 @@ export default function AdminPage() {
   const usersTabRef = useRef<HTMLButtonElement>(null);
   const promotionsTabRef = useRef<HTMLButtonElement>(null);
   const brandsModelsTabRef = useRef<HTMLButtonElement>(null);
+  const parsingTabRef = useRef<HTMLButtonElement>(null);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const { indicatorRef, indicatorStyle } = useTabIndicator(
     activeTab,
     {
       users: usersTabRef,
       brandsModels: brandsModelsTabRef,
+      parsing: parsingTabRef,
       listings: listingsTabRef,
       promotions: promotionsTabRef,
     },
@@ -111,6 +115,18 @@ export default function AdminPage() {
               {t('admin.brandsModelsTabLabel')}
             </button>
             <button
+              ref={parsingTabRef}
+              type="button"
+              onClick={() => setActiveTab('parsing')}
+              className={`shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap flex items-center ${
+                activeTab === 'parsing'
+                  ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
+                  : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
+              }`}
+            >
+              {t('admin.parsingTabLabel')}
+            </button>
+            <button
               ref={listingsTabRef}
               type="button"
               onClick={() => setActiveTab('listings')}
@@ -143,41 +159,28 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div
-        className={activeTab !== 'listings' ? 'hidden' : undefined}
-        aria-hidden={activeTab !== 'listings'}
-      >
+      {activeTab === 'users' && (
+        <UsersTab
+          isActive
+          onViewUserListings={(userId) => {
+            localStorageSetItem('adminListingsSearchQuery', userId);
+            setActiveTab('listings');
+          }}
+        />
+      )}
+      {activeTab === 'brandsModels' && <BrandsModelsTab isActive />}
+      {activeTab === 'parsing' && <ParsingTab isActive />}
+      {activeTab === 'listings' && (
         <ListingsTab
+          isActive
           initialSearchQuery={
             typeof window !== 'undefined'
               ? localStorageGetItem('adminListingsSearchQuery') || ''
               : ''
           }
         />
-      </div>
-      <div
-        className={activeTab !== 'users' ? 'hidden' : undefined}
-        aria-hidden={activeTab !== 'users'}
-      >
-        <UsersTab
-          onViewUserListings={(userId) => {
-            localStorageSetItem('adminListingsSearchQuery', userId);
-            setActiveTab('listings');
-          }}
-        />
-      </div>
-      <div
-        className={activeTab !== 'promotions' ? 'hidden' : undefined}
-        aria-hidden={activeTab !== 'promotions'}
-      >
-        <PromotionsTab />
-      </div>
-      <div
-        className={activeTab !== 'brandsModels' ? 'hidden' : undefined}
-        aria-hidden={activeTab !== 'brandsModels'}
-      >
-        <BrandsModelsTab />
-      </div>
+      )}
+      {activeTab === 'promotions' && <PromotionsTab isActive />}
     </div>
   );
 }

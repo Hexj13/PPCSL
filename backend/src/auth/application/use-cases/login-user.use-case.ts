@@ -62,9 +62,10 @@ export class LoginUserUseCase {
       user = removePasswordFromUser(foundUser) as UserWithoutPassword;
     }
 
-    if (ip) {
-      await this.usersService.update(user.id, { last_login_ip: ip });
-    }
+    await this.usersService.update(user.id, {
+      last_login_at: new Date(),
+      ...(ip ? { last_login_ip: ip } : {}),
+    });
 
     const payload = { email: user.email || '', sub: user.id, type: user.type };
     const accessToken = this.jwtService.sign(payload);

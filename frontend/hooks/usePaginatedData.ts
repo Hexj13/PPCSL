@@ -1,21 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface PaginationMeta {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+import type { PaginatedResponse, PaginationMeta } from '@/lib/api';
 
 interface UsePaginatedDataOptions<T, F> {
-  fetchFn: (
-    _page: number,
-    _limit: number,
-    _filters: F,
-  ) => Promise<{
-    data: T[];
-    meta: PaginationMeta;
-  }>;
+  fetchFn: (_page: number, _limit: number, _filters: F) => Promise<PaginatedResponse<T>>;
   limit?: number;
   initialFilters: F;
   showLoadingDelay?: number;
@@ -35,6 +23,7 @@ interface UsePaginatedDataReturn<T, F> {
   setPage: (_page: number) => void;
   loadMore: () => void;
   reload: (_keepPage?: boolean) => void;
+  reloadAsync: (_keepPage?: boolean) => Promise<boolean | undefined>;
   setData: React.Dispatch<React.SetStateAction<T[]>>;
 }
 
@@ -68,12 +57,16 @@ export function usePaginatedData<T, F>(
   const prevDebouncedFiltersRef = useRef<F>(initialFilters);
 
   const load = useCallback(
-    async (targetPage: number, append = false, filtersToUse: F = debouncedFilters) => {
+    async (
+      targetPage: number,
+      append = false,
+      filtersToUse: F = debouncedFilters,
+    ): Promise<boolean | undefined> => {
       if (append && loadingMoreRef.current) {
-        return;
+        return undefined;
       }
       if (!append && loadingRef.current) {
-        return;
+        return undefined;
       }
 
       if (append) {
@@ -114,11 +107,13 @@ export function usePaginatedData<T, F>(
         setMeta(result.meta);
         setPage(targetPage);
         hasDataRef.current = true;
+        return true;
       } catch (error) {
         if (!append) {
           setData([]);
         }
         console.error('Error loading paginated data:', error);
+        return false;
       } finally {
         if (showLoadingTimeoutRef.current) {
           clearTimeout(showLoadingTimeoutRef.current);
@@ -190,7 +185,8 @@ export function usePaginatedData<T, F>(
   }, [debouncedFilters]);
 
   const loadMore = useCallback(() => {
-    if (meta && page < meta.totalPages && !loadingMore) {
+    const totalPages = meta?.totalPages ?? 1;
+    if (meta && page < totalPages && !loadingMore) {
       void load(page + 1, true);
     }
   }, [meta, page, loadingMore, load]);
@@ -200,6 +196,15 @@ export function usePaginatedData<T, F>(
       hasDataRef.current = false;
       const targetPage = keepPage ? page : 1;
       void load(targetPage, false, debouncedFilters);
+    },
+    [load, debouncedFilters, page],
+  );
+
+  const reloadAsync = useCallback(
+    (keepPage = false) => {
+      hasDataRef.current = false;
+      const targetPage = keepPage ? page : 1;
+      return load(targetPage, false, debouncedFilters);
     },
     [load, debouncedFilters, page],
   );
@@ -222,6 +227,7 @@ export function usePaginatedData<T, F>(
     setPage: handleSetPage,
     loadMore,
     reload,
+    reloadAsync,
     setData,
   };
 }

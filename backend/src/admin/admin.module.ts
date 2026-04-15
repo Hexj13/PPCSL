@@ -58,5 +58,6 @@ import { AdminAuditLog } from './entities/admin-audit-log.entity';
     AdminBrandsModelsService,
     AdminTireBrandsModelsService,
   ],
+  exports: [AdminService, AdminAuditService],
 })
 export class AdminModule {}

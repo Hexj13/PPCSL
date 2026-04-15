@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 
 import { UserProfilePatchService } from '../auth/application/user-profile-patch.service';
@@ -10,7 +11,7 @@ import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/application/users.service';
 
 import { AdminService } from './admin.service';
-import { IListingCache, LISTING_CACHE } from '../listings/application/ports/listing-cache.port';
+import { IListingCache } from '../listings/application/ports/listing-cache.port';
 import { RefreshTokenService } from '../auth/infrastructure/services/refresh-token.service';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 
@@ -270,7 +271,7 @@ describe('AdminService', () => {
 
       const result = await service.validateAssignUser('at-limit-id');
 
-      expect(result).toEqual({ valid: false, error: 'errors.activeListingsLimitExceeded' });
+      expect(result).toEqual({ valid: false, error: 'errors.activeListingsLimitExceeded|10' });
     });
   });
 
@@ -454,6 +455,107 @@ describe('AdminService', () => {
       expect(usersService.update).toHaveBeenCalledWith('target', { emailVerified: true });
       expect(emailService.sendEmailChangeConfirmationEmail).not.toHaveBeenCalled();
       expect(result.emailConfirmationSent).toBe(false);
+    });
+  });
+
+  describe('refreshUserActiveListingDates', () => {
+    it('throws NotFoundException when user does not exist', async () => {
+      const usersRepository = {
+        findOne: jest.fn().mockResolvedValue(null),
+      } as unknown as Repository<User>;
+      const listingsRepository = {
+        find: jest.fn(),
+        update: jest.fn(),
+      } as unknown as Repository<Listing>;
+
+      const service = new AdminService(
+        usersRepository,
+        listingsRepository,
+        {} as Repository<PromotionHistory>,
+        {} as RefreshTokenService,
+        {} as ListingsService,
+        {} as ExchangeRatesService,
+        {
+          invalidateSearch: jest.fn(),
+          invalidateSingle: jest.fn(),
+        } as unknown as IListingCache,
+        {} as UsersService,
+        {} as UserProfilePatchService,
+        {} as EmailService,
+      );
+
+      await expect(service.refreshUserActiveListingDates('missing', 'actor')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(listingsRepository.find).not.toHaveBeenCalled();
+    });
+
+    it('returns updated 0 when user has no active listings', async () => {
+      const usersRepository = {
+        findOne: jest.fn().mockResolvedValue(createUser({ id: 'u1' })),
+      } as unknown as Repository<User>;
+      const listingsRepository = {
+        find: jest.fn().mockResolvedValue([]),
+        update: jest.fn(),
+      } as unknown as Repository<Listing>;
+      const listingCache = {
+        invalidateSearch: jest.fn(),
+        invalidateSingle: jest.fn(),
+      } as unknown as IListingCache;
+
+      const service = new AdminService(
+        usersRepository,
+        listingsRepository,
+        {} as Repository<PromotionHistory>,
+        {} as RefreshTokenService,
+        {} as ListingsService,
+        {} as ExchangeRatesService,
+        listingCache,
+        {} as UsersService,
+        {} as UserProfilePatchService,
+        {} as EmailService,
+      );
+
+      const result = await service.refreshUserActiveListingDates('u1', 'actor');
+
+      expect(result).toEqual({ updated: 0 });
+      expect(listingsRepository.update).not.toHaveBeenCalled();
+      expect(listingCache.invalidateSearch).not.toHaveBeenCalled();
+    });
+
+    it('updates active listings and invalidates cache', async () => {
+      const usersRepository = {
+        findOne: jest.fn().mockResolvedValue(createUser({ id: 'u1' })),
+      } as unknown as Repository<User>;
+      const listingsRepository = {
+        find: jest.fn().mockResolvedValue([{ id: 'l1' }, { id: 'l2' }]),
+        update: jest.fn().mockResolvedValue({ affected: 2 }),
+      } as unknown as Repository<Listing>;
+      const listingCache = {
+        invalidateSearch: jest.fn().mockResolvedValue(undefined),
+        invalidateSingle: jest.fn().mockResolvedValue(undefined),
+      } as unknown as IListingCache;
+
+      const service = new AdminService(
+        usersRepository,
+        listingsRepository,
+        {} as Repository<PromotionHistory>,
+        {} as RefreshTokenService,
+        {} as ListingsService,
+        {} as ExchangeRatesService,
+        listingCache,
+        {} as UsersService,
+        {} as UserProfilePatchService,
+        {} as EmailService,
+      );
+
+      const result = await service.refreshUserActiveListingDates('u1', 'actor');
+
+      expect(result).toEqual({ updated: 2 });
+      expect(listingsRepository.update).toHaveBeenCalled();
+      expect(listingCache.invalidateSearch).toHaveBeenCalled();
+      expect(listingCache.invalidateSingle).toHaveBeenCalledWith('l1');
+      expect(listingCache.invalidateSingle).toHaveBeenCalledWith('l2');
     });
   });
 });

@@ -12,6 +12,9 @@ import { ListingView } from './listings/entities/listing-view.entity';
 import { Listing } from './listings/entities/listing.entity';
 import { PromotionHistory } from './listings/entities/promotion-history.entity';
 import { Vehicle } from './listings/entities/vehicle.entity';
+import { ParserLogChunk } from './parsing/infrastructure/persistence/parser-log-chunk.entity';
+import { ParserRun } from './parsing/infrastructure/persistence/parser-run.entity';
+import { ParserSchedule } from './parsing/infrastructure/persistence/parser-schedule.entity';
 import { SavedFilter } from './saved-filters/entities/saved-filter.entity';
 import { TireBrand } from './tires/entities/tire-brand.entity';
 import { TireModel } from './tires/entities/tire-model.entity';
@@ -40,6 +43,9 @@ export const dataSourceOptions: DataSourceOptions = {
     SavedFilter,
     ExchangeRate,
     AdminAuditLog,
+    ParserRun,
+    ParserSchedule,
+    ParserLogChunk,
     TireBrand,
     TireModel,
     Tire,

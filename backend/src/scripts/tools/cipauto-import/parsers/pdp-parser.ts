@@ -28,6 +28,7 @@ export function parsePdpHtml(html: string, url: string): ParsedPdpData {
   if (!sourceListingId) {
     throw new Error(`Cannot extract sourceListingId from URL: ${url}`);
   }
+  const sourceStatus = detectSourceStatus($, html);
 
   const jsonLd = extractProductJsonLd($);
 
@@ -35,6 +36,8 @@ export function parsePdpHtml(html: string, url: string): ParsedPdpData {
     sourceListingId,
     sourceUrl: url,
     canonicalUrl: canonicalizeUrl(url),
+    sourceStatus: sourceStatus.status,
+    sourceStatusReason: sourceStatus.reason,
     sourcePostId: extractSourcePostId($),
     title: readTitle($, jsonLd),
     brand: readBrand($, jsonLd),
@@ -63,6 +66,9 @@ export function parsePdpHtml(html: string, url: string): ParsedPdpData {
     warnings,
   };
 
+  if (parsed.sourceStatus === 'closed') {
+    warnings.push(`SOURCE_CLOSED:${parsed.sourceStatusReason ?? 'pdp_template'}`);
+  }
   if (!parsed.price || parsed.price <= 0) {
     warnings.push('MISSING_PRICE');
   }
@@ -71,6 +77,37 @@ export function parsePdpHtml(html: string, url: string): ParsedPdpData {
   }
 
   return parsed;
+}
+
+function detectSourceStatus(
+  $: cheerio.CheerioAPI,
+  html: string,
+): { status: 'active' | 'closed'; reason?: string } {
+  const title = $('title').text().trim();
+  const text = normalizeSourceStatusText([title, $.text(), html].filter(Boolean).join(' '));
+
+  if (
+    text.includes('vandut') ||
+    text.includes('s a vandut deja') ||
+    text.includes('nici o grija')
+  ) {
+    return {
+      status: 'closed',
+      reason: 'pdp_template',
+    };
+  }
+
+  return { status: 'active' };
+}
+
+function normalizeSourceStatusText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function extractProductJsonLd($: cheerio.CheerioAPI): Record<string, unknown> | null {

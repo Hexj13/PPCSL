@@ -45,12 +45,23 @@ export interface AuditBrandsModelsCommandOptions {
   env: RuntimeEnv;
 }
 
+export type SourceStatus = 'active' | 'missing_candidate' | 'closed';
+
+export type SourceCloseReason =
+  | 'plp_missing_candidate'
+  | 'pdp_closed_template'
+  | 'pdp_http_404'
+  | 'pdp_http_410';
+
+export type SourceCloseOutcome = 'listing_closed' | 'source_only';
+
 export interface RegistryItem {
   source: 'cipauto';
   sourceListingId: string;
   sourcePostId?: string;
   url: string;
   canonicalUrl: string;
+  sourceStatus?: SourceStatus;
   title?: string;
   brand?: string;
   model?: string;
@@ -67,6 +78,13 @@ export interface RegistryItem {
   error?: string;
   warnings?: string[];
   retryCount?: number;
+  lastSeenAt?: string;
+  lastImportedAt?: string;
+  missingSince?: string;
+  missingCount?: number;
+  closedAt?: string;
+  closeReason?: SourceCloseReason;
+  closeOutcome?: SourceCloseOutcome;
   discoveredAt: string;
   updatedAt: string;
 }
@@ -75,6 +93,16 @@ export interface RegistryData {
   items: Record<string, RegistryItem>;
   meta: {
     lastUpdatedAt: string;
+  };
+}
+
+export interface CurrentPlpSnapshotData {
+  items: Record<string, RegistryItem>;
+  meta: {
+    lastUpdatedAt: string;
+    activeItemsCount: number;
+    missingCandidatesCount: number;
+    closedItemsCount: number;
   };
 }
 
@@ -106,5 +134,6 @@ export interface CipautoBrandsModelsAuditReport {
 export interface CipautoConfig extends KupitoImportClientConfig {
   cipautoBaseUrl: string;
   registryPath: string;
+  currentPlpPath: string;
   reportsDir: string;
 }

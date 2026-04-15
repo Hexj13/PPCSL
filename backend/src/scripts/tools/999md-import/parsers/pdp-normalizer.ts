@@ -238,6 +238,7 @@ export function normalize999mdAdvert(params: {
     sourceListingId: advert.id,
     sourceUrl: listingUrl,
     canonicalUrl,
+    sourceStatus: 'active',
     title: advert.title,
     brand,
     model,

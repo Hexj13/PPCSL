@@ -69,6 +69,10 @@ backend/src/scripts/tools/cipauto-import/data/
 backend/src/scripts/tools/cipauto-import/reports/
 backend/src/scripts/tools/999md-import/data/
 backend/src/scripts/tools/999md-import/reports/
+backend/src/scripts/tools/cipauto-import/
+backend/src/scripts/tools/999md-import/
+backend/src/common/config/parsers.ts
+frontend/lib/config/parsers.ts
 
 
 *storybook.log
@@ -88,5 +92,6 @@ frontend/public/logo*.png
 frontend/public/og-image.jpg
 frontend/public/opengraph-image.png
 frontend/public/pwa192.png
+frontend/public/partners/
 backend/assets/watermark/logo.png
 

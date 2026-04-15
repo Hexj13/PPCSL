@@ -76,7 +76,7 @@ describe('AdminTireBrandsModelsService', () => {
     expect(res.data).toEqual([]);
     expect(res.meta.total).toBe(0);
     expect(res.meta.page).toBe(1);
-    expect(res.meta.totalPages).toBe(0);
+    expect(res.meta.totalPages).toBe(1);
   });
 
   it('createTireBrand throws ConflictException when active duplicate name exists', async () => {

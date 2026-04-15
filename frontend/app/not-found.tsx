@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { loadTranslations } from '@/lib/i18n';
 
 const translations = loadTranslations();
+const actionButtonClassName =
+  'w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none min-w-[220px] whitespace-nowrap';
 
 export const metadata: Metadata = {
   title: '404',
@@ -42,10 +44,7 @@ export default function NotFound() {
         </div>
 
         <div className="flex justify-center">
-          <Link
-            href="/"
-            className="text-primary-600 font-medium text-sm md:text-base hover-only:hover:text-primary-700 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-6 py-2.5 text-base rounded-lg border-2 border-primary-500 hover-only:hover:border-primary-600 bg-primary-50 hover-only:hover:bg-primary-100"
-          >
+          <Link href="/" className={actionButtonClassName}>
             {translations.notFound.backToHome}
           </Link>
         </div>

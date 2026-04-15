@@ -1,12 +1,14 @@
 import type { ListingStatus } from '../types';
 
 import { adminBrandsModelsApi } from './admin-brands-models';
+import { adminParsingApi } from './admin-parsing';
 import { adminTireBrandsModelsApi } from './admin-tire-brands-models';
 import { api } from './api-client';
 import type {
   AdminStats,
   Listing,
   PaginationMeta,
+  PaginatedResponse,
   PromotionHistory,
   User,
   AdminUpdateUserProfileResponse,
@@ -42,7 +44,7 @@ export const adminApi = {
       params.set('isPromoted', isPromoted.toString());
     }
     const query = params.toString();
-    return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/admin/listings?${query}`);
+    return api.get<PaginatedResponse<Listing, PaginationMeta>>(`/api/admin/listings?${query}`);
   },
   getListingsStatusCounts: (search?: string) => {
     const params = new URLSearchParams();
@@ -57,7 +59,13 @@ export const adminApi = {
   updateListingStatus: (id: string, status: ListingStatus) =>
     api.patch(`/api/admin/listings/${id}/status`, { status }),
   getStats: () => api.get<AdminStats>('/api/admin/stats'),
-  getAllUsers: (page: number = 1, limit: number = 20, search?: string, userType?: string) => {
+  getAllUsers: (
+    page: number = 1,
+    limit: number = 20,
+    search?: string,
+    userType?: string,
+    activity?: 'active' | 'inactive',
+  ) => {
     const params = new URLSearchParams();
     params.set('page', page.toString());
     params.set('limit', limit.toString());
@@ -67,10 +75,15 @@ export const adminApi = {
     if (userType) {
       params.set('userType', userType);
     }
+    if (activity) {
+      params.set('activity', activity);
+    }
     const query = params.toString();
-    return api.get<{ data: User[]; meta: PaginationMeta }>(`/api/admin/users?${query}`);
+    return api.get<PaginatedResponse<User, PaginationMeta>>(`/api/admin/users?${query}`);
   },
   getUserListings: (userId: string) => api.get<Listing[]>(`/api/admin/users/${userId}/listings`),
+  refreshUserActiveListingDates: (userId: string) =>
+    api.post<{ updated: number }>(`/api/admin/users/${userId}/listings/refresh-dates`),
   validateAssignUser: (userId: string) =>
     api.get<{
       valid: boolean;
@@ -115,11 +128,11 @@ export const adminApi = {
     if (listingId) params.set('listingId', listingId);
     if (userId) params.set('userId', userId);
     if (fromDate) params.set('fromDate', fromDate.toISOString());
-    return api.get<{
-      data: PromotionHistory[];
-      meta: { total: number; page: number; limit: number; totalPages: number };
-    }>(`/api/admin/promotions?${params.toString()}`);
+    return api.get<PaginatedResponse<PromotionHistory, PaginationMeta>>(
+      `/api/admin/promotions?${params.toString()}`,
+    );
   },
   ...adminBrandsModelsApi,
   ...adminTireBrandsModelsApi,
+  ...adminParsingApi,
 };

@@ -87,6 +87,27 @@ export class PlpParser999 {
     return items;
   }
 
+  async resolveProfileLoginStatus(login: string): Promise<'profile_exists' | 'profile_not_found'> {
+    const trimmed = login.trim();
+    if (!trimmed) {
+      return 'profile_not_found';
+    }
+
+    const profileUrl = this.buildProfileUrl(trimmed);
+    try {
+      const response = await fetch(profileUrl, {
+        method: 'GET',
+        redirect: 'follow',
+      });
+      if (response.status === 404) {
+        return 'profile_not_found';
+      }
+      return 'profile_exists';
+    } catch {
+      return 'profile_exists';
+    }
+  }
+
   private advertToPlpItem(ad: AdvertRaw): ParsedPlpItem999 {
     const id = String(ad.id);
     const url = buildListingUrlFromTemplate(this.config.listingPathTemplate, id);
@@ -103,5 +124,18 @@ export class PlpParser999 {
       subCategoryId: ad.subCategory?.id,
       subCategoryUrl: ad.subCategory?.url,
     };
+  }
+
+  private buildProfileUrl(login: string): string {
+    const listingUrl = buildListingUrlFromTemplate(this.config.listingPathTemplate, '1');
+    try {
+      const parsed = new URL(listingUrl);
+      parsed.pathname = `/profile/${encodeURIComponent(login)}`;
+      parsed.search = '';
+      parsed.hash = '';
+      return parsed.toString();
+    } catch {
+      return `https://999.md/profile/${encodeURIComponent(login)}`;
+    }
   }
 }

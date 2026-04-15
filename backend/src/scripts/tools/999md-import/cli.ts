@@ -1,5 +1,8 @@
 import 'reflect-metadata';
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { Command } from 'commander';
 
 import type { ListingStatus } from '../../../common/types';
@@ -40,7 +43,7 @@ import { PdpParser999 } from './parsers/pdp-parser';
 import { PlpParser999 } from './parsers/plp-parser';
 import { RegistryStore999 } from './storage/registry';
 import { ReportStore999 } from './storage/report';
-import type { RegistryItem999, Scan999CommandOptions } from './types';
+import type { ParsedPlpItem999, RegistryItem999, Scan999CommandOptions } from './types';
 import { resolve999mdListingCity } from './utils/listing-city';
 
 const program = new Command();
@@ -91,6 +94,7 @@ program
   .option('--only-failed')
   .option('--update-existing')
   .option('--source-id <value>')
+  .option('--plp-file <path>', 'path to PLP snapshot file')
   .option('--registration-type <value>', 'Local|Foreign|Cleared')
   .option('--default-hp <number>', 'fallback horsepower', '150')
   .option('--city <value>', 'city value', 'Chișinău')
@@ -109,6 +113,7 @@ program
       onlyFailed: Boolean(rawOptions.onlyFailed),
       updateExisting: Boolean(rawOptions.updateExisting),
       sourceId: rawOptions.sourceId ? String(rawOptions.sourceId) : undefined,
+      plpFilePath: rawOptions.plpFile ? String(rawOptions.plpFile) : undefined,
       registrationType: normalizeRegistrationType(rawOptions.registrationType),
       defaultHp: Number(rawOptions.defaultHp),
       city: String(rawOptions.city),
@@ -156,6 +161,14 @@ async function runScan(options: Scan999CommandOptions): Promise<void> {
     },
   });
 
+  if (items.length === 0) {
+    const profileStatus = await plp.resolveProfileLoginStatus(options.login);
+    if (profileStatus === 'profile_not_found') {
+      throw new Error(`Profile login "${options.login}" was not found on 999.md.`);
+    }
+    throw new Error(`Profile login "${options.login}" exists but has no active listings to scan.`);
+  }
+
   for (const item of items) {
     cardsFound += 1;
     if (known.has(item.sourceListingId)) {
@@ -178,10 +191,48 @@ async function runScan(options: Scan999CommandOptions): Promise<void> {
     }
   }
 
+  if (!options.dryRun) {
+    const currentPlpPath = writeCurrentPlpSnapshotByLogin(config, options.login, items);
+    logger.info('SCAN', `[PLP_FILE] login=${options.login} file=${currentPlpPath}`);
+  }
+
   logger.info(
     'SCAN',
-    `[DONE] pages=${pages} cardsFound=${cardsFound} new=${newItems} duplicates=${duplicates} dryRun=${Boolean(options.dryRun)}`,
+    `[DONE] pagesScanned=${pages} cardsFound=${cardsFound} new=${newItems} duplicates=${duplicates} existingListings=0 readyForImport=${newItems} missingCandidates=0 closeEstimate=0 closeValid=0 activeItems=0 closedItems=0 dryRun=${Boolean(options.dryRun)}`,
   );
+}
+
+function writeCurrentPlpSnapshotByLogin(
+  config: { currentPlpDir: string },
+  login: string,
+  items: ParsedPlpItem999[],
+): string {
+  const normalizedLogin = login.trim();
+  const fileName = `${toLoginFileSlug(normalizedLogin)}.json`;
+  const filePath = path.join(config.currentPlpDir, fileName);
+  const now = new Date().toISOString();
+  const byId = Object.fromEntries(items.map((item) => [item.sourceListingId, item]));
+  const snapshot = {
+    login: normalizedLogin,
+    items: byId,
+    meta: {
+      lastUpdatedAt: now,
+      totalItems: items.length,
+    },
+  };
+
+  fs.mkdirSync(config.currentPlpDir, { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(snapshot, null, 2), 'utf-8');
+
+  return filePath;
+}
+
+function toLoginFileSlug(login: string): string {
+  const normalized = login.trim().toLowerCase();
+  if (!normalized) {
+    return 'unknown-login';
+  }
+  return normalized.replace(/[^a-z0-9_-]+/g, '-');
 }
 
 async function runImport(options: ImportCommandOptions): Promise<void> {
@@ -528,7 +579,7 @@ function getImportCandidates(
     return ordered.filter((item) => item.state === 'failed');
   }
 
-  return ordered.filter((item) => {
+  const selected = ordered.filter((item) => {
     if (
       options.resume &&
       (item.state === 'created' || item.state === 'updated' || item.state === 'skipped')
@@ -537,6 +588,23 @@ function getImportCandidates(
     }
     return item.state === 'discovered' || item.state === 'pdp_parsed' || item.state === 'failed';
   });
+
+  if (!options.plpFilePath) {
+    return selected;
+  }
+
+  const sourceIds = loadSourceIdsFromPlpFile(options.plpFilePath);
+  return selected.filter((item) => sourceIds.has(item.sourceListingId));
+}
+
+function loadSourceIdsFromPlpFile(plpFilePath: string): Set<string> {
+  if (!fs.existsSync(plpFilePath)) {
+    throw new Error(`PLP file not found: ${plpFilePath}`);
+  }
+  const raw = fs.readFileSync(plpFilePath, 'utf-8');
+  const parsed = JSON.parse(raw) as { items?: Record<string, unknown> };
+  const entries = parsed.items ?? {};
+  return new Set(Object.keys(entries));
 }
 
 async function runReport(options: ReportCommandOptions, env: 'local' | 'prod'): Promise<void> {

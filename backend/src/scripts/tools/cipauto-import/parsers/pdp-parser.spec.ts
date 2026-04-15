@@ -1,10 +1,67 @@
+import { parsePdpHtml } from './pdp-parser';
+
+describe('parsePdpHtml', () => {
+  it('marks active listing pages as active source status', () => {
+    const parsed = parsePdpHtml(
+      `
+        <html>
+          <head>
+            <title>Volkswagen Golf 2020 - 12.990€ | CipAuto.md</title>
+            <script type="application/ld+json">
+              {
+                "@type": "Product",
+                "name": "Volkswagen Golf 2020",
+                "model": "Golf",
+                "modelDate": 2020,
+                "brand": { "name": "Volkswagen" },
+                "offers": { "price": "12990", "priceCurrency": "EUR" }
+              }
+            </script>
+          </head>
+          <body>
+            <h1 class="cipauto-vehicle-title">Volkswagen Golf 2020</h1>
+            <div id="gallery-data">{"images":["https://img/1.jpg","https://img/2.jpg"]}</div>
+          </body>
+        </html>
+      `,
+      'https://cipauto.md/vehicul/j12345-volkswagen-golf/',
+    );
+
+    expect(parsed.sourceListingId).toBe('j12345');
+    expect(parsed.sourceStatus).toBe('active');
+    expect(parsed.sourceStatusReason).toBeUndefined();
+  });
+
+  it('marks sold templates as closed source status', () => {
+    const parsed = parsePdpHtml(
+      `
+        <html>
+          <head>
+            <title>Dacia Logan 2021 - 8.990€ | CipAuto.md</title>
+          </head>
+          <body>
+            <div>VÂNDUT!</div>
+            <h1 class="cipauto-vehicle-title">Dacia Logan 2021</h1>
+            <div>🤯 S-a vândut deja?!</div>
+            <div>Nici o grijă</div>
+          </body>
+        </html>
+      `,
+      'https://cipauto.md/vehicul/j54321-dacia-logan/',
+    );
+
+    expect(parsed.sourceListingId).toBe('j54321');
+    expect(parsed.sourceStatus).toBe('closed');
+    expect(parsed.sourceStatusReason).toBe('pdp_template');
+    expect(parsed.warnings).toContain('SOURCE_CLOSED:pdp_template');
+  });
+});
+
 import { describe, expect, it } from '@jest/globals';
 
 import { BodyType, FuelType } from '../../../../common/types';
 import { mapBodyType } from '../../partner-import-shared/mapping/body-type-mapper';
 import { mapFuel } from '../../partner-import-shared/mapping/enum-mapper';
-
-import { parsePdpHtml } from './pdp-parser';
 
 describe('pdp-parser', () => {
   it('extracts equipment options (slug + label) from DOM attributes', () => {

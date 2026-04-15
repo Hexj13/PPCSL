@@ -12,6 +12,7 @@ import { IBrandsCache } from '../brands/application/ports/brands-cache.port';
 import { BRANDS_CACHE } from '../brands/application/ports/brands-cache.port';
 import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
+import { buildPaginationMeta } from '../common/utils/pagination.utils';
 import { normalizeForComparison } from '../common/utils/slug.utils';
 import { IListingCache } from '../listings/application/ports/listing-cache.port';
 import { LISTING_CACHE } from '../listings/application/ports/listing-cache.port';
@@ -98,7 +99,7 @@ export class AdminBrandsModelsService {
     if (brands.length === 0) {
       return {
         data: [],
-        meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+        meta: buildPaginationMeta(total, page, limit),
       };
     }
     const brandIds = brands.map((b) => b.id);
@@ -156,12 +157,7 @@ export class AdminBrandsModelsService {
     }));
     return {
       data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: buildPaginationMeta(total, page, limit),
     };
   }
 

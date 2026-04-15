@@ -1,5 +1,6 @@
 'use client';
 
+import { AdminFilterButton } from '@/app/admin/components/AdminButtons';
 import { useTranslation } from '@/hooks/useTranslation';
 
 type ListingStatus = 'All' | 'Active' | 'Paused' | 'Closed';
@@ -49,38 +50,20 @@ export function StatusFilterButtons({
   return (
     <div className="flex flex-wrap gap-2 md:gap-3">
       {statuses.map((status) => (
-        <button
+        <AdminFilterButton
           key={status}
           onClick={() => onFilterChange(status)}
-          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
-            currentFilter === status
-              ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-              : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
-          }`}
+          active={currentFilter === status}
+          badge={status !== 'All' ? counts[status] : undefined}
         >
           {getLabel(status)}
-          {status !== 'All' && (
-            <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-sm">
-              {counts[status]}
-            </span>
-          )}
-        </button>
+        </AdminFilterButton>
       ))}
 
       {showPromoted && onPromotedClick && (
-        <button
-          onClick={onPromotedClick}
-          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
-            promotedActive
-              ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-              : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
-          }`}
-        >
+        <AdminFilterButton onClick={onPromotedClick} active={promotedActive} badge={promotedCount}>
           {t('myListings.promoted')}
-          <span className="ml-2 px-2 py-0.5 rounded-full bg-primary-500/20 text-sm">
-            {promotedCount}
-          </span>
-        </button>
+        </AdminFilterButton>
       )}
     </div>
   );

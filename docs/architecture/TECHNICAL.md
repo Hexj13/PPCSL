@@ -281,7 +281,8 @@ PPCSL/
 │   │   ├── board/    # Seller listings board (public by slug)
 │   │   ├── brands/   # Brands and models
 │   │   ├── admin/    # Admin panel
-│   │   ├── upload/   # File upload service (with watermark support)
+   │   │   ├── parsing/  # Parsing orchestration (admin runs, schedules, CLI runner)
+   │   │   ├── upload/   # File upload service (with watermark support)
 │   │   ├── common/   # Common utilities and services
 │   │   │   ├── decorators/ # Custom validation decorators (IsName, IsPhone, IsPassword)
 │   │   │   ├── i18n/  # Internationalization service (I18nService)
@@ -485,7 +486,7 @@ GET  /api/upload/image/:filename      # Get optimized image version
 
 ### Admin
 
-Admin panel (role `Admin` only, `JwtAuthGuard` + `AdminGuard`). Tabs: Users, Brands/Models, Listings, Promotions.
+Admin panel (role `Admin` only, `JwtAuthGuard` + `AdminGuard`). Tabs: Users, Brands/Models, Listings, Promotions, Parsing.
 
 **Users & Listings:**
 
@@ -584,10 +585,18 @@ GET /health                          # Health check (database, Redis)
 
 - `phone` (partial), `additional_phone` (nullable; optional business contact), `type`, `active`, `email` (unique)
 - `last_listing_refresh_at` - Timestamp of last "Refresh dates" action; used to enforce 48h limit per user
+- `last_login_at` - Timestamp of the most recent successful login; set by login use case
 
 **Saved Filters Table:**
 
 - `user_id`, `created_at`
+
+**Parsing Tables** (`parser_runs`, `parser_schedules`, `parser_log_chunks`):
+
+- Managed by the `parsing` module. Schema and indexes are described in `docs/features/parsing-framework.md`.
+- `parser_runs` — individual PLP/PDP runs with status, env, actor, and timing.
+- `parser_schedules` — recurring schedules with frequency presets and cron support.
+- `parser_log_chunks` — sequenced log lines from CLI runner stdout/stderr.
 
 #### Triggers
 
@@ -856,7 +865,7 @@ npm run make-admin
 npm run reset-users
 ```
 
-### Partner Import Scripts (CipAuto)
+### Partner Import Scripts (platform-specific)
 
 ```bash
 npm run cipauto:scan -- --pages=24 --env=prod
@@ -864,7 +873,10 @@ npm run cipauto:import -- --userId=<UUID> --status=paused --env=prod --limit=10
 npm run cipauto:report -- --last --env=prod
 ```
 
-See [cipauto-import.md](../features/cipauto-import.md) for CLI flags, idempotency model, and rollout checklist.
+See platform parser docs for CLI flags, idempotency model, and rollout checklists:
+
+- `../../../docs/parsing/cipauto-import.md`
+- `../../../docs/parsing/999md-import.md`
 
 ### Backup Scripts
 

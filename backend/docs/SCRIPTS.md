@@ -332,9 +332,44 @@ Batches of 50, 1s pause between batches. Idempotent for the chosen criterion (`N
 
 **Local vs production UI:** Missing blur placeholders in the Next.js app on localhost usually means listing rows have null blurhash columns in the DB you hit locally—not a dev-build switch. Align data (create via the app, or backfill) or see `core/docs/features/image-preview.md` (Local development vs production).
 
+### Admin parsing (Nest runtime)
+
+The admin **Parsing** UI triggers parser CLI pipelines via a managed child process and parser catalog entries. Configure these **backend** variables (see also `core/docs/features/admin-parsing-ru.md` and `core/docs/features/parsing-framework.md`):
+
+| Variable | Purpose |
+|----------|---------|
+| `ADMIN_PARSING_TARGET_ENV` | `local` (default) or `prod` / `production` — parsed server-side; clients cannot override. |
+| `ADMIN_PARSING_KUPITO_API_URL` | Kupito API base URL for the import client (falls back to legacy `KUPITO_IMPORT_API_URL` / `CIPAUTO_API_URL` if unset). |
+| `ADMIN_PARSING_ADMIN_EMAIL` | Service admin email for CLI auth (falls back to `KUPITO_IMPORT_ADMIN_EMAIL` / `CIPAUTO_ADMIN_EMAIL`). |
+| `ADMIN_PARSING_ADMIN_PASSWORD` | Service admin password (falls back to legacy import env vars). |
+| `ADMIN_PARSING_IMPORT_SECRET` | Import secret for the Kupito API client (falls back to `KUPITO_IMPORT_SECRET` / `CIPAUTO_IMPORT_SECRET`). |
+| `ADMIN_PARSING_SCHEDULER_ENABLED` | `true` by default; set `false` / `0` / `no` to disable cron-triggered schedules. |
+| `ADMIN_PARSING_CANCEL_GRACE_MS` | Grace period before SIGKILL on cancel (default 60000, max 600000). |
+| `ADMIN_PARSING_MAX_CONCURRENT_RUNS` | Reserved for future use (currently one active run per parser + run type + target env is enforced in code). |
+| `ADMIN_PARSING_CLI_OVERRIDE_<PARSER_CODE>` | Optional custom command prefix for a parser CLI process (for example `ADMIN_PARSING_CLI_OVERRIDE_CIPAUTO`). Use only trusted values from deployment config or secrets management. |
+
+Legacy compatibility:
+
+- `ADMIN_PARSING_CIPAUTO_CLI` is still supported as a fallback for `cipauto`.
+
+Schedules and run history are stored in PostgreSQL (`parser_runs`, `parser_schedules`, `parser_log_chunks`). Parser raw artifacts remain file-based in parser-owned folders:
+
+- PLP snapshot file (`plpDataPath` in parser catalog, if configured)
+- parser registry (`data/*-registry.json`)
+- parser reports (`reports/*-run-*.json`)
+
+The API exposes normalized summaries on runs while the CLI files remain the raw source of truth.
+
 ### Partner listing imports (`cipauto-import`, `999md-import`)
 
-Shared code lives in `src/scripts/tools/partner-import-shared/` (Kupito API client, upload, mappers, registry/report helpers). Each importer has its own CLI and parsers under `cipauto-import/` and `999md-import/`.
+Shared code lives in `src/scripts/tools/partner-import-shared/` (Kupito API client, upload, mappers, registry/report helpers).
+
+Parser source of truth is platform-specific:
+
+- `parsers/cipauto-import/` in platform root
+- `parsers/999md-import/` in platform root
+
+Runtime copies are created in core by `npm run prepare:build` under `src/scripts/tools/`.
 
 | npm script | Effect |
 |------------|--------|
@@ -342,7 +377,10 @@ Shared code lives in `src/scripts/tools/partner-import-shared/` (Kupito API clie
 | `npm run 999md:scan` / `999md:import` / `999md:report` | 999.md GraphQL → same downstream pipeline |
 | `npm run 999md:dealer-audit` | Brand/model audit report vs live Kupito API |
 
-From the **platform repo root**, the same flows are exposed as `npm run 999md:*` (see root `package.json`). Full env flags and checklists: `core/docs/features/cipauto-import.md`, `core/docs/features/999md-import.md`.
+From the **platform repo root**, the same flows are exposed as `npm run 999md:*` (see root `package.json`). Full env flags and operational checklists are platform docs:
+
+- `../../../docs/parsing/cipauto-import.md`
+- `../../../docs/parsing/999md-import.md`
 
 ## Migration Scripts
 

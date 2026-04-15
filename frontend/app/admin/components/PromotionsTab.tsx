@@ -3,20 +3,34 @@
 import Link from 'next/link';
 import { useCallback } from 'react';
 
-import { CopyButton } from '@/components/common/CopyButton';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
+import { useRefreshWhenVisible } from '@/hooks/useRefreshWhenVisible';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { PromotionHistory } from '@/lib/api';
 import { adminApi } from '@/lib/api';
-import { formatDateShort } from '@/lib/utils';
 import { Pagination } from '@/ui';
+
+import { AdminFilterButton } from './AdminButtons';
+import {
+  AdminCopyValueCell,
+  AdminDateTimeCell,
+  AdminSearchInput,
+  AdminTableState,
+  adminTableCenteredCellClassName,
+  adminTableCenteredSecondaryCellClassName,
+  adminTableHeaderClassName,
+} from './AdminTableShared';
 
 interface PromotionsFilters {
   searchQuery: string;
   timeFilter: 'All' | 'day' | 'week' | 'month';
 }
 
-export function PromotionsTab() {
+interface PromotionsTabProps {
+  isActive: boolean;
+}
+
+export function PromotionsTab({ isActive }: PromotionsTabProps) {
   const { t } = useTranslation();
 
   const getFromDate = useCallback((filter: 'All' | 'day' | 'week' | 'month'): Date | undefined => {
@@ -41,6 +55,7 @@ export function PromotionsTab() {
     filters,
     setFilters,
     setPage,
+    reload,
   } = usePaginatedData<PromotionHistory, PromotionsFilters>({
     fetchFn: async (pageNum, limitNum, filtersData) => {
       const listingId = filtersData.searchQuery ? filtersData.searchQuery : undefined;
@@ -68,11 +83,14 @@ export function PromotionsTab() {
     debounceMs: 500,
   });
 
+  useRefreshWhenVisible(isActive, () => {
+    reload(true);
+  });
+
   return (
     <div>
       <div className="mb-4 md:mb-6 flex flex-col gap-4">
-        <input
-          type="text"
+        <AdminSearchInput
           value={filters.searchQuery}
           onChange={(e) =>
             setFilters((prev) => ({
@@ -81,13 +99,12 @@ export function PromotionsTab() {
             }))
           }
           placeholder={t('admin.promotionsTab.searchPlaceholder')}
-          className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
         />
 
         <div className="pt-4 border-t border-primary-500/20 sm:border-t-0 sm:pt-0">
           <div className="flex flex-wrap gap-2 md:gap-3">
             {(['All', 'day', 'week', 'month'] as const).map((filter) => (
-              <button
+              <AdminFilterButton
                 key={filter}
                 onClick={() =>
                   setFilters((prev) => ({
@@ -95,11 +112,7 @@ export function PromotionsTab() {
                     timeFilter: filter,
                   }))
                 }
-                className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium text-base transition-colors ${
-                  filters.timeFilter === filter
-                    ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-                    : 'bg-bg-secondary hover-only:hover:bg-bg-base border-2 border-primary-700 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900'
-                }`}
+                active={filters.timeFilter === filter}
               >
                 {filter === 'All'
                   ? t('admin.promotionsTab.allTime')
@@ -108,49 +121,51 @@ export function PromotionsTab() {
                     : filter === 'week'
                       ? t('admin.promotionsTab.lastWeek')
                       : t('admin.promotionsTab.lastMonth')}
-              </button>
+              </AdminFilterButton>
             ))}
           </div>
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-8 text-text-secondary">{t('common.loading')}</div>
-      ) : promotions.length === 0 ? (
-        <div className="text-center py-8 text-text-secondary">
-          {filters.searchQuery
+      <AdminTableState
+        loading={loading}
+        isEmpty={promotions.length === 0}
+        loadingText={t('common.loading')}
+        emptyText={
+          filters.searchQuery
             ? t('admin.promotionsTab.noResults')
-            : t('admin.promotionsTab.noPromotions')}
-        </div>
-      ) : (
+            : t('admin.promotionsTab.noPromotions')
+        }
+        emptyClassName="py-8"
+      >
         <>
           <div className="mb-3 md:mb-4 text-sm md:text-base text-primary-900">
             {t('admin.promotionsTab.totalPromotions')}:{' '}
             <span className="font-semibold text-primary-900">{meta?.total || 0}</span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse [&_tbody_tr:nth-child(even)]:bg-primary-500/5">
               <thead>
                 <tr className="border-b border-primary-700/30">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900">
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
                     {t('admin.promotionsTab.listingTitle')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
+                  <th className={`${adminTableHeaderClassName} text-center`}>
                     {t('admin.promotionsTab.status')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
+                  <th className={`${adminTableHeaderClassName} text-center`}>
                     {t('admin.promotionsTab.days')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
+                  <th className={`${adminTableHeaderClassName} text-center`}>
                     {t('admin.promotionsTab.startDate')}
                   </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">
+                  <th className={`${adminTableHeaderClassName} text-center`}>
                     {t('admin.promotionsTab.endDate')}
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900">
+                  <th className={`${adminTableHeaderClassName} text-center`}>
                     {t('admin.promotionsTab.userId')}
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-primary-900">
+                  <th className={`${adminTableHeaderClassName} text-center`}>
                     {t('admin.promotionsTab.listingId')}
                   </th>
                 </tr>
@@ -158,7 +173,7 @@ export function PromotionsTab() {
               <tbody>
                 {promotions.map((promotion) => (
                   <tr key={promotion.id} className="border-b border-primary-700/10">
-                    <td className="py-3 px-4 text-sm">
+                    <td className="py-3 px-4 text-sm text-center">
                       <Link
                         href={`/listings/${promotion.listing_id}`}
                         className="text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:underline transition-colors"
@@ -166,7 +181,7 @@ export function PromotionsTab() {
                         {promotion.listing_title}
                       </Link>
                     </td>
-                    <td className="py-3 px-4 text-sm text-center">
+                    <td className={adminTableCenteredCellClassName}>
                       <span
                         className={
                           promotion.listing_status === 'Active'
@@ -183,56 +198,35 @@ export function PromotionsTab() {
                             : t('userListings.closed')}
                       </span>
                     </td>
-                    <td
-                      className="py-3 px-4 text-sm text-center"
-                      style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                    >
-                      {promotion.days}
+                    <td className={adminTableCenteredSecondaryCellClassName}>{promotion.days}</td>
+                    <AdminDateTimeCell value={promotion.started_at} />
+                    <AdminDateTimeCell value={promotion.ended_at} />
+                    <td className={adminTableCenteredCellClassName}>
+                      <AdminCopyValueCell
+                        value={promotion.user_id}
+                        label={t('admin.promotionsTab.userId')}
+                      />
                     </td>
-                    <td
-                      className="py-3 px-4 text-sm text-center"
-                      style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                    >
-                      {formatDateShort(promotion.started_at)}
-                    </td>
-                    <td
-                      className="py-3 px-4 text-sm text-center"
-                      style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-                    >
-                      {promotion.ended_at ? formatDateShort(promotion.ended_at) : '—'}
-                    </td>
-                    <td className="py-3 px-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="hidden md:inline text-text-secondary font-mono text-xs break-all">
-                          {promotion.user_id}
-                        </span>
-                        <CopyButton
-                          text={promotion.user_id}
-                          label={t('admin.promotionsTab.userId')}
-                        />
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="hidden md:inline text-text-secondary font-mono text-xs break-all">
-                          {promotion.listing_id}
-                        </span>
-                        <CopyButton
-                          text={promotion.listing_id}
-                          label={t('admin.promotionsTab.listingId')}
-                        />
-                      </div>
+                    <td className={adminTableCenteredCellClassName}>
+                      <AdminCopyValueCell
+                        value={promotion.listing_id}
+                        label={t('admin.promotionsTab.listingId')}
+                      />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {meta && meta.totalPages > 1 && (
-            <Pagination currentPage={page} totalPages={meta.totalPages} onPageChange={setPage} />
+          {(meta?.totalPages ?? 0) > 1 && (
+            <Pagination
+              currentPage={page}
+              totalPages={meta?.totalPages ?? 1}
+              onPageChange={setPage}
+            />
           )}
         </>
-      )}
+      </AdminTableState>
     </div>
   );
 }

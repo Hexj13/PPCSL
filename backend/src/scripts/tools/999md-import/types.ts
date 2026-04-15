@@ -77,5 +77,6 @@ export interface Md999Config extends KupitoImportClientConfig {
   imageBaseUrl: string;
   advertBatchSize: number;
   registryPath: string;
+  currentPlpDir: string;
   reportsDir: string;
 }

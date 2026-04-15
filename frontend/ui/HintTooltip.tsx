@@ -197,7 +197,7 @@ export function HintTooltip({
   const popoverContent = isOpen && typeof document !== 'undefined' && (
     <div
       ref={popoverRef}
-      className={`fixed z-1070 ${width} transition-[opacity,transform] duration-150 ease-out`}
+      className={`fixed z-[10010] ${width} transition-[opacity,transform] duration-150 ease-out`}
       style={{
         left: portalStyle?.left ?? 0,
         top: portalStyle?.top ?? 0,

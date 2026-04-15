@@ -1,5 +1,7 @@
 import 'reflect-metadata';
 
+import * as fs from 'fs';
+
 import { Command } from 'commander';
 
 import type { ListingStatus } from '../../../common/types';
@@ -43,7 +45,15 @@ import type {
   RegistryItem,
   ReportCommandOptions,
   ScanCommandOptions,
+  SourceCloseReason,
 } from './types';
+import {
+  finalizeRegistryAfterPlpScan,
+  normalizeSourceStatus,
+  resolveClosedPdpErrorReason,
+  selectImportCandidates,
+  selectRunReportItems,
+} from './workflow/registry-lifecycle';
 
 const program = new Command();
 const logger = new Logger(isPartnerImportDebugEnabled());
@@ -93,6 +103,7 @@ program
   .option('--only-failed')
   .option('--update-existing')
   .option('--source-id <value>')
+  .option('--plp-file <path>', 'path to PLP snapshot file')
   .option('--registration-type <value>', 'Local|Foreign|Cleared')
   .option('--default-hp <number>', 'fallback horsepower', '150')
   .option('--city <value>', 'city value', 'Chișinău')
@@ -111,6 +122,7 @@ program
       onlyFailed: Boolean(rawOptions.onlyFailed),
       updateExisting: Boolean(rawOptions.updateExisting),
       sourceId: rawOptions.sourceId ? String(rawOptions.sourceId) : undefined,
+      plpFilePath: rawOptions.plpFile ? String(rawOptions.plpFile) : undefined,
       registrationType: normalizeRegistrationType(rawOptions.registrationType),
       defaultHp: Number(rawOptions.defaultHp),
       city: String(rawOptions.city),
@@ -153,65 +165,101 @@ async function runScan(options: ScanCommandOptions): Promise<void> {
   const plpParser = new PlpParser(config);
 
   const pageFrom = options.pageFrom ?? 1;
-  const pageTo = options.pageTo ?? options.pages;
-  const known = new Set(registry.getAll().map((item) => item.sourceListingId));
+  const requestedPageTo = options.pageTo ?? options.pages;
+  const knownBefore = new Set(registry.getAll().map((item) => item.sourceListingId));
+  const seenSourceIds = new Set<string>();
   let pagesScanned = 0;
   let cardsFound = 0;
   let newItems = 0;
   let duplicates = 0;
+  let existingListings = 0;
+  let readyForImport = 0;
+  let detectedMaxPages: number | undefined;
+  let lastScannedPage = pageFrom - 1;
 
-  for (let page = pageFrom; page <= pageTo; page++) {
+  for (let page = pageFrom; page <= requestedPageTo; page++) {
     if (shouldStop) {
       break;
     }
     const startedAt = Date.now();
     const parsed = await plpParser.parseCatalogPage(page);
     pagesScanned += 1;
+    lastScannedPage = page;
     cardsFound += parsed.items.length;
+    if (parsed.maxPages && (!detectedMaxPages || parsed.maxPages > detectedMaxPages)) {
+      detectedMaxPages = parsed.maxPages;
+    }
 
     let pageNew = 0;
     let pageDuplicates = 0;
+    const seenAt = new Date().toISOString();
 
     for (const item of parsed.items) {
-      if (known.has(item.sourceListingId)) {
+      if (seenSourceIds.has(item.sourceListingId)) {
         pageDuplicates += 1;
         duplicates += 1;
         continue;
       }
-      known.add(item.sourceListingId);
-      pageNew += 1;
-      newItems += 1;
+
+      seenSourceIds.add(item.sourceListingId);
+      const existing = registry.getBySourceId(item.sourceListingId);
+
+      if (knownBefore.has(item.sourceListingId)) {
+        pageDuplicates += 1;
+        duplicates += 1;
+      } else {
+        knownBefore.add(item.sourceListingId);
+        pageNew += 1;
+        newItems += 1;
+      }
+
+      if (existing?.kupitoListingId) {
+        existingListings += 1;
+      } else {
+        readyForImport += 1;
+      }
+
       if (!options.dryRun) {
-        registry.upsert({
-          source: 'cipauto',
-          sourceListingId: item.sourceListingId,
-          url: item.url,
-          canonicalUrl: item.canonicalUrl,
-          title: item.title,
-          brand: item.brand,
-          model: item.model,
-          year: item.year,
-          price: item.price,
-          currency: item.currency,
-          state: 'discovered',
-        });
+        registry.upsertPlpItem(item, seenAt);
       }
     }
 
     const elapsedSec = ((Date.now() - startedAt) / 1000).toFixed(1);
     logger.info(
       'SCAN',
-      `[PAGE ${page}] found=${parsed.items.length} new=${pageNew} duplicates=${pageDuplicates} elapsed=${elapsedSec}s`,
+      `[PAGE ${page}] found=${parsed.items.length} new=${pageNew} duplicates=${pageDuplicates} maxPages=${parsed.maxPages ?? '-'} elapsed=${elapsedSec}s`,
     );
 
-    if (page < pageTo) {
+    if (detectedMaxPages && page >= detectedMaxPages) {
+      break;
+    }
+
+    if (page < requestedPageTo) {
       await sleep(options.delay);
     }
   }
 
+  const closeValid =
+    !options.dryRun &&
+    pageFrom === 1 &&
+    typeof detectedMaxPages === 'number' &&
+    detectedMaxPages > 0 &&
+    lastScannedPage >= detectedMaxPages;
+  const finalized = finalizeRegistryAfterPlpScan({
+    items: registry.getAll(),
+    seenSourceIds,
+    closeValid,
+    now: new Date().toISOString(),
+  });
+
+  if (!options.dryRun) {
+    registry.replaceAllItems(finalized.items);
+    registry.writeCurrentPlpSnapshot(config.currentPlpPath);
+  }
+
   logger.info(
     'SCAN',
-    `[DONE] pagesScanned=${pagesScanned} cardsFound=${cardsFound} new=${newItems} duplicates=${duplicates} dryRun=${Boolean(options.dryRun)}`,
+    `[DONE] pagesScanned=${pagesScanned} cardsFound=${cardsFound} new=${newItems} duplicates=${duplicates} existingListings=${existingListings} readyForImport=${readyForImport} missingCandidates=${finalized.missingCandidates} closeEstimate=${finalized.closeEstimate} closeValid=${closeValid ? 1 : 0} activeItems=${finalized.activeItems} closedItems=${finalized.closedItems} dryRun=${Boolean(options.dryRun)}`,
   );
 }
 
@@ -262,6 +310,10 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
     await sleep(options.delay);
   }
 
+  if (!options.dryRun) {
+    registry.writeCurrentPlpSnapshot(config.currentPlpPath);
+  }
+
   const report = reportStore.build({
     startedAt,
     env: options.env,
@@ -275,12 +327,12 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
       dryRun: options.dryRun,
       processed,
     },
-    items: registry.getAll(),
+    items: selectRunReportItems(registry.getAll(), startedAt),
   });
   const reportPath = reportStore.save(report);
   logger.info(
     'REPORT',
-    `processed=${processed} created=${report.summary.created} updated=${report.summary.updated} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview} file=${reportPath}`,
+    `processed=${processed} created=${report.summary.created} updated=${report.summary.updated} closedSynced=${report.summary.closedSynced} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview} file=${reportPath}`,
   );
 }
 
@@ -297,18 +349,50 @@ async function processSingleItem(params: {
   const { item, options, registry, kupitoApi, resolver, pdpParser, uploadClient, targetStatus } =
     params;
   const sourceId = item.sourceListingId;
+  let parseSucceeded = false;
 
   try {
     logger.info('IMPORT', `[PDP][${sourceId}] parsing ${item.url}`);
     const parsed = await pdpParser.parse(item.url);
+    parseSucceeded = true;
     const warnings = [...parsed.warnings];
+    const pdpSeenAt = new Date().toISOString();
 
     registry.markState(sourceId, 'pdp_parsed', {
       parsedData: parsed,
+      sourceStatus: parsed.sourceStatus,
+      sourcePostId: parsed.sourcePostId ?? item.sourcePostId,
+      url: parsed.sourceUrl,
+      canonicalUrl: parsed.canonicalUrl,
       error: undefined,
       warnings,
       retryCount: item.retryCount ?? 0,
+      lastSeenAt: parsed.sourceStatus === 'active' ? pdpSeenAt : item.lastSeenAt,
+      missingSince: parsed.sourceStatus === 'active' ? undefined : item.missingSince,
+      missingCount: parsed.sourceStatus === 'active' ? 0 : item.missingCount,
+      closedAt: parsed.sourceStatus === 'active' ? undefined : item.closedAt,
+      closeReason: parsed.sourceStatus === 'active' ? undefined : item.closeReason,
+      closeOutcome: parsed.sourceStatus === 'active' ? undefined : item.closeOutcome,
     });
+
+    if (parsed.sourceStatus === 'closed') {
+      if (options.dryRun) {
+        logger.info(
+          'IMPORT',
+          `[DRY-RUN][${sourceId}] source closed reason=${parsed.sourceStatusReason ?? 'pdp_template'}`,
+        );
+        return;
+      }
+      await closeSourceItem({
+        item,
+        registry,
+        kupitoApi,
+        parsedData: parsed,
+        warnings,
+        reason: 'pdp_closed_template',
+      });
+      return;
+    }
 
     if (!parsed.price || parsed.price <= 0) {
       registry.markState(sourceId, 'manual_review', {
@@ -448,6 +532,7 @@ async function processSingleItem(params: {
         imageCount: uploadedImages.urls.length,
         imageFailures: uploadedImages.failures,
         error: undefined,
+        lastImportedAt: new Date().toISOString(),
       });
       logger.info('IMPORT', `[OK][${sourceId}] updated kupitoId=${updated.id}`);
       return;
@@ -463,9 +548,30 @@ async function processSingleItem(params: {
       imageCount: uploadedImages.urls.length,
       imageFailures: uploadedImages.failures,
       error: undefined,
+      lastImportedAt: new Date().toISOString(),
     });
     logger.info('IMPORT', `[OK][${sourceId}] created kupitoId=${created.id}`);
   } catch (error) {
+    const closeReason =
+      !parseSucceeded && normalizeSourceStatus(item) === 'missing_candidate'
+        ? resolveClosedPdpErrorReason(error)
+        : null;
+
+    if (closeReason) {
+      if (options.dryRun) {
+        logger.info('IMPORT', `[DRY-RUN][${sourceId}] source closed reason=${closeReason}`);
+        return;
+      }
+      await closeSourceItem({
+        item,
+        registry,
+        kupitoApi,
+        warnings: item.warnings ?? [],
+        reason: closeReason,
+      });
+      return;
+    }
+
     const retryCount = (item.retryCount ?? 0) + 1;
     registry.markState(sourceId, 'failed', {
       error: String(error),
@@ -506,25 +612,23 @@ async function uploadImagesSequentially(params: {
 }
 
 function getImportCandidates(items: RegistryItem[], options: ImportCommandOptions): RegistryItem[] {
-  const ordered = [...items].sort((a, b) => a.discoveredAt.localeCompare(b.discoveredAt));
-
-  if (options.sourceId) {
-    return ordered.filter((item) => item.sourceListingId === options.sourceId);
+  const selected = selectImportCandidates(items, options);
+  if (!options.plpFilePath) {
+    return selected;
   }
 
-  if (options.onlyFailed) {
-    return ordered.filter((item) => item.state === 'failed');
-  }
+  const sourceIds = loadSourceIdsFromPlpFile(options.plpFilePath);
+  return selected.filter((item) => sourceIds.has(item.sourceListingId));
+}
 
-  return ordered.filter((item) => {
-    if (
-      options.resume &&
-      (item.state === 'created' || item.state === 'updated' || item.state === 'skipped')
-    ) {
-      return false;
-    }
-    return item.state === 'discovered' || item.state === 'pdp_parsed' || item.state === 'failed';
-  });
+function loadSourceIdsFromPlpFile(plpFilePath: string): Set<string> {
+  if (!fs.existsSync(plpFilePath)) {
+    throw new Error(`PLP file not found: ${plpFilePath}`);
+  }
+  const raw = fs.readFileSync(plpFilePath, 'utf-8');
+  const parsed = JSON.parse(raw) as { items?: Record<string, unknown> };
+  const entries = parsed.items ?? {};
+  return new Set(Object.keys(entries));
 }
 
 async function runReport(options: ReportCommandOptions, env: 'local' | 'prod'): Promise<void> {
@@ -541,8 +645,46 @@ async function runReport(options: ReportCommandOptions, env: 'local' | 'prod'): 
   const report = reportStore.read(targetPath);
   logger.info(
     'REPORT',
-    `file=${targetPath} created=${report.summary.created} updated=${report.summary.updated} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview}`,
+    `file=${targetPath} created=${report.summary.created} updated=${report.summary.updated} closedSynced=${report.summary.closedSynced} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview}`,
   );
+}
+
+async function closeSourceItem(params: {
+  item: RegistryItem;
+  registry: RegistryStore;
+  kupitoApi?: KupitoApiClient;
+  parsedData?: ParsedPdpData;
+  warnings: string[];
+  reason: SourceCloseReason;
+}): Promise<void> {
+  const { item, registry, kupitoApi, parsedData, warnings, reason } = params;
+  const sourceId = item.sourceListingId;
+  const commonUpdates: Partial<RegistryItem> = {
+    parsedData,
+    warnings,
+    error: undefined,
+    sourcePostId: parsedData?.sourcePostId ?? item.sourcePostId,
+    url: parsedData?.sourceUrl ?? item.url,
+    canonicalUrl: parsedData?.canonicalUrl ?? item.canonicalUrl,
+    retryCount: item.retryCount ?? 0,
+  };
+
+  if (item.kupitoListingId) {
+    if (!kupitoApi) {
+      throw new Error('Import clients are not initialized.');
+    }
+    const closed = await kupitoApi.closeListing(item.kupitoListingId);
+    registry.markClosed(sourceId, reason, 'listing_closed', {
+      ...commonUpdates,
+      kupitoListingId: closed.id,
+      createdStatus: closed.status,
+    });
+    logger.info('IMPORT', `[CLOSED][${sourceId}] kupitoId=${closed.id} reason=${reason}`);
+    return;
+  }
+
+  registry.markClosed(sourceId, reason, 'source_only', commonUpdates);
+  logger.info('IMPORT', `[CLOSED][${sourceId}] no kupito listing reason=${reason}`);
 }
 
 async function runAuditBrandsModels(options: AuditBrandsModelsCommandOptions): Promise<void> {

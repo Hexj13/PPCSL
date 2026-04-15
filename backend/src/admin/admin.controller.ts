@@ -28,6 +28,7 @@ import { AdminGuard } from '../auth/infrastructure/guards/admin.guard';
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
 import * as constants from '../common/constants';
 import { ListingStatus, TireVehicleType } from '../common/types';
+import { parseLimitQuery, parsePageQuery } from '../common/utils/pagination.utils';
 import { TogglePromotionDto } from '../listings/presentation/dto/toggle-promotion.dto';
 
 import { AdminBrandsModelsService } from './admin-brands-models.service';
@@ -44,18 +45,6 @@ import { UpdateModelDto } from './dto/update-model.dto';
 import { UpdateTireBrandDto } from './dto/update-tire-brand.dto';
 import { UpdateTireModelDto } from './dto/update-tire-model.dto';
 import { UpdateUserPartnerSettingsDto } from './dto/update-user-partner-settings.dto';
-
-const parsePositiveIntQuery = (
-  value: string | undefined,
-  defaultValue: number,
-  maxValue: number,
-): number => {
-  const parsed = value ? Number.parseInt(value, 10) : Number.NaN;
-  if (!Number.isFinite(parsed)) {
-    return defaultValue;
-  }
-  return Math.min(maxValue, Math.max(1, parsed));
-};
 
 @ApiTags('admin')
 @ApiBearerAuth('JWT-auth')
@@ -131,15 +120,23 @@ export class AdminController {
     type: String,
     description: 'Filter by user type',
   })
+  @ApiQuery({
+    name: 'activity',
+    required: false,
+    type: String,
+    description: 'Filter by account activity: all (default), active, inactive',
+  })
   getAllUsers(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('userType') userType?: string,
+    @Query('activity') activity?: string,
   ) {
-    const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
-    const limitNum = limit ? Math.min(100, Math.max(1, parseInt(limit, 10))) : 20;
-    return this.adminService.getAllUsers(pageNum, limitNum, search, userType);
+    const pageNum = parsePageQuery(page);
+    const limitNum = parseLimitQuery(limit, { defaultValue: 20, maxValue: 100 });
+    const activityNorm = activity === 'active' || activity === 'inactive' ? activity : undefined;
+    return this.adminService.getAllUsers(pageNum, limitNum, search, userType, activityNorm);
   }
 
   @ApiOperation({ summary: 'Delete all brands (cascade: models, vehicles, listings, favorites)' })
@@ -252,8 +249,8 @@ export class AdminController {
     @Query('isPromoted') isPromoted?: string,
     @Query('search') search?: string,
   ) {
-    const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
-    const limitNum = limit ? Math.min(100, Math.max(1, parseInt(limit, 10))) : 20;
+    const pageNum = parsePageQuery(page);
+    const limitNum = parseLimitQuery(limit, { defaultValue: 20, maxValue: 100 });
     const isPromotedBool =
       isPromoted === 'true' ? true : isPromoted === 'false' ? false : undefined;
     return this.adminService.getAllListings(
@@ -455,7 +452,10 @@ export class AdminController {
     },
   })
   @Patch('listings/:id/status')
-  updateListingStatus(@Param('id') id: string, @Body('status') status: ListingStatus) {
+  updateListingStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('status') status: ListingStatus,
+  ) {
     return this.adminService.updateListingStatus(id, status);
   }
 
@@ -512,8 +512,21 @@ export class AdminController {
     },
   })
   @Get('users/:id/listings')
-  getUserListings(@Param('id') id: string) {
+  getUserListings(@Param('id', ParseUUIDPipe) id: string) {
     return this.adminService.getUserListings(id);
+  }
+
+  @Post('users/:id/listings/refresh-dates')
+  @ApiOperation({ summary: 'Set last_updated_at to now for all active listings of a user' })
+  @ApiParam({
+    name: 'id',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'User UUID',
+  })
+  @ApiResponse({ status: 200, description: 'Count of updated listings' })
+  refreshUserActiveListingDates(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    const user = req.user as { id: string };
+    return this.adminService.refreshUserActiveListingDates(id, user.id);
   }
 
   @ApiOperation({ summary: 'Toggle user status' })
@@ -568,7 +581,7 @@ export class AdminController {
     },
   })
   @Patch('users/:id/toggle-status')
-  toggleUserStatus(@Param('id') id: string) {
+  toggleUserStatus(@Param('id', ParseUUIDPipe) id: string) {
     return this.adminService.toggleUserStatus(id);
   }
 
@@ -672,8 +685,8 @@ export class AdminController {
     @Query('userId') userId?: string,
     @Query('fromDate') fromDate?: string,
   ) {
-    const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
-    const limitNum = limit ? Math.min(100, Math.max(1, parseInt(limit, 10))) : 50;
+    const pageNum = parsePageQuery(page);
+    const limitNum = parseLimitQuery(limit, { defaultValue: 50, maxValue: 100 });
     const fromDateObj = fromDate ? new Date(fromDate) : undefined;
     return this.adminService.getAllPromotions(pageNum, limitNum, listingId, userId, fromDateObj);
   }
@@ -690,8 +703,8 @@ export class AdminController {
     @Query('query') query?: string,
     @Query('vehicleType') vehicleType?: string,
   ) {
-    const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
-    const limitNum = limit ? Math.min(2000, Math.max(1, parseInt(limit, 10))) : 100;
+    const pageNum = parsePageQuery(page);
+    const limitNum = parseLimitQuery(limit, { defaultValue: 100, maxValue: 2000 });
     const type =
       vehicleType === 'car' ||
       vehicleType === 'truck' ||
@@ -823,8 +836,8 @@ export class AdminController {
     @Query('query') query?: string,
     @Query('tireVehicleType') tireVehicleType?: string,
   ) {
-    const pageNum = parsePositiveIntQuery(page, 1, 2000);
-    const limitNum = parsePositiveIntQuery(limit, 100, 2000);
+    const pageNum = parsePageQuery(page);
+    const limitNum = parseLimitQuery(limit, { defaultValue: 100, maxValue: 2000 });
     const tvt =
       tireVehicleType === 'car' || tireVehicleType === 'truck' || tireVehicleType === 'moto'
         ? (tireVehicleType as TireVehicleType)

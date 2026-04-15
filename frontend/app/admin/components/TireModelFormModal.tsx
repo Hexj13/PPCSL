@@ -15,6 +15,8 @@ import { adminApi } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { Checkbox } from '@/ui';
 
+import { AdminActionButton } from './AdminButtons';
+
 interface TireModelFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -118,7 +120,7 @@ export function TireModelFormModal({
             {t('admin.brandsModelsTab.fieldBrand')}
           </label>
           {isEdit ? (
-            <div className="w-full px-4 py-2.5 rounded-lg border-2 border-primary-700/50 bg-bg-darker text-text-secondary opacity-60 cursor-not-allowed">
+            <div className="input-field w-full cursor-not-allowed opacity-60 pointer-events-none">
               {selectedBrand?.name ?? (loadingBrands ? t('common.loading') : '—')}
             </div>
           ) : (
@@ -146,9 +148,12 @@ export function TireModelFormModal({
               setNameError(null);
             }}
             placeholder={t('admin.brandsModelsTab.namePlaceholderModel')}
-            className={`w-full px-4 py-2.5 rounded-lg border-2 bg-bg-secondary text-text-primary focus:outline-hidden focus:border-primary-900 ${
-              nameError ? 'border-red-500' : 'border-primary-700'
-            }`}
+            className={[
+              'input-field w-full',
+              nameError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
             maxLength={100}
             required
           />
@@ -161,20 +166,12 @@ export function TireModelFormModal({
           size="sm"
         />
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <AdminActionButton variant="secondary" className="flex-1" onClick={onClose}>
             {t('common.cancel')}
-          </button>
-          <button
-            type="submit"
-            disabled={submitting || !brandId}
-            className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          </AdminActionButton>
+          <AdminActionButton type="submit" className="flex-1" disabled={submitting || !brandId}>
             {t('common.save')}
-          </button>
+          </AdminActionButton>
         </div>
       </form>
     </Modal>

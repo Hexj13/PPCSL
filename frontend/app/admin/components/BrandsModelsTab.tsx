@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { usePaginatedData } from '@/hooks/usePaginatedData';
+import { useRefreshWhenVisible } from '@/hooks/useRefreshWhenVisible';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { AdminBrand, AdminModel } from '@/lib/api';
 import { adminApi } from '@/lib/api';
@@ -25,7 +26,11 @@ type BrandsModelsFiltersState = {
   vehicleSegment: Segment;
 };
 
-export function BrandsModelsTab() {
+interface BrandsModelsTabProps {
+  isActive: boolean;
+}
+
+export function BrandsModelsTab({ isActive }: BrandsModelsTabProps) {
   const { t } = useTranslation();
   const [expandedBrandIds, setExpandedBrandIds] = useState<Set<string>>(new Set());
   const [archiveTarget, setArchiveTarget] = useState<ArchiveTarget | null>(null);
@@ -79,6 +84,10 @@ export function BrandsModelsTab() {
     debounceFilters: ['searchQuery'],
     debounceMs: 500,
     showLoadingDelay: 300,
+  });
+
+  useRefreshWhenVisible(isActive, () => {
+    reload(true);
   });
 
   useEffect(() => {

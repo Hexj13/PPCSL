@@ -14,6 +14,7 @@ import {
   UserType as UserTypeEnum,
 } from '../common/types';
 import { logUserEvent } from '../common/utils/log-user-event';
+import { buildPaginationMeta } from '../common/utils/pagination.utils';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 import { IListingCache, LISTING_CACHE } from '../listings/application/ports/listing-cache.port';
 import { Listing } from '../listings/entities/listing.entity';
@@ -44,6 +45,11 @@ type AdminUpdateUserProfileResult = {
   emailConfirmationSent: boolean;
 };
 
+type AdminUserListItem = SanitizedUser & {
+  listingCountTotal: number;
+  listingCountActive: number;
+};
+
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
@@ -70,14 +76,22 @@ export class AdminService {
     limit: number = 20,
     searchQuery?: string,
     userType?: string,
+    activity?: string,
   ): Promise<{
-    data: SanitizedUser[];
-    meta: { total: number; page: number; limit: number; totalPages: number };
+    data: AdminUserListItem[];
+    meta: {
+      total: number;
+      totalAll: number;
+      activeTotal: number;
+      inactiveTotal: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
   }> {
     const skip = (page - 1) * limit;
     const queryBuilder = this.usersRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect('user.listings', 'listings')
       .orderBy('user.created_at', 'DESC');
 
     if (searchQuery) {
@@ -96,23 +110,72 @@ export class AdminService {
       }
     }
 
-    const [users, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
+    const totalAll = await queryBuilder.getCount();
+    const activeTotal = await queryBuilder
+      .clone()
+      .andWhere('user.active = :activeOnly', { activeOnly: true })
+      .getCount();
+    const inactiveTotal = await queryBuilder
+      .clone()
+      .andWhere('user.active = :inactiveOnly', { inactiveOnly: false })
+      .getCount();
+
+    const listQuery = queryBuilder.clone();
+    if (activity === 'active') {
+      listQuery.andWhere('user.active = :listActivity', { listActivity: true });
+    } else if (activity === 'inactive') {
+      listQuery.andWhere('user.active = :listActivity', { listActivity: false });
+    }
+
+    const [users, total] = await listQuery.skip(skip).take(limit).getManyAndCount();
+
+    const userIds = users.map((user) => user.id);
+    const listingCountsByUserId = new Map<string, { total: number; active: number }>();
+
+    if (userIds.length > 0) {
+      const listingCounts = await this.listingsRepository
+        .createQueryBuilder('listing')
+        .select('listing.user_id', 'user_id')
+        .addSelect('COUNT(*)', 'total_count')
+        .addSelect(
+          'SUM(CASE WHEN listing.status = :activeStatus THEN 1 ELSE 0 END)',
+          'active_count',
+        )
+        .where('listing.user_id IN (:...userIds)', {
+          userIds,
+          activeStatus: ListingStatusEnum.Active,
+        })
+        .groupBy('listing.user_id')
+        .getRawMany<{ user_id: string; total_count: string; active_count: string }>();
+
+      for (const row of listingCounts) {
+        listingCountsByUserId.set(row.user_id, {
+          total: Number(row.total_count) || 0,
+          active: Number(row.active_count) || 0,
+        });
+      }
+    }
 
     const processedUsers = users.map((user) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...userWithoutPassword } = user;
-      return userWithoutPassword;
+      const counts = listingCountsByUserId.get(user.id) ?? { total: 0, active: 0 };
+      return {
+        ...userWithoutPassword,
+        listings: user.listings ?? [],
+        listingCountTotal: counts.total,
+        listingCountActive: counts.active,
+      };
     });
-
-    const totalPages = Math.ceil(total / limit);
 
     return {
       data: processedUsers,
       meta: {
+        ...buildPaginationMeta(total, page, limit),
         total,
-        page,
-        limit,
-        totalPages,
+        totalAll,
+        activeTotal,
+        inactiveTotal,
       },
     };
   }
@@ -134,6 +197,47 @@ export class AdminService {
       throw new NotFoundException('errors.userNotFound');
     }
     return user.listings || [];
+  }
+
+  async refreshUserActiveListingDates(
+    targetUserId: string,
+    actorUserId: string,
+  ): Promise<{ updated: number }> {
+    const user = await this.usersRepository.findOne({ where: { id: targetUserId } });
+    if (!user) {
+      throw new NotFoundException('errors.userNotFound');
+    }
+
+    const activeRows = await this.listingsRepository.find({
+      where: { user_id: targetUserId, status: ListingStatusEnum.Active },
+      select: ['id'],
+    });
+
+    if (activeRows.length === 0) {
+      return { updated: 0 };
+    }
+
+    const now = new Date();
+    await this.listingsRepository.update(
+      { user_id: targetUserId, status: ListingStatusEnum.Active },
+      { last_updated_at: now, updated_at: now },
+    );
+
+    try {
+      await this.listingCache.invalidateSearch();
+      await Promise.all(activeRows.map((row) => this.listingCache.invalidateSingle(row.id)));
+    } catch {
+      // Ignore cache errors
+    }
+
+    logUserEvent(this.logger, {
+      event: 'admin_user_active_listing_dates_refreshed',
+      actorUserId,
+      userId: targetUserId,
+      updated: activeRows.length,
+    });
+
+    return { updated: activeRows.length };
   }
 
   async validateAssignUser(userId: string): Promise<{
@@ -163,7 +267,10 @@ export class AdminService {
     const listingLimit = await this.usersService.getListingLimit(userId);
 
     if (activeListings >= listingLimit) {
-      return { valid: false, error: 'errors.activeListingsLimitExceeded' };
+      return {
+        valid: false,
+        error: `errors.activeListingsLimitExceeded|${listingLimit}`,
+      };
     }
 
     const displayName =
@@ -448,16 +555,9 @@ export class AdminService {
     const enrichedListings =
       await this.exchangeRatesService.enrichListingsWithApproxPrice(processedListings);
 
-    const totalPages = Math.ceil(total / limit);
-
     return {
       data: enrichedListings,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages,
-      },
+      meta: buildPaginationMeta(total, page, limit),
     };
   }
 
@@ -524,6 +624,10 @@ export class AdminService {
   }
 
   async updateListingStatus(listingId: string, status: ListingStatus) {
+    const allowed: readonly string[] = ['Active', 'Paused', 'Closed'];
+    if (!allowed.includes(status)) {
+      throw new BadRequestException('errors.invalidListingStatus');
+    }
     const listing = await this.listingsRepository.findOne({
       where: { id: listingId },
     });
@@ -715,12 +819,7 @@ export class AdminService {
 
     return {
       data: historyWithStatus,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: buildPaginationMeta(total, page, limit),
     };
   }
 }

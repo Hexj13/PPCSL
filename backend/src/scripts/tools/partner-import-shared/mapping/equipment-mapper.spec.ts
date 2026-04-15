@@ -38,4 +38,33 @@ describe('equipment-mapper', () => {
     const count = result.equipmentKeys.filter((k) => k === 'abs').length;
     expect(count).toBe(1);
   });
+
+  it('maps common 999.md PDP checklist labels (Romanian phrasing)', () => {
+    const labels = [
+      'Sistem antiblocare a frânelor (ABS)',
+      'Jante din aliaj ușor',
+      'Anvelope all-season',
+      'Trapă',
+      'Sistem audio, Bluetooth',
+      'Ventilație a scaunelor',
+      'Computer de bord',
+      'Sistem de navigare, TV, DVD',
+    ];
+    const options: ParsedPdpEquipmentOption[] = labels.map((label) => ({ label }));
+    const result = mapEquipmentOptions(options);
+    expect(result.warnings).toEqual([]);
+    expect(result.equipmentKeys).toEqual(
+      expect.arrayContaining([
+        'abs',
+        'alloy_wheels',
+        'tires_all_season',
+        'sunroof',
+        'premium_audio',
+        'ventilated_seats',
+        'board_computer',
+        'navigation',
+      ]),
+    );
+    expect(result.equipmentKeys).toHaveLength(8);
+  });
 });

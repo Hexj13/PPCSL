@@ -28,9 +28,23 @@ export type AuditAction =
   | 'TIRE_MODEL_CREATE'
   | 'TIRE_MODEL_UPDATE'
   | 'TIRE_MODEL_ARCHIVE'
-  | 'TIRE_MODEL_UNARCHIVE';
+  | 'TIRE_MODEL_UNARCHIVE'
+  | 'PARSING_PLP_RUN_CREATE'
+  | 'PARSING_PDP_RUN_CREATE'
+  | 'PARSING_RUN_CANCEL'
+  | 'PARSING_SCHEDULE_CREATE'
+  | 'PARSING_SCHEDULE_UPDATE'
+  | 'PARSING_SCHEDULE_STATUS'
+  | 'PARSING_SCHEDULE_DELETE'
+  | 'PARSING_SCHEDULE_RUN_NOW';
 
-export type AuditEntityType = 'BRAND' | 'MODEL' | 'TIRE_BRAND' | 'TIRE_MODEL';
+export type AuditEntityType =
+  | 'BRAND'
+  | 'MODEL'
+  | 'TIRE_BRAND'
+  | 'TIRE_MODEL'
+  | 'PARSER_RUN'
+  | 'PARSER_SCHEDULE';
 
 @Entity('admin_audit_log')
 @Index(['actor_user_id'])

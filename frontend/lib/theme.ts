@@ -27,6 +27,7 @@ export interface ThemeColors {
     base: string;
     secondary: string;
     darker: string;
+    partnerLogo: string;
   };
   text: {
     primary: string;
@@ -42,6 +43,7 @@ export interface ThemeColors {
     danger: string;
     warning: string;
     info: string;
+    rose: string;
   };
   pwa?: {
     backgroundColor: string;
@@ -106,6 +108,7 @@ const defaultTheme: ThemeColors = {
     base: '#F5F5F5',
     secondary: '#F4F4F4',
     darker: '#E8E8E8',
+    partnerLogo: '#FFFFFF',
   },
   text: {
     primary: '#1B1B1B',
@@ -121,6 +124,7 @@ const defaultTheme: ThemeColors = {
     danger: '#FFC107',
     warning: '#FFC107',
     info: '#0D6EFD',
+    rose: '#db2777',
   },
   pwa: {
     backgroundColor: '#F5F5F5',

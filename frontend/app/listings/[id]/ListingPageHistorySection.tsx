@@ -5,7 +5,7 @@ import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { InfoBlock, HintTooltip, CoinsIcon, EyeIcon, LoadingSpinner } from '@/ui';
 
-import { getInfocarDemoUrl, shouldShowInfocarSection } from './listingPageInfocar';
+import { getReportDemoUrl, shouldShowReportSection } from './listingPageReports';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -35,7 +35,7 @@ export function ListingPageHistorySection({
   const reportRedirectUrl = `${API_URL}/api/listings/${listing.id}/report-redirect?locale=${locale}`;
 
   const handleOrderReportClick = () => {
-    analytics.infocarCheck(
+    analytics.reportCheck(
       listing.id,
       !!listing.vin?.trim(),
       listing.vehicle?.brand?.name,
@@ -45,12 +45,12 @@ export function ListingPageHistorySection({
   };
 
   const handleSampleReportClick = () => {
-    analytics.infocarSampleClick(listing.id);
+    analytics.reportSampleClick(listing.id);
   };
 
   return (
     <div className="space-y-6">
-      {shouldShowInfocarSection(listing) && (
+      {shouldShowReportSection(listing) && (
         <div className="surface overflow-visible">
           <div className="flex items-center gap-2 mb-4 min-w-0">
             <h2 className="text-xl md:text-2xl font-bold text-primary-900 min-w-0 wrap-break-word">
@@ -73,7 +73,7 @@ export function ListingPageHistorySection({
               {t('listingDetail.orderReport')}
             </a>
             <a
-              href={getInfocarDemoUrl(locale)}
+              href={getReportDemoUrl(locale) ?? '#'}
               target="_blank"
               rel="noopener noreferrer"
               onClick={handleSampleReportClick}

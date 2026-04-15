@@ -22,20 +22,40 @@ export class SignPage {
   }
 
   private async gotoWithRetry(url: string): Promise<void> {
-    let lastError: unknown;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      try {
-        await this.page.goto(url, { waitUntil: 'domcontentloaded' });
-        return;
-      } catch (error) {
-        lastError = error;
-        const message = error instanceof Error ? error.message : String(error);
-        if (!message.includes('net::ERR_ABORTED') || attempt === 1) {
-          throw error;
+    for (let routeAttempt = 0; routeAttempt < 3; routeAttempt += 1) {
+      let lastGotoError: unknown;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          await this.page.goto(url, { waitUntil: 'load' });
+          lastGotoError = undefined;
+          break;
+        } catch (error) {
+          lastGotoError = error;
+          const message = error instanceof Error ? error.message : String(error);
+          if (!message.includes('net::ERR_ABORTED') || attempt === 1) {
+            break;
+          }
         }
       }
+      if (lastGotoError) {
+        if (routeAttempt === 2) {
+          throw lastGotoError;
+        }
+        await this.page.waitForTimeout(400);
+        continue;
+      }
+      const ready = await this.page
+        .getByTestId(this.testIds.page)
+        .waitFor({ state: 'visible', timeout: 8000 })
+        .then(() => true)
+        .catch(() => false);
+      if (ready) {
+        return;
+      }
+      if (routeAttempt < 2) {
+        await this.page.waitForTimeout(500 * (routeAttempt + 1));
+      }
     }
-    throw lastError;
   }
 
   async openLogin(): Promise<void> {

@@ -1,6 +1,25 @@
 import type { Listing } from '@/lib/api';
+import { loadSiteConfigSync } from '@/lib/site-config';
 
-import { getInfocarUrl, shouldShowInfocarSection } from './listingPageInfocar';
+import { getReportUrl, shouldShowReportSection } from './listingPageReports';
+
+jest.mock('@/lib/site-config', () => ({
+  loadSiteConfigSync: jest.fn(),
+}));
+
+const mockedLoadSiteConfigSync = jest.mocked(loadSiteConfigSync);
+
+const reportProvider = {
+  baseUrls: {
+    ro: 'https://infocar.md',
+    ru: 'https://ru.infocar.md',
+  },
+  demoUrls: {
+    ro: 'https://infocar.md/demo?from=kupito',
+    ru: 'https://ru.infocar.md/demo?from=kupito',
+  },
+  partnerFrom: 'kupito',
+};
 
 function listing(overrides: Partial<Listing> & { status: Listing['status'] }): Listing {
   return {
@@ -20,79 +39,98 @@ function listing(overrides: Partial<Listing> & { status: Listing['status'] }): L
   } as Listing;
 }
 
-describe('getInfocarUrl', () => {
+beforeEach(() => {
+  mockedLoadSiteConfigSync.mockReturnValue({
+    reportProvider,
+  } as never);
+});
+
+describe('getReportUrl', () => {
   it('should return RO base URL with from=kupito when VIN is absent', () => {
     const listingWithoutVin = listing({ status: 'Active', vin: undefined });
-    expect(getInfocarUrl(listingWithoutVin, 'ro')).toBe('https://infocar.md/?from=kupito');
+    expect(getReportUrl(listingWithoutVin, 'ro')).toBe('https://infocar.md?from=kupito');
   });
 
   it('should return RU base URL when VIN is absent and locale is ru', () => {
     const listingWithoutVin = listing({ status: 'Active', vin: undefined });
-    expect(getInfocarUrl(listingWithoutVin, 'ru')).toBe('https://ru.infocar.md/?from=kupito');
+    expect(getReportUrl(listingWithoutVin, 'ru')).toBe('https://ru.infocar.md?from=kupito');
   });
 
   it('should return base URL when VIN is empty string', () => {
     const listingWithEmptyVin = listing({ status: 'Active', vin: '' });
-    expect(getInfocarUrl(listingWithEmptyVin, 'ro')).toBe('https://infocar.md/?from=kupito');
+    expect(getReportUrl(listingWithEmptyVin, 'ro')).toBe('https://infocar.md?from=kupito');
   });
 
   it('should return URL with encoded vin parameter when VIN is present (RO)', () => {
     const vin = 'WBA21FL020CV09474';
     const listingWithVin = listing({ status: 'Active', vin });
-    const url = getInfocarUrl(listingWithVin, 'ro');
+    const url = getReportUrl(listingWithVin, 'ro');
     expect(url).toContain('from=kupito');
     expect(url).toContain('vin=' + encodeURIComponent(vin));
-    expect(url).toBe('https://infocar.md/?from=kupito&vin=WBA21FL020CV09474');
+    expect(url).toBe('https://infocar.md?from=kupito&vin=WBA21FL020CV09474');
   });
 
   it('should return URL with encoded vin parameter when VIN is present (RU)', () => {
     const vin = 'WBA21FL020CV09474';
     const listingWithVin = listing({ status: 'Active', vin });
-    const url = getInfocarUrl(listingWithVin, 'ru');
+    const url = getReportUrl(listingWithVin, 'ru');
     expect(url).toContain('from=kupito');
     expect(url).toContain('vin=' + encodeURIComponent(vin));
-    expect(url).toBe('https://ru.infocar.md/?from=kupito&vin=WBA21FL020CV09474');
+    expect(url).toBe('https://ru.infocar.md?from=kupito&vin=WBA21FL020CV09474');
   });
 
   it('should default to RO when locale is omitted', () => {
     const listingWithVin = listing({ status: 'Active', vin: 'ABC123' });
-    expect(getInfocarUrl(listingWithVin)).toBe('https://infocar.md/?from=kupito&vin=ABC123');
+    expect(getReportUrl(listingWithVin)).toBe('https://infocar.md?from=kupito&vin=ABC123');
   });
 
   it('should trim and encode VIN when it has leading/trailing spaces', () => {
     const listingWithSpaces = listing({ status: 'Active', vin: '  ABC123  ' });
-    const url = getInfocarUrl(listingWithSpaces, 'ro');
+    const url = getReportUrl(listingWithSpaces, 'ro');
     expect(url).toContain('vin=' + encodeURIComponent('ABC123'));
   });
 
   it('should return base URL without vin when VIN is masked (4+9+4)', () => {
     const maskedVin = 'WBA2*********9474';
     const listingWithMaskedVin = listing({ status: 'Active', vin: maskedVin });
-    const url = getInfocarUrl(listingWithMaskedVin, 'ro');
-    expect(url).toBe('https://infocar.md/?from=kupito');
+    const url = getReportUrl(listingWithMaskedVin, 'ro');
+    expect(url).toBe('https://infocar.md?from=kupito');
     expect(url).not.toContain('vin=');
+  });
+
+  it('should return null when report provider is not configured', () => {
+    mockedLoadSiteConfigSync.mockReturnValue({} as never);
+    const listingWithVin = listing({ status: 'Active', vin: 'ABC123' });
+    expect(getReportUrl(listingWithVin, 'ro')).toBeNull();
   });
 });
 
-describe('shouldShowInfocarSection', () => {
+describe('shouldShowReportSection', () => {
   it('should return true for Active listing with VIN', () => {
-    expect(shouldShowInfocarSection(listing({ status: 'Active', vin: 'WBA21FL020CV09474' }))).toBe(
+    expect(shouldShowReportSection(listing({ status: 'Active', vin: 'WBA21FL020CV09474' }))).toBe(
       true,
     );
   });
 
   it('should return true for Active listing without VIN', () => {
-    expect(shouldShowInfocarSection(listing({ status: 'Active' }))).toBe(true);
+    expect(shouldShowReportSection(listing({ status: 'Active' }))).toBe(true);
   });
 
   it('should return false for Closed listing', () => {
-    expect(shouldShowInfocarSection(listing({ status: 'Closed', vin: 'WBA21FL020CV09474' }))).toBe(
+    expect(shouldShowReportSection(listing({ status: 'Closed', vin: 'WBA21FL020CV09474' }))).toBe(
       false,
     );
   });
 
   it('should return false for Paused listing', () => {
-    expect(shouldShowInfocarSection(listing({ status: 'Paused', vin: 'WBA21FL020CV09474' }))).toBe(
+    expect(shouldShowReportSection(listing({ status: 'Paused', vin: 'WBA21FL020CV09474' }))).toBe(
+      false,
+    );
+  });
+
+  it('should return false when provider is not configured', () => {
+    mockedLoadSiteConfigSync.mockReturnValue({} as never);
+    expect(shouldShowReportSection(listing({ status: 'Active', vin: 'WBA21FL020CV09474' }))).toBe(
       false,
     );
   });

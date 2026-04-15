@@ -13,3 +13,8 @@ export interface KupitoImportClientConfig {
   defaultDelayMs: number;
   imageStepDelayMs: number;
 }
+
+export interface BaseParserConfig extends KupitoImportClientConfig {
+  registryPath: string;
+  reportsDir: string;
+}

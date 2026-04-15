@@ -1,17 +1,16 @@
-import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { LISTING_REPOSITORY } from '../ports/listing.repository.port';
+import { REPORT_URL_PROVIDER } from '../ports/report-url-provider.port';
 import { GetReportUrlUseCase } from './get-report-url.use-case';
 
 describe('GetReportUrlUseCase', () => {
   let useCase: GetReportUrlUseCase;
   let mockListingRepo: { findById: jest.Mock };
-  let mockConfigService: { get: jest.Mock };
+  let providerEnabled: boolean;
 
   const listingId = '550e8400-e29b-41d4-a716-446655440000';
   const vin = 'WBA21FL020CV09474';
-  const secretKey = 'test-secret-key';
 
   const mockListing = {
     id: listingId,
@@ -22,10 +21,15 @@ describe('GetReportUrlUseCase', () => {
 
   beforeEach(async () => {
     mockListingRepo = { findById: jest.fn().mockResolvedValue(mockListing) };
-    mockConfigService = {
-      get: jest.fn((key: string) => {
-        if (key === 'INFOCAR_SECRET_KEY') return secretKey;
-        return undefined;
+    providerEnabled = true;
+    const mockReportUrlProvider = {
+      isEnabled: jest.fn(() => providerEnabled),
+      generateUrl: jest.fn((inputVin: string, locale: 'ro' | 'ru') => {
+        const host = locale === 'ru' ? 'https://ru.infocar.md' : 'https://infocar.md';
+        return Promise.resolve(`${host}/?from=kupito&vin=${inputVin}`);
+      }),
+      getFallbackUrl: jest.fn((locale: 'ro' | 'ru') => {
+        return locale === 'ru' ? 'https://ru.infocar.md' : 'https://infocar.md';
       }),
     };
 
@@ -33,7 +37,7 @@ describe('GetReportUrlUseCase', () => {
       providers: [
         GetReportUrlUseCase,
         { provide: LISTING_REPOSITORY, useValue: mockListingRepo },
-        { provide: ConfigService, useValue: mockConfigService },
+        { provide: REPORT_URL_PROVIDER, useValue: mockReportUrlProvider },
       ],
     }).compile();
 
@@ -77,8 +81,8 @@ describe('GetReportUrlUseCase', () => {
     await expect(useCase.execute(listingId)).rejects.toThrow();
   });
 
-  it('should throw when INFOCAR_SECRET_KEY is not set', async () => {
-    mockConfigService.get.mockReturnValue(undefined);
+  it('should throw when report provider is disabled', async () => {
+    providerEnabled = false;
     await expect(useCase.execute(listingId)).rejects.toThrow();
   });
 });
