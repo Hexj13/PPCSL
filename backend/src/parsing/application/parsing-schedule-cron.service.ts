@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { QueryFailedError } from 'typeorm';
 
 import { resolveParsingSchedulerEnabled } from './parsing-env';
 import { ParsingOrchestratorService } from './parsing-orchestrator.service';
@@ -15,9 +16,19 @@ export class ParsingScheduleCronService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    const fixed = await this.orchestrator.reconcileStaleActiveRunsOnStartup();
-    if (fixed > 0) {
-      this.logger.warn(`[SCHEDULER][startup-reconcile] staleRuns=${fixed}`);
+    try {
+      const fixed = await this.orchestrator.reconcileStaleActiveRunsOnStartup();
+      if (fixed > 0) {
+        this.logger.warn(`[SCHEDULER][startup-reconcile] staleRuns=${fixed}`);
+      }
+    } catch (error) {
+      if (this.isMissingParsingTablesError(error)) {
+        this.logger.warn(
+          '[SCHEDULER][startup-reconcile-skipped] Parsing tables are missing. Run migrations to enable parsing scheduler.',
+        );
+        return;
+      }
+      throw error;
     }
   }
 
@@ -64,5 +75,27 @@ export class ParsingScheduleCronService implements OnApplicationBootstrap {
         this.logger.warn(`Availability refresh failed for ${row.id}: ${String(error)}`);
       }
     }
+  }
+
+  private isMissingParsingTablesError(error: unknown): boolean {
+    if (!(error instanceof QueryFailedError)) {
+      return false;
+    }
+    const typedError = error as QueryFailedError & {
+      code?: string;
+      message?: string;
+      driverError?: { code?: string; message?: string };
+    };
+    const code = typedError.code ?? typedError.driverError?.code;
+    const message = (
+      typedError.message ??
+      typedError.driverError?.message ??
+      ''
+    ).toLowerCase();
+    const referencesParsingTables =
+      message.includes('parser_runs') ||
+      message.includes('parser_schedules') ||
+      message.includes('parser_log_chunks');
+    return code === '42P01' && referencesParsingTables;
   }
 }

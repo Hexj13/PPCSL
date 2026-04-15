@@ -2,6 +2,7 @@ import { ParsingOrchestratorService } from './parsing-orchestrator.service';
 import { ParsingScheduleCronService } from './parsing-schedule-cron.service';
 import type { ClaimedParserSchedule } from './parsing-schedule.service';
 import { ParsingScheduleService } from './parsing-schedule.service';
+import { QueryFailedError } from 'typeorm';
 
 describe('ParsingScheduleCronService', () => {
   const createDeps = () => {
@@ -71,6 +72,24 @@ describe('ParsingScheduleCronService', () => {
 
     await service.onApplicationBootstrap();
 
+    expect(orchestrator.reconcileStaleActiveRunsOnStartup).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips startup reconcile when parsing tables are missing', async () => {
+    const { service, orchestrator } = createDeps();
+    const driverError = Object.assign(new Error('relation "parser_runs" does not exist'), {
+      code: '42P01',
+    });
+    const missingTableError = new QueryFailedError(
+      'SELECT * FROM "parser_runs"',
+      [],
+      driverError,
+    );
+    (orchestrator.reconcileStaleActiveRunsOnStartup as jest.Mock).mockRejectedValue(
+      missingTableError,
+    );
+
+    await expect(service.onApplicationBootstrap()).resolves.toBeUndefined();
     expect(orchestrator.reconcileStaleActiveRunsOnStartup).toHaveBeenCalledTimes(1);
   });
 });
