@@ -142,8 +142,9 @@ export interface CreateParserSchedulePayload {
   parserCode?: string;
   runType: ParserRunType;
   assignedUserId?: string;
-  frequencyPreset: 'every_n_hours' | 'daily' | 'weekly' | 'custom';
+  frequencyPreset: 'every_n_hours' | 'every_n_days' | 'daily' | 'weekly' | 'custom';
   everyNHours?: number;
+  everyNDays?: number;
   presetTime?: string;
   presetWeekday?: string;
   cronExpression?: string;
@@ -152,8 +153,9 @@ export interface CreateParserSchedulePayload {
 }
 
 export interface UpdateParserSchedulePayload {
-  frequencyPreset?: 'every_n_hours' | 'daily' | 'weekly' | 'custom';
+  frequencyPreset?: 'every_n_hours' | 'every_n_days' | 'daily' | 'weekly' | 'custom';
   everyNHours?: number;
+  everyNDays?: number;
   presetTime?: string;
   presetWeekday?: string;
   cronExpression?: string;

@@ -595,7 +595,7 @@ GET /health                          # Health check (database, Redis)
 
 - Managed by the `parsing` module. Schema and indexes are described in `docs/features/parsing-framework.md`.
 - `parser_runs` — individual PLP/PDP runs with status, env, actor, and timing.
-- `parser_schedules` — recurring schedules with frequency presets and cron support.
+- `parser_schedules` — recurring schedules with frequency presets (`every_n_hours`, `every_n_days`, `daily`, `weekly`, `custom`) and persisted cron.
 - `parser_log_chunks` — sequenced log lines from CLI runner stdout/stderr.
 
 #### Triggers

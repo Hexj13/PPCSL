@@ -47,6 +47,7 @@
     "vehicleTypeCategoryEnum": "vehicleType должен быть car, truck или moto",
     "parsingCronExpressionRequired": "Для пользовательского пресета требуется cron-выражение.",
     "parsingEveryNHoursRequired": "Требуется интервал в часах, не менее 1.",
+    "parsingEveryNDaysRequired": "Требуется интервал в днях от 1 до 30.",
     "parsingCronInvalid": "Некорректное cron-выражение или часовой пояс."
   },
   "errors": {

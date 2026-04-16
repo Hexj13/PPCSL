@@ -67,7 +67,7 @@
 
 ### Что показывает
 
-- список PLP-файлов (`/api/admin/parsing/plp-files`)
+- список PLP-файлов (`/api/admin/parsing/plp-files`): колонки parser, имя файла, последнее обновление, число объявлений, ошибки, «missing» (кандидаты на пропуск/недоступность по данным файла), действия
 - историю PLP-запусков (`/api/admin/parsing/plp-runs`)
 
 Обе таблицы paginated.
@@ -100,10 +100,10 @@
   - `scanMode`: `first_n` / `all` (для `cipauto`)
   - `scanMode`: `first_n` / `range` / `all` (для parser без ограничений `cipauto`)
   - `pagesFirst`, `pageFrom`, `pageTo`
-  - `delayMs`, `resume`, `dryRun`, `removeClosed`
+  - `delayMs`, `resume`, `dryRun`, `removeClosed` — при включении объявления, которые источник помечает закрытыми/недоступными (в т.ч. 404/410/шаблон «закрыто»), закрываются и на платформе; при выключении фиксация в регистре импорта, на платформе объявление может оставаться активным
 - `profile_login` mode:
   - `login`, `pageSize`, `maxItems`
-  - `delayMs`, `resume`, `dryRun`
+  - `delayMs`, `resume`, `dryRun` (чекбокс `removeClosed` в форме только в режиме `pages`)
 
 Кнопка запуска блокируется, если обязательные поля невалидны.
 
@@ -136,13 +136,13 @@
 - `limit`
 - `resume`
 - `dryRun`
-- `removeClosed`
 - `onlyFailed`
 - `updateExisting`
 - `registrationType`
 - `defaultHp`
 - `city` (обязательно)
 - `delayMs`
+- `removeClosed` — тот же смысл, что в PLP (закрытие на платформе при недоступности на источнике vs только регистр)
 
 `assignedUserId` проходит preflight-валидацию через admin API.
 
@@ -151,7 +151,7 @@
 ### Что показывает
 
 - список расписаний (`/api/admin/parsing/schedules`)
-- колонки: parser, runType, assigned user, env, frequency, status, next run, last run, availability, actions
+- колонки: parser, runType, assigned user, frequency, status, next run, last run, availability (индикатор + краткий summary; подсказка в UI описывает HTTP GET и различие PLP vs PDP), actions. Окружение (`targetEnv`) задаётся на backend и в этой таблице не показывается.
 
 Сортировка на backend:
 
@@ -178,7 +178,7 @@
 
 - `scanMode`, `pages/pageFrom/pageTo` или `login/pageSize/maxItems`
 - `delayMs`
-- `removeClosed`
+- `removeClosed` — в UI чекбокс только при `scanInputMode: pages` у parser в каталоге
 
 Для `pdp`:
 
@@ -196,7 +196,8 @@
 
 Частота:
 
-- `every_n_hours`
+- `every_n_hours` (интервал в часах)
+- `every_n_days` (интервал 1–30 суток и время суток запуска)
 - `daily`
 - `weekly`
 - `custom` (cron expression)
@@ -294,6 +295,8 @@ Timezone по умолчанию: `Europe/Chisinau`.
 - `next_run_at` пересчитывается в транзакции до фактического запуска run
 
 ### Availability
+
+Backend дергает каталоговые URL парсера методом **HTTP GET** (набор страниц зависит от `availabilityProbe` в `config/parsers.ts` и от `runType` расписания: для PLP возможен обход нескольких страниц каталога, для PDP — упрощённая проверка). Успех страницы — HTTP «ok» ответа.
 
 Статусы:
 

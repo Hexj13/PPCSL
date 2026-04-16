@@ -1,9 +1,19 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsObject, IsOptional, IsString, Min, ValidateIf } from 'class-validator';
+import {
+  IsDefined,
+  IsIn,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 
 export class UpdateParserScheduleDto {
   @IsOptional()
-  @IsIn(['every_n_hours', 'daily', 'weekly', 'custom'])
+  @IsIn(['every_n_hours', 'every_n_days', 'daily', 'weekly', 'custom'])
   frequencyPreset?: string;
 
   @ValidateIf((o) => o.frequencyPreset === 'every_n_hours')
@@ -12,11 +22,25 @@ export class UpdateParserScheduleDto {
   @Min(1)
   everyNHours?: number;
 
+  @ValidateIf((o) => o.frequencyPreset === 'every_n_days')
+  @IsDefined()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  everyNDays?: number;
+
   @ValidateIf((o) => o.frequencyPreset === 'custom')
   @IsString()
   cronExpression?: string;
 
-  @IsOptional()
+  @ValidateIf(
+    (o) =>
+      o.frequencyPreset === 'daily' ||
+      o.frequencyPreset === 'weekly' ||
+      o.frequencyPreset === 'every_n_days',
+  )
+  @IsDefined()
   @IsString()
   presetTime?: string;
 
@@ -24,7 +48,13 @@ export class UpdateParserScheduleDto {
   @IsString()
   presetWeekday?: string;
 
-  @IsOptional()
+  @ValidateIf(
+    (o) =>
+      o.frequencyPreset === 'daily' ||
+      o.frequencyPreset === 'weekly' ||
+      o.frequencyPreset === 'every_n_days',
+  )
+  @IsDefined()
   @IsString()
   timezone?: string;
 

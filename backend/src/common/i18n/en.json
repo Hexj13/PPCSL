@@ -47,6 +47,7 @@
     "vehicleTypeCategoryEnum": "vehicleType must be car, truck, or moto",
     "parsingCronExpressionRequired": "Cron expression is required for the custom preset.",
     "parsingEveryNHoursRequired": "Interval in hours is required and must be at least 1.",
+    "parsingEveryNDaysRequired": "Interval in days is required and must be between 1 and 30.",
     "parsingCronInvalid": "Invalid cron expression or timezone."
   },
   "errors": {

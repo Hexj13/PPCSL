@@ -312,6 +312,18 @@ function parseEveryNHoursFromCron(cronExpression: string): number | null {
   return parsed;
 }
 
+function parseEveryNDaysFromCron(cronExpression: string): number | null {
+  const match = cronExpression.match(/^([0-5]?\d) ([01]?\d|2[0-3]) \*\/(\d+) \* \*$/);
+  if (!match) {
+    return null;
+  }
+  const parsed = Number(match[3]);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 30) {
+    return null;
+  }
+  return parsed;
+}
+
 function parsePresetTimeFromCron(cronExpression: string): string | null {
   const parts = cronExpression.trim().split(/\s+/);
   if (parts.length < 5) {
@@ -349,6 +361,21 @@ function parsePresetWeekdayFromCron(cronExpression: string): string | null {
 
 function isValidPresetTime(value: string): boolean {
   return /^([01]\d|2[0-3]):([0-5]\d)$/.test(value.trim());
+}
+
+function isValidCronExpression(value: string): boolean {
+  const parts = value.trim().split(/\s+/);
+  if (parts.length !== 5) {
+    return false;
+  }
+  const validators = [
+    /^(\*|([0-5]?\d)(-[0-5]?\d)?)(\/([1-9]\d*))?(,(\*|([0-5]?\d)(-[0-5]?\d)?)(\/([1-9]\d*))?)*$/,
+    /^(\*|([01]?\d|2[0-3])(-([01]?\d|2[0-3]))?)(\/([1-9]\d*))?(,(\*|([01]?\d|2[0-3])(-([01]?\d|2[0-3]))?)(\/([1-9]\d*))?)*$/,
+    /^(\*|([1-9]|[12]\d|3[01])(-([1-9]|[12]\d|3[01]))?)(\/([1-9]\d*))?(,(\*|([1-9]|[12]\d|3[01])(-([1-9]|[12]\d|3[01]))?)(\/([1-9]\d*))?)*$/,
+    /^(\*|([1-9]|1[0-2])(-([1-9]|1[0-2]))?)(\/([1-9]\d*))?(,(\*|([1-9]|1[0-2])(-([1-9]|1[0-2]))?)(\/([1-9]\d*))?)*$/,
+    /^(\*|[0-7](-[0-7])?)(\/([1-9]\d*))?(,(\*|[0-7](-[0-7])?)(\/([1-9]\d*))?)*$/,
+  ];
+  return parts.every((part, index) => validators[index].test(part));
 }
 
 function escapeRegExp(value: string): string {
@@ -533,8 +560,9 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     parserCode: parserCatalogDefaultCode,
     runType: 'plp' as 'plp' | 'pdp',
     assignedUserId: '',
-    frequencyPreset: 'daily' as 'every_n_hours' | 'daily' | 'weekly' | 'custom',
+    frequencyPreset: 'daily' as 'every_n_hours' | 'every_n_days' | 'daily' | 'weekly' | 'custom',
     everyNHours: 6,
+    everyNDays: 1,
     cronExpression: '0 3 * * *',
     presetTime: '',
     presetWeekday: '',
@@ -656,10 +684,11 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
   );
   const isWeeklyPreset = scheduleForm.frequencyPreset === 'weekly';
   const isDailyPreset = scheduleForm.frequencyPreset === 'daily';
-  const shouldShowSchedulePresetTimeField = isDailyPreset || isWeeklyPreset;
-  const shouldShowScheduleTimezoneField = isDailyPreset || isWeeklyPreset;
-  const canEditSchedulePresetTime = isDailyPreset || isWeeklyPreset;
-  const canEditScheduleTimezone = isDailyPreset || isWeeklyPreset;
+  const isEveryNDaysPreset = scheduleForm.frequencyPreset === 'every_n_days';
+  const shouldShowSchedulePresetTimeField = isDailyPreset || isWeeklyPreset || isEveryNDaysPreset;
+  const shouldShowScheduleTimezoneField = isDailyPreset || isWeeklyPreset || isEveryNDaysPreset;
+  const canEditSchedulePresetTime = isDailyPreset || isWeeklyPreset || isEveryNDaysPreset;
+  const canEditScheduleTimezone = isDailyPreset || isWeeklyPreset || isEveryNDaysPreset;
   const pdpPlpFileOptions = useMemo(
     () => plpFilesByParser[pdpForm.parserCode] ?? [],
     [plpFilesByParser, pdpForm.parserCode],
@@ -1155,6 +1184,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         assignedUserId: '',
         frequencyPreset: 'daily',
         everyNHours: 6,
+        everyNDays: 1,
         cronExpression: '0 3 * * *',
         presetTime: '',
         presetWeekday: '',
@@ -1192,14 +1222,21 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     (schedule: ParserSchedule) => {
       const cfg = schedule.config_snapshot ?? {};
       const pdpDefaults = getParserPdpDefaults(schedule.parser_code);
-      const resolvedFrequencyPreset: 'every_n_hours' | 'daily' | 'weekly' | 'custom' =
+      const resolvedFrequencyPreset:
+        | 'every_n_hours'
+        | 'every_n_days'
+        | 'daily'
+        | 'weekly'
+        | 'custom' =
         schedule.frequency_preset === 'every_n_hours' ||
+        schedule.frequency_preset === 'every_n_days' ||
         schedule.frequency_preset === 'daily' ||
         schedule.frequency_preset === 'weekly' ||
         schedule.frequency_preset === 'custom'
           ? schedule.frequency_preset
           : 'custom';
       const parsedEveryNHours = parseEveryNHoursFromCron(schedule.cron_expression);
+      const parsedEveryNDays = parseEveryNDaysFromCron(schedule.cron_expression);
       const parsedPresetTime = parsePresetTimeFromCron(schedule.cron_expression);
       const parsedPresetWeekday = parsePresetWeekdayFromCron(schedule.cron_expression);
       setEditingSchedule(schedule);
@@ -1209,6 +1246,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         assignedUserId: schedule.assigned_user_id ?? '',
         frequencyPreset: resolvedFrequencyPreset,
         everyNHours: parsedEveryNHours ?? 6,
+        everyNDays: parsedEveryNDays ?? 1,
         cronExpression: schedule.cron_expression || '0 3 * * *',
         presetTime: parsedPresetTime ?? '',
         presetWeekday: parsedPresetWeekday ?? '',
@@ -1497,10 +1535,28 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
       return;
     }
     if (
-      (scheduleForm.frequencyPreset === 'daily' || scheduleForm.frequencyPreset === 'weekly') &&
+      (scheduleForm.frequencyPreset === 'daily' ||
+        scheduleForm.frequencyPreset === 'weekly' ||
+        scheduleForm.frequencyPreset === 'every_n_days') &&
       !isValidPresetTime(scheduleForm.presetTime)
     ) {
       toast.error(t('admin.parsing.presetTimeRequired'));
+      return;
+    }
+    if (
+      scheduleForm.frequencyPreset === 'every_n_days' &&
+      (!Number.isInteger(scheduleForm.everyNDays) ||
+        scheduleForm.everyNDays < 1 ||
+        scheduleForm.everyNDays > 30)
+    ) {
+      toast.error(t('admin.parsing.everyNDaysRequired'));
+      return;
+    }
+    if (
+      scheduleForm.frequencyPreset === 'custom' &&
+      !isValidCronExpression(scheduleForm.cronExpression)
+    ) {
+      toast.error(t('admin.parsing.cronExpressionInvalid'));
       return;
     }
     setScheduleCreating(true);
@@ -1510,8 +1566,12 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           frequencyPreset: scheduleForm.frequencyPreset,
           everyNHours:
             scheduleForm.frequencyPreset === 'every_n_hours' ? scheduleForm.everyNHours : undefined,
+          everyNDays:
+            scheduleForm.frequencyPreset === 'every_n_days' ? scheduleForm.everyNDays : undefined,
           presetTime:
-            scheduleForm.frequencyPreset === 'daily' || scheduleForm.frequencyPreset === 'weekly'
+            scheduleForm.frequencyPreset === 'daily' ||
+            scheduleForm.frequencyPreset === 'weekly' ||
+            scheduleForm.frequencyPreset === 'every_n_days'
               ? scheduleForm.presetTime
               : undefined,
           presetWeekday:
@@ -1533,8 +1593,12 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           frequencyPreset: scheduleForm.frequencyPreset,
           everyNHours:
             scheduleForm.frequencyPreset === 'every_n_hours' ? scheduleForm.everyNHours : undefined,
+          everyNDays:
+            scheduleForm.frequencyPreset === 'every_n_days' ? scheduleForm.everyNDays : undefined,
           presetTime:
-            scheduleForm.frequencyPreset === 'daily' || scheduleForm.frequencyPreset === 'weekly'
+            scheduleForm.frequencyPreset === 'daily' ||
+            scheduleForm.frequencyPreset === 'weekly' ||
+            scheduleForm.frequencyPreset === 'every_n_days'
               ? scheduleForm.presetTime
               : undefined,
           presetWeekday:
@@ -1965,7 +2029,16 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                       {t('admin.parsing.colLastRun')}
                     </th>
                     <th className={`text-center ${tableHeaderClassName}`}>
-                      {t('admin.parsing.colAvailability')}
+                      <span className="inline-flex items-center justify-center gap-1">
+                        <span>{t('admin.parsing.colAvailability')}</span>
+                        <HintTooltip
+                          ariaLabel={t('admin.parsing.colAvailabilityHintButton')}
+                          width="w-72"
+                          className="align-middle"
+                        >
+                          {t('admin.parsing.colAvailabilityHint')}
+                        </HintTooltip>
+                      </span>
                     </th>
                     <th className={`text-center ${tableHeaderClassName}`}>
                       {t('admin.parsing.colActions')}
@@ -2620,6 +2693,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
               }
               options={[
                 { value: 'every_n_hours', label: t('admin.parsing.presetEveryNHours') },
+                { value: 'every_n_days', label: t('admin.parsing.presetEveryNDays') },
                 { value: 'daily', label: t('admin.parsing.presetDaily') },
                 { value: 'weekly', label: t('admin.parsing.presetWeekly') },
                 { value: 'custom', label: t('admin.parsing.presetCustom') },
@@ -2640,6 +2714,23 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                 value={scheduleForm.everyNHours}
                 onChange={(e) =>
                   setScheduleForm((s) => ({ ...s, everyNHours: Number(e.target.value) }))
+                }
+              />
+            </div>
+          )}
+          {scheduleForm.frequencyPreset === 'every_n_days' && (
+            <div>
+              <label className={modalFieldLabelClassName}>
+                {t('admin.parsing.fieldEveryNDays')}
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={30}
+                className={modalInputClassName}
+                value={scheduleForm.everyNDays}
+                onChange={(e) =>
+                  setScheduleForm((s) => ({ ...s, everyNDays: Number(e.target.value) }))
                 }
               />
             </div>

@@ -19,6 +19,23 @@ import {
 } from './parsing-schedule-next-run';
 import { presetToCronExpression, type FrequencyPresetKind } from './parsing-schedule-presets';
 
+function parseEveryNDaysFromCronExpression(cronExpression: string): number | null {
+  const parts = cronExpression.trim().split(/\s+/);
+  if (parts.length < 3) {
+    return null;
+  }
+  const dayOfMonthPart = parts[2];
+  const match = dayOfMonthPart.match(/^\*\/(\d+)$/);
+  if (!match) {
+    return null;
+  }
+  const parsed = Number(match[1]);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 30) {
+    return null;
+  }
+  return parsed;
+}
+
 export interface ClaimedParserSchedule {
   schedule: ParserSchedule;
   plannedRunAt: Date;
@@ -72,6 +89,7 @@ export class ParsingScheduleService {
     assignedUserId?: string;
     frequencyPreset: FrequencyPresetKind | string;
     everyNHours?: number;
+    everyNDays?: number;
     presetTime?: string;
     presetWeekday?: string;
     cronExpression?: string;
@@ -113,6 +131,7 @@ export class ParsingScheduleService {
         plpFileKey,
       });
     }
+    const timezone = params.timezone?.trim() || 'Europe/Chisinau';
     let cronExpression: string;
     if (params.frequencyPreset === 'custom') {
       if (!params.cronExpression?.trim()) {
@@ -125,28 +144,35 @@ export class ParsingScheduleService {
         throw new BadRequestException('validation.parsingEveryNHoursRequired');
       }
       cronExpression = presetToCronExpression('every_n_hours', { everyNHours: n });
+    } else if (params.frequencyPreset === 'every_n_days') {
+      const n = params.everyNDays ?? 0;
+      if (!Number.isFinite(n) || n < 1 || n > 30) {
+        throw new BadRequestException('validation.parsingEveryNDaysRequired');
+      }
+      cronExpression = presetToCronExpression('every_n_days', {
+        everyNDays: n,
+        presetTime: params.presetTime,
+      });
     } else {
       cronExpression = presetToCronExpression(params.frequencyPreset as FrequencyPresetKind, {
         everyNHours: params.everyNHours,
+        everyNDays: params.everyNDays,
         presetTime: params.presetTime,
         presetWeekday: params.presetWeekday,
       });
     }
+    let nextRunAt: Date;
     try {
-      computeNextRunAtFromCron({
+      nextRunAt = this.computeNextRunAtByPreset({
+        frequencyPreset: params.frequencyPreset,
         cronExpression,
-        timezone: params.timezone ?? 'Europe/Chisinau',
+        timezone,
         from: new Date(),
+        everyNDays: params.everyNDays,
       });
     } catch {
       throw new BadRequestException('validation.parsingCronInvalid');
     }
-    const timezone = params.timezone?.trim() || 'Europe/Chisinau';
-    const nextRunAt = computeNextRunAtFromCron({
-      cronExpression,
-      timezone,
-      from: new Date(),
-    });
     const entity = this.scheduleRepo.create({
       parser_code: params.parserCode,
       run_type: params.runType,
@@ -188,6 +214,7 @@ export class ParsingScheduleService {
     adminUserId: string;
     frequencyPreset?: FrequencyPresetKind | string;
     everyNHours?: number;
+    everyNDays?: number;
     presetTime?: string;
     presetWeekday?: string;
     cronExpression?: string;
@@ -222,7 +249,7 @@ export class ParsingScheduleService {
       existing.config_snapshot = params.configSnapshot;
     }
     if (params.timezone) {
-      existing.timezone = params.timezone;
+      existing.timezone = params.timezone.trim();
     }
     if (params.frequencyPreset) {
       if (params.frequencyPreset === 'custom') {
@@ -236,11 +263,21 @@ export class ParsingScheduleService {
           throw new BadRequestException('validation.parsingEveryNHoursRequired');
         }
         existing.cron_expression = presetToCronExpression('every_n_hours', { everyNHours: n });
+      } else if (params.frequencyPreset === 'every_n_days') {
+        const n = params.everyNDays ?? 0;
+        if (!Number.isFinite(n) || n < 1 || n > 30) {
+          throw new BadRequestException('validation.parsingEveryNDaysRequired');
+        }
+        existing.cron_expression = presetToCronExpression('every_n_days', {
+          everyNDays: n,
+          presetTime: params.presetTime,
+        });
       } else {
         existing.cron_expression = presetToCronExpression(
           params.frequencyPreset as FrequencyPresetKind,
           {
             everyNHours: params.everyNHours,
+            everyNDays: params.everyNDays,
             presetTime: params.presetTime,
             presetWeekday: params.presetWeekday,
           },
@@ -249,7 +286,8 @@ export class ParsingScheduleService {
       existing.frequency_preset = String(params.frequencyPreset);
     }
     try {
-      computeNextRunAtFromCron({
+      existing.next_run_at = this.computeNextRunAtByPreset({
+        frequencyPreset: existing.frequency_preset,
         cronExpression: existing.cron_expression,
         timezone: existing.timezone,
         from: new Date(),
@@ -257,11 +295,6 @@ export class ParsingScheduleService {
     } catch {
       throw new BadRequestException('validation.parsingCronInvalid');
     }
-    existing.next_run_at = computeNextRunAtFromCron({
-      cronExpression: existing.cron_expression,
-      timezone: existing.timezone,
-      from: new Date(),
-    });
     existing.updated_by_admin_user_id = params.adminUserId;
     const saved = await this.scheduleRepo.save(existing);
     this.logger.log(
@@ -297,7 +330,8 @@ export class ParsingScheduleService {
     const previousStatus = existing.status;
     existing.status = params.status;
     if (params.status === 'active' && previousStatus !== 'active') {
-      existing.next_run_at = computeNextRunAtFromCron({
+      existing.next_run_at = this.computeNextRunAtByPreset({
+        frequencyPreset: existing.frequency_preset,
         cronExpression: existing.cron_expression,
         timezone: existing.timezone,
         from: new Date(),
@@ -470,7 +504,8 @@ export class ParsingScheduleService {
           continue;
         }
         const plannedRunAt = new Date(schedule.next_run_at);
-        schedule.next_run_at = computeNextRunAtFromCronAfter({
+        schedule.next_run_at = this.computeNextRunAtByPreset({
+          frequencyPreset: schedule.frequency_preset,
           cronExpression: schedule.cron_expression,
           timezone: schedule.timezone,
           from: plannedRunAt,
@@ -560,6 +595,49 @@ export class ParsingScheduleService {
       after,
       ip,
       userAgent,
+    });
+  }
+
+  private computeNextRunAtByPreset(params: {
+    frequencyPreset?: string | null;
+    cronExpression: string;
+    timezone: string;
+    from: Date;
+    minAfter?: Date;
+    everyNDays?: number;
+  }): Date {
+    if (params.frequencyPreset === 'every_n_days') {
+      const parsedEveryNDays =
+        params.everyNDays ?? parseEveryNDaysFromCronExpression(params.cronExpression);
+      if (!parsedEveryNDays) {
+        throw new Error('Invalid every_n_days interval');
+      }
+      if (params.minAfter) {
+        return computeNextRunAtFromCronAfter({
+          cronExpression: params.cronExpression,
+          timezone: params.timezone,
+          from: params.from,
+          minAfter: params.minAfter,
+        });
+      }
+      return computeNextRunAtFromCron({
+        cronExpression: params.cronExpression,
+        timezone: params.timezone,
+        from: params.from,
+      });
+    }
+    if (params.minAfter) {
+      return computeNextRunAtFromCronAfter({
+        cronExpression: params.cronExpression,
+        timezone: params.timezone,
+        from: params.from,
+        minAfter: params.minAfter,
+      });
+    }
+    return computeNextRunAtFromCron({
+      cronExpression: params.cronExpression,
+      timezone: params.timezone,
+      from: params.from,
     });
   }
 }

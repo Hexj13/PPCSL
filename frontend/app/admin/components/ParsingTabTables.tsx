@@ -232,49 +232,52 @@ export function ParsingPlpFilesTable({
                   {t('admin.parsing.colErrorsCount')}
                 </th>
                 <th className={`text-center ${tableHeaderClassName}`}>
+                  {t('admin.parsing.colMissingCount')}
+                </th>
+                <th className={`text-center ${tableHeaderClassName}`}>
                   {t('admin.parsing.colActions')}
                 </th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((file) => {
-                const totalErrors = file.errorItemsCount + file.missingCandidatesCount;
-                return (
-                  <tr
-                    key={`${file.parserCode}:${file.fileKey}`}
-                    className="border-b border-primary-700/10"
-                  >
-                    <td className={tableCenteredCellClassName}>{file.parserLabel}</td>
-                    <td className={`${tableCenteredSecondaryCellClassName} max-w-[18rem]`}>
-                      <div className="truncate" title={file.fileName}>
-                        {file.fileName}
-                      </div>
-                    </td>
-                    <td className={`${tableCenteredSecondaryCellClassName} whitespace-nowrap`}>
-                      {formatAdminTableDateTime(file.lastUpdatedAt)}
-                    </td>
-                    <td className={tableCenteredCellClassName}>{file.itemsCount}</td>
-                    <td className={tableCenteredCellClassName}>{totalErrors}</td>
-                    <td className={`${tableCenteredCellClassName} whitespace-nowrap`}>
-                      <div className="relative flex items-center justify-center">
-                        <AdminActionButton
-                          variant="secondary"
-                          data-admin-actions-trigger
-                          aria-haspopup="menu"
-                          aria-expanded={
-                            openPlpFileActionsMenuKey === `${file.parserCode}:${file.fileKey}`
-                          }
-                          aria-label={t('admin.parsing.colActions')}
-                          className={tablePrimaryButtonClassName}
-                          onClick={makePlpFileActionsClickHandler(file)}
-                        >
-                          <span>{t('admin.parsing.colActions')}</span>
-                        </AdminActionButton>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {rows.map((file) => (
+                <tr
+                  key={`${file.parserCode}:${file.fileKey}`}
+                  className="border-b border-primary-700/10"
+                >
+                  <td className={tableCenteredCellClassName}>{file.parserLabel}</td>
+                  <td className={`${tableCenteredSecondaryCellClassName} max-w-[18rem]`}>
+                    <div className="truncate" title={file.fileName}>
+                      {file.fileName}
+                    </div>
+                  </td>
+                  <td className={`${tableCenteredSecondaryCellClassName} whitespace-nowrap`}>
+                    {formatAdminTableDateTime(file.lastUpdatedAt)}
+                  </td>
+                  <td className={tableCenteredCellClassName}>{file.itemsCount}</td>
+                  <td className={tableCenteredCellClassName}>{file.errorItemsCount || '—'}</td>
+                  <td className={tableCenteredCellClassName}>
+                    {file.missingCandidatesCount || '—'}
+                  </td>
+                  <td className={`${tableCenteredCellClassName} whitespace-nowrap`}>
+                    <div className="relative flex items-center justify-center">
+                      <AdminActionButton
+                        variant="secondary"
+                        data-admin-actions-trigger
+                        aria-haspopup="menu"
+                        aria-expanded={
+                          openPlpFileActionsMenuKey === `${file.parserCode}:${file.fileKey}`
+                        }
+                        aria-label={t('admin.parsing.colActions')}
+                        className={tablePrimaryButtonClassName}
+                        onClick={makePlpFileActionsClickHandler(file)}
+                      >
+                        <span>{t('admin.parsing.colActions')}</span>
+                      </AdminActionButton>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

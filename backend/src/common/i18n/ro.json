@@ -47,6 +47,7 @@
     "vehicleTypeCategoryEnum": "vehicleType trebuie să fie car, truck sau moto",
     "parsingCronExpressionRequired": "Expresia cron este obligatorie pentru presetul personalizat.",
     "parsingEveryNHoursRequired": "Intervalul în ore este obligatoriu și trebuie să fie cel puțin 1.",
+    "parsingEveryNDaysRequired": "Intervalul în zile este obligatoriu și trebuie să fie între 1 și 30.",
     "parsingCronInvalid": "Expresie cron sau fus orar nevalid."
   },
   "errors": {

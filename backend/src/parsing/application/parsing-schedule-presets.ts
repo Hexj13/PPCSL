@@ -1,8 +1,13 @@
-export type FrequencyPresetKind = 'every_n_hours' | 'daily' | 'weekly' | 'custom';
+export type FrequencyPresetKind = 'every_n_hours' | 'every_n_days' | 'daily' | 'weekly' | 'custom';
 
 export function presetToCronExpression(
   preset: FrequencyPresetKind,
-  params: { everyNHours?: number; presetTime?: string; presetWeekday?: string },
+  params: {
+    everyNHours?: number;
+    everyNDays?: number;
+    presetTime?: string;
+    presetWeekday?: string;
+  },
 ): string {
   const timeMatch = params.presetTime?.trim().match(/^([01]\d|2[0-3]):([0-5]\d)$/);
   const presetHour = timeMatch ? Number(timeMatch[1]) : 0;
@@ -19,6 +24,10 @@ export function presetToCronExpression(
   if (preset === 'every_n_hours') {
     const n = Math.max(1, Math.min(24, params.everyNHours ?? 6));
     return `0 */${n} * * *`;
+  }
+  if (preset === 'every_n_days') {
+    const n = Math.max(1, Math.min(30, params.everyNDays ?? 1));
+    return `${presetMinute} ${presetHour} */${n} * *`;
   }
   throw new Error('custom preset requires cronExpression');
 }
