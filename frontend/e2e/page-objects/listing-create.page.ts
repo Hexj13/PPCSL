@@ -19,6 +19,7 @@ export class ListingCreatePage {
     bodyTypeSelect: 'listing-create-body-type-select',
     conditionSelect: 'listing-create-condition-select',
     registrationTypeSelect: 'listing-create-registration-type-select',
+    statusSelect: 'listing-create-status-select',
     citySelect: 'listing-create-city-select',
     engineDisplacementInput: 'listing-form-engine-displacement',
     horsepowerInput: 'listing-form-horsepower',
@@ -123,6 +124,7 @@ export class ListingCreatePage {
     await this.selectFirstDropdownOption(this.testIds.bodyTypeSelect);
     await this.selectFirstDropdownOption(this.testIds.conditionSelect);
     await this.selectFirstDropdownOption(this.testIds.registrationTypeSelect);
+    await this.selectLastDropdownOption(this.testIds.statusSelect);
     await this.selectFirstDropdownOption(this.testIds.citySelect);
     await this.page.getByTestId(this.testIds.engineDisplacementInput).fill('2.0');
     await this.page.getByTestId(this.testIds.horsepowerInput).fill('150');
@@ -142,6 +144,7 @@ export class ListingCreatePage {
     await this.selectFirstDropdownOption(this.testIds.bodyTypeSelect);
     await this.selectFirstDropdownOption(this.testIds.conditionSelect);
     await this.selectFirstDropdownOption(this.testIds.registrationTypeSelect);
+    await this.selectLastDropdownOption(this.testIds.statusSelect);
     await this.page.getByTestId(this.testIds.engineDisplacementInput).fill('2.5');
     await this.page.getByTestId(this.testIds.horsepowerInput).fill('190');
     await this.page.getByTestId(this.testIds.powerKwInput).fill('140');

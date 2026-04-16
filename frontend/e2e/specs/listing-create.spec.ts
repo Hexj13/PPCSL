@@ -95,7 +95,13 @@ test.describe('Listing create @p0', () => {
       {
         name: 'Validate listing detail page and all required blocks',
         action: async () => {
-          await expect(page).toHaveURL(/\/listings\/[^/]+$/, { timeout: 30_000 });
+          await expect(page).toHaveURL(
+            (url) => {
+              const path = url.pathname;
+              return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
+            },
+            { timeout: 30_000 },
+          );
           await listingDetailPage.expectFullPageView(listingDescription, selectedEquipmentLabels);
         },
       },

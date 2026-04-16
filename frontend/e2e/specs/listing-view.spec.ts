@@ -25,7 +25,13 @@ async function createListingForViewScenario(
   await listingCreatePage.fillRequiredFields();
   await listingCreatePage.uploadPhotos(LISTING_PHOTO_FILES);
   await listingCreatePage.submitCreateForm();
-  await expect(page).toHaveURL(/\/listings\/[^/]+$/, { timeout: 30_000 });
+  await expect(page).toHaveURL(
+    (url) => {
+      const path = url.pathname;
+      return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
+    },
+    { timeout: 30_000 },
+  );
 }
 
 test.describe('Listing detail: view and interaction @p0', () => {
@@ -105,7 +111,10 @@ test.describe('Listing detail: view and interaction @p0', () => {
       {
         name: 'Verify current page stays on listing detail URL',
         action: async () => {
-          await expect(page).toHaveURL(/\/listings\/[^/]+$/);
+          await expect(page).toHaveURL((url) => {
+            const path = url.pathname;
+            return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
+          });
         },
       },
     ];

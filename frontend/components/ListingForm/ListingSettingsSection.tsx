@@ -54,6 +54,7 @@ export function ListingSettingsSection({
           placeholder={t('listings.statusLabel')}
           autoPosition={true}
           menuMaxHeight={300}
+          dataTestId="listing-create-status-select"
           options={[
             { value: 'Active', label: t('listings.publishedStatus') },
             { value: 'Paused', label: t('listings.pausedStatus') },

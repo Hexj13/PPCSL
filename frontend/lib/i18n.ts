@@ -67,8 +67,8 @@ export async function loadTranslationsDynamic(locale: Locale): Promise<Translati
   if (locale === 'ru') {
     if (ruTranslations) return ruTranslations;
     try {
-      const mod = await import('./locales/ru.json');
-      ruTranslations = mod.default as unknown as Translations;
+      const translations = require('./locales/ru.json');
+      ruTranslations = translations as unknown as Translations;
       return ruTranslations;
     } catch {
       return createEmptyTranslations();
@@ -76,8 +76,8 @@ export async function loadTranslationsDynamic(locale: Locale): Promise<Translati
   }
   if (roTranslations) return roTranslations;
   try {
-    const mod = await import('./locales/ro.json');
-    roTranslations = mod.default as unknown as Translations;
+    const translations = require('./locales/ro.json');
+    roTranslations = translations as unknown as Translations;
     return roTranslations;
   } catch {
     return createEmptyTranslations();

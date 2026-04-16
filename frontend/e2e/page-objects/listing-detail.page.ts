@@ -31,7 +31,10 @@ export class ListingDetailPage {
   }
 
   async expectPageView(): Promise<void> {
-    await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
+    await expect(this.page).toHaveURL((url) => {
+      const path = url.pathname;
+      return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
+    });
     await expect(this.copyLinkButton).toBeVisible();
   }
 
