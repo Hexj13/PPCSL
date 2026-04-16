@@ -10,6 +10,7 @@ import { In, MoreThan, Repository } from 'typeorm';
 import { AdminAuditService } from '../../admin/admin-audit.service';
 import { AdminUsersService } from '../../admin/admin-users.service';
 import type { AuditAction, AuditEntityType } from '../../admin/entities/admin-audit-log.entity';
+import { resolveParsingRuntimeRoot } from '../../common/parsing-runtime-path';
 import { buildPaginationMeta } from '../../common/utils/pagination.utils';
 import type { ParserRunType, ParserTargetEnv } from '../domain/types';
 import { CliParserRunnerService } from '../infrastructure/cli-parser-runner.service';
@@ -168,30 +169,13 @@ export class ParsingOrchestratorService {
       throw new BadRequestException('errors.parserRunNotFound');
     }
     const fileKey = this.resolvePlpOutputFileKey(run.parser_code, run.config_snapshot);
-    const s3Path = this.resolveS3RelativePath(run.parser_code, fileKey);
-    const fileName = path.basename(s3Path);
-
-    if (this.plpStorage.useS3) {
-      const content = await this.plpStorage.downloadFile(s3Path);
-      if (content === null) {
-        return { fileName, missing: true, content: null };
-      }
-      return { fileName, missing: false, content };
+    const storageRelPath = this.resolveS3RelativePath(run.parser_code, fileKey);
+    const fileName = path.basename(storageRelPath);
+    const content = await this.plpStorage.downloadFile(storageRelPath);
+    if (content === null) {
+      return { fileName, missing: true, content: null };
     }
-
-    const filePath = this.resolveCurrentPlpFilePath(run);
-    if (!fs.existsSync(filePath)) {
-      return {
-        fileName: path.basename(filePath),
-        missing: true,
-        content: null,
-      };
-    }
-    return {
-      fileName: path.basename(filePath),
-      missing: false,
-      content: await fsp.readFile(filePath, 'utf-8'),
-    };
+    return { fileName, missing: false, content };
   }
 
   async createPlpRun(params: {
@@ -695,13 +679,10 @@ export class ParsingOrchestratorService {
   }
 
   async listAllPlpFiles(): Promise<ParserPlpFileInfo[]> {
-    if (this.plpStorage.useS3) {
-      return this.listAllPlpFilesFromS3();
-    }
-    return this.listAllPlpFilesFromLocal();
+    return this.listAllPlpFilesViaStorage();
   }
 
-  private async listAllPlpFilesFromS3(): Promise<ParserPlpFileInfo[]> {
+  private async listAllPlpFilesViaStorage(): Promise<ParserPlpFileInfo[]> {
     const result: ParserPlpFileInfo[] = [];
     const parsers = getParserCatalog().filter((p) => p.supportedRunTypes.includes('plp'));
 
@@ -753,56 +734,6 @@ export class ParsingOrchestratorService {
     return this.sortPlpFileInfoList(result);
   }
 
-  private async listAllPlpFilesFromLocal(): Promise<ParserPlpFileInfo[]> {
-    const result: ParserPlpFileInfo[] = [];
-    const parsers = getParserCatalog().filter((p) => p.supportedRunTypes.includes('plp'));
-
-    for (const parser of parsers) {
-      if (parser.scanInputMode === 'profile_login') {
-        const dirPath = this.get999mdCurrentPlpDir();
-        if (!fs.existsSync(dirPath)) {
-          continue;
-        }
-        const files = (await fsp.readdir(dirPath))
-          .filter((name) => name.endsWith('.json'))
-          .sort((a, b) => a.localeCompare(b));
-        for (const fileName of files) {
-          const rawPath = path.join(dirPath, fileName);
-          result.push(
-            await this.buildParserPlpFileInfoFromPath(
-              parser.code,
-              parser.label,
-              fileName,
-              fileName,
-              rawPath,
-            ),
-          );
-        }
-        continue;
-      }
-
-      if (!parser.plpDataPath) {
-        continue;
-      }
-      const rawPath = this.resolveParserPlpDataPath(parser.plpDataPath);
-      if (!fs.existsSync(rawPath)) {
-        continue;
-      }
-      const fileName = path.basename(parser.plpDataPath);
-      result.push(
-        await this.buildParserPlpFileInfoFromPath(
-          parser.code,
-          parser.label,
-          fileName,
-          'default',
-          rawPath,
-        ),
-      );
-    }
-
-    return this.sortPlpFileInfoList(result);
-  }
-
   private sortPlpFileInfoList(list: ParserPlpFileInfo[]): ParserPlpFileInfo[] {
     return list.sort((a, b) => {
       const left = a.lastUpdatedAt ? new Date(a.lastUpdatedAt).getTime() : 0;
@@ -825,49 +756,22 @@ export class ParsingOrchestratorService {
     missing: boolean;
     content: string | null;
   }> {
-    const s3Path = this.resolveS3RelativePath(parserCode, fileKey);
-    const fileName = path.basename(s3Path);
-
-    if (this.plpStorage.useS3) {
-      const content = await this.plpStorage.downloadFile(s3Path);
-      if (content === null) {
-        return { fileName, missing: true, content: null };
-      }
-      return { fileName, missing: false, content };
-    }
-
-    try {
-      const filePath = this.resolvePdpPlpFilePath(parserCode, fileKey);
-      if (!fs.existsSync(filePath)) {
-        return { fileName: path.basename(filePath), missing: true, content: null };
-      }
-      return {
-        fileName: path.basename(filePath),
-        missing: false,
-        content: await fsp.readFile(filePath, 'utf-8'),
-      };
-    } catch {
+    const storageRelPath = this.resolveS3RelativePath(parserCode, fileKey);
+    const fileName = path.basename(storageRelPath);
+    const content = await this.plpStorage.downloadFile(storageRelPath);
+    if (content === null) {
       return { fileName, missing: true, content: null };
     }
+    return { fileName, missing: false, content };
   }
 
   async deletePlpFile(parserCode: string, fileKey: string): Promise<void> {
-    const s3Path = this.resolveS3RelativePath(parserCode, fileKey);
-
-    if (this.plpStorage.useS3) {
-      const exists = (await this.plpStorage.getFileMetadata(s3Path)) !== null;
-      if (!exists) {
-        throw new BadRequestException('errors.parsingPlpFileInvalid');
-      }
-      await this.plpStorage.deleteFile(s3Path);
-      return;
-    }
-
-    const rawPath = this.resolvePdpPlpFilePath(parserCode, fileKey);
-    if (!fs.existsSync(rawPath)) {
+    const storageRelPath = this.resolveS3RelativePath(parserCode, fileKey);
+    const exists = (await this.plpStorage.getFileMetadata(storageRelPath)) !== null;
+    if (!exists) {
       throw new BadRequestException('errors.parsingPlpFileInvalid');
     }
-    await fsp.unlink(rawPath);
+    await this.plpStorage.deleteFile(storageRelPath);
   }
 
   private async executePdpRun(runId: string): Promise<void> {
@@ -1220,16 +1124,8 @@ export class ParsingOrchestratorService {
     return absPath;
   }
 
-  private getParsingRuntimeRoot(): string {
-    const fromEnv = process.env.PARSING_RUNTIME_DIR?.trim();
-    if (fromEnv) {
-      return path.isAbsolute(fromEnv) ? fromEnv : path.join(process.cwd(), fromEnv);
-    }
-    return path.join(process.cwd(), 'runtime', 'parsing');
-  }
-
   private get999mdCurrentPlpDir(): string {
-    return path.join(this.getParsingRuntimeRoot(), '999md', 'current-plp');
+    return path.join(resolveParsingRuntimeRoot(), '999md', 'current-plp');
   }
 
   private async resolvePdpReportPath(
@@ -1303,16 +1199,16 @@ export class ParsingOrchestratorService {
     if (!parser?.cliScript) {
       return null;
     }
-    const parserDir = path.dirname(parser.cliScript);
-    return path.join(process.cwd(), 'src', 'scripts', 'tools', parserDir, 'reports');
+    return path.join(resolveParsingRuntimeRoot(), parserCode, 'reports');
   }
 
   private resolveParserPlpDataPath(plpDataPath: string): string {
     if (path.isAbsolute(plpDataPath)) {
       return plpDataPath;
     }
-    if (plpDataPath.startsWith('runtime/')) {
-      return path.join(process.cwd(), plpDataPath);
+    if (plpDataPath.startsWith('runtime/parsing/')) {
+      const tail = plpDataPath.slice('runtime/parsing/'.length);
+      return path.join(resolveParsingRuntimeRoot(), tail);
     }
     return path.join(process.cwd(), 'src', 'scripts', 'tools', plpDataPath);
   }
@@ -1430,18 +1326,15 @@ export class ParsingOrchestratorService {
   }
 
   private async ensurePlpFileLocal(parserCode: string, plpFileKey: string): Promise<void> {
-    if (!this.plpStorage.useS3) {
-      return;
-    }
-    const s3Path = this.resolveS3RelativePath(parserCode, plpFileKey);
+    const storageRelPath = this.resolveS3RelativePath(parserCode, plpFileKey);
     const localAbsPath = this.resolveLocalPlpPath(parserCode, plpFileKey);
     if (fs.existsSync(localAbsPath)) {
       return;
     }
     this.logger.log(
-      `[PDP][s3-download] downloading PLP file before import: ${s3Path} → ${localAbsPath}`,
+      `[PDP][storage] fetching PLP snapshot before import: ${storageRelPath} → ${localAbsPath}`,
     );
-    const ok = await this.plpStorage.downloadToLocal(s3Path, localAbsPath);
+    const ok = await this.plpStorage.downloadToLocal(storageRelPath, localAbsPath);
     if (!ok) {
       throw new BadRequestException('errors.parsingPlpFileInvalid');
     }
@@ -1457,7 +1350,7 @@ export class ParsingOrchestratorService {
     if (parser?.plpDataPath) {
       return this.resolveParserPlpDataPath(parser.plpDataPath);
     }
-    return path.join(this.getParsingRuntimeRoot(), parserCode, `${plpFileKey}.json`);
+    return path.join(resolveParsingRuntimeRoot(), parserCode, `${plpFileKey}.json`);
   }
 
   private async syncPlpFileToS3(run: ParserRun): Promise<void> {

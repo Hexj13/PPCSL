@@ -368,20 +368,20 @@ nano ecosystem.config.js
 module.exports = {
   apps: [
     {
-      name: 'ppcsl-backend',
-      script: 'dist/main.js',
-      cwd: '/var/www/ppcsl/backend',
+      name: "ppcsl-backend",
+      script: "dist/main.js",
+      cwd: "/var/www/ppcsl/backend",
       instances: 1,
-      exec_mode: 'fork',
+      exec_mode: "fork",
       env: {
-        NODE_ENV: 'production',
+        NODE_ENV: "production",
       },
-      error_file: '/var/log/pm2/ppcsl-backend-error.log',
-      out_file: '/var/log/pm2/ppcsl-backend-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      error_file: "/var/log/pm2/ppcsl-backend-error.log",
+      out_file: "/var/log/pm2/ppcsl-backend-out.log",
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
       merge_logs: true,
       autorestart: true,
-      max_memory_restart: '500M',
+      max_memory_restart: "500M",
     },
   ],
 };
@@ -398,21 +398,21 @@ nano ecosystem.config.js
 module.exports = {
   apps: [
     {
-      name: 'ppcsl-frontend',
-      script: 'node_modules/next/dist/bin/next',
-      args: 'start',
-      cwd: '/var/www/ppcsl/frontend',
+      name: "ppcsl-frontend",
+      script: "node_modules/next/dist/bin/next",
+      args: "start",
+      cwd: "/var/www/ppcsl/frontend",
       instances: 1,
-      exec_mode: 'fork',
+      exec_mode: "fork",
       env: {
-        NODE_ENV: 'production',
+        NODE_ENV: "production",
       },
-      error_file: '/var/log/pm2/ppcsl-frontend-error.log',
-      out_file: '/var/log/pm2/ppcsl-frontend-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      error_file: "/var/log/pm2/ppcsl-frontend-error.log",
+      out_file: "/var/log/pm2/ppcsl-frontend-out.log",
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
       merge_logs: true,
       autorestart: true,
-      max_memory_restart: '500M',
+      max_memory_restart: "500M",
     },
   ],
 };
@@ -663,10 +663,23 @@ The application has built-in cron logic for closing old listings and expiring pr
    - **Schedule:** e.g. `30 2 * * *` (daily at 02:30 UTC)
 
    Example with curl (Render Cron Job or shell):
+
    ```bash
    curl -X POST https://your-backend.onrender.com/api/listings/cron/close-old -H "x-cron-secret: $CRON_SECRET"
    curl -X POST https://your-backend.onrender.com/api/listings/cron/expire-promotions -H "x-cron-secret: $CRON_SECRET"
    ```
+
+### 3.9a. Partner parser state (persistent disk)
+
+If you run **CipAuto** or **999.md** import CLI from Render Shell, the parser keeps a JSON registry, PLP snapshot, and run reports on disk. The default app filesystem is **ephemeral** on deploy unless you use a **Render persistent disk**.
+
+1. Attach a disk to `kupito-backend` (Render → **Disk** → **Add Disk**) and note the **mount path** (for example `/var/data`).
+2. Add an environment variable on the same **backend web service**: **`PARSING_RUNTIME_DIR=<mount path>`** (must match the mount path exactly). Admin Parsing (manual runs and scheduler) spawns parser CLIs on that host and resolves catalog `plpDataPath` values relative to this root, so the variable must be set on the service—not only in one-off Render Shell sessions.
+3. After deploy, parser state is written under:
+   - `<mount>/cipauto/cipauto-registry.json`, `cipauto-current-plp.json`, `reports/`
+   - `<mount>/999md/999md-registry.json`, `current-plp/`, `reports/`
+
+On first deploy after this change, copy an existing `cipauto-registry.json` into the new location or run `npm run cipauto:seed-registry -- --env prod <userId>` once. See `docs/parsing/cipauto-import.md`.
 
 ### 3.10. Telegram support bot (optional)
 
@@ -696,9 +709,10 @@ If you deploy the frontend as a separate service on Render.com:
 2. Connect your GitHub repository
 3. Configure:
    - **Name:** `kupito-frontend`
-  - **Root Directory:** leave empty
-  - **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm run prepare:build && cd core/frontend && npm ci && npm run build`
-  - **Start Command:** `cd core/frontend && npm start`
+
+- **Root Directory:** leave empty
+- **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm run prepare:build && cd core/frontend && npm ci && npm run build`
+- **Start Command:** `cd core/frontend && npm start`
 
 **Environment Variables:**
 

@@ -1,20 +1,24 @@
 import * as path from 'path';
 
+import { resolveParsingRuntimeRoot } from '../../../common/parsing-runtime-path';
 import { resolveKupitoImportCredentials } from '../partner-import-shared/kupito-env';
 
 import type { Md999Config, RuntimeEnv } from './types';
 
-const ROOT_DIR = path.resolve(__dirname);
 const DEFAULT_GRAPHQL = 'https://999.md/graphql';
 const DEFAULT_LISTING_TEMPLATE = 'https://999.md/ro/{{id}}';
 const DEFAULT_IMAGE_BASE = 'https://i.simpalsmedia.com/999.md/BoardImages/900x900';
 
-function resolveParsingRuntimeRoot(): string {
-  const fromEnv = process.env.PARSING_RUNTIME_DIR?.trim();
-  if (fromEnv) {
-    return path.isAbsolute(fromEnv) ? fromEnv : path.join(process.cwd(), fromEnv);
+function resolveOptionalEnvPath(envKey: string): string | undefined {
+  const raw = process.env[envKey]?.trim();
+  if (!raw) {
+    return undefined;
   }
-  return path.join(process.cwd(), 'runtime', 'parsing');
+  return path.isAbsolute(raw) ? raw : path.join(process.cwd(), raw);
+}
+
+export function resolve999mdStateDir(runtimeRoot: string): string {
+  return path.join(runtimeRoot, '999md');
 }
 
 export {
@@ -33,14 +37,17 @@ export function resolveMd999Config(
 ): Md999Config {
   const creds = resolveKupitoImportCredentials(env, options);
   const runtimeRoot = resolveParsingRuntimeRoot();
+  const stateDir = resolve999mdStateDir(runtimeRoot);
 
   return {
     env,
     ...creds,
     graphqlUrl: process.env.SITE999MD_GRAPHQL_URL?.trim() ?? DEFAULT_GRAPHQL,
-    registryPath: path.join(ROOT_DIR, 'data', '999md-registry.json'),
-    currentPlpDir: path.join(runtimeRoot, '999md', 'current-plp'),
-    reportsDir: path.join(ROOT_DIR, 'reports'),
+    registryPath:
+      resolveOptionalEnvPath('SITE999MD_REGISTRY_PATH') ??
+      path.join(stateDir, '999md-registry.json'),
+    currentPlpDir: path.join(stateDir, 'current-plp'),
+    reportsDir: resolveOptionalEnvPath('SITE999MD_REPORTS_DIR') ?? path.join(stateDir, 'reports'),
     requestTimeoutMs: Number(process.env.SITE999MD_REQUEST_TIMEOUT_MS ?? 20000),
     maxRetries: Number(process.env.SITE999MD_MAX_RETRIES ?? 3),
     defaultDelayMs: Number(process.env.SITE999MD_DEFAULT_DELAY_MS ?? 3000),

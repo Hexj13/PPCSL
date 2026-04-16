@@ -13,6 +13,8 @@ import {
 } from '@aws-sdk/client-s3';
 import { Injectable, Logger } from '@nestjs/common';
 
+import { resolveParsingRuntimeRoot } from '../../common/parsing-runtime-path';
+
 const S3_PREFIX = 'parsing-plp/';
 
 @Injectable()
@@ -39,20 +41,13 @@ export class PlpStorageService {
           secretAccessKey: secretAccessKey!,
         },
       });
-      this.logger.log('[PlpStorage] S3 mode enabled');
+      this.logger.log('[PlpStorage] Disk primary; S3 mirror and fallback enabled');
     } else {
       this.s3Client = null;
-      this.logger.log('[PlpStorage] Local filesystem mode (S3 credentials not configured)');
+      this.logger.log('[PlpStorage] Disk only (S3 credentials not configured)');
     }
 
-    const fromEnv = process.env.PARSING_RUNTIME_DIR?.trim();
-    if (fromEnv) {
-      this.localRuntimeRoot = path.isAbsolute(fromEnv)
-        ? fromEnv
-        : path.join(process.cwd(), fromEnv);
-    } else {
-      this.localRuntimeRoot = path.join(process.cwd(), 'runtime', 'parsing');
-    }
+    this.localRuntimeRoot = resolveParsingRuntimeRoot();
   }
 
   private s3Key(relativePath: string): string {
@@ -64,31 +59,38 @@ export class PlpStorageService {
   }
 
   async uploadFile(relativePath: string, content: string): Promise<void> {
+    const absPath = this.localPath(relativePath);
+    await fsp.mkdir(path.dirname(absPath), { recursive: true });
+    await fsp.writeFile(absPath, content, 'utf-8');
+
     if (!this.useS3 || !this.s3Client) {
-      const absPath = this.localPath(relativePath);
-      await fsp.mkdir(path.dirname(absPath), { recursive: true });
-      await fsp.writeFile(absPath, content, 'utf-8');
       return;
     }
     const key = this.s3Key(relativePath);
-    await this.s3Client.send(
-      new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: key,
-        Body: content,
-        ContentType: 'application/json; charset=utf-8',
-      }),
-    );
-    this.logger.debug(`[PlpStorage] uploaded ${key}`);
+    try {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: content,
+          ContentType: 'application/json; charset=utf-8',
+        }),
+      );
+      this.logger.debug(`[PlpStorage] mirrored to S3 ${key}`);
+    } catch (error: unknown) {
+      this.logger.warn(
+        `[PlpStorage] S3 mirror failed key=${key} error=${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   async downloadFile(relativePath: string): Promise<string | null> {
-    if (!this.useS3 || !this.s3Client) {
-      const absPath = this.localPath(relativePath);
-      if (!fs.existsSync(absPath)) {
-        return null;
-      }
+    const absPath = this.localPath(relativePath);
+    if (fs.existsSync(absPath)) {
       return fsp.readFile(absPath, 'utf-8');
+    }
+    if (!this.useS3 || !this.s3Client) {
+      return null;
     }
     try {
       const result = await this.s3Client.send(
@@ -126,74 +128,74 @@ export class PlpStorageService {
   }
 
   async deleteFile(relativePath: string): Promise<void> {
-    if (!this.useS3 || !this.s3Client) {
-      const absPath = this.localPath(relativePath);
-      if (fs.existsSync(absPath)) {
-        await fsp.unlink(absPath);
-      }
-      return;
-    }
-    await this.s3Client.send(
-      new DeleteObjectCommand({
-        Bucket: this.bucketName,
-        Key: this.s3Key(relativePath),
-      }),
-    );
     const absPath = this.localPath(relativePath);
     if (fs.existsSync(absPath)) {
-      try {
-        await fsp.unlink(absPath);
-      } catch {
-        /* local cleanup is best-effort */
+      await fsp.unlink(absPath);
+    }
+    if (!this.useS3 || !this.s3Client) {
+      return;
+    }
+    try {
+      await this.s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucketName,
+          Key: this.s3Key(relativePath),
+        }),
+      );
+      this.logger.debug(`[PlpStorage] deleted from S3 ${this.s3Key(relativePath)}`);
+    } catch (error: unknown) {
+      const code = (error as { name?: string }).name;
+      if (code !== 'NotFound' && code !== 'NoSuchKey') {
+        throw error;
       }
     }
-    this.logger.debug(`[PlpStorage] deleted ${this.s3Key(relativePath)}`);
   }
 
   async listFiles(prefix: string): Promise<string[]> {
-    if (!this.useS3 || !this.s3Client) {
-      const dirPath = this.localPath(prefix);
-      if (!fs.existsSync(dirPath)) {
-        return [];
-      }
+    const merged = new Set<string>();
+    const dirPath = this.localPath(prefix);
+    if (fs.existsSync(dirPath)) {
       const names = await fsp.readdir(dirPath);
-      return names
-        .filter((name) => name.endsWith('.json'))
-        .sort()
-        .map((name) => `${prefix}${name}`);
-    }
-    const fullPrefix = this.s3Key(prefix);
-    const result: string[] = [];
-    let continuationToken: string | undefined;
-    do {
-      const response = await this.s3Client.send(
-        new ListObjectsV2Command({
-          Bucket: this.bucketName,
-          Prefix: fullPrefix,
-          ContinuationToken: continuationToken,
-        }),
-      );
-      for (const obj of response.Contents ?? []) {
-        if (obj.Key && obj.Key.endsWith('.json')) {
-          result.push(obj.Key.slice(S3_PREFIX.length));
+      for (const name of names) {
+        if (name.endsWith('.json')) {
+          merged.add(`${prefix}${name}`);
         }
       }
-      continuationToken = response.NextContinuationToken;
-    } while (continuationToken);
-    return result.sort();
+    }
+    if (this.useS3 && this.s3Client) {
+      const fullPrefix = this.s3Key(prefix);
+      let continuationToken: string | undefined;
+      do {
+        const response = await this.s3Client.send(
+          new ListObjectsV2Command({
+            Bucket: this.bucketName,
+            Prefix: fullPrefix,
+            ContinuationToken: continuationToken,
+          }),
+        );
+        for (const obj of response.Contents ?? []) {
+          if (obj.Key && obj.Key.endsWith('.json')) {
+            merged.add(obj.Key.slice(S3_PREFIX.length));
+          }
+        }
+        continuationToken = response.NextContinuationToken;
+      } while (continuationToken);
+    }
+    return [...merged].sort();
   }
 
   async getFileMetadata(
     relativePath: string,
   ): Promise<{ size: number; lastModified: Date } | null> {
+    const absPath = this.localPath(relativePath);
+    try {
+      const stat = await fsp.stat(absPath);
+      return { size: stat.size, lastModified: stat.mtime };
+    } catch {
+      /* try S3 */
+    }
     if (!this.useS3 || !this.s3Client) {
-      const absPath = this.localPath(relativePath);
-      try {
-        const stat = await fsp.stat(absPath);
-        return { size: stat.size, lastModified: stat.mtime };
-      } catch {
-        return null;
-      }
+      return null;
     }
     try {
       const result = await this.s3Client.send(

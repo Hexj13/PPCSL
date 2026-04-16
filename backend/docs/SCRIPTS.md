@@ -20,6 +20,7 @@ Scripts are organized into two directories based on their intended environment:
 ## Stage Scripts
 
 These scripts are **blocked from running in production** and can only be executed in:
+
 - `stage`
 - `development`
 - `test`
@@ -27,6 +28,7 @@ These scripts are **blocked from running in production** and can only be execute
 ### Available Stage Scripts
 
 #### Seeding Scripts
+
 - `seed.ts` - Seed test data (users and listings). **Note:** Requires brands and models to exist in database (use `add-brands.ts` or `seed:all-brands` first)
 - `seed-vin-test.ts` - Seed test data with VIN codes
 - `seed-vehicles-full.ts` - Full vehicle seeding
@@ -35,6 +37,7 @@ These scripts are **blocked from running in production** and can only be execute
 - `create-test-listing.ts` - Create a test listing
 
 #### Brand and Model Scripts
+
 - `add-brands.ts` - Add basic brands and models
 - `seed-all-brands.ts` - Run all brand and model seeding scripts sequentially (optimized for low memory usage)
 - `add-grand-models.ts` - Add Grand versions and extended models
@@ -63,17 +66,21 @@ These scripts are **blocked from running in production** and can only be execute
 - `generate-listings-for-all-models.ts` - Generate listings for all models
 
 #### Database Management Scripts
+
 - `clear-database.ts` - Clear all database data
 - `reset-users.ts` - Reset user data
 - `check-user.ts` - Check user data
 
 #### User Management Scripts
+
 - `make-admin.ts` - Create admin user
 
 #### Email and Notification Scripts
+
 - `send-test-emails.ts` - Send seven sample transactional emails to `SEND_TEST_EMAIL_TO` using the configured SMTP provider. Stage/dev/test only. Supports `SEND_TEST_EMAIL_LOCALE=en|ro|ru` and retries transient SMTP failures with backoff. Run: `npm run send-test-emails`
 
 #### Cache Management Scripts
+
 - `clear-cache.ts` - Clear all Redis cache
 - `clear-listing-cache.ts` - Clear listings cache (with optional listing ID)
 - `clear-brands-cache.ts` - Clear brands and models cache
@@ -104,6 +111,7 @@ checkEnvironment(['stage', 'development', 'test']);
 ```
 
 If a stage script is attempted to run in production, it will:
+
 1. Display an error message
 2. Exit with code 1
 3. Prevent any database operations
@@ -142,11 +150,13 @@ SCRIPT_DELAY_MS=10000 npm run seed:all-brands -- --skip-duplicates --skip-heavy
 ```
 
 **Options:**
+
 - `--skip-duplicates` - Skip duplicate checking (saves memory)
 - `--skip-heavy` - Skip heavy scripts (American, Japanese, Commercial, Historical models)
 - `SCRIPT_DELAY_MS` - Delay between scripts in milliseconds (default: 8000ms)
 
 **Note:** The script is optimized for low memory usage with:
+
 - Automatic garbage collection between operations
 - Increased delays between scripts (8 seconds by default)
 - Smaller batch sizes for duplicate checking
@@ -192,6 +202,7 @@ npm run make-admin:prod -- --email existing@example.com --password new-password 
 ```
 
 **Options:**
+
 - `--email` - Email address (default: admin@admin.com)
 - `--password` - Password (default: GGGgggTEST777)
 - `--first-name` - First name (default: Admin)
@@ -215,6 +226,7 @@ npm run remove-admin:prod -- --email user@example.com --type Individual
 ```
 
 **Options:**
+
 - `--email` - Email address (required)
 - `--type` - New user type: `Individual` or `Business` (default: `Individual`)
 
@@ -229,6 +241,7 @@ npm run fix-price-nulls:prod
 ```
 
 This script:
+
 - Replaces all NULL values in the `price` column with 0
 - Converts the `price` column from decimal to integer type
 - Sets NOT NULL constraint
@@ -323,10 +336,10 @@ Maintenance utilities (not under `stage/` / `production/` guards in the same way
 
 Requires **PostgreSQL**, **S3 credentials** (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME`), and image URLs that resolve to keys in that bucket.
 
-| npm script | Effect |
-|------------|--------|
-| `npm run backfill:blurhash:cover` | Active listings with `cover_blur_hash IS NULL`: fetch first image from S3, set `cover_blur_hash`. |
-| `npm run backfill:blurhash:all` | Active listings with `image_blur_hashes IS NULL`: fetch each image, set `image_blur_hashes` (nullable slots on failure) and sync `cover_blur_hash` from the first successful hash / first slot. |
+| npm script                        | Effect                                                                                                                                                                                          |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run backfill:blurhash:cover` | Active listings with `cover_blur_hash IS NULL`: fetch first image from S3, set `cover_blur_hash`.                                                                                               |
+| `npm run backfill:blurhash:all`   | Active listings with `image_blur_hashes IS NULL`: fetch each image, set `image_blur_hashes` (nullable slots on failure) and sync `cover_blur_hash` from the first successful hash / first slot. |
 
 Batches of 50, 1s pause between batches. Idempotent for the chosen criterion (`NULL` column).
 
@@ -338,17 +351,22 @@ Batches of 50, 1s pause between batches. Idempotent for the chosen criterion (`N
 
 The admin **Parsing** UI triggers parser CLI pipelines via a managed child process and parser catalog entries. Configure these **backend** variables (see also `core/docs/features/admin-parsing-ru.md` and `core/docs/features/parsing-framework.md`):
 
-| Variable | Purpose |
-|----------|---------|
-| `ADMIN_PARSING_TARGET_ENV` | `local` (default) or `prod` / `production` — parsed server-side; clients cannot override. |
-| `ADMIN_PARSING_KUPITO_API_URL` | Kupito API base URL for the import client (falls back to legacy `KUPITO_IMPORT_API_URL` / `CIPAUTO_API_URL` if unset). |
-| `ADMIN_PARSING_ADMIN_EMAIL` | Service admin email for CLI auth (falls back to `KUPITO_IMPORT_ADMIN_EMAIL` / `CIPAUTO_ADMIN_EMAIL`). |
-| `ADMIN_PARSING_ADMIN_PASSWORD` | Service admin password (falls back to legacy import env vars). |
-| `ADMIN_PARSING_IMPORT_SECRET` | Import secret for the Kupito API client (falls back to `KUPITO_IMPORT_SECRET` / `CIPAUTO_IMPORT_SECRET`). |
-| `ADMIN_PARSING_SCHEDULER_ENABLED` | `true` by default; set `false` / `0` / `no` to disable cron-triggered schedules. |
-| `ADMIN_PARSING_CANCEL_GRACE_MS` | Grace period before SIGKILL on cancel (default 60000, max 600000). |
-| `ADMIN_PARSING_MAX_CONCURRENT_RUNS` | Reserved for future use (currently one active run per parser + run type + target env is enforced in code). |
-| `ADMIN_PARSING_CLI_OVERRIDE_<PARSER_CODE>` | Optional custom command prefix for a parser CLI process (for example `ADMIN_PARSING_CLI_OVERRIDE_CIPAUTO`). Use only trusted values from deployment config or secrets management. |
+| Variable                                                                   | Purpose                                                                                                                                                                                                                                                                                   |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ADMIN_PARSING_TARGET_ENV`                                                 | `local` (default) or `prod` / `production` — parsed server-side; clients cannot override.                                                                                                                                                                                                 |
+| `ADMIN_PARSING_KUPITO_API_URL`                                             | Kupito API base URL for the import client (falls back to legacy `KUPITO_IMPORT_API_URL` / `CIPAUTO_API_URL` if unset).                                                                                                                                                                    |
+| `ADMIN_PARSING_ADMIN_EMAIL`                                                | Service admin email for CLI auth (falls back to `KUPITO_IMPORT_ADMIN_EMAIL` / `CIPAUTO_ADMIN_EMAIL`).                                                                                                                                                                                     |
+| `ADMIN_PARSING_ADMIN_PASSWORD`                                             | Service admin password (falls back to legacy import env vars).                                                                                                                                                                                                                            |
+| `ADMIN_PARSING_IMPORT_SECRET`                                              | Import secret for the Kupito API client (falls back to `KUPITO_IMPORT_SECRET` / `CIPAUTO_IMPORT_SECRET`).                                                                                                                                                                                 |
+| `ADMIN_PARSING_SCHEDULER_ENABLED`                                          | `true` by default; set `false` / `0` / `no` to disable cron-triggered schedules.                                                                                                                                                                                                          |
+| `ADMIN_PARSING_CANCEL_GRACE_MS`                                            | Grace period before SIGKILL on cancel (default 60000, max 600000).                                                                                                                                                                                                                        |
+| `ADMIN_PARSING_MAX_CONCURRENT_RUNS`                                        | Reserved for future use (currently one active run per parser + run type + target env is enforced in code).                                                                                                                                                                                |
+| `ADMIN_PARSING_CLI_OVERRIDE_<PARSER_CODE>`                                 | Optional custom command prefix for a parser CLI process (for example `ADMIN_PARSING_CLI_OVERRIDE_CIPAUTO`). Use only trusted values from deployment config or secrets management.                                                                                                         |
+| `PARSING_RUNTIME_DIR`                                                      | Root directory for parser registry, PLP JSON, and `reports/` on the backend host. Default when unset: `runtime/parsing` under the backend process `cwd` (typically `core/backend`). On persistent-disk deployments, set to the mount path so admin runs, scheduler, and manual CLI agree. |
+| `CIPAUTO_REGISTRY_PATH`, `CIPAUTO_CURRENT_PLP_PATH`, `CIPAUTO_REPORTS_DIR` | Optional absolute or `cwd`-relative overrides for CipAuto file paths.                                                                                                                                                                                                                     |
+| `SITE999MD_REGISTRY_PATH`, `SITE999MD_REPORTS_DIR`                         | Optional overrides for 999.md registry and reports (PLP dir stays `<runtime>/999md/current-plp/`).                                                                                                                                                                                        |
+
+When any of the path variables above are set to a non-empty value, the admin parser runner forwards them into the parser CLI child environment together with `PARSING_RUNTIME_DIR`, so scheduled and manual admin runs use the same layout as shell commands.
 
 Legacy compatibility:
 
@@ -357,8 +375,7 @@ Legacy compatibility:
 Schedules and run history are stored in PostgreSQL (`parser_runs`, `parser_schedules`, `parser_log_chunks`). Parser raw artifacts remain file-based in parser-owned folders:
 
 - PLP snapshot file (`plpDataPath` in parser catalog, if configured)
-- parser registry (`data/*-registry.json`)
-- parser reports (`reports/*-run-*.json`)
+- parser registry and reports under `PARSING_RUNTIME_DIR` (default `runtime/parsing/<parser>/`: `cipauto-registry.json`, `999md-registry.json`, `reports/`)
 
 The API exposes normalized summaries on runs while the CLI files remain the raw source of truth.
 
@@ -373,13 +390,13 @@ Parser source of truth is platform-specific:
 
 Runtime copies are created in core by `npm run prepare:build` under `src/scripts/tools/`.
 
-| npm script | Effect |
-|------------|--------|
-| `npm run cipauto:scan` / `cipauto:import` / `cipauto:report` | CipAuto HTML catalog → Kupito API |
-| `npm run 999md:scan` / `999md:import` / `999md:report` | 999.md GraphQL → same downstream pipeline |
-| `npm run cipauto:seed-registry` | Seed registry from existing Kupito listings (deduplication) |
-| `npm run cipauto:audit-stale` | Find and close listings removed from CipAuto |
-| `npm run 999md:dealer-audit` | Brand/model audit report vs live Kupito API |
+| npm script                                                   | Effect                                                      |
+| ------------------------------------------------------------ | ----------------------------------------------------------- |
+| `npm run cipauto:scan` / `cipauto:import` / `cipauto:report` | CipAuto HTML catalog → Kupito API                           |
+| `npm run 999md:scan` / `999md:import` / `999md:report`       | 999.md GraphQL → same downstream pipeline                   |
+| `npm run cipauto:seed-registry`                              | Seed registry from existing Kupito listings (deduplication) |
+| `npm run cipauto:audit-stale`                                | Find and close listings removed from CipAuto                |
+| `npm run 999md:dealer-audit`                                 | Brand/model audit report vs live Kupito API                 |
 
 #### CipAuto registry seeding (`seed-registry`)
 
@@ -388,10 +405,11 @@ When a partner already has listings in the Kupito database **before** the first 
 The script reads all listings for a given user, extracts the CipAuto product code (`Cod Produs: XXXXX`) from descriptions, and writes `sourceListingId → kupitoListingId` mappings into the parser registry JSON. Subsequent PLP scans preserve these mappings, and PDP imports skip (or update) matched listings instead of creating duplicates.
 
 ```bash
-npm run cipauto:seed-registry -- <userId>
+npm run cipauto:seed-registry -- [--env prod] <userId>
 ```
 
 The script handles:
+
 - HTML entities in descriptions (`&nbsp;`)
 - Case normalization (uppercase `D08422` in description matches lowercase `d08422` in URL)
 - Idempotent runs (skips entries already in the registry)
@@ -407,10 +425,12 @@ Identifies Kupito listings that no longer exist on CipAuto. Works in two phases:
 
 ```bash
 # Fastest: use PLP snapshot as source of truth for active sourceIds (no HTTP)
-npm run cipauto:audit-stale -- <userId> --plp-file runtime/parsing/cipauto/cipauto-current-plp.json
+# Path is relative to cwd when not absolute; default layout when PARSING_RUNTIME_DIR is unset and cwd is core/backend:
+npm run cipauto:audit-stale -- [--env prod] <userId> --plp-file runtime/parsing/cipauto/cipauto-current-plp.json
+# With a disk mount at /var/data: --plp-file /var/data/cipauto/cipauto-current-plp.json (same value as CIPAUTO_CURRENT_PLP_PATH if set)
 
 # Full audit with website verification (read-only, ~17 min for 680 listings)
-npm run cipauto:audit-stale -- <userId>
+npm run cipauto:audit-stale -- [--env prod] <userId>
 
 # Close confirmed stale listings in the database
 npm run cipauto:audit-stale -- <userId> --plp-file <path> --close
@@ -428,15 +448,16 @@ On deployments where PLP artifacts are stored in S3 (same credentials as the app
 
 Output categories:
 
-| Category | Meaning |
-|----------|---------|
-| Active & in PLP | Listing exists on both Kupito and CipAuto — no action needed |
-| Active & NOT in PLP (confirmed) | Verified closed/sold on CipAuto — safe to close |
-| Active & NOT in PLP (still active) | Page is live but PLP missed it — do NOT close |
-| No Cod Produs | Cannot match — needs manual review |
-| Already closed | Already closed in Kupito — ignored |
+| Category                           | Meaning                                                      |
+| ---------------------------------- | ------------------------------------------------------------ |
+| Active & in PLP                    | Listing exists on both Kupito and CipAuto — no action needed |
+| Active & NOT in PLP (confirmed)    | Verified closed/sold on CipAuto — safe to close              |
+| Active & NOT in PLP (still active) | Page is live but PLP missed it — do NOT close                |
+| No Cod Produs                      | Cannot match — needs manual review                           |
+| Already closed                     | Already closed in Kupito — ignored                           |
 
 The `--close` flag performs a full listing close matching the application behavior:
+
 - Sets `status = Closed`, `closed_at`, resets all promotion fields (`is_promoted`, `promoted_until`, `promoted_started_at`, `promoted_paused_at`)
 - Ends open promotion history records for promoted listings
 - Invalidates Redis search cache (`listings:search:*`) after all closures
@@ -461,6 +482,7 @@ From the **platform repo root**, the same flows are exposed as `npm run 999md:*`
 ## Migration Scripts
 
 Database migrations are handled separately and are located in:
+
 - `src/migrations/` - Migration files
 - Run with: `npm run migration:run`
 - Revert with: `npm run migration:revert`
@@ -475,11 +497,13 @@ Database migrations are handled separately and are located in:
 ## Database Backups
 
 For automated database backups, see:
+
 - **Documentation**: `../../docs/guides/DEPLOYMENT.md` (Database Backups section)
 - **TypeScript script**: `src/scripts/production/backup-database.ts`
 - **Bash script**: `config/scripts/backup-database.sh` (for cron)
 
 Quick usage:
+
 ```bash
 # Manual backup
 npm run backup
@@ -487,4 +511,3 @@ npm run backup
 # With custom options
 npm run backup -- --output-dir /path/to/backups --keep-days 60
 ```
-

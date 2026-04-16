@@ -10,7 +10,9 @@ import { IsNull } from 'typeorm';
 import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
 import { PromotionHistory } from '../../../../listings/entities/promotion-history.entity';
+import { normalizeRuntimeEnv, resolveConfig } from '../config';
 import { RegistryStore } from '../storage/registry';
+import type { RuntimeEnv } from '../types';
 
 const COD_PRODUS_RE = /Cod\s+[Pp]rodus\s*:(?:\s|&nbsp;)*\s*([A-Za-z0-9]+)/;
 const CIPAUTO_BASE = 'https://cipauto.md';
@@ -238,15 +240,73 @@ async function invalidateRedisCache(): Promise<void> {
   }
 }
 
+function parseAuditStaleArgv(): {
+  userId: string;
+  env: RuntimeEnv;
+  closeFlag: boolean;
+  skipVerify: boolean;
+  verifyAll: boolean;
+  plpFilePath: string | undefined;
+} {
+  const raw = process.argv.slice(2);
+  let env = normalizeRuntimeEnv(undefined);
+  let plpFilePath: string | undefined;
+  const positional: string[] = [];
+  let closeFlag = false;
+  let skipVerify = false;
+  let verifyAll = false;
+
+  for (let i = 0; i < raw.length; i++) {
+    const a = raw[i];
+    if (a === '--env' && raw[i + 1]) {
+      env = normalizeRuntimeEnv(raw[i + 1]);
+      i += 1;
+      continue;
+    }
+    if (a === '--close') {
+      closeFlag = true;
+      continue;
+    }
+    if (a === '--skip-verify') {
+      skipVerify = true;
+      continue;
+    }
+    if (a === '--verify-all') {
+      verifyAll = true;
+      continue;
+    }
+    if (a === '--plp-file' && raw[i + 1]) {
+      plpFilePath = raw[i + 1];
+      i += 1;
+      continue;
+    }
+    if (!a.startsWith('--')) {
+      positional.push(a);
+    }
+  }
+
+  return {
+    userId: positional[0] ?? '',
+    env,
+    closeFlag,
+    skipVerify,
+    verifyAll,
+    plpFilePath,
+  };
+}
+
 async function auditStaleListings() {
-  const userId = process.argv[2];
+  const { userId, env, closeFlag, skipVerify, verifyAll, plpFilePath } = parseAuditStaleArgv();
   if (!userId) {
-    console.error('Usage: npm run cipauto:audit-stale -- <userId> [--close] [--skip-verify]');
     console.error(
-      'Alternative: npx ts-node src/scripts/tools/cipauto-import/commands/audit-stale-listings.ts <userId> [--close] [--skip-verify]',
+      'Usage: npm run cipauto:audit-stale -- [--env local|prod] <userId> [--close] [--skip-verify]',
+    );
+    console.error(
+      'Alternative: npx ts-node src/scripts/tools/cipauto-import/commands/audit-stale-listings.ts [--env prod] <userId> [--close] [--skip-verify]',
     );
     console.error('  userId — UUID of the CipAuto partner user in Kupito DB');
     console.error('Flags:');
+    console.error('  --env <local|prod>      Filesystem paths from resolveConfig (default local)');
     console.error('  --close                 Close confirmed stale listings in DB');
     console.error('  --skip-verify           Skip CipAuto website verification');
     console.error(
@@ -257,13 +317,6 @@ async function auditStaleListings() {
     );
     process.exit(1);
   }
-
-  const closeFlag = process.argv.includes('--close');
-  const skipVerify = process.argv.includes('--skip-verify');
-  const verifyAll = process.argv.includes('--verify-all');
-
-  const plpFileIdx = process.argv.indexOf('--plp-file');
-  const plpFilePath = plpFileIdx !== -1 ? process.argv[plpFileIdx + 1] : undefined;
 
   console.log(`[audit] Connecting to database...`);
   await AppDataSource.initialize();
@@ -277,7 +330,7 @@ async function auditStaleListings() {
 
   console.log(`[audit] Found ${listings.length} Kupito listings for user ${userId}`);
 
-  const registryPath = path.join(__dirname, '..', 'data', 'cipauto-registry.json');
+  const { registryPath } = resolveConfig(env);
   const registry = new RegistryStore(registryPath);
   const registryItems = registry.getAll();
 

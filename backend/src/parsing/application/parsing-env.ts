@@ -63,5 +63,19 @@ export function buildParsingChildProcessEnv(targetEnv: ParserTargetEnv): NodeJS.
     out.KUPITO_IMPORT_SECRET = importSecret;
   }
   out.ADMIN_PARSING_TARGET_ENV = targetEnv;
+  const parsingRuntimeEnvKeys = [
+    'PARSING_RUNTIME_DIR',
+    'CIPAUTO_REGISTRY_PATH',
+    'CIPAUTO_CURRENT_PLP_PATH',
+    'CIPAUTO_REPORTS_DIR',
+    'SITE999MD_REGISTRY_PATH',
+    'SITE999MD_REPORTS_DIR',
+  ] as const;
+  for (const key of parsingRuntimeEnvKeys) {
+    const value = process.env[key]?.trim();
+    if (value) {
+      out[key] = value;
+    }
+  }
   return out;
 }

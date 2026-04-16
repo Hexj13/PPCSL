@@ -1,11 +1,10 @@
 import 'reflect-metadata';
 
-import * as path from 'path';
-
 import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
+import { normalizeRuntimeEnv, resolveConfig } from '../config';
 import { RegistryStore } from '../storage/registry';
-import type { RegistryItem } from '../types';
+import type { RegistryItem, RuntimeEnv } from '../types';
 
 const COD_PRODUS_RE = /Cod\s+[Pp]rodus\s*:(?:\s|&nbsp;)*\s*([A-Za-z0-9]+)/;
 const CIPAUTO_BASE = 'https://cipauto.md';
@@ -29,12 +28,30 @@ function buildCipautoUrl(sourceId: string, title?: string): string {
   return `${CIPAUTO_BASE}/vehicul/${sourceId}-${slug}/`;
 }
 
+function parseSeedArgv(): { userId: string; env: RuntimeEnv } {
+  const args = process.argv.slice(2);
+  let env = normalizeRuntimeEnv(undefined);
+  const positional: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--env' && args[i + 1]) {
+      env = normalizeRuntimeEnv(args[i + 1]);
+      i += 1;
+      continue;
+    }
+    if (!args[i].startsWith('--')) {
+      positional.push(args[i]);
+    }
+  }
+  const userId = positional[0];
+  return { userId: userId ?? '', env };
+}
+
 async function seedRegistry() {
-  const userId = process.argv[2];
+  const { userId, env } = parseSeedArgv();
   if (!userId) {
-    console.error('Usage: npm run cipauto:seed-registry -- <userId>');
+    console.error('Usage: npm run cipauto:seed-registry -- [--env local|prod] <userId>');
     console.error(
-      'Alternative: npx ts-node src/scripts/tools/cipauto-import/commands/seed-registry.ts <userId>',
+      'Alternative: npx ts-node src/scripts/tools/cipauto-import/commands/seed-registry.ts [--env prod] <userId>',
     );
     console.error('  userId — UUID of the CipAuto partner user in Kupito DB');
     process.exit(1);
@@ -58,7 +75,7 @@ async function seedRegistry() {
     return;
   }
 
-  const registryPath = path.join(__dirname, '..', 'data', 'cipauto-registry.json');
+  const { registryPath } = resolveConfig(env);
   const registry = new RegistryStore(registryPath);
   const existingItems = registry.getAll();
   const existingByKupitoId = new Map(

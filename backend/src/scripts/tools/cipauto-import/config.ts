@@ -1,18 +1,22 @@
 import * as path from 'path';
 
+import { resolveParsingRuntimeRoot } from '../../../common/parsing-runtime-path';
 import { resolveKupitoImportCredentials } from '../partner-import-shared/kupito-env';
 
 import type { CipautoConfig, RuntimeEnv } from './types';
 
-const ROOT_DIR = path.resolve(__dirname);
 const DEFAULT_CIPAUTO_BASE_URL = 'https://cipauto.md';
 
-function resolveParsingRuntimeRoot(): string {
-  const fromEnv = process.env.PARSING_RUNTIME_DIR?.trim();
-  if (fromEnv) {
-    return path.isAbsolute(fromEnv) ? fromEnv : path.join(process.cwd(), fromEnv);
+function resolveOptionalEnvPath(envKey: string): string | undefined {
+  const raw = process.env[envKey]?.trim();
+  if (!raw) {
+    return undefined;
   }
-  return path.join(process.cwd(), 'runtime', 'parsing');
+  return path.isAbsolute(raw) ? raw : path.join(process.cwd(), raw);
+}
+
+export function resolveCipautoStateDir(runtimeRoot: string): string {
+  return path.join(runtimeRoot, 'cipauto');
 }
 
 export {
@@ -31,14 +35,19 @@ export function resolveConfig(
 ): CipautoConfig {
   const creds = resolveKupitoImportCredentials(env, options);
   const runtimeRoot = resolveParsingRuntimeRoot();
+  const stateDir = resolveCipautoStateDir(runtimeRoot);
 
   return {
     env,
     ...creds,
     cipautoBaseUrl: process.env.CIPAUTO_BASE_URL?.trim() ?? DEFAULT_CIPAUTO_BASE_URL,
-    registryPath: path.join(ROOT_DIR, 'data', 'cipauto-registry.json'),
-    currentPlpPath: path.join(runtimeRoot, 'cipauto', 'cipauto-current-plp.json'),
-    reportsDir: path.join(ROOT_DIR, 'reports'),
+    registryPath:
+      resolveOptionalEnvPath('CIPAUTO_REGISTRY_PATH') ??
+      path.join(stateDir, 'cipauto-registry.json'),
+    currentPlpPath:
+      resolveOptionalEnvPath('CIPAUTO_CURRENT_PLP_PATH') ??
+      path.join(stateDir, 'cipauto-current-plp.json'),
+    reportsDir: resolveOptionalEnvPath('CIPAUTO_REPORTS_DIR') ?? path.join(stateDir, 'reports'),
     requestTimeoutMs: Number(process.env.CIPAUTO_REQUEST_TIMEOUT_MS ?? 20000),
     maxRetries: Number(process.env.CIPAUTO_MAX_RETRIES ?? 3),
     defaultDelayMs: Number(process.env.CIPAUTO_DEFAULT_DELAY_MS ?? 3000),

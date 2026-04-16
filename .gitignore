@@ -9,6 +9,8 @@ dist/
 build/
 frontend/.next/
 backend/dist/
+backend/tsconfig.tsbuildinfo
+backend/tsconfig.build.tsbuildinfo
 
 # Environment variables
 .env

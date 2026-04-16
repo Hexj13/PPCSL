@@ -42,7 +42,7 @@ The framework is parser-agnostic. Parser implementations are platform-specific.
 5. Final run status and summary are persisted to `parser_runs`.
 6. Schedules are persisted in `parser_schedules`.
 
-Parser artifacts (registry, current PLP snapshot, JSON reports) stay in parser-owned `data/` and `reports/` folders.
+Parser artifacts on disk live under `PARSING_RUNTIME_DIR` (default `<backend cwd>/runtime/parsing/<parser>/`: registry JSON, PLP paths from the catalog, `reports/`). The backend and import CLIs use the same root resolver (`src/common/parsing-runtime-path.ts`). PLP files are written and read primarily on disk; when AWS S3 credentials are configured, objects are mirrored under the `parsing-plp/` prefix for backup and cross-host reads.
 
 ## Schedules
 
@@ -73,6 +73,7 @@ Important variables:
 - `ADMIN_PARSING_IMPORT_SECRET`
 - `ADMIN_PARSING_SCHEDULER_ENABLED`
 - `ADMIN_PARSING_CANCEL_GRACE_MS`
+- `PARSING_RUNTIME_DIR` (and optional `CIPAUTO_*` / `SITE999MD_*` path overrides) — same semantics as partner import CLIs; forwarded into parser child processes when set
 
 Optional parser-specific CLI overrides:
 
