@@ -11,8 +11,8 @@
     "lib": ["ES2021"],
     "types": ["node"],
     "sourceMap": true,
+    "rootDir": "./src",
     "outDir": "./dist",
-    "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
@@ -28,10 +28,10 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "paths": {
-      "@/*": ["src/*"],
-      "@constants": ["src/common/constants.ts"],
-      "@types": ["src/common/types.ts"],
-      "@common/*": ["src/common/*"]
+      "@/*": ["./src/*"],
+      "@constants": ["./src/common/constants.ts"],
+      "@types": ["./src/common/types.ts"],
+      "@common/*": ["./src/common/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
