@@ -91,6 +91,7 @@ program
   .option('--limit <number>')
   .option('--resume')
   .option('--dry-run')
+  .option('--remove-closed')
   .option('--only-failed')
   .option('--update-existing')
   .option('--source-id <value>')
@@ -110,6 +111,7 @@ program
       limit: rawOptions.limit ? Number(rawOptions.limit) : undefined,
       resume: Boolean(rawOptions.resume),
       dryRun: Boolean(rawOptions.dryRun),
+      removeClosed: Boolean(rawOptions.removeClosed),
       onlyFailed: Boolean(rawOptions.onlyFailed),
       updateExisting: Boolean(rawOptions.updateExisting),
       sourceId: rawOptions.sourceId ? String(rawOptions.sourceId) : undefined,

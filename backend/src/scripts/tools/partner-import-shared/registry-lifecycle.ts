@@ -110,7 +110,7 @@ export function finalizeRegistryAfterPlpScan<TItem extends BaseRegistryItem<stri
 
 export function selectImportCandidates<TItem extends BaseRegistryItem<string>>(
   items: TItem[],
-  options: Pick<ImportCommandOptions, 'sourceId' | 'onlyFailed' | 'resume'>,
+  options: Pick<ImportCommandOptions, 'sourceId' | 'onlyFailed' | 'resume' | 'removeClosed'>,
 ): TItem[] {
   const ordered = [...items].sort((a, b) => {
     const statusRank =
@@ -126,16 +126,38 @@ export function selectImportCandidates<TItem extends BaseRegistryItem<string>>(
   }
 
   if (options.onlyFailed) {
-    return ordered.filter(
-      (item) => normalizeSourceStatus(item) !== 'closed' && item.state === 'failed',
-    );
+    return ordered.filter((item) => {
+      if (item.state !== 'failed') {
+        return false;
+      }
+      const sourceStatus = normalizeSourceStatus(item);
+      if (sourceStatus === 'closed') {
+        return Boolean(options.removeClosed);
+      }
+      return true;
+    });
   }
 
   return ordered.filter((item) => {
     const sourceStatus = normalizeSourceStatus(item);
 
     if (sourceStatus === 'closed') {
-      return false;
+      if (!options.removeClosed) {
+        return false;
+      }
+      if (
+        options.resume &&
+        (item.state === 'created' || item.state === 'updated' || item.state === 'skipped')
+      ) {
+        return false;
+      }
+      return (
+        item.state === 'discovered' ||
+        item.state === 'pdp_parsed' ||
+        item.state === 'failed' ||
+        item.state === 'closed' ||
+        item.state === 'manual_review'
+      );
     }
 
     if (sourceStatus === 'missing_candidate') {
