@@ -198,11 +198,22 @@ export class CliParserRunnerService {
     );
     const child = custom
       ? this.spawnCustomShell(custom.command, custom.args, commandArgs, extraEnv)
-      : spawn('npx', ['ts-node', '-r', 'tsconfig-paths/register', cliTs, ...commandArgs], {
-          cwd: backendRoot,
-          env: { ...process.env, ...extraEnv },
-          shell: false,
-        });
+      : spawn(
+          process.execPath,
+          [
+            '-r',
+            require.resolve('ts-node/register'),
+            '-r',
+            require.resolve('tsconfig-paths/register'),
+            cliTs,
+            ...commandArgs,
+          ],
+          {
+            cwd: backendRoot,
+            env: { ...process.env, ...extraEnv },
+            shell: false,
+          },
+        );
     const proc = child as ChildProcessWithoutNullStreams;
     proc.once('error', (error) => {
       this.logger.error(`[CLI][process-error] parser=${parserCode} ${error.message}`);
