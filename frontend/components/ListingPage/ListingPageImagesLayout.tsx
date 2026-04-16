@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  useEffect,
-  useState,
-  type Dispatch,
-  type MutableRefObject,
-  type SetStateAction,
-} from 'react';
+import { type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
 import { Spinner } from '@/ui';
 
@@ -74,22 +68,7 @@ export function ListingPageImagesLayout({
   setCurrentImageIndex,
   handleThumbnailImageLoad,
 }: ListingPageImagesLayoutProps) {
-  const [isMobileViewport, setIsMobileViewport] = useState(true);
-
-  useEffect(() => {
-    const updateViewport = () => {
-      setIsMobileViewport(window.innerWidth < 640);
-    };
-
-    updateViewport();
-    window.addEventListener('resize', updateViewport);
-
-    return () => {
-      window.removeEventListener('resize', updateViewport);
-    };
-  }, []);
-
-  const renderThumbnail = (img: string, index: number) => (
+  const renderThumbnail = (img: string, index: number, className?: string) => (
     <div
       key={index}
       onClick={() => navigateTo(index, { clearTimer: true })}
@@ -105,7 +84,7 @@ export function ListingPageImagesLayout({
         visibleIndex === index
           ? 'ring-2 ring-primary-500 shadow-md'
           : 'hover-only:hover:ring-2 hover-only:hover:ring-primary-300'
-      }`}
+      } ${className ?? ''}`}
     >
       {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
         <ListingThumbnailTile
@@ -225,10 +204,10 @@ export function ListingPageImagesLayout({
       </div>
 
       {images.length > 1 && (
-        <div className={`grid gap-2 ${isMobileViewport ? 'grid-cols-3' : 'grid-cols-4'}`}>
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
           {images
-            .slice(0, isMobileViewport ? 3 : 4)
-            .map((img, index) => renderThumbnail(img, index))}
+            .slice(0, 4)
+            .map((img, index) => renderThumbnail(img, index, index === 3 ? 'hidden sm:block' : ''))}
         </div>
       )}
     </div>

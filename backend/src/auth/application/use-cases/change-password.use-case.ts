@@ -17,7 +17,7 @@ export class ChangePasswordUseCase {
   ) {}
 
   async execute(userId: string, dto: ChangePasswordDto, requestLocale?: string): Promise<void> {
-    const user = await this.usersService.findOneById(userId);
+    const user = await this.usersService.findOneByIdWithPassword(userId);
 
     const currentOk = await this.passwordService.verify(dto.currentPassword, user.password);
     if (!currentOk) {

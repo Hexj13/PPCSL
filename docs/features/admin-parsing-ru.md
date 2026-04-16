@@ -1,3 +1,13 @@
+---
+title: Admin parsing tab (RU)
+owner: platform
+tags:
+  - type/feature
+  - domain/parsing
+  - scope/core
+  - status/active
+---
+
 # Вкладка `Парсинг` в админке (as-is)
 
 ## Назначение

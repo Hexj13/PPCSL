@@ -553,7 +553,15 @@ export default function MyListingsPage() {
   const { isLoading, isAuthorized, showSkeleton, listings } = state;
   const showInitialSkeleton = showSkeleton && listings.length === 0;
 
-  if (isLoading || !isAuthorized) {
+  if (isLoading) {
+    return (
+      <div className="min-h-[calc(100vh-200px)]" data-testid="my-listings-page">
+        <MyListingsSkeleton t={t} />
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
     return null;
   }
 

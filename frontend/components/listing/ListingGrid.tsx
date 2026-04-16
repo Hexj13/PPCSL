@@ -18,6 +18,7 @@ import {
 import { LISTING_GRID_PAGE_SIZE, SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY } from '@/lib/constants';
 import { buildMinimalCategorySearchUrl, getParsedListingSearchParams } from '@/lib/search';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
+import { silentCatch } from '@/lib/utils';
 
 import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
@@ -73,9 +74,66 @@ function getVehicleTypeFromParams(searchParamsString: string): 'car' | 'truck' |
 async function fetchListingsPage(
   params: Record<string, string | number | boolean>,
   page: number,
+  signal?: AbortSignal,
 ): Promise<{ data: Listing[]; meta: PaginationMeta }> {
-  const res = await listingsApi.getAll({ ...params, page });
+  const res = await listingsApi.getAll({ ...params, page }, signal ? { signal } : undefined);
   return { data: res.data.data, meta: res.data.meta };
+}
+
+async function buildFetchParams(searchParamsString: string) {
+  const vehicleType = getVehicleTypeFromParams(searchParamsString);
+  const parsedParams = await getParsedListingSearchParams(searchParamsString, vehicleType);
+  const isTireCategory = parsedParams.category === 'tire';
+  const limitFromParams = Number(parsedParams.limit);
+  const hasValidLimitInSearch =
+    Number.isFinite(limitFromParams) && Number.isInteger(limitFromParams) && limitFromParams > 0;
+  let urlHasExplicitLimit = false;
+  try {
+    urlHasExplicitLimit = new URLSearchParams(searchParamsString).has('limit');
+  } catch {
+    urlHasExplicitLimit = false;
+  }
+  const effectiveLimit =
+    urlHasExplicitLimit && hasValidLimitInSearch ? limitFromParams : LISTING_GRID_PAGE_SIZE;
+  return {
+    ...parsedParams,
+    ...(!isTireCategory ? { vehicleType } : {}),
+    limit: effectiveLimit,
+  } as Record<string, string | number | boolean>;
+}
+
+function handleSearchLimitOverflowError(
+  error: unknown,
+  searchParamsString: string,
+  router: ReturnType<typeof useRouter>,
+): boolean {
+  if (!isAxiosError(error) || error.response?.status !== 400) return false;
+  const errorKey = (error.response.data as { errorKey?: string } | undefined)?.errorKey;
+  if (errorKey !== 'errors.searchBrandIdsLimit' && errorKey !== 'errors.searchModelIdsLimit') {
+    return false;
+  }
+  if (typeof window !== 'undefined') {
+    sessionStorageSetItem(
+      SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY,
+      'searchFilters.invalidUrlSelectionLimits',
+    );
+  }
+  console.error('Search filters API rejected limit-overflow query', {
+    errorKey,
+    searchParams: searchParamsString,
+  });
+  router.replace('/');
+  return true;
+}
+
+function dispatchAnalyticsForNewListings(newListings: Listing[]) {
+  if (newListings.length === 0) return;
+  const items = newListings.map((listing) => listingToViewItemListEntry(listing));
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(() => analytics.viewItemList(items), { timeout: 500 });
+  } else {
+    setTimeout(() => analytics.viewItemList(items), 0);
+  }
 }
 
 export function ListingGrid({ initialData }: ListingGridProps) {
@@ -96,6 +154,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const { user } = useAuthStore();
   const { setFavorites } = useFavoritesStore();
   const prevSearchParamsStringRef = useRef<string | null>(null);
+  const fetchControllerRef = useRef<AbortController | null>(null);
   const gridSearchParamsEffectInitializedRef = useRef(false);
   const skipClientFetchOnMountRef = useRef<boolean | undefined>(undefined);
   if (skipClientFetchOnMountRef.current === undefined) {
@@ -131,27 +190,11 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
   const fetchListings = useCallback(
     async (page: number, append: boolean = false) => {
-      const vehicleType = getVehicleTypeFromParams(searchParamsString);
-      const parsedParams = await getParsedListingSearchParams(searchParamsString, vehicleType);
-      const isTireCategory = parsedParams.category === 'tire';
-      const limitFromParams = Number(parsedParams.limit);
-      const hasValidLimitInSearch =
-        Number.isFinite(limitFromParams) &&
-        Number.isInteger(limitFromParams) &&
-        limitFromParams > 0;
-      let urlHasExplicitLimit = false;
-      try {
-        urlHasExplicitLimit = new URLSearchParams(searchParamsString).has('limit');
-      } catch {
-        urlHasExplicitLimit = false;
-      }
-      const effectiveLimit =
-        urlHasExplicitLimit && hasValidLimitInSearch ? limitFromParams : LISTING_GRID_PAGE_SIZE;
-      const params: Record<string, string | number | boolean> = {
-        ...parsedParams,
-        ...(!isTireCategory ? { vehicleType } : {}),
-        limit: effectiveLimit,
-      };
+      fetchControllerRef.current?.abort();
+      const controller = new AbortController();
+      fetchControllerRef.current = controller;
+
+      const params = await buildFetchParams(searchParamsString);
 
       let loadMoreStartedAt = 0;
       let appendDeferred = false;
@@ -164,11 +207,13 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       }
 
       try {
-        const firstRes = await fetchListingsPage(params, page);
+        const firstRes = await fetchListingsPage(params, page, controller.signal);
+        if (controller.signal.aborted) return;
         const allNewListings = firstRes.data;
         const finalMeta = firstRes.meta;
 
         await checkFavorites(allNewListings.map((l) => l.id));
+        if (controller.signal.aborted) return;
 
         if (!append) {
           startTransition(() => {
@@ -179,14 +224,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             setMeta(finalMeta);
             setError(null);
             setHasLoadedWithFilters(true);
-            if (allNewListings.length > 0) {
-              const items = allNewListings.map((listing) => listingToViewItemListEntry(listing));
-              if (typeof requestIdleCallback !== 'undefined') {
-                requestIdleCallback(() => analytics.viewItemList(items), { timeout: 500 });
-              } else {
-                setTimeout(() => analytics.viewItemList(items), 0);
-              }
-            }
+            dispatchAnalyticsForNewListings(allNewListings);
           });
         } else {
           appendDeferred = true;
@@ -207,40 +245,24 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           }, remaining);
         }
       } catch (error) {
-        if (isAxiosError(error) && error.response?.status === 400) {
-          const errorKey = (error.response.data as { errorKey?: string } | undefined)?.errorKey;
-          if (
-            errorKey === 'errors.searchBrandIdsLimit' ||
-            errorKey === 'errors.searchModelIdsLimit'
-          ) {
-            if (typeof window !== 'undefined') {
-              sessionStorageSetItem(
-                SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY,
-                'searchFilters.invalidUrlSelectionLimits',
-              );
-            }
-            console.error('Search filters API rejected limit-overflow query', {
-              errorKey,
-              searchParams: searchParamsString,
-            });
-            router.replace('/');
-            return;
-          }
-        }
+        if (controller.signal.aborted) return;
+        if (handleSearchLimitOverflowError(error, searchParamsString, router)) return;
         if (!append) {
           setListings([]);
           setError(t('listings.loadError'));
           setHasLoadedWithFilters(true);
         }
       } finally {
-        if (!appendDeferred) {
-          setLoadingMore(false);
-        }
-        if (!append) {
-          setLoading(false);
-        }
-        if (!append && typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('searchComplete'));
+        if (!controller.signal.aborted) {
+          if (!appendDeferred) {
+            setLoadingMore(false);
+          }
+          if (!append) {
+            setLoading(false);
+          }
+          if (!append && typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('searchComplete'));
+          }
         }
       }
     },
@@ -274,18 +296,12 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         typeof window !== 'undefined' ? sessionStorageGetItem('homeScrollTimestamp') : null;
       const saved = loadGridState();
       const skipInitialFetch = Boolean(ts && saved && saved.page > 1);
-      if (skipInitialFetch) {
+      if (skipInitialFetch || skipClientFetchOnMountRef.current === true) {
         setHasLoadedWithFilters(true);
-        return;
+      } else {
+        void fetchListingsRef.current(1, false);
       }
-      if (skipClientFetchOnMountRef.current === true) {
-        setHasLoadedWithFilters(true);
-        return;
-      }
-      void fetchListingsRef.current(1, false);
-      return;
-    }
-    if (searchParamsString !== prevSearchParamsStringRef.current) {
+    } else if (searchParamsString !== prevSearchParamsStringRef.current) {
       prevSearchParamsStringRef.current = searchParamsString;
       setCurrentPage(1);
       setHasLoadedWithFilters(false);
@@ -295,6 +311,10 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       sessionStorageRemoveItem('homeScrollTimestamp');
       void fetchListingsRef.current(1, false);
     }
+
+    return () => {
+      fetchControllerRef.current?.abort();
+    };
   }, [searchParamsString]);
 
   useEffect(() => {
@@ -351,7 +371,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             const updatedFavorites = new Set([...currentFavorites, ...favoriteIds]);
             setFavorites(Array.from(updatedFavorites));
           })
-          .catch(() => {});
+          .catch(silentCatch('ListingGrid.batchFavoritesCheck'));
       }
 
       analytics.viewItemList(

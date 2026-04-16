@@ -17,7 +17,7 @@ Frontend-specific documentation for PPCSL Next.js application.
 - **[design-system.md](./design-system.md)** - Design system and UI components
 - **[STORYBOOK.md](./STORYBOOK.md)** - Storybook setup guide
 - **[e2e-playwright.md](./e2e-playwright.md)** - Playwright end-to-end testing guide
-- **[LINTING.md](../../docs/LINTING.md)** - ESLint configuration and rules
+- **[linting.md](../../docs/engineering/linting.md)** - ESLint configuration and rules
 
 ## 🏗️ Key Architecture
 

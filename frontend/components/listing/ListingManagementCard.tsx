@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { CopyButton } from '@/components/common/CopyButton';
 import {
@@ -14,6 +14,7 @@ import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
+import { setBlurForListing } from '@/lib/blur-navigation-cache';
 import {
   formatBodyType,
   formatDriveType,
@@ -25,6 +26,7 @@ import {
   getVehicleType,
   isTireListing,
 } from '@/lib/utils';
+import { blurhashToDataURL } from '@/lib/utils/blurhash';
 import { EditIcon } from '@/ui';
 
 const SPARKLES_EMOJI = '\u2728';
@@ -321,6 +323,17 @@ export function ListingManagementCard({
   const hasImage = imageUrl !== '/placeholder-car.jpg' && !imageError;
   const optimizedImageUrl = hasImage ? getOptimizedImageUrl(imageUrl, 70, 900) : '';
 
+  const blurDataURL = useMemo(
+    () => (listing.cover_blur_hash ? blurhashToDataURL(listing.cover_blur_hash) : undefined),
+    [listing.cover_blur_hash],
+  );
+
+  const handleLinkClick = () => {
+    if (listing.cover_blur_hash) {
+      setBlurForListing(listing.id, listing.cover_blur_hash, listing.images?.[0]);
+    }
+  };
+
   const isAdminMode = mode === 'admin';
   const isBoardMode = mode === 'board';
   const myListingsCardTestId =
@@ -335,6 +348,7 @@ export function ListingManagementCard({
           href={`/listings/${listing.id}`}
           className="shrink-0"
           data-testid={myListingsCardLinkTestId}
+          onClick={handleLinkClick}
         >
           <div className="relative w-full h-[200px] sm:h-[250px] lg:h-full lg:min-h-[250px] bg-bg-darker overflow-hidden rounded-t-xl lg:rounded-tl-xl lg:rounded-bl-xl lg:rounded-tr-none lg:rounded-br-none">
             {hasImage ? (
@@ -350,6 +364,8 @@ export function ListingManagementCard({
                   optimizedImageUrl.startsWith('http://') ||
                   optimizedImageUrl.startsWith('https://')
                 }
+                placeholder={blurDataURL ? 'blur' : undefined}
+                blurDataURL={blurDataURL}
                 onError={() => setImageError(true)}
               />
             ) : (
@@ -369,7 +385,11 @@ export function ListingManagementCard({
         <div className="flex-1 p-4 sm:p-5 flex flex-col min-w-0">
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 lg:gap-6">
             <div className="flex-1 min-w-0">
-              <Link href={`/listings/${listing.id}`} className="mb-3 block group">
+              <Link
+                href={`/listings/${listing.id}`}
+                className="mb-3 block group"
+                onClick={handleLinkClick}
+              >
                 <div className="flex items-start gap-1.5">
                   <h3 className="font-bold text-base md:text-lg text-primary-900 line-clamp-2">
                     {displayTitle}

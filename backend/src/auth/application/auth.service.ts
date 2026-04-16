@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 
-import { ListingsService } from '../../listings/listings.service';
 import { UsersService } from '../../users/application/users.service';
 import { EmailService } from '../infrastructure/services/email.service';
 import { RefreshTokenService } from '../infrastructure/services/refresh-token.service';
@@ -45,7 +44,6 @@ export class AuthService {
     private usersService: UsersService,
     private smsService: SmsService,
     private emailService: EmailService,
-    private listingsService: ListingsService,
     private refreshTokenService: RefreshTokenService,
     private registerUserUseCase: RegisterUserUseCase,
     private loginUserUseCase: LoginUserUseCase,

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button } from '@/ui';
+import { Button, designTokens } from '@/ui';
 
 import type { DropdownOption } from './dropdown-types';
 
@@ -143,9 +143,9 @@ export function DropdownMenu({
       className={`bg-white border-2 border-primary-500/30 rounded-lg shadow-xl ${
         isPortaled
           ? ''
-          : `absolute z-100 ${widthClass} ${openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'}`
+          : `absolute ${widthClass} ${openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'}`
       } ${!isPositioned ? 'opacity-0 pointer-events-none' : ''}`}
-      style={portalStyle}
+      style={isPortaled ? portalStyle : { zIndex: designTokens.zIndex.dropdown }}
       data-testid={dataTestId ? `${dataTestId}-menu` : undefined}
     >
       <div className={scrollClass} style={scrollStyle}>

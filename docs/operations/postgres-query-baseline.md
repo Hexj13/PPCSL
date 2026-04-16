@@ -1,3 +1,13 @@
+---
+title: Postgres query baseline and operations
+owner: platform
+tags:
+  - type/runbook
+  - domain/ops
+  - scope/core
+  - status/active
+---
+
 # Postgres query baseline and operations (Render)
 
 Runbook after upgrading Render Postgres or when investigating slow queries, 503s, and pool timeouts.

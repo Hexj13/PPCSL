@@ -151,6 +151,7 @@ export interface BuildListingPayloadInput {
   mappedEnums: MappedVehicleEnums;
   horsepower: number;
   vehicleType?: PartnerImportVehicleType;
+  imageBlurHashes?: (string | null)[];
 }
 
 export interface ImportFailedItem {
@@ -187,6 +188,7 @@ export type RefreshResponse = LoginResponse;
 export interface UploadResult {
   url: string;
   path: string;
+  blurhash?: string | null;
 }
 
 export interface KupitoCreateListingPayload {
@@ -198,6 +200,7 @@ export interface KupitoCreateListingPayload {
   down_payment_amount?: number | null;
   description?: string;
   images: string[];
+  image_blur_hashes?: (string | null)[];
   status?: ListingStatus;
   condition: ConditionType;
   registration_type: RegistrationType;

@@ -24,43 +24,7 @@ export class LoginUserUseCase {
   ) {}
 
   async execute(loginDto: LoginDto, ip?: string): Promise<LoginResponse> {
-    let user = await this.validateUser(loginDto.login, loginDto.password);
-
-    if (!user) {
-      const isEmail = loginDto.login.includes('@');
-      const normalizedPhone = isEmail ? null : this.smsService.normalizePhoneNumber(loginDto.login);
-      const foundUser = isEmail
-        ? await this.usersService.findByEmail(loginDto.login)
-        : normalizedPhone
-          ? await this.usersService.findByPhone(normalizedPhone)
-          : null;
-
-      if (!foundUser) {
-        throw new UnauthorizedException('errors.invalidLoginCredentials');
-      }
-
-      const passwordIsValid = await this.passwordService.verify(
-        loginDto.password,
-        foundUser.password,
-      );
-
-      if (!passwordIsValid) {
-        throw new UnauthorizedException('errors.invalidLoginCredentials');
-      }
-
-      if (!foundUser.active) {
-        throw new UnauthorizedException('errors.userDeactivated');
-      }
-      if (
-        isEmail &&
-        foundUser.email &&
-        foundUser.type !== UserType.Admin &&
-        foundUser.emailVerified !== true
-      ) {
-        throw new UnauthorizedException('errors.emailNotVerifiedForLogin');
-      }
-      user = removePasswordFromUser(foundUser) as UserWithoutPassword;
-    }
+    const user = await this.authenticateUser(loginDto.login, loginDto.password);
 
     await this.usersService.update(user.id, {
       last_login_at: new Date(),
@@ -96,23 +60,35 @@ export class LoginUserUseCase {
   }
 
   async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
+    try {
+      return await this.authenticateUser(login, password);
+    } catch (error) {
+      if (error instanceof UnauthorizedException) return null;
+      throw error;
+    }
+  }
+
+  private async authenticateUser(login: string, password: string): Promise<UserWithoutPassword> {
     const isEmail = login.includes('@');
     const normalizedPhone = isEmail ? null : this.smsService.normalizePhoneNumber(login);
     const user = isEmail
-      ? await this.usersService.findByEmail(login)
+      ? await this.usersService.findByEmailWithPassword(login)
       : normalizedPhone
-        ? await this.usersService.findByPhone(normalizedPhone)
+        ? await this.usersService.findByPhoneWithPassword(normalizedPhone)
         : null;
 
-    if (user && (await this.passwordService.verify(password, user.password))) {
-      if (!user.active) {
-        return null;
-      }
-      if (isEmail && user.email && user.type !== UserType.Admin && user.emailVerified !== true) {
-        return null;
-      }
-      return removePasswordFromUser(user) as UserWithoutPassword;
+    if (!user || !(await this.passwordService.verify(password, user.password))) {
+      throw new UnauthorizedException('errors.invalidLoginCredentials');
     }
-    return null;
+
+    if (!user.active) {
+      throw new UnauthorizedException('errors.userDeactivated');
+    }
+
+    if (isEmail && user.email && user.type !== UserType.Admin && user.emailVerified !== true) {
+      throw new UnauthorizedException('errors.emailNotVerifiedForLogin');
+    }
+
+    return removePasswordFromUser(user) as UserWithoutPassword;
   }
 }

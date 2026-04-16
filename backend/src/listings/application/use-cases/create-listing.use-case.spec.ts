@@ -46,8 +46,10 @@ function createUseCase(mocks: {
   tireModelRepository?: Partial<Repository<TireModel>>;
   tireBrandRepository?: Partial<Repository<TireBrand>>;
 }) {
+  const saveMock = jest.fn();
   const listingRepo = {
-    save: jest.fn(),
+    save: saveMock,
+    saveWithActiveLimit: jest.fn().mockImplementation((listing: unknown) => saveMock(listing)),
     countActiveByUser: jest.fn().mockResolvedValue(0),
     findById: jest.fn(),
     search: jest.fn(),
@@ -275,9 +277,12 @@ describe('CreateListingUseCase', () => {
 
     it('should throw BadRequestException when target user is at listing limit', async () => {
       const targetUser = { id: 'target-user-id', active: true } as User;
-      const { useCase, listingRepo, usersService } = createUseCase({
+      const { useCase } = createUseCase({
         listingRepo: {
           save: jest.fn(),
+          saveWithActiveLimit: jest
+            .fn()
+            .mockRejectedValue(new BadRequestException('errors.activeListingsLimitExceeded|100')),
           countActiveByUser: jest.fn().mockResolvedValue(100),
           findById: jest.fn(),
           search: jest.fn(),

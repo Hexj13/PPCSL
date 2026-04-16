@@ -28,7 +28,7 @@ import {
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { createSlug, getCountry, slugMatches, slugToName } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 30;
 
 const country = getCountry();
 const siteConfig = loadSiteConfigSync(country);
@@ -341,12 +341,12 @@ function buildHomeMetaUrls(
   return { urlSuffix, canonicalUrl, canonicalParams };
 }
 
-async function getHomePrevNextUrls(
+function getHomePrevNextUrls(
   hasNonIndexableParams: boolean,
   safePage: number,
   canonicalParams: URLSearchParams,
-  params: Record<string, string | string[] | undefined>,
-): Promise<{ prevUrl?: string; nextUrl?: string }> {
+  totalPages: number,
+): { prevUrl?: string; nextUrl?: string } {
   let prevUrl: string | undefined;
   let nextUrl: string | undefined;
   if (!hasNonIndexableParams && safePage > 1) {
@@ -355,15 +355,11 @@ async function getHomePrevNextUrls(
     const prevQuery = prevParams.toString();
     prevUrl = `${siteUrl}/${prevQuery ? `?${prevQuery}` : ''}`;
   }
-  if (!hasNonIndexableParams) {
-    const listings = await getListings(withListingGridDefaultLimit(params));
-    const totalPages = listings?.meta?.totalPages ?? 0;
-    if (typeof totalPages === 'number' && totalPages > 0 && safePage < totalPages) {
-      const nextParams = new URLSearchParams(canonicalParams.toString());
-      nextParams.set('page', String(safePage + 1));
-      const nextQuery = nextParams.toString();
-      nextUrl = `${siteUrl}/${nextQuery ? `?${nextQuery}` : ''}`;
-    }
+  if (!hasNonIndexableParams && totalPages > 0 && safePage < totalPages) {
+    const nextParams = new URLSearchParams(canonicalParams.toString());
+    nextParams.set('page', String(safePage + 1));
+    const nextQuery = nextParams.toString();
+    nextUrl = `${siteUrl}/${nextQuery ? `?${nextQuery}` : ''}`;
   }
   return { prevUrl, nextUrl };
 }
@@ -429,6 +425,9 @@ export async function generateMetadata({
 
   const isTireCategory = typeof params.category === 'string' && params.category === 'tire';
 
+  const listings = await getListings(withListingGridDefaultLimit(params));
+  const totalPages = listings?.meta?.totalPages ?? 0;
+
   if (isTireCategory) {
     const tiresBaseTitle = t.metadata.site.tiresDefaultTitle;
     const tireMeta = await fetchTireSearchMetadata({
@@ -446,11 +445,11 @@ export async function generateMetadata({
       hasNonIndexableParams,
       safePage,
     );
-    const { prevUrl, nextUrl } = await getHomePrevNextUrls(
+    const { prevUrl, nextUrl } = getHomePrevNextUrls(
       hasNonIndexableParams,
       safePage,
       canonicalParams,
-      params,
+      totalPages,
     );
     return buildHomeMetadata(
       fullTitle,
@@ -506,11 +505,11 @@ export async function generateMetadata({
     hasNonIndexableParams,
     safePage,
   );
-  const { prevUrl, nextUrl } = await getHomePrevNextUrls(
+  const { prevUrl, nextUrl } = getHomePrevNextUrls(
     hasNonIndexableParams,
     safePage,
     canonicalParams,
-    params,
+    totalPages,
   );
   return buildHomeMetadata(
     fullTitle,

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import type { TireBrand } from '@/lib/api';
 import { tiresApi } from '@/lib/api';
+import { silentCatch } from '@/lib/utils';
 
 export function useTireBrandsCatalog(): TireBrand[] {
   const [tireBrands, setTireBrands] = useState<TireBrand[]>([]);
@@ -10,7 +11,7 @@ export function useTireBrandsCatalog(): TireBrand[] {
     tiresApi
       .getBrands()
       .then((res) => setTireBrands(res.data))
-      .catch(() => {});
+      .catch(silentCatch('TireBrands.load'));
   }, []);
 
   return tireBrands;

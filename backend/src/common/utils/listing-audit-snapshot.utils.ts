@@ -9,13 +9,13 @@ export type ListingAuditChange = {
 
 const DESCRIPTION_PREVIEW_MAX = 80;
 
-export function maskVinForLog(vin: string | null | undefined): string | null {
+function maskVinForLog(vin: string | null | undefined): string | null {
   if (vin == null || vin === '') return null;
   if (vin.length <= 4) return '****';
   return `****${vin.slice(-4)}`;
 }
 
-export function descriptionForAuditLog(description: string | null | undefined): {
+function descriptionForAuditLog(description: string | null | undefined): {
   length: number;
   preview: string;
 } {
@@ -31,7 +31,7 @@ export function descriptionForAuditLog(description: string | null | undefined): 
   return { length: plain.length, preview };
 }
 
-export function imagesForAuditLog(images: string[] | null | undefined): {
+function imagesForAuditLog(images: string[] | null | undefined): {
   count: number;
   paths: string[];
 } {

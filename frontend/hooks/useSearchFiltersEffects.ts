@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import type { Brand, VehicleModel } from '@/lib/api';
 import { brandsApi } from '@/lib/api';
-import { createSlug, sortByName } from '@/lib/utils';
+import { createSlug, silentCatch, sortByName } from '@/lib/utils';
 
 import type { FilterState } from './useSearchFilters';
 
@@ -62,7 +62,7 @@ export function useModelsForBrands(
           return { ...prev, model_ids: validModelIds };
         });
       })
-      .catch(() => {})
+      .catch(silentCatch('SearchFilters.loadModels'))
       .finally(() => setLoadingModels(false));
   }, [brandIds, vehicleType, setModels, setFilters]);
 

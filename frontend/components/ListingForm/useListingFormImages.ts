@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { uploadApi } from '@/lib/api';
 import { toast } from '@/lib/toast';
-import { isBrowser } from '@/lib/utils';
+import { isBrowser, silentCatch } from '@/lib/utils';
 
 import type { ListingFormImageFields } from './listingFormTypes';
 
@@ -87,7 +87,9 @@ export function useListingFormImages<T extends ListingFormImageFields>({
       mountedRef.current = false;
       if (submittedRef === undefined || !submittedRef.current) {
         metaRef.current.forEach(({ path, deleteToken }) => {
-          void uploadApi.deleteImage(path, deleteToken).catch(() => {});
+          void uploadApi
+            .deleteImage(path, deleteToken)
+            .catch(silentCatch('ListingForm.cleanupImage'));
         });
       }
       clearUploadState(false);
@@ -120,7 +122,7 @@ export function useListingFormImages<T extends ListingFormImageFields>({
           if (response.data.path && response.data.deleteToken) {
             void uploadApi
               .deleteImage(response.data.path, response.data.deleteToken)
-              .catch(() => {});
+              .catch(silentCatch('ListingForm.deleteOrphanImage'));
           }
           revokeSlotPreviewUrl(slotId);
           return;

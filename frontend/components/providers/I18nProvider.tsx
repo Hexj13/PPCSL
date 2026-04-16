@@ -6,7 +6,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import {
   getDefaultLocale,
   getStoredLocale,
-  loadTranslations,
+  loadTranslationsDynamic,
   type Locale,
   type Translations,
 } from '@/lib/i18n';
@@ -20,41 +20,41 @@ interface I18nContextType {
 interface I18nProviderProps {
   children: ReactNode;
   initialLocale?: Locale;
+  initialTranslations?: Translations;
 }
 
 const defaultLocale = getDefaultLocale();
-const defaultTranslations = loadTranslations(defaultLocale);
 
 const I18nContext = createContext<I18nContextType>({
   locale: defaultLocale,
-  translations: defaultTranslations,
+  translations: {} as Translations,
   isLoading: false,
 });
 
-export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
+export function I18nProvider({ children, initialLocale, initialTranslations }: I18nProviderProps) {
   const serverLocale = initialLocale || defaultLocale;
 
   const [locale, setLocale] = useState<Locale>(serverLocale);
-  const [translations, setTranslations] = useState<Translations>(() => {
-    return loadTranslations(serverLocale) || defaultTranslations;
-  });
-  const [isLoading] = useState(false);
+  const [translations, setTranslations] = useState<Translations>(
+    () => initialTranslations || ({} as Translations),
+  );
+  const [isLoading, setIsLoading] = useState(!initialTranslations);
 
   useEffect(() => {
     const storedLocale = getStoredLocale();
-    if (storedLocale !== locale) {
-      setLocale(storedLocale);
-      const loadedTranslations = loadTranslations(storedLocale);
-      if (loadedTranslations) {
-        setTranslations(loadedTranslations);
-      }
+    if (storedLocale !== locale || !initialTranslations) {
+      setIsLoading(true);
+      void loadTranslationsDynamic(storedLocale).then((loaded) => {
+        setLocale(storedLocale);
+        setTranslations(loaded);
+        setIsLoading(false);
+      });
     }
-  }, [locale]);
-
-  const safeTranslations = translations || defaultTranslations;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <I18nContext.Provider value={{ locale, translations: safeTranslations, isLoading }}>
+    <I18nContext.Provider value={{ locale, translations, isLoading }}>
       {children}
     </I18nContext.Provider>
   );

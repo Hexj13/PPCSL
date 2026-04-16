@@ -589,7 +589,7 @@ add a second origin and behavior to your existing CloudFront distribution:
    - Cache policy: CachingOptimized (or custom with All query strings in cache key)
    - Origin request policy: AllViewerExceptHostHeader
    - Compress objects: Yes
-3. Set frontend env: `NEXT_PUBLIC_IMAGE_CDN_URL=https://cdn.kupito.club`
+3. Set frontend env: `NEXT_PUBLIC_IMAGE_CDN_URL=https://api.kupito.club`
 
 The backend already returns `Cache-Control: public, max-age=31536000, immutable`
 for optimized images, so CloudFront will cache them for up to one year.
@@ -598,9 +598,9 @@ for optimized images, so CloudFront will cache them for up to one year.
 
 **Build Settings:**
 
-1. **Root Directory:** Set to `backend` in service settings
-2. **Build Command:** `npm ci && npm run build`
-3. **Start Command:** `npm run start:prod`
+1. **Root Directory:** Leave empty
+2. **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && cd core/backend && npm ci && npm run build`
+3. **Start Command:** `cd core/backend && npm run start:prod`
 
 ### 3.6. Database Migrations
 
@@ -610,7 +610,7 @@ After first deployment, run migrations:
 2. Run:
 
 ```bash
-npm run migration:run
+cd core/backend && npm run migration:run
 ```
 
 ### 3.7. Loading Brands and Models (REQUIRED)
@@ -621,7 +621,7 @@ After migrations, you need to load brands and models into the database.
 2. Run:
 
 ```bash
-npm run seed:all-brands
+cd core/backend && npm run seed:all-brands:prod
 ```
 
 This will load all brands and models and automatically clear the Redis cache.
@@ -633,7 +633,7 @@ This will load all brands and models and automatically clear the Redis cache.
 1. In Render Shell, run:
 
 ```bash
-npm run make-admin:prod -- --email your-email@example.com --password your-secure-password
+cd core/backend && npm run make-admin:prod -- --email your-email@example.com --password your-secure-password
 ```
 
 ### 3.9. Setting Up Cron Jobs
@@ -692,13 +692,13 @@ Use POST (GET returns 404). To remove: `curl -X POST "https://api.telegram.org/b
 
 If you deploy the frontend as a separate service on Render.com:
 
-1. Go to Render Dashboard → **New** → **Static Site** (recommended for Next.js) or **Web Service**
+1. Go to Render Dashboard → **New** → **Web Service**
 2. Connect your GitHub repository
 3. Configure:
    - **Name:** `kupito-frontend`
-   - **Root Directory:** `frontend`
-   - **Build Command:** `npm ci && npm run build`
-   - **Publish Directory:** `.next` (for Static Site)
+  - **Root Directory:** leave empty
+  - **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm run prepare:build && cd core/frontend && npm ci && npm run build`
+  - **Start Command:** `cd core/frontend && npm start`
 
 **Environment Variables:**
 
@@ -899,7 +899,7 @@ ssh -i ~/.ssh/ppcsl_key -p 2200 yourusername@your-server.com
 
 - **Status:** ✅ Protected
 - **URL:** `/design-system`
-- **Environment:** Returns 404 in production
+- **Environment:** Renders a not-found state in production
 - **⚠️ Production:** Automatically hidden
 
 ### Production Checklist
@@ -1043,7 +1043,7 @@ sudo tail -f /var/log/nginx/ppcsl-api-error.log
 ### Update Code
 
 ```bash
-cd /var/www/kupito
+cd /var/www/ppcsl
 git pull origin main
 cd backend && npm install && npm run build && pm2 restart kupito-backend
 cd ../frontend && npm install && npm run build && pm2 restart kupito-frontend

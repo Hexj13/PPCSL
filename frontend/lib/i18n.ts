@@ -24,6 +24,10 @@ function loadRoTranslations(): Translations {
     return roTranslations;
   }
 
+  if (typeof window !== 'undefined') {
+    return createEmptyTranslations();
+  }
+
   try {
     const translations = require('./locales/ro.json');
     roTranslations = translations as unknown as Translations;
@@ -42,6 +46,10 @@ function loadRuTranslations(): Translations {
     return ruTranslations;
   }
 
+  if (typeof window !== 'undefined') {
+    return createEmptyTranslations();
+  }
+
   try {
     const translations = require('./locales/ru.json');
     ruTranslations = translations as unknown as Translations;
@@ -52,6 +60,27 @@ function loadRuTranslations(): Translations {
     );
     ruTranslations = createEmptyTranslations();
     return ruTranslations;
+  }
+}
+
+export async function loadTranslationsDynamic(locale: Locale): Promise<Translations> {
+  if (locale === 'ru') {
+    if (ruTranslations) return ruTranslations;
+    try {
+      const mod = await import('./locales/ru.json');
+      ruTranslations = mod.default as unknown as Translations;
+      return ruTranslations;
+    } catch {
+      return createEmptyTranslations();
+    }
+  }
+  if (roTranslations) return roTranslations;
+  try {
+    const mod = await import('./locales/ro.json');
+    roTranslations = mod.default as unknown as Translations;
+    return roTranslations;
+  } catch {
+    return createEmptyTranslations();
   }
 }
 

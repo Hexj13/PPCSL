@@ -301,7 +301,7 @@ npm run dev
 - [Scripts Architecture](../architecture/scripts-architecture.md)
 - [Known Issues](../architecture/known-issues.md)
 - [Platform Guide](./platform-guide.md)
-- [Deployment](./deployment.md)
+- [Deployment](./DEPLOYMENT.md)
 
 ---
 

@@ -16,6 +16,7 @@ import {
   horsepowerToKw,
   getVehicleType,
 } from '@/lib/utils';
+import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
 export interface ComparisonField {
   key: string;
@@ -45,6 +46,9 @@ export const comparisonFields: ComparisonField[] = [
       const imageUrl = listing.images?.[0] || '/placeholder-car.jpg';
       const isPlaceholder = imageUrl === '/placeholder-car.jpg';
       const isExternal = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+      const blurURL = listing.cover_blur_hash
+        ? blurhashToDataURL(listing.cover_blur_hash)
+        : undefined;
 
       return (
         <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center">
@@ -73,6 +77,8 @@ export const comparisonFields: ComparisonField[] = [
                   className="object-cover"
                   draggable={false}
                   unoptimized
+                  placeholder={blurURL ? 'blur' : undefined}
+                  blurDataURL={blurURL}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
@@ -87,6 +93,8 @@ export const comparisonFields: ComparisonField[] = [
                   className="object-cover"
                   draggable={false}
                   unoptimized={process.env.NODE_ENV === 'development'}
+                  placeholder={blurURL ? 'blur' : undefined}
+                  blurDataURL={blurURL}
                 />
               )}
             </Link>

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, LessThanOrEqual, Repository } from 'typeorm';
 
 import { AdminAuditService } from '../../admin/admin-audit.service';
-import { AdminService } from '../../admin/admin.service';
+import { AdminUsersService } from '../../admin/admin-users.service';
 import type { AuditAction, AuditEntityType } from '../../admin/entities/admin-audit-log.entity';
 import { buildPaginationMeta } from '../../common/utils/pagination.utils';
 import type { ParserRunType, ParserScheduleStatus, ParserTargetEnv } from '../domain/types';
@@ -49,7 +49,7 @@ export class ParsingScheduleService {
     @InjectRepository(ParserSchedule)
     private readonly scheduleRepo: Repository<ParserSchedule>,
     private readonly adminAudit: AdminAuditService,
-    private readonly adminService: AdminService,
+    private readonly adminService: AdminUsersService,
     private readonly orchestrator: ParsingOrchestratorService,
     private readonly availability: ParsingAvailabilityService,
   ) {}

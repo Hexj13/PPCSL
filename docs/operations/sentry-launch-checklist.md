@@ -10,7 +10,7 @@ tags:
 
 # Sentry launch checklist
 
-Pre-launch verification for Sentry monitoring. Setup: [sentry.md](../guides/sentry.md).
+Pre-launch verification for Sentry monitoring. Setup: [SENTRY.md](../guides/SENTRY.md).
 
 ## What's already configured
 
@@ -31,7 +31,7 @@ Pre-launch verification for Sentry monitoring. Setup: [sentry.md](../guides/sent
 
 ## After launch
 
-Monitor: error rate (< 1%), API latency (< 500ms p95), Web Vitals, business metrics, cron execution. Adjust sample rates for high traffic; see [sentry.md](../guides/sentry.md).
+Monitor: error rate (< 1%), API latency (< 500ms p95), Web Vitals, business metrics, cron execution. Adjust sample rates for high traffic; see [SENTRY.md](../guides/SENTRY.md).
 
 ## Final checklist
 

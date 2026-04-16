@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
@@ -7,6 +8,13 @@ import { brandsApi, citiesApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 import { SearchFilters } from './SearchFilters';
+
+function renderWithProviders(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 jest.mock('@/lib/toast', () => ({
   toast: {
@@ -400,7 +408,7 @@ describe('SearchFilters', () => {
 
   it('should render basic filters and load brands and cities', async () => {
     clearBrandsAndModelsCache();
-    render(<SearchFilters />);
+    renderWithProviders(<SearchFilters />);
 
     await waitFor(() => {
       expect(screen.getByText('Basic criteria')).toBeInTheDocument();
@@ -418,7 +426,7 @@ describe('SearchFilters', () => {
   });
 
   it('should show advanced filters toggle', async () => {
-    render(<SearchFilters />);
+    renderWithProviders(<SearchFilters />);
 
     await waitFor(() => {
       expect(screen.getByText('Additional criteria')).toBeInTheDocument();
@@ -429,7 +437,7 @@ describe('SearchFilters', () => {
   });
 
   it('should toggle advanced filters', async () => {
-    render(<SearchFilters />);
+    renderWithProviders(<SearchFilters />);
 
     await waitFor(() => {
       expect(screen.getByLabelText('Show Additional criteria')).toBeInTheDocument();
@@ -442,7 +450,7 @@ describe('SearchFilters', () => {
   });
 
   it('should handle form submission', async () => {
-    render(<SearchFilters />);
+    renderWithProviders(<SearchFilters />);
 
     await waitFor(() => {
       expect(brandsApi.getAll).toHaveBeenCalled();
@@ -461,7 +469,7 @@ describe('SearchFilters', () => {
 
   it('should handle reset', async () => {
     mockGet.mockReturnValue('brand-1');
-    render(<SearchFilters />);
+    renderWithProviders(<SearchFilters />);
 
     await waitFor(() => {
       expect(brandsApi.getAll).toHaveBeenCalled();
@@ -487,7 +495,7 @@ describe('SearchFilters', () => {
       return null;
     });
 
-    render(<SearchFilters />);
+    renderWithProviders(<SearchFilters />);
 
     await waitFor(() => {
       expect(mockGet).toHaveBeenCalled();
@@ -502,7 +510,7 @@ describe('SearchFilters', () => {
 
     it('should validate price range (from <= to)', async () => {
       const { toast } = require('@/lib/toast');
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -526,7 +534,7 @@ describe('SearchFilters', () => {
 
     it('should validate price is within valid range (0-999999999)', async () => {
       const { toast } = require('@/lib/toast');
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -554,7 +562,7 @@ describe('SearchFilters', () => {
     });
 
     it('should only allow digits in price input', async () => {
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -571,7 +579,7 @@ describe('SearchFilters', () => {
     });
 
     it('should format price with spaces for thousands', async () => {
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -591,7 +599,7 @@ describe('SearchFilters', () => {
 
   describe('Popular Body Types Filter', () => {
     it('should render popular body types filter', async () => {
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -604,7 +612,7 @@ describe('SearchFilters', () => {
     });
 
     it('should handle body type selection', async () => {
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -619,7 +627,7 @@ describe('SearchFilters', () => {
     });
 
     it('should handle multiple body type selections', async () => {
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -638,7 +646,7 @@ describe('SearchFilters', () => {
     });
 
     it('should use Minivan instead of Van', async () => {
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -651,7 +659,7 @@ describe('SearchFilters', () => {
 
   describe('Filter comparison logic', () => {
     it('should detect filter changes regardless of array order', async () => {
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -699,7 +707,7 @@ describe('SearchFilters', () => {
 
       mockGet.mockImplementation((key: string) => (key === 'brand_id' ? 'brand-1' : null));
 
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -716,7 +724,7 @@ describe('SearchFilters', () => {
     });
 
     it('should disable save button when no filters are active', async () => {
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -736,7 +744,7 @@ describe('SearchFilters', () => {
 
       mockGet.mockImplementation((key: string) => (key === 'brand_id' ? 'brand-1' : null));
 
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -763,7 +771,7 @@ describe('SearchFilters', () => {
 
       mockGet.mockImplementation((key: string) => (key === 'brand_id' ? 'brand-1' : null));
 
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -792,7 +800,7 @@ describe('SearchFilters', () => {
         isInitialized: true,
       });
 
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();
@@ -816,7 +824,7 @@ describe('SearchFilters', () => {
         isInitialized: true,
       });
 
-      render(<SearchFilters />);
+      renderWithProviders(<SearchFilters />);
 
       await waitFor(() => {
         expect(brandsApi.getAll).toHaveBeenCalled();

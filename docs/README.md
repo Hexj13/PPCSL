@@ -13,7 +13,7 @@ tags:
 Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal core for building car marketplaces.
 
 - **Structure and principles:** [documentation-architecture.md](./documentation-architecture.md) | **Migration report:** [docs/documentation-refactor-report.md](../../docs/documentation-refactor-report.md) (in platform repo)
-- **Reference:** [reference/](./reference/) — [popular-brands-sync](./reference/popular-brands-sync.md), [platform-assets](./reference/platform-assets.md), analytics, scripts
+- **Reference:** [reference/](./reference/) — [popular-brands-sync](./reference/popular-brands-sync.md), [platform-assets](./reference/platform-assets.md), [brands-models master plan](./reference/brands-models-master-plan.md), [SEO audit](./reference/seo-audit.md), analytics
 - **Operations:** [operations/](./operations/) — [SMTP email setup](./operations/smtp-email-setup.md) ([RU](./operations/smtp-email-setup-ru.md)), [User action logging](./operations/user-action-logging.md), [Sentry launch checklist](./operations/sentry-launch-checklist.md), [Postgres query baseline](./operations/postgres-query-baseline.md), deploy, monitoring
 - **ADR:** [architecture/adr/](./architecture/adr/) — architecture decision records
 
@@ -43,7 +43,8 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [e2e-playwright-standards.md](./guides/e2e-playwright-standards.md) — Playwright E2E standards for this project
 - [search-filter-limits.md](./guides/search-filter-limits.md) — Brand/model selection limits in search
 - [quick-start-ru.md](./guides/quick-start-ru.md) — Quick start (Russian)
-- [LINTING.md](./LINTING.md) — Linting and code quality (single source)
+- [linting.md](./engineering/linting.md) — Linting and code quality (single source)
+- [inp-validation.md](./engineering/inp-validation.md) — INP validation checklist
 
 **Order:** platform-checklist → platform-guide → deployment. Local: local-development → quick-start-ru.
 
@@ -53,15 +54,9 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 - [ga4-events.md](./analytics/ga4-events.md) — GA4 events and architecture (Sentry in [guides/SENTRY.md](./guides/SENTRY.md))
 
-### [`scripts/`](./scripts/)
-
-**Brands and models scripts**
-
-- [brands-models-master-plan.md](./scripts/brands-models-master-plan.md) — Plan and production scripts (seed-all-brands-complete, order, cache)
-
 ### [`features/`](./features/)
 
-**Feature documentation** — components and functionality
+**Feature documentation** — components and functionality. Current decision: keep active feature docs here until domain clusters are ready to move into `domains/`.
 
 - [search-title-url.md](./features/search-title-url.md) — Search page URL and title (slugs, diacritics)
 - Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see [TECHNICAL.md](./architecture/TECHNICAL.md) §6 Exchange Rates)
@@ -84,8 +79,8 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - Comparison (vehicles and tires) — up to 3 + 3 listings; guests in `localStorage`, signed-in users in `comparison_items` and `/api/comparison/*` (see [TECHNICAL.md](./architecture/TECHNICAL.md#comparison-vehicles-and-tires))
 - [SITEMAP.md](./features/SITEMAP.md) — Sitemap generation
 - [vehicle-type.md](./features/vehicle-type.md) — Vehicle type toggles (car/truck/moto)
-- [seo-audit.md](./audits/seo-audit.md) — SEO audit
-- [Documentation and product TODO](./reference/documentation-todo.md) — single backlog (features/todo.md redirects there)
+- [seo-audit.md](./reference/seo-audit.md) — SEO audit
+- [Documentation and product TODO](./reference/documentation-todo.md) — single backlog (`features/TODO.md` redirects there)
 
 ---
 
@@ -123,7 +118,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 3. [guides/e2e-playwright-standards.md](./guides/e2e-playwright-standards.md)
 4. [architecture/e2e-test-architecture.md](./architecture/e2e-test-architecture.md)
 5. [../backend/docs/TESTING.md](../backend/docs/TESTING.md)
-6. [LINTING.md](./LINTING.md)
+6. [linting.md](./engineering/linting.md)
 
 ### For DevOps
 

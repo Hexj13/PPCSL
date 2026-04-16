@@ -4,7 +4,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { ListingsModule } from '../listings/listings.module';
 import { UsersModule } from '../users/users.module';
 
 import { AuthService } from './application/auth.service';
@@ -42,7 +41,6 @@ import { AuthController } from './presentation/auth.controller';
 @Module({
   imports: [
     UsersModule,
-    ListingsModule,
     PassportModule,
     TypeOrmModule.forFeature([RefreshToken]),
     JwtModule.registerAsync({

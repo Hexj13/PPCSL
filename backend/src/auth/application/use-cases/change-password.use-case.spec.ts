@@ -9,7 +9,9 @@ import { ChangePasswordUseCase } from './change-password.use-case';
 
 describe('ChangePasswordUseCase', () => {
   let useCase: ChangePasswordUseCase;
-  let usersService: jest.Mocked<Pick<UsersService, 'findOneById' | 'update'>>;
+  let usersService: jest.Mocked<
+    Pick<UsersService, 'findOneById' | 'findOneByIdWithPassword' | 'update'>
+  >;
   let passwordService: jest.Mocked<Pick<PasswordService, 'verify' | 'hash'>>;
   let emailService: jest.Mocked<Pick<EmailService, 'sendPasswordChangedNotification'>>;
 
@@ -20,8 +22,12 @@ describe('ChangePasswordUseCase', () => {
   };
 
   beforeEach(async () => {
+    const findOneByIdMock = jest.fn();
     usersService = {
-      findOneById: jest.fn(),
+      findOneById: findOneByIdMock,
+      findOneByIdWithPassword: jest
+        .fn()
+        .mockImplementation((...args: unknown[]) => findOneByIdMock(...args)),
       update: jest.fn(),
     };
     passwordService = {

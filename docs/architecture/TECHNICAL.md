@@ -53,7 +53,7 @@ Core application framework for creating car marketplace platforms for different 
   - Visual highlighting with green border and "Promoted" tag
   - Promotion periods: 1, 7, 14, or 30 days
   - Promotion time is frozen when listing is paused
-  - Access control via `PROMOTION_ACCESS` environment variable (disabled/admin/all)
+  - Access control via backend `PROMOTION_ACCESS` environment variable (disabled/admin/all)
   - See [paid-promotion.md](../features/paid-promotion.md) for complete documentation
 
 ### Technologies
@@ -73,7 +73,7 @@ Core application framework for creating car marketplace platforms for different 
 
 ### Requirements
 
-- Node.js 18+
+- Node.js 20.9+
 - Docker and Docker Compose
 - npm or yarn
 
@@ -81,6 +81,7 @@ Core application framework for creating car marketplace platforms for different 
 
 ```bash
 # Install dependencies
+cd core
 npm run install:all
 
 # Start database
@@ -90,7 +91,7 @@ docker-compose up -d
 cd backend && npm run start:dev
 
 # Start frontend (Terminal 2)
-cd frontend && npm run dev
+cd ../frontend && npm run dev
 ```
 
 **Frontend:** http://localhost:3000 | **Backend:** http://localhost:4000
@@ -103,7 +104,7 @@ If you see `Cannot connect to the Docker daemon`:
 
 1. Open Docker Desktop application
 2. Wait for full startup
-3. Run `docker-compose up -d`
+3. Run `cd core && docker-compose up -d`
 
 **Option 2: Install PostgreSQL and Redis locally**
 
@@ -112,16 +113,16 @@ If you see `Cannot connect to the Docker daemon`:
 ```bash
 brew install postgresql@15
 brew services start postgresql@15
-createdb ppcsl
+createdb kupito
 psql postgres
 ```
 
 In psql:
 
 ```sql
-CREATE USER ppcsl WITH PASSWORD 'ppcsl123';
-ALTER DATABASE ppcsl OWNER TO ppcsl;
-GRANT ALL PRIVILEGES ON DATABASE ppcsl TO ppcsl;
+CREATE USER kupito WITH PASSWORD 'kupito123';
+ALTER DATABASE kupito OWNER TO kupito;
+GRANT ALL PRIVILEGES ON DATABASE kupito TO kupito;
 \q
 ```
 
@@ -137,7 +138,7 @@ brew services start redis
 **For production (migrations):**
 
 ```bash
-cd backend
+cd core/backend
 npm run build
 npm run migration:run
 ```
@@ -145,7 +146,7 @@ npm run migration:run
 **For development (TypeORM sync):**
 
 ```bash
-cd backend && npm run start:dev
+cd core/backend && npm run start:dev
 ```
 
 **Important:** Always use migrations in production. The latest migration includes database optimizations (indexes, triggers).
@@ -164,9 +165,9 @@ NODE_ENV=development
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=ppcsl
-DB_PASSWORD=ppcsl123
-DB_NAME=ppcsl
+DB_USERNAME=kupito
+DB_PASSWORD=kupito123
+DB_NAME=kupito
 
 # Database Connection Pooling (optional)
 DB_POOL_MAX=20
@@ -205,6 +206,11 @@ SMTP_FROM=noreply@your-domain.com
 DEFAULT_LOCALE=<locale>
 # Supported locales depend on platform (e.g. ro, ru for Moldova)
 
+# Promotion and cron configuration
+PROMOTION_ACCESS=disabled
+MAX_PROMOTIONS_PER_USER=10
+CRON_SECRET=your-secret-key-here
+
 # Infocar partner integration (optional)
 INFOCAR_SECRET_KEY=<secret-from-infocar>
 # Required for report URL with encrypted VIN (GET /api/listings/:id/report-url). If unset, endpoint returns 404.
@@ -228,13 +234,9 @@ NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
 # Google Analytics Measurement ID (optional)
 NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 
-# Promotion Feature Configuration
-PROMOTION_ACCESS=disabled  # Options: disabled, admin, all
-MAX_PROMOTIONS_PER_USER=10  # Maximum active promotions per user
-CRON_SECRET=your-secret-key-here  # Secret for cron job authentication
 ```
 
-### Promotion Feature Variables
+### Promotion Feature Variables (backend runtime)
 
 - **`PROMOTION_ACCESS`**: Controls who can access promotion features
   - `disabled`: Feature disabled for all users
@@ -281,8 +283,8 @@ PPCSL/
 │   │   ├── board/    # Seller listings board (public by slug)
 │   │   ├── brands/   # Brands and models
 │   │   ├── admin/    # Admin panel
-   │   │   ├── parsing/  # Parsing orchestration (admin runs, schedules, CLI runner)
-   │   │   ├── upload/   # File upload service (with watermark support)
+│   │   ├── parsing/  # Parsing orchestration (admin runs, schedules, CLI runner)
+│   │   ├── upload/   # File upload service (with watermark support)
 │   │   ├── common/   # Common utilities and services
 │   │   │   ├── decorators/ # Custom validation decorators (IsName, IsPhone, IsPassword)
 │   │   │   ├── i18n/  # Internationalization service (I18nService)
@@ -648,20 +650,20 @@ npm run backup -- --keep-days 60
 ```bash
 export DB_HOST=localhost
 export DB_PORT=5432
-export DB_USERNAME=ppcsl
+export DB_USERNAME=kupito
 export DB_PASSWORD=your_password
-export DB_NAME=ppcsl
+export DB_NAME=kupito
 export BACKUP_DIR=/var/backups/ppcsl
 export KEEP_DAYS=30
 
-./backend/scripts/backup-database.sh
+./core/backend/config/scripts/backup-database.sh
 ```
 
 #### Automated Backups (Cron)
 
 ```bash
 # Daily backup at 2 AM
-0 2 * * * source /etc/ppcsl/backup.env && /path/to/ppcsl/backend/scripts/backup-database.sh >> /var/log/ppcsl-backup.log 2>&1
+0 2 * * * source /etc/ppcsl/backup.env && /path/to/kupito.club/core/backend/config/scripts/backup-database.sh >> /var/log/ppcsl-backup.log 2>&1
 ```
 
 Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YYYY-MM-DD_HH-MM-SS.sql.gz`
@@ -760,13 +762,13 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 
 ```bash
 # Backend unit tests
-cd backend && npm test
+cd core/backend && npm test
 
 # Backend integration tests
-cd backend && npm run test:integration
+cd core/backend && npm run test:integration
 
 # Frontend tests
-cd frontend && npm test
+cd core/frontend && npm test
 ```
 
 ### Integration Tests
@@ -1061,7 +1063,7 @@ The backend has `trust proxy: true` configured, which correctly identifies real 
 5. Enable SSL/TLS (Full strict mode)
 6. Enable WAF and Bot Protection
 
-See [deployment.md](../guides/deployment.md#72-rendercom-deployment) for CloudFront CDN setup instructions (CloudFront is AWS's CDN service, similar to Cloudflare).
+See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFront CDN setup instructions (CloudFront is AWS's CDN service, similar to Cloudflare).
 
 ---
 
@@ -1115,7 +1117,7 @@ See [deployment.md](../guides/deployment.md#72-rendercom-deployment) for CloudFr
   - Favorite toggle button disabled during operation with visual feedback
   - Ref-based guards to prevent concurrent requests
 - Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
-- **INP (Interaction to Next Paint) optimizations for mobile:** Deferred analytics (search/select_content) via requestIdleCallback; single rAF for scroll restore after router.replace; rAF-throttled scroll handlers with state guards (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll); GTM/Tawk loaded after idle or first interaction; parse cache for ListingGrid search params; chunked dropdown render and precomputed lowerLabel for filter options. See [inp-validation.md](../performance/inp-validation.md) for post-deploy validation.
+- **INP (Interaction to Next Paint) optimizations for mobile:** Deferred analytics (search/select_content) via requestIdleCallback; single rAF for scroll restore after router.replace; rAF-throttled scroll handlers with state guards (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll); GTM/Tawk loaded after idle or first interaction; parse cache for ListingGrid search params; chunked dropdown render and precomputed lowerLabel for filter options. See [inp-validation.md](../engineering/inp-validation.md) for post-deploy validation.
 - **Resource hints optimization:**
   - Static preconnect to API domain in `layout.tsx` for faster image loading (server-rendered, no JS required)
   - DNS-prefetch and preconnect for Google Tag Manager (server-rendered in `layout.tsx`)
@@ -1160,7 +1162,7 @@ See [deployment.md](../guides/deployment.md#72-rendercom-deployment) for CloudFr
   - `no-hardcoded-text` - Enforces use of translation keys instead of hardcoded text
   - `import/order` - Ensures consistent import ordering
   - TypeScript and React rules for code quality
-  - See [linting.md](../linting.md) for complete linting guide
+  - See [linting.md](../engineering/linting.md) for complete linting guide
 
 ---
 
@@ -1197,16 +1199,16 @@ Or use `npm run dev` in root - it will start both servers.
 
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:4000
-- API check: http://localhost:4000 (should show "PPCSL API v1.0")
+- API check: http://localhost:4000 (should show "Kupito API v1.0")
 
 ---
 
 ## Additional Resources
 
-- **API Documentation:** Swagger available at `/api` endpoint (when running)
+- **API Documentation:** Swagger available at `/api/docs` (when running in non-production)
 - **Project README:** See [README.md](../../README.md) in project root
-- **Deployment Guide:** See [deployment.md](../guides/deployment.md) for production deployment
-- **Feature docs:** [seller-listings-board.md](../features/seller-listings-board.md), [paid-promotion.md](../features/paid-promotion.md), [image-preview.md](../features/image-preview.md), [ui-components.md](../features/ui-components.md), [todo.md](../features/todo.md)
+- **Deployment Guide:** See [DEPLOYMENT.md](../guides/DEPLOYMENT.md) for production deployment
+- **Feature docs:** [seller-listings-board.md](../features/seller-listings-board.md), [paid-promotion.md](../features/paid-promotion.md), [image-preview.md](../features/image-preview.md), [ui-components.md](../features/ui-components.md), [TODO.md](../features/TODO.md)
 
 ---
 
@@ -1265,8 +1267,8 @@ The workflow sets `ONNXRUNTIME_NODE_INSTALL=skip` so `onnxruntime-node` does not
 
 3. **Update Platforms Job:**
    - Only runs on push to `main` branch
-   - Clones platform repositories
-   - Updates submodule reference to latest commit
+   - Clones the target platform repository (currently `kupito.club`)
+   - Updates the submodule reference to the latest core commit
    - Commits and pushes changes
 
 **Required Secrets:**
@@ -1317,7 +1319,7 @@ The workflow sets `ONNXRUNTIME_NODE_INSTALL=skip` for the same reason as PPCSL c
   - Required scopes: `repo` (full control of private repositories)
 - `API_URL` (required) - Backend API URL for production builds
 
-**Note:** The `actions/checkout@v4` action must be configured with `token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}` to access private submodules. The default `GITHUB_TOKEN` may not have sufficient permissions for private submodules.
+**Note:** The `actions/checkout@v5` action must be configured with `token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}` to access private submodules. The default `GITHUB_TOKEN` may not have sufficient permissions for private submodules.
 
 ### 13.4.1. Render.com Deployment Configuration
 
@@ -1351,7 +1353,7 @@ cd core/frontend && npm start
 3. Copy platform-specific files via `npm run prepare:build` (frontend locales ro/ru/en, backend locales, theme, config, assets)
 4. Install dependencies and build the application
 
-**Memory tuning (Next.js frontend):** To avoid out-of-memory restarts on Render.com (e.g. when traffic is low but health checks run frequently), the app uses: `cacheMaxMemorySize: 25MB` in next.config.js, `minimumCacheTTL: 86400` for image optimization, and Sentry server `tracesSampleRate: 0.2`. See [sentry.md](../guides/sentry.md) for Sentry server config.
+**Memory tuning (Next.js frontend):** To avoid out-of-memory restarts on Render.com (e.g. when traffic is low but health checks run frequently), the app uses: `cacheMaxMemorySize: 25MB` in next.config.js, `minimumCacheTTL: 86400` for image optimization, and Sentry server `tracesSampleRate: 0.2`. See [SENTRY.md](../guides/SENTRY.md) for Sentry server config.
 
 ### 13.4.2. Render.com Backend Deployment Configuration
 
@@ -1409,7 +1411,7 @@ cd core/backend && npm run start:prod
 2. Load brands and models:
 
    ```bash
-   cd core/backend && npm run seed:all-brands
+   cd core/backend && npm run seed:all-brands:prod
    ```
 
 3. Create admin user:
@@ -1454,7 +1456,7 @@ cd core/backend && npm run start:prod
 **Submodule Checkout Fails in kupito.club (Repository not found):**
 
 - Ensure `PAT_TOKEN` secret is set in kupito.club repository settings
-- The `actions/checkout@v4` action must be configured with `token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}`
+- The `actions/checkout@v5` action must be configured with `token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}`
 - `GITHUB_TOKEN` may not have sufficient permissions to access private submodules
 - PAT must have `repo` scope to access private repositories
 - Verify that the submodule URL in `.gitmodules` is correct and points to the right repository
@@ -1468,9 +1470,8 @@ cd core/backend && npm run start:prod
 
 **Tests Fail in Platform CI/CD:**
 
-- Tests should run in PPCSL core CI/CD only
-- Platform CI/CD should only run build and deployment
-- Remove test steps from platform workflow if needed
+- Platform CI currently runs lint, tests, and build in addition to deployment-related steps.
+- If this becomes too expensive, adjust the workflow intentionally rather than assuming it is build-only.
 
 **Why No Build in PPCSL Core:**
 
@@ -1533,7 +1534,7 @@ Comprehensive test coverage for promotion features:
 Run tests:
 
 ```bash
-cd backend && npm run test -- listings.service.spec.ts
+cd core/backend && npm run test -- listings.service.spec.ts
 ```
 
 ### Related Documentation
@@ -1570,7 +1571,7 @@ cd backend && npm run test -- listings.service.spec.ts
   - GTM load after requestIdleCallback (2.5s), Tawk after first interaction or 4s; lower Sentry replay sampling on mobile viewport
   - ListingGrid: parsed search params cache (keyed by searchParamsString + vehicleType), deferred viewItemList; ListingCard prefetch
   - MultiSelectDropdown/Dropdown: precomputed lowerLabel for options, chunked render (first 50 then rAF to full list)
-  - KPI and validation: lib/performance/inp-kpi.ts (targets, observer), [inp-validation.md](../performance/inp-validation.md) for GSC validation steps
+  - KPI and validation: lib/performance/inp-kpi.ts (targets, observer), [inp-validation.md](../engineering/inp-validation.md) for GSC validation steps
 - **Performance Optimizations (2025-01):**
   - Migrated initial data fetching to Server Components for improved SEO and initial page load
   - Optimized third-party scripts (Google Analytics, Google Tag Manager) with `lazyOnload` strategy

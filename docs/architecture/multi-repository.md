@@ -263,7 +263,7 @@ For detailed troubleshooting guides, see:
 
 - **[Platform Guide - Troubleshooting](../guides/platform-guide.md#5-troubleshooting)** - Platform setup issues
 - **[Local Development Guide - Troubleshooting](../guides/local-development.md#troubleshooting)** - Local development issues
-- **[Deployment Guide - Troubleshooting](../guides/deployment.md#7-troubleshooting)** - Deployment issues
+- **[Deployment Guide - Troubleshooting](../guides/DEPLOYMENT.md#7-troubleshooting)** - Deployment issues
 
 ### Quick Fixes
 

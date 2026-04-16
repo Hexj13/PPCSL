@@ -1,25 +1,11 @@
-export type FAQItem = {
-  id: string;
-  question: string;
-  answer: string | string[];
-};
+import type { FAQConfig, FAQConfigWithLanguages } from '@/lib/config/faq-types';
 
-export type FAQScenario = {
-  id: string;
-  title: string;
-  steps: string[];
-};
-
-export type FAQConfig = {
-  items: FAQItem[];
-  scenarios: FAQScenario[];
-};
-
-export type FAQConfigWithLanguages = {
-  ro?: FAQConfig;
-  ru?: FAQConfig;
-  en?: FAQConfig;
-};
+export type {
+  FAQItem,
+  FAQScenario,
+  FAQConfig,
+  FAQConfigWithLanguages,
+} from '@/lib/config/faq-types';
 
 export function loadFaqSync(country: string, locale?: string): FAQConfig | null {
   try {

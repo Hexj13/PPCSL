@@ -1,6 +1,7 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+import { AdminGuard } from '../../auth/infrastructure/guards/admin.guard';
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
 import { UsersService } from '../application/users.service';
 
@@ -9,7 +10,7 @@ import { UsersService } from '../application/users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @ApiOperation({ summary: 'Get all users' })
+  @ApiOperation({ summary: 'Get all users (admin only)' })
   @ApiBearerAuth('JWT-auth')
   @ApiResponse({
     status: 200,
@@ -40,7 +41,7 @@ export class UsersController {
       },
     },
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get()
   async findAll() {
     const users = await this.usersService.findAll();
@@ -51,7 +52,7 @@ export class UsersController {
     });
   }
 
-  @ApiOperation({ summary: 'Get user details' })
+  @ApiOperation({ summary: 'Get public seller profile' })
   @ApiParam({
     name: 'id',
     example: '550e8400-e29b-41d4-a716-446655440000',
@@ -59,11 +60,18 @@ export class UsersController {
   })
   @ApiResponse({
     status: 200,
-    description: 'User details',
+    description: 'Public seller profile',
     content: {
       'application/json': {
         schema: {
           type: 'object',
+          properties: {
+            id: { type: 'string' },
+            type: { type: 'string' },
+            firstName: { type: 'string', nullable: true },
+            companyName: { type: 'string', nullable: true },
+            created_at: { type: 'string', format: 'date-time' },
+          },
         },
       },
     },
@@ -87,9 +95,6 @@ export class UsersController {
   })
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const user = await this.usersService.findOneById(id);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return this.usersService.findPublicProfile(id);
   }
 }

@@ -27,7 +27,7 @@ tags:
 
 - **Default:** All documentation is in English (root and core: `docs/`, `core/docs/`, `core/backend/docs/`, `core/frontend/docs/`, READMEs).
 - **Intentional Russian:** Only docs explicitly for Russian-speaking audience use Russian. Such docs must have the filename suffix `-ru` (e.g. `quick-start-ru.md`). Do not translate them.
-- **No mixed language:** A document is either fully English or (if intentional) fully Russian with `-ru` in the name. Avoid mixing languages in one file. Docs that still contain untranslated Russian (e.g. `loading-states.md`, `paid-promotion.md`, `seller-listings-board.md`, `vehicle-type.md`) should be fully translated in a follow-up.
+- **No mixed language:** A document is either fully English or, if intentional, fully Russian with `-ru` in the name. Avoid mixing languages in one file. If a touched file still contains mixed-language content, normalize it as part of the same change.
 
 ## Naming
 

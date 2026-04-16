@@ -3,17 +3,14 @@ import { Repository } from 'typeorm';
 
 import { UserProfilePatchService } from '../auth/application/user-profile-patch.service';
 import { EmailService } from '../auth/infrastructure/services/email.service';
+import { RefreshTokenService } from '../auth/infrastructure/services/refresh-token.service';
 import { ListingStatus as ListingStatusEnum } from '../common/types';
+import { IListingCache } from '../listings/application/ports/listing-cache.port';
 import { Listing } from '../listings/entities/listing.entity';
-import { PromotionHistory } from '../listings/entities/promotion-history.entity';
-import { ListingsService } from '../listings/listings.service';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/application/users.service';
 
-import { AdminService } from './admin.service';
-import { IListingCache } from '../listings/application/ports/listing-cache.port';
-import { RefreshTokenService } from '../auth/infrastructure/services/refresh-token.service';
-import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
+import { AdminUsersService } from './admin-users.service';
 
 function createUser(overrides: Partial<User> = {}): User {
   const user = new User();
@@ -32,7 +29,7 @@ function createUser(overrides: Partial<User> = {}): User {
   return user;
 }
 
-describe('AdminService', () => {
+describe('AdminUsersService', () => {
   describe('validateAssignUser', () => {
     it('should return valid and user when user exists, is active, and under limit', async () => {
       const user = createUser({ id: 'target-id', firstName: 'Jane', type: 'Individual' });
@@ -46,13 +43,10 @@ describe('AdminService', () => {
         getListingLimit: jest.fn().mockResolvedValue(100),
       } as unknown as UsersService;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         listingsRepository,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
@@ -95,13 +89,10 @@ describe('AdminService', () => {
         getListingLimit: jest.fn().mockResolvedValue(50),
       } as unknown as UsersService;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         listingsRepository,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
@@ -133,13 +124,10 @@ describe('AdminService', () => {
         getListingLimit: jest.fn().mockResolvedValue(10),
       } as unknown as UsersService;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         listingsRepository,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
@@ -171,13 +159,10 @@ describe('AdminService', () => {
         getListingLimit: jest.fn().mockResolvedValue(10),
       } as unknown as UsersService;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         listingsRepository,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
@@ -197,13 +182,10 @@ describe('AdminService', () => {
       const listingsRepository = { count: jest.fn() } as unknown as Repository<Listing>;
       const usersService = { getListingLimit: jest.fn() } as unknown as UsersService;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         listingsRepository,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
@@ -225,13 +207,10 @@ describe('AdminService', () => {
       const listingsRepository = { count: jest.fn() } as unknown as Repository<Listing>;
       const usersService = { getListingLimit: jest.fn() } as unknown as UsersService;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         listingsRepository,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
@@ -256,13 +235,10 @@ describe('AdminService', () => {
         getListingLimit: jest.fn().mockResolvedValue(10),
       } as unknown as UsersService;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         listingsRepository,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
         {} as UserProfilePatchService,
@@ -291,13 +267,10 @@ describe('AdminService', () => {
         sendEmailChangeConfirmationEmail: jest.fn(),
       } as unknown as EmailService;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         {} as Repository<Listing>,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
         userProfilePatchService,
@@ -335,13 +308,10 @@ describe('AdminService', () => {
         sendEmailChangeConfirmationEmail: jest.fn().mockResolvedValue(undefined),
       } as unknown as EmailService;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         {} as Repository<Listing>,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
         userProfilePatchService,
@@ -388,13 +358,10 @@ describe('AdminService', () => {
         sendEmailChangeConfirmationEmail: jest.fn(),
       } as unknown as EmailService;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         {} as Repository<Listing>,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
         userProfilePatchService,
@@ -437,13 +404,10 @@ describe('AdminService', () => {
         sendEmailChangeConfirmationEmail: jest.fn(),
       } as unknown as EmailService;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         {} as Repository<Listing>,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {} as IListingCache,
         usersService,
         userProfilePatchService,
@@ -468,13 +432,10 @@ describe('AdminService', () => {
         update: jest.fn(),
       } as unknown as Repository<Listing>;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         listingsRepository,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         {
           invalidateSearch: jest.fn(),
           invalidateSingle: jest.fn(),
@@ -503,13 +464,10 @@ describe('AdminService', () => {
         invalidateSingle: jest.fn(),
       } as unknown as IListingCache;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         listingsRepository,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         listingCache,
         {} as UsersService,
         {} as UserProfilePatchService,
@@ -536,13 +494,10 @@ describe('AdminService', () => {
         invalidateSingle: jest.fn().mockResolvedValue(undefined),
       } as unknown as IListingCache;
 
-      const service = new AdminService(
+      const service = new AdminUsersService(
         usersRepository,
         listingsRepository,
-        {} as Repository<PromotionHistory>,
         {} as RefreshTokenService,
-        {} as ListingsService,
-        {} as ExchangeRatesService,
         listingCache,
         {} as UsersService,
         {} as UserProfilePatchService,

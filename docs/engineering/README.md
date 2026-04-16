@@ -16,7 +16,8 @@ Backend, frontend, QA, conventions, documentation standards.
 
 - Backend: [../backend/docs/](../../backend/docs/)
 - Frontend: [../frontend/docs/](../../frontend/docs/)
-- Linting: [../LINTING.md](../LINTING.md)
+- Linting: [linting.md](./linting.md)
+- INP validation: [inp-validation.md](./inp-validation.md)
 - Local development: [../guides/local-development.md](../guides/local-development.md)
 - [documentation-standards.md](./documentation-standards.md) — format, tags, section choice
 - [obsidian-usage.md](./obsidian-usage.md) — repo vs vault, sync, tags

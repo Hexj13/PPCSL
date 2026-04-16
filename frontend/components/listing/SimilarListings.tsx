@@ -10,6 +10,7 @@ import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
 import { listingsApi } from '@/lib/api';
 import { useFavoritesStore } from '@/lib/store';
+import { silentCatch } from '@/lib/utils';
 
 interface SimilarListingsProps {
   listingId: string;
@@ -75,6 +76,14 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const hasTrackedImpression = useRef(false);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(() => {
+    const ref = scrollTimeoutRef;
+    return () => {
+      if (ref.current) clearTimeout(ref.current);
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -86,7 +95,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
             setListings(response.data || []);
           }
         })
-        .catch(() => {})
+        .catch(silentCatch('SimilarListings.fetchSimilar'))
         .finally(() => {
           if (!controller.signal.aborted) {
             setIsLoading(false);
@@ -188,7 +197,8 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
       });
     }
 
-    setTimeout(updateScrollButtons, 400);
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(updateScrollButtons, 400);
   }, [canScrollLeft, updateScrollButtons, currentPosition]);
 
   const handleScrollRight = useCallback(() => {
@@ -218,7 +228,8 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
       });
     }
 
-    setTimeout(updateScrollButtons, 400);
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(updateScrollButtons, 400);
   }, [canScrollRight, updateScrollButtons, currentPosition, listings.length]);
 
   const handleCardClick = useCallback(
@@ -256,7 +267,8 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
 
   useEffect(() => {
     if (!isLoading && listings.length > 0) {
-      setTimeout(updateScrollButtons, 200);
+      const id = setTimeout(updateScrollButtons, 200);
+      return () => clearTimeout(id);
     }
   }, [isLoading, listings.length, updateScrollButtons]);
 

@@ -12,6 +12,7 @@ import { Tire } from '../tires/entities/tire.entity';
 import { UploadModule } from '../upload/upload.module';
 import { UsersModule } from '../users/users.module';
 
+import { UserAccountDeletedListener } from './application/listeners/user-account-deleted.listener';
 import { LISTING_CACHE } from './application/ports/listing-cache.port';
 import { LISTING_REPOSITORY } from './application/ports/listing.repository.port';
 import { PROMOTION_HISTORY_WRITER } from './application/ports/promotion-history.port';
@@ -121,7 +122,8 @@ import { ListingsController } from './presentation/listings.controller';
     AutoCloseOldListingsUseCase,
     ExpirePromotionsUseCase,
     CronSecretGuard,
+    UserAccountDeletedListener,
   ],
-  exports: [ListingsService, LISTING_CACHE],
+  exports: [ListingsService, LISTING_CACHE, TypeOrmModule],
 })
 export class ListingsModule {}

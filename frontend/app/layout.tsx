@@ -17,6 +17,7 @@ import { ScrollReset } from '@/components/layout/ScrollReset';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { CookieConsent } from '@/components/providers/CookieConsent';
 import { I18nProvider } from '@/components/providers/I18nProvider';
+import { QueryProvider } from '@/components/providers/QueryProvider';
 import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 import { getVersionedAssetPath } from '@/lib/assets';
@@ -24,6 +25,7 @@ import { getServerTranslations, type Locale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
 import { Toaster } from '@/lib/toast';
 import { getCountry } from '@/lib/utils';
+import { designTokens } from '@/ui';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' });
@@ -168,65 +170,70 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <GoogleAnalyticsConsent />
         <GoogleAnalytics />
         <OrganizationSchema />
-        <CookieConsent />
-        <I18nProvider initialLocale={initialLocale}>
-          <AuthProvider>
-            <ProfileSaveSuccessToast />
-            <ServiceWorkerRegistration />
-            <ScrollReset />
-            <PageScrollTracker />
-            <ExternalLinkTracker />
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <OfflineBanner />
-              <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">{children}</main>
-              <ConditionalFooter />
-            </div>
-            <Toaster
-              position="top-right"
-              containerStyle={{
-                top: '80px',
-                zIndex: 10000,
-              }}
-              toastOptions={{
-                style: {
-                  zIndex: 10000,
-                  minWidth: '320px',
-                  maxWidth: '400px',
-                  width: '100%',
-                  background: '#FFFFFF',
-                  color: '#1B1B1B',
-                  border: '2px solid rgba(74, 154, 126, 0.4)',
-                  borderRadius: '0.75rem',
-                  padding: '16px',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                },
-                success: {
+        <QueryProvider>
+          <I18nProvider
+            initialLocale={initialLocale}
+            initialTranslations={getServerTranslations(initialLocale)}
+          >
+            <CookieConsent />
+            <AuthProvider>
+              <ProfileSaveSuccessToast />
+              <ServiceWorkerRegistration />
+              <ScrollReset />
+              <PageScrollTracker />
+              <ExternalLinkTracker />
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <OfflineBanner />
+                <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">{children}</main>
+                <ConditionalFooter />
+              </div>
+              <Toaster
+                position="top-right"
+                containerStyle={{
+                  top: '80px',
+                  zIndex: designTokens.zIndex.toast,
+                }}
+                toastOptions={{
                   style: {
+                    zIndex: designTokens.zIndex.toast,
+                    minWidth: '320px',
+                    maxWidth: '400px',
+                    width: '100%',
                     background: '#FFFFFF',
                     color: '#1B1B1B',
-                    border: '2px solid rgba(40, 167, 69, 0.6)',
+                    border: '2px solid rgba(74, 154, 126, 0.4)',
                     borderRadius: '0.75rem',
                     padding: '16px',
-                    boxShadow:
-                      '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                   },
-                },
-                error: {
-                  style: {
-                    background: '#FFFFFF',
-                    color: '#1B1B1B',
-                    border: '2px solid rgba(220, 53, 69, 0.6)',
-                    borderRadius: '0.75rem',
-                    padding: '16px',
-                    boxShadow:
-                      '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                  success: {
+                    style: {
+                      background: '#FFFFFF',
+                      color: '#1B1B1B',
+                      border: '2px solid rgba(40, 167, 69, 0.6)',
+                      borderRadius: '0.75rem',
+                      padding: '16px',
+                      boxShadow:
+                        '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                    },
                   },
-                },
-              }}
-            />
-          </AuthProvider>
-        </I18nProvider>
+                  error: {
+                    style: {
+                      background: '#FFFFFF',
+                      color: '#1B1B1B',
+                      border: '2px solid rgba(220, 53, 69, 0.6)',
+                      borderRadius: '0.75rem',
+                      padding: '16px',
+                      boxShadow:
+                        '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                    },
+                  },
+                }}
+              />
+            </AuthProvider>
+          </I18nProvider>
+        </QueryProvider>
       </body>
     </html>
   );

@@ -1,3 +1,13 @@
+---
+title: Search filter selection limits
+owner: platform
+tags:
+  - type/guide
+  - domain/search
+  - scope/core
+  - status/active
+---
+
 # Search Filter Selection Limits
 
 The search form enforces hard selection limits for brands and models:

@@ -38,6 +38,31 @@ export class UsersService {
     return user;
   }
 
+  async findPublicProfile(id: string): Promise<{
+    id: string;
+    type: string;
+    firstName: string | null;
+    companyName: string | null;
+    board_slug: string | null;
+    created_at: Date;
+  }> {
+    const user = await this.usersRepository.findOne({
+      where: { id, active: true },
+      select: ['id', 'type', 'firstName', 'companyName', 'board_slug', 'created_at'],
+    });
+    if (!user) {
+      throw new NotFoundException('errors.userNotFound');
+    }
+    return {
+      id: user.id,
+      type: user.type,
+      firstName: user.firstName,
+      companyName: user.companyName,
+      board_slug: user.board_slug,
+      created_at: user.created_at,
+    };
+  }
+
   async findOne(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id },
@@ -59,6 +84,36 @@ export class UsersService {
     return this.usersRepository.findOne({
       where: { phone, active: true },
     });
+  }
+
+  async findByEmailWithPassword(email: string): Promise<User | null> {
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .andWhere('user.active = true')
+      .getOne();
+  }
+
+  async findByPhoneWithPassword(phone: string): Promise<User | null> {
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.phone = :phone', { phone })
+      .andWhere('user.active = true')
+      .getOne();
+  }
+
+  async findOneByIdWithPassword(id: string): Promise<User> {
+    const user = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.id = :id', { id })
+      .getOne();
+    if (!user) {
+      throw new NotFoundException('errors.userNotFound');
+    }
+    return user;
   }
 
   async getActiveListingsCount(userId: string): Promise<number> {

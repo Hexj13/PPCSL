@@ -62,4 +62,15 @@ describe('buildCreateListingPayload', () => {
     const payload = buildCreateListingPayload(buildInput({ doors: 2 }, { vehicleType: 'moto' }));
     expect(payload.vehicle.doors).toBeUndefined();
   });
+
+  it('includes image_blur_hashes when provided', () => {
+    const hashes = ['UBF~bx00', 'LKO2?U%2'];
+    const payload = buildCreateListingPayload(buildInput({}, { imageBlurHashes: hashes }));
+    expect(payload.image_blur_hashes).toEqual(hashes);
+  });
+
+  it('omits image_blur_hashes when not provided', () => {
+    const payload = buildCreateListingPayload(buildInput({}));
+    expect(payload.image_blur_hashes).toBeUndefined();
+  });
 });

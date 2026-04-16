@@ -97,7 +97,7 @@ export function ListingPageActions({
               disabled
               className="w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-6 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-primary-500/10 text-primary-300 border border-primary-500/30 cursor-not-allowed opacity-50 text-base"
             >
-              <LoadingSpinner size="sm" className="border-primary-300 border-t-transparent" />
+              <LoadingSpinner size="sm" />
               <span>{t('common.loading')}</span>
             </button>
           ) : (

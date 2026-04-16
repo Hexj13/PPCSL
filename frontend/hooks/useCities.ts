@@ -1,50 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import type { City } from '@/lib/api';
 import { citiesApi } from '@/lib/api';
 import { sortByName } from '@/lib/utils';
 
-let citiesCache: City[] | null = null;
-let citiesPromise: Promise<City[]> | null = null;
-
-function fetchCities(): Promise<City[]> {
-  if (citiesCache) return Promise.resolve(citiesCache);
-  if (citiesPromise) return citiesPromise;
-  citiesPromise = citiesApi
-    .getAll()
-    .then((res) => {
-      citiesCache = sortByName(res.data);
-      return citiesCache;
-    })
-    .catch(() => {
-      citiesPromise = null;
-      return [];
-    });
-  return citiesPromise;
+async function fetchCities(): Promise<City[]> {
+  const res = await citiesApi.getAll();
+  return sortByName(res.data);
 }
 
 export function useCities() {
-  const [cities, setCities] = useState<City[]>(citiesCache ?? []);
-  const [loading, setLoading] = useState(!citiesCache);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchCities()
-      .then((data) => {
-        if (!cancelled) {
-          setCities(data);
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data: cities = [], isLoading: loading } = useQuery<City[]>({
+    queryKey: ['cities'],
+    queryFn: fetchCities,
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
+  });
 
   return { cities, loading };
 }

@@ -2,8 +2,9 @@ import { BadRequestException, Logger, UnauthorizedException } from '@nestjs/comm
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
 import { UserType } from '../../common/types';
-import { ListingsService } from '../../listings/listings.service';
 import { User } from '../../users/entities/user.entity';
 import { UsersService } from '../../users/application/users.service';
 
@@ -41,7 +42,7 @@ describe('AuthService', () => {
   let passwordService: jest.Mocked<PasswordService>;
   let smsService: jest.Mocked<SmsService>;
   let emailService: jest.Mocked<EmailService>;
-  let listingsService: jest.Mocked<ListingsService>;
+  let eventEmitter: jest.Mocked<EventEmitter2>;
   let mockRefreshTokenService: jest.Mocked<RefreshTokenService>;
 
   const mockUser = {
@@ -90,12 +91,24 @@ describe('AuthService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
+    const findByEmailMock = jest.fn();
+    const findByPhoneMock = jest.fn();
+    const findOneByIdMock = jest.fn();
     const mockUsersService = {
-      findByEmail: jest.fn(),
-      findByPhone: jest.fn(),
+      findByEmail: findByEmailMock,
+      findByPhone: findByPhoneMock,
+      findByEmailWithPassword: jest
+        .fn()
+        .mockImplementation((...args: unknown[]) => findByEmailMock(...args)),
+      findByPhoneWithPassword: jest
+        .fn()
+        .mockImplementation((...args: unknown[]) => findByPhoneMock(...args)),
+      findOneByIdWithPassword: jest
+        .fn()
+        .mockImplementation((...args: unknown[]) => findOneByIdMock(...args)),
       create: jest.fn(),
       findOne: jest.fn(),
-      findOneById: jest.fn(),
+      findOneById: findOneByIdMock,
       update: jest.fn(),
       ensureBoardSlug: jest.fn().mockResolvedValue('test-slug'),
     };
@@ -125,8 +138,9 @@ describe('AuthService', () => {
       sendEmailChangedNotification: jest.fn(),
     };
 
-    const mockListingsService = {
-      closeAllUserListings: jest.fn(),
+    const mockEventEmitter = {
+      emit: jest.fn(),
+      emitAsync: jest.fn().mockResolvedValue([]),
     };
 
     mockRefreshTokenService = {
@@ -175,8 +189,8 @@ describe('AuthService', () => {
           useValue: mockEmailService,
         },
         {
-          provide: ListingsService,
-          useValue: mockListingsService,
+          provide: EventEmitter2,
+          useValue: mockEventEmitter,
         },
         {
           provide: RefreshTokenService,
@@ -211,7 +225,7 @@ describe('AuthService', () => {
     passwordService = module.get(PasswordService);
     smsService = module.get(SmsService);
     emailService = module.get(EmailService);
-    listingsService = module.get(ListingsService);
+    eventEmitter = module.get(EventEmitter2);
   });
 
   it('should be defined', () => {
@@ -890,7 +904,6 @@ describe('AuthService', () => {
 
     it('should delete account successfully', async () => {
       usersService.findOneById.mockResolvedValue(createUserWithDeactivate());
-      listingsService.closeAllUserListings.mockResolvedValue(5);
       usersService.update.mockResolvedValue({
         ...mockUser,
         email: null,
@@ -904,7 +917,10 @@ describe('AuthService', () => {
       const result = await service.deleteAccount(userId);
 
       expect(usersService.findOneById).toHaveBeenCalledWith(userId);
-      expect(listingsService.closeAllUserListings).toHaveBeenCalledWith(userId);
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        'user.account.deleted',
+        expect.objectContaining({ userId }),
+      );
       expect(usersService.update).toHaveBeenCalledWith(userId, {
         email: null,
         phone: null,
@@ -924,22 +940,20 @@ describe('AuthService', () => {
 
       await expect(service.deleteAccount(userId)).rejects.toThrow(BadRequestException);
       expect(usersService.findOneById).toHaveBeenCalledWith(userId);
-      expect(listingsService.closeAllUserListings).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
       expect(usersService.update).not.toHaveBeenCalled();
     });
 
-    it('should close all user listings before updating user', async () => {
+    it('should emit event and update user in correct order', async () => {
       usersService.findOneById.mockResolvedValue(createUserWithDeactivate());
-      listingsService.closeAllUserListings.mockResolvedValue(3);
       usersService.update.mockResolvedValue({
         ...mockUser,
         active: false,
       } as User);
 
       const callOrder: string[] = [];
-      (listingsService.closeAllUserListings as jest.Mock).mockImplementation(async () => {
-        callOrder.push('closeListings');
-        return 3;
+      (eventEmitter.emitAsync as jest.Mock).mockImplementation(async () => {
+        callOrder.push('emitEvent');
       });
       (usersService.update as jest.Mock).mockImplementation(async () => {
         callOrder.push('updateUser');
@@ -948,12 +962,11 @@ describe('AuthService', () => {
 
       await service.deleteAccount(userId);
 
-      expect(callOrder).toEqual(['closeListings', 'updateUser']);
+      expect(callOrder).toEqual(['emitEvent', 'updateUser']);
     });
 
     it('should nullify all personal data', async () => {
       usersService.findOneById.mockResolvedValue(createUserWithDeactivate());
-      listingsService.closeAllUserListings.mockResolvedValue(0);
       usersService.update.mockResolvedValue({
         ...mockUser,
         email: null,

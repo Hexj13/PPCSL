@@ -53,6 +53,7 @@
   "errors": {
     "serverError": "Eroare pe server. Încercați mai târziu.",
     "invalidRequest": "Cerere invalidă. Verificați datele introduse.",
+    "validationFailed": "Validare eșuată. Verificați datele introduse.",
     "unauthorized": "Acces neautorizat. Autentificați-vă din nou.",
     "forbidden": "Nu aveți permisiune pentru această acțiune.",
     "notFound": "Resursa nu a fost găsită.",

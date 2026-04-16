@@ -10,6 +10,14 @@ import {
 import * as Sentry from '@sentry/node';
 import { Request, Response } from 'express';
 
+import {
+  AccessDeniedError,
+  ConflictError,
+  DomainError,
+  LimitExceededError,
+  NotFoundError,
+  ValidationError,
+} from '../errors/domain.errors';
 import { I18nService } from '../i18n/i18n.service';
 import { logUserActionFailure } from '../utils/log-user-event';
 import { sanitizeForSentryExtra } from '../utils/sentry-payload.utils';
@@ -64,6 +72,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
         }
         code = responseObj.code;
       }
+    } else if (exception instanceof DomainError) {
+      status = this.mapDomainErrorToStatus(exception);
+      code = exception.code;
+      errorKey = this.getErrorKey(exception.message);
+      message = this.translateMessage(exception.message, locale);
     } else if (exception instanceof Error) {
       const isDbConnectivity = this.isDatabaseConnectivityFailure(exception);
       if (isDbConnectivity) {
@@ -121,7 +134,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     if (
-      exception instanceof HttpException &&
+      (exception instanceof HttpException || exception instanceof DomainError) &&
       status >= HttpStatus.BAD_REQUEST &&
       status < HttpStatus.INTERNAL_SERVER_ERROR &&
       errorKey?.startsWith('errors.') &&
@@ -174,6 +187,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return translated;
     }
     return message;
+  }
+
+  private mapDomainErrorToStatus(error: DomainError): HttpStatus {
+    if (error instanceof NotFoundError) return HttpStatus.NOT_FOUND;
+    if (error instanceof ValidationError) return HttpStatus.BAD_REQUEST;
+    if (error instanceof AccessDeniedError) return HttpStatus.FORBIDDEN;
+    if (error instanceof LimitExceededError) return HttpStatus.BAD_REQUEST;
+    if (error instanceof ConflictError) return HttpStatus.CONFLICT;
+    return HttpStatus.INTERNAL_SERVER_ERROR;
   }
 
   private isDatabaseConnectivityFailure(exception: Error): boolean {

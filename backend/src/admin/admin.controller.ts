@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -32,8 +31,11 @@ import { parseLimitQuery, parsePageQuery } from '../common/utils/pagination.util
 import { TogglePromotionDto } from '../listings/presentation/dto/toggle-promotion.dto';
 
 import { AdminBrandsModelsService } from './admin-brands-models.service';
+import { AdminListingsService } from './admin-listings.service';
+import { AdminPromotionsService } from './admin-promotions.service';
+import { AdminStatsService } from './admin-stats.service';
 import { AdminTireBrandsModelsService } from './admin-tire-brands-models.service';
-import { AdminService } from './admin.service';
+import { AdminUsersService } from './admin-users.service';
 import { DeleteAllBrandsService } from './delete-all-brands.service';
 import { AdminUpdateUserProfileDto } from './dto/admin-update-user-profile.dto';
 import { CreateBrandDto } from './dto/create-brand.dto';
@@ -52,7 +54,10 @@ import { UpdateUserPartnerSettingsDto } from './dto/update-user-partner-settings
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminController {
   constructor(
-    private readonly adminService: AdminService,
+    private readonly adminUsersService: AdminUsersService,
+    private readonly adminListingsService: AdminListingsService,
+    private readonly adminStatsService: AdminStatsService,
+    private readonly adminPromotionsService: AdminPromotionsService,
     private readonly deleteAllBrandsService: DeleteAllBrandsService,
     private readonly adminBrandsModelsService: AdminBrandsModelsService,
     private readonly adminTireBrandsModelsService: AdminTireBrandsModelsService,
@@ -136,7 +141,7 @@ export class AdminController {
     const pageNum = parsePageQuery(page);
     const limitNum = parseLimitQuery(limit, { defaultValue: 20, maxValue: 100 });
     const activityNorm = activity === 'active' || activity === 'inactive' ? activity : undefined;
-    return this.adminService.getAllUsers(pageNum, limitNum, search, userType, activityNorm);
+    return this.adminUsersService.getAllUsers(pageNum, limitNum, search, userType, activityNorm);
   }
 
   @ApiOperation({ summary: 'Delete all brands (cascade: models, vehicles, listings, favorites)' })
@@ -253,7 +258,7 @@ export class AdminController {
     const limitNum = parseLimitQuery(limit, { defaultValue: 20, maxValue: 100 });
     const isPromotedBool =
       isPromoted === 'true' ? true : isPromoted === 'false' ? false : undefined;
-    return this.adminService.getAllListings(
+    return this.adminListingsService.getAllListings(
       pageNum,
       limitNum,
       listingId,
@@ -306,7 +311,7 @@ export class AdminController {
     @Query('userId') userId?: string,
     @Query('search') search?: string,
   ) {
-    return this.adminService.getListingsStatusCounts(listingId, userId, search);
+    return this.adminListingsService.getListingsStatusCounts(listingId, userId, search);
   }
 
   @ApiOperation({ summary: 'Get statistics' })
@@ -358,8 +363,8 @@ export class AdminController {
   @Get('stats')
   getStats() {
     return Promise.all([
-      this.adminService.getUserStats(),
-      this.adminService.getListingStats(),
+      this.adminStatsService.getUserStats(),
+      this.adminStatsService.getListingStats(),
     ]).then(([users, listings]) => ({ users, listings }));
   }
 
@@ -368,7 +373,7 @@ export class AdminController {
   @ApiParam({ name: 'userId', description: 'Target user UUID' })
   @ApiResponse({ status: 200, description: 'Validation result' })
   validateAssignUser(@Param('userId', ParseUUIDPipe) userId: string) {
-    return this.adminService.validateAssignUser(userId);
+    return this.adminUsersService.validateAssignUser(userId);
   }
 
   @ApiOperation({ summary: 'Update listing status' })
@@ -456,7 +461,7 @@ export class AdminController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body('status') status: ListingStatus,
   ) {
-    return this.adminService.updateListingStatus(id, status);
+    return this.adminListingsService.updateListingStatus(id, status);
   }
 
   @ApiOperation({ summary: 'Get user listings' })
@@ -513,7 +518,7 @@ export class AdminController {
   })
   @Get('users/:id/listings')
   getUserListings(@Param('id', ParseUUIDPipe) id: string) {
-    return this.adminService.getUserListings(id);
+    return this.adminUsersService.getUserListings(id);
   }
 
   @Post('users/:id/listings/refresh-dates')
@@ -526,7 +531,7 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'Count of updated listings' })
   refreshUserActiveListingDates(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
     const user = req.user as { id: string };
-    return this.adminService.refreshUserActiveListingDates(id, user.id);
+    return this.adminUsersService.refreshUserActiveListingDates(id, user.id);
   }
 
   @ApiOperation({ summary: 'Toggle user status' })
@@ -582,7 +587,7 @@ export class AdminController {
   })
   @Patch('users/:id/toggle-status')
   toggleUserStatus(@Param('id', ParseUUIDPipe) id: string) {
-    return this.adminService.toggleUserStatus(id);
+    return this.adminUsersService.toggleUserStatus(id);
   }
 
   @Patch('users/:id/partner-settings')
@@ -602,7 +607,7 @@ export class AdminController {
     @Req() req: Request,
   ) {
     const user = req.user as { id: string };
-    return this.adminService.updateUserPartnerSettings(id, dto, user.id);
+    return this.adminUsersService.updateUserPartnerSettings(id, dto, user.id);
   }
 
   @Patch('users/:id/profile')
@@ -622,7 +627,7 @@ export class AdminController {
     @Req() req: Request,
   ) {
     const user = req.user as { id: string };
-    return this.adminService.updateUserProfile(id, dto, user.id);
+    return this.adminUsersService.updateUserProfile(id, dto, user.id);
   }
 
   @Patch('listings/:id/promote')
@@ -638,17 +643,8 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin role required' })
   @ApiResponse({ status: 429, description: 'Too Many Requests - rate limit exceeded' })
   togglePromotion(@Param('id', ParseUUIDPipe) id: string, @Body() dto: TogglePromotionDto) {
-    const isDevelopment = process.env.NODE_ENV !== 'production';
-    const promotionAccess = process.env.PROMOTION_ACCESS || 'disabled';
-
-    const shouldSkipChecks = isDevelopment;
-    if (!shouldSkipChecks) {
-      if (promotionAccess === 'disabled') {
-        throw new ForbiddenException('errors.promotionDisabled');
-      }
-    }
-
-    return this.adminService.toggleListingPromotion(id, dto.is_promoted, dto.days);
+    this.adminPromotionsService.assertPromotionAccessAllowed();
+    return this.adminPromotionsService.toggleListingPromotion(id, dto.is_promoted, dto.days);
   }
 
   @Get('promotions')
@@ -688,7 +684,13 @@ export class AdminController {
     const pageNum = parsePageQuery(page);
     const limitNum = parseLimitQuery(limit, { defaultValue: 50, maxValue: 100 });
     const fromDateObj = fromDate ? new Date(fromDate) : undefined;
-    return this.adminService.getAllPromotions(pageNum, limitNum, listingId, userId, fromDateObj);
+    return this.adminPromotionsService.getAllPromotions(
+      pageNum,
+      limitNum,
+      listingId,
+      userId,
+      fromDateObj,
+    );
   }
 
   @Get('brands-models')

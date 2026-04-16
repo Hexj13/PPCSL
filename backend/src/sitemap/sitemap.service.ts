@@ -350,26 +350,37 @@ export class SitemapService {
     const startDate = new Date(year, mon - 1, 1);
     const endDate = new Date(year, mon, 1);
 
-    const listings: { id: string; updated_at: Date }[] = await this.listingRepo
-      .createQueryBuilder('l')
-      .select(['l.id', 'l.updated_at'])
-      .where('l.status = :status', { status: 'Active' })
-      .andWhere('l.created_at >= :start', { start: startDate })
-      .andWhere('l.created_at < :end', { end: endDate })
-      .orderBy('l.updated_at', 'DESC')
-      .addOrderBy('l.id', 'ASC')
-      .getMany();
+    const BATCH_SIZE = 5000;
+    const urlEntries: string[] = [];
+    let offset = 0;
+    let hasMore = true;
 
-    if (listings.length === 0) return null;
+    while (hasMore) {
+      const batch: { id: string; updated_at: Date }[] = await this.listingRepo
+        .createQueryBuilder('l')
+        .select(['l.id', 'l.updated_at'])
+        .where('l.status = :status', { status: 'Active' })
+        .andWhere('l.created_at >= :start', { start: startDate })
+        .andWhere('l.created_at < :end', { end: endDate })
+        .orderBy('l.updated_at', 'DESC')
+        .addOrderBy('l.id', 'ASC')
+        .skip(offset)
+        .take(BATCH_SIZE)
+        .getMany();
 
-    const urls: SitemapUrl[] = listings.map((l) => ({
-      loc: `${SITE_URL}/listings/${l.id}`,
-      lastmod: l.updated_at.toISOString().split('T')[0],
-      changefreq: 'hourly',
-      priority: 0.9,
-    }));
+      for (const l of batch) {
+        urlEntries.push(
+          `  <url>\n    <loc>${this.escapeXml(`${SITE_URL}/listings/${l.id}`)}</loc>\n    <lastmod>${l.updated_at.toISOString().split('T')[0]}</lastmod>\n    <changefreq>hourly</changefreq>\n    <priority>0.9</priority>\n  </url>`,
+        );
+      }
 
-    const xml = this.buildUrlset(urls);
+      hasMore = batch.length === BATCH_SIZE;
+      offset += BATCH_SIZE;
+    }
+
+    if (urlEntries.length === 0) return null;
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries.join('\n')}\n</urlset>\n`;
     await this.saveToCache(cacheKey, xml);
     return xml;
   }

@@ -24,6 +24,7 @@ import { getFavoriteButtonClassName, useListingCardFavorite } from '@/hooks/useL
 import { useListingCardImageError } from '@/hooks/useListingCardImageError';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
+import { setBlurForListing } from '@/lib/blur-navigation-cache';
 import { sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
 import {
@@ -403,13 +404,16 @@ function ListingCardComponent({
   }, []);
 
   const handleClick = useCallback(() => {
+    if (listing.cover_blur_hash) {
+      setBlurForListing(listing.id, listing.cover_blur_hash, images[0]);
+    }
     if (typeof window !== 'undefined' && window.location.pathname === '/') {
       startTransition(() => {
         sessionStorageSetItem('homeScrollPosition', window.scrollY.toString());
         sessionStorageSetItem('homeScrollTimestamp', Date.now().toString());
       });
     }
-  }, []);
+  }, [listing.id, listing.cover_blur_hash, images]);
 
   const favoriteDisabled = isToggling;
   const favoriteButtonClass = getFavoriteButtonClassName(isToggling, isFavorite);

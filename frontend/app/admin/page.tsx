@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
 
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -9,11 +10,34 @@ import { localStorageGetItem, localStorageSetItem } from '@/lib/browser-local-st
 import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 import { toast } from '@/lib/toast';
 
-import { BrandsModelsTab } from './components/BrandsModelsTab';
-import { ListingsTab } from './components/ListingsTab';
-import { ParsingTab } from './components/ParsingTab';
-import { PromotionsTab } from './components/PromotionsTab';
-import { UsersTab } from './components/UsersTab';
+const TabSkeleton = () => (
+  <div className="animate-pulse bg-primary-500/10 rounded-lg min-h-[70vh]" />
+);
+
+const BrandsModelsTab = dynamic(
+  () => import('./components/BrandsModelsTab').then((mod) => ({ default: mod.BrandsModelsTab })),
+  { ssr: false, loading: TabSkeleton },
+);
+
+const ListingsTab = dynamic(
+  () => import('./components/ListingsTab').then((mod) => ({ default: mod.ListingsTab })),
+  { ssr: false, loading: TabSkeleton },
+);
+
+const ParsingTab = dynamic(
+  () => import('./components/ParsingTab').then((mod) => ({ default: mod.ParsingTab })),
+  { ssr: false, loading: TabSkeleton },
+);
+
+const PromotionsTab = dynamic(
+  () => import('./components/PromotionsTab').then((mod) => ({ default: mod.PromotionsTab })),
+  { ssr: false, loading: TabSkeleton },
+);
+
+const UsersTab = dynamic(
+  () => import('./components/UsersTab').then((mod) => ({ default: mod.UsersTab })),
+  { ssr: false, loading: TabSkeleton },
+);
 
 type AdminTab = 'listings' | 'users' | 'promotions' | 'brandsModels' | 'parsing';
 
@@ -159,28 +183,30 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {activeTab === 'users' && (
-        <UsersTab
-          isActive
-          onViewUserListings={(userId) => {
-            localStorageSetItem('adminListingsSearchQuery', userId);
-            setActiveTab('listings');
-          }}
-        />
-      )}
-      {activeTab === 'brandsModels' && <BrandsModelsTab isActive />}
-      {activeTab === 'parsing' && <ParsingTab isActive />}
-      {activeTab === 'listings' && (
-        <ListingsTab
-          isActive
-          initialSearchQuery={
-            typeof window !== 'undefined'
-              ? localStorageGetItem('adminListingsSearchQuery') || ''
-              : ''
-          }
-        />
-      )}
-      {activeTab === 'promotions' && <PromotionsTab isActive />}
+      <div className="min-h-[70vh]">
+        {activeTab === 'users' && (
+          <UsersTab
+            isActive
+            onViewUserListings={(userId) => {
+              localStorageSetItem('adminListingsSearchQuery', userId);
+              setActiveTab('listings');
+            }}
+          />
+        )}
+        {activeTab === 'brandsModels' && <BrandsModelsTab isActive />}
+        {activeTab === 'parsing' && <ParsingTab isActive />}
+        {activeTab === 'listings' && (
+          <ListingsTab
+            isActive
+            initialSearchQuery={
+              typeof window !== 'undefined'
+                ? localStorageGetItem('adminListingsSearchQuery') || ''
+                : ''
+            }
+          />
+        )}
+        {activeTab === 'promotions' && <PromotionsTab isActive />}
+      </div>
     </div>
   );
 }

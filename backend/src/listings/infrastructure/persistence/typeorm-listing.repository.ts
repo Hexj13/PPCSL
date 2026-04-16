@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -57,10 +57,10 @@ export class TypeOrmListingRepository implements IListingRepository {
     return this.repository.manager.transaction('REPEATABLE READ', async (manager) => {
       const scopedRepository = manager.getRepository(Listing);
 
-      const countQb = this.buildSearchQuery(criteria, scopedRepository);
-      const total = await countQb.getCount();
+      const baseQb = this.buildSearchQuery(criteria, scopedRepository);
+      const total = await baseQb.getCount();
 
-      const queryBuilder = this.buildSearchQuery(criteria, scopedRepository);
+      const queryBuilder = baseQb.clone();
       const validSortFields =
         listCategory === 'tire'
           ? ['created_at', 'price', 'views']
@@ -115,6 +115,19 @@ export class TypeOrmListingRepository implements IListingRepository {
         status: ListingStatusEnum.Active,
         is_promoted: true,
       },
+    });
+  }
+
+  async saveWithActiveLimit(listing: Listing, userId: string, limit: number): Promise<Listing> {
+    return this.repository.manager.transaction('SERIALIZABLE', async (manager) => {
+      const repo = manager.getRepository(Listing);
+      const activeCount = await repo.count({
+        where: { user_id: userId, status: ListingStatusEnum.Active },
+      });
+      if (activeCount >= limit) {
+        throw new BadRequestException(`errors.activeListingsLimitExceeded|${limit}`);
+      }
+      return repo.save(listing);
     });
   }
 

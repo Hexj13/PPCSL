@@ -18,6 +18,6 @@ import { RedisBrandsCache } from './infrastructure/cache/redis-brands-cache';
     RedisBrandsCache,
     { provide: BRANDS_CACHE, useExisting: RedisBrandsCache },
   ],
-  exports: [BrandsService, BRANDS_CACHE],
+  exports: [BrandsService, BRANDS_CACHE, TypeOrmModule],
 })
 export class BrandsModule {}

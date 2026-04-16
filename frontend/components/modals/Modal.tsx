@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { designTokens } from '@/ui';
 
 interface ModalProps {
   isOpen: boolean;
@@ -58,7 +59,8 @@ export function Modal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-9999 p-4 sm:p-6 md:p-8"
+      className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 sm:p-6 md:p-8"
+      style={{ zIndex: designTokens.zIndex.modal }}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {

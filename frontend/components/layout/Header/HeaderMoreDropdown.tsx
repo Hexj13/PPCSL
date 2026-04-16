@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ChevronDownIcon } from '@/ui';
+import { ChevronDownIcon, designTokens } from '@/ui';
 
 import { DetailsMoreIcon, LogoutIcon, ScaleIcon, ShieldIcon, UserIcon } from './icons';
 
@@ -59,7 +59,8 @@ export function HeaderMoreDropdown({
       </button>
       {isOpen && (
         <div
-          className="absolute right-0 top-full z-100 mt-1 min-w-[180px] rounded-lg border-2 border-primary-500/30 bg-white py-1 shadow-xl"
+          className="absolute right-0 top-full mt-1 min-w-[180px] rounded-lg border-2 border-primary-500/30 bg-white py-1 shadow-xl"
+          style={{ zIndex: designTokens.zIndex.dropdown }}
           data-testid="header-user-more-menu"
           role="menu"
         >

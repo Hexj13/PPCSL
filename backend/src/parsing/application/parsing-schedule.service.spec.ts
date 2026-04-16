@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 
 import { AdminAuditService } from '../../admin/admin-audit.service';
-import { AdminService } from '../../admin/admin.service';
+import { AdminUsersService } from '../../admin/admin-users.service';
 import { ParserSchedule } from '../infrastructure/persistence/parser-schedule.entity';
 
 import { ParsingAvailabilityService } from './parsing-availability.service';
@@ -62,7 +62,7 @@ describe('ParsingScheduleService', () => {
     const adminAudit = {
       log: jest.fn().mockResolvedValue(undefined),
     } as unknown as AdminAuditService;
-    const adminService = {} as AdminService;
+    const adminService = {} as AdminUsersService;
     const orchestrator = {
       createRunFromSchedule: jest.fn(),
     } as unknown as ParsingOrchestratorService;

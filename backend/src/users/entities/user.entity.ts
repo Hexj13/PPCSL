@@ -1,3 +1,4 @@
+import { Exclude, Expose } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
@@ -20,6 +21,7 @@ import { Listing } from '../../listings/entities/listing.entity';
 @Index(['board_slug'], { unique: true, where: '"board_slug" IS NOT NULL' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
+  @Expose()
   id: string;
 
   @Column({
@@ -32,7 +34,7 @@ export class User {
   @Column({ type: 'varchar', unique: true, nullable: true })
   email: string | null;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', select: false })
   password: string;
 
   @Column({ type: 'varchar', nullable: true })
@@ -99,18 +101,23 @@ export class User {
   emailVerified: boolean | null;
 
   @Column({ type: 'varchar', nullable: true })
+  @Exclude()
   registration_ip: string | null;
 
   @Column({ type: 'varchar', nullable: true })
+  @Exclude()
   last_login_ip: string | null;
 
   @Column({ type: 'timestamptz', nullable: true, name: 'last_login_at' })
+  @Exclude()
   last_login_at: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true, name: 'last_listing_refresh_at' })
+  @Exclude()
   last_listing_refresh_at: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true, name: 'last_listing_refresh_reminder_sent_at' })
+  @Exclude()
   last_listing_refresh_reminder_sent_at: Date | null;
 
   @CreateDateColumn()

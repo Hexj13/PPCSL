@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, MoreThan, Repository } from 'typeorm';
 
 import { AdminAuditService } from '../../admin/admin-audit.service';
-import { AdminService } from '../../admin/admin.service';
+import { AdminUsersService } from '../../admin/admin-users.service';
 import type { AuditAction, AuditEntityType } from '../../admin/entities/admin-audit-log.entity';
 import { buildPaginationMeta } from '../../common/utils/pagination.utils';
 import type { ParserRunType, ParserTargetEnv } from '../domain/types';
@@ -86,7 +86,7 @@ export class ParsingOrchestratorService {
     private readonly cliRunner: CliParserRunnerService,
     private readonly plpStorage: PlpStorageService,
     private readonly adminAudit: AdminAuditService,
-    private readonly adminService: AdminService,
+    private readonly adminService: AdminUsersService,
   ) {}
 
   async listRuns(params: { runType: ParserRunType; page: number; limit: number }): Promise<{

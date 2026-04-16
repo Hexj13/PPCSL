@@ -154,13 +154,6 @@ export class CreateListingUseCase {
     }
 
     const status = dto.status || ListingStatusEnum.Active;
-    if (status === ListingStatusEnum.Active) {
-      const activeCount = await this.listingRepo.countActiveByUser(ownerId);
-      const limit = await this.usersService.getListingLimit(ownerId);
-      if (activeCount >= limit) {
-        throw new BadRequestException(`errors.activeListingsLimitExceeded|${limit}`);
-      }
-    }
 
     const blurHashesError = validateImageBlurHashesMatchImages(dto.image_blur_hashes, dto.images);
     if (blurHashesError) {
@@ -239,7 +232,13 @@ export class CreateListingUseCase {
       listing.cover_blur_hash = coverBlurHashFromImageBlurHashes(dto.image_blur_hashes);
     }
 
-    const saved = await this.listingRepo.save(listing);
+    let saved: Listing;
+    if (status === ListingStatusEnum.Active) {
+      const limit = await this.usersService.getListingLimit(ownerId);
+      saved = await this.listingRepo.saveWithActiveLimit(listing, ownerId, limit);
+    } else {
+      saved = await this.listingRepo.save(listing);
+    }
     await this.listingCache.invalidateSearch();
     await this.listingCache.invalidateSingle(saved.id);
     return saved;
@@ -288,13 +287,6 @@ export class CreateListingUseCase {
     const title = await this.generateTitle(vehicle);
 
     const status = dto.status || ListingStatusEnum.Active;
-    if (status === ListingStatusEnum.Active) {
-      const activeCount = await this.listingRepo.countActiveByUser(ownerId);
-      const limit = await this.usersService.getListingLimit(ownerId);
-      if (activeCount >= limit) {
-        throw new BadRequestException(`errors.activeListingsLimitExceeded|${limit}`);
-      }
-    }
 
     const blurHashesError = validateImageBlurHashesMatchImages(dto.image_blur_hashes, dto.images);
     if (blurHashesError) {
@@ -330,7 +322,13 @@ export class CreateListingUseCase {
       listing.cover_blur_hash = coverBlurHashFromImageBlurHashes(dto.image_blur_hashes);
     }
 
-    const saved = await this.listingRepo.save(listing);
+    let saved: Listing;
+    if (status === ListingStatusEnum.Active) {
+      const limit = await this.usersService.getListingLimit(ownerId);
+      saved = await this.listingRepo.saveWithActiveLimit(listing, ownerId, limit);
+    } else {
+      saved = await this.listingRepo.save(listing);
+    }
     await this.listingCache.invalidateSearch();
     await this.listingCache.invalidateSingle(saved.id);
     return saved;

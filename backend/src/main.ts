@@ -48,21 +48,32 @@ async function bootstrap() {
       forbidNonWhitelisted: false,
       transform: true,
       exceptionFactory: (errors) => {
-        const messages = errors.map((error) => Object.values(error.constraints || {}).join(', '));
+        const messages = errors.map((error) => {
+          const constraints = Object.values(error.constraints || {});
+          return constraints
+            .map((c) =>
+              c.startsWith('validation.') || c.startsWith('errors.')
+                ? c
+                : 'errors.validationFailed',
+            )
+            .join('; ');
+        });
         return new BadRequestException(messages.join('; '));
       },
     }),
   );
 
-  app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
-    res.setHeader(
-      'Access-Control-Allow-Origin',
-      process.env.FRONTEND_URL || 'http://localhost:3000',
-    );
+  const frontendOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const setUploadsCorsHeaders = (res: Response) => {
+    res.setHeader('Access-Control-Allow-Origin', frontendOrigin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  };
+
+  app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
+    setUploadsCorsHeaders(res);
     if (req.method === 'OPTIONS') {
       return res.sendStatus(200);
     }
@@ -72,14 +83,7 @@ async function bootstrap() {
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
     setHeaders: (res, path) => {
-      res.setHeader(
-        'Access-Control-Allow-Origin',
-        process.env.FRONTEND_URL || 'http://localhost:3000',
-      );
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range');
-      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      setUploadsCorsHeaders(res);
       if (
         path.endsWith('.webp') ||
         path.endsWith('.jpg') ||
@@ -96,18 +100,6 @@ async function bootstrap() {
         );
       }
     },
-  });
-
-  app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
-    if (res.statusCode === 404) {
-      res.setHeader(
-        'Access-Control-Allow-Origin',
-        process.env.FRONTEND_URL || 'http://localhost:3000',
-      );
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    }
-    next();
   });
 
   const config = new DocumentBuilder()

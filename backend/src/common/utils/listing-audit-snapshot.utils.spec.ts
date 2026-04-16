@@ -3,18 +3,70 @@ import { Listing } from '../../listings/entities/listing.entity';
 import {
   buildListingAuditSnapshot,
   diffListingAuditSnapshots,
-  maskVinForLog,
 } from './listing-audit-snapshot.utils';
 
 describe('listing-audit-snapshot.utils', () => {
-  describe('maskVinForLog', () => {
-    it('returns null for empty input', () => {
-      expect(maskVinForLog(null)).toBeNull();
-      expect(maskVinForLog('')).toBeNull();
+  describe('maskVinForLog (via buildListingAuditSnapshot)', () => {
+    it('masks VIN to last four characters in snapshot', () => {
+      const listing = {
+        category: 'vehicle',
+        price: 1000,
+        currency: 'EUR',
+        city: 'X',
+        negotiable: false,
+        available_in_credit: false,
+        down_payment_amount: null,
+        description: null,
+        description_ro: null,
+        description_ru: null,
+        images: null,
+        title: 't',
+        urgent: false,
+        is_new: false,
+        vin: 'WBA3A5G59CNP12345',
+        condition: null,
+        registration_type: null,
+        horsepower: null,
+        power_kw: null,
+        equipment: null,
+        image_blur_hashes: null,
+        cover_blur_hash: null,
+        tire: null,
+        vehicle: null,
+      } as unknown as Listing;
+      const snap = buildListingAuditSnapshot(listing);
+      expect(snap.vin).toBe('****2345');
     });
 
-    it('masks VIN to last four characters', () => {
-      expect(maskVinForLog('WBA3A5G59CNP12345')).toBe('****2345');
+    it('returns null for empty VIN in snapshot', () => {
+      const listing = {
+        category: 'vehicle',
+        price: 1000,
+        currency: 'EUR',
+        city: 'X',
+        negotiable: false,
+        available_in_credit: false,
+        down_payment_amount: null,
+        description: null,
+        description_ro: null,
+        description_ru: null,
+        images: null,
+        title: 't',
+        urgent: false,
+        is_new: false,
+        vin: null,
+        condition: null,
+        registration_type: null,
+        horsepower: null,
+        power_kw: null,
+        equipment: null,
+        image_blur_hashes: null,
+        cover_blur_hash: null,
+        tire: null,
+        vehicle: null,
+      } as unknown as Listing;
+      const snap = buildListingAuditSnapshot(listing);
+      expect(snap.vin).toBeNull();
     });
   });
 

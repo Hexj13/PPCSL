@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { ClassSerializerInterceptor, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -13,6 +14,7 @@ import { BoardModule } from './board/board.module';
 import { BrandsModule } from './brands/brands.module';
 import { CitiesModule } from './cities/cities.module';
 import { CommonModule } from './common/common.module';
+import { appConfig, authConfig, databaseConfig, uploadConfig } from './common/config';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { CipautoImportThrottlerGuard } from './common/guards/cipauto-import-throttler.guard';
 import { SentryInterceptor } from './common/interceptors/sentry.interceptor';
@@ -34,6 +36,7 @@ import { UsersModule } from './users/users.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      load: [appConfig, authConfig, databaseConfig, uploadConfig],
     }),
     ThrottlerModule.forRoot([
       {
@@ -42,6 +45,7 @@ import { UsersModule } from './users/users.module';
       },
     ]),
     TypeOrmModule.forRoot(dataSourceOptions),
+    EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     CommonModule,
     ExchangeRatesModule,
@@ -76,6 +80,10 @@ import { UsersModule } from './users/users.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: SentryInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor,
     },
   ],
 })

@@ -386,6 +386,7 @@ describe('ListingGrid', () => {
             limit: LISTING_GRID_PAGE_SIZE,
             page: 1,
           }),
+          expect.anything(),
         );
       });
       await screen.findByText('No listings found');
@@ -409,6 +410,7 @@ describe('ListingGrid', () => {
             limit: 10,
             page: 1,
           }),
+          expect.anything(),
         );
       });
       await screen.findByText('No listings found');

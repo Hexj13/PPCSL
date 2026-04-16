@@ -4,6 +4,7 @@ import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local
 import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
 import { sanitizeReturnUrl } from '@/lib/return-url';
 import { toast } from '@/lib/toast';
+import { silentCatch } from '@/lib/utils';
 
 export const hasCompleteProfileEmailNotificationsEnabled = (
   email: string,
@@ -24,7 +25,11 @@ export async function processPendingFavorites(userId: string): Promise<void> {
     }
   }
   if (validFavorites.length > 0) {
-    await Promise.all(validFavorites.map((id: string) => favoritesApi.add(id).catch(() => {})));
+    await Promise.all(
+      validFavorites.map((id: string) =>
+        favoritesApi.add(id).catch(silentCatch('completeProfile.syncFavorites')),
+      ),
+    );
   }
   localStorageRemoveItem('pendingFavorites');
 }

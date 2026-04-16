@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { designTokens } from '@/ui';
 
 interface MultiSelectOption {
   value: string;
@@ -274,7 +275,10 @@ function MultiSelectDropdownComponent({
       )}
 
       {isOpen && !disabled && (
-        <div className="absolute z-100 w-full mt-1 top-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl overflow-hidden">
+        <div
+          className="absolute w-full mt-1 top-full bg-white border-2 border-primary-500/30 rounded-lg shadow-xl overflow-hidden"
+          style={{ zIndex: designTokens.zIndex.dropdown }}
+        >
           <div className="max-h-96 overflow-auto scrollbar-custom">
             {filteredOptions.length > 0 ? (
               optionsToRender.map((option, index) => {

@@ -46,6 +46,5 @@ export function handleUploadError(
   if (error instanceof BadRequestException) {
     throw error;
   }
-  const errorMessage = error instanceof Error ? error.message : 'errors.unknownError';
-  throw new BadRequestException(userMessage || `errors.imageProcessingError|${errorMessage}`);
+  throw new BadRequestException(userMessage || 'errors.imageProcessingError');
 }

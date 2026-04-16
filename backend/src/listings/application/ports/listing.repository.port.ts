@@ -81,4 +81,5 @@ export interface IListingRepository {
     listing: Listing,
     currencyContext: SimilarCandidatesCurrencyContext,
   ): Promise<Listing[]>;
+  saveWithActiveLimit(listing: Listing, userId: string, limit: number): Promise<Listing>;
 }

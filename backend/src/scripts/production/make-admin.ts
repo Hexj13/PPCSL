@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import 'reflect-metadata';
 import * as bcrypt from 'bcrypt';
 
@@ -5,11 +7,15 @@ import { UserType as UserTypeEnum } from '../../common/types';
 import { AppDataSource } from '../../data-source';
 import { User } from '../../users/entities/user.entity';
 
+function generateSecurePassword(): string {
+  return randomBytes(16).toString('base64url');
+}
+
 async function makeAdmin() {
   try {
     const args = process.argv.slice(2);
     let email: string | null = null;
-    let password = 'GGGgggTEST777';
+    let password: string | null = null;
     let firstName = 'Admin';
     let lastName = 'User';
     let phone: string | null = null;
@@ -68,6 +74,10 @@ async function makeAdmin() {
         console.log('Please provide --email parameter to create a new admin user');
         process.exit(1);
       }
+      if (!password) {
+        password = generateSecurePassword();
+        console.log('⚠️  No --password provided, generated a random one');
+      }
       console.log(`👤 Creating new user ${email}...`);
       const hashedPassword = await bcrypt.hash(password, 10);
       admin = userRepo.create({
@@ -100,6 +110,10 @@ async function makeAdmin() {
           console.error('❌ Error: Cannot update password without email');
           console.log('Please provide --email parameter to update password');
           process.exit(1);
+        }
+        if (!password) {
+          password = generateSecurePassword();
+          console.log('⚠️  No --password provided, generated a random one');
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         admin.password = hashedPassword;

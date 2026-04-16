@@ -11,6 +11,7 @@ import {
 } from '@/lib/comparisonMigration';
 import { sanitizeReturnUrl } from '@/lib/return-url';
 import { toast } from '@/lib/toast';
+import { silentCatch } from '@/lib/utils';
 
 type LoginResponse = {
   data: {
@@ -53,7 +54,11 @@ export async function runAfterRegistration(
         }
       }
       if (validFavorites.length > 0) {
-        await Promise.all(validFavorites.map((id: string) => favoritesApi.add(id).catch(() => {})));
+        await Promise.all(
+          validFavorites.map((id: string) =>
+            favoritesApi.add(id).catch(silentCatch('afterRegistration.syncFavorites')),
+          ),
+        );
       }
       localStorageRemoveItem('pendingFavorites');
     }

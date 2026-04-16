@@ -14,7 +14,7 @@ import { getCountry } from '@/lib/utils';
 const siteConfig = loadSiteConfigSync(getCountry());
 const siteUrl = siteConfig.siteUrl;
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 30;
 
 export async function generateMetadata({
   searchParams,

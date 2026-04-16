@@ -13,7 +13,7 @@ tags:
 ## Target structure (repo docs)
 
 - **architecture/** — system overview, multi-repo, backend layers, scripts, known issues, technical; ADR in `architecture/adr/`.
-- **domains/** — business-domain docs (DDD); feature/domain docs live here.
+- **domains/** — business-domain docs (DDD); currently reserved for gradual regrouping, while active feature docs still live in `features/`.
 - **engineering/** — backend, frontend, QA, conventions, documentation standards.
 - **operations/** — deploy, monitoring, runbooks, Sentry.
 - **reference/** — env vars, permissions, glossary, scripts reference, analytics, audits.

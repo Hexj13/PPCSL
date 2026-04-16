@@ -352,7 +352,7 @@ npm run dev
 
 ### Step 10: Deploy
 
-Follow instructions in [deployment.md](./deployment.md) for:
+Follow instructions in [DEPLOYMENT.md](./DEPLOYMENT.md) for:
 
 - VPS deployment
 - Render.com deployment
@@ -697,7 +697,7 @@ All settings are configured **only via environment variables**. Each platform ha
 - **Frontend:** `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
 - **Backend:** `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`
 
-Detailed setup and integration: [sentry.md](./sentry.md).
+Detailed setup and integration: [SENTRY.md](./SENTRY.md).
 
 ### Example (Moldova, Frontend)
 
@@ -712,14 +712,14 @@ SENTRY_PROJECT=kupito-frontend
 
 - [ ] GA4: separate project, `NEXT_PUBLIC_GA_ID`, verify events
 - [ ] GTM (optional): container and/or `NEXT_PUBLIC_GTM_ID`
-- [ ] Sentry: Frontend + Backend projects, DSN and env in both; see [sentry.md](./sentry.md) if needed
+- [ ] Sentry: Frontend + Backend projects, DSN and env in both; see [SENTRY.md](./SENTRY.md) if needed
 
 ### Important
 
 - Do not use one GA/Sentry project for multiple platforms.
 - No fallback: core does not set default values.
 
-**See also:** [ga4-events.md](../analytics/ga4-events.md), [sentry.md](./sentry.md), [platform-checklist.md](./platform-checklist.md).
+**See also:** [ga4-events.md](../analytics/ga4-events.md), [SENTRY.md](./SENTRY.md), [platform-checklist.md](./platform-checklist.md).
 
 ---
 
@@ -727,6 +727,6 @@ SENTRY_PROJECT=kupito-frontend
 
 - [multi-repository.md](../architecture/multi-repository.md) - Architecture overview
 - [local-development.md](./local-development.md) - Local development guide
-- [deployment.md](./deployment.md) - Deployment instructions
-- [sentry.md](./sentry.md) - Sentry setup and monitoring
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment instructions
+- [SENTRY.md](./SENTRY.md) - Sentry setup and monitoring
 - [technical.md](../architecture/technical.md#13-cicd-configuration) - CI/CD configuration

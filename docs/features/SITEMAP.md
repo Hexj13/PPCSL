@@ -28,13 +28,15 @@ GET /sitemaps/:name.xml   → Next.js route handler → GET /api/sitemaps/:name 
 
 - **Backend** (`core/backend/src/sitemap/`): `SitemapModule`, `SitemapController`, `SitemapService`
 - **Frontend** (`core/frontend/app/`): route handlers for `/sitemap.xml`, `/sitemap.txt`, `/sitemaps/[name]`; they proxy to the backend with retries and return 502 with a body on upstream failure.
-- **robots.txt** (`core/frontend/app/robots.ts`): `Sitemap: https://kupito.club/sitemap.xml`
+- **robots.txt** (`core/frontend/app/robots.ts`): `Sitemap: https://kupito.club/sitemap.xml` and `Sitemap: https://kupito.club/sitemap.txt`
 
 ## Sitemap Index and Child Sitemaps
 
 | URL                              | Content                                                    | Priority | changefreq    |
 | -------------------------------- | ---------------------------------------------------------- | -------- | ------------- |
-| `/sitemap.xml`                   | Sitemap index (`pages`, `brands-{car\|truck\|moto}`, `sellers`, `listings-*` — **no nested sitemap index**, per Google) | —        | —             |
+| `/sitemap.xml`                   | Sitemap index (`pages`, `brands-{car\|truck\|moto}`, `tires`, `sellers`, `listings-*` — **no nested sitemap index**, per Google) | —        | —             |
+| `/sitemap.txt`                   | Plain-text sitemap mirror for crawlers and diagnostics     | —        | —             |
+| `/sitemaps/tires.xml`           | Tire category and tire taxonomy URLs                       | 0.7–0.8  | daily         |
 | `/sitemaps/pages.xml`            | Static pages                                               | 0.2–1.0  | daily/monthly |
 | `/sitemaps/brands-car.xml`      | Brand + brand+model URLs for passenger cars (`car`)       | 0.7–0.8  | daily         |
 | `/sitemaps/brands-truck.xml`    | Same for commercial (`truck`)                             | 0.7–0.8  | daily         |
@@ -126,8 +128,8 @@ Same URL rules as before: `vehicleType` query param for truck/moto, omitted for 
 
 If the frontend proxy does not work (e.g. GSC still cannot fetch the sitemap):
 
-1. In `core/frontend/app/robots.ts`, set `sitemap: 'https://api.kupito.club/api/sitemap.xml'` (or the actual backend base URL).
-2. In Google Search Console, submit `https://api.kupito.club/api/sitemap.xml`.
+1. In `core/frontend/app/robots.ts`, expose the public sitemap endpoints (`https://kupito.club/sitemap.xml` and `https://kupito.club/sitemap.txt`).
+2. In Google Search Console, submit `https://kupito.club/sitemap.xml`.
 
 Google allows the sitemap to be on a different subdomain; URLs inside the sitemap must point to the verified property (e.g. `https://kupito.club/...`).
 

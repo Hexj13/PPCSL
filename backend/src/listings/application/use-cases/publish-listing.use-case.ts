@@ -33,19 +33,16 @@ export class PublishListingUseCase {
     if (listing.user_id !== userId) {
       throw new ForbiddenException('errors.listingAccessDenied');
     }
-
-    const activeCount = await this.listingRepo.countActiveByUser(userId);
-    const limit = await this.usersService.getListingLimit(userId);
     if (listing.status === 'Active') {
       throw new BadRequestException('errors.listingAlreadyActive');
-    }
-    if (activeCount >= limit) {
-      throw new BadRequestException(`errors.activeListingsLimitExceeded|${limit}`);
     }
 
     const previousStatus = listing.status;
     listing.publish();
-    const saved = await this.listingRepo.save(listing);
+
+    const limit = await this.usersService.getListingLimit(userId);
+    const saved = await this.listingRepo.saveWithActiveLimit(listing, userId, limit);
+
     await this.listingCache.invalidateSearch();
     await this.listingCache.invalidateSingle(listingId);
     logUserEvent(this.logger, {

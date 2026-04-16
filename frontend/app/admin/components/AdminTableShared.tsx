@@ -7,6 +7,7 @@ import { CopyButton } from '@/components/common/CopyButton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Modal } from '@/components/modals/Modal';
 import { formatAdminTableDateTime } from '@/lib/utils';
+import { designTokens } from '@/ui';
 
 import { AdminActionButton } from './AdminButtons';
 
@@ -132,8 +133,8 @@ export function AdminActionsMenuPortal({
       data-admin-actions-menu
       {...{ [menuDataAttr]: true }}
       role="menu"
-      className="fixed z-[120] min-w-48 rounded-lg border-2 border-primary-500/30 bg-white shadow-xl"
-      style={{ top, left, transform: 'translateX(-100%)' }}
+      className="fixed min-w-48 rounded-lg border-2 border-primary-500/30 bg-white shadow-xl"
+      style={{ top, left, transform: 'translateX(-100%)', zIndex: designTokens.zIndex.dropdown }}
     >
       {items.map((item) => (
         <button

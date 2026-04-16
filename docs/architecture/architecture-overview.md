@@ -73,7 +73,7 @@ Moldova (kupito.club)              Future Platform
 
 ### Deploy
 
-8. **[deployment.md](../guides/deployment.md)**
+8. **[DEPLOYMENT.md](../guides/DEPLOYMENT.md)**
    - Deploy instructions for Render.com
    - CI/CD setup
    - Production checklist
@@ -148,7 +148,7 @@ Moldova (kupito.club)              Future Platform
 
 ### For DevOps
 
-1. [deployment.md](../guides/deployment.md)
+1. [DEPLOYMENT.md](../guides/DEPLOYMENT.md)
 2. [platform-guide.md](../guides/platform-guide.md)
 
 ---

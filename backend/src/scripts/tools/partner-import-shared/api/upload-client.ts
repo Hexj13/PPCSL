@@ -62,6 +62,7 @@ export class UploadClient {
       return {
         url: json.url,
         path: json.path,
+        blurhash: json.blurhash ?? null,
       };
     };
 

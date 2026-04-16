@@ -31,15 +31,3 @@ export const STATUS_CONFIG: Record<ListingStatus, StatusConfig> = {
 export function getStatusConfig(status: ListingStatus): StatusConfig {
   return STATUS_CONFIG[status];
 }
-
-export function getStatusTextColor(status: ListingStatus): string {
-  return STATUS_CONFIG[status].textColor;
-}
-
-export function getStatusBgColor(status: ListingStatus): string {
-  return STATUS_CONFIG[status].bgColor;
-}
-
-export function getStatusBorderColor(status: ListingStatus): string | undefined {
-  return STATUS_CONFIG[status].borderColor;
-}

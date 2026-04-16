@@ -1,3 +1,13 @@
+---
+title: Image optimization setup guide
+owner: platform
+tags:
+  - type/guide
+  - domain/frontend
+  - scope/core
+  - status/active
+---
+
 # Image optimization setup guide
 
 After implementing image upload optimization, complete these 3 steps:
@@ -40,8 +50,8 @@ node node_modules/typeorm/cli.js migration:run -d dist/data-source.cli.js
 ## Step 2. Add env variable on Render (Frontend)
 
 1. Open [Render Dashboard](https://dashboard.render.com)
-2. Go to **frontend** service (kupito-frontend)
-3. **Environment** → **Add Environment Variable**:
+2. Go to **frontend** service (`kupito-frontend`)
+3. **Environment** -> **Add Environment Variable**:
 
 ```
 NEXT_PUBLIC_IMAGE_CDN_URL=https://api.kupito.club
@@ -105,7 +115,7 @@ Cover-only mode only touches rows with `cover_blur_hash IS NULL`. Full mode only
 | Before | After |
 |---|---|
 | Image processed twice (backend + Next.js) | Single processing (backend), Next.js skips |
-| Every card request → S3 + sharp | LRU cache in memory, repeated requests instant |
+| Every card request -> S3 + sharp | LRU cache in memory, repeated requests instant |
 | Thumbnails 800px | 640px (~36% savings) |
 | API returns 20 photos per card | Maximum 5 |
 | Thumbnail generated on the fly | Pre-generated 400px at upload |

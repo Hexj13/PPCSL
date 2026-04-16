@@ -14,6 +14,7 @@ import {
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
+import { silentCatch } from '@/lib/utils';
 
 const isValidEmail = (value: string): boolean => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -44,7 +45,11 @@ async function processPendingFavorites(userId: string): Promise<void> {
     }
   }
   if (validFavorites.length > 0) {
-    await Promise.all(validFavorites.map((id: string) => favoritesApi.add(id).catch(() => {})));
+    await Promise.all(
+      validFavorites.map((id: string) =>
+        favoritesApi.add(id).catch(silentCatch('login.syncFavorites')),
+      ),
+    );
   }
   localStorageRemoveItem('pendingFavorites');
 }

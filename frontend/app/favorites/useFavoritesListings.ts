@@ -7,6 +7,7 @@ import type { Listing, PaginationMeta } from '@/lib/api';
 import { favoritesApi } from '@/lib/api';
 import { subscribeToCrossTabEvents } from '@/lib/cross-tab-events';
 import { useFavoritesStore } from '@/lib/store';
+import { silentCatch } from '@/lib/utils';
 
 const FAVORITES_PAGE_SIZE = 20;
 
@@ -15,9 +16,9 @@ function cacheListingIds(ids: string[]): void {
   void caches
     .open('kupito-data-v1')
     .then((cache) => {
-      ids.forEach((id) => cache.add(`/listings/${id}`).catch(() => {}));
+      ids.forEach((id) => cache.add(`/listings/${id}`).catch(silentCatch('Favorites.cacheAdd')));
     })
-    .catch(() => {});
+    .catch(silentCatch('Favorites.prefetch'));
 }
 
 export function useFavoritesListings(user: { id: string } | null) {

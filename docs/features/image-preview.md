@@ -321,9 +321,13 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
 ### Blur placeholders (blurhash)
 
 - **Search / listing cards:** `cover_blur_hash` on the listing; `ListingCard` decodes with `blurhashToDataURL` (`core/frontend/lib/utils/blurhash.ts`).
+- **Management cards:** `ListingManagementCard` (my listings, admin, board) decodes `cover_blur_hash` → `placeholder="blur"` on the cover `Image`.
+- **Comparison table:** `comparisonFields.tsx` photo cell uses `cover_blur_hash` → `placeholder="blur"` on both external and internal `Image` variants.
 - **Listing detail:** API returns `image_blur_hashes` (jsonb, same order as `images`, nullable slots) and `cover_blur_hash`. UI uses per-index hash when present; index `0` falls back to `cover_blur_hash` if the array slot is empty (legacy rows).
+- **Navigation blur cache:** On SPA navigation from a card to the listing detail page, `loading.tsx` (route-level Suspense fallback) can show a blur placeholder in the hero area instead of a gray skeleton. `ListingCard` and `ListingManagementCard` save `cover_blur_hash` to an in-memory LRU cache (`core/frontend/lib/blur-navigation-cache.ts`, max 50 entries) on click; `loading.tsx` (`'use client'`) reads the cache via `useParams()` and renders the decoded blur as a CSS `background-image`. When no cached blur exists (direct navigation, SEO, shared links), the fallback is the original gray pulse skeleton.
 - **Create/update:** Form sends `image_blur_hashes` in parallel with `images` (length must match). Upload response includes `blurhash` per file.
-- **Backfill:** `npm run backfill:blurhash:cover` (cover only) and `npm run backfill:blurhash:all` (full array) from `core/backend`; requires DB + S3 access. See `core/backend/docs/SCRIPTS.md` and `core/docs/guides/image-optimization-setup-ru.md`.
+- **Partner imports:** The import pipeline (CipAuto, 999.md) collects `blurhash` from each upload response and includes `image_blur_hashes` in the create-listing payload, so imported listings have blur placeholders immediately.
+- **Backfill (legacy data):** `npm run backfill:blurhash:cover` (cover only) and `npm run backfill:blurhash:all` (full array) from `core/backend`; requires DB + S3 access. Only needed for listings created before blurhash was integrated into the import pipeline. See `core/backend/docs/SCRIPTS.md`.
 
 ### Local development vs production
 
@@ -526,5 +530,5 @@ If you need to add features:
 
 ---
 
-**Last Updated:** 2026-03-25  
-**Version:** 3.13 (Listing page preview: confirmed/pending hero slots, no translate slide; separate hero vs thumbnail readiness; adjacent preload delays; mobile three thumbnails only)
+**Last Updated:** 2026-04-16  
+**Version:** 3.14 (Blur placeholders: added to ListingManagementCard, comparison table; navigation blur cache for loading.tsx skeleton)

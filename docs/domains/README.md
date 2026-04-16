@@ -14,7 +14,7 @@ Domain-driven documentation: grouping by business meaning.
 
 ## Contents
 
-See [../features/](../features/) for current feature docs (to be reorganized by domain: search, listings, brands-models, etc.).
+Current decision: keep active feature docs in [../features/](../features/) for now, and use `domains/` for future domain-based regrouping once clusters are mature enough to move.
 
 ## Expected reviewers
 

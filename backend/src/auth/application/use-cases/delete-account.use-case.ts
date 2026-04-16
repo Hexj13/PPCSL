@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
+import { UserAccountDeletedEvent } from '../../../common/events/user-account-deleted.event';
 import { logUserEvent } from '../../../common/utils/log-user-event';
-import { ListingsService } from '../../../listings/listings.service';
 import { UsersService } from '../../../users/application/users.service';
 import { RefreshTokenService } from '../../infrastructure/services/refresh-token.service';
 
@@ -11,7 +12,7 @@ export class DeleteAccountUseCase {
 
   constructor(
     private usersService: UsersService,
-    private listingsService: ListingsService,
+    private eventEmitter: EventEmitter2,
     private refreshTokenService: RefreshTokenService,
   ) {}
 
@@ -22,7 +23,10 @@ export class DeleteAccountUseCase {
       throw new BadRequestException('errors.userDeactivated');
     }
 
-    const closedListingsCount = await this.listingsService.closeAllUserListings(userId);
+    await this.eventEmitter.emitAsync(
+      UserAccountDeletedEvent.eventName,
+      new UserAccountDeletedEvent(userId),
+    );
     await this.refreshTokenService.revokeAllUserTokens(userId);
 
     user.deactivate();
@@ -40,7 +44,6 @@ export class DeleteAccountUseCase {
     logUserEvent(this.logger, {
       event: 'account_deleted',
       userId,
-      closedListingsCount,
     });
 
     return { success: true };

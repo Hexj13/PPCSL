@@ -45,6 +45,7 @@ describe('UsersController', () => {
       findAll: jest.fn(),
       findOne: jest.fn(),
       findOneById: jest.fn(),
+      findPublicProfile: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -66,7 +67,7 @@ describe('UsersController', () => {
   });
 
   describe('findAll', () => {
-    it('should return all users without passwords', async () => {
+    it('should return all users without passwords (admin only)', async () => {
       const mockUsers = [mockUser, { ...mockUser, id: 'user-2' }] as unknown as User[];
       service.findAll.mockResolvedValue(mockUsers);
 
@@ -82,21 +83,31 @@ describe('UsersController', () => {
   });
 
   describe('findOne', () => {
-    it('should return user without password', async () => {
+    it('should return public profile without sensitive data', async () => {
       const userId = 'user-1';
-      service.findOneById.mockResolvedValue(mockUser as unknown as User);
+      const publicProfile = {
+        id: 'user-1',
+        type: 'Individual',
+        firstName: 'Test',
+        companyName: null,
+        board_slug: null,
+        created_at: mockUser.created_at,
+      };
+      service.findPublicProfile.mockResolvedValue(publicProfile);
 
       const result = await controller.findOne(userId);
 
-      expect(service.findOneById).toHaveBeenCalledWith(userId);
+      expect(service.findPublicProfile).toHaveBeenCalledWith(userId);
       expect(result).not.toHaveProperty('password');
+      expect(result).not.toHaveProperty('email');
+      expect(result).not.toHaveProperty('phone');
       expect(result).toHaveProperty('id', 'user-1');
-      expect(result).toHaveProperty('email', 'test@example.com');
+      expect(result).toHaveProperty('firstName', 'Test');
     });
 
     it('should throw NotFoundException when user not found', async () => {
       const userId = 'non-existent';
-      service.findOneById.mockRejectedValue(new NotFoundException('User not found'));
+      service.findPublicProfile.mockRejectedValue(new NotFoundException('User not found'));
 
       await expect(controller.findOne(userId)).rejects.toThrow(NotFoundException);
     });

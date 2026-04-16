@@ -328,7 +328,9 @@ Requires **PostgreSQL**, **S3 credentials** (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_AC
 | `npm run backfill:blurhash:cover` | Active listings with `cover_blur_hash IS NULL`: fetch first image from S3, set `cover_blur_hash`. |
 | `npm run backfill:blurhash:all` | Active listings with `image_blur_hashes IS NULL`: fetch each image, set `image_blur_hashes` (nullable slots on failure) and sync `cover_blur_hash` from the first successful hash / first slot. |
 
-Batches of 50, 1s pause between batches. Idempotent for the chosen criterion (`NULL` column). Operational notes: `core/docs/guides/image-optimization-setup-ru.md` (Step 3).
+Batches of 50, 1s pause between batches. Idempotent for the chosen criterion (`NULL` column).
+
+**Note:** Partner import scripts (CipAuto, 999.md) now include `image_blur_hashes` in the create-listing payload automatically by collecting `blurhash` from each upload response. Backfill is only needed for listings created before this integration.
 
 **Local vs production UI:** Missing blur placeholders in the Next.js app on localhost usually means listing rows have null blurhash columns in the DB you hit locally—not a dev-build switch. Align data (create via the app, or backfill) or see `core/docs/features/image-preview.md` (Local development vs production).
 
@@ -375,7 +377,71 @@ Runtime copies are created in core by `npm run prepare:build` under `src/scripts
 |------------|--------|
 | `npm run cipauto:scan` / `cipauto:import` / `cipauto:report` | CipAuto HTML catalog → Kupito API |
 | `npm run 999md:scan` / `999md:import` / `999md:report` | 999.md GraphQL → same downstream pipeline |
+| `npm run cipauto:seed-registry` | Seed registry from existing Kupito listings (deduplication) |
+| `npm run cipauto:audit-stale` | Find and close listings removed from CipAuto |
 | `npm run 999md:dealer-audit` | Brand/model audit report vs live Kupito API |
+
+#### CipAuto registry seeding (`seed-registry`)
+
+When a partner already has listings in the Kupito database **before** the first PLP/PDP run, the parser registry is empty and all listings would be imported as duplicates. `seed-registry` prevents this by pre-populating the registry.
+
+The script reads all listings for a given user, extracts the CipAuto product code (`Cod Produs: XXXXX`) from descriptions, and writes `sourceListingId → kupitoListingId` mappings into the parser registry JSON. Subsequent PLP scans preserve these mappings, and PDP imports skip (or update) matched listings instead of creating duplicates.
+
+```bash
+npm run cipauto:seed-registry -- <userId>
+```
+
+The script handles:
+- HTML entities in descriptions (`&nbsp;`)
+- Case normalization (uppercase `D08422` in description matches lowercase `d08422` in URL)
+- Idempotent runs (skips entries already in the registry)
+
+**When to run:** Once, before the first PLP scan for a partner that already has listings imported through other means.
+
+#### CipAuto stale listings audit (`audit-stale-listings`)
+
+Identifies Kupito listings that no longer exist on CipAuto. Works in two phases:
+
+1. **Registry cross-reference** — compares Kupito listings against the active PLP registry (fast, no network).
+2. **Website verification** — for each candidate, fetches the CipAuto page and checks for HTTP 404/410 or the "VÂNDUT" (sold) template. Only confirmed-closed listings are flagged.
+
+```bash
+# Phase 1 + 2: full audit with website verification (read-only)
+npm run cipauto:audit-stale -- <userId>
+
+# Close confirmed stale listings in the database
+npm run cipauto:audit-stale -- <userId> --close
+
+# Skip website verification (trust registry only)
+npm run cipauto:audit-stale -- <userId> --skip-verify
+```
+
+Output categories:
+
+| Category | Meaning |
+|----------|---------|
+| Active & in PLP | Listing exists on both Kupito and CipAuto — no action needed |
+| Active & NOT in PLP (confirmed) | Verified closed/sold on CipAuto — safe to close |
+| Active & NOT in PLP (still active) | Page is live but PLP missed it — do NOT close |
+| No Cod Produs | Cannot match — needs manual review |
+| Already closed | Already closed in Kupito — ignored |
+
+The `--close` flag performs a full listing close matching the application behavior:
+- Sets `status = Closed`, `closed_at`, resets all promotion fields (`is_promoted`, `promoted_until`, `promoted_started_at`, `promoted_paused_at`)
+- Ends open promotion history records for promoted listings
+- Invalidates Redis search cache (`listings:search:*`) after all closures
+
+**When to run:** After PLP scans are established, periodically or when the listing count diverges between Kupito and CipAuto.
+
+#### Applying the pattern to other parsers
+
+Both scripts are CipAuto-specific but follow a reusable pattern for any partner import:
+
+1. **Identifier extraction** — find a stable external ID in listing data (product code, external URL slug, etc.)
+2. **Registry seeding** — map `externalId → kupitoListingId` before the first automated import
+3. **Stale audit** — cross-reference DB listings with the latest PLP, then verify on the source website
+
+For a new parser, create equivalent scripts under `src/scripts/tools/<parser>-import/commands/` following the same structure.
 
 From the **platform repo root**, the same flows are exposed as `npm run 999md:*` (see root `package.json`). Full env flags and operational checklists are platform docs:
 
@@ -399,7 +465,7 @@ Database migrations are handled separately and are located in:
 ## Database Backups
 
 For automated database backups, see:
-- **Documentation**: `../../docs/guides/deployment.md` (Database Backups section)
+- **Documentation**: `../../docs/guides/DEPLOYMENT.md` (Database Backups section)
 - **TypeScript script**: `src/scripts/production/backup-database.ts`
 - **Bash script**: `config/scripts/backup-database.sh` (for cron)
 

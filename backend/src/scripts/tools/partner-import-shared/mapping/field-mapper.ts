@@ -56,6 +56,10 @@ export function buildCreateListingPayload(
     payload.down_payment_amount = null;
   }
 
+  if (input.imageBlurHashes?.length) {
+    payload.image_blur_hashes = input.imageBlurHashes;
+  }
+
   return payload;
 }
 

@@ -21,9 +21,12 @@ import { UsersModule } from '../users/users.module';
 
 import { AdminAuditService } from './admin-audit.service';
 import { AdminBrandsModelsService } from './admin-brands-models.service';
+import { AdminListingsService } from './admin-listings.service';
+import { AdminPromotionsService } from './admin-promotions.service';
+import { AdminStatsService } from './admin-stats.service';
 import { AdminTireBrandsModelsService } from './admin-tire-brands-models.service';
+import { AdminUsersService } from './admin-users.service';
 import { AdminController } from './admin.controller';
-import { AdminService } from './admin.service';
 import { DeleteAllBrandsService } from './delete-all-brands.service';
 import { AdminAuditLog } from './entities/admin-audit-log.entity';
 
@@ -52,12 +55,15 @@ import { AdminAuditLog } from './entities/admin-audit-log.entity';
   ],
   controllers: [AdminController],
   providers: [
-    AdminService,
+    AdminUsersService,
+    AdminListingsService,
+    AdminStatsService,
+    AdminPromotionsService,
     DeleteAllBrandsService,
     AdminAuditService,
     AdminBrandsModelsService,
     AdminTireBrandsModelsService,
   ],
-  exports: [AdminService, AdminAuditService],
+  exports: [AdminUsersService, AdminAuditService],
 })
 export class AdminModule {}

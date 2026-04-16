@@ -18,6 +18,6 @@ import { TiresService } from './tires.service';
     RedisTiresCache,
     { provide: TIRES_CACHE, useExisting: RedisTiresCache },
   ],
-  exports: [TiresService, TIRES_CACHE],
+  exports: [TiresService, TIRES_CACHE, TypeOrmModule],
 })
 export class TiresModule {}

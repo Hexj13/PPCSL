@@ -1,3 +1,13 @@
+---
+title: Intermittent toast cache checklist
+owner: platform
+tags:
+  - type/runbook
+  - domain/ops
+  - scope/core
+  - status/active
+---
+
 # Ruling out caching layers for intermittent API/toast issues
 
 Use this checklist when users see periodic “connection / server unavailable” toasts but the root cause might be confused with stale or edge-cached data.

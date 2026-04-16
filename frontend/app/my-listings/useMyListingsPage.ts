@@ -10,6 +10,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing, PaginationMeta, PromotionAccessStatus, PromotionHistory } from '@/lib/api';
 import { listingsApi, normalizeListingResponse } from '@/lib/api';
 import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
+import { silentCatch } from '@/lib/utils';
 
 import { useMyListingsRefreshCooldownTimer } from './useMyListingsRefreshCooldownTimer';
 import { useMyListingsUpdatedToast } from './useMyListingsUpdatedToast';
@@ -69,10 +70,10 @@ function preloadListingPages(listings: Listing[]) {
     .open('kupito-data-v1')
     .then((cache) => {
       listings.forEach((listing) => {
-        cache.add(`/listings/${listing.id}`).catch(() => {});
+        cache.add(`/listings/${listing.id}`).catch(silentCatch('MyListings.cacheAdd'));
       });
     })
-    .catch(() => {});
+    .catch(silentCatch('MyListings.prefetch'));
 }
 
 async function fetchPromotionAccess(): Promise<PromotionAccessStatus> {

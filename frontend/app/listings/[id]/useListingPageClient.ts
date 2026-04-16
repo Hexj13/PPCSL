@@ -19,10 +19,12 @@ import {
 import { prepareListingDescriptionHtml } from '@/lib/listingDescriptionHtml';
 import { getListingDescriptionForLocale } from '@/lib/listingDescriptionLocale';
 import { buildSignInHref } from '@/lib/return-url';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import {
   getCityName,
+  getCountry,
   getListingDisplayTitle,
   getTireModelDisplayLabel,
   isTireListing,
@@ -162,7 +164,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const displayTitle = listing ? getListingDisplayTitle(listing, t) : '';
   useEffect(() => {
     if (!displayTitle) return;
-    document.title = `${displayTitle} | Kupito`;
+    document.title = `${displayTitle} | ${loadSiteConfigSync(getCountry()).name}`;
   }, [displayTitle]);
 
   const handleToggleFavorite = useCallback(async () => {

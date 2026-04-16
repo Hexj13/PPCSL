@@ -252,12 +252,13 @@ Do not show these current vehicle form fields for `category = 'tire'`:
 - `studded = true` is valid only when `season = 'winter'`.
 - `run_flat = true` is valid only when `tire_vehicle_type = 'car'`.
 - Image validation keeps the current shared limits.
+- Minimum images: `1` for tire listings, `2` for vehicle listings.
 
 ## Create and edit validation contract
 
 ### Create validation
 
-- `category` is required.
+- Explicit `category` is recommended, but create validation may infer the category when the payload is unambiguously tire-only or vehicle-only.
 - API must reject mixed payloads that contain both `vehicle` and `tire`.
 - Tire payload must be present when `category = 'tire'`.
 - `model_id` may be omitted (stored as `NULL`).
@@ -326,6 +327,9 @@ Available filters:
   - Studded
   - Run-flat
   - Reinforced XL
+  - Spare / donut
+  - Tubeless
+  - Acoustic
 
 Recommended layout:
 
@@ -381,6 +385,9 @@ Use these public filter keys for tire search:
 - `tire_studded`
 - `tire_run_flat`
 - `tire_reinforced_xl`
+- `tire_spare_donut`
+- `tire_tubeless`
+- `tire_acoustic`
 - shared `price_gte`
 - shared `price_lte`
 - shared `cities`
@@ -406,11 +413,13 @@ If tire brand/model names are exposed in public URLs later, use the same slug ut
 
 Generate tire titles automatically.
 
-Listing title format (automatic):
+Stored listing title format (automatic):
 
 - Known model: `{Brand} {Model} {Width}/{Profile} R{Diameter}[ {LoadIndex}{SpeedIndex}]`
 - Model omitted: `{Brand} {Width}/{Profile} R{Diameter}[ {LoadIndex}{SpeedIndex}]`
 - Catalog `Other` model (`is_other`): `{Brand} {Width}/{Profile} R{Diameter}[ {LoadIndex}{SpeedIndex}]` (no model segment)
+
+Current UI note: the page H1 is simplified to brand + model for tire listings, while the stored `listing.title` keeps the size-aware format above.
 
 Marking: width (mm), profile (%), `R` (radial), rim diameter (inches); optional suffix is load index plus speed index with no space between them (e.g. `91V`). Omit the suffix when both load index and speed index are empty.
 
@@ -425,10 +434,10 @@ Examples:
 Show these tire-specific characteristics on cards:
 
 - size (`205/55 R16`)
+- tire vehicle type
 - season
 - condition
 - quantity
-- optional badge for `studded`
 
 Do not show vehicle characteristics on tire cards.
 
@@ -445,11 +454,11 @@ Show these tire-specific attributes on the listing detail page:
 - quantity
 - load index
 - speed index
-- DOT year
-- tread depth
 - studded
 - run-flat
 - reinforced XL
+
+Current implementation note: `dot_year` and `tread_depth_mm` are currently available in tire comparison, not on the listing detail page.
 
 ### SEO and structured data
 
@@ -461,10 +470,9 @@ Show these tire-specific attributes on the listing detail page:
 
 ## Sitemap and indexing
 
-- Active tire listing detail pages must be included in the existing monthly `listings-YYYY-MM.xml` sitemaps once the detail page is indexable.
-- Do not add arbitrary tire filter URLs like `?category=tire&...` to sitemap in MVP.
-- Do not introduce a tire taxonomy sitemap in MVP unless dedicated stable landing pages are added.
-- If dedicated tire SEO landings are added later, use a separate sitemap child file such as `brands-tire.xml` or another explicit tire-specific name; do not mix tire taxonomy into `brands-car|truck|moto`.
+- Active tire listing detail pages are included in the existing monthly `listings-YYYY-MM.xml` sitemaps once the detail page is indexable.
+- Tire search taxonomy URLs already ship through the dedicated `tires.xml` sitemap child file, including `?category=tire`, tire-brand URLs, and tire brand+model combinations.
+- Keep tire taxonomy isolated from `brands-car|truck|moto`; any future expansion should continue through explicit tire-specific sitemap files.
 - If a dedicated `/tires` landing page is added, include it in `pages.xml` and review its metadata, crawlability, and structured data.
 - robots, metadata, and sitemap inclusion must always stay aligned: a URL listed in sitemap must be crawlable and indexable.
 
@@ -477,13 +485,13 @@ Show these tire-specific attributes on the listing detail page:
 
 ### Compare
 
-- Disable compare for tire listings in MVP.
+- Tire compare is implemented as a separate flow from vehicle compare.
 - Do not allow mixing vehicle and tire listings in compare flows.
 
 ### Similar listings
 
-- Hide the similar listings block for tire listings in MVP.
-- If similarity is added later, use tire-specific ranking based on brand, size, season, and condition.
+- Tire listings use a tire-aware similar listings block.
+- Similarity must stay tire-specific and rank by brand, size, season, and condition.
 
 ### Analytics
 
@@ -507,7 +515,7 @@ Do not send tire listings through vehicle-only analytics dimensions.
 - `search` events for tire flow must include at minimum `listing_category`, `tire_vehicle_type`, `season`, `condition`, `quantity`, and normalized size params.
 - `select_content` tracking must support tire category switch and tire quick-filter interactions.
 - `save_filter` must persist and report `category=tire`.
-- While compare and similar are disabled for tires, compare/similar GA4 events must not fire for tire listings.
+- Compare and similar GA4 events for tires must carry tire category context and must never mix vehicle and tire entities.
 - Consent handling remains unchanged: tire analytics are sent only when analytics consent is granted.
 
 ## Logging and monitoring
@@ -656,10 +664,10 @@ Docs and translations:
 
 - price must clearly mean total set price
 - `diameter_inch` must support `.5`
-- `Other` model must not leak into final title when a custom model name exists
+- `Other` model must not leak into the final title
 - saved filters must persist category
-- compare must be disabled for tires
-- similar listings must be hidden or reimplemented
+- compare must stay separated by category
+- similar listings must stay tire-aware
 - breadcrumbs and JSON-LD must stop assuming every listing is a vehicle
 - analytics must carry category-specific fields
 - logging must avoid raw free-text payload leakage
@@ -668,9 +676,7 @@ Docs and translations:
 ## Not in MVP
 
 - partner imports for tires
-- tire compare
-- tire-specific similar listings algorithm
-- dedicated tire brand/model landing pages in sitemap
+- dedicated `/tires/*` route hierarchy beyond the current query-based sitemap entries
 - deep structured tire-type taxonomy beyond the MVP flags
 - price-per-tire mode
 
@@ -687,8 +693,7 @@ Docs and translations:
 ## Test checklist
 
 - create tire listing with curated model
-- create tire listing with `Other` model and custom model name
-- reject tire listing when `Other` is selected but custom model name is empty
+- create tire listing with catalog `Other`
 - reject tire create/edit when mixed `vehicle` and `tire` payload is submitted
 - reject tire edit when category change is attempted
 - reject `studded = true` for non-winter tires
@@ -698,6 +703,8 @@ Docs and translations:
 - tire search count preview matches submitted search results
 - saved tire filter round-trips correctly
 - tire cards and tire detail page render without vehicle fields
+- tire compare stays isolated from vehicle compare
+- tire similar listings stay tire-aware
 - tire analytics send category-aware events
 - tire listing detail pages appear in monthly sitemap once active and indexable
 

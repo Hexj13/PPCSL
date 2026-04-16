@@ -53,6 +53,7 @@
   "errors": {
     "serverError": "Server error. Please try again later.",
     "invalidRequest": "Invalid request. Please check the entered data.",
+    "validationFailed": "Validation failed. Please check the entered data.",
     "unauthorized": "Unauthorized access. Please log in again.",
     "forbidden": "You do not have permission for this action.",
     "notFound": "Resource not found.",

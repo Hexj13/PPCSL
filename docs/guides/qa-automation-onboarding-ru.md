@@ -29,7 +29,7 @@ tags:
 5. [e2e-test-architecture.md](../architecture/e2e-test-architecture.md)
 6. [frontend e2e entrypoint](../../frontend/docs/e2e-playwright.md)
 7. [backend integration tests](../../backend/docs/TESTING.md)
-8. [LINTING.md](../LINTING.md)
+8. [linting.md](../engineering/linting.md)
 
 ## 3) Настройка локального окружения
 
@@ -171,7 +171,7 @@ npm run release-check
 
 Если нужно локально исправлять пакетами:
 
-- правила и команды смотрите в [LINTING.md](../LINTING.md)
+- правила и команды смотрите в [linting.md](../engineering/linting.md)
 
 ## 8) Быстрый чеклист первого рабочего дня
 
