@@ -2,7 +2,9 @@ import 'reflect-metadata';
 
 import * as fs from 'fs';
 import * as path from 'path';
+import type { Readable } from 'stream';
 
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { IsNull } from 'typeorm';
 
 import { AppDataSource } from '../../../../data-source';
@@ -14,6 +16,99 @@ const COD_PRODUS_RE = /Cod\s+[Pp]rodus\s*:(?:\s|&nbsp;)*\s*([A-Za-z0-9]+)/;
 const CIPAUTO_BASE = 'https://cipauto.md';
 const REQUEST_DELAY_MS = 1500;
 const REQUEST_TIMEOUT_MS = 15000;
+const S3_PLP_PREFIX = 'parsing-plp/';
+
+function normalizeKeyRelative(p: string): string {
+  return p.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '');
+}
+
+function buildPlpS3RelativeCandidates(plpFilePathArg: string, resolvedLocalPath: string): string[] {
+  const cwd = process.cwd();
+  const candidates: string[] = [];
+  if (!path.isAbsolute(plpFilePathArg)) {
+    candidates.push(normalizeKeyRelative(plpFilePathArg));
+  }
+  const fromCwd = normalizeKeyRelative(path.relative(cwd, resolvedLocalPath));
+  if (fromCwd && !fromCwd.startsWith('..')) {
+    candidates.push(fromCwd);
+    const stripped = fromCwd.replace(/^runtime\/parsing\//, '');
+    if (stripped && stripped !== fromCwd) {
+      candidates.push(stripped);
+    }
+  }
+  return [...new Set(candidates.filter(Boolean))];
+}
+
+async function tryReadPlpFromS3(
+  plpFilePathArg: string,
+  resolvedLocalPath: string,
+): Promise<string | null> {
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID?.trim();
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY?.trim();
+  const bucketName = process.env.AWS_S3_BUCKET_NAME?.trim() || 'kupito-uploads';
+  const region = process.env.AWS_REGION?.trim() || 'eu-north-1';
+
+  if (!accessKeyId || !secretAccessKey) {
+    return null;
+  }
+
+  const relativeKeys = buildPlpS3RelativeCandidates(plpFilePathArg, resolvedLocalPath);
+  if (relativeKeys.length === 0) {
+    return null;
+  }
+
+  const client = new S3Client({
+    region,
+    credentials: { accessKeyId, secretAccessKey },
+  });
+
+  for (const rel of relativeKeys) {
+    const key = `${S3_PLP_PREFIX}${rel}`;
+    try {
+      const result = await client.send(
+        new GetObjectCommand({
+          Bucket: bucketName,
+          Key: key,
+        }),
+      );
+      if (!result.Body) {
+        continue;
+      }
+      const stream = result.Body as Readable;
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk as Buffer);
+      }
+      const body = Buffer.concat(chunks).toString('utf-8');
+      console.log(`[audit] Loaded PLP snapshot from S3 s3://${bucketName}/${key}`);
+      return body;
+    } catch (error: unknown) {
+      const code = (error as { name?: string }).name;
+      if (code === 'NoSuchKey' || code === 'NotFound') {
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  return null;
+}
+
+async function readPlpSnapshotJson(plpFilePathArg: string): Promise<string> {
+  const resolvedPath = path.isAbsolute(plpFilePathArg)
+    ? plpFilePathArg
+    : path.resolve(process.cwd(), plpFilePathArg);
+  if (fs.existsSync(resolvedPath)) {
+    return fs.readFileSync(resolvedPath, 'utf-8');
+  }
+  const fromS3 = await tryReadPlpFromS3(plpFilePathArg, resolvedPath);
+  if (fromS3 !== null) {
+    return fromS3;
+  }
+  throw new Error(
+    `PLP snapshot not found at ${resolvedPath}. If PLP is stored in S3 only, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY (same as the app) so this script can download parsing-plp/<relative-path>.`,
+  );
+}
 
 type VerifyResult =
   | { closed: true; reason: 'http_404' | 'http_410' | 'sold_template' }
@@ -194,7 +289,7 @@ async function auditStaleListings() {
       ? plpFilePath
       : path.resolve(process.cwd(), plpFilePath);
     console.log(`[audit] Loading PLP snapshot from: ${resolvedPath}`);
-    const raw = fs.readFileSync(resolvedPath, 'utf-8');
+    const raw = await readPlpSnapshotJson(plpFilePath);
     const parsed = JSON.parse(raw) as { items?: Record<string, unknown> };
     const sourceIds = Object.keys(parsed.items ?? {}).map((id) => id.toLowerCase());
     activeSourceIds = new Set(sourceIds);

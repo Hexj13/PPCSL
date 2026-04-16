@@ -424,6 +424,8 @@ npm run cipauto:audit-stale -- <userId> --skip-verify
 
 The `--plp-file` flag is the recommended mode: it loads the sourceIds from the current PLP snapshot JSON (created by the latest PLP scan) and treats that list as the ground truth. Any listing with a `Cod Produs` not present in the snapshot is marked as closed — no HTTP calls to CipAuto.
 
+On deployments where PLP artifacts are stored in S3 (same credentials as the app: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional `AWS_S3_BUCKET_NAME` / `AWS_REGION`), the script reads the local path first; if the file is missing on disk, it downloads the object under `parsing-plp/<same-relative-path-as---plp-file>` automatically.
+
 Output categories:
 
 | Category | Meaning |

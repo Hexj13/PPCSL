@@ -1288,7 +1288,7 @@ Platform repo (kupito.club)
 Caches:
 
 - `actions/setup-node` with `cache: 'npm'` and a multi-path `cache-dependency-path` (root, `core/frontend`, `core/backend` lockfiles).
-- `actions/cache@v4` for `core/frontend/.next/cache`, keyed on the frontend lockfile plus a content hash of TS/TSX sources. Next.js uses this to skip unchanged module work.
+- `actions/cache@v5` for `core/frontend/.next/cache`, keyed on the frontend lockfile plus a content hash of TS/TSX sources. Next.js uses this to skip unchanged module work.
 
 **Required secrets:**
 
