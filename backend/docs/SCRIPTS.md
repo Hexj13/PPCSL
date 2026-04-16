@@ -406,15 +406,23 @@ Identifies Kupito listings that no longer exist on CipAuto. Works in two phases:
 2. **Website verification** — for each candidate, fetches the CipAuto page and checks for HTTP 404/410 or the "VÂNDUT" (sold) template. Only confirmed-closed listings are flagged.
 
 ```bash
-# Phase 1 + 2: full audit with website verification (read-only)
+# Fastest: use PLP snapshot as source of truth for active sourceIds (no HTTP)
+npm run cipauto:audit-stale -- <userId> --plp-file runtime/parsing/cipauto/cipauto-current-plp.json
+
+# Full audit with website verification (read-only, ~17 min for 680 listings)
 npm run cipauto:audit-stale -- <userId>
 
 # Close confirmed stale listings in the database
-npm run cipauto:audit-stale -- <userId> --close
+npm run cipauto:audit-stale -- <userId> --plp-file <path> --close
+
+# Force HTTP verification for every listing, ignoring registry
+npm run cipauto:audit-stale -- <userId> --verify-all
 
 # Skip website verification (trust registry only)
 npm run cipauto:audit-stale -- <userId> --skip-verify
 ```
+
+The `--plp-file` flag is the recommended mode: it loads the sourceIds from the current PLP snapshot JSON (created by the latest PLP scan) and treats that list as the ground truth. Any listing with a `Cod Produs` not present in the snapshot is marked as closed — no HTTP calls to CipAuto.
 
 Output categories:
 

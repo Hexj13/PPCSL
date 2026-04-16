@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 export interface ThemeColors {
   primary: {
     50: string;
@@ -134,7 +136,7 @@ const defaultTheme: ThemeColors = {
 
 export function loadThemeSync(_country: string): ThemeColors {
   try {
-    const themeModule = require(`./theme/colors`);
+    const themeModule = require('./theme/colors') as { default: ThemeColors };
     return themeModule.default;
   } catch {
     return defaultTheme;

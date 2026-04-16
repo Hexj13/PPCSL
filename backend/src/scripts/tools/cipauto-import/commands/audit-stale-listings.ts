@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 
+import * as fs from 'fs';
 import * as path from 'path';
 
 import { IsNull } from 'typeorm';
@@ -151,15 +152,23 @@ async function auditStaleListings() {
     );
     console.error('  userId — UUID of the CipAuto partner user in Kupito DB');
     console.error('Flags:');
-    console.error('  --close        Close confirmed stale listings in DB');
-    console.error('  --skip-verify  Skip CipAuto website verification');
-    console.error('  --verify-all   Ignore registry, verify every listing directly on CipAuto');
+    console.error('  --close                 Close confirmed stale listings in DB');
+    console.error('  --skip-verify           Skip CipAuto website verification');
+    console.error(
+      '  --verify-all            Ignore registry, verify every listing directly on CipAuto',
+    );
+    console.error(
+      '  --plp-file <path>       Use PLP snapshot JSON as source of truth for active sourceIds',
+    );
     process.exit(1);
   }
 
   const closeFlag = process.argv.includes('--close');
   const skipVerify = process.argv.includes('--skip-verify');
   const verifyAll = process.argv.includes('--verify-all');
+
+  const plpFileIdx = process.argv.indexOf('--plp-file');
+  const plpFilePath = plpFileIdx !== -1 ? process.argv[plpFileIdx + 1] : undefined;
 
   console.log(`[audit] Connecting to database...`);
   await AppDataSource.initialize();
@@ -176,15 +185,32 @@ async function auditStaleListings() {
   const registryPath = path.join(__dirname, '..', 'data', 'cipauto-registry.json');
   const registry = new RegistryStore(registryPath);
   const registryItems = registry.getAll();
-  const activeSourceIds = new Set(
-    registryItems
-      .filter((item) => item.sourceStatus === 'active')
-      .map((item) => item.sourceListingId),
-  );
 
-  console.log(
-    `[audit] Registry: ${registryItems.length} total, ${activeSourceIds.size} active in PLP\n`,
-  );
+  let activeSourceIds: Set<string>;
+  let activeSource: 'plp-file' | 'registry';
+
+  if (plpFilePath) {
+    const resolvedPath = path.isAbsolute(plpFilePath)
+      ? plpFilePath
+      : path.resolve(process.cwd(), plpFilePath);
+    console.log(`[audit] Loading PLP snapshot from: ${resolvedPath}`);
+    const raw = fs.readFileSync(resolvedPath, 'utf-8');
+    const parsed = JSON.parse(raw) as { items?: Record<string, unknown> };
+    const sourceIds = Object.keys(parsed.items ?? {}).map((id) => id.toLowerCase());
+    activeSourceIds = new Set(sourceIds);
+    activeSource = 'plp-file';
+    console.log(`[audit] PLP snapshot: ${activeSourceIds.size} active sourceIds\n`);
+  } else {
+    activeSourceIds = new Set(
+      registryItems
+        .filter((item) => item.sourceStatus === 'active')
+        .map((item) => item.sourceListingId.toLowerCase()),
+    );
+    activeSource = 'registry';
+    console.log(
+      `[audit] Registry: ${registryItems.length} total, ${activeSourceIds.size} active in PLP\n`,
+    );
+  }
 
   const matched: { listing: Listing; sourceId: string }[] = [];
   const stale: { listing: Listing; sourceId: string }[] = [];
@@ -213,9 +239,9 @@ async function auditStaleListings() {
     }
   }
 
-  console.log(`=== PHASE 1: REGISTRY CROSS-REFERENCE ===`);
+  console.log(`=== PHASE 1: CROSS-REFERENCE (source: ${activeSource}) ===`);
   if (verifyAll) {
-    console.log(`  --verify-all: skipping registry check, will verify all on CipAuto`);
+    console.log(`  --verify-all: skipping ${activeSource} check, will verify all on CipAuto`);
   }
   console.log(`  Active & in PLP:       ${matched.length} (ok)`);
   console.log(`  Active & NOT in PLP:   ${stale.length} (need verification)`);
@@ -226,7 +252,24 @@ async function auditStaleListings() {
   const confirmedClosed: { listing: Listing; sourceId: string; reason: string }[] = [];
   const falsePositives: { listing: Listing; sourceId: string; reason: string }[] = [];
 
-  if (stale.length > 0 && !skipVerify) {
+  const trustSourceList = activeSource === 'plp-file' && !verifyAll;
+
+  if (stale.length > 0 && trustSourceList) {
+    console.log(`[audit] Using PLP snapshot as source of truth — skipping HTTP verification.`);
+    for (const { listing, sourceId } of stale) {
+      confirmedClosed.push({ listing, sourceId, reason: 'not_in_plp_snapshot' });
+    }
+    console.log(`  Confirmed closed: ${confirmedClosed.length}`);
+    console.log('');
+
+    if (confirmedClosed.length > 0) {
+      console.log(`=== CONFIRMED CLOSED (${confirmedClosed.length}) ===`);
+      for (const { listing, sourceId, reason } of confirmedClosed) {
+        console.log(`  ${formatListing(listing, sourceId)}  reason=${reason}`);
+      }
+      console.log('');
+    }
+  } else if (stale.length > 0 && !skipVerify) {
     console.log(`=== PHASE 2: VERIFYING ${stale.length} CANDIDATES ON CIPAUTO ===`);
 
     for (let i = 0; i < stale.length; i++) {
