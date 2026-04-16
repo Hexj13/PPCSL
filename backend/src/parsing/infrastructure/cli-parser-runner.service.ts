@@ -191,29 +191,19 @@ export class CliParserRunnerService {
     onProcessError?: (error: Error) => void,
   ): CliParserRunHandle {
     const backendRoot = process.cwd();
-    const cliTs = this.resolveCliEntrypoint(backendRoot, parserCode);
+    const cliEntry = this.resolveCliEntrypoint(backendRoot, parserCode);
     const custom = this.resolveCustomCommand(parserCode);
+    const mode = custom ? 'custom' : cliEntry.kind === 'js' ? 'node' : 'ts-node';
     this.logger.log(
-      `[CLI][spawn] parser=${parserCode} mode=${custom ? 'custom' : 'ts-node'} args=${JSON.stringify(commandArgs)}`,
+      `[CLI][spawn] parser=${parserCode} mode=${mode} args=${JSON.stringify(commandArgs)}`,
     );
     const child = custom
       ? this.spawnCustomShell(custom.command, custom.args, commandArgs, extraEnv)
-      : spawn(
-          process.execPath,
-          [
-            '-r',
-            require.resolve('ts-node/register'),
-            '-r',
-            require.resolve('tsconfig-paths/register'),
-            cliTs,
-            ...commandArgs,
-          ],
-          {
-            cwd: backendRoot,
-            env: { ...process.env, ...extraEnv },
-            shell: false,
-          },
-        );
+      : spawn(process.execPath, this.buildNodeArgs(cliEntry, commandArgs), {
+          cwd: backendRoot,
+          env: { ...process.env, ...extraEnv },
+          shell: false,
+        });
     const proc = child as ChildProcessWithoutNullStreams;
     proc.once('error', (error) => {
       this.logger.error(`[CLI][process-error] parser=${parserCode} ${error.message}`);
@@ -224,17 +214,44 @@ export class CliParserRunnerService {
     return { pid: proc.pid ?? 0, child: proc };
   }
 
-  private resolveCliEntrypoint(backendRoot: string, parserCode: string): string {
+  private buildNodeArgs(
+    cliEntry: { kind: 'js' | 'ts'; path: string },
+    commandArgs: string[],
+  ): string[] {
+    if (cliEntry.kind === 'js') {
+      return [cliEntry.path, ...commandArgs];
+    }
+    return [
+      '-r',
+      require.resolve('ts-node/register'),
+      '-r',
+      require.resolve('tsconfig-paths/register'),
+      cliEntry.path,
+      ...commandArgs,
+    ];
+  }
+
+  private resolveCliEntrypoint(
+    backendRoot: string,
+    parserCode: string,
+  ): { kind: 'js' | 'ts'; path: string } {
     const catalogItem = getParserCatalogItem(parserCode);
     if (!catalogItem?.cliScript) {
       throw new Error(`Parser "${parserCode}" CLI entrypoint is missing in parser catalog.`);
     }
-    const cliPath = path.join(backendRoot, 'src', 'scripts', 'tools', catalogItem.cliScript);
-    if (!fs.existsSync(cliPath)) {
-      this.logger.error(`Parser CLI not found for "${parserCode}" at ${cliPath}`);
-      throw new Error(`Parser "${parserCode}" CLI entrypoint is missing.`);
+    const compiledCliScript = catalogItem.cliScript.replace(/\.ts$/, '.js');
+    const distPath = path.join(backendRoot, 'dist', 'scripts', 'tools', compiledCliScript);
+    if (fs.existsSync(distPath)) {
+      return { kind: 'js', path: distPath };
     }
-    return cliPath;
+    const srcPath = path.join(backendRoot, 'src', 'scripts', 'tools', catalogItem.cliScript);
+    if (fs.existsSync(srcPath)) {
+      return { kind: 'ts', path: srcPath };
+    }
+    this.logger.error(
+      `Parser CLI not found for "${parserCode}". Checked dist=${distPath} and src=${srcPath}`,
+    );
+    throw new Error(`Parser "${parserCode}" CLI entrypoint is missing.`);
   }
 
   private resolveCustomCommand(
