@@ -27,7 +27,6 @@ export class CliParserRunnerService {
     maxItems?: number;
     resume?: boolean;
     dryRun?: boolean;
-    removeClosed?: boolean;
     delayMs: number;
     extraEnv: NodeJS.ProcessEnv;
     onStdoutLine: (line: string) => void;
@@ -99,7 +98,6 @@ export class CliParserRunnerService {
     maxItems?: number;
     resume?: boolean;
     dryRun?: boolean;
-    removeClosed?: boolean;
     delayMs: number;
   }): string[] {
     const parts = ['scan', '--env', params.env, '--delay', String(params.delayMs)];
@@ -123,9 +121,6 @@ export class CliParserRunnerService {
     }
     if (params.dryRun) {
       parts.push('--dry-run');
-    }
-    if (!params.login && params.removeClosed) {
-      parts.push('--remove-closed');
     }
     return parts;
   }

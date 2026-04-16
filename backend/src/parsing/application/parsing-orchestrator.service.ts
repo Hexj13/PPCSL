@@ -540,11 +540,10 @@ export class ParsingOrchestratorService {
       const maxItems =
         cfg.maxItems !== undefined && cfg.maxItems !== null ? Number(cfg.maxItems) : undefined;
       const delayMs = Number(cfg.delayMs ?? 3000);
-      const removeClosed = Boolean(cfg.removeClosed);
       const resume = Boolean(cfg.resume);
       const dryRun = Boolean(cfg.dryRun);
       this.logger.log(
-        `[PLP][start] runId=${runId} parser=${run.parser_code} targetEnv=${targetEnv} scanMode=${scanMode} pages=${pages} pageFrom=${pageFrom ?? '-'} pageTo=${pageTo ?? '-'} resume=${resume} dryRun=${dryRun} removeClosed=${removeClosed} delayMs=${delayMs}`,
+        `[PLP][start] runId=${runId} parser=${run.parser_code} targetEnv=${targetEnv} scanMode=${scanMode} pages=${pages} pageFrom=${pageFrom ?? '-'} pageTo=${pageTo ?? '-'} resume=${resume} dryRun=${dryRun} delayMs=${delayMs}`,
       );
       let doneSummary: PlpDoneSummary | null = null;
       const handle = this.cliRunner.runScan({
@@ -558,7 +557,6 @@ export class ParsingOrchestratorService {
         maxItems,
         resume,
         dryRun,
-        removeClosed,
         delayMs,
         extraEnv,
         onStdoutLine: (line) => {

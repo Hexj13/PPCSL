@@ -26,6 +26,7 @@ import type {
 import { citiesApi } from '@/lib/api/api-cities';
 import type { City } from '@/lib/api/api-types';
 import type { ParserConfigItem, ParserPdpDefaultsConfig } from '@/lib/config/parser-types';
+import { parsersConfig } from '@/lib/config/parsers';
 import { registrationTypes } from '@/lib/constants';
 import { toast } from '@/lib/toast';
 import { formatAdminTableDateTime } from '@/lib/utils';
@@ -43,7 +44,6 @@ import {
 import { AdminActionButton } from './AdminButtons';
 import { AdminActionsMenuPortal, AdminConfirmModal } from './AdminTableShared';
 import { ParsingPlpFilesTable, ParsingRunsTable } from './ParsingTabTables';
-import { parsersConfig } from './parsing-tab-parsers';
 
 type InnerTab = 'plp' | 'pdp' | 'scheduler';
 type PlpScanMode = 'first_n' | 'range' | 'all';

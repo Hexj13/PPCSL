@@ -121,9 +121,6 @@ export function ParsingRunsTable({
                   {t('admin.parsing.colStatus')}
                 </th>
                 <th className={`text-center ${tableHeaderClassName}`}>
-                  {t('admin.parsing.colEnv')}
-                </th>
-                <th className={`text-center ${tableHeaderClassName}`}>
                   {t('admin.parsing.colActions')}
                 </th>
               </tr>
@@ -150,9 +147,6 @@ export function ParsingRunsTable({
                     className={`${tableCenteredCellClassName} font-semibold ${getRunStatusClassName(run.status)}`}
                   >
                     {getTranslatedParsingValue('status', run.status)}
-                  </td>
-                  <td className={tableCenteredSecondaryCellClassName}>
-                    {getTranslatedParsingValue('env', run.target_env)}
                   </td>
                   <td className={`${tableCenteredCellClassName} whitespace-nowrap`}>
                     <div className="relative flex items-center justify-center">

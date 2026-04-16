@@ -70,14 +70,12 @@ backend/src/scripts/tools/cipauto-import/reports/
 backend/src/scripts/tools/999md-import/data/
 backend/src/scripts/tools/999md-import/reports/
 backend/runtime/parsing/
-frontend/lib/config/parsers.ts
-
 
 *storybook.log
 storybook-static
 
 # Platform-specific files (should be in platform repositories, not in core)
-frontend/lib/config/site.ts
+frontend/lib/config/
 frontend/lib/locales/*.json
 !frontend/lib/locales/en.json
 frontend/lib/theme/colors.ts
