@@ -21,6 +21,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,css,md}\"",
     "test": "NODE_OPTIONS='--max-old-space-size=16384' jest --runInBand",
+    "test:ci": "NODE_OPTIONS='--max-old-space-size=8192' jest --maxWorkers=50% --passWithNoTests",
     "test:watch": "NODE_OPTIONS='--max-old-space-size=8192' jest --watch",
     "test:coverage": "NODE_OPTIONS='--max-old-space-size=16384' jest --coverage --maxWorkers=1",
     "test:e2e": "playwright test",

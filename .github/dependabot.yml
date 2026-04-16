@@ -1,0 +1,60 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      frontend-dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      frontend-prod-dependencies:
+        dependency-type: production
+        update-types:
+          - patch
+    commit-message:
+      prefix: chore(frontend-deps)
+      include: scope
+    labels:
+      - dependencies
+      - frontend
+
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      backend-dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      backend-prod-dependencies:
+        dependency-type: production
+        update-types:
+          - patch
+    commit-message:
+      prefix: chore(backend-deps)
+      include: scope
+    labels:
+      - dependencies
+      - backend
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore(ci)
+      include: scope
+    labels:
+      - dependencies
+      - github-actions

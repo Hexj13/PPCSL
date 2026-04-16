@@ -153,11 +153,13 @@ async function auditStaleListings() {
     console.error('Flags:');
     console.error('  --close        Close confirmed stale listings in DB');
     console.error('  --skip-verify  Skip CipAuto website verification');
+    console.error('  --verify-all   Ignore registry, verify every listing directly on CipAuto');
     process.exit(1);
   }
 
   const closeFlag = process.argv.includes('--close');
   const skipVerify = process.argv.includes('--skip-verify');
+  const verifyAll = process.argv.includes('--verify-all');
 
   console.log(`[audit] Connecting to database...`);
   await AppDataSource.initialize();
@@ -202,7 +204,9 @@ async function auditStaleListings() {
     }
     const sourceId = rawCod.toLowerCase();
 
-    if (activeSourceIds.has(sourceId)) {
+    if (verifyAll) {
+      stale.push({ listing, sourceId });
+    } else if (activeSourceIds.has(sourceId)) {
       matched.push({ listing, sourceId });
     } else {
       stale.push({ listing, sourceId });
@@ -210,6 +214,9 @@ async function auditStaleListings() {
   }
 
   console.log(`=== PHASE 1: REGISTRY CROSS-REFERENCE ===`);
+  if (verifyAll) {
+    console.log(`  --verify-all: skipping registry check, will verify all on CipAuto`);
+  }
   console.log(`  Active & in PLP:       ${matched.length} (ok)`);
   console.log(`  Active & NOT in PLP:   ${stale.length} (need verification)`);
   console.log(`  No Cod Produs:         ${noCod.length} (manual review)`);

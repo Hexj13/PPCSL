@@ -16,6 +16,7 @@
     "lint": "eslint \"src/**/*.ts\" --fix --ignore-pattern '*.spec.ts' --ignore-pattern '*.test.ts' --ignore-pattern '*.integration.ts' --ignore-pattern 'src/test/**'",
     "lint:check": "eslint \"src/**/*.ts\" --ignore-pattern '*.spec.ts' --ignore-pattern '*.test.ts' --ignore-pattern '*.integration.ts' --ignore-pattern 'src/test/**'",
     "test": "jest",
+    "test:ci": "jest --maxWorkers=50%",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:integration": "NODE_OPTIONS='--experimental-vm-modules --no-deprecation' jest --config config/jest-integration.config.cjs",

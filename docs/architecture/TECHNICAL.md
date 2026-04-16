@@ -1214,112 +1214,91 @@ Or use `npm run dev` in root - it will start both servers.
 
 ## 13. CI/CD Configuration
 
-Complete guide for setting up Continuous Integration and Continuous Deployment (CI/CD) for PPCSL core and platform-specific repositories.
+Complete guide for Continuous Integration and Continuous Deployment of PPCSL core and platform repositories (kupito.club and future platforms).
 
 ### 13.1. Overview
 
 The CI/CD system is designed to:
 
-- **Automatically test** code changes in PPCSL core
-- **Verify code quality** (linting, formatting, TypeScript type checking)
-- **Update submodules** in platform repositories when core changes
-- **Build and deploy** platform-specific applications independently
-- **Maintain separation** between core and platform-specific code
+- **Validate every pull request** (lint, tests, build) on both repos — no merge to `main` without a green CI.
+- **Run jobs in parallel** (prepare → frontend-check + backend-check + audit → deploy) for fast feedback.
+- **Gate production deploys** behind successful CI via Render Deploy Hooks, not direct push auto-deploy.
+- **Propagate core changes** to platform repos through a PR (not a direct push), so submodule bumps go through the same CI gate as any other change.
+- **Keep platform files as the single source of truth**: `npm run prepare:build` is called identically in local `release-check` and in CI, eliminating drift.
+
+Both workflows set `ONNXRUNTIME_NODE_INSTALL=skip` so `onnxruntime-node` does not run NuGet downloads for optional GPU binaries during `npm ci` (plate masking uses CPU only).
+
+Node version is pinned via `.nvmrc` at the repository root (`node-version-file: .nvmrc` in `actions/setup-node`), so local, CI, and Render run the same major version.
 
 ### 13.2. Architecture
 
 ```
-PPCSL (Core Repository)
-    │
-    ├─── On push to main:
-    │    ├── Run tests (frontend + backend)
-    │    ├── Run linters and formatters
-    │    ├── TypeScript type checking
-    │    └── Update submodules in platform repos
-    │
-    └─── Platform Repositories (e.g., kupito.club)
-         │
-         ├─── On submodule update or push:
-         │    ├── Copy locale files to core (optional: translations load from root)
-         │    ├── Copy theme files to core (required: TypeScript modules)
-         │    ├── Copy config files to core (required: TypeScript modules)
-         │    ├── Install dependencies
-         │    ├── Build frontend and backend
-         │    └── Deploy to production
+PPCSL (core repository)
+  on: push [main, develop] | pull_request [main, develop]
+    ├── backend-test     (lint, unit, integration)
+    ├── frontend-test    (lint, styles, format, unit)
+    └── typecheck        (needs: backend-test, frontend-test)
+            │
+            └── on push main only:
+                sync-to-locales
+                  └── opens a PR in each platform repo
+                      (kupito.club, …) bumping submodule pointer
+
+Platform repo (kupito.club)
+  on: push [main] | pull_request [main]
+    ├── prepare          (checkout + npm ci + npm run prepare:build + verify files)
+    ├── frontend-check   (lint, styles, format, test, next build)   needs: prepare
+    ├── backend-check    (lint, format, unit, integration, nest build) needs: prepare
+    ├── audit            (npm audit, non-blocking)                  needs: prepare
+    └── deploy           (only on push main, after frontend+backend OK)
+          └── POST Render deploy hooks (frontend + backend)
 ```
+
+`tsc --noEmit` is not run as a separate job — `next build` and `nest build` already perform type checking. This removes ~30–60s of duplicated work per run.
 
 ### 13.3. PPCSL Core CI/CD
 
-**Workflow File:** `.github/workflows/ci.yml` in PPCSL repository
-
-The workflow sets `ONNXRUNTIME_NODE_INSTALL=skip` so `onnxruntime-node` does not run NuGet downloads for optional GPU binaries during `npm ci` (plate masking uses CPU only; avoids CI timeouts).
+**Workflow:** `.github/workflows/ci.yml` in the PPCSL repository.
 
 **Jobs:**
 
-1. **Test Jobs:**
-   - Backend: Installs dependencies, runs linters, runs unit and integration tests
-   - Frontend: Installs dependencies, runs linters, checks formatting, runs tests
-   - Validates code quality
+1. **backend-test** — installs deps, runs ESLint (`lint:check`), prettier (`format:check`), unit tests (`npm test`) and integration tests (`npm run test:integration`) against service containers (Postgres 15, Redis 7).
+2. **frontend-test** — installs deps, runs ESLint (`lint`), Stylelint (`lint:styles`), prettier (`format:check`), Jest (`npm test -- --passWithNoTests`).
+3. **typecheck** — depends on both tests; runs `npx tsc --noEmit` for frontend and backend (sanity check; builds live in platform repos).
+4. **sync-to-locales** — depends on typecheck; only on `push: main`. Opens a pull request in each registered platform repo with the new submodule pointer, a commit list (`git log --oneline PREV..CURRENT`) inlined in the PR body, and a branch name `chore/update-core-<short-sha>`. No direct push to `main`, so platform `main` branch protection stays intact.
 
-2. **Type Check Job:**
-   - Runs TypeScript type checking (`tsc --noEmit`) for both frontend and backend
-   - Verifies code compiles without errors (without creating build artifacts)
+**Required secrets:**
 
-3. **Update Platforms Job:**
-   - Only runs on push to `main` branch
-   - Clones the target platform repository (currently `kupito.club`)
-   - Updates the submodule reference to the latest core commit
-   - Commits and pushes changes
+- `PAT_TOKEN` (required for `sync-to-locales`) — Personal Access Token with `repo` scope (and `workflow` scope to open PRs that touch workflow files if any). If not set, the sync job is skipped with a warning.
 
-**Required Secrets:**
+### 13.4. Platform CI/CD (kupito.club)
 
-- `PAT_TOKEN` (optional) - Personal Access Token with `repo` scope for pushing to platform repositories
-  - If not set, submodule updates will be skipped with a warning
-  - To create: GitHub Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token
-  - Required scopes: `repo` (full control of private repositories)
+**Workflow:** `.github/workflows/ci.yml` at the kupito.club root.
 
-### 13.4. Platform-Specific CI/CD (kupito.club)
+**Jobs:**
 
-**Workflow File:** `.github/workflows/ci.yml` in kupito.club repository
+1. **prepare** — checkout with submodules, `npm ci` at the root, `npm run prepare:build`, then verifies that all expected files exist in the submodule (locales RO/RU/EN, `theme.json`, `config/site.ts`, `config/parsers.ts`, frontend and backend parsers catalog, `public/logo.png`, `watermark/logo.png`).
+2. **frontend-check** (needs prepare) — `npm ci` in `core/frontend`, restores `actions/cache` for `core/frontend/.next/cache`, runs lint / lint:styles / format:check / test / `next build`, verifies `.next` directory exists.
+3. **backend-check** (needs prepare) — runs with Postgres + Redis services, `npm ci` in `core/backend`, runs lint:check / format:check / unit / integration / `nest build`, verifies `dist/main.js`.
+4. **audit** (needs prepare, `continue-on-error: true`) — runs `npm audit --omit=dev --audit-level=high` for frontend and backend as a non-blocking advisory.
+5. **deploy** (needs frontend-check + backend-check, `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`) — POSTs to `RENDER_FRONTEND_DEPLOY_HOOK` and `RENDER_BACKEND_DEPLOY_HOOK`. If a hook secret is missing, that step is skipped and Render's own auto-deploy is expected as a fallback.
 
-The workflow sets `ONNXRUNTIME_NODE_INSTALL=skip` for the same reason as PPCSL core CI (see §13.3).
+`prepare:build` is the single source of truth: the same script runs locally (`npm run release-check`, `release-check:fast`) and in every CI job. No inline copy script duplicates it anywhere. The script never uses `rm -rf` against `core/frontend/lib/config` or `core/frontend/lib/locales`, so core-only files in those directories (for example `parsers.ts` kept under `!frontend/lib/config/parsers.ts` in `core/.gitignore`) are never accidentally wiped.
 
-**Steps:**
+Caches:
 
-1. **Checkout with submodules:**
-   - Clones repository with PPCSL core submodule
-   - Initializes and updates submodules recursively
+- `actions/setup-node` with `cache: 'npm'` and a multi-path `cache-dependency-path` (root, `core/frontend`, `core/backend` lockfiles).
+- `actions/cache@v4` for `core/frontend/.next/cache`, keyed on the frontend lockfile plus a content hash of TS/TSX sources. Next.js uses this to skip unchanged module work.
 
-2. **Copy platform-specific files:**
-   - Copies `locales/ro.json`, `locales/ru.json`, `locales/en.json` to `core/frontend/lib/locales/` (frontend; no backend folder in frontend)
-   - Copies `locales/backend/*.json` to `core/backend/src/common/i18n/` (backend)
-   - Copies `theme/` to `core/frontend/lib/theme/`
-   - Copies `config/` to `core/frontend/lib/config/`
+**Required secrets:**
 
-   **Note:** Translation files are loaded from the copied files in core at build/runtime.
+- `PAT_TOKEN` (required) — Personal Access Token with `repo` scope for cloning the private PPCSL submodule. `GITHUB_TOKEN` alone is not enough for private submodules.
+- `API_URL` — backend API URL injected as `NEXT_PUBLIC_API_URL` during `next build`.
+- `RENDER_FRONTEND_DEPLOY_HOOK`, `RENDER_BACKEND_DEPLOY_HOOK` — Render Deploy Hook URLs for frontend and backend services. If absent, CI skips the explicit deploy and Render's own auto-deploy on `push: main` still runs.
 
-3. **Install dependencies:**
-   - Installs frontend and backend dependencies
+**Branch protection for `main`** is documented in the platform repo at `docs/deployment/branch-protection.md` (required checks: `Prepare platform files`, `Frontend check`, `Backend check`; `Dependency audit (non-blocking)` is intentionally not required).
 
-4. **Run linters:**
-   - Validates code quality
-
-5. **Build:**
-   - Builds frontend with platform-specific configuration
-   - Builds backend
-
-6. **Deploy:**
-   - Deploys to production environment
-
-**Required Secrets:**
-
-- `PAT_TOKEN` (required) - Personal Access Token with `repo` scope for accessing private PPCSL submodule
-  - If not set, submodule checkout will fail with "Repository not found" error
-  - To create: GitHub Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token
-  - Required scopes: `repo` (full control of private repositories)
-- `API_URL` (required) - Backend API URL for production builds
-
-**Note:** The `actions/checkout@v5` action must be configured with `token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}` to access private submodules. The default `GITHUB_TOKEN` may not have sufficient permissions for private submodules.
+`actions/checkout@v5` is configured with `token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}` across all jobs so private submodules resolve consistently.
 
 ### 13.4.1. Render.com Deployment Configuration
 
@@ -1421,29 +1400,20 @@ cd core/backend && npm run start:prod
 
 ### 13.5. Workflow Overview
 
-**Development Workflow:**
+**Core change lands in production:**
 
-1. Developer makes changes in PPCSL core
-2. Commits and pushes to PPCSL/main
-3. PPCSL CI/CD triggers:
-   - Tests pass
-   - Linters and formatters pass
-   - TypeScript type checking passes
-   - Updates kupito.club submodule
-4. kupito.club CI/CD triggers:
-   - Copies locale/theme/config files
-   - Builds with platform config
-   - Deploys to production
+1. Developer opens a PR into `PPCSL/main` — core CI runs backend-test, frontend-test, typecheck.
+2. After review and merge to `PPCSL/main`, `sync-to-locales` opens a PR in each platform repo (e.g. `kupito.club`) titled `chore: update PPCSL core to <short-sha>` with the core changelog in the body.
+3. The platform PR is validated by the full platform CI (prepare + frontend-check + backend-check + audit).
+4. After review and merge to platform `main`, the `deploy` job POSTs Render deploy hooks, and Render rebuilds the frontend and backend services.
 
-**Platform-Specific Changes:**
+**Platform-specific change (translation/theme/config/assets):**
 
-1. Developer makes changes in kupito.club
-2. Updates locales/theme/config files
-3. Commits and pushes to kupito.club/main
-4. kupito.club CI/CD triggers:
-   - Copies files to core
-   - Builds with new config
-   - Deploys to production
+1. Developer opens a PR into `kupito.club/main` editing root `locales/`, `theme/`, `config/`, or `assets/`.
+2. Platform CI validates the PR (prepare step verifies that `prepare:build` still produces all required files).
+3. After review and merge, the `deploy` job triggers Render hooks.
+
+Pre-push hook (husky) runs `npm run release-check:fast` locally (prepare:build + lint + unit tests, no integration, no build) to catch the most common CI failures before pushing. It is skipped when `CI=true` or `HUSKY=0`.
 
 ### 13.6. Troubleshooting
 
@@ -1470,35 +1440,41 @@ cd core/backend && npm run start:prod
 
 **Tests Fail in Platform CI/CD:**
 
-- Platform CI currently runs lint, tests, and build in addition to deployment-related steps.
-- If this becomes too expensive, adjust the workflow intentionally rather than assuming it is build-only.
+- Platform CI runs lint, unit + integration tests, and builds in `frontend-check` and `backend-check`. If a job is too expensive, adjust it intentionally rather than assuming CI is build-only.
+- Reproduce locally with `npm run release-check`. For a faster loop (no integration tests, no build), use `npm run release-check:fast`.
 
 **Why No Build in PPCSL Core:**
 
-- Build requires locale-specific files (translations, theme, config) that don't exist in core
-- Build in core would use default values, not reflecting real production builds
-- Build is done in platform repositories (kupito.club) where locale files are available
-- TypeScript type checking (`tsc --noEmit`) is sufficient to verify code compiles correctly
+- Build requires platform-specific files (translations, theme, config, assets) that do not exist in core.
+- Build in core would use placeholder/default values, not reflecting real production output.
+- Build runs in platform repositories (e.g. kupito.club) where `prepare:build` fills those files in first.
+- `tsc --noEmit` in core is kept as a quick sanity check; real type coverage is provided by platform `next build` and `nest build`.
 
-**Deployment Fails:**
+**Deploy Hook Did Not Fire:**
 
-- Check deployment credentials/secrets
-- Verify deployment commands are correct
-- Check deployment target is accessible
-- Review deployment logs for specific errors
+- Check that `RENDER_FRONTEND_DEPLOY_HOOK` / `RENDER_BACKEND_DEPLOY_HOOK` secrets are set on the platform repo (Repository Settings → Secrets and variables → Actions).
+- The `deploy` job runs only on `push: main` after both `frontend-check` and `backend-check` pass — red CI keeps a failing main out of production.
+- If a hook secret is missing, the step logs a skip message and Render's own auto-deploy takes over (fallback).
+- For full-stack gating, disable Render's "Auto-Deploy" on the service so deploys fire only via the webhook from CI.
+
+**Submodule Update PR Not Created:**
+
+- Ensure `PAT_TOKEN` is set on the core repo with `repo` scope.
+- The PR is opened by `sync-to-locales` only on `push: main` of core; `pull_request` events do not open platform PRs.
+- If a PR for the same branch name already exists (for example a stale `chore/update-core-<short-sha>`), the API call fails softly and logs `PR creation failed (branch may already have an open PR)`.
 
 ### 13.7. Best Practices
 
-1. **Always test** core changes locally before pushing
-2. **Monitor builds** - ensure all platform builds succeed after core updates
-3. **Use semantic versioning** for major core changes
-4. **Document breaking changes** in core that affect platforms
-5. **Keep secrets secure** - never commit secrets to repository
-6. **Use environment-specific configurations** for different deployment targets
-7. **Set up notifications** for build failures
-8. **Review deployment logs** regularly
-9. **Test submodule updates** in staging before production
-10. **Backup** platform-specific files before major core updates
+1. **Every change goes through a PR** — both PPCSL and kupito.club require CI green on `main`.
+2. **Never push directly to `main`** in either repo; configure branch protection (see `docs/deployment/branch-protection.md` in the platform repo).
+3. **`npm run prepare:build` is the single source of truth** for platform files. Do not add ad-hoc `cp -r`/`rm -rf` steps in CI or docs.
+4. **Pin Node with `.nvmrc`.** Both repos use `node-version-file: .nvmrc`; keep Render pinned to the same major.
+5. **Keep `release-check` and CI aligned.** If you add a validation step, add it to `release-check` too, and vice versa.
+6. **Let core changes propagate via PR**, not direct push. The auto-PR from `sync-to-locales` replaces any "push submodule bump" pattern.
+7. **Gate Render on CI.** Trigger deploys from the CI `deploy` job via Render Deploy Hooks; disable Render auto-deploy on the service so a red CI cannot ship.
+8. **Monitor the non-blocking audit job.** `npm audit --omit=dev --audit-level=high` runs on each push; triage high findings during the sprint.
+9. **Keep caches effective.** `actions/setup-node` (npm) and `actions/cache` for `.next/cache` speed up CI significantly; do not key caches on branch names.
+10. **Review deploy logs on Render.** The GitHub `deploy` job only triggers the hook; actual build output lives on Render.
 
 For detailed implementation, see [Multi-Repository](./multi-repository.md).
 

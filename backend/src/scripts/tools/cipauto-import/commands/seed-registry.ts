@@ -98,24 +98,26 @@ async function seedRegistry() {
     const title = [brandName, modelName, year].filter(Boolean).join(' ');
     const url = buildCipautoUrl(sourceId, title);
 
+    const derivedSourceStatus = listing.status === 'Closed' ? 'closed' : 'active';
+
     registry.upsert({
       source: 'cipauto',
       sourceListingId: sourceId,
       url,
       canonicalUrl: url,
-      sourceStatus: listing.status === 'Closed' ? 'closed' : 'active',
+      sourceStatus: existingBySource?.sourceStatus ?? derivedSourceStatus,
       title: title || undefined,
       brand: brandName || undefined,
       model: modelName || undefined,
       year: year || undefined,
       price: listing.price || undefined,
       currency: listing.currency || undefined,
-      state: 'created',
+      state: existingBySource?.state ?? 'created',
       kupitoListingId: listing.id,
       ownerUserId: userId,
       createdStatus: listing.status,
-      lastSeenAt: now,
-      lastImportedAt: now,
+      lastSeenAt: existingBySource?.lastSeenAt ?? now,
+      lastImportedAt: existingBySource?.lastImportedAt ?? now,
     } as Omit<RegistryItem, 'discoveredAt' | 'updatedAt'>);
 
     seeded++;
