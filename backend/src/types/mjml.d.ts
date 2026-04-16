@@ -11,7 +11,7 @@ declare module 'mjml' {
     errors?: unknown[];
   };
 
-  function mjml2html(input: string, options?: MjmlOptions): MjmlResult;
+  function mjml2html(input: string, options?: MjmlOptions): Promise<MjmlResult>;
 
   export = mjml2html;
 }

@@ -141,7 +141,7 @@ export class EmailService {
       emailPlainParagraph(this.emailT('emails.verification.disclaimer', loc)),
     ].join('');
 
-    const emailHtml = buildEmailLayout({
+    const emailHtml = await buildEmailLayout({
       siteBaseUrl: siteBase,
       documentTitle: emailSubject,
       heading: this.emailT('emails.verification.heading', loc),
@@ -179,7 +179,7 @@ export class EmailService {
       emailPlainParagraph(this.emailT('emails.emailChange.disclaimer', loc)),
     ].join('');
 
-    const emailHtml = buildEmailLayout({
+    const emailHtml = await buildEmailLayout({
       siteBaseUrl: siteBase,
       documentTitle: emailSubject,
       heading: this.emailT('emails.emailChange.heading', loc),
@@ -243,7 +243,7 @@ export class EmailService {
       emailPlainParagraph(this.emailT('emails.passwordChanged.body1', loc)),
       emailPlainParagraph(this.emailT('emails.passwordChanged.body2', loc)),
     ].join('');
-    const html = buildEmailLayout({
+    const html = await buildEmailLayout({
       siteBaseUrl: siteBase,
       documentTitle: subject,
       heading: this.emailT('emails.passwordChanged.heading', loc),
@@ -279,7 +279,7 @@ export class EmailService {
       emailTextParagraph(bodyHowTo),
       emailCtaButton(myListingsUrl, this.emailT('emails.listingRefresh.cta', loc)),
     ].join('');
-    const html = buildEmailLayout({
+    const html = await buildEmailLayout({
       siteBaseUrl: siteBase,
       documentTitle: subject,
       heading: this.emailT('emails.listingRefresh.heading', loc),
@@ -338,7 +338,7 @@ export class EmailService {
       ...cards,
       emailCtaButton(myListingsUrl, this.emailT('emails.weeklyDigest.cta', loc)),
     ].join('');
-    const html = buildEmailLayout({
+    const html = await buildEmailLayout({
       siteBaseUrl: siteBase,
       documentTitle: subject,
       heading: this.emailT('emails.weeklyDigest.heading', loc),
@@ -362,7 +362,7 @@ export class EmailService {
       emailPlainParagraph(this.emailT('emails.phoneChanged.body1', loc)),
       emailPlainParagraph(this.emailT('emails.phoneChanged.body2', loc)),
     ].join('');
-    const html = buildEmailLayout({
+    const html = await buildEmailLayout({
       siteBaseUrl: siteBase,
       documentTitle: subject,
       heading: this.emailT('emails.phoneChanged.heading', loc),
@@ -386,7 +386,7 @@ export class EmailService {
       emailPlainParagraph(this.emailT('emails.emailChanged.body1', loc)),
       emailPlainParagraph(this.emailT('emails.emailChanged.body2', loc)),
     ].join('');
-    const html = buildEmailLayout({
+    const html = await buildEmailLayout({
       siteBaseUrl: siteBase,
       documentTitle: subject,
       heading: this.emailT('emails.emailChanged.heading', loc),

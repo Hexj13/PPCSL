@@ -12,8 +12,8 @@ const brand = {
 
 const fontStack = 'Arial, Helvetica, sans-serif';
 
-function compileMjml(mjml: string): string {
-  const result = mjml2html(mjml, {
+async function compileMjml(mjml: string): Promise<string> {
+  const result = await mjml2html(mjml, {
     minify: false,
     validationLevel: 'soft',
   });
@@ -43,7 +43,7 @@ export type EmailLayoutOptions = {
   signatureLine?: string;
 };
 
-export function buildEmailLayout(options: EmailLayoutOptions): string {
+export async function buildEmailLayout(options: EmailLayoutOptions): Promise<string> {
   const base = normalizeSiteBaseUrl(options.siteBaseUrl);
   const logoUrl = `${base}/logo.png`;
   const safeHeading = escapeHtml(options.heading);
@@ -93,7 +93,7 @@ export function buildEmailLayout(options: EmailLayoutOptions): string {
     </mj-section>
   </mj-body>
 </mjml>`;
-  return compileMjml(mjml);
+  return await compileMjml(mjml);
 }
 
 export function emailTextParagraph(textHtml: string): string {

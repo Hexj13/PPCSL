@@ -16,8 +16,8 @@ describe('email-template', () => {
   });
 
   describe('buildEmailLayout', () => {
-    it('renders compiled html with brand footer and signature', () => {
-      const html = buildEmailLayout({
+    it('renders compiled html with brand footer and signature', async () => {
+      const html = await buildEmailLayout({
         siteBaseUrl: 'https://kupito.club',
         documentTitle: 'T',
         heading: 'H',
