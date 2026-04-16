@@ -75,7 +75,10 @@ backend/runtime/parsing/
 storybook-static
 
 # Platform-specific files (should be in platform repositories, not in core)
+# Already-tracked files are not affected by this rule; only new files are ignored.
+# To track a new config file in core, add a negation (!path) below.
 frontend/lib/config/
+!frontend/lib/config/parsers.ts
 frontend/lib/locales/*.json
 !frontend/lib/locales/en.json
 frontend/lib/theme/colors.ts
