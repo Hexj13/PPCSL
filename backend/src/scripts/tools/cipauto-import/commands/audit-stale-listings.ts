@@ -177,7 +177,9 @@ async function auditStaleListings() {
       .map((item) => item.sourceListingId),
   );
 
-  console.log(`[audit] Registry: ${registryItems.length} total, ${activeSourceIds.size} active in PLP\n`);
+  console.log(
+    `[audit] Registry: ${registryItems.length} total, ${activeSourceIds.size} active in PLP\n`,
+  );
 
   const matched: { listing: Listing; sourceId: string }[] = [];
   const stale: { listing: Listing; sourceId: string }[] = [];
@@ -285,7 +287,9 @@ async function auditStaleListings() {
 
     await invalidateRedisCache();
   } else if (confirmedClosed.length > 0) {
-    console.log(`[audit] To close these ${confirmedClosed.length} listings, re-run with --close flag.`);
+    console.log(
+      `[audit] To close these ${confirmedClosed.length} listings, re-run with --close flag.`,
+    );
   }
 
   await AppDataSource.destroy();
