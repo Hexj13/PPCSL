@@ -32,7 +32,10 @@ function buildCipautoUrl(sourceId: string, title?: string): string {
 async function seedRegistry() {
   const userId = process.argv[2];
   if (!userId) {
-    console.error('Usage: npx ts-node -r tsconfig-paths/register <script> <userId>');
+    console.error('Usage: npm run cipauto:seed-registry -- <userId>');
+    console.error(
+      'Alternative: npx ts-node src/scripts/tools/cipauto-import/commands/seed-registry.ts <userId>',
+    );
     console.error('  userId — UUID of the CipAuto partner user in Kupito DB');
     process.exit(1);
   }
