@@ -70,7 +70,8 @@ export type RegistryImportState =
   | 'closed'
   | 'failed'
   | 'skipped'
-  | 'manual_review';
+  | 'manual_review'
+  | 'duplicate_skipped';
 
 export type SourceStatus = 'active' | 'missing_candidate' | 'closed';
 
@@ -194,6 +195,9 @@ export interface UploadResult {
 export interface KupitoCreateListingPayload {
   price: number;
   currency?: Currency;
+  partner_source_code?: string;
+  partner_listing_external_key?: string;
+  partner_listing_canonical_url?: string;
   city: string;
   negotiable?: boolean;
   available_in_credit?: boolean;

@@ -33,6 +33,10 @@ import {
   coverBlurHashFromImageBlurHashes,
   validateImageBlurHashesMatchImages,
 } from '../utils/image-blur-hashes.utils';
+import {
+  assertPartnerListingCanonicalUrlShape,
+  normalizePartnerListingCanonicalUrlInput,
+} from '../utils/partner-listing-canonical-url.utils';
 
 const CREATE_LISTING_EXCLUDED_FIELDS = [
   'vehicle',
@@ -41,6 +45,9 @@ const CREATE_LISTING_EXCLUDED_FIELDS = [
   'description',
   'description_ro',
   'description_ru',
+  'partner_source_code',
+  'partner_listing_external_key',
+  'partner_listing_canonical_url',
 ] as const;
 
 @Injectable()
@@ -121,7 +128,7 @@ export class CreateListingUseCase {
       throw new BadRequestException('errors.vehiclePayloadRequired');
     }
 
-    return this.executeVehicle(dto, ownerId, userType);
+    return this.executeVehicle(dto, ownerId, userType ?? '');
   }
 
   private async executeTire(dto: CreateListingDto, ownerId: string): Promise<Listing> {
@@ -280,7 +287,7 @@ export class CreateListingUseCase {
   private async executeVehicle(
     dto: CreateListingDto,
     ownerId: string,
-    _userType: string | undefined,
+    userType: string,
   ): Promise<Listing> {
     const vehicle = Object.assign(new Vehicle(), dto.vehicle) as Vehicle;
     if (vehicle.fuel === 'Electric') vehicle.engine_displ_l = null;
@@ -291,6 +298,35 @@ export class CreateListingUseCase {
     const blurHashesError = validateImageBlurHashesMatchImages(dto.image_blur_hashes, dto.images);
     if (blurHashesError) {
       throw new BadRequestException(blurHashesError);
+    }
+
+    const partnerSource = dto.partner_source_code?.trim();
+    const partnerKey = dto.partner_listing_external_key?.trim();
+    const partnerCanonicalUrl = normalizePartnerListingCanonicalUrlInput(
+      dto.partner_listing_canonical_url,
+    );
+    const hasPartnerSource = Boolean(partnerSource);
+    const hasPartnerKey = Boolean(partnerKey);
+    if (hasPartnerSource !== hasPartnerKey) {
+      throw new BadRequestException('errors.partnerListingKeyPairRequired');
+    }
+    if (partnerCanonicalUrl) {
+      if (userType !== 'Admin') {
+        throw new ForbiddenException('errors.partnerListingKeyAdminOnly');
+      }
+      if (!hasPartnerSource || !hasPartnerKey || !partnerSource || !partnerKey) {
+        throw new BadRequestException('errors.partnerListingCanonicalUrlRequiresPartnerKeys');
+      }
+      assertPartnerListingCanonicalUrlShape(partnerCanonicalUrl);
+    }
+    if (hasPartnerSource && hasPartnerKey && partnerSource && partnerKey) {
+      if (userType !== 'Admin') {
+        throw new ForbiddenException('errors.partnerListingKeyAdminOnly');
+      }
+      const taken = await this.listingRepo.findByPartnerListingKey(partnerSource, partnerKey);
+      if (taken) {
+        throw new BadRequestException('errors.partnerListingKeyInUse');
+      }
     }
 
     const listingFields = Object.fromEntries(
@@ -313,6 +349,9 @@ export class CreateListingUseCase {
       last_updated_at: new Date(),
       last_published_at: status === ListingStatusEnum.Active ? new Date() : null,
       tire_id: null,
+      partner_source_code: partnerSource ?? null,
+      partner_listing_external_key: partnerKey ?? null,
+      partner_listing_canonical_url: partnerCanonicalUrl,
     });
     if (!listing.available_in_credit) {
       listing.down_payment_amount = null;

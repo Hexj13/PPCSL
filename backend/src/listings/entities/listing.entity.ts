@@ -132,6 +132,15 @@ export class Listing {
   @Column({ type: 'varchar', nullable: true, length: 17 })
   vin: string | null;
 
+  @Column({ name: 'partner_source_code', type: 'varchar', length: 32, nullable: true })
+  partner_source_code: string | null;
+
+  @Column({ name: 'partner_listing_external_key', type: 'varchar', length: 64, nullable: true })
+  partner_listing_external_key: string | null;
+
+  @Column({ name: 'partner_listing_canonical_url', type: 'text', nullable: true })
+  partner_listing_canonical_url: string | null;
+
   @Column({
     type: 'enum',
     enum: constants.conditionTypes,

@@ -76,6 +76,8 @@
     "invalidListingId": "Format ID anunț invalid",
     "listingAccessDenied": "Nu aveți acces la acest anunț",
     "listingAlreadyActive": "Anunțul este deja activ",
+    "partnerListingCanonicalUrlInvalid": "URL-ul anunțului partener trebuie să fie un URL https valid.",
+    "partnerListingCanonicalUrlRequiresPartnerKeys": "URL-ul anunțului partener necesită partner_source_code și partner_listing_external_key.",
     "activeListingsLimitExceeded": "Limita de anunțuri active a fost depășită. Maximum: {max}",
     "invalidUserId": "ID utilizator invalid",
     "assignedUserDeactivated": "Utilizatorul este dezactivat",
@@ -189,7 +191,8 @@
     "parsingPlpModeMonoSingleFileOnly": "Acest parser permite doar un singur fișier PLP.",
     "parsingPlpFileNameAlreadyUsed": "Un fișier PLP cu acest nume este deja folosit de o altă programare activă.",
     "parsingRunCannotCancel": "Această rulare nu poate fi anulată.",
-    "parsingActiveRunExists": "Există deja o rulare activă a parserului pentru acest parser și mod."
+    "parsingRegistrySyncUnavailable": "Sincronizarea registrului nu este disponibilă pentru acest parser.",
+    "parsingSyncAssignedUserRequired": "Pentru sincronizarea registrului este necesar UUID-ul utilizatorului-partener Kupito (introduceți manual sau rulați mai întâi PDP/PLP cu utilizator atribuit)."
   },
   "vehicleOptions": {
     "transmission": {

@@ -77,5 +77,6 @@ export function buildParsingChildProcessEnv(targetEnv: ParserTargetEnv): NodeJS.
       out[key] = value;
     }
   }
+  out.KUPITO_TYPEORM_QUERY_LOG = 'false';
   return out;
 }

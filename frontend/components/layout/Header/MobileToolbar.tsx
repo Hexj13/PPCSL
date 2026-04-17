@@ -7,6 +7,7 @@ import { CloseIcon, MenuIcon } from './icons';
 type MobileToolbarProps = {
   showSkeleton: boolean;
   isMobileMenuOpen: boolean;
+  isMenuToggleLocked?: boolean;
   onToggle: () => void;
   toggleAriaLabel: string;
   toggleId: string;
@@ -18,6 +19,7 @@ type MobileToolbarProps = {
 export function MobileToolbar({
   showSkeleton,
   isMobileMenuOpen,
+  isMenuToggleLocked = false,
   onToggle,
   toggleAriaLabel,
   toggleId,
@@ -40,9 +42,11 @@ export function MobileToolbar({
           id={toggleId}
           type="button"
           onClick={onToggle}
-          className="lg:hidden text-primary-700 transition-colors duration-200 p-2 select-none hover-only:hover:text-primary-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base"
+          disabled={isMenuToggleLocked}
+          className="lg:hidden text-primary-700 transition-colors duration-200 p-2 select-none hover-only:hover:text-primary-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base disabled:pointer-events-none disabled:opacity-100"
           aria-label={toggleAriaLabel}
           aria-expanded={isMobileMenuOpen}
+          aria-busy={isMenuToggleLocked}
           aria-controls={drawerId}
           suppressHydrationWarning
         >

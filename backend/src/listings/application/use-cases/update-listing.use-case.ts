@@ -34,6 +34,7 @@ import {
   coverBlurHashFromImageBlurHashes,
   validateImageBlurHashesMatchImages,
 } from '../utils/image-blur-hashes.utils';
+import { assertPartnerListingCanonicalUrlShape } from '../utils/partner-listing-canonical-url.utils';
 
 function sanitizeListingDescriptionInput(value: string | null | undefined): string | null {
   if (value == null || !String(value).trim()) {
@@ -182,6 +183,13 @@ export class UpdateListingUseCase {
       if (updateListingDto.vehicle) {
         throw new BadRequestException('errors.listingMixedVehicleTire');
       }
+      if (
+        updateListingDto.partner_source_code !== undefined ||
+        updateListingDto.partner_listing_external_key !== undefined ||
+        updateListingDto.partner_listing_canonical_url !== undefined
+      ) {
+        throw new BadRequestException('errors.partnerListingKeyVehicleOnly');
+      }
       return this.executeTireListingUpdate(id, listing, updateListingDto, userId, beforeSnapshot);
     }
 
@@ -319,6 +327,8 @@ export class UpdateListingUseCase {
     delete (listingFields as Record<string, unknown>).description;
     delete (listingFields as Record<string, unknown>).description_ro;
     delete (listingFields as Record<string, unknown>).description_ru;
+    delete (listingFields as Record<string, unknown>).partner_source_code;
+    delete (listingFields as Record<string, unknown>).partner_listing_external_key;
 
     const localizedPatch = buildLocalizedDescriptionUpdate(listing, updateListingDto);
 
@@ -439,7 +449,6 @@ export class UpdateListingUseCase {
     beforeSnapshot: Record<string, unknown>,
   ): Promise<Listing> {
     void userType;
-    void isAdmin;
 
     const previousBrandId = listing.vehicle?.brand_id;
 
@@ -516,12 +525,23 @@ export class UpdateListingUseCase {
     delete (listingFields as Record<string, unknown>).description;
     delete (listingFields as Record<string, unknown>).description_ro;
     delete (listingFields as Record<string, unknown>).description_ru;
+    delete (listingFields as Record<string, unknown>).partner_source_code;
+    delete (listingFields as Record<string, unknown>).partner_listing_external_key;
+    delete (listingFields as Record<string, unknown>).partner_listing_canonical_url;
+
+    const partnerFieldsPatch = await this.resolvePartnerListingPartnerFieldsUpdate(
+      id,
+      listing,
+      updateListingDto,
+      isAdmin,
+    );
 
     const localizedPatch = buildLocalizedDescriptionUpdate(listing, updateListingDto);
 
     const listingUpdateData: Partial<Listing> = {
       ...(listingFields as Partial<Listing>),
       ...localizedPatch,
+      ...partnerFieldsPatch,
       last_edited_at: new Date(),
       title: await this.generateTitle(updatedVehicle),
     };
@@ -566,6 +586,117 @@ export class UpdateListingUseCase {
     this.emitListingUpdatedLog(beforeSnapshot, freshListing, id, userId, listing.user_id);
 
     return freshListing;
+  }
+
+  private async resolvePartnerListingPartnerFieldsUpdate(
+    listingId: string,
+    listing: Listing,
+    dto: UpdateListingDto,
+    isAdmin: boolean,
+  ): Promise<
+    Partial<
+      Pick<
+        Listing,
+        'partner_source_code' | 'partner_listing_external_key' | 'partner_listing_canonical_url'
+      >
+    >
+  > {
+    const srcRaw = dto.partner_source_code;
+    const keyRaw = dto.partner_listing_external_key;
+    const urlRaw = dto.partner_listing_canonical_url;
+
+    const keysTouched = srcRaw !== undefined || keyRaw !== undefined;
+    const urlTouched = urlRaw !== undefined;
+
+    if (!keysTouched && !urlTouched) {
+      return {};
+    }
+
+    if (!isAdmin) {
+      throw new ForbiddenException('errors.partnerListingKeyAdminOnly');
+    }
+
+    let keyPatch: Partial<Pick<Listing, 'partner_source_code' | 'partner_listing_external_key'>> =
+      {};
+
+    if (keysTouched) {
+      if (srcRaw === undefined || keyRaw === undefined) {
+        throw new BadRequestException('errors.partnerListingKeyPairRequired');
+      }
+      const srcNorm = srcRaw === null ? null : String(srcRaw).trim() || null;
+      const keyNorm = keyRaw === null ? null : String(keyRaw).trim() || null;
+      if ((srcNorm === null) !== (keyNorm === null)) {
+        throw new BadRequestException('errors.partnerListingKeyPairRequired');
+      }
+      if (srcNorm && keyNorm) {
+        const taken = await this.listingsRepository.findOne({
+          where: {
+            partner_source_code: srcNorm,
+            partner_listing_external_key: keyNorm,
+          },
+        });
+        if (taken && taken.id !== listingId) {
+          throw new BadRequestException('errors.partnerListingKeyInUse');
+        }
+        keyPatch = {
+          partner_source_code: srcNorm,
+          partner_listing_external_key: keyNorm,
+        };
+      } else {
+        keyPatch = {
+          partner_source_code: null,
+          partner_listing_external_key: null,
+        };
+      }
+    }
+
+    if (keyPatch.partner_source_code === null && keyPatch.partner_listing_external_key === null) {
+      return {
+        ...keyPatch,
+        partner_listing_canonical_url: null,
+      };
+    }
+
+    let urlNorm: string | null | undefined;
+    if (urlTouched) {
+      if (urlRaw === null) {
+        urlNorm = null;
+      } else {
+        const trimmed = String(urlRaw).trim();
+        if (!trimmed) {
+          urlNorm = null;
+        } else {
+          assertPartnerListingCanonicalUrlShape(trimmed);
+          urlNorm = trimmed;
+        }
+      }
+    }
+
+    const mergedSrc =
+      keyPatch.partner_source_code !== undefined
+        ? keyPatch.partner_source_code
+        : listing.partner_source_code;
+    const mergedKey =
+      keyPatch.partner_listing_external_key !== undefined
+        ? keyPatch.partner_listing_external_key
+        : listing.partner_listing_external_key;
+
+    if (urlNorm !== undefined && urlNorm !== null && (!mergedSrc || !mergedKey)) {
+      throw new BadRequestException('errors.partnerListingCanonicalUrlRequiresPartnerKeys');
+    }
+
+    const out: Partial<
+      Pick<
+        Listing,
+        'partner_source_code' | 'partner_listing_external_key' | 'partner_listing_canonical_url'
+      >
+    > = { ...keyPatch };
+
+    if (urlTouched) {
+      out.partner_listing_canonical_url = urlNorm ?? null;
+    }
+
+    return out;
   }
 
   private extractPathFromUrl(url: string): string | null {

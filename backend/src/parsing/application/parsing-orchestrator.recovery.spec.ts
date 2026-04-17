@@ -42,7 +42,7 @@ function createRun(overrides: Partial<ParserRun> = {}): ParserRun {
 }
 
 describe('ParsingOrchestratorService recovery', () => {
-  it('marks stale active runs as failed on startup', async () => {
+  it('marks stale in_progress and cancel_requested runs as failed on startup without failing queued rows', async () => {
     const runRepo = {
       find: jest.fn(),
       save: jest.fn(),
@@ -63,11 +63,18 @@ describe('ParsingOrchestratorService recovery', () => {
       adminService,
     );
     const staleRuns = [
-      createRun({ id: 'run-1', status: 'queued', counters: { old: true } }),
-      createRun({ id: 'run-2', status: 'in_progress' }),
+      createRun({ id: 'run-1', status: 'in_progress', counters: { old: true } }),
+      createRun({ id: 'run-2', status: 'cancel_requested' }),
     ];
-    (runRepo.find as jest.Mock).mockResolvedValue(staleRuns);
+    (runRepo.find as jest.Mock).mockResolvedValueOnce(staleRuns).mockResolvedValueOnce([]);
     (runRepo.save as jest.Mock).mockResolvedValue(staleRuns);
+
+    const scheduleSpy = jest
+      .spyOn(
+        service as unknown as { scheduleTryStartNextQueuedRun: () => void },
+        'scheduleTryStartNextQueuedRun',
+      )
+      .mockImplementation(() => undefined);
 
     const recovered = await service.reconcileStaleActiveRunsOnStartup();
 
@@ -80,5 +87,7 @@ describe('ParsingOrchestratorService recovery', () => {
     expect(savedRuns[1].process_pid).toBeNull();
     expect(savedRuns[0].counters).toEqual({ old: true, exitCode: 1, restartRecovered: true });
     expect(savedRuns[1].counters).toEqual({ exitCode: 1, restartRecovered: true });
+    expect(scheduleSpy).not.toHaveBeenCalled();
+    scheduleSpy.mockRestore();
   });
 });

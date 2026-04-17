@@ -76,6 +76,8 @@
     "invalidListingId": "Неверный формат ID объявления",
     "listingAccessDenied": "У вас нет доступа к этому объявлению",
     "listingAlreadyActive": "Объявление уже активно",
+    "partnerListingCanonicalUrlInvalid": "URL объявления партнёра должен быть корректным https-адресом.",
+    "partnerListingCanonicalUrlRequiresPartnerKeys": "Для URL объявления партнёра нужны partner_source_code и partner_listing_external_key.",
     "activeListingsLimitExceeded": "Превышен лимит активных объявлений. Максимум: {max}",
     "invalidUserId": "Некорректный ID пользователя",
     "assignedUserDeactivated": "Пользователь деактивирован",
@@ -189,7 +191,8 @@
     "parsingPlpModeMonoSingleFileOnly": "Для этого парсера доступен только один PLP-файл.",
     "parsingPlpFileNameAlreadyUsed": "PLP-файл с таким именем уже используется другим активным расписанием.",
     "parsingRunCannotCancel": "Этот запуск нельзя отменить.",
-    "parsingActiveRunExists": "Уже есть активный запуск парсера для этого парсера и режима."
+    "parsingRegistrySyncUnavailable": "Синхронизация реестра для этого парсера недоступна.",
+    "parsingSyncAssignedUserRequired": "Для синхронизации реестра нужен UUID пользователя‑партнёра на Kupito (введите вручную или сначала выполните PDP/PLP с назначенным пользователем)."
   },
   "vehicleOptions": {
     "transmission": {

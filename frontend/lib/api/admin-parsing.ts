@@ -1,14 +1,15 @@
 import { api } from './api-client';
 import type { PaginatedResponse, PaginationMeta } from './api-types';
 
-export type ParserRunType = 'plp' | 'pdp';
+export type ParserScheduleRunType = 'plp' | 'pdp';
+export type ParserRunRecordType = 'plp' | 'pdp' | 'sync';
 export type ParserTargetEnv = 'local' | 'prod';
 
 export interface ParserCatalogItem {
   code: string;
   label: string;
   domain: string;
-  supportedRunTypes: ParserRunType[];
+  supportedRunTypes: ParserScheduleRunType[];
   scanInputMode?: 'pages' | 'profile_login';
   adminAvailability: string;
   releaseStage: string;
@@ -16,12 +17,13 @@ export interface ParserCatalogItem {
   manualRunEnabled: boolean;
   schedulerEnabled: boolean;
   plpMode: 'mono' | 'multi';
+  registrySyncEnabled?: boolean;
 }
 
 export interface ParserRun {
   id: string;
   parser_code: string;
-  run_type: ParserRunType;
+  run_type: ParserRunRecordType;
   domain: string;
   assigned_user_id: string | null;
   target_env: ParserTargetEnv;
@@ -83,7 +85,7 @@ export interface PlpFileInfo {
 export interface ParserSchedule {
   id: string;
   parser_code: string;
-  run_type: ParserRunType;
+  run_type: ParserScheduleRunType;
   domain: string;
   assigned_user_id: string | null;
   target_env: ParserTargetEnv;
@@ -136,11 +138,12 @@ export interface CreatePdpRunPayload {
   city: string;
   delayMs?: number;
   removeClosed?: boolean;
+  checkUserDuplicatesBeforeCreate?: boolean;
 }
 
 export interface CreateParserSchedulePayload {
   parserCode?: string;
-  runType: ParserRunType;
+  runType: ParserScheduleRunType;
   assignedUserId?: string;
   frequencyPreset: 'every_n_hours' | 'every_n_days' | 'daily' | 'weekly' | 'custom';
   everyNHours?: number;
@@ -225,4 +228,17 @@ export const adminParsingApi = {
   deleteSchedule: (id: string) => api.delete<{ ok: boolean }>(`/api/admin/parsing/schedules/${id}`),
   runScheduleNow: (id: string) =>
     api.post<{ runId: string | null }>(`/api/admin/parsing/schedules/${id}/run-now`, {}),
+  getRegistrySyncHint: (parserCode: string, fileKey: string) =>
+    api.get<{
+      login: string | null;
+      suggestedAssignedUserId: string | null;
+      plpLoginMatchesFileKey: boolean;
+    }>(
+      `/api/admin/parsing/parsers/${encodeURIComponent(parserCode)}/plp-files/${encodeURIComponent(fileKey)}/sync-hint`,
+    ),
+  createRegistrySyncRun: (parserCode: string, fileKey: string, body: { assignedUserId?: string }) =>
+    api.post<ParserRun>(
+      `/api/admin/parsing/parsers/${encodeURIComponent(parserCode)}/plp-files/${encodeURIComponent(fileKey)}/sync-runs`,
+      body,
+    ),
 };

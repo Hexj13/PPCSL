@@ -44,6 +44,36 @@ export class CliParserRunnerService {
     );
   }
 
+  runSeedRegistry(params: {
+    parserCode: 'cipauto' | '999md';
+    env: ParserTargetEnv;
+    userId: string;
+    login?: string;
+    extraEnv: NodeJS.ProcessEnv;
+    onStdoutLine: (line: string) => void;
+    onStderrLine: (line: string) => void;
+    onProcessError?: (error: Error) => void;
+  }): CliParserRunHandle {
+    const backendRoot = process.cwd();
+    const entry = this.resolveSeedRegistryEntrypoint(backendRoot, params.parserCode);
+    const argv = this.buildSeedRegistryArgs(params);
+    const child = spawn(process.execPath, this.buildNodeArgs(backendRoot, entry, argv), {
+      cwd: backendRoot,
+      env: { ...process.env, ...params.extraEnv },
+      shell: false,
+    }) as ChildProcessWithoutNullStreams;
+    this.logger.log(
+      `[CLI][seed-registry] parser=${params.parserCode} mode=${entry.kind} args=${JSON.stringify(argv)}`,
+    );
+    child.once('error', (error) => {
+      this.logger.error(`[CLI][seed-registry][process-error] ${error.message}`);
+      params.onProcessError?.(error);
+    });
+    this.pipeLines(child.stdout, params.onStdoutLine);
+    this.pipeLines(child.stderr, params.onStderrLine);
+    return { pid: child.pid ?? 0, child };
+  }
+
   runImport(params: {
     parserCode: string;
     env: ParserTargetEnv;
@@ -60,6 +90,7 @@ export class CliParserRunnerService {
     city: string;
     delayMs: number;
     plpFilePath?: string;
+    checkUserDuplicatesBeforeCreate?: boolean;
     extraEnv: NodeJS.ProcessEnv;
     onStdoutLine: (line: string) => void;
     onStderrLine: (line: string) => void;
@@ -126,6 +157,7 @@ export class CliParserRunnerService {
   }
 
   private buildImportArgs(params: {
+    parserCode: string;
     env: ParserTargetEnv;
     userId: string;
     status: 'active' | 'paused';
@@ -140,6 +172,7 @@ export class CliParserRunnerService {
     city: string;
     delayMs: number;
     plpFilePath?: string;
+    checkUserDuplicatesBeforeCreate?: boolean;
   }): string[] {
     const parts = [
       'import',
@@ -179,6 +212,9 @@ export class CliParserRunnerService {
     if (params.plpFilePath) {
       parts.push('--plp-file', params.plpFilePath);
     }
+    if (params.checkUserDuplicatesBeforeCreate) {
+      parts.push('--check-user-duplicates-before-create');
+    }
     return parts;
   }
 
@@ -199,7 +235,7 @@ export class CliParserRunnerService {
     );
     const child = custom
       ? this.spawnCustomShell(custom.command, custom.args, commandArgs, extraEnv)
-      : spawn(process.execPath, this.buildNodeArgs(cliEntry, commandArgs), {
+      : spawn(process.execPath, this.buildNodeArgs(backendRoot, cliEntry, commandArgs), {
           cwd: backendRoot,
           env: { ...process.env, ...extraEnv },
           shell: false,
@@ -215,13 +251,16 @@ export class CliParserRunnerService {
   }
 
   private buildNodeArgs(
+    backendRoot: string,
     cliEntry: { kind: 'js' | 'ts'; path: string },
     commandArgs: string[],
   ): string[] {
+    const preloadArgs = this.resolvePartnerImportCliPreloadArgs(backendRoot);
     if (cliEntry.kind === 'js') {
-      return [cliEntry.path, ...commandArgs];
+      return [...preloadArgs, cliEntry.path, ...commandArgs];
     }
     return [
+      ...preloadArgs,
       '-r',
       require.resolve('ts-node/register'),
       '-r',
@@ -229,6 +268,51 @@ export class CliParserRunnerService {
       cliEntry.path,
       ...commandArgs,
     ];
+  }
+
+  private resolvePartnerImportCliPreloadArgs(backendRoot: string): string[] {
+    const preload = path.join(backendRoot, 'scripts', 'partner-import-cli-preload.cjs');
+    if (!fs.existsSync(preload)) {
+      this.logger.warn(`[CLI] partner preload missing at ${preload}`);
+      return [];
+    }
+    return ['-r', preload];
+  }
+
+  private resolveSeedRegistryEntrypoint(
+    backendRoot: string,
+    parserCode: 'cipauto' | '999md',
+  ): { kind: 'js' | 'ts'; path: string } {
+    const relative =
+      parserCode === 'cipauto'
+        ? 'cipauto-import/commands/seed-registry.ts'
+        : '999md-import/commands/seed-registry.ts';
+    const compiled = relative.replace(/\.ts$/, '.js');
+    const distPath = path.join(backendRoot, 'dist', 'scripts', 'tools', compiled);
+    if (fs.existsSync(distPath)) {
+      return { kind: 'js', path: distPath };
+    }
+    const srcPath = path.join(backendRoot, 'src', 'scripts', 'tools', relative);
+    if (fs.existsSync(srcPath)) {
+      return { kind: 'ts', path: srcPath };
+    }
+    throw new Error(`seed-registry script not found for "${parserCode}".`);
+  }
+
+  private buildSeedRegistryArgs(params: {
+    parserCode: 'cipauto' | '999md';
+    env: ParserTargetEnv;
+    userId: string;
+    login?: string;
+  }): string[] {
+    if (params.parserCode === 'cipauto') {
+      return ['--env', params.env, params.userId];
+    }
+    const login = params.login?.trim() ?? '';
+    if (!login) {
+      throw new Error('999md seed-registry requires login.');
+    }
+    return ['--login', login, '--userId', params.userId, '--env', params.env];
   }
 
   private resolveCliEntrypoint(

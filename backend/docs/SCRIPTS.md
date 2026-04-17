@@ -340,8 +340,12 @@ Requires **PostgreSQL**, **S3 credentials** (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_AC
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run backfill:blurhash:cover` | Active listings with `cover_blur_hash IS NULL`: fetch first image from S3, set `cover_blur_hash`.                                                                                               |
 | `npm run backfill:blurhash:all`   | Active listings with `image_blur_hashes IS NULL`: fetch each image, set `image_blur_hashes` (nullable slots on failure) and sync `cover_blur_hash` from the first successful hash / first slot. |
+| `npm run backfill:blurhash:cover:prod` | Same as `cover`, but runs **compiled** `dist/scripts/tools/backfill-blurhash.js` (no `ts-node` / `tsconfig-paths`). Use on hosts where devDependencies are omitted (e.g. Render shell after deploy). |
+| `npm run backfill:blurhash:all:prod`   | Same as `all`, compiled entrypoint.                                                                                                                                                             |
 
 Batches of 50, 1s pause between batches. Idempotent for the chosen criterion (`NULL` column).
+
+**Render / production shell:** After a successful `nest build` deploy, run `backfill:blurhash:cover:prod` (or `all:prod`) from `core/backend`. The plain `backfill:blurhash:*` scripts need devDependencies (`ts-node`, `tsconfig-paths`) and fail with `Cannot find module 'tsconfig-paths/register'` if those were not installed.
 
 **Note:** Partner import scripts (CipAuto, 999.md) now include `image_blur_hashes` in the create-listing payload automatically by collecting `blurhash` from each upload response. Backfill is only needed for listings created before this integration.
 
@@ -350,6 +354,8 @@ Batches of 50, 1s pause between batches. Idempotent for the chosen criterion (`N
 ### Admin parsing (Nest runtime)
 
 The admin **Parsing** UI triggers parser CLI pipelines via a managed child process and parser catalog entries. Configure these **backend** variables (see also `core/docs/features/admin-parsing-ru.md` and `core/docs/features/parsing-framework.md`):
+
+**Registry sync (UI):** For parsers whose catalog entry sets `registrySyncEnabled`, the **PLP files** table includes **Sync registry**. It creates a `parser_runs` row with `run_type: sync`, calls the same `seed-registry` TypeScript entrypoint as `npm run cipauto:seed-registry` / `npm run 999md:seed-registry` (stdout/stderr → `parser_log_chunks`, optional cancel, `reportJson=` path captured like PDP reports). Endpoints: `GET /api/admin/parsing/parsers/:parserCode/plp-files/:fileKey/sync-hint`, `POST .../sync-runs` (body optional `assignedUserId`). The same **GET sync-hint** is also used when choosing a PLP file in **Admin → Parsing → manual PDP** and in the **scheduler** form for **PDP** runs (to prefill the partner UUID); only **POST sync-runs** is restricted to `registrySyncEnabled` parsers.
 
 | Variable                                                                   | Purpose                                                                                                                                                                                                                                                                                   |
 | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -360,7 +366,7 @@ The admin **Parsing** UI triggers parser CLI pipelines via a managed child proce
 | `ADMIN_PARSING_IMPORT_SECRET`                                              | Import secret for the Kupito API client (falls back to `KUPITO_IMPORT_SECRET` / `CIPAUTO_IMPORT_SECRET`).                                                                                                                                                                                 |
 | `ADMIN_PARSING_SCHEDULER_ENABLED`                                          | `true` by default; set `false` / `0` / `no` to disable cron-triggered schedules.                                                                                                                                                                                                          |
 | `ADMIN_PARSING_CANCEL_GRACE_MS`                                            | Grace period before SIGKILL on cancel (default 60000, max 600000).                                                                                                                                                                                                                        |
-| `ADMIN_PARSING_MAX_CONCURRENT_RUNS`                                        | Reserved for future use (currently one active run per parser + run type + target env is enforced in code).                                                                                                                                                                                |
+| `ADMIN_PARSING_MAX_CONCURRENT_RUNS`                                        | Reserved for future use (the orchestrator runs at most one child process per parser + run type + target env; extra runs stay `queued` in FIFO order).                                                                                                                                      |
 | `ADMIN_PARSING_CLI_OVERRIDE_<PARSER_CODE>`                                 | Optional custom command prefix for a parser CLI process (for example `ADMIN_PARSING_CLI_OVERRIDE_CIPAUTO`). Use only trusted values from deployment config or secrets management.                                                                                                         |
 | `PARSING_RUNTIME_DIR`                                                      | Root directory for parser registry, PLP JSON, and `reports/` on the backend host. Default when unset: `runtime/parsing` under the backend process `cwd` (typically `core/backend`). On persistent-disk deployments, set to the mount path so admin runs, scheduler, and manual CLI agree. |
 | `CIPAUTO_REGISTRY_PATH`, `CIPAUTO_CURRENT_PLP_PATH`, `CIPAUTO_REPORTS_DIR` | Optional absolute or `cwd`-relative overrides for CipAuto file paths.                                                                                                                                                                                                                     |
@@ -395,14 +401,18 @@ Runtime copies are created in core by `npm run prepare:build` under `src/scripts
 | `npm run cipauto:scan` / `cipauto:import` / `cipauto:report` | CipAuto HTML catalog → Kupito API                           |
 | `npm run 999md:scan` / `999md:import` / `999md:report`       | 999.md GraphQL → same downstream pipeline                   |
 | `npm run cipauto:seed-registry`                              | Seed registry from existing Kupito listings (deduplication) |
+| `npm run 999md:seed-registry`                                | Seed 999.md registry + partner keys from Kupito DB + 999 PLP/PDP (dedup after lost registry) |
+| `npm run partner:check-urls`                                 | PDP check for listings with saved `partner_listing_canonical_url` (JSON+CSV report)          |
 | `npm run cipauto:audit-stale`                                | Find and close listings removed from CipAuto                |
 | `npm run 999md:dealer-audit`                                 | Brand/model audit report vs live Kupito API                 |
+
+**PDP import — optional DB dedup:** `cipauto:import` and `999md:import` accept `--check-user-duplicates-before-create` (opens the same Postgres connection pattern as `seed-registry`, skips `createListing` when a same-user duplicate is detected). `999md:import` also accepts `--dedupe-999-price-tolerance-pct` and `--dedupe-999-photo-count-tolerance` for fingerprint tolerances (defaults `0` and `1`). The admin **Parsing → PDP** modal and PDP schedules persist the same flag in run/schedule `config_snapshot`. See `docs/parsing/cipauto-import.md`, `docs/parsing/999md-import.md`, and `core/docs/features/parsing-framework.md`.
 
 #### CipAuto registry seeding (`seed-registry`)
 
 When a partner already has listings in the Kupito database **before** the first PLP/PDP run, the parser registry is empty and all listings would be imported as duplicates. `seed-registry` prevents this by pre-populating the registry.
 
-The script reads all listings for a given user, extracts the CipAuto product code (`Cod Produs: XXXXX`) from descriptions, and writes `sourceListingId → kupitoListingId` mappings into the parser registry JSON. Subsequent PLP scans preserve these mappings, and PDP imports skip (or update) matched listings instead of creating duplicates.
+The script reads all listings for a given user, extracts the CipAuto product code (`Cod Produs: XXXXX`) from descriptions, and writes `sourceListingId → kupitoListingId` mappings into the parser registry JSON. It also updates each matched Kupito row with `partner_source_code`, `partner_listing_external_key`, and `partner_listing_canonical_url` (derived listing URL). Subsequent PLP scans preserve these mappings, and PDP imports skip (or update) matched listings instead of creating duplicates.
 
 ```bash
 npm run cipauto:seed-registry -- [--env prod] <userId>
@@ -414,7 +424,29 @@ The script handles:
 - Case normalization (uppercase `D08422` in description matches lowercase `d08422` in URL)
 - Idempotent runs (skips entries already in the registry)
 
-**When to run:** Once, before the first PLP scan for a partner that already has listings imported through other means.
+**When to run:** Once, before the first PLP scan for a partner that already has listings imported through other means — or after a fresh PLP scan if you need to re-link registry rows (the script does not depend on the PLP JSON body; see `docs/parsing/cipauto-import.md`).
+
+The same logic is available from the admin **Parsing → PLP files → Sync registry** action when `registrySyncEnabled` is set for CipAuto.
+
+#### 999.md registry seeding (`999md-import/commands/seed-registry.ts`)
+
+When a partner already has vehicle listings in Kupito but the **999.md JSON registry** (`999md-registry.json`) is missing or out of sync, `999md:seed-registry` rebuilds `sourceListingId → kupitoListingId` by matching live 999 profile ads (PLP + PDP) against DB rows: **VIN** first, then a strict **fingerprint** (brand/model via resolver, mapped fuel/color, year, mileage, engine volume, price+currency, image count). Only unambiguous single matches are written; outcomes are logged to `reports/999md-seed-*.{json,csv}`. By default it also sets `listings.partner_source_code` / `partner_listing_external_key` / `partner_listing_canonical_url` for matched listings (skipped with `--dry-run`). Requires PostgreSQL, the same Kupito import env as `999md:import`, and a backend migration that adds the partner columns to `listings`.
+
+```bash
+npm run 999md:seed-registry -- --login=AGMOTORS --userId=<UUID> [--env local|prod] [--dry-run] [--delay ms] [--price-tolerance-pct n] [--photo-count-tolerance n]
+```
+
+See `docs/parsing/999md-import.md` for full flag list and operational notes.
+
+The same logic is available from the admin **Parsing → PLP files → Sync registry** action on a profile’s PLP file when `registrySyncEnabled` is set for 999.md.
+
+#### Partner listing URL check (`partner:check-urls`)
+
+Reads vehicle listings for a user that already have `partner_source_code` and a non-null `partner_listing_canonical_url`, runs the same PDP parser as imports (`cipauto` or `999md`), and writes `reports/partner-url-check-*.{json,csv}` with `outcome` (`active` / `closed` / `error`) plus `sourceStatus` / `sourceStatusReason` when available.
+
+```bash
+npm run partner:check-urls -- --partner cipauto --userId=<UUID> [--env local|prod] [--dry-run] [--limit N] [--delay ms]
+```
 
 #### CipAuto stale listings audit (`audit-stale-listings`)
 

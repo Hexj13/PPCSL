@@ -77,6 +77,10 @@ export interface IListingRepository {
   countActiveByUser(userId: string): Promise<number>;
   countPromotedByUser(userId: string): Promise<number>;
   findByVin(vin: string): Promise<Listing | null>;
+  findByPartnerListingKey(
+    partnerSourceCode: string,
+    partnerListingExternalKey: string,
+  ): Promise<Listing | null>;
   findSimilarCandidates(
     listing: Listing,
     currencyContext: SimilarCandidatesCurrencyContext,

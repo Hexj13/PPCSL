@@ -251,4 +251,35 @@ export class UpdateListingDto {
   @ValidateNested()
   @Type(() => UpdateTireDto)
   tire?: UpdateTireDto;
+
+  @ApiPropertyOptional({
+    example: '999md',
+    description: 'Partner parser code (admin only; set together with partner_listing_external_key)',
+    maxLength: 32,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  partner_source_code?: string | null;
+
+  @ApiPropertyOptional({
+    example: '12345678',
+    description: 'External listing id on partner site (admin only)',
+    maxLength: 64,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  partner_listing_external_key?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'https://example.com/listing/1',
+    description:
+      'Canonical partner listing page URL (admin only; https only; requires partner keys when set to a non-null value)',
+    maxLength: 2048,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  partner_listing_canonical_url?: string | null;
 }

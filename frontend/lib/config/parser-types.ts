@@ -44,4 +44,5 @@ export interface ParserConfigItem {
   defaultPdpCity?: string;
   defaultPdpCityNames?: string[];
   availabilityProbe?: ParserAvailabilityProbeConfig;
+  registrySyncEnabled?: boolean;
 }

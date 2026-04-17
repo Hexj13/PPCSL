@@ -239,34 +239,6 @@ export const tireComparisonFields: ComparisonField[] = [
     ),
   },
   {
-    key: 'tireDotYear',
-    labelKey: 'compare.tireDotYear',
-    renderCell: (listing, t) => (
-      <td
-        key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
-        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-      >
-        {listing.tire?.dot_year != null ? String(listing.tire.dot_year) : t('compare.notAvailable')}
-      </td>
-    ),
-  },
-  {
-    key: 'tireTreadDepth',
-    labelKey: 'compare.tireTreadDepth',
-    renderCell: (listing, t) => (
-      <td
-        key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
-        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-      >
-        {listing.tire?.tread_depth_mm != null
-          ? String(listing.tire.tread_depth_mm)
-          : t('compare.notAvailable')}
-      </td>
-    ),
-  },
-  {
     key: 'tireStudded',
     labelKey: 'compare.tireStudded',
     renderCell: (listing, t) => (

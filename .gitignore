@@ -9,6 +9,7 @@ dist/
 build/
 frontend/.next/
 backend/dist/
+frontend/tsconfig.tsbuildinfo
 backend/tsconfig.tsbuildinfo
 backend/tsconfig.build.tsbuildinfo
 

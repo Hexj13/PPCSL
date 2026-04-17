@@ -2,7 +2,9 @@
 
 import { useLayoutEffect, useRef, useState } from 'react';
 
-const EXIT_MS = 280;
+export const MOBILE_MENU_EXIT_ANIM_MS = 280;
+
+export const MOBILE_MENU_ENTER_ANIM_MS = 260;
 
 export function useMenuDrawerPresence(wantOpen: boolean) {
   const [mounted, setMounted] = useState(wantOpen);
@@ -23,7 +25,7 @@ export function useMenuDrawerPresence(wantOpen: boolean) {
     const reduced =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const delay = reduced ? 0 : EXIT_MS;
+    const delay = reduced ? 0 : MOBILE_MENU_EXIT_ANIM_MS;
     const timer = window.setTimeout(() => {
       setMounted(false);
       setExiting(false);

@@ -6,9 +6,12 @@ import * as path from 'path';
 import { Command } from 'commander';
 
 import type { ListingStatus } from '../../../common/types';
+import { AppDataSource } from '../../../data-source';
+import { Listing } from '../../../listings/entities/listing.entity';
 import { AuthClient } from '../partner-import-shared/api/auth-client';
 import { KupitoApiClient } from '../partner-import-shared/api/kupito-api';
 import { UploadClient } from '../partner-import-shared/api/upload-client';
+import { uploadImportImagesSequentially } from '../partner-import-shared/api/upload-import-images';
 import type {
   ImportCommandOptions,
   ReportCommandOptions,
@@ -29,6 +32,14 @@ import {
 } from '../partner-import-shared/mapping/field-mapper';
 import { estimateHorsepower } from '../partner-import-shared/mapping/hp-estimator';
 import { isPartnerImportDebugEnabled } from '../partner-import-shared/partner-import-debug';
+import { build999mdPartnerListingMetadataPatch } from '../partner-import-shared/partner-listing-metadata-patch';
+import { selectRunReportItems } from '../partner-import-shared/registry-lifecycle';
+import {
+  DEFAULT_999MD_DEDUPE_PHOTO_COUNT_TOLERANCE,
+  DEFAULT_999MD_DEDUPE_PRICE_TOLERANCE_PCT,
+  find999DuplicateBeforeCreate,
+} from '../partner-import-shared/user-listing-dedupe/user-listing-dedupe-999';
+import { loadUserVehicleListingsForDedupe } from '../partner-import-shared/user-listing-dedupe/user-listing-dedupe-load';
 import { Logger } from '../partner-import-shared/utils/logger';
 import { sleep } from '../partner-import-shared/utils/sleep';
 
@@ -100,6 +111,12 @@ program
   .option('--default-hp <number>', 'fallback horsepower', '150')
   .option('--city <value>', 'city value', 'Chișinău')
   .option('--delay <number>', 'delay between requests in ms', '3000')
+  .option(
+    '--check-user-duplicates-before-create',
+    'query DB for same-user duplicates before create',
+  )
+  .option('--dedupe-999-price-tolerance-pct <number>', 'fingerprint price tolerance percent', '0')
+  .option('--dedupe-999-photo-count-tolerance <number>', 'fingerprint photo count tolerance', '1')
   .action(async (rawOptions) => {
     if (!rawOptions.userId) {
       throw new Error('Missing required argument --userId');
@@ -120,6 +137,12 @@ program
       defaultHp: Number(rawOptions.defaultHp),
       city: String(rawOptions.city),
       delay: Number(rawOptions.delay),
+      checkUserDuplicatesBeforeCreate: Boolean(rawOptions.checkUserDuplicatesBeforeCreate),
+      dedupe999PriceTolerancePct: Math.max(0, Number(rawOptions.dedupe999PriceTolerancePct)),
+      dedupe999PhotoCountTolerance: Math.max(
+        0,
+        Math.floor(Number(rawOptions.dedupe999PhotoCountTolerance)),
+      ),
     };
     await runImport(options);
   });
@@ -252,6 +275,22 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const startedAt = new Date().toISOString();
   const targetStatus = mapCliStatusToListingStatus(options.status);
 
+  let loadDedupeListings: (() => Promise<Listing[]>) | undefined;
+  if (options.checkUserDuplicatesBeforeCreate && !options.dryRun) {
+    let cached: Listing[] | null = null;
+    loadDedupeListings = async () => {
+      if (cached) {
+        return cached;
+      }
+      if (!AppDataSource.isInitialized) {
+        await AppDataSource.initialize();
+      }
+      const repo = AppDataSource.getRepository(Listing);
+      cached = await loadUserVehicleListingsForDedupe(repo, options.userId);
+      return cached;
+    };
+  }
+
   if (authClient) {
     await authClient.login();
   }
@@ -259,30 +298,37 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const candidates = getImportCandidates(registry.getAll(), options);
   logger.info(
     'IMPORT',
-    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)}`,
+    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)} checkUserDuplicatesBeforeCreate=${Boolean(options.checkUserDuplicatesBeforeCreate)}`,
   );
 
   let processed = 0;
-  for (const item of candidates) {
-    if (shouldStop) {
-      break;
+  try {
+    for (const item of candidates) {
+      if (shouldStop) {
+        break;
+      }
+      if (options.limit && processed >= options.limit) {
+        break;
+      }
+      processed += 1;
+      await processSingleItem({
+        item,
+        options,
+        registry,
+        kupitoApi,
+        resolver,
+        pdpParser,
+        uploadClient,
+        targetStatus,
+        imageStepDelayMs: config.imageStepDelayMs,
+        loadDedupeListings,
+      });
+      await sleep(options.delay);
     }
-    if (options.limit && processed >= options.limit) {
-      break;
+  } finally {
+    if (options.checkUserDuplicatesBeforeCreate && !options.dryRun && AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
     }
-    processed += 1;
-    await processSingleItem({
-      item,
-      options,
-      registry,
-      kupitoApi,
-      resolver,
-      pdpParser,
-      uploadClient,
-      targetStatus,
-      imageStepDelayMs: config.imageStepDelayMs,
-    });
-    await sleep(options.delay);
   }
 
   const report = reportStore.build({
@@ -297,13 +343,14 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
       sourceId: options.sourceId,
       dryRun: options.dryRun,
       processed,
+      checkUserDuplicatesBeforeCreate: Boolean(options.checkUserDuplicatesBeforeCreate),
     },
-    items: registry.getAll(),
+    items: selectRunReportItems(registry.getAll(), startedAt),
   });
   const reportPath = reportStore.save(report);
   logger.info(
     'REPORT',
-    `processed=${processed} created=${report.summary.created} updated=${report.summary.updated} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview} file=${reportPath}`,
+    `processed=${processed} created=${report.summary.created} updated=${report.summary.updated} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview} duplicateSkipped=${report.summary.duplicateSkipped ?? 0} file=${reportPath}`,
   );
 }
 
@@ -317,6 +364,7 @@ async function processSingleItem(params: {
   uploadClient?: UploadClient;
   targetStatus: ListingStatus;
   imageStepDelayMs: number;
+  loadDedupeListings?: () => Promise<Listing[]>;
 }): Promise<void> {
   const {
     item,
@@ -328,6 +376,7 @@ async function processSingleItem(params: {
     uploadClient,
     targetStatus,
     imageStepDelayMs,
+    loadDedupeListings,
   } = params;
   const sourceId = item.sourceListingId;
 
@@ -402,6 +451,18 @@ async function processSingleItem(params: {
     }
 
     if (item.kupitoListingId && !options.updateExisting) {
+      if (!options.dryRun && kupitoApi) {
+        const partnerMeta = build999mdPartnerListingMetadataPatch(
+          parsed,
+          sourceId,
+          item.canonicalUrl,
+        );
+        await kupitoApi.updateListing(item.kupitoListingId, partnerMeta);
+        logger.info(
+          'IMPORT',
+          `[PARTNER_META][${sourceId}] kupitoId=${item.kupitoListingId} url=${partnerMeta.partner_listing_canonical_url}`,
+        );
+      }
       registry.markState(sourceId, 'skipped', {
         warnings,
         error: undefined,
@@ -432,11 +493,12 @@ async function processSingleItem(params: {
       return;
     }
 
-    const uploadedImages = await uploadImagesSequentially({
+    const uploadedImages = await uploadImportImagesSequentially({
       sourceId,
       imageUrls: parsed.images,
       uploadClient,
       warnings,
+      logger,
       stepDelayMs: imageStepDelayMs,
     });
 
@@ -491,10 +553,15 @@ async function processSingleItem(params: {
       },
       horsepower: hp.horsepower,
       vehicleType,
+      imageBlurHashes: uploadedImages.blurHashes,
     };
 
     if (item.kupitoListingId && options.updateExisting) {
       const updatePayload = buildUpdateListingPayload(payloadInput);
+      Object.assign(
+        updatePayload,
+        build999mdPartnerListingMetadataPatch(finalizedParsed, sourceId, item.canonicalUrl),
+      );
       const updated = await kupitoApi.updateListing(item.kupitoListingId, updatePayload);
       registry.markState(sourceId, 'updated', {
         kupitoListingId: updated.id,
@@ -510,7 +577,59 @@ async function processSingleItem(params: {
       return;
     }
 
+    if (options.checkUserDuplicatesBeforeCreate && loadDedupeListings) {
+      const listings = await loadDedupeListings();
+      const priceTol =
+        options.dedupe999PriceTolerancePct ?? DEFAULT_999MD_DEDUPE_PRICE_TOLERANCE_PCT;
+      const photoTol =
+        options.dedupe999PhotoCountTolerance ?? DEFAULT_999MD_DEDUPE_PHOTO_COUNT_TOLERANCE;
+      const dup = find999DuplicateBeforeCreate({
+        sourceListingId: sourceId,
+        listings,
+        parsed: finalizedParsed,
+        resolvedBrandId,
+        resolvedModelId,
+        fuel: fuelMap.value!,
+        color: colorMap.value!,
+        priceTolerancePct: priceTol,
+        photoCountTolerance: photoTol,
+      });
+      if (dup.kind === 'ambiguous') {
+        registry.markState(sourceId, 'manual_review', {
+          parsedData: finalizedParsed,
+          warnings,
+          imageCount: uploadedImages.urls.length,
+          imageFailures: uploadedImages.failures,
+          error: `DUPLICATE_AMBIGUOUS:${dup.detail}`,
+          vehicleType,
+        });
+        logger.warn('IMPORT', `[MANUAL][${sourceId}] DUPLICATE_AMBIGUOUS:${dup.detail}`);
+        return;
+      }
+      if (dup.kind === 'duplicate') {
+        registry.markState(sourceId, 'duplicate_skipped', {
+          parsedData: finalizedParsed,
+          kupitoListingId: dup.listing.id,
+          ownerUserId: options.userId,
+          warnings,
+          imageCount: uploadedImages.urls.length,
+          imageFailures: uploadedImages.failures,
+          error: `DUPLICATE_MATCH:${dup.layer}`,
+          vehicleType,
+        });
+        logger.info(
+          'IMPORT',
+          `[DUPLICATE_SKIP][${sourceId}] kupitoId=${dup.listing.id} layer=${dup.layer}`,
+        );
+        return;
+      }
+    }
+
     const createPayload = buildCreateListingPayload(payloadInput);
+    Object.assign(
+      createPayload,
+      build999mdPartnerListingMetadataPatch(finalizedParsed, sourceId, item.canonicalUrl),
+    );
     const created = await kupitoApi.createListing(createPayload);
     registry.markState(sourceId, 'created', {
       kupitoListingId: created.id,
@@ -533,40 +652,6 @@ async function processSingleItem(params: {
   }
 }
 
-async function uploadImagesSequentially(params: {
-  sourceId: string;
-  imageUrls: string[];
-  uploadClient: UploadClient;
-  warnings: string[];
-  stepDelayMs: number;
-}): Promise<{ urls: string[]; failures: number }> {
-  const { sourceId, uploadClient, warnings, stepDelayMs } = params;
-  const imageUrls = params.imageUrls.slice(0, 20);
-  const uploaded: string[] = [];
-  let failures = 0;
-
-  for (let index = 0; index < imageUrls.length; index++) {
-    const imageUrl = imageUrls[index];
-    try {
-      const result = await uploadClient.uploadFromUrl(imageUrl);
-      uploaded.push(result.url);
-      logger.info('IMG', `[${sourceId}] [${index + 1}/${imageUrls.length}] uploaded`);
-    } catch (error) {
-      failures += 1;
-      warnings.push(`IMAGE_UPLOAD_FAILED:${index}:${imageUrl}`);
-      logger.warn(
-        'IMG',
-        `[${sourceId}] [${index + 1}/${imageUrls.length}] failed ${String(error)}`,
-      );
-    }
-    if (index < imageUrls.length - 1) {
-      await sleep(stepDelayMs);
-    }
-  }
-
-  return { urls: uploaded, failures };
-}
-
 function getImportCandidates(
   items: RegistryItem999[],
   options: ImportCommandOptions,
@@ -584,7 +669,10 @@ function getImportCandidates(
   const selected = ordered.filter((item) => {
     if (
       options.resume &&
-      (item.state === 'created' || item.state === 'updated' || item.state === 'skipped')
+      (item.state === 'created' ||
+        item.state === 'updated' ||
+        item.state === 'skipped' ||
+        item.state === 'duplicate_skipped')
     ) {
       return false;
     }
@@ -623,7 +711,7 @@ async function runReport(options: ReportCommandOptions, env: 'local' | 'prod'): 
   const report = reportStore.read(targetPath);
   logger.info(
     'REPORT',
-    `file=${targetPath} created=${report.summary.created} updated=${report.summary.updated} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview}`,
+    `file=${targetPath} created=${report.summary.created} updated=${report.summary.updated} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview} duplicateSkipped=${report.summary.duplicateSkipped ?? 0}`,
   );
 }
 

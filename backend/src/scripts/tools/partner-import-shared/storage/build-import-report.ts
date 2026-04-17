@@ -9,6 +9,7 @@ export interface ImportReportSourceItem {
   warnings?: string[];
   imageCount?: number;
   imageFailures?: number;
+  kupitoListingId?: string;
 }
 
 export interface BuildImportReportInput {
@@ -44,10 +45,12 @@ export function buildImportReport(input: BuildImportReportInput): ImportReport {
   let skipped = 0;
   let failed = 0;
   let manualReview = 0;
+  let duplicateSkipped = 0;
   let pdpParsed = 0;
   let listingsDiscovered = 0;
   let totalImages = 0;
   let imageFailures = 0;
+  const duplicateSkippedItems: ImportReport['duplicateSkippedItems'] = [];
 
   for (const item of input.items) {
     listingsDiscovered += 1;
@@ -56,6 +59,18 @@ export function buildImportReport(input: BuildImportReportInput): ImportReport {
     if (item.state === 'updated') updated += 1;
     if (item.state === 'closed') closedSynced += 1;
     if (item.state === 'skipped') skipped += 1;
+    if (item.state === 'duplicate_skipped') {
+      duplicateSkipped += 1;
+      const err = item.error ?? '';
+      const layerMatch = err.match(/^DUPLICATE_MATCH:([a-z0-9_]+)$/i);
+      duplicateSkippedItems.push({
+        sourceListingId: item.sourceListingId,
+        url: item.url,
+        matchedKupitoListingId: item.kupitoListingId ?? '',
+        layer: layerMatch ? layerMatch[1] : 'unknown',
+        reason: err,
+      });
+    }
     if (item.state === 'failed') {
       failed += 1;
       failedItems.push({
@@ -97,6 +112,7 @@ export function buildImportReport(input: BuildImportReportInput): ImportReport {
       skipped,
       failed,
       manualReview,
+      duplicateSkipped,
       totalImages,
       imageFailures,
     },
@@ -111,6 +127,7 @@ export function buildImportReport(input: BuildImportReportInput): ImportReport {
     },
     failedItems,
     manualReviewItems,
+    duplicateSkippedItems,
   };
 }
 

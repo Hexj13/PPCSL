@@ -147,7 +147,10 @@ export function selectImportCandidates<TItem extends BaseRegistryItem<string>>(
       }
       if (
         options.resume &&
-        (item.state === 'created' || item.state === 'updated' || item.state === 'skipped')
+        (item.state === 'created' ||
+          item.state === 'updated' ||
+          item.state === 'skipped' ||
+          item.state === 'duplicate_skipped')
       ) {
         return false;
       }
@@ -166,7 +169,10 @@ export function selectImportCandidates<TItem extends BaseRegistryItem<string>>(
 
     if (
       options.resume &&
-      (item.state === 'created' || item.state === 'updated' || item.state === 'skipped')
+      (item.state === 'created' ||
+        item.state === 'updated' ||
+        item.state === 'skipped' ||
+        item.state === 'duplicate_skipped')
     ) {
       return false;
     }

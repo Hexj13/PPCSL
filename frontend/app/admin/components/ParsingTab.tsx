@@ -1,5 +1,6 @@
 'use client';
 
+import { isAxiosError } from 'axios';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getRegistrationTypeOptions } from '@/components/ListingForm/listingFormUtils';
@@ -131,6 +132,33 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
   const [reportSearchQuery, setReportSearchQuery] = useState('');
   const [plpFileSearchQuery, setPlpFileSearchQuery] = useState('');
 
+  const [registrySyncModalOpen, setRegistrySyncModalOpen] = useState(false);
+  const [registrySyncFile, setRegistrySyncFile] = useState<PlpFileInfo | null>(null);
+  const [registrySyncHintLoading, setRegistrySyncHintLoading] = useState(false);
+  const [registrySyncHint, setRegistrySyncHint] = useState<{
+    login: string | null;
+    suggestedAssignedUserId: string | null;
+    plpLoginMatchesFileKey: boolean;
+  } | null>(null);
+  const [registrySyncAssignedUserId, setRegistrySyncAssignedUserId] = useState('');
+  const [registrySyncRunId, setRegistrySyncRunId] = useState<string | null>(null);
+  const registrySyncRunIdsRef = useRef<Record<string, string>>({});
+  const registrySyncLogSeqRef = useRef(0);
+  const registrySyncReportFetchedRef = useRef(false);
+  const [registrySyncLogLines, setRegistrySyncLogLines] = useState<string[]>([]);
+  const [registrySyncModalRun, setRegistrySyncModalRun] = useState<ParserRun | null>(null);
+  const [registrySyncSearchQuery, setRegistrySyncSearchQuery] = useState('');
+  const [registrySyncReportJson, setRegistrySyncReportJson] = useState('');
+
+  const [pdpSyncHintLoading, setPdpSyncHintLoading] = useState(false);
+  const [pdpSyncHint, setPdpSyncHint] = useState<{ plpLoginMatchesFileKey: boolean } | null>(null);
+  const pdpSyncHintRequestIdRef = useRef(0);
+  const [schedulePdpSyncHintLoading, setSchedulePdpSyncHintLoading] = useState(false);
+  const [schedulePdpSyncHint, setSchedulePdpSyncHint] = useState<{
+    plpLoginMatchesFileKey: boolean;
+  } | null>(null);
+  const schedulePdpSyncHintRequestIdRef = useRef(0);
+
   const [cancelRun, setCancelRun] = useState<ParserRun | null>(null);
   const [deletePlpFileTarget, setDeletePlpFileTarget] = useState<PlpFileInfo | null>(null);
   const [deleteSchedule, setDeleteSchedule] = useState<ParserSchedule | null>(null);
@@ -155,6 +183,9 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
   const plpListRefreshCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pdpListRefreshCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLogContent = logLines.some((line) => typeof line === 'string' && line.trim().length > 0);
+  const hasRegistrySyncLogContent = registrySyncLogLines.some(
+    (line) => typeof line === 'string' && line.trim().length > 0,
+  );
 
   const defaultParserCode = useMemo(() => catalog[0]?.code ?? parserCatalogDefaultCode, [catalog]);
   const manualRunParserOptions = useMemo(
@@ -209,6 +240,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     removeClosed: initialPdpDefaults.removeClosed,
     onlyFailed: initialPdpDefaults.onlyFailed,
     updateExisting: initialPdpDefaults.updateExisting,
+    checkUserDuplicatesBeforeCreate: false,
   });
   const selectedPlpParserLabel = useMemo(
     () => getSelectedOptionLabel(manualRunParserOptions, plpForm.parserCode),
@@ -245,6 +277,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     pdpRemoveClosed: initialPdpDefaults.removeClosed,
     pdpOnlyFailed: initialPdpDefaults.onlyFailed,
     pdpUpdateExisting: initialPdpDefaults.updateExisting,
+    pdpCheckUserDuplicatesBeforeCreate: false,
   });
   const selectedPdpParserLabel = useMemo(
     () => getSelectedOptionLabel(manualRunParserOptions, pdpForm.parserCode),
@@ -378,6 +411,84 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
   );
   const pdpAssignValidation = useAssignUserValidation(pdpForm.assignedUserId);
   const scheduleAssignValidation = useAssignUserValidation(scheduleForm.assignedUserId);
+  const registrySyncAssignValidation = useAssignUserValidation(registrySyncAssignedUserId);
+
+  useEffect(() => {
+    if (!pdpModalOpen || !pdpForm.plpFileKey.trim()) {
+      setPdpSyncHint(null);
+      setPdpSyncHintLoading(false);
+      return;
+    }
+    const rid = (pdpSyncHintRequestIdRef.current += 1);
+    setPdpSyncHintLoading(true);
+    setPdpSyncHint(null);
+    void (async () => {
+      try {
+        const res = await adminApi.getRegistrySyncHint(pdpForm.parserCode, pdpForm.plpFileKey);
+        if (rid !== pdpSyncHintRequestIdRef.current) return;
+        setPdpSyncHint({ plpLoginMatchesFileKey: res.data.plpLoginMatchesFileKey });
+        setPdpForm((s) => ({ ...s, assignedUserId: res.data.suggestedAssignedUserId ?? '' }));
+      } catch (e) {
+        if (rid !== pdpSyncHintRequestIdRef.current) return;
+        setPdpSyncHint(null);
+        setPdpForm((s) => ({ ...s, assignedUserId: '' }));
+        const status = isAxiosError(e) ? e.response?.status : undefined;
+        if (status === undefined || status >= 500) {
+          toast.error(t('admin.parsing.registrySyncHintLoadError'));
+        }
+      } finally {
+        if (rid === pdpSyncHintRequestIdRef.current) {
+          setPdpSyncHintLoading(false);
+        }
+      }
+    })();
+  }, [pdpModalOpen, pdpForm.parserCode, pdpForm.plpFileKey, t]);
+
+  useEffect(() => {
+    if (
+      !scheduleModalOpen ||
+      scheduleForm.runType !== 'pdp' ||
+      !scheduleForm.pdpPlpFileKey.trim() ||
+      editingSchedule
+    ) {
+      setSchedulePdpSyncHint(null);
+      setSchedulePdpSyncHintLoading(false);
+      return;
+    }
+    const rid = (schedulePdpSyncHintRequestIdRef.current += 1);
+    setSchedulePdpSyncHintLoading(true);
+    setSchedulePdpSyncHint(null);
+    void (async () => {
+      try {
+        const res = await adminApi.getRegistrySyncHint(
+          scheduleForm.parserCode,
+          scheduleForm.pdpPlpFileKey,
+        );
+        if (rid !== schedulePdpSyncHintRequestIdRef.current) return;
+        setSchedulePdpSyncHint({ plpLoginMatchesFileKey: res.data.plpLoginMatchesFileKey });
+        setScheduleForm((s) => ({ ...s, assignedUserId: res.data.suggestedAssignedUserId ?? '' }));
+      } catch (e) {
+        if (rid !== schedulePdpSyncHintRequestIdRef.current) return;
+        setSchedulePdpSyncHint(null);
+        setScheduleForm((s) => ({ ...s, assignedUserId: '' }));
+        const status = isAxiosError(e) ? e.response?.status : undefined;
+        if (status === undefined || status >= 500) {
+          toast.error(t('admin.parsing.registrySyncHintLoadError'));
+        }
+      } finally {
+        if (rid === schedulePdpSyncHintRequestIdRef.current) {
+          setSchedulePdpSyncHintLoading(false);
+        }
+      }
+    })();
+  }, [
+    scheduleModalOpen,
+    scheduleForm.runType,
+    scheduleForm.parserCode,
+    scheduleForm.pdpPlpFileKey,
+    editingSchedule,
+    t,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -417,6 +528,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           next.removeClosed = pdpDefaults.removeClosed;
           next.onlyFailed = pdpDefaults.onlyFailed;
           next.updateExisting = pdpDefaults.updateExisting;
+          next.checkUserDuplicatesBeforeCreate = false;
           if (cityList.length > 0) {
             next.city = getDefaultPdpCity(firstManual, cityList);
           }
@@ -434,6 +546,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           next.pdpRemoveClosed = pdpDefaults.removeClosed;
           next.pdpOnlyFailed = pdpDefaults.onlyFailed;
           next.pdpUpdateExisting = pdpDefaults.updateExisting;
+          next.pdpCheckUserDuplicatesBeforeCreate = false;
           if (cityList.length > 0) {
             next.pdpCity = getDefaultPdpCity(firstScheduler, cityList);
           }
@@ -796,6 +909,191 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     [t],
   );
 
+  const plpRegistrySyncFileKey = useCallback(
+    (file: PlpFileInfo) => `${file.parserCode}:${file.fileKey}`,
+    [],
+  );
+
+  const openRegistrySyncModal = useCallback(
+    async (file: PlpFileInfo) => {
+      setRegistrySyncFile(file);
+      setRegistrySyncModalOpen(true);
+      setRegistrySyncHint(null);
+      setRegistrySyncHintLoading(true);
+      setRegistrySyncSearchQuery('');
+      setRegistrySyncReportJson('');
+      setRegistrySyncLogLines([]);
+      registrySyncLogSeqRef.current = 0;
+      registrySyncReportFetchedRef.current = false;
+      try {
+        const res = await adminApi.getRegistrySyncHint(file.parserCode, file.fileKey);
+        setRegistrySyncHint(res.data);
+        setRegistrySyncAssignedUserId(res.data.suggestedAssignedUserId ?? '');
+        const k = plpRegistrySyncFileKey(file);
+        const persistedId = registrySyncRunIdsRef.current[k];
+        if (persistedId) {
+          const runRes = await adminApi.getRun(persistedId);
+          setRegistrySyncModalRun(runRes.data);
+          const activeLike =
+            isRunActive(runRes.data.status) ||
+            runRes.data.status === 'cancel_requested' ||
+            runRes.data.status === 'queued';
+          if (activeLike) {
+            setRegistrySyncRunId(persistedId);
+            registrySyncLogSeqRef.current = 0;
+            setRegistrySyncLogLines([]);
+            registrySyncReportFetchedRef.current = false;
+            return;
+          }
+          setRegistrySyncRunId(null);
+          registrySyncReportFetchedRef.current = false;
+          let afterSeq = 0;
+          const lines: string[] = [];
+          for (let pageIdx = 0; pageIdx < 50; pageIdx += 1) {
+            const lr = await adminApi.getRunLogs(persistedId, afterSeq);
+            const chunks = lr.data.data;
+            if (chunks.length === 0) break;
+            const maxSeq = Math.max(...chunks.map((c) => c.seq));
+            afterSeq = maxSeq;
+            lines.push(
+              ...chunks.flatMap((chunk) =>
+                typeof chunk.message === 'string' && chunk.message.trim().length > 0
+                  ? [chunk.message]
+                  : [],
+              ),
+            );
+            if (chunks.length < 500) break;
+          }
+          registrySyncLogSeqRef.current = afterSeq;
+          setRegistrySyncLogLines(lines);
+          if (runRes.data.status === 'completed') {
+            registrySyncReportFetchedRef.current = true;
+            try {
+              const reportRes = await adminApi.getRunReport(persistedId);
+              setRegistrySyncReportJson(JSON.stringify(reportRes.data, null, 2));
+            } catch {
+              setRegistrySyncReportJson('');
+            }
+          } else {
+            setRegistrySyncReportJson('');
+          }
+          return;
+        }
+        setRegistrySyncRunId(null);
+        setRegistrySyncModalRun(null);
+      } catch {
+        toast.error(t('admin.parsing.registrySyncHintLoadError'));
+        setRegistrySyncAssignedUserId('');
+        setRegistrySyncRunId(null);
+        setRegistrySyncModalRun(null);
+      } finally {
+        setRegistrySyncHintLoading(false);
+      }
+    },
+    [plpRegistrySyncFileKey, t],
+  );
+
+  useEffect(() => {
+    if (!registrySyncRunId) return;
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const tick = async () => {
+      try {
+        const res = await adminApi.getRunLogs(registrySyncRunId, registrySyncLogSeqRef.current);
+        const chunks = res.data.data;
+        if (chunks.length > 0) {
+          const maxSeq = Math.max(...chunks.map((c) => c.seq));
+          registrySyncLogSeqRef.current = maxSeq;
+          setRegistrySyncLogLines((prev) => [
+            ...prev,
+            ...chunks.flatMap((chunk) =>
+              typeof chunk.message === 'string' && chunk.message.trim().length > 0
+                ? [chunk.message]
+                : [],
+            ),
+          ]);
+        }
+        const refreshed = await adminApi.getRun(registrySyncRunId);
+        setRegistrySyncModalRun(refreshed.data);
+        const terminal = !isRunActive(refreshed.data.status) && refreshed.data.status !== 'queued';
+        if (terminal && interval) {
+          clearInterval(interval);
+          interval = null;
+        }
+        if (
+          terminal &&
+          refreshed.data.status === 'completed' &&
+          !registrySyncReportFetchedRef.current &&
+          refreshed.data.id === registrySyncRunId
+        ) {
+          registrySyncReportFetchedRef.current = true;
+          try {
+            const reportRes = await adminApi.getRunReport(registrySyncRunId);
+            setRegistrySyncReportJson(JSON.stringify(reportRes.data, null, 2));
+          } catch {
+            setRegistrySyncReportJson('');
+          }
+        }
+      } catch {
+        toast.error(t('admin.parsing.logsLoadError'));
+      }
+    };
+    void tick();
+    interval = setInterval(() => void tick(), 2500);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [registrySyncRunId, t]);
+
+  const startRegistrySync = useCallback(async () => {
+    if (!registrySyncFile) return;
+    if (registrySyncAssignValidation.status !== 'valid') {
+      toast.error(t('admin.parsing.assignUserRequired'));
+      return;
+    }
+    const uid = registrySyncAssignedUserId.trim();
+    try {
+      const run = await adminApi.createRegistrySyncRun(
+        registrySyncFile.parserCode,
+        registrySyncFile.fileKey,
+        {
+          assignedUserId: uid || undefined,
+        },
+      );
+      const k = plpRegistrySyncFileKey(registrySyncFile);
+      registrySyncRunIdsRef.current[k] = run.data.id;
+      setRegistrySyncRunId(run.data.id);
+      setRegistrySyncModalRun(run.data);
+      setRegistrySyncLogLines([]);
+      registrySyncLogSeqRef.current = 0;
+      setRegistrySyncReportJson('');
+      registrySyncReportFetchedRef.current = false;
+      toast.success(t('admin.parsing.runStarted'));
+    } catch {
+      toast.error(t('admin.parsing.registrySyncRunStartError'));
+    }
+  }, [
+    plpRegistrySyncFileKey,
+    registrySyncAssignValidation.status,
+    registrySyncAssignedUserId,
+    registrySyncFile,
+    t,
+  ]);
+
+  const cancelRegistrySyncRun = useCallback(async () => {
+    if (!registrySyncModalRun) return;
+    if (!isRunActive(registrySyncModalRun.status) && registrySyncModalRun.status !== 'queued') {
+      return;
+    }
+    try {
+      await adminApi.cancelRun(registrySyncModalRun.id);
+      toast.success(t('admin.parsing.cancelRequested'));
+      const refreshed = await adminApi.getRun(registrySyncModalRun.id);
+      setRegistrySyncModalRun(refreshed.data);
+    } catch {
+      toast.error(t('admin.parsing.cancelError'));
+    }
+  }, [registrySyncModalRun, t]);
+
   const downloadPlpFile = useCallback(
     async (file: PlpFileInfo) => {
       try {
@@ -867,6 +1165,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         pdpRemoveClosed: pdpDefaults.removeClosed,
         pdpOnlyFailed: pdpDefaults.onlyFailed,
         pdpUpdateExisting: pdpDefaults.updateExisting,
+        pdpCheckUserDuplicatesBeforeCreate: false,
       };
     });
   }, [cities, schedulerParserOptions]);
@@ -939,6 +1238,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         pdpRemoveClosed: Boolean(cfg.removeClosed),
         pdpOnlyFailed: Boolean(cfg.onlyFailed),
         pdpUpdateExisting: Boolean(cfg.updateExisting),
+        pdpCheckUserDuplicatesBeforeCreate: Boolean(cfg.checkUserDuplicatesBeforeCreate),
       });
       setScheduleModalOpen(true);
     },
@@ -955,6 +1255,9 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     value: string,
     onChange: (_value: string) => void,
     validation: AssignUserValidationState,
+    labelKey = 'admin.parsing.fieldAssignedUserId',
+    hintKey = 'admin.parsing.fieldAssignedUserHint',
+    hintAriaKey = 'admin.parsing.fieldAssignedUserHintButton',
   ) => {
     const hasError = validation.status === 'error';
     const isValid = validation.status === 'valid';
@@ -968,12 +1271,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     return (
       <div>
         <div className="flex items-center gap-1.5 mb-2">
-          <label className={modalFieldLabelClassName}>
-            {t('admin.parsing.fieldAssignedUserId')}
-          </label>
-          <HintTooltip ariaLabel={t('admin.parsing.fieldAssignedUserHintButton')}>
-            {t('admin.parsing.fieldAssignedUserHint')}
-          </HintTooltip>
+          <label className={modalFieldLabelClassName}>{t(labelKey)}</label>
+          <HintTooltip ariaLabel={t(hintAriaKey)}>{t(hintKey)}</HintTooltip>
         </div>
         <div className="relative">
           <input
@@ -1094,6 +1393,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         city: pdpForm.city.trim(),
         delayMs: pdpForm.delayMs,
         removeClosed: pdpForm.removeClosed,
+        checkUserDuplicatesBeforeCreate: pdpForm.checkUserDuplicatesBeforeCreate,
       });
       toast.success(t('admin.parsing.runStarted'));
       setPdpModalOpen(false);
@@ -1157,6 +1457,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
       city: scheduleForm.pdpCity.trim(),
       delayMs: scheduleForm.pdpDelayMs,
       removeClosed: scheduleForm.pdpRemoveClosed,
+      checkUserDuplicatesBeforeCreate: scheduleForm.pdpCheckUserDuplicatesBeforeCreate,
       dataSource: 'plp_registry',
     };
   };
@@ -1294,6 +1595,10 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
       setCancelRun(null);
       plpRuns.reload(true);
       pdpRuns.reload(true);
+      if (registrySyncRunId === cancelRun.id) {
+        const refreshed = await adminApi.getRun(cancelRun.id);
+        setRegistrySyncModalRun(refreshed.data);
+      }
     } catch {
       toast.error(t('admin.parsing.cancelError'));
     }
@@ -1479,11 +1784,12 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
       {innerTab === 'plp' && (
         <div>
           <div className="space-y-3">
-            <div className="flex flex-wrap gap-3 justify-between items-center">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-between sm:items-center">
               <h2 className="text-xl font-bold text-primary-900">
                 {t('admin.parsing.plpFilesTitle')}
               </h2>
               <AdminActionButton
+                className="w-full sm:w-auto"
                 variant={plpFilesList.loading ? 'secondary' : 'primary'}
                 onClick={() => void onPlpFilesRefresh()}
                 disabled={plpFilesList.loading}
@@ -1522,10 +1828,11 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
             )}
           </div>
           <div className="mt-8 space-y-4">
-            <div className="flex flex-wrap gap-3 justify-between items-center">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-between sm:items-center">
               <h2 className="text-xl font-bold text-primary-900">{t('admin.parsing.plpTitle')}</h2>
-              <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
                 <AdminActionButton
+                  className="w-full sm:w-auto"
                   onClick={() => setPlpModalOpen(true)}
                   disabled={catalogLoading || catalog.length === 0}
                 >
@@ -1533,6 +1840,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                   {t('admin.parsing.startPlp')}
                 </AdminActionButton>
                 <AdminActionButton
+                  className="w-full sm:w-auto"
                   variant={plpRuns.loading || plpListRefreshCooldown ? 'secondary' : 'primary'}
                   onClick={() => void onPlpRunsListRefresh()}
                   disabled={plpRuns.loading || plpListRefreshCooldown}
@@ -1577,10 +1885,11 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
 
       {innerTab === 'pdp' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-3 justify-between items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-between sm:items-center">
             <h2 className="text-xl font-bold text-primary-900">{t('admin.parsing.pdpTitle')}</h2>
-            <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
               <AdminActionButton
+                className="w-full sm:w-auto"
                 onClick={() => setPdpModalOpen(true)}
                 disabled={catalogLoading || catalog.length === 0}
               >
@@ -1588,6 +1897,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                 {t('admin.parsing.startPdp')}
               </AdminActionButton>
               <AdminActionButton
+                className="w-full sm:w-auto"
                 variant={pdpRuns.loading || pdpListRefreshCooldown ? 'secondary' : 'primary'}
                 onClick={() => void onPdpRunsListRefresh()}
                 disabled={pdpRuns.loading || pdpListRefreshCooldown}
@@ -1631,11 +1941,12 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
 
       {innerTab === 'scheduler' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-3 justify-between items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-between sm:items-center">
             <h2 className="text-xl font-bold text-primary-900">
               {t('admin.parsing.schedulerTitle')}
             </h2>
             <AdminActionButton
+              className="w-full sm:w-auto"
               onClick={openScheduleCreateModal}
               disabled={catalogLoading || !catalog.some((c) => c.schedulerEnabled)}
             >
@@ -2039,6 +2350,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                       removeClosed: pdpDefaults.removeClosed,
                       onlyFailed: pdpDefaults.onlyFailed,
                       updateExisting: pdpDefaults.updateExisting,
+                      checkUserDuplicatesBeforeCreate: false,
                     };
                   })
                 }
@@ -2064,10 +2376,23 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
               className="w-full"
             />
           </div>
-          {renderAssignedUserField(
-            pdpForm.assignedUserId,
-            (value) => setPdpForm((s) => ({ ...s, assignedUserId: value })),
-            pdpAssignValidation,
+          {pdpSyncHintLoading ? (
+            <div className="py-2 text-center text-text-secondary text-sm">
+              {t('admin.parsing.loading')}
+            </div>
+          ) : (
+            <>
+              {pdpSyncHint &&
+                pdpForm.parserCode === '999md' &&
+                !pdpSyncHint.plpLoginMatchesFileKey && (
+                  <InfoBlock>{t('admin.parsing.registrySyncLoginMismatch')}</InfoBlock>
+                )}
+              {renderAssignedUserField(
+                pdpForm.assignedUserId,
+                (value) => setPdpForm((s) => ({ ...s, assignedUserId: value })),
+                pdpAssignValidation,
+              )}
+            </>
           )}
           <div>
             <label className={modalFieldLabelClassName}>
@@ -2191,6 +2516,18 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
               )}
               size="sm"
             />
+            <Checkbox
+              checked={pdpForm.checkUserDuplicatesBeforeCreate}
+              onChange={(checked) =>
+                setPdpForm((s) => ({ ...s, checkUserDuplicatesBeforeCreate: checked }))
+              }
+              label={renderCheckboxLabelWithHint(
+                'admin.parsing.fieldCheckUserDuplicatesBeforeCreate',
+                'admin.parsing.fieldCheckUserDuplicatesBeforeCreateHint',
+                'admin.parsing.fieldCheckUserDuplicatesBeforeCreateHintButton',
+              )}
+              size="sm"
+            />
           </div>
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <AdminActionButton
@@ -2224,6 +2561,33 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         size="large"
       >
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+          <div>
+            <label className={modalFieldLabelClassName}>{t('admin.parsing.fieldRunType')}</label>
+            <Dropdown
+              value={scheduleForm.runType}
+              onChange={(value) => {
+                const runType = value as 'plp' | 'pdp';
+                setScheduleForm((s) => {
+                  const next = {
+                    ...s,
+                    runType,
+                    assignedUserId: runType === 'pdp' ? s.assignedUserId : '',
+                  };
+                  if (runType === 'pdp' && !s.pdpCity.trim()) {
+                    next.pdpCity = getDefaultPdpCity(s.parserCode, cities);
+                  }
+                  return next;
+                });
+              }}
+              options={[
+                { value: 'plp', label: t('admin.parsing.subtabPlp') },
+                { value: 'pdp', label: t('admin.parsing.subtabPdp') },
+              ]}
+              disabled={Boolean(editingSchedule)}
+              renderMenuInPortal
+              className="w-full"
+            />
+          </div>
           <div>
             <label className={modalFieldLabelClassName}>{t('admin.parsing.fieldParser')}</label>
             {schedulerParserOptions.length <= 1 ? (
@@ -2260,6 +2624,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                       pdpRemoveClosed: pdpDefaults.removeClosed,
                       pdpOnlyFailed: pdpDefaults.onlyFailed,
                       pdpUpdateExisting: pdpDefaults.updateExisting,
+                      pdpCheckUserDuplicatesBeforeCreate: false,
                     };
                   })
                 }
@@ -2290,33 +2655,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
               />
             </div>
           )}
-          <div>
-            <label className={modalFieldLabelClassName}>{t('admin.parsing.fieldRunType')}</label>
-            <Dropdown
-              value={scheduleForm.runType}
-              onChange={(value) => {
-                const runType = value as 'plp' | 'pdp';
-                setScheduleForm((s) => {
-                  const next = {
-                    ...s,
-                    runType,
-                    assignedUserId: runType === 'pdp' ? s.assignedUserId : '',
-                  };
-                  if (runType === 'pdp' && !s.pdpCity.trim()) {
-                    next.pdpCity = getDefaultPdpCity(s.parserCode, cities);
-                  }
-                  return next;
-                });
-              }}
-              options={[
-                { value: 'plp', label: t('admin.parsing.subtabPlp') },
-                { value: 'pdp', label: t('admin.parsing.subtabPdp') },
-              ]}
-              disabled={Boolean(editingSchedule)}
-              renderMenuInPortal
-              className="w-full"
-            />
-          </div>
           {scheduleForm.runType === 'pdp' &&
             (editingSchedule ? (
               <div>
@@ -2333,12 +2671,23 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                   className="input-field w-full opacity-60 cursor-not-allowed"
                 />
               </div>
+            ) : schedulePdpSyncHintLoading ? (
+              <div className="py-2 text-center text-text-secondary text-sm">
+                {t('admin.parsing.loading')}
+              </div>
             ) : (
-              renderAssignedUserField(
-                scheduleForm.assignedUserId,
-                (value) => setScheduleForm((s) => ({ ...s, assignedUserId: value })),
-                scheduleAssignValidation,
-              )
+              <>
+                {schedulePdpSyncHint &&
+                  scheduleForm.parserCode === '999md' &&
+                  !schedulePdpSyncHint.plpLoginMatchesFileKey && (
+                    <InfoBlock>{t('admin.parsing.registrySyncLoginMismatch')}</InfoBlock>
+                  )}
+                {renderAssignedUserField(
+                  scheduleForm.assignedUserId,
+                  (value) => setScheduleForm((s) => ({ ...s, assignedUserId: value })),
+                  scheduleAssignValidation,
+                )}
+              </>
             ))}
           <div>
             <label className={modalFieldLabelClassName}>{t('admin.parsing.fieldFrequency')}</label>
@@ -2718,6 +3067,18 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                   )}
                   size="sm"
                 />
+                <Checkbox
+                  checked={scheduleForm.pdpCheckUserDuplicatesBeforeCreate}
+                  onChange={(checked) =>
+                    setScheduleForm((s) => ({ ...s, pdpCheckUserDuplicatesBeforeCreate: checked }))
+                  }
+                  label={renderCheckboxLabelWithHint(
+                    'admin.parsing.fieldCheckUserDuplicatesBeforeCreate',
+                    'admin.parsing.fieldCheckUserDuplicatesBeforeCreateHint',
+                    'admin.parsing.fieldCheckUserDuplicatesBeforeCreateHintButton',
+                  )}
+                  size="sm"
+                />
               </div>
             </div>
           )}
@@ -2742,6 +3103,138 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                 : t('admin.parsing.submitSchedule')}
             </AdminActionButton>
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={registrySyncModalOpen}
+        onClose={() => setRegistrySyncModalOpen(false)}
+        title={
+          registrySyncFile
+            ? `${t('admin.parsing.registrySyncModalTitle')} — ${registrySyncFile.fileName}`
+            : t('admin.parsing.registrySyncModalTitle')
+        }
+        size="large"
+      >
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+          {registrySyncHintLoading ? (
+            <div className="py-6 text-center text-text-secondary">{t('admin.parsing.loading')}</div>
+          ) : (
+            <>
+              <InfoBlock>
+                {registrySyncFile?.parserCode === '999md'
+                  ? t('admin.parsing.registrySyncInfo999md')
+                  : t('admin.parsing.registrySyncInfoCipauto')}
+              </InfoBlock>
+              {registrySyncHint &&
+                registrySyncFile?.parserCode === '999md' &&
+                !registrySyncHint.plpLoginMatchesFileKey && (
+                  <InfoBlock>{t('admin.parsing.registrySyncLoginMismatch')}</InfoBlock>
+                )}
+              {renderAssignedUserField(
+                registrySyncAssignedUserId,
+                (v) => setRegistrySyncAssignedUserId(v),
+                registrySyncAssignValidation,
+                'admin.parsing.registrySyncAssignedUserLabel',
+                'admin.parsing.registrySyncAssignedUserHint',
+                'admin.parsing.fieldAssignedUserHintButton',
+              )}
+              <div className="mb-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-wrap gap-2">
+                    {registrySyncModalRun && isRunActive(registrySyncModalRun.status) ? (
+                      <AdminActionButton
+                        variant="secondary"
+                        className={modalPrimaryButtonClassName}
+                        onClick={() => void cancelRegistrySyncRun()}
+                      >
+                        {t('admin.parsing.registrySyncCancelRun')}
+                      </AdminActionButton>
+                    ) : (
+                      <AdminActionButton
+                        className={modalPrimaryButtonClassName}
+                        disabled={
+                          !registrySyncFile ||
+                          (registrySyncFile.parserCode === '999md' &&
+                            registrySyncHint &&
+                            !registrySyncHint.plpLoginMatchesFileKey) ||
+                          registrySyncAssignValidation.status !== 'valid' ||
+                          (registrySyncModalRun ? isRunActive(registrySyncModalRun.status) : false)
+                        }
+                        onClick={() => void startRegistrySync()}
+                      >
+                        {t('admin.parsing.registrySyncStart')}
+                      </AdminActionButton>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-end sm:flex-1">
+                    <AdminActionButton
+                      className={modalPrimaryButtonClassName}
+                      onClick={() =>
+                        void copyModalText(
+                          [
+                            hasRegistrySyncLogContent ? registrySyncLogLines.join('\n') : '',
+                            registrySyncReportJson,
+                          ]
+                            .filter((s) => s.trim().length > 0)
+                            .join('\n\n---\n\n'),
+                          t('admin.parsing.registrySyncModalTitle'),
+                        )
+                      }
+                    >
+                      {t('admin.parsing.copy')}
+                    </AdminActionButton>
+                    <div className="w-full sm:w-80">
+                      <input
+                        type="text"
+                        value={registrySyncSearchQuery}
+                        onChange={(e) => setRegistrySyncSearchQuery(e.target.value)}
+                        placeholder={t('admin.parsing.searchPlaceholder')}
+                        className={modalInputClassName}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="sm:flex sm:justify-end">
+                  <p className="mt-1 text-xs text-text-secondary sm:text-right">
+                    {t('admin.parsing.searchMatches', {
+                      count: registrySyncSearchQuery.trim()
+                        ? getSearchMatchCount(
+                            [
+                              hasRegistrySyncLogContent ? registrySyncLogLines.join('\n') : '',
+                              registrySyncReportJson,
+                            ]
+                              .filter((s) => s.trim().length > 0)
+                              .join('\n\n'),
+                            registrySyncSearchQuery.trim(),
+                          )
+                        : '—',
+                    })}
+                  </p>
+                </div>
+              </div>
+              {registrySyncReportJson ? (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-primary-900">
+                    {t('admin.parsing.registrySyncReportTitle')}
+                  </h3>
+                  <pre className="text-xs font-mono whitespace-pre-wrap break-words max-h-[24vh] overflow-y-auto bg-primary-500/5 p-3 rounded-lg border border-primary-500/15">
+                    {renderHighlightedText(registrySyncReportJson, registrySyncSearchQuery.trim())}
+                  </pre>
+                </div>
+              ) : null}
+              {hasRegistrySyncLogContent ? (
+                <pre className="text-xs font-mono whitespace-pre-wrap break-words max-h-[40vh] overflow-y-auto bg-primary-500/5 p-3 rounded-lg border border-primary-500/15">
+                  {renderHighlightedText(
+                    registrySyncLogLines.join('\n'),
+                    registrySyncSearchQuery.trim(),
+                  )}
+                </pre>
+              ) : (
+                <InfoBlock>{t('admin.parsing.registrySyncLogsEmpty')}</InfoBlock>
+              )}
+            </>
+          )}
         </div>
       </Modal>
 
@@ -2866,6 +3359,21 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                     void downloadPlpFile(selectedFile);
                   },
                 },
+                ...(catalog.some(
+                  (c) => c.code === openPlpFileActionsMenu.file.parserCode && c.registrySyncEnabled,
+                )
+                  ? [
+                      {
+                        id: 'registry-sync',
+                        label: t('admin.parsing.plpFileRegistrySync'),
+                        onSelect: () => {
+                          const selectedFile = openPlpFileActionsMenu.file;
+                          setOpenPlpFileActionsMenu(null);
+                          void openRegistrySyncModal(selectedFile);
+                        },
+                      },
+                    ]
+                  : []),
                 {
                   id: 'delete',
                   label: t('admin.parsing.plpFileDelete'),

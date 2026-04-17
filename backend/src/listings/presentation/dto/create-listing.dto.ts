@@ -339,4 +339,35 @@ export class CreateListingDto {
   @IsOptional()
   @IsUUID('4', { message: 'errors.invalidUserId' })
   assignedUserId?: string;
+
+  @ApiPropertyOptional({
+    example: '999md',
+    description: 'Partner parser code (admin only; set together with partner_listing_external_key)',
+    maxLength: 32,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  partner_source_code?: string;
+
+  @ApiPropertyOptional({
+    example: '12345678',
+    description: 'External listing id on partner site (admin only)',
+    maxLength: 64,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  partner_listing_external_key?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://example.com/listing/1',
+    description:
+      'Canonical partner listing page URL (admin only; https only; requires partner_source_code and partner_listing_external_key when set)',
+    maxLength: 2048,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  partner_listing_canonical_url?: string;
 }

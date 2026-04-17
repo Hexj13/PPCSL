@@ -21,6 +21,19 @@ import { TireModel } from './tires/entities/tire-model.entity';
 import { Tire } from './tires/entities/tire.entity';
 import { User } from './users/entities/user.entity';
 
+function resolveTypeOrmQueryLogging(): boolean {
+  if (process.env.NODE_ENV !== 'development') {
+    return false;
+  }
+  const raw = String(process.env.KUPITO_TYPEORM_QUERY_LOG ?? 'true')
+    .trim()
+    .toLowerCase();
+  if (raw === '0' || raw === 'false' || raw === 'no' || raw === 'off') {
+    return false;
+  }
+  return true;
+}
+
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',
@@ -51,7 +64,7 @@ export const dataSourceOptions: DataSourceOptions = {
     Tire,
   ],
   synchronize: process.env.DB_SYNC === 'true' || process.env.NODE_ENV === 'test',
-  logging: process.env.NODE_ENV === 'development',
+  logging: resolveTypeOrmQueryLogging(),
   migrations: process.env.NODE_ENV === 'test' ? [] : ['dist/migrations/*.js'],
   extra: {
     max: parseInt(process.env.DB_POOL_MAX || '20'),

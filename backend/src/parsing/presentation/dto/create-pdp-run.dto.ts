@@ -59,4 +59,8 @@ export class CreatePdpRunDto {
   @IsInt()
   @Min(0)
   delayMs?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  checkUserDuplicatesBeforeCreate?: boolean;
 }

@@ -44,6 +44,7 @@ export interface ParserConfigItem {
   defaultPdpCity?: string;
   defaultPdpCityNames?: string[];
   availabilityProbe?: ParserAvailabilityProbeConfig;
+  registrySyncEnabled?: boolean;
 }
 
 const chisinauAliases = [
@@ -93,6 +94,7 @@ export const parsersConfig: ParserConfigItem[] = [
       defaultPageProbeCount: 3,
       timeoutMs: 15000,
     },
+    registrySyncEnabled: true,
   },
   {
     code: '999md',
@@ -120,5 +122,6 @@ export const parsersConfig: ParserConfigItem[] = [
     },
     defaultPdpCity: 'Chișinău',
     defaultPdpCityNames: chisinauAliases,
+    registrySyncEnabled: true,
   },
 ];

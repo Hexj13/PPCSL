@@ -135,6 +135,18 @@ export class TypeOrmListingRepository implements IListingRepository {
     return this.repository.findOne({ where: { vin } });
   }
 
+  async findByPartnerListingKey(
+    partnerSourceCode: string,
+    partnerListingExternalKey: string,
+  ): Promise<Listing | null> {
+    return this.repository.findOne({
+      where: {
+        partner_source_code: partnerSourceCode,
+        partner_listing_external_key: partnerListingExternalKey,
+      },
+    });
+  }
+
   async findSimilarCandidates(
     listing: Listing,
     currencyContext: SimilarCandidatesCurrencyContext,

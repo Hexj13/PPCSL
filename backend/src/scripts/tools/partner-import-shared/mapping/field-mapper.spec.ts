@@ -69,6 +69,18 @@ describe('buildCreateListingPayload', () => {
     expect(payload.image_blur_hashes).toEqual(hashes);
   });
 
+  it('includes image_blur_hashes with null entries aligned to images', () => {
+    const hashes = ['UBF~bx00', null];
+    const payload = buildCreateListingPayload(
+      buildInput(
+        { images: ['https://img/a.jpg', 'https://img/b.jpg'] },
+        { imageBlurHashes: hashes },
+      ),
+    );
+    expect(payload.image_blur_hashes).toEqual(hashes);
+    expect(payload.images).toHaveLength(2);
+  });
+
   it('omits image_blur_hashes when not provided', () => {
     const payload = buildCreateListingPayload(buildInput({}));
     expect(payload.image_blur_hashes).toBeUndefined();

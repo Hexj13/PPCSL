@@ -5,9 +5,12 @@ import * as fs from 'fs';
 import { Command } from 'commander';
 
 import type { ListingStatus } from '../../../common/types';
+import { AppDataSource } from '../../../data-source';
+import { Listing } from '../../../listings/entities/listing.entity';
 import { AuthClient } from '../partner-import-shared/api/auth-client';
 import { KupitoApiClient } from '../partner-import-shared/api/kupito-api';
 import { UploadClient } from '../partner-import-shared/api/upload-client';
+import { uploadImportImagesSequentially } from '../partner-import-shared/api/upload-import-images';
 import { mapBodyType } from '../partner-import-shared/mapping/body-type-mapper';
 import { BrandModelResolver } from '../partner-import-shared/mapping/brand-model-resolver';
 import { mapColor } from '../partner-import-shared/mapping/color-mapper';
@@ -23,6 +26,7 @@ import {
 } from '../partner-import-shared/mapping/field-mapper';
 import { estimateHorsepower } from '../partner-import-shared/mapping/hp-estimator';
 import { isPartnerImportDebugEnabled } from '../partner-import-shared/partner-import-debug';
+import { buildCipautoPartnerListingMetadataPatch } from '../partner-import-shared/partner-listing-metadata-patch';
 import {
   finalizeRegistryAfterPlpScan,
   normalizeSourceStatus,
@@ -30,6 +34,8 @@ import {
   selectImportCandidates,
   selectRunReportItems,
 } from '../partner-import-shared/registry-lifecycle';
+import { findCipautoDuplicateBeforeCreate } from '../partner-import-shared/user-listing-dedupe/user-listing-dedupe-cipauto';
+import { loadUserVehicleListingsForDedupe } from '../partner-import-shared/user-listing-dedupe/user-listing-dedupe-load';
 import { Logger } from '../partner-import-shared/utils/logger';
 import { sleep } from '../partner-import-shared/utils/sleep';
 
@@ -109,6 +115,10 @@ program
   .option('--default-hp <number>', 'fallback horsepower', '150')
   .option('--city <value>', 'city value', 'Chișinău')
   .option('--delay <number>', 'delay between requests in ms', '3000')
+  .option(
+    '--check-user-duplicates-before-create',
+    'query DB for same-user duplicates before create',
+  )
   .action(async (rawOptions) => {
     if (!rawOptions.userId) {
       throw new Error('Missing required argument --userId');
@@ -129,6 +139,7 @@ program
       defaultHp: Number(rawOptions.defaultHp),
       city: String(rawOptions.city),
       delay: Number(rawOptions.delay),
+      checkUserDuplicatesBeforeCreate: Boolean(rawOptions.checkUserDuplicatesBeforeCreate),
     };
     await runImport(options);
   });
@@ -280,6 +291,22 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const startedAt = new Date().toISOString();
   const targetStatus = mapCliStatusToListingStatus(options.status);
 
+  let loadDedupeListings: (() => Promise<Listing[]>) | undefined;
+  if (options.checkUserDuplicatesBeforeCreate && !options.dryRun) {
+    let cached: Listing[] | null = null;
+    loadDedupeListings = async () => {
+      if (cached) {
+        return cached;
+      }
+      if (!AppDataSource.isInitialized) {
+        await AppDataSource.initialize();
+      }
+      const repo = AppDataSource.getRepository(Listing);
+      cached = await loadUserVehicleListingsForDedupe(repo, options.userId);
+      return cached;
+    };
+  }
+
   if (authClient) {
     await authClient.login();
   }
@@ -287,29 +314,36 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const candidates = getImportCandidates(registry.getAll(), options);
   logger.info(
     'IMPORT',
-    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)}`,
+    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)} checkUserDuplicatesBeforeCreate=${Boolean(options.checkUserDuplicatesBeforeCreate)}`,
   );
 
   let processed = 0;
-  for (const item of candidates) {
-    if (shouldStop) {
-      break;
+  try {
+    for (const item of candidates) {
+      if (shouldStop) {
+        break;
+      }
+      if (options.limit && processed >= options.limit) {
+        break;
+      }
+      processed += 1;
+      await processSingleItem({
+        item,
+        options,
+        registry,
+        kupitoApi,
+        resolver,
+        pdpParser,
+        uploadClient,
+        targetStatus,
+        loadDedupeListings,
+      });
+      await sleep(options.delay);
     }
-    if (options.limit && processed >= options.limit) {
-      break;
+  } finally {
+    if (options.checkUserDuplicatesBeforeCreate && !options.dryRun && AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
     }
-    processed += 1;
-    await processSingleItem({
-      item,
-      options,
-      registry,
-      kupitoApi,
-      resolver,
-      pdpParser,
-      uploadClient,
-      targetStatus,
-    });
-    await sleep(options.delay);
   }
 
   if (!options.dryRun) {
@@ -328,13 +362,14 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
       sourceId: options.sourceId,
       dryRun: options.dryRun,
       processed,
+      checkUserDuplicatesBeforeCreate: Boolean(options.checkUserDuplicatesBeforeCreate),
     },
     items: selectRunReportItems(registry.getAll(), startedAt),
   });
   const reportPath = reportStore.save(report);
   logger.info(
     'REPORT',
-    `processed=${processed} created=${report.summary.created} updated=${report.summary.updated} closedSynced=${report.summary.closedSynced} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview} file=${reportPath}`,
+    `processed=${processed} created=${report.summary.created} updated=${report.summary.updated} closedSynced=${report.summary.closedSynced} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview} duplicateSkipped=${report.summary.duplicateSkipped ?? 0} file=${reportPath}`,
   );
 }
 
@@ -347,9 +382,19 @@ async function processSingleItem(params: {
   pdpParser: PdpParser;
   uploadClient?: UploadClient;
   targetStatus: ListingStatus;
+  loadDedupeListings?: () => Promise<Listing[]>;
 }): Promise<void> {
-  const { item, options, registry, kupitoApi, resolver, pdpParser, uploadClient, targetStatus } =
-    params;
+  const {
+    item,
+    options,
+    registry,
+    kupitoApi,
+    resolver,
+    pdpParser,
+    uploadClient,
+    targetStatus,
+    loadDedupeListings,
+  } = params;
   const sourceId = item.sourceListingId;
   let parseSucceeded = false;
 
@@ -435,6 +480,18 @@ async function processSingleItem(params: {
     }
 
     if (item.kupitoListingId && !options.updateExisting) {
+      if (!options.dryRun && kupitoApi) {
+        const partnerMeta = buildCipautoPartnerListingMetadataPatch(
+          parsed,
+          sourceId,
+          item.canonicalUrl,
+        );
+        await kupitoApi.updateListing(item.kupitoListingId, partnerMeta);
+        logger.info(
+          'IMPORT',
+          `[PARTNER_META][${sourceId}] kupitoId=${item.kupitoListingId} url=${partnerMeta.partner_listing_canonical_url}`,
+        );
+      }
       registry.markState(sourceId, 'skipped', {
         warnings,
         error: undefined,
@@ -465,11 +522,12 @@ async function processSingleItem(params: {
       return;
     }
 
-    const uploadedImages = await uploadImagesSequentially({
+    const uploadedImages = await uploadImportImagesSequentially({
       sourceId,
       imageUrls: parsed.images,
       uploadClient,
       warnings,
+      logger,
     });
 
     if (uploadedImages.urls.length < 2) {
@@ -521,10 +579,15 @@ async function processSingleItem(params: {
         color: colorMap.value,
       },
       horsepower: hp.horsepower,
+      imageBlurHashes: uploadedImages.blurHashes,
     };
 
     if (item.kupitoListingId && options.updateExisting) {
       const updatePayload = buildUpdateListingPayload(payloadInput);
+      Object.assign(
+        updatePayload,
+        buildCipautoPartnerListingMetadataPatch(finalizedParsed, sourceId, item.canonicalUrl),
+      );
       const updated = await kupitoApi.updateListing(item.kupitoListingId, updatePayload);
       registry.markState(sourceId, 'updated', {
         kupitoListingId: updated.id,
@@ -540,7 +603,44 @@ async function processSingleItem(params: {
       return;
     }
 
+    if (options.checkUserDuplicatesBeforeCreate && loadDedupeListings) {
+      const listings = await loadDedupeListings();
+      const dup = findCipautoDuplicateBeforeCreate(listings, sourceId);
+      if (dup.kind === 'ambiguous') {
+        registry.markState(sourceId, 'manual_review', {
+          parsedData: finalizedParsed,
+          warnings,
+          imageCount: uploadedImages.urls.length,
+          imageFailures: uploadedImages.failures,
+          error: `DUPLICATE_AMBIGUOUS:${dup.detail}`,
+        });
+        logger.warn('IMPORT', `[MANUAL][${sourceId}] DUPLICATE_AMBIGUOUS:${dup.detail}`);
+        return;
+      }
+      if (dup.kind === 'duplicate') {
+        registry.markState(sourceId, 'duplicate_skipped', {
+          parsedData: finalizedParsed,
+          kupitoListingId: dup.listing.id,
+          ownerUserId: options.userId,
+          warnings,
+          imageCount: uploadedImages.urls.length,
+          imageFailures: uploadedImages.failures,
+          error: `DUPLICATE_MATCH:${dup.layer}`,
+          lastImportedAt: new Date().toISOString(),
+        });
+        logger.info(
+          'IMPORT',
+          `[DUPLICATE_SKIP][${sourceId}] kupitoId=${dup.listing.id} layer=${dup.layer}`,
+        );
+        return;
+      }
+    }
+
     const createPayload = buildCreateListingPayload(payloadInput);
+    Object.assign(
+      createPayload,
+      buildCipautoPartnerListingMetadataPatch(finalizedParsed, sourceId, item.canonicalUrl),
+    );
     const created = await kupitoApi.createListing(createPayload);
     registry.markState(sourceId, 'created', {
       kupitoListingId: created.id,
@@ -583,36 +683,6 @@ async function processSingleItem(params: {
   }
 }
 
-async function uploadImagesSequentially(params: {
-  sourceId: string;
-  imageUrls: string[];
-  uploadClient: UploadClient;
-  warnings: string[];
-}): Promise<{ urls: string[]; failures: number }> {
-  const { sourceId, uploadClient, warnings } = params;
-  const imageUrls = params.imageUrls.slice(0, 20);
-  const uploaded: string[] = [];
-  let failures = 0;
-
-  for (let index = 0; index < imageUrls.length; index++) {
-    const imageUrl = imageUrls[index];
-    try {
-      const result = await uploadClient.uploadFromUrl(imageUrl);
-      uploaded.push(result.url);
-      logger.info('IMG', `[${sourceId}] [${index + 1}/${imageUrls.length}] uploaded`);
-    } catch (error) {
-      failures += 1;
-      warnings.push(`IMAGE_UPLOAD_FAILED:${index}:${imageUrl}`);
-      logger.warn(
-        'IMG',
-        `[${sourceId}] [${index + 1}/${imageUrls.length}] failed ${String(error)}`,
-      );
-    }
-  }
-
-  return { urls: uploaded, failures };
-}
-
 function getImportCandidates(items: RegistryItem[], options: ImportCommandOptions): RegistryItem[] {
   const selected = selectImportCandidates(items, options);
   if (!options.plpFilePath) {
@@ -647,7 +717,7 @@ async function runReport(options: ReportCommandOptions, env: 'local' | 'prod'): 
   const report = reportStore.read(targetPath);
   logger.info(
     'REPORT',
-    `file=${targetPath} created=${report.summary.created} updated=${report.summary.updated} closedSynced=${report.summary.closedSynced} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview}`,
+    `file=${targetPath} created=${report.summary.created} updated=${report.summary.updated} closedSynced=${report.summary.closedSynced} skipped=${report.summary.skipped} failed=${report.summary.failed} manualReview=${report.summary.manualReview} duplicateSkipped=${report.summary.duplicateSkipped ?? 0}`,
   );
 }
 

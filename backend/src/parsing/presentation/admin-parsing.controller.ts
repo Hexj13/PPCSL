@@ -31,6 +31,7 @@ import { ParsingScheduleService } from '../application/parsing-schedule.service'
 import { CreateParserScheduleDto } from './dto/create-parser-schedule.dto';
 import { CreatePdpRunDto } from './dto/create-pdp-run.dto';
 import { CreatePlpRunDto } from './dto/create-plp-run.dto';
+import { CreateSyncRunDto } from './dto/create-sync-run.dto';
 import { PatchParserScheduleStatusDto } from './dto/patch-parser-schedule-status.dto';
 import { UpdateParserScheduleDto } from './dto/update-parser-schedule.dto';
 
@@ -112,6 +113,36 @@ export class AdminParsingController {
       `attachment; filename="${encodeURIComponent(file.fileName)}"`,
     );
     res.send(file.content);
+  }
+
+  @Get('parsers/:parserCode/plp-files/:fileKey/sync-hint')
+  @ApiOperation({
+    summary:
+      'PLP file hints (login, suggested assigned user id, login/file match) for registry sync and PDP forms',
+  })
+  async getRegistrySyncHint(
+    @Param('parserCode') parserCode: string,
+    @Param('fileKey') fileKey: string,
+  ): Promise<unknown> {
+    return this.orchestrator.getRegistrySyncHint(parserCode, fileKey);
+  }
+
+  @Post('parsers/:parserCode/plp-files/:fileKey/sync-runs')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Queue registry seed (sync) run for a PLP file' })
+  async createSyncRun(
+    @Req() req: Request,
+    @Param('parserCode') parserCode: string,
+    @Param('fileKey') fileKey: string,
+    @Body() dto: CreateSyncRunDto,
+  ): Promise<unknown> {
+    const user = req.user as { id: string };
+    return this.orchestrator.createSyncRun({
+      adminUserId: user.id,
+      parserCode,
+      plpFileKey: fileKey,
+      assignedUserId: dto.assignedUserId,
+    });
   }
 
   @Get('parsers/:parserCode/plp-files/:fileKey')
@@ -236,6 +267,7 @@ export class AdminParsingController {
       city: dto.city,
       delayMs: dto.delayMs ?? 3000,
       removeClosed: dto.removeClosed,
+      checkUserDuplicatesBeforeCreate: dto.checkUserDuplicatesBeforeCreate,
     });
   }
 

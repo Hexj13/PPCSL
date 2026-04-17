@@ -72,6 +72,7 @@ describe('ListingsService', () => {
     countActiveByUser: jest.Mock;
     countPromotedByUser: jest.Mock;
     findByVin: jest.Mock;
+    findByPartnerListingKey: jest.Mock;
     findSimilarCandidates: jest.Mock;
   };
   let mockListingCache: {
@@ -198,6 +199,7 @@ describe('ListingsService', () => {
       countActiveByUser: jest.fn(),
       countPromotedByUser: jest.fn(),
       findByVin: jest.fn(),
+      findByPartnerListingKey: jest.fn().mockResolvedValue(null),
       findSimilarCandidates: jest.fn(),
     };
 

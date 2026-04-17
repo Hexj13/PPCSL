@@ -1,4 +1,4 @@
-export type ParserRunType = 'plp' | 'pdp';
+export type ParserRunType = 'plp' | 'pdp' | 'sync';
 
 export type ParserRunTriggerMode = 'manual' | 'scheduled';
 

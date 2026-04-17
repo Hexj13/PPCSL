@@ -19,6 +19,7 @@ export interface ParserCatalogItem {
   defaultPdpCity?: string;
   defaultPdpCityNames?: string[];
   availabilityProbe?: ParserAvailabilityProbeConfig;
+  registrySyncEnabled?: boolean;
 }
 
 const parserCatalog: ParserCatalogItem[] = parsersConfig.map((item: ParserConfigItem) => ({
@@ -38,6 +39,7 @@ const parserCatalog: ParserCatalogItem[] = parsersConfig.map((item: ParserConfig
   defaultPdpCity: item.defaultPdpCity,
   defaultPdpCityNames: item.defaultPdpCityNames,
   availabilityProbe: item.availabilityProbe,
+  registrySyncEnabled: item.registrySyncEnabled,
 }));
 
 export function getParserCatalog(): ParserCatalogItem[] {

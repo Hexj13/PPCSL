@@ -164,13 +164,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preconnect" href="https://embed.tawk.to" crossOrigin="anonymous" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
-        <GoogleTagManager />
-        <GoogleTagManagerNoscript title={siteConfig.name} />
-        <TawkTo />
-        <GoogleAnalyticsConsent />
-        <GoogleAnalytics />
-        <OrganizationSchema />
         <QueryProvider>
+          <GoogleTagManager />
+          <GoogleTagManagerNoscript title={siteConfig.name} />
+          <TawkTo />
+          <GoogleAnalyticsConsent />
+          <GoogleAnalytics />
+          <OrganizationSchema />
           <I18nProvider
             initialLocale={initialLocale}
             initialTranslations={getServerTranslations(initialLocale)}

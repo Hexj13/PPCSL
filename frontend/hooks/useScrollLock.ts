@@ -1,29 +1,62 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 
-export function useScrollLock(enabled: boolean) {
-  useEffect(() => {
-    if (!enabled) return;
+let scrollLockDepth = 0;
+let lockedScrollY = 0;
+let bodyStyleSnapshot: {
+  position: string;
+  top: string;
+  width: string;
+  left: string;
+} | null = null;
 
-    const scrollY = window.scrollY;
+function acquireScrollLock() {
+  if (scrollLockDepth === 0) {
+    lockedScrollY = window.scrollY;
     const body = document.body;
-    const originalPosition = body.style.position;
-    const originalTop = body.style.top;
-    const originalWidth = body.style.width;
-    const originalLeft = body.style.left;
-
+    bodyStyleSnapshot = {
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      left: body.style.left,
+    };
     body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
+    body.style.top = `-${lockedScrollY}px`;
     body.style.left = '0';
     body.style.width = '100%';
+  }
+  scrollLockDepth += 1;
+}
 
+function releaseScrollLock() {
+  if (scrollLockDepth === 0) {
+    return;
+  }
+  scrollLockDepth -= 1;
+  if (scrollLockDepth > 0) {
+    return;
+  }
+
+  const body = document.body;
+  if (bodyStyleSnapshot) {
+    body.style.position = bodyStyleSnapshot.position;
+    body.style.top = bodyStyleSnapshot.top;
+    body.style.width = bodyStyleSnapshot.width;
+    body.style.left = bodyStyleSnapshot.left;
+  }
+  bodyStyleSnapshot = null;
+  window.scrollTo(0, lockedScrollY);
+}
+
+export function useScrollLock(enabled: boolean) {
+  useLayoutEffect(() => {
+    if (!enabled) {
+      return undefined;
+    }
+    acquireScrollLock();
     return () => {
-      body.style.position = originalPosition;
-      body.style.top = originalTop;
-      body.style.width = originalWidth;
-      body.style.left = originalLeft;
-      window.scrollTo(0, scrollY);
+      releaseScrollLock();
     };
   }, [enabled]);
 }

@@ -1,22 +1,17 @@
 import 'reflect-metadata';
 
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
 import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
+import { PARTNER_SOURCE_CODE_CIPAUTO } from '../../partner-import-shared/partner-source-codes';
+import { extractCodProdus } from '../../partner-import-shared/user-listing-dedupe/user-listing-dedupe-cipauto';
 import { normalizeRuntimeEnv, resolveConfig } from '../config';
 import { RegistryStore } from '../storage/registry';
 import type { RegistryItem, RuntimeEnv } from '../types';
 
-const COD_PRODUS_RE = /Cod\s+[Pp]rodus\s*:(?:\s|&nbsp;)*\s*([A-Za-z0-9]+)/;
 const CIPAUTO_BASE = 'https://cipauto.md';
-
-function extractCodProdus(listing: Listing): string | null {
-  for (const field of [listing.description, listing.description_ro, listing.description_ru]) {
-    if (!field) continue;
-    const match = field.match(COD_PRODUS_RE);
-    if (match) return match[1];
-  }
-  return null;
-}
 
 function buildCipautoUrl(sourceId: string, title?: string): string {
   const slug = title
@@ -75,7 +70,8 @@ async function seedRegistry() {
     return;
   }
 
-  const { registryPath } = resolveConfig(env);
+  const configResolved = resolveConfig(env);
+  const { registryPath, reportsDir } = configResolved;
   const registry = new RegistryStore(registryPath);
   const existingItems = registry.getAll();
   const existingByKupitoId = new Map(
@@ -137,6 +133,15 @@ async function seedRegistry() {
       lastImportedAt: existingBySource?.lastImportedAt ?? now,
     } as Omit<RegistryItem, 'discoveredAt' | 'updatedAt'>);
 
+    await listingRepo.update(
+      { id: listing.id },
+      {
+        partner_source_code: PARTNER_SOURCE_CODE_CIPAUTO,
+        partner_listing_external_key: sourceId,
+        partner_listing_canonical_url: url,
+      },
+    );
+
     seeded++;
   }
 
@@ -146,6 +151,18 @@ async function seedRegistry() {
   console.log(`  Skipped (in registry): ${skippedAlreadyInRegistry}`);
   console.log(`  Registry total:        ${registry.getAll().length}`);
   console.log(`  Registry path:         ${registryPath}`);
+
+  const summary = {
+    seeded,
+    skippedNoCod,
+    skippedAlreadyInRegistry,
+    registryTotal: registry.getAll().length,
+  };
+  const ts = new Date().toISOString().replace(/[:.]/g, '-');
+  const jsonPath = path.join(reportsDir, `cipauto-seed-${ts}.json`);
+  fs.mkdirSync(reportsDir, { recursive: true });
+  fs.writeFileSync(jsonPath, JSON.stringify({ summary, userId }, null, 2), 'utf-8');
+  console.log(`[seed-registry] reportJson=${jsonPath}`);
 
   await AppDataSource.destroy();
 }

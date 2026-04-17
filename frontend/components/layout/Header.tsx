@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { isHideFooterPath } from '@/components/layout/header-flow-paths';
-import { useMenuDrawerPresence } from '@/hooks/useMenuDrawerPresence';
+import { MOBILE_MENU_ENTER_ANIM_MS, useMenuDrawerPresence } from '@/hooks/useMenuDrawerPresence';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useComparisonStore } from '@/lib/store';
 
@@ -47,8 +47,29 @@ export function Header() {
 
   const menuWantOpen = isMobileMenuOpen && showNav;
   const { mounted: drawerMounted, exiting: drawerExiting } = useMenuDrawerPresence(menuWantOpen);
+  const [enterAnimating, setEnterAnimating] = useState(false);
 
   useScrollLock(drawerMounted);
+
+  useEffect(() => {
+    if (!menuWantOpen) {
+      setEnterAnimating(false);
+      return undefined;
+    }
+    const reduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ms = reduced ? 0 : MOBILE_MENU_ENTER_ANIM_MS;
+    if (ms === 0) {
+      setEnterAnimating(false);
+      return undefined;
+    }
+    setEnterAnimating(true);
+    const id = window.setTimeout(() => setEnterAnimating(false), ms);
+    return () => window.clearTimeout(id);
+  }, [menuWantOpen]);
+
+  const isMenuToggleLocked = drawerExiting || enterAnimating;
 
   useEffect(() => {
     if (pathname === '/sign' && isMobileMenuOpen) {
@@ -92,15 +113,17 @@ export function Header() {
     ? 'mobile-menu-backdrop-leave'
     : 'mobile-menu-backdrop-enter';
 
+  const drawerMotionKey = `${drawerMounted}-${drawerExiting}-${backdropMotionClass}`;
+
   const mobileMenuBackdrop =
     drawerMounted &&
     showNav &&
     typeof document !== 'undefined' &&
     createPortal(
       <div
+        key={drawerMotionKey}
         className={`${backdropMotionClass} fixed inset-0 z-40 lg:hidden bg-dark-900/35`}
         aria-hidden
-        onClick={handleMobileMenuClose}
         onPointerDown={handleMobileMenuClose}
       />,
       document.body,
@@ -148,6 +171,7 @@ export function Header() {
                   <MobileToolbar
                     showSkeleton={showSkeleton}
                     isMobileMenuOpen={isMobileMenuOpen}
+                    isMenuToggleLocked={isMenuToggleLocked}
                     onToggle={handleMobileMenuToggle}
                     toggleAriaLabel={t('header.toggleMenu')}
                     toggleId={MOBILE_MENU_TOGGLE_ID}
@@ -189,6 +213,7 @@ export function Header() {
 
         <div className="relative z-10 h-0 w-full overflow-visible lg:hidden">
           <MobileNavDrawer
+            key={drawerMotionKey}
             id={MOBILE_DRAWER_ID}
             presenceMounted={drawerMounted}
             presenceClosing={drawerExiting}

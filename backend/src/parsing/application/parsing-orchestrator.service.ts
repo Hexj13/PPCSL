@@ -12,6 +12,7 @@ import { AdminUsersService } from '../../admin/admin-users.service';
 import type { AuditAction, AuditEntityType } from '../../admin/entities/admin-audit-log.entity';
 import { resolveParsingRuntimeRoot } from '../../common/parsing-runtime-path';
 import { buildPaginationMeta } from '../../common/utils/pagination.utils';
+import { stripAnsiSequences } from '../../common/utils/strip-ansi-sequences';
 import type { ParserRunType, ParserTargetEnv } from '../domain/types';
 import { CliParserRunnerService } from '../infrastructure/cli-parser-runner.service';
 import { ParserLogChunk } from '../infrastructure/persistence/parser-log-chunk.entity';
@@ -156,6 +157,7 @@ export class ParsingOrchestratorService {
       flags: raw.flags,
       failedItems: raw.failedItems,
       manualReviewItems: raw.manualReviewItems,
+      duplicateSkippedItems: raw.duplicateSkippedItems,
       unmappedValues: raw.unmappedValues,
       userId: reportUserId,
       assignedUserId: reportUserId,
@@ -198,7 +200,6 @@ export class ParsingOrchestratorService {
     this.logger.log(
       `[PLP][create] parser=${params.parserCode} adminUserId=${params.adminUserId} targetEnv=${targetEnv} scanMode=${params.scanMode}`,
     );
-    await this.assertNoActiveRun(params.parserCode, 'plp', targetEnv);
     const catalog = getParserCatalogItem(params.parserCode);
     if (!catalog || !catalog.manualRunEnabled || catalog.adminAvailability !== 'enabled') {
       throw new BadRequestException('errors.parsingParserNotAvailablePlp');
@@ -288,11 +289,7 @@ export class ParsingOrchestratorService {
       status: 'success',
       meta: { runId: saved.id },
     });
-    setImmediate(() => {
-      void this.executePlpRun(saved.id).catch((error) => {
-        this.logger.error(`PLP run ${saved.id} failed: ${String(error)}`);
-      });
-    });
+    this.scheduleTryStartNextQueuedRun(saved.parser_code, 'plp', saved.target_env);
     return this.getRun(saved.id);
   }
 
@@ -312,12 +309,12 @@ export class ParsingOrchestratorService {
     city: string;
     delayMs: number;
     removeClosed?: boolean;
+    checkUserDuplicatesBeforeCreate?: boolean;
   }): Promise<ParserRun> {
     const targetEnv = resolveParsingTargetEnv();
     this.logger.log(
       `[PDP][create] parser=${params.parserCode} adminUserId=${params.adminUserId} assignedUserId=${params.assignedUserId} targetEnv=${targetEnv}`,
     );
-    await this.assertNoActiveRun(params.parserCode, 'pdp', targetEnv);
     const catalog = getParserCatalogItem(params.parserCode);
     if (!catalog || !catalog.manualRunEnabled || catalog.adminAvailability !== 'enabled') {
       throw new BadRequestException('errors.parsingParserNotAvailablePdp');
@@ -339,6 +336,7 @@ export class ParsingOrchestratorService {
       city: params.city,
       delayMs: params.delayMs,
       removeClosed: Boolean(params.removeClosed),
+      checkUserDuplicatesBeforeCreate: Boolean(params.checkUserDuplicatesBeforeCreate),
       dataSource: 'plp_registry',
       plpFileKey: params.plpFileKey,
       plpFilePath,
@@ -366,11 +364,127 @@ export class ParsingOrchestratorService {
       status: 'success',
       meta: { runId: saved.id },
     });
-    setImmediate(() => {
-      void this.executePdpRun(saved.id).catch((error) => {
-        this.logger.error(`PDP run ${saved.id} failed: ${String(error)}`);
-      });
+    this.scheduleTryStartNextQueuedRun(saved.parser_code, 'pdp', saved.target_env);
+    return this.getRun(saved.id);
+  }
+
+  async getRegistrySyncHint(
+    parserCode: string,
+    plpFileKey: string,
+  ): Promise<{
+    login: string | null;
+    suggestedAssignedUserId: string | null;
+    plpLoginMatchesFileKey: boolean;
+  }> {
+    const catalog = getParserCatalogItem(parserCode);
+    if (
+      !catalog ||
+      catalog.adminAvailability !== 'enabled' ||
+      !catalog.supportedRunTypes.includes('pdp')
+    ) {
+      throw new BadRequestException('errors.parsingRegistrySyncUnavailable');
+    }
+    const file = await this.getPlpFileContentByKey(parserCode, plpFileKey);
+    if (file.missing || !file.content) {
+      throw new BadRequestException('errors.parsingPlpFileInvalid');
+    }
+    let login: string | null = null;
+    try {
+      const parsed = JSON.parse(file.content) as { login?: unknown };
+      if (typeof parsed.login === 'string' && parsed.login.trim()) {
+        login = parsed.login.trim();
+      }
+    } catch {
+      login = null;
+    }
+    let plpLoginMatchesFileKey = true;
+    if (parserCode === '999md' && login) {
+      const expectedKey = this.normalizeSyncPlpFileKey(`${this.toLoginFileSlug(login)}.json`);
+      plpLoginMatchesFileKey = expectedKey === this.normalizeSyncPlpFileKey(plpFileKey);
+    }
+    const suggestedAssignedUserId = await this.suggestAssignedUserIdForPlpFile(
+      parserCode,
+      plpFileKey,
+    );
+    return { login, suggestedAssignedUserId, plpLoginMatchesFileKey };
+  }
+
+  async createSyncRun(params: {
+    adminUserId: string;
+    parserCode: string;
+    plpFileKey: string;
+    assignedUserId?: string;
+  }): Promise<ParserRun> {
+    const targetEnv = resolveParsingTargetEnv();
+    const catalog = getParserCatalogItem(params.parserCode);
+    if (!catalog?.registrySyncEnabled || catalog.adminAvailability !== 'enabled') {
+      throw new BadRequestException('errors.parsingRegistrySyncUnavailable');
+    }
+    if (params.parserCode !== 'cipauto' && params.parserCode !== '999md') {
+      throw new BadRequestException('errors.parsingRegistrySyncUnavailable');
+    }
+    const file = await this.getPlpFileContentByKey(params.parserCode, params.plpFileKey);
+    if (file.missing || !file.content) {
+      throw new BadRequestException('errors.parsingPlpFileInvalid');
+    }
+    let loginFromPlp: string | undefined;
+    if (params.parserCode === '999md') {
+      try {
+        const parsed = JSON.parse(file.content) as { login?: unknown };
+        if (typeof parsed.login === 'string' && parsed.login.trim()) {
+          loginFromPlp = parsed.login.trim();
+        }
+      } catch {
+        loginFromPlp = undefined;
+      }
+      if (!loginFromPlp) {
+        throw new BadRequestException('errors.parsingLoginRequired');
+      }
+      const expectedKey = this.normalizeSyncPlpFileKey(
+        `${this.toLoginFileSlug(loginFromPlp)}.json`,
+      );
+      if (expectedKey !== this.normalizeSyncPlpFileKey(params.plpFileKey)) {
+        throw new BadRequestException('errors.parsingPlpFileInvalid');
+      }
+    }
+    const hinted = await this.suggestAssignedUserIdForPlpFile(params.parserCode, params.plpFileKey);
+    const userId = params.assignedUserId?.trim() || hinted || '';
+    if (!userId) {
+      throw new BadRequestException('errors.parsingSyncAssignedUserRequired');
+    }
+    const validation = await this.adminService.validateAssignUser(userId);
+    if (!validation.valid) {
+      throw new BadRequestException(validation.error ?? 'errors.invalidUserId');
+    }
+    const configSnapshot: Record<string, unknown> = {
+      syncKind: 'registry_seed',
+      plpFileKey: params.plpFileKey.trim(),
+      login: loginFromPlp,
+    };
+    const run = this.runRepo.create({
+      parser_code: params.parserCode,
+      run_type: 'sync',
+      domain: catalog.domain,
+      assigned_user_id: userId,
+      target_env: targetEnv,
+      trigger_mode: 'manual',
+      schedule_id: null,
+      status: 'queued',
+      config_snapshot: configSnapshot,
+      created_by_admin_user_id: params.adminUserId,
     });
+    const saved = await this.runRepo.save(run);
+    this.logger.log(
+      `[SYNC][queued] runId=${saved.id} parser=${saved.parser_code} assignedUserId=${saved.assigned_user_id} targetEnv=${targetEnv}`,
+    );
+    await this.logAudit(params.adminUserId, 'PARSING_SYNC_RUN_CREATE', 'PARSER_RUN', saved.id, {
+      parserCode: params.parserCode,
+      runType: 'sync',
+      targetEnv,
+      status: 'success',
+      meta: { runId: saved.id, plpFileKey: params.plpFileKey },
+    });
+    this.scheduleTryStartNextQueuedRun(saved.parser_code, 'sync', saved.target_env);
     return this.getRun(saved.id);
   }
 
@@ -382,14 +496,6 @@ export class ParsingOrchestratorService {
     if (schedule.target_env !== targetEnv) {
       this.logger.warn(
         `[SCHEDULER][skip] scheduleId=${schedule.id} parser=${schedule.parser_code} runType=${schedule.run_type} reason=target_env_mismatch scheduleEnv=${schedule.target_env} currentEnv=${targetEnv}`,
-      );
-      return null;
-    }
-    try {
-      await this.assertNoActiveRun(schedule.parser_code, schedule.run_type, targetEnv);
-    } catch {
-      this.logger.warn(
-        `Skipping schedule ${schedule.id}: active run exists for ${schedule.parser_code}/${schedule.run_type}`,
       );
       return null;
     }
@@ -416,17 +522,7 @@ export class ParsingOrchestratorService {
     this.logger.log(
       `[SCHEDULER][queued] scheduleId=${schedule.id} runId=${saved.id} parser=${saved.parser_code} runType=${saved.run_type}`,
     );
-    setImmediate(() => {
-      if (schedule.run_type === 'plp') {
-        void this.executePlpRun(saved.id).catch((error) => {
-          this.logger.error(`Scheduled PLP run ${saved.id} failed: ${String(error)}`);
-        });
-      } else {
-        void this.executePdpRun(saved.id).catch((error) => {
-          this.logger.error(`Scheduled PDP run ${saved.id} failed: ${String(error)}`);
-        });
-      }
-    });
+    this.scheduleTryStartNextQueuedRun(saved.parser_code, saved.run_type, saved.target_env);
     return this.getRun(saved.id);
   }
 
@@ -450,6 +546,7 @@ export class ParsingOrchestratorService {
         status: 'success',
         meta: { runId: run.id, immediate: true },
       });
+      this.scheduleTryStartNextQueuedRun(run.parser_code, run.run_type, run.target_env);
       return run;
     }
     run.status = 'cancel_requested';
@@ -476,41 +573,112 @@ export class ParsingOrchestratorService {
     return run;
   }
 
-  private async assertNoActiveRun(
+  private scheduleTryStartNextQueuedRun(
+    parserCode: string,
+    runType: ParserRunType,
+    targetEnv: ParserTargetEnv,
+  ): void {
+    setImmediate(() => {
+      void this.tryStartNextQueuedRun(parserCode, runType, targetEnv).catch((error) => {
+        this.logger.error(`[QUEUE] tryStartNextQueuedRun failed: ${String(error)}`);
+      });
+    });
+  }
+
+  private async tryStartNextQueuedRun(
     parserCode: string,
     runType: ParserRunType,
     targetEnv: ParserTargetEnv,
   ): Promise<void> {
-    const existing = await this.runRepo
-      .createQueryBuilder('r')
-      .where('r.parser_code = :parserCode', { parserCode })
-      .andWhere('r.run_type = :runType', { runType })
-      .andWhere('r.target_env = :targetEnv', { targetEnv })
-      .andWhere('r.status IN (:...st)', { st: ['queued', 'in_progress', 'cancel_requested'] })
-      .getOne();
-    if (existing) {
-      throw new BadRequestException('errors.parsingActiveRunExists');
+    const blocker = await this.runRepo.findOne({
+      where: {
+        parser_code: parserCode,
+        run_type: runType,
+        target_env: targetEnv,
+        status: In(['in_progress', 'cancel_requested']),
+      },
+    });
+    if (blocker) {
+      return;
     }
+    const next = await this.runRepo.findOne({
+      where: {
+        parser_code: parserCode,
+        run_type: runType,
+        target_env: targetEnv,
+        status: 'queued',
+      },
+      order: { created_at: 'ASC', id: 'ASC' },
+    });
+    if (!next) {
+      return;
+    }
+    this.logger.log(
+      `[QUEUE][dequeue] runId=${next.id} parser=${parserCode} runType=${runType} targetEnv=${targetEnv}`,
+    );
+    if (runType === 'plp') {
+      setImmediate(() => {
+        void this.executePlpRun(next.id).catch((error) => {
+          this.logger.error(`PLP run ${next.id} failed: ${String(error)}`);
+        });
+      });
+    } else if (runType === 'pdp') {
+      setImmediate(() => {
+        void this.executePdpRun(next.id).catch((error) => {
+          this.logger.error(`PDP run ${next.id} failed: ${String(error)}`);
+        });
+      });
+    } else if (runType === 'sync') {
+      setImmediate(() => {
+        void this.executeSyncRun(next.id).catch((error) => {
+          this.logger.error(`SYNC run ${next.id} failed: ${String(error)}`);
+        });
+      });
+    }
+  }
+
+  private async claimQueuedRunForExecution(runId: string): Promise<boolean> {
+    const startedAt = new Date();
+    const result = await this.runRepo
+      .createQueryBuilder()
+      .update(ParserRun)
+      .set({ status: 'in_progress', started_at: startedAt })
+      .where('id = :id', { id: runId })
+      .andWhere('status = :queued', { queued: 'queued' })
+      .execute();
+    return Boolean(result.affected && result.affected > 0);
   }
 
   private async executePlpRun(runId: string): Promise<void> {
     let processErrorMessage: string | null = null;
+    let bucketParserCode = '';
+    let bucketRunType: ParserRunType = 'plp';
+    let bucketTargetEnv: ParserTargetEnv = 'local';
+    let bucketTracked = false;
     try {
       const run = await this.getRun(runId);
-      if (run.status === 'cancel_requested' || run.status === 'cancelled') {
-        if (run.status !== 'cancelled') {
-          run.status = 'cancelled';
-          run.finished_at = new Date();
-          await this.runRepo.save(run);
-        }
+      bucketParserCode = run.parser_code;
+      bucketRunType = run.run_type;
+      bucketTargetEnv = run.target_env;
+      bucketTracked = true;
+      if (run.status === 'cancelled') {
         return;
       }
-      const cfg = run.config_snapshot;
-      const targetEnv = run.target_env;
+      if (run.status === 'cancel_requested') {
+        run.status = 'cancelled';
+        run.finished_at = new Date();
+        await this.runRepo.save(run);
+        return;
+      }
+      const claimed = await this.claimQueuedRunForExecution(runId);
+      if (!claimed) {
+        this.logger.warn(`[PLP][skip-claim] runId=${runId} parser=${run.parser_code}`);
+        return;
+      }
+      const claimedRun = await this.getRun(runId);
+      const cfg = claimedRun.config_snapshot;
+      const targetEnv = claimedRun.target_env;
       const extraEnv = buildParsingChildProcessEnv(targetEnv);
-      run.status = 'in_progress';
-      run.started_at = new Date();
-      await this.runRepo.save(run);
       const scanMode = String(cfg.scanMode ?? 'first_n');
       const pages = Number(cfg.pages ?? 1);
       const pageFrom =
@@ -527,11 +695,11 @@ export class ParsingOrchestratorService {
       const resume = Boolean(cfg.resume);
       const dryRun = Boolean(cfg.dryRun);
       this.logger.log(
-        `[PLP][start] runId=${runId} parser=${run.parser_code} targetEnv=${targetEnv} scanMode=${scanMode} pages=${pages} pageFrom=${pageFrom ?? '-'} pageTo=${pageTo ?? '-'} resume=${resume} dryRun=${dryRun} delayMs=${delayMs}`,
+        `[PLP][start] runId=${runId} parser=${claimedRun.parser_code} targetEnv=${targetEnv} scanMode=${scanMode} pages=${pages} pageFrom=${pageFrom ?? '-'} pageTo=${pageTo ?? '-'} resume=${resume} dryRun=${dryRun} delayMs=${delayMs}`,
       );
       let doneSummary: PlpDoneSummary | null = null;
       const handle = this.cliRunner.runScan({
-        parserCode: run.parser_code,
+        parserCode: claimedRun.parser_code,
         env: targetEnv,
         pages,
         pageFrom,
@@ -618,6 +786,10 @@ export class ParsingOrchestratorService {
       await this.bumpScheduleAfterRun(latest.schedule_id, latest.started_at);
     } catch (error) {
       await this.failRun(runId, error);
+    } finally {
+      if (bucketTracked) {
+        this.scheduleTryStartNextQueuedRun(bucketParserCode, bucketRunType, bucketTargetEnv);
+      }
     }
   }
 
@@ -777,22 +949,34 @@ export class ParsingOrchestratorService {
   private async executePdpRun(runId: string): Promise<void> {
     let reportPath: string | null = null;
     let processErrorMessage: string | null = null;
+    let bucketParserCode = '';
+    let bucketRunType: ParserRunType = 'pdp';
+    let bucketTargetEnv: ParserTargetEnv = 'local';
+    let bucketTracked = false;
     try {
       const run = await this.getRun(runId);
-      if (run.status === 'cancel_requested' || run.status === 'cancelled') {
-        if (run.status !== 'cancelled') {
-          run.status = 'cancelled';
-          run.finished_at = new Date();
-          await this.runRepo.save(run);
-        }
+      bucketParserCode = run.parser_code;
+      bucketRunType = run.run_type;
+      bucketTargetEnv = run.target_env;
+      bucketTracked = true;
+      if (run.status === 'cancelled') {
         return;
       }
-      const cfg = run.config_snapshot;
-      const targetEnv = run.target_env;
+      if (run.status === 'cancel_requested') {
+        run.status = 'cancelled';
+        run.finished_at = new Date();
+        await this.runRepo.save(run);
+        return;
+      }
+      const claimed = await this.claimQueuedRunForExecution(runId);
+      if (!claimed) {
+        this.logger.warn(`[PDP][skip-claim] runId=${runId} parser=${run.parser_code}`);
+        return;
+      }
+      const claimedRun = await this.getRun(runId);
+      const cfg = claimedRun.config_snapshot;
+      const targetEnv = claimedRun.target_env;
       const extraEnv = buildParsingChildProcessEnv(targetEnv);
-      run.status = 'in_progress';
-      run.started_at = new Date();
-      await this.runRepo.save(run);
       const listingStatus = String(cfg.listingStatus ?? 'paused') as 'active' | 'paused';
       const limit = cfg.limit !== undefined && cfg.limit !== null ? Number(cfg.limit) : undefined;
       const resume = Boolean(cfg.resume);
@@ -801,7 +985,7 @@ export class ParsingOrchestratorService {
       const updateExisting = Boolean(cfg.updateExisting);
       const registrationType = String(cfg.registrationType ?? 'Local');
       const defaultHp = Number(cfg.defaultHp ?? 150);
-      const parserDefaultCity = getParserCatalogItem(run.parser_code)?.defaultPdpCity;
+      const parserDefaultCity = getParserCatalogItem(claimedRun.parser_code)?.defaultPdpCity;
       const city = String(cfg.city ?? parserDefaultCity ?? '').trim();
       if (!city) {
         throw new Error('PDP run city is required');
@@ -809,17 +993,17 @@ export class ParsingOrchestratorService {
       const delayMs = Number(cfg.delayMs ?? 3000);
       const removeClosed = Boolean(cfg.removeClosed);
       const plpFileKey = String(cfg.plpFileKey ?? '').trim();
-      await this.ensurePlpFileLocal(run.parser_code, plpFileKey);
-      const plpFilePath = this.resolvePdpPlpFilePath(run.parser_code, plpFileKey);
-      const userId = run.assigned_user_id;
+      await this.ensurePlpFileLocal(claimedRun.parser_code, plpFileKey);
+      const plpFilePath = this.resolvePdpPlpFilePath(claimedRun.parser_code, plpFileKey);
+      const userId = claimedRun.assigned_user_id;
       if (!userId) {
         throw new Error('PDP run requires assigned_user_id');
       }
       this.logger.log(
-        `[PDP][start] runId=${runId} parser=${run.parser_code} assignedUserId=${userId} targetEnv=${targetEnv} status=${listingStatus} limit=${limit ?? '-'} resume=${resume} dryRun=${dryRun} removeClosed=${removeClosed} onlyFailed=${onlyFailed} updateExisting=${updateExisting} registrationType=${registrationType} defaultHp=${defaultHp} city=${city} delayMs=${delayMs}`,
+        `[PDP][start] runId=${runId} parser=${claimedRun.parser_code} assignedUserId=${userId} targetEnv=${targetEnv} status=${listingStatus} limit=${limit ?? '-'} resume=${resume} dryRun=${dryRun} removeClosed=${removeClosed} onlyFailed=${onlyFailed} updateExisting=${updateExisting} registrationType=${registrationType} defaultHp=${defaultHp} city=${city} delayMs=${delayMs}`,
       );
       const handle = this.cliRunner.runImport({
-        parserCode: run.parser_code,
+        parserCode: claimedRun.parser_code,
         env: targetEnv,
         userId,
         status: listingStatus,
@@ -834,6 +1018,7 @@ export class ParsingOrchestratorService {
         city,
         delayMs,
         plpFilePath,
+        checkUserDuplicatesBeforeCreate: Boolean(cfg.checkUserDuplicatesBeforeCreate),
         extraEnv,
         onStdoutLine: (line) => {
           void this.appendLogLine(runId, 'info', line, line);
@@ -858,7 +1043,7 @@ export class ParsingOrchestratorService {
       await this.flushLogBuffer(runId);
       this.cleanupRunLoggingState(runId);
       const latest = await this.getRun(runId);
-      const resolvedReportPath = await this.resolvePdpReportPath(run, reportPath);
+      const resolvedReportPath = await this.resolvePdpReportPath(claimedRun, reportPath);
       const resolvedCounters = await this.resolvePdpCounters(resolvedReportPath, exitCode);
       if (latest.status === 'cancel_requested') {
         latest.status = 'cancelled';
@@ -888,6 +1073,122 @@ export class ParsingOrchestratorService {
       await this.bumpScheduleAfterRun(latest.schedule_id, latest.started_at);
     } catch (error) {
       await this.failRun(runId, error);
+    } finally {
+      if (bucketTracked) {
+        this.scheduleTryStartNextQueuedRun(bucketParserCode, bucketRunType, bucketTargetEnv);
+      }
+    }
+  }
+
+  private async executeSyncRun(runId: string): Promise<void> {
+    let capturedReportPath: string | null = null;
+    let processErrorMessage: string | null = null;
+    let bucketParserCode = '';
+    let bucketRunType: ParserRunType = 'sync';
+    let bucketTargetEnv: ParserTargetEnv = 'local';
+    let bucketTracked = false;
+    try {
+      const run = await this.getRun(runId);
+      bucketParserCode = run.parser_code;
+      bucketRunType = run.run_type;
+      bucketTargetEnv = run.target_env;
+      bucketTracked = true;
+      if (run.status === 'cancelled') {
+        return;
+      }
+      if (run.status === 'cancel_requested') {
+        run.status = 'cancelled';
+        run.finished_at = new Date();
+        await this.runRepo.save(run);
+        return;
+      }
+      const claimed = await this.claimQueuedRunForExecution(runId);
+      if (!claimed) {
+        this.logger.warn(`[SYNC][skip-claim] runId=${runId} parser=${run.parser_code}`);
+        return;
+      }
+      const claimedRun = await this.getRun(runId);
+      if (claimedRun.parser_code !== 'cipauto' && claimedRun.parser_code !== '999md') {
+        throw new Error(`Unsupported parser for registry sync: ${claimedRun.parser_code}`);
+      }
+      const cfg = claimedRun.config_snapshot;
+      const targetEnv = claimedRun.target_env;
+      const extraEnv = buildParsingChildProcessEnv(targetEnv);
+      const userId = claimedRun.assigned_user_id;
+      if (!userId) {
+        throw new Error('Registry sync requires assigned_user_id');
+      }
+      const login =
+        typeof cfg.login === 'string' && cfg.login.trim().length > 0 ? cfg.login.trim() : undefined;
+      if (claimedRun.parser_code === '999md' && !login) {
+        throw new Error('999.md registry sync requires login in PLP snapshot');
+      }
+      this.logger.log(
+        `[SYNC][start] runId=${runId} parser=${claimedRun.parser_code} assignedUserId=${userId} targetEnv=${targetEnv}`,
+      );
+      const handle = this.cliRunner.runSeedRegistry({
+        parserCode: claimedRun.parser_code,
+        env: targetEnv,
+        userId,
+        login,
+        extraEnv,
+        onStdoutLine: (line) => {
+          void this.appendLogLine(runId, 'info', line, line);
+          const m = line.match(/reportJson=(.+)$/);
+          if (m) {
+            capturedReportPath = m[1].trim();
+          }
+        },
+        onStderrLine: (line) => {
+          void this.appendLogLine(runId, 'error', line, line);
+        },
+        onProcessError: (error) => {
+          processErrorMessage = this.stringifyError(error);
+          void this.appendLogLine(runId, 'error', processErrorMessage, processErrorMessage);
+        },
+      });
+      this.activeChildren.set(runId, { child: handle.child, killTimer: null });
+      await this.runRepo.update(runId, { process_pid: handle.pid });
+      const exitCode = await this.waitForChild(handle.child);
+      this.clearChildTimers(runId);
+      this.activeChildren.delete(runId);
+      await this.flushLogBuffer(runId);
+      this.cleanupRunLoggingState(runId);
+      const latest = await this.getRun(runId);
+      const resolvedReportPath = await this.resolvePdpReportPath(claimedRun, capturedReportPath);
+      const resolvedCounters = await this.resolvePdpCounters(resolvedReportPath, exitCode);
+      if (latest.status === 'cancel_requested') {
+        latest.status = 'cancelled';
+        latest.finished_at = new Date();
+        latest.process_pid = null;
+        latest.report_storage_key = resolvedReportPath;
+        latest.counters = resolvedCounters;
+        await this.runRepo.save(latest);
+        this.logger.warn(
+          `[SYNC][cancelled] runId=${runId} parser=${latest.parser_code} exitCode=${exitCode}`,
+        );
+        await this.bumpScheduleAfterRun(latest.schedule_id, latest.started_at);
+        return;
+      }
+      latest.status = exitCode === 0 ? 'completed' : 'failed';
+      latest.finished_at = new Date();
+      latest.process_pid = null;
+      latest.report_storage_key = resolvedReportPath;
+      latest.counters = resolvedCounters;
+      if (exitCode !== 0) {
+        latest.error_summary = processErrorMessage ?? `CLI exited with code ${exitCode}`;
+      }
+      await this.runRepo.save(latest);
+      this.logger.log(
+        `[SYNC][finish] runId=${runId} parser=${latest.parser_code} status=${latest.status} exitCode=${exitCode} reportPath=${latest.report_storage_key ?? '-'}`,
+      );
+      await this.bumpScheduleAfterRun(latest.schedule_id, latest.started_at);
+    } catch (error) {
+      await this.failRun(runId, error);
+    } finally {
+      if (bucketTracked) {
+        this.scheduleTryStartNextQueuedRun(bucketParserCode, bucketRunType, bucketTargetEnv);
+      }
     }
   }
 
@@ -911,27 +1212,45 @@ export class ParsingOrchestratorService {
     const stale = await this.runRepo.find({
       where: {
         target_env: targetEnv,
-        status: In(['queued', 'in_progress', 'cancel_requested']),
+        status: In(['in_progress', 'cancel_requested']),
       },
       order: { created_at: 'ASC' },
       take: 200,
     });
-    if (stale.length === 0) {
-      return 0;
+    if (stale.length > 0) {
+      const finishedAt = new Date();
+      for (const run of stale) {
+        run.status = 'failed';
+        run.finished_at = finishedAt;
+        run.process_pid = null;
+        run.error_summary = run.error_summary ?? 'Run marked as failed after server restart';
+        run.counters = {
+          ...(run.counters ?? {}),
+          exitCode: 1,
+          restartRecovered: true,
+        };
+      }
+      await this.runRepo.save(stale);
     }
-    const finishedAt = new Date();
-    for (const run of stale) {
-      run.status = 'failed';
-      run.finished_at = finishedAt;
-      run.process_pid = null;
-      run.error_summary = run.error_summary ?? 'Run marked as failed after server restart';
-      run.counters = {
-        ...(run.counters ?? {}),
-        exitCode: 1,
-        restartRecovered: true,
-      };
+    const queuedRuns = await this.runRepo.find({
+      where: { target_env: targetEnv, status: 'queued' },
+      order: { created_at: 'ASC' },
+      take: 500,
+    });
+    const bucketKeys = new Set<string>();
+    for (const run of queuedRuns) {
+      bucketKeys.add(`${run.parser_code}\0${run.run_type}\0${run.target_env}`);
     }
-    await this.runRepo.save(stale);
+    for (const key of bucketKeys) {
+      const [parserCode, runType, env] = key.split('\0');
+      if (parserCode && runType && (env === 'local' || env === 'prod')) {
+        this.scheduleTryStartNextQueuedRun(
+          parserCode,
+          runType as ParserRunType,
+          env as ParserTargetEnv,
+        );
+      }
+    }
     return stale.length;
   }
 
@@ -959,7 +1278,9 @@ export class ParsingOrchestratorService {
     message: string,
     rawLine: string,
   ): Promise<void> {
-    const consoleLine = `[RUN][${runId}][${level}] ${message}`;
+    const sanitizedMessage = stripAnsiSequences(message).replace(/\r\n/g, '\n').trimEnd();
+    const sanitizedRaw = stripAnsiSequences(rawLine).replace(/\r\n/g, '\n').trimEnd();
+    const consoleLine = `[RUN][${runId}][${level}] ${sanitizedMessage}`;
     if (level === 'error') {
       this.logger.error(consoleLine);
     } else if (level === 'warn' || level === 'warning') {
@@ -973,8 +1294,8 @@ export class ParsingOrchestratorService {
       run_id: runId,
       seq: next,
       level,
-      message: message.slice(0, 8000),
-      raw_line: rawLine.slice(0, 8000),
+      message: sanitizedMessage.slice(0, 8000),
+      raw_line: sanitizedRaw.slice(0, 8000),
     });
     const buffer = this.logBuffers.get(runId) ?? [];
     buffer.push(chunk);
@@ -1302,6 +1623,45 @@ export class ParsingOrchestratorService {
       missingCandidatesCount,
       fileSizeBytes,
     };
+  }
+
+  private normalizeSyncPlpFileKey(fileKey: string): string {
+    const t = fileKey.trim();
+    const base = path.basename(t);
+    return base.endsWith('.json') ? base : `${base}.json`;
+  }
+
+  private async suggestAssignedUserIdForPlpFile(
+    parserCode: string,
+    plpFileKey: string,
+  ): Promise<string | null> {
+    const norm = this.normalizeSyncPlpFileKey(plpFileKey);
+    const recent = await this.runRepo.find({
+      where: { parser_code: parserCode },
+      order: { created_at: 'DESC' },
+      take: 120,
+    });
+    for (const run of recent) {
+      const uid = run.assigned_user_id?.trim();
+      if (!uid) continue;
+      if (run.run_type === 'pdp') {
+        const raw = String(run.config_snapshot?.plpFileKey ?? '').trim();
+        if (!raw) continue;
+        const fk = this.normalizeSyncPlpFileKey(raw);
+        if (fk === norm) {
+          return uid;
+        }
+      }
+      if (run.run_type === 'plp') {
+        const login = String(run.config_snapshot?.login ?? '').trim();
+        if (!login) continue;
+        const expected = this.normalizeSyncPlpFileKey(`${this.toLoginFileSlug(login)}.json`);
+        if (expected === norm) {
+          return uid;
+        }
+      }
+    }
+    return null;
   }
 
   private toLoginFileSlug(login: string): string {

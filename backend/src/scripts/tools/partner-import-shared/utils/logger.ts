@@ -26,8 +26,9 @@ export class Logger {
   }
 
   private log(level: Level, scope: string, message: string): void {
-    const timestamp = new Date().toISOString();
-    const line = `[${timestamp}] [${level}] [${scope}] ${message}`;
+    const iso = new Date().toISOString();
+    const stamp = `${iso.slice(0, 10)} ${iso.slice(11, 23)}`;
+    const line = `[${stamp}] [${level}] [${scope}] ${message}`;
     if (level === 'ERROR') {
       console.error(line);
       return;

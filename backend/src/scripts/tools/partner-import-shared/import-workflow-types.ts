@@ -25,11 +25,22 @@ export interface ImportCommandOptions {
   defaultHp: number;
   city: string;
   delay: number;
+  checkUserDuplicatesBeforeCreate?: boolean;
+  dedupe999PriceTolerancePct?: number;
+  dedupe999PhotoCountTolerance?: number;
 }
 
 export interface ReportCommandOptions {
   file?: string;
   last?: boolean;
+}
+
+export interface ImportDuplicateSkippedItem {
+  sourceListingId: string;
+  url: string;
+  matchedKupitoListingId: string;
+  layer: string;
+  reason: string;
 }
 
 export interface ImportReport {
@@ -50,6 +61,7 @@ export interface ImportReport {
     skipped: number;
     failed: number;
     manualReview: number;
+    duplicateSkipped: number;
     totalImages: number;
     imageFailures: number;
   };
@@ -64,4 +76,5 @@ export interface ImportReport {
   };
   failedItems: ImportFailedItem[];
   manualReviewItems: ImportManualReviewItem[];
+  duplicateSkippedItems: ImportDuplicateSkippedItem[];
 }
