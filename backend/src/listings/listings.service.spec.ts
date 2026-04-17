@@ -22,6 +22,7 @@ import { CloseListingUseCase } from './application/use-cases/close-listing.use-c
 import { CreatePromotionHistoryUseCase } from './application/use-cases/create-promotion-history.use-case';
 import { FindByVinUseCase } from './application/use-cases/find-by-vin.use-case';
 import { FindSimilarUseCase } from './application/use-cases/find-similar.use-case';
+import { GetActiveUserListingsCountUseCase } from './application/use-cases/get-active-user-listings-count.use-case';
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
 import { GetBoardListingsUseCase } from './application/use-cases/get-board-listings.use-case';
 import { GetListingHistoryUseCase } from './application/use-cases/get-listing-history.use-case';
@@ -100,6 +101,7 @@ describe('ListingsService', () => {
   let mockFindSimilarUseCase: { execute: jest.Mock };
   let mockGetUserListingsUseCase: { execute: jest.Mock };
   let mockGetActiveUserListingsUseCase: { execute: jest.Mock };
+  let mockGetActiveUserListingsCountUseCase: { execute: jest.Mock };
   let mockGetBoardListingsUseCase: { execute: jest.Mock };
   let mockFindByVinUseCase: { execute: jest.Mock };
   let mockGetListingVinUseCase: { execute: jest.Mock };
@@ -225,6 +227,7 @@ describe('ListingsService', () => {
     mockFindSimilarUseCase = { execute: jest.fn().mockResolvedValue([]) };
     mockGetUserListingsUseCase = { execute: jest.fn() };
     mockGetActiveUserListingsUseCase = { execute: jest.fn() };
+    mockGetActiveUserListingsCountUseCase = { execute: jest.fn() };
     mockGetBoardListingsUseCase = { execute: jest.fn() };
     mockFindByVinUseCase = { execute: jest.fn() };
     mockGetListingVinUseCase = { execute: jest.fn() };
@@ -279,6 +282,10 @@ describe('ListingsService', () => {
         { provide: FindSimilarUseCase, useValue: mockFindSimilarUseCase },
         { provide: GetUserListingsUseCase, useValue: mockGetUserListingsUseCase },
         { provide: GetActiveUserListingsUseCase, useValue: mockGetActiveUserListingsUseCase },
+        {
+          provide: GetActiveUserListingsCountUseCase,
+          useValue: mockGetActiveUserListingsCountUseCase,
+        },
         { provide: GetBoardListingsUseCase, useValue: mockGetBoardListingsUseCase },
         { provide: FindByVinUseCase, useValue: mockFindByVinUseCase },
         { provide: GetListingVinUseCase, useValue: mockGetListingVinUseCase },

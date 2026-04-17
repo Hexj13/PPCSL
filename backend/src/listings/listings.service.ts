@@ -19,6 +19,7 @@ import { CreatePromotionHistoryUseCase } from './application/use-cases/create-pr
 import { ExpirePromotionsUseCase } from './application/use-cases/expire-promotions.use-case';
 import { FindByVinUseCase } from './application/use-cases/find-by-vin.use-case';
 import { FindSimilarUseCase } from './application/use-cases/find-similar.use-case';
+import { GetActiveUserListingsCountUseCase } from './application/use-cases/get-active-user-listings-count.use-case';
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
 import { GetBoardListingsUseCase } from './application/use-cases/get-board-listings.use-case';
 import { GetListingHistoryUseCase } from './application/use-cases/get-listing-history.use-case';
@@ -82,6 +83,7 @@ export class ListingsService {
     private readonly findSimilarUseCase: FindSimilarUseCase,
     private readonly getUserListingsUseCase: GetUserListingsUseCase,
     private readonly getActiveUserListingsUseCase: GetActiveUserListingsUseCase,
+    private readonly getActiveUserListingsCountUseCase: GetActiveUserListingsCountUseCase,
     private readonly getBoardListingsUseCase: GetBoardListingsUseCase,
     private readonly findByVinUseCase: FindByVinUseCase,
     private readonly getListingVinUseCase: GetListingVinUseCase,
@@ -251,8 +253,12 @@ export class ListingsService {
     return this.getUserListingsUseCase.execute(userId, page, limit, status, promoted, search);
   }
 
-  async getActiveUserListings(userId: string): Promise<Listing[]> {
-    return this.getActiveUserListingsUseCase.execute(userId);
+  async getActiveUserListings(userId: string, page = 1, limit = 20): Promise<Listing[]> {
+    return this.getActiveUserListingsUseCase.execute(userId, page, limit);
+  }
+
+  async getActiveUserListingsCount(userId: string): Promise<number> {
+    return this.getActiveUserListingsCountUseCase.execute(userId);
   }
 
   async getBoardListings(

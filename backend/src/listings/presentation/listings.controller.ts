@@ -162,10 +162,42 @@ export class ListingsController {
     example: '550e8400-e29b-41d4-a716-446655440000',
     description: 'User UUID',
   })
-  @ApiResponse({ status: 200, description: 'List of active listings' })
+  @ApiQuery({ name: 'page', required: false, example: '1' })
+  @ApiQuery({ name: 'limit', required: false, example: '20' })
+  @ApiResponse({ status: 200, description: 'List of active listings (paginated)' })
   @Get('user/:userId/active')
-  getUserActiveListings(@Param('userId') userId: string) {
-    return this.listingsService.getActiveUserListings(userId);
+  getUserActiveListings(
+    @Param('userId') userId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page && Number.isFinite(parseInt(page, 10)) ? parseInt(page, 10) : 1;
+    const limitNum = limit && Number.isFinite(parseInt(limit, 10)) ? parseInt(limit, 10) : 20;
+    return this.listingsService.getActiveUserListings(userId, pageNum, limitNum);
+  }
+
+  @ApiOperation({ summary: 'Get active listings count by user' })
+  @ApiParam({
+    name: 'userId',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'User UUID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Count of active listings',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: { count: { type: 'number' } },
+        },
+      },
+    },
+  })
+  @Get('user/:userId/active/count')
+  async getUserActiveListingsCount(@Param('userId') userId: string): Promise<{ count: number }> {
+    const count = await this.listingsService.getActiveUserListingsCount(userId);
+    return { count };
   }
 
   @ApiOperation({ summary: 'Search listings by VIN' })

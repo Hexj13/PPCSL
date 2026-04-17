@@ -98,10 +98,10 @@ export function useListingData({
 
           if (listingRes.data.user?.id) {
             listingsApi
-              .getUserActiveListings(listingRes.data.user.id)
+              .getUserActiveListingsCount(listingRes.data.user.id)
               .then((res) => {
                 if (currentId === id) {
-                  setActiveListingsCount(res.data.length);
+                  setActiveListingsCount(res.data.count);
                 }
               })
               .catch(() => {
@@ -214,9 +214,9 @@ export function useListingData({
   useEffect(() => {
     if (initialListing?.user?.id) {
       listingsApi
-        .getUserActiveListings(initialListing.user.id)
+        .getUserActiveListingsCount(initialListing.user.id)
         .then((res) => {
-          setActiveListingsCount(res.data.length);
+          setActiveListingsCount(res.data.count);
         })
         .catch(() => {
           setActiveListingsCount(0);

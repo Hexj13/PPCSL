@@ -51,6 +51,7 @@ describe('ListingsController', () => {
       findAll: jest.fn(),
       getUserListings: jest.fn(),
       getActiveUserListings: jest.fn(),
+      getActiveUserListingsCount: jest.fn(),
       findByVin: jest.fn(),
       findOne: jest.fn(),
       getListingVin: jest.fn(),
@@ -237,7 +238,7 @@ describe('ListingsController', () => {
   });
 
   describe('getUserActiveListings', () => {
-    it('should return active listings for user', async () => {
+    it('should return active listings for user with default pagination', async () => {
       const userId = 'user-1';
       const mockListings = [mockListing];
 
@@ -245,8 +246,29 @@ describe('ListingsController', () => {
 
       const result = await controller.getUserActiveListings(userId);
 
-      expect(service.getActiveUserListings).toHaveBeenCalledWith(userId);
+      expect(service.getActiveUserListings).toHaveBeenCalledWith(userId, 1, 20);
       expect(result).toEqual(mockListings);
+    });
+
+    it('should pass page and limit when provided', async () => {
+      const userId = 'user-1';
+      service.getActiveUserListings.mockResolvedValue([]);
+
+      await controller.getUserActiveListings(userId, '3', '15');
+
+      expect(service.getActiveUserListings).toHaveBeenCalledWith(userId, 3, 15);
+    });
+  });
+
+  describe('getUserActiveListingsCount', () => {
+    it('should return count of active listings for user', async () => {
+      const userId = 'user-1';
+      service.getActiveUserListingsCount.mockResolvedValue(42);
+
+      const result = await controller.getUserActiveListingsCount(userId);
+
+      expect(service.getActiveUserListingsCount).toHaveBeenCalledWith(userId);
+      expect(result).toEqual({ count: 42 });
     });
   });
 

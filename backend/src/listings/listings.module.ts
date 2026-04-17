@@ -25,6 +25,7 @@ import { CreatePromotionHistoryUseCase } from './application/use-cases/create-pr
 import { ExpirePromotionsUseCase } from './application/use-cases/expire-promotions.use-case';
 import { FindByVinUseCase } from './application/use-cases/find-by-vin.use-case';
 import { FindSimilarUseCase } from './application/use-cases/find-similar.use-case';
+import { GetActiveUserListingsCountUseCase } from './application/use-cases/get-active-user-listings-count.use-case';
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
 import { GetBoardListingsUseCase } from './application/use-cases/get-board-listings.use-case';
 import { GetListingHistoryUseCase } from './application/use-cases/get-listing-history.use-case';
@@ -107,6 +108,7 @@ import { ListingsController } from './presentation/listings.controller';
     UpdateListingUseCase,
     GetUserListingsUseCase,
     GetActiveUserListingsUseCase,
+    GetActiveUserListingsCountUseCase,
     GetBoardListingsUseCase,
     FindByVinUseCase,
     GetListingVinUseCase,

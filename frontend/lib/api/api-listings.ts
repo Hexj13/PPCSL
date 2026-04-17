@@ -31,8 +31,8 @@ export const listingsApi = {
     }
     return api.get<Listing>(`/api/listings/${id}`, config);
   },
-  getUserActiveListings: (userId: string) =>
-    api.get<Listing[]>(`/api/listings/user/${userId}/active`),
+  getUserActiveListingsCount: (userId: string) =>
+    api.get<{ count: number }>(`/api/listings/user/${userId}/active/count`),
   getByVin: (vin: string, excludeId?: string) =>
     api.get<Listing[]>(`/api/listings/vin/${vin}`, { params: excludeId ? { excludeId } : {} }),
   getVin: (id: string, action: 'reveal' | 'copy') =>
