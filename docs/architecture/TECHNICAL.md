@@ -140,7 +140,7 @@ brew services start redis
 ```bash
 cd core/backend
 npm run build
-npm run migration:run
+npm run migration:run:prod
 ```
 
 **For development (TypeORM sync):**
@@ -1384,7 +1384,7 @@ cd core/backend && npm run start:prod
 1. Run database migrations via Render Shell:
 
    ```bash
-   cd core/backend && npm run migration:run
+   cd core/backend && npm run migration:run:prod
    ```
 
 2. Load brands and models:

@@ -243,7 +243,7 @@ chmod 600 /var/www/ppcsl/frontend/.env.local
 ```bash
 cd /var/www/ppcsl/backend
 npm run build
-npm run migration:run
+npm run migration:run:prod
 ```
 
 #### Build Frontend
@@ -610,7 +610,7 @@ After first deployment, run migrations:
 2. Run:
 
 ```bash
-cd core/backend && npm run migration:run
+cd core/backend && npm run migration:run:prod
 ```
 
 ### 3.7. Loading Brands and Models (REQUIRED)
@@ -1067,8 +1067,8 @@ cd ../frontend && npm install && npm run build && pm2 restart kupito-frontend
 
 ```bash
 cd /var/www/ppcsl/backend
-npm run migration:run
-npm run migration:revert
+npm run migration:run:prod
+npm run migration:revert:prod
 ```
 
 ---

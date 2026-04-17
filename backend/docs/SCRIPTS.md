@@ -305,8 +305,8 @@ npm run check-models:prod
 For a fresh production database:
 
 ```bash
-# 1. Apply migrations
-npm run migration:run
+# 1. Apply migrations (requires prior `npm run build`)
+npm run migration:run:prod
 
 # 2. Fix price column issues
 npm run fix-price-nulls:prod
@@ -516,8 +516,8 @@ From the **platform repo root**, the same flows are exposed as `npm run 999md:*`
 Database migrations are handled separately and are located in:
 
 - `src/migrations/` - Migration files
-- Run with: `npm run migration:run`
-- Revert with: `npm run migration:revert`
+- Local (TypeScript): `npm run migration:run` / `npm run migration:revert`
+- After `npm run build` (compiled `dist/`): `npm run migration:run:prod` / `npm run migration:revert:prod`
 
 ## Notes
 
