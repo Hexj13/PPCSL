@@ -33,10 +33,13 @@ import {
 
 import { useListingPageCreatedToast } from './useListingPageCreatedToast';
 
+const LISTING_LIFETIME_DAYS = 90;
+const LISTING_LIFETIME_MS = LISTING_LIFETIME_DAYS * 24 * 60 * 60 * 1000;
+
 function getClosingDate(lastUpdatedAt: string): Date {
-  const date = new Date(lastUpdatedAt);
-  date.setDate(date.getDate() + 90);
-  return date;
+  const base = new Date(lastUpdatedAt);
+  if (Number.isNaN(base.getTime())) return base;
+  return new Date(base.getTime() + LISTING_LIFETIME_MS);
 }
 
 export function useListingPageClient(listingId: string, initialListing: Listing | null) {

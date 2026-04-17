@@ -56,6 +56,8 @@ export function formatPrice(price: number | undefined, currency?: string): strin
   return integerPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
+export const DISPLAY_TIME_ZONE = 'Europe/Chisinau';
+
 export function formatDate(date: string | Date, locale?: string): string {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return '';
@@ -65,14 +67,22 @@ export function formatDate(date: string | Date, locale?: string): string {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: DISPLAY_TIME_ZONE,
   });
 }
 
 export function formatDateShort(date: string | Date): string {
   const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
+  if (Number.isNaN(d.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('ro-RO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: DISPLAY_TIME_ZONE,
+  }).formatToParts(d);
+  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+  const month = parts.find((p) => p.type === 'month')?.value ?? '';
+  const year = parts.find((p) => p.type === 'year')?.value ?? '';
   return `${day}.${month}.${year}`;
 }
 
@@ -93,6 +103,19 @@ export function formatAdminTableDateTime(value: string | Date | null | undefined
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 }
 
+function getCalendarDayKey(date: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: DISPLAY_TIME_ZONE,
+  }).formatToParts(date);
+  const y = parts.find((p) => p.type === 'year')?.value ?? '0000';
+  const m = parts.find((p) => p.type === 'month')?.value ?? '01';
+  const d = parts.find((p) => p.type === 'day')?.value ?? '01';
+  return `${y}-${m}-${d}`;
+}
+
 export function formatDateRelative(
   date: string | Date,
   t: (_key: string, _params?: Record<string, string | number>) => string,
@@ -101,9 +124,11 @@ export function formatDateRelative(
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return '';
 
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const todayKey = getCalendarDayKey(new Date());
+  const dateKey = getCalendarDayKey(d);
+
+  const today = new Date(`${todayKey}T00:00:00Z`);
+  const dateOnly = new Date(`${dateKey}T00:00:00Z`);
 
   const diffTime = today.getTime() - dateOnly.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -148,6 +173,7 @@ export function formatDateLong(date: string | Date, locale?: string): string {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: DISPLAY_TIME_ZONE,
   });
 }
 

@@ -216,7 +216,7 @@ MAX_PROMOTIONS_PER_USER=10
 
 ### Rate limiting
 
-- Global: 100 req/min (production)
+- Global: 600 req/min (production)
 - Promotion endpoints: `togglePromotion` 10/min, `getPromotionHistory` 30/min, admin 20–30/min
 
 ### Cron protection

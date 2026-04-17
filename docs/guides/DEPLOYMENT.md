@@ -594,6 +594,31 @@ add a second origin and behavior to your existing CloudFront distribution:
 The backend already returns `Cache-Control: public, max-age=31536000, immutable`
 for optimized images, so CloudFront will cache them for up to one year.
 
+**Cloudflare Cache Rule for image delivery (recommended when API is proxied through Cloudflare):**
+
+Without an explicit rule, Cloudflare often serves `GET /api/upload/image/*` as **DYNAMIC** (no edge cache), so every browser request hits the origin and competes with other API traffic. Add a Cache Rule so optimized listing images are cached at the edge.
+
+1. Cloudflare Dashboard → select the zone for `api.kupito.club` (or the zone that proxies the API hostname).
+2. **Caching** → **Cache Rules** → **Create rule**.
+3. **Rule name:** e.g. `Cache optimized listing images`.
+4. **When incoming requests match:** Custom filter expression, for example:
+   - `(http.host eq "api.kupito.club" and starts_with(http.request.uri.path, "/api/upload/image/"))`
+5. **Then:**
+   - **Cache eligibility:** Eligible for cache.
+   - **Edge TTL:** Respect origin cache-control header (origin sends `max-age=31536000, immutable`).
+   - **Browser TTL:** Respect origin or match edge (browser should honor origin `Cache-Control`).
+   - **Cache key:** Include **all** query string parameters (or at least `quality` and `width`) so different resize URLs do not collide.
+   - If the UI offers **Respect strong ETags:** enable it (the API sets an `ETag` on image responses).
+6. Save and deploy the rule.
+
+**Verify:** run twice:
+
+```bash
+curl -sI "https://api.kupito.club/api/upload/image/<uuid>.webp?quality=65&width=640"
+```
+
+The second response should show `cf-cache-status: HIT` (after the first `MISS`/`DYNAMIC` depending on rollout). Most image traffic should then be served from the edge, reducing origin CPU and avoiding accidental overlap with API rate limits.
+
 **CloudFront CORS for `/uploads/*` (recommended for S3 origin assets):**
 
 Browser `fetch` diagnostics and future `fetch`-based image flows need a successful CORS preflight on the static CDN host. On the CloudFront distribution that serves `AWS_CLOUDFRONT_URL` (e.g. `cdn.kupito.club`):

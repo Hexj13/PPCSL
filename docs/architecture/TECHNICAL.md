@@ -683,7 +683,7 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 
 #### Rate Limiting
 
-**Global:** 100 requests per 60 seconds
+**Global:** 600 requests per 60 seconds per IP (production)
 
 **Special Limits:**
 
@@ -694,7 +694,7 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 - `POST /api/auth/request-password-reset`: 30 requests per hour per IP (supplementary; per-phone SMS quota enforced in Redis)
 - `POST /api/upload/image`: 20 requests per minute
 
-**Excluded from global limit:** `GET /api/upload/image/:filename` (image delivery) uses `@SkipThrottle()` so viewing listing photos does not count toward the 100 req/min per-IP quota.
+**Excluded from throttling:** `GET /api/upload/image/:filename` (image delivery) uses `@SkipThrottle()` so viewing listing photos is not rate-limited by NestJS; edge caching (see [DEPLOYMENT.md](../guides/DEPLOYMENT.md)) reduces origin load.
 
 #### SMS Verification
 
