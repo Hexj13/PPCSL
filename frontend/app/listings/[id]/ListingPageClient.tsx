@@ -421,13 +421,13 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
   const imagesRef = useRef(images);
   imagesRef.current = images;
 
-  const onFinalImageFailure = useCallback((index: number) => {
+  const onFinalImageFailure = useCallback((index: number, imageUrl: string) => {
     const l = listingRef.current;
     if (!l) return;
     void reportImageLoadFailure({
       scope: failureScopeRef.current,
       listingId: l.id,
-      imageUrl: imagesRef.current[index] ?? '',
+      imageUrl: imageUrl || imagesRef.current[index] || '',
       imageIndex: index,
       imagesTotal: imagesRef.current.length,
       attemptsMade: LISTING_IMAGE_SCHEDULED_RETRY_COUNT,

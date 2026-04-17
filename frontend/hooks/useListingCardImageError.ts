@@ -12,11 +12,11 @@ export function useListingCardImageError(
   setImageErrors: React.Dispatch<React.SetStateAction<Set<number>>>,
 ) {
   const onFinalFailure = useCallback(
-    (index: number) => {
+    (index: number, imageUrl: string) => {
       void reportImageLoadFailure({
         scope: 'listing_card',
         listingId,
-        imageUrl: images[index] ?? '',
+        imageUrl: imageUrl || images[index] || '',
         imageIndex: index,
         imagesTotal: images.length,
         attemptsMade: LISTING_IMAGE_SCHEDULED_RETRY_COUNT,

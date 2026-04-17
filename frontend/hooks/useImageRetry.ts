@@ -19,7 +19,7 @@ export function useImageRetry(
   setImageErrors: React.Dispatch<React.SetStateAction<Set<number>>>,
   quality = 65,
   width = 800,
-  onFinalFailure?: (index: number) => void,
+  onFinalFailure?: (index: number, imageUrl: string) => void,
 ) {
   const retriesRef = useRef<Map<number, RetryEntry>>(new Map());
   const imagesRef = useRef(images);
@@ -43,12 +43,21 @@ export function useImageRetry(
     clearAllRetries();
   }, [imagesSignature, clearAllRetries]);
 
+  const resolveAttemptedUrl = useCallback(
+    (index: number): string => {
+      const src = imagesRef.current[index];
+      if (!src || src === '/placeholder-car.jpg') return src ?? '';
+      return getOptimizedImageUrl(src, quality, width);
+    },
+    [quality, width],
+  );
+
   const scheduleRetry = useCallback(
     (index: number) => {
       const existing = retriesRef.current.get(index);
       const attempt = existing ? existing.attempt + 1 : 1;
       if (attempt > MAX_RETRIES) {
-        onFinalFailureRef.current?.(index);
+        onFinalFailureRef.current?.(index, resolveAttemptedUrl(index));
         retriesRef.current.delete(index);
         return;
       }
@@ -85,7 +94,7 @@ export function useImageRetry(
 
       retriesRef.current.set(index, { attempt, timerId });
     },
-    [quality, width, setImageErrors],
+    [quality, width, setImageErrors, resolveAttemptedUrl],
   );
 
   const onImageError = useCallback(
@@ -96,6 +105,9 @@ export function useImageRetry(
         next.add(index);
         return next;
       });
+      if (retriesRef.current.has(index)) {
+        return;
+      }
       scheduleRetry(index);
     },
     [setImageErrors, scheduleRetry],

@@ -49,7 +49,6 @@ export function MobileToolbar({
           aria-expanded={isMobileMenuOpen}
           aria-busy={isMenuToggleLocked}
           aria-controls={drawerId}
-          suppressHydrationWarning
         >
           {isMobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
         </button>

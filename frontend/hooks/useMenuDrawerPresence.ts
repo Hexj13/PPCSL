@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export const MOBILE_MENU_EXIT_ANIM_MS = 240;
 
@@ -12,7 +12,7 @@ export function useMenuDrawerPresence(wantOpen: boolean) {
   const mountedRef = useRef(mounted);
   mountedRef.current = mounted;
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (wantOpen) {
       setMounted(true);
       setExiting(false);

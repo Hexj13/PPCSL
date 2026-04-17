@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect } from 'react';
+import { useEffect } from 'react';
 
 let scrollLockDepth = 0;
 let lockedScrollY = 0;
@@ -50,7 +50,7 @@ function releaseScrollLock() {
 }
 
 export function useScrollLock(enabled: boolean) {
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!enabled) {
       return undefined;
     }

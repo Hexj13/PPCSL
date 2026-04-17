@@ -125,17 +125,10 @@ export function Header() {
       {mobileMenuBackdrop}
       <header
         className={`flex flex-col bg-bg-base shadow-lg z-50 ${isTelegramWebView ? 'relative' : 'sticky top-0'}`}
-        suppressHydrationWarning
       >
         <div className="relative z-20 shrink-0 h-[72px] bg-bg-base">
-          <div
-            className="container relative mx-auto px-3 sm:px-4 h-full border-b border-primary-700"
-            suppressHydrationWarning
-          >
-            <div
-              className="flex justify-between items-center h-full w-full min-w-0 gap-2"
-              suppressHydrationWarning
-            >
+          <div className="container relative mx-auto px-3 sm:px-4 h-full border-b border-primary-700">
+            <div className="flex justify-between items-center h-full w-full min-w-0 gap-2">
               <HeaderLogo brandAlt={t('header.brandName')} />
 
               <div className="flex items-center justify-end shrink-0 min-w-0 gap-2 xl:gap-4">
