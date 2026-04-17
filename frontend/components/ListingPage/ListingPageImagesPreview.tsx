@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import { type CSSProperties, type Dispatch, type SetStateAction } from 'react';
 
+import { TrackedNextImage } from '@/components/common/TrackedNextImage';
 import { getOptimizedImageUrl } from '@/lib/utils';
 
 export const RESET_TO_FIRST_DELAY_MS = 10000;
@@ -72,7 +72,7 @@ function renderPreviewSlide(index: number, params: SlideParams, options: Preview
   const priority = index === 0;
 
   return (
-    <Image
+    <TrackedNextImage
       key={`preview-slide-${index}`}
       src={optimizedUrl}
       alt={t('listings.imageAltWithTotal', {
@@ -226,7 +226,7 @@ export function ListingThumbnailTile({
 
   return (
     <>
-      <Image
+      <TrackedNextImage
         src={optimizedUrl}
         alt={t('listings.imageAltWithTotal', {
           title: imageAltTitle,

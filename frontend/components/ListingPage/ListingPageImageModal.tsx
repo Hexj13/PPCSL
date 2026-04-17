@@ -1,7 +1,6 @@
 'use client';
 
-import Image from 'next/image';
-
+import { TrackedNextImage } from '@/components/common/TrackedNextImage';
 import { Spinner } from '@/ui';
 
 import {
@@ -157,7 +156,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
           {hasValidImage ? (
             <>
               {confirmedUrl && (
-                <Image
+                <TrackedNextImage
                   key={`confirmed-${visibleIndex}`}
                   src={confirmedUrl}
                   alt={imageAltText}
@@ -180,7 +179,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
                 />
               )}
               {pendingUrl && pendingUrl !== confirmedUrl && (
-                <Image
+                <TrackedNextImage
                   key={`pending-${currentIndex}`}
                   src={pendingUrl}
                   alt={imageAltText}

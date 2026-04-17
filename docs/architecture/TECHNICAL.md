@@ -1113,6 +1113,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - **Modal viewer:** Full-screen photo viewer with keyboard navigation and swipe gestures
   - **Performance:** 80% code reduction, instant cache switching, no artificial delays
   - See [image-preview.md](../features/image-preview.md) for complete documentation
+  - **Image load Sentry diagnostics:** After retry exhaustion, `reportImageLoadFailure` calls `GET /api/diagnostics/image-status` (Nest `DiagnosticsModule`) for an allowlisted server-side `HEAD` to the failing URL; see `image-preview.md` and `DEPLOYMENT.md` (CloudFront CORS for `/uploads/*`).
 - **Race condition prevention:** Loading states and request guards to prevent duplicate API calls
   - Favorite toggle button disabled during operation with visual feedback
   - Ref-based guards to prevent concurrent requests

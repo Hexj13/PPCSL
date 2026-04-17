@@ -594,6 +594,21 @@ add a second origin and behavior to your existing CloudFront distribution:
 The backend already returns `Cache-Control: public, max-age=31536000, immutable`
 for optimized images, so CloudFront will cache them for up to one year.
 
+**CloudFront CORS for `/uploads/*` (recommended for S3 origin assets):**
+
+Browser `fetch` diagnostics and future `fetch`-based image flows need a successful CORS preflight on the static CDN host. On the CloudFront distribution that serves `AWS_CLOUDFRONT_URL` (e.g. `cdn.kupito.club`):
+
+1. Behaviors → select or create behavior with path pattern `/uploads/*` (or the path your S3 origin uses for listing images).
+2. Allowed HTTP methods: **GET, HEAD, OPTIONS** (OPTIONS is required for preflight).
+3. Attach a **Response headers policy** that returns CORS headers, for example AWS managed **CORS-With-Preflight** (`5cc3b908-e619-4b99-88e5-2cf7f45965bd`) or a custom policy with at least:
+   - `Access-Control-Allow-Origin: https://kupito.club` (and staging origins if needed)
+   - `Access-Control-Allow-Methods: GET, HEAD, OPTIONS`
+   - `Access-Control-Max-Age: 600`
+4. Invalidate `/uploads/*` after changes.
+5. Verify: `curl -X OPTIONS -H "Origin: https://kupito.club" -H "Access-Control-Request-Method: HEAD" "https://cdn.kupito.club/uploads/<any>.webp"` should return **200** or **204** with `Access-Control-Allow-Origin` present.
+
+Sentry image diagnostics use the backend `HEAD` proxy (`/api/diagnostics/image-status`) and do not depend on this CORS policy, but other client-side `fetch` calls to the CDN will.
+
 ### 3.5. Build Configuration
 
 **Build Settings:**

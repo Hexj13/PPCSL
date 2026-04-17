@@ -25,7 +25,7 @@ import {
 import { SimilarListings } from '@/components/listing/SimilarListings';
 import { PromotionModal } from '@/components/modals/PromotionModal';
 import { useI18n } from '@/components/providers/I18nProvider';
-import { useImageRetry } from '@/hooks/useImageRetry';
+import { LISTING_IMAGE_SCHEDULED_RETRY_COUNT, useImageRetry } from '@/hooks/useImageRetry';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { reportImageLoadFailure } from '@/lib/image-failure-monitor';
@@ -368,23 +368,6 @@ function listingPagePrimaryHeadingTitle(listing: Listing, t: (k: string) => stri
   return vehicleInfo || listing.title || t('listings.defaultTitle');
 }
 
-function reportListingPageImageFailure(
-  scope: 'listing_page' | 'listing_modal',
-  listingId: string,
-  images: string[],
-  index: number,
-  retry: (i: number) => void,
-): void {
-  retry(index);
-  void reportImageLoadFailure({
-    scope,
-    listingId,
-    imageUrl: images[index] ?? '',
-    imageIndex: index,
-    imagesTotal: images.length,
-  });
-}
-
 function ListingPageMainContent(props: UseListingPageClientReturn) {
   const { t } = useTranslation();
   const { locale } = useI18n();
@@ -429,15 +412,50 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     closeImageModal,
   } = props;
   const previewRef = useRef<ListingPageImagesHandle>(null);
+  const listingRef = useRef(listing);
+  listingRef.current = listing;
+  const failureScopeRef = useRef<'listing_page' | 'listing_modal'>('listing_page');
 
   const images =
     listing?.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
+  const imagesRef = useRef(images);
+  imagesRef.current = images;
+
+  const onFinalImageFailure = useCallback((index: number) => {
+    const l = listingRef.current;
+    if (!l) return;
+    void reportImageLoadFailure({
+      scope: failureScopeRef.current,
+      listingId: l.id,
+      imageUrl: imagesRef.current[index] ?? '',
+      imageIndex: index,
+      imagesTotal: imagesRef.current.length,
+      attemptsMade: LISTING_IMAGE_SCHEDULED_RETRY_COUNT,
+    });
+  }, []);
+
   const { onImageError: retryImageError } = useImageRetry(
     images,
     imageErrors,
     setImageErrors,
     75,
     1200,
+    onFinalImageFailure,
+  );
+
+  const handlePageImageError = useCallback(
+    (index: number) => {
+      failureScopeRef.current = 'listing_page';
+      retryImageError(index);
+    },
+    [retryImageError],
+  );
+  const handleModalImageError = useCallback(
+    (index: number) => {
+      failureScopeRef.current = 'listing_modal';
+      retryImageError(index);
+    },
+    [retryImageError],
   );
 
   useListingPageGalleryKeyboard(previewRef, images.length, isImageModalOpen);
@@ -448,10 +466,6 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
 
   const nextImage = () => setModalImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setModalImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  const handlePageImageError = (index: number) =>
-    reportListingPageImageFailure('listing_page', listing.id, images, index, retryImageError);
-  const handleModalImageError = (index: number) =>
-    reportListingPageImageFailure('listing_modal', listing.id, images, index, retryImageError);
 
   return (
     <>

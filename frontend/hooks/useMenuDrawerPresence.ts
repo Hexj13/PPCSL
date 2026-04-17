@@ -2,9 +2,9 @@
 
 import { useLayoutEffect, useRef, useState } from 'react';
 
-export const MOBILE_MENU_EXIT_ANIM_MS = 280;
+export const MOBILE_MENU_EXIT_ANIM_MS = 240;
 
-export const MOBILE_MENU_ENTER_ANIM_MS = 260;
+export const MOBILE_MENU_ENTER_ANIM_MS = 240;
 
 export function useMenuDrawerPresence(wantOpen: boolean) {
   const [mounted, setMounted] = useState(wantOpen);

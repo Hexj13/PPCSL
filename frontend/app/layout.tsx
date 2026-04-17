@@ -13,6 +13,7 @@ import { GoogleTagManagerNoscript } from '@/components/analytics/GoogleTagManage
 import { OrganizationSchema } from '@/components/analytics/OrganizationSchema';
 import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
 import { Header } from '@/components/layout/Header';
+import { NavigationTelemetry } from '@/components/layout/NavigationTelemetry';
 import { ScrollReset } from '@/components/layout/ScrollReset';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { CookieConsent } from '@/components/providers/CookieConsent';
@@ -181,6 +182,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <ServiceWorkerRegistration />
               <ScrollReset />
               <PageScrollTracker />
+              <NavigationTelemetry />
               <ExternalLinkTracker />
               <div className="min-h-screen flex flex-col">
                 <Header />

@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
+import { TrackedNextImage } from '@/components/common/TrackedNextImage';
 import {
   bindImageReadiness,
   useListingCardCarouselPreload,
@@ -31,7 +31,7 @@ export function ListingCardImageArea({
 }) {
   if (showImage) {
     return (
-      <Image
+      <TrackedNextImage
         src={imageUrl}
         alt={t('listings.imageAlt', { title: imageAltTitle, index: '1' })}
         fill
@@ -380,8 +380,7 @@ export const ListingCardImageCarousel = React.forwardRef<
       if (imageErrors.has(index)) return errorPlaceholder;
       const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 640);
       return (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <TrackedNextImage
           key={`card-native-${index}`}
           src={imageUrl}
           alt={t('listings.imageAltWithTotal', {
@@ -389,17 +388,13 @@ export const ListingCardImageCarousel = React.forwardRef<
             index: String(index + 1),
             total: String(images.length),
           })}
-          decoding="sync"
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           draggable={false}
+          className="object-cover"
+          unoptimized
           onLoad={() => markLoaded(index)}
           onError={() => onImageError(index)}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
         />
       );
     },
@@ -417,7 +412,7 @@ export const ListingCardImageCarousel = React.forwardRef<
       }
       const isFirst = priority && index === 0;
       return (
-        <Image
+        <TrackedNextImage
           key={`card-slide-${index}`}
           src={imageUrl}
           alt={t('listings.imageAltWithTotal', {

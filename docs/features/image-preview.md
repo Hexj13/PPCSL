@@ -267,6 +267,20 @@ The inline preview on the listing page is expected to behave as follows:
 
 ---
 
+## Image load failure monitoring (Sentry)
+
+When `useImageRetry` finishes all three scheduled retries without a successful load, the client calls `reportImageLoadFailure` in `core/frontend/lib/image-failure-monitor.ts`, which emits a Sentry warning `image_load_failed`.
+
+**Flow:** `onError` on listing card / listing page / modal images triggers retries only; the Sentry report runs on final exhaustion, not on the first failure.
+
+**Diagnostics:** The monitor calls `GET /api/diagnostics/image-status?url=...` on the API (`core/backend/src/diagnostics/`) so the server performs an allowlisted `HEAD` to the image URL (avoids broken browser CORS probes to `cdn.kupito.club`).
+
+**Tags / extra:** `retriesExhausted`, `imageUrlKind` (`origin` vs `optimized`), `imageHost`, `imageStatus` from the HEAD response, plus `inflightImages` (global counter from `TrackedNextImage` / `core/frontend/lib/image-inflight-tracker.ts`), `navigationCount` (`NavigationTelemetry` + `core/frontend/lib/navigation-count.ts`), `attemptsMade`, and connection metadata.
+
+**Listing detail:** `ListingPageClient.tsx` sets a ref on each `onImageError` so the final report uses `listing_page` vs `listing_modal` correctly.
+
+---
+
 ## Loading States
 
 ### Preview (thumbnail block)

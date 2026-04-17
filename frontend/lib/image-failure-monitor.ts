@@ -1,11 +1,18 @@
 'use client';
 
+import { isAxiosError } from 'axios';
+
+import { api } from '@/lib/api/api-client';
+import { getImageInflightCount } from '@/lib/image-inflight-tracker';
+import { getNavigationCount } from '@/lib/navigation-count';
+
 type ImageFailureEvent = {
   scope: 'listing_card' | 'listing_page' | 'listing_modal';
   listingId?: string;
   imageUrl: string;
   imageIndex: number;
   imagesTotal: number;
+  attemptsMade?: number;
 };
 
 const EVENT_TTL_MS = 2 * 60 * 1000;
@@ -13,7 +20,6 @@ const MAX_EVENTS_PER_WINDOW = 30;
 const WINDOW_MS = 10 * 60 * 1000;
 const diagnosticsTimestamps: number[] = [];
 const reportedEvents = new Map<string, number>();
-const diagnosticsCheckedUrls = new Set<string>();
 
 function now(): number {
   return Date.now();
@@ -54,25 +60,45 @@ function getConnectionMeta() {
   };
 }
 
-async function fetchImageStatus(imageUrl: string): Promise<number | null> {
-  if (diagnosticsCheckedUrls.has(imageUrl)) {
-    return null;
-  }
-  diagnosticsCheckedUrls.add(imageUrl);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 2500);
+function classifyImageUrlKind(imageUrl: string): 'origin' | 'optimized' | 'unknown' {
   try {
-    const response = await fetch(imageUrl, {
-      method: 'HEAD',
-      cache: 'no-store',
-      mode: 'cors',
-      signal: controller.signal,
-    });
-    return response.status;
+    const u = new URL(imageUrl, 'https://kupito.club');
+    if (u.pathname.includes('/api/upload/image/')) return 'optimized';
+    if (u.pathname.startsWith('/uploads/')) return 'origin';
+    return 'unknown';
   } catch {
-    return null;
-  } finally {
-    clearTimeout(timeout);
+    return 'unknown';
+  }
+}
+
+function imageHostFromUrl(imageUrl: string): string {
+  try {
+    return new URL(imageUrl, 'https://kupito.club').hostname;
+  } catch {
+    return 'unknown';
+  }
+}
+
+type DiagnosticsHeadResult = {
+  status: number | null;
+  reason?: 'timeout' | 'network' | 'invalid_host' | 'rate_limited';
+};
+
+async function fetchImageStatusViaApi(imageUrl: string): Promise<DiagnosticsHeadResult> {
+  try {
+    const { data } = await api.get<DiagnosticsHeadResult>('/api/diagnostics/image-status', {
+      params: { url: imageUrl },
+      timeout: 3500,
+    });
+    return {
+      status: typeof data?.status === 'number' ? data.status : null,
+      reason: data?.reason,
+    };
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 429) {
+      return { status: null, reason: 'rate_limited' };
+    }
+    return { status: null, reason: 'network' };
   }
 }
 
@@ -91,7 +117,13 @@ export async function reportImageLoadFailure(event: ImageFailureEvent): Promise<
   reportedEvents.set(key, now());
 
   const connection = getConnectionMeta();
-  const imageStatus = await fetchImageStatus(event.imageUrl);
+  const head = await fetchImageStatusViaApi(event.imageUrl);
+  const imageStatusTag =
+    typeof head.status === 'number' && Number.isFinite(head.status)
+      ? String(head.status)
+      : 'unknown';
+  const imageUrlKind = classifyImageUrlKind(event.imageUrl);
+  const imageHost = imageHostFromUrl(event.imageUrl);
 
   const Sentry = await import('@sentry/nextjs');
   Sentry.captureMessage('image_load_failed', {
@@ -99,7 +131,10 @@ export async function reportImageLoadFailure(event: ImageFailureEvent): Promise<
     tags: {
       area: event.scope,
       imageFailure: true,
-      imageStatus: imageStatus ? String(imageStatus) : 'unknown',
+      imageStatus: imageStatusTag,
+      retriesExhausted: 'true',
+      imageUrlKind,
+      imageHost,
     },
     extra: {
       listingId: event.listingId ?? null,
@@ -113,7 +148,11 @@ export async function reportImageLoadFailure(event: ImageFailureEvent): Promise<
         height: window.innerHeight,
       },
       connection,
-      imageStatus,
+      imageStatus: head.status,
+      diagnosticsReason: head.reason ?? null,
+      inflightImages: getImageInflightCount(),
+      navigationCount: getNavigationCount(),
+      attemptsMade: event.attemptsMade ?? null,
       timestamp: new Date().toISOString(),
     },
   });

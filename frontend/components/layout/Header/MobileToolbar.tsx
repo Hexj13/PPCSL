@@ -7,6 +7,7 @@ import { CloseIcon, MenuIcon } from './icons';
 type MobileToolbarProps = {
   showSkeleton: boolean;
   isMobileMenuOpen: boolean;
+  isDrawerVisible: boolean;
   isMenuToggleLocked?: boolean;
   onToggle: () => void;
   toggleAriaLabel: string;
@@ -19,6 +20,7 @@ type MobileToolbarProps = {
 export function MobileToolbar({
   showSkeleton,
   isMobileMenuOpen,
+  isDrawerVisible,
   isMenuToggleLocked = false,
   onToggle,
   toggleAriaLabel,
@@ -34,8 +36,7 @@ export function MobileToolbar({
           <div className="h-9 w-20 bg-primary-700/20 rounded-sm animate-pulse" />
         ) : null
       ) : (
-        showCreateListing &&
-        !isMobileMenuOpen && <CreateListingButton variant="mobile" shortLabel />
+        showCreateListing && !isDrawerVisible && <CreateListingButton variant="mobile" shortLabel />
       )}
       {showMenuToggle && (
         <button
@@ -43,7 +44,7 @@ export function MobileToolbar({
           type="button"
           onClick={onToggle}
           disabled={isMenuToggleLocked}
-          className="lg:hidden text-primary-700 transition-colors duration-200 p-2 select-none hover-only:hover:text-primary-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base disabled:pointer-events-none disabled:opacity-100"
+          className="touch-manipulation lg:hidden text-primary-700 transition-colors duration-200 p-2 select-none hover-only:hover:text-primary-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base disabled:pointer-events-none disabled:opacity-100"
           aria-label={toggleAriaLabel}
           aria-expanded={isMobileMenuOpen}
           aria-busy={isMenuToggleLocked}

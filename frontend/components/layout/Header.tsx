@@ -21,7 +21,6 @@ const MOBILE_DRAWER_ID = 'header-mobile-drawer';
 const MOBILE_MENU_TOGGLE_ID = 'header-mobile-menu-toggle';
 
 export function Header() {
-  const headerRef = useRef<HTMLElement>(null);
   const [isTelegramWebView, setIsTelegramWebView] = useState(false);
   const comparisonCount = useComparisonStore((state) => state.count());
   const prevMenuOpenRef = useRef(false);
@@ -79,18 +78,6 @@ export function Header() {
 
   useEffect(() => {
     if (!drawerMounted) return;
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (headerRef.current && !headerRef.current.contains(target)) {
-        handleMobileMenuClose();
-      }
-    };
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
-  }, [drawerMounted, handleMobileMenuClose]);
-
-  useEffect(() => {
-    if (!drawerMounted) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleMobileMenuClose();
     };
@@ -113,7 +100,12 @@ export function Header() {
     ? 'mobile-menu-backdrop-leave'
     : 'mobile-menu-backdrop-enter';
 
-  const drawerMotionKey = `${drawerMounted}-${drawerExiting}-${backdropMotionClass}`;
+  const handleBackdropClick = () => {
+    if (enterAnimating) {
+      return;
+    }
+    handleMobileMenuClose();
+  };
 
   const mobileMenuBackdrop =
     drawerMounted &&
@@ -121,10 +113,9 @@ export function Header() {
     typeof document !== 'undefined' &&
     createPortal(
       <div
-        key={drawerMotionKey}
         className={`${backdropMotionClass} fixed inset-0 z-40 lg:hidden bg-dark-900/35`}
         aria-hidden
-        onPointerDown={handleMobileMenuClose}
+        onClick={handleBackdropClick}
       />,
       document.body,
     );
@@ -133,7 +124,6 @@ export function Header() {
     <>
       {mobileMenuBackdrop}
       <header
-        ref={headerRef}
         className={`flex flex-col bg-bg-base shadow-lg z-50 ${isTelegramWebView ? 'relative' : 'sticky top-0'}`}
         suppressHydrationWarning
       >
@@ -171,6 +161,7 @@ export function Header() {
                   <MobileToolbar
                     showSkeleton={showSkeleton}
                     isMobileMenuOpen={isMobileMenuOpen}
+                    isDrawerVisible={drawerMounted}
                     isMenuToggleLocked={isMenuToggleLocked}
                     onToggle={handleMobileMenuToggle}
                     toggleAriaLabel={t('header.toggleMenu')}
@@ -213,7 +204,6 @@ export function Header() {
 
         <div className="relative z-10 h-0 w-full overflow-visible lg:hidden">
           <MobileNavDrawer
-            key={drawerMotionKey}
             id={MOBILE_DRAWER_ID}
             presenceMounted={drawerMounted}
             presenceClosing={drawerExiting}
