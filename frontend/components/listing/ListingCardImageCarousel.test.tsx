@@ -1,11 +1,7 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import {
-  IMAGE_SLIDE_DURATION_MS,
-  ListingCardImageCarousel,
-  type ListingCardImageCarouselHandle,
-} from './ListingCardParts';
+import { ListingCardImageCarousel, type ListingCardImageCarouselHandle } from './ListingCardParts';
 
 jest.mock('next/image', () => ({
   __esModule: true,
@@ -57,15 +53,7 @@ function CarouselHarness({
 }
 
 describe('ListingCardImageCarousel', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('should animate on first transition and commit new index after animation', async () => {
+  it('should commit new index immediately when target is ready (placeholder)', async () => {
     const ref = React.createRef<ListingCardImageCarouselHandle>();
     const onIndexChange = jest.fn();
     const onBusyChange = jest.fn();
@@ -83,16 +71,6 @@ describe('ListingCardImageCarousel', () => {
 
     fireEvent.click(screen.getByTestId('go-next'));
 
-    await act(async () => {
-      jest.advanceTimersByTime(0);
-    });
-    await act(async () => {
-      jest.advanceTimersByTime(0);
-    });
-    await act(async () => {
-      jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30);
-    });
-
     await waitFor(() => {
       expect(ref.current?.getIndex()).toBe(1);
     });
@@ -100,7 +78,7 @@ describe('ListingCardImageCarousel', () => {
     expect(onBusyChange).toHaveBeenLastCalledWith(false);
   });
 
-  it('should ignore rapid repeated clicks while busy', async () => {
+  it('should not skip ahead when multiple goNext fire in one tick (only advances one step)', async () => {
     const ref = React.createRef<ListingCardImageCarouselHandle>();
     const onIndexChange = jest.fn();
     render(
@@ -116,26 +94,16 @@ describe('ListingCardImageCarousel', () => {
     fireEvent.click(screen.getByTestId('go-next'));
     fireEvent.click(screen.getByTestId('go-next'));
     fireEvent.click(screen.getByTestId('go-next'));
-
-    await act(async () => {
-      jest.advanceTimersByTime(0);
-    });
-    await act(async () => {
-      jest.advanceTimersByTime(0);
-    });
-    await act(async () => {
-      jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30);
-    });
 
     await waitFor(() => {
       expect(ref.current?.getIndex()).toBe(1);
     });
-    const callsWithOne = onIndexChange.mock.calls.filter((c) => c[0] === 1);
-    expect(callsWithOne).toHaveLength(1);
+    expect(onIndexChange).toHaveBeenCalledWith(1);
+    expect(onIndexChange).not.toHaveBeenCalledWith(2);
     expect(onIndexChange).toHaveBeenLastCalledWith(1);
   });
 
-  it('should go prev and next with correct direction for 2 photos', async () => {
+  it('should go prev and next for 2 photos', async () => {
     const ref = React.createRef<ListingCardImageCarouselHandle>();
     const onIndexChange = jest.fn();
     render(
@@ -149,32 +117,21 @@ describe('ListingCardImageCarousel', () => {
     await waitFor(() => expect(ref.current).not.toBeNull());
 
     fireEvent.click(screen.getByTestId('go-next'));
-    await act(async () => jest.advanceTimersByTime(0));
-    await act(async () => jest.advanceTimersByTime(0));
-    await act(async () => jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30));
-
     await waitFor(() => expect(ref.current?.getIndex()).toBe(1));
     expect(onIndexChange).toHaveBeenLastCalledWith(1);
 
     fireEvent.click(screen.getByTestId('go-prev'));
-    await act(async () => jest.advanceTimersByTime(0));
-    await act(async () => jest.advanceTimersByTime(0));
-    await act(async () => jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30));
-
     await waitFor(() => expect(ref.current?.getIndex()).toBe(0));
     expect(onIndexChange).toHaveBeenLastCalledWith(0);
   });
 
-  it('should report idle and single visible index after animation completes', async () => {
+  it('should report idle and single visible index after navigation', async () => {
     const ref = React.createRef<ListingCardImageCarouselHandle>();
     render(<CarouselHarness images={twoPlaceholderImages} carouselRef={ref} />);
 
     await waitFor(() => expect(ref.current).not.toBeNull());
 
     fireEvent.click(screen.getByTestId('go-next'));
-    await act(async () => jest.advanceTimersByTime(0));
-    await act(async () => jest.advanceTimersByTime(0));
-    await act(async () => jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30));
 
     await waitFor(() => {
       expect(ref.current?.getIndex()).toBe(1);
@@ -194,20 +151,16 @@ describe('ListingCardImageCarousel', () => {
     expect(ref.current?.getIndex()).toBe(0);
 
     fireEvent.click(screen.getByTestId('go-next'));
-    await act(async () => jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30));
     await waitFor(() => expect(ref.current?.getIndex()).toBe(1));
 
     fireEvent.click(screen.getByTestId('go-next'));
-    await act(async () => jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30));
     await waitFor(() => expect(ref.current?.getIndex()).toBe(2));
 
     fireEvent.click(screen.getByTestId('go-next'));
-    await act(async () => jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30));
     await waitFor(() => expect(ref.current?.getIndex()).toBe(0));
     expect(onIndexChange).toHaveBeenLastCalledWith(0);
 
     fireEvent.click(screen.getByTestId('go-prev'));
-    await act(async () => jest.advanceTimersByTime(IMAGE_SLIDE_DURATION_MS + 30));
     await waitFor(() => expect(ref.current?.getIndex()).toBe(2));
     expect(onIndexChange).toHaveBeenLastCalledWith(2);
   });

@@ -10,8 +10,6 @@ import {
 import { getOptimizedImageUrl } from '@/lib/utils';
 import { Spinner } from '@/ui';
 
-export const IMAGE_SLIDE_DURATION_MS = 220;
-
 export function ListingCardImageArea({
   showImage,
   imageUrl,
@@ -66,14 +64,7 @@ export function ListingCardImageArea({
 
 type CarouselState =
   | { type: 'idle'; index: number }
-  | { type: 'preloading'; fromIndex: number; toIndex: number; direction: 'next' | 'prev' }
-  | {
-      type: 'animating';
-      fromIndex: number;
-      toIndex: number;
-      direction: 'next' | 'prev';
-      phase: 'setup' | 'running';
-    };
+  | { type: 'preloading'; fromIndex: number; toIndex: number };
 
 export interface ListingCardImageCarouselHandle {
   goNext: () => void;
@@ -112,8 +103,6 @@ export const ListingCardImageCarousel = React.forwardRef<
   const [state, setState] = useState<CarouselState>({ type: 'idle', index: 0 });
   const loadedRef = useRef<Set<number>>(new Set());
   const preloadingRef = useRef<Set<number>>(new Set());
-  const rafRef = useRef<number | undefined>(undefined);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hasPreloadedAllRef = useRef(false);
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
   const imagesSignature = images.join('\u0001');
@@ -146,14 +135,6 @@ export const ListingCardImageCarousel = React.forwardRef<
       img.onerror = null;
     }
     imagesCacheRef.current = [];
-    if (rafRef.current !== undefined) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = undefined;
-    }
-    if (timerRef.current !== undefined) {
-      clearTimeout(timerRef.current);
-      timerRef.current = undefined;
-    }
     setState({ type: 'idle', index: 0 });
   }, [imagesSignature]);
 
@@ -204,53 +185,16 @@ export const ListingCardImageCarousel = React.forwardRef<
     }
   }, [images, imageErrors, markLoaded]);
 
-  const startAnimating = useCallback(
-    (
-      fromIndex: number,
-      toIndex: number,
-      direction: 'next' | 'prev',
-      markAsLoadedOnCommit = false,
-    ) => {
-      if (rafRef.current !== undefined) cancelAnimationFrame(rafRef.current);
-      if (timerRef.current !== undefined) clearTimeout(timerRef.current);
-
-      setState({
-        type: 'animating',
-        fromIndex,
-        toIndex,
-        direction,
-        phase: 'setup',
-      });
-
-      rafRef.current = requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setState((s) => (s.type === 'animating' ? { ...s, phase: 'running' as const } : s));
-          timerRef.current = setTimeout(() => {
-            if (markAsLoadedOnCommit) {
-              loadedRef.current.add(toIndex);
-            }
-            preloadingRef.current.delete(toIndex);
-            setState({ type: 'idle', index: toIndex });
-            if (timerRef.current !== undefined) {
-              clearTimeout(timerRef.current);
-              timerRef.current = undefined;
-            }
-          }, IMAGE_SLIDE_DURATION_MS + 30);
-        });
-      });
-    },
-    [],
-  );
-
-  const loadTargetThenAnimate = useCallback(
-    (fromIndex: number, toIndex: number, direction: 'next' | 'prev') => {
+  const loadTargetThenCommit = useCallback(
+    (toIndex: number) => {
       const src = images[toIndex];
       if (!src || src === '/placeholder-car.jpg' || imageErrors.has(toIndex)) {
-        startAnimating(fromIndex, toIndex, direction);
+        setState({ type: 'idle', index: toIndex });
         return;
       }
       if (loadedRef.current.has(toIndex)) {
-        startAnimating(fromIndex, toIndex, direction, true);
+        markLoaded(toIndex);
+        setState({ type: 'idle', index: toIndex });
         return;
       }
 
@@ -262,11 +206,11 @@ export const ListingCardImageCarousel = React.forwardRef<
         img,
         () => {
           markLoaded(toIndex);
-          startAnimating(fromIndex, toIndex, direction, true);
+          setState({ type: 'idle', index: toIndex });
         },
         () => {
           preloadingRef.current.delete(toIndex);
-          startAnimating(fromIndex, toIndex, direction);
+          setState({ type: 'idle', index: toIndex });
         },
       );
       img.src = url;
@@ -274,7 +218,7 @@ export const ListingCardImageCarousel = React.forwardRef<
         resolveReadiness();
       }
     },
-    [images, imageErrors, markLoaded, startAnimating],
+    [images, imageErrors, markLoaded],
   );
 
   const goNext = useCallback(() => {
@@ -287,19 +231,12 @@ export const ListingCardImageCarousel = React.forwardRef<
     }
     const toIndex = (fromIndex + 1) % len;
     if (isTargetReady(toIndex)) {
-      startAnimating(fromIndex, toIndex, 'next', loadedRef.current.has(toIndex));
+      setState({ type: 'idle', index: toIndex });
     } else {
-      setState({ type: 'preloading', fromIndex, toIndex, direction: 'next' });
-      loadTargetThenAnimate(fromIndex, toIndex, 'next');
+      setState({ type: 'preloading', fromIndex, toIndex });
+      loadTargetThenCommit(toIndex);
     }
-  }, [
-    images.length,
-    state,
-    isTargetReady,
-    startAnimating,
-    loadTargetThenAnimate,
-    preloadAllRemaining,
-  ]);
+  }, [images.length, state, isTargetReady, loadTargetThenCommit, preloadAllRemaining]);
 
   const goPrev = useCallback(() => {
     if (state.type !== 'idle') return;
@@ -311,19 +248,12 @@ export const ListingCardImageCarousel = React.forwardRef<
     }
     const toIndex = (fromIndex - 1 + len) % len;
     if (isTargetReady(toIndex)) {
-      startAnimating(fromIndex, toIndex, 'prev', loadedRef.current.has(toIndex));
+      setState({ type: 'idle', index: toIndex });
     } else {
-      setState({ type: 'preloading', fromIndex, toIndex, direction: 'prev' });
-      loadTargetThenAnimate(fromIndex, toIndex, 'prev');
+      setState({ type: 'preloading', fromIndex, toIndex });
+      loadTargetThenCommit(toIndex);
     }
-  }, [
-    images.length,
-    state,
-    isTargetReady,
-    startAnimating,
-    loadTargetThenAnimate,
-    preloadAllRemaining,
-  ]);
+  }, [images.length, state, isTargetReady, loadTargetThenCommit, preloadAllRemaining]);
 
   useImperativeHandle(
     ref,
@@ -344,14 +274,6 @@ export const ListingCardImageCarousel = React.forwardRef<
     loadedRef,
     preloadingRef,
     imagesCacheRef,
-  );
-
-  useEffect(
-    () => () => {
-      if (rafRef.current !== undefined) cancelAnimationFrame(rafRef.current);
-      if (timerRef.current !== undefined) clearTimeout(timerRef.current);
-    },
-    [],
   );
 
   const errorPlaceholder = React.useMemo(
@@ -452,20 +374,8 @@ export const ListingCardImageCarousel = React.forwardRef<
     ],
   );
 
-  const slideBase: React.CSSProperties = {
-    position: 'absolute',
-    inset: 0,
-    backfaceVisibility: 'hidden',
-    WebkitBackfaceVisibility: 'hidden',
-  };
-
-  const visibleIndex = state.type === 'idle' ? state.index : state.fromIndex;
+  const displayIndex = state.type === 'idle' ? state.index : state.fromIndex;
   const isPreloading = state.type === 'preloading';
-  const isAnimating = state.type === 'animating';
-  const dir = isAnimating ? state.direction : 'next';
-  const isRunning = isAnimating && state.phase === 'running';
-  const enterFrom = dir === 'next' ? 'translate3d(100%, 0, 0)' : 'translate3d(-100%, 0, 0)';
-  const exitTo = dir === 'next' ? 'translate3d(-100%, 0, 0)' : 'translate3d(100%, 0, 0)';
 
   return (
     <div className="absolute inset-0 overflow-hidden" style={{ isolation: 'isolate' }}>
@@ -474,33 +384,7 @@ export const ListingCardImageCarousel = React.forwardRef<
           <Spinner size="sm" inline />
         </div>
       )}
-      <div
-        style={{
-          ...slideBase,
-          transform: isAnimating
-            ? isRunning
-              ? exitTo
-              : 'translate3d(0%, 0, 0)'
-            : 'translate3d(0%, 0, 0)',
-          transition:
-            isAnimating && isRunning ? `transform ${IMAGE_SLIDE_DURATION_MS}ms ease-out` : 'none',
-          willChange: isAnimating ? 'transform' : 'auto',
-        }}
-      >
-        {renderSlide(isAnimating ? state.fromIndex : visibleIndex)}
-      </div>
-      {isAnimating && (
-        <div
-          style={{
-            ...slideBase,
-            transform: isRunning ? 'translate3d(0%, 0, 0)' : enterFrom,
-            transition: isRunning ? `transform ${IMAGE_SLIDE_DURATION_MS}ms ease-out` : 'none',
-            willChange: 'transform',
-          }}
-        >
-          {state.toIndex === 0 && priority ? renderSlide(0) : renderNativeSlide(state.toIndex)}
-        </div>
-      )}
+      <div className="absolute inset-0">{renderSlide(displayIndex)}</div>
     </div>
   );
 });
