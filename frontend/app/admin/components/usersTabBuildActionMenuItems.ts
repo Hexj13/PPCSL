@@ -14,17 +14,30 @@ export type UsersTabMenuHandlers = {
 
 export type UsersTabTranslate = (key: string) => string;
 
+function hasActiveListingsForViewListingsMenu(user: User): boolean {
+  const hasActiveInListings =
+    user.listings?.some((listing) => listing.status === 'Active') ?? false;
+  if (hasActiveInListings) {
+    return true;
+  }
+  return typeof user.listingCountActive === 'number' && user.listingCountActive > 0;
+}
+
+function hasActiveListingsForRefreshDatesMenu(user: User): boolean {
+  const listings = user.listings;
+  if (listings != null && listings.length > 0) {
+    return listings.some((listing) => listing.status === 'Active');
+  }
+  return typeof user.listingCountActive === 'number' && user.listingCountActive > 0;
+}
+
 function pushViewListingsIfNeeded(
   user: User,
   items: ActionMenuItem[],
   t: UsersTabTranslate,
   h: UsersTabMenuHandlers,
 ) {
-  const hasActiveListings =
-    typeof user.listingCountActive === 'number'
-      ? user.listingCountActive > 0
-      : (user.listings?.some((listing) => listing.status === 'Active') ?? false);
-  if (!hasActiveListings) {
+  if (!hasActiveListingsForViewListingsMenu(user)) {
     return;
   }
   items.push({
@@ -43,8 +56,7 @@ function pushRefreshDatesIfNeeded(
   t: UsersTabTranslate,
   h: UsersTabMenuHandlers,
 ) {
-  const hasActive = user.listings?.some((listing) => listing.status === 'Active') ?? false;
-  if (!hasActive) {
+  if (!hasActiveListingsForRefreshDatesMenu(user)) {
     return;
   }
   items.push({
