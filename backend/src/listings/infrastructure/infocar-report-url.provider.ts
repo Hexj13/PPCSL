@@ -12,6 +12,13 @@ function base64urlEncode(buffer: Buffer): string {
   return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
+const DEFAULT_REPORT_BASE: Record<ReportProviderLocale, string> = {
+  ro: 'https://infocar.md',
+  ru: 'https://ru.infocar.md',
+};
+
+const DEFAULT_PARTNER_FROM = 'kupito';
+
 function encryptVin(vin: string, secretKey: string): string {
   const normalizedVin = vin.trim();
   const key = crypto.createHash('sha256').update(secretKey).digest();
@@ -51,8 +58,8 @@ export class InfocarReportUrlProvider implements IReportUrlProvider {
   }
 
   private getConfiguredBaseUrl(locale: ReportProviderLocale): string {
-    const baseUrl = this.getBaseUrl(locale);
-    const partnerFrom = this.getPartnerFrom();
+    const baseUrl = this.getBaseUrl(locale) || DEFAULT_REPORT_BASE[locale];
+    const partnerFrom = this.getPartnerFrom() || DEFAULT_PARTNER_FROM;
     if (!baseUrl || !partnerFrom) {
       return '';
     }

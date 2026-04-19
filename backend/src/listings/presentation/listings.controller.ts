@@ -365,7 +365,6 @@ export class ListingsController {
     description: 'Locale for report provider (ro | ru)',
   })
   @ApiResponse({ status: 302, description: 'Redirect to report provider' })
-  @ApiResponse({ status: 404, description: 'Report provider is not configured' })
   @Get(':id/report-redirect')
   async getReportRedirect(
     @Param('id', ParseUUIDPipe) id: string,
@@ -373,10 +372,6 @@ export class ListingsController {
     @Query('locale') locale?: string,
   ) {
     const normalizedLocale = normalizeReportLocale(locale);
-    if (!this.listingsService.isReportProviderEnabled()) {
-      throw new NotFoundException('errors.listingNotFound');
-    }
-
     const fallbackUrl = this.listingsService.getReportFallbackUrl(normalizedLocale);
     try {
       const { url } = await this.listingsService.getReportUrl(id, normalizedLocale);
