@@ -176,7 +176,7 @@
     "@nestjs/testing": "^11.1.19",
     "@types/jest": "^29.5.11",
     "@types/node": "^20.10.6",
-    "@types/supertest": "^6.0.3",
+    "@types/supertest": "^7.2.0",
     "@typescript-eslint/eslint-plugin": "^8.58.2",
     "@typescript-eslint/parser": "^8.58.2",
     "eslint": "^9.39.2",
