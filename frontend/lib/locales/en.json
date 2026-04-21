@@ -8,9 +8,8 @@
     "privacy": "Privacy Policy",
     "cookieSettings": "Cookie Settings",
     "contacts": "Contacts",
-    "partnerCipautoDescription": "Car import and sales",
-    "partnerInfocarDescription": "Vehicle history reports",
-    "partnerFactumDescription": "Car import and sales"
+    "partnerImportSalesDescription": "Car import and sales",
+    "partnerInfocarDescription": "Vehicle history reports"
   },
   "header": {
     "addListing": "Add Listing",
