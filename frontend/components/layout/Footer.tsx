@@ -188,7 +188,7 @@ export function Footer() {
         <div className="text-center">
           <div className="flex justify-center mb-6" suppressHydrationWarning>
             <div suppressHydrationWarning>
-              <PWAInstallButtonGray />
+              <PWAInstallButtonGray mobileApp={siteConfig.mobileApp} />
             </div>
           </div>
 

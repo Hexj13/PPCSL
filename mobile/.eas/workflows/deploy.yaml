@@ -1,0 +1,39 @@
+name: Deploy mobile
+
+on:
+  push:
+    branches: ['release/android']
+
+jobs:
+  fingerprint:
+    name: Check native changes
+    steps:
+      - uses: expo/fingerprint
+
+  build_android:
+    name: Build Android
+    needs: [fingerprint]
+    if: needs.fingerprint.outputs.changed == 'true'
+    steps:
+      - uses: eas/build
+        with:
+          platform: android
+          profile: production
+
+  submit_android:
+    name: Submit to Google Play
+    needs: [build_android]
+    steps:
+      - uses: eas/submit
+        with:
+          platform: android
+          profile: production
+
+  ota_update:
+    name: OTA Update
+    needs: [fingerprint]
+    if: needs.fingerprint.outputs.changed == 'false'
+    steps:
+      - uses: eas/update
+        with:
+          branch: production

@@ -6,6 +6,7 @@ import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { Brand } from './brands/entities/brand.entity';
 import { VehicleModel } from './brands/entities/vehicle-model.entity';
 import { ComparisonItem } from './comparison/entities/comparison-item.entity';
+import { PushDevice } from './devices/entities/push-device.entity';
 import { ExchangeRate } from './exchange-rates/entities/exchange-rate.entity';
 import { Favorite } from './favorites/entities/favorite.entity';
 import { ListingView } from './listings/entities/listing-view.entity';
@@ -62,6 +63,7 @@ export const dataSourceOptions: DataSourceOptions = {
     TireBrand,
     TireModel,
     Tire,
+    PushDevice,
   ],
   synchronize: process.env.DB_SYNC === 'true' || process.env.NODE_ENV === 'test',
   logging: resolveTypeOrmQueryLogging(),

@@ -1,22 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Modal } from '@/components/modals/Modal';
+import { PWAStoreDesktopModal } from '@/components/pwa/PWAStoreDesktopModal';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useTranslation } from '@/hooks/useTranslation';
+import type { MobileAppLinks } from '@/lib/site-config';
 
 interface PWAInstallButtonGrayProps {
   fullWidth?: boolean;
+  mobileApp?: MobileAppLinks;
 }
 
 function highlightKeywords(text: string, keywords: string[]): React.ReactNode {
-  const isInsideParentheses = (text: string, position: number): boolean => {
+  const isInsideParentheses = (s: string, position: number): boolean => {
     let openCount = 0;
     for (let i = 0; i < position; i++) {
-      if (text[i] === '(') {
+      if (s[i] === '(') {
         openCount++;
-      } else if (text[i] === ')') {
+      } else if (s[i] === ')') {
         openCount--;
       }
     }
@@ -80,10 +83,11 @@ function highlightKeywords(text: string, keywords: string[]): React.ReactNode {
   return <>{parts}</>;
 }
 
-export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGrayProps) {
-  const { canInstall, isInstalled, isIOS, isReady, install } = usePWAInstall();
+export function PWAInstallButtonGray({ fullWidth = false, mobileApp }: PWAInstallButtonGrayProps) {
+  const { canInstall, isInstalled, isIOS, isMobile, isReady, install } = usePWAInstall();
   const { t } = useTranslation();
   const [showModal, setShowModal] = useState(false);
+  const [showStoreModal, setShowStoreModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'ios' | 'android'>('ios');
   const [isMounted, setIsMounted] = useState(false);
 
@@ -91,7 +95,12 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
     setIsMounted(true);
   }, []);
 
-  const shouldShow = isMounted && isReady && !isInstalled && canInstall;
+  const storeLinksActive =
+    mobileApp?.enabled === true && !!(mobileApp.androidUrl || mobileApp.iosUrl);
+
+  const shouldShowPwa = !isInstalled && canInstall;
+  const shouldShow = isMounted && isReady && !isInstalled && (storeLinksActive || shouldShowPwa);
+
   const highlightKeywordsList = [
     'Safari',
     'iPhone',
@@ -103,14 +112,15 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
     'Add',
   ];
 
-  const handleInstall = () => {
-    if (isIOS) {
-      setActiveTab('ios');
-      setShowModal(true);
-    } else {
-      void handleAndroidInstall();
-    }
-  };
+  const androidQrSrc = useMemo(() => {
+    if (!mobileApp?.androidUrl) return null;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(mobileApp.androidUrl)}`;
+  }, [mobileApp?.androidUrl]);
+
+  const iosQrSrc = useMemo(() => {
+    if (!mobileApp?.iosUrl) return null;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(mobileApp.iosUrl)}`;
+  }, [mobileApp?.iosUrl]);
 
   const handleAndroidInstall = async () => {
     const success = await install();
@@ -120,12 +130,44 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
     }
   };
 
+  const handlePrimaryClick = () => {
+    if (storeLinksActive) {
+      if (isMobile && !isIOS && mobileApp?.androidUrl) {
+        window.location.href = mobileApp.androidUrl;
+        return;
+      }
+      if (isMobile && isIOS && mobileApp?.iosUrl) {
+        window.location.href = mobileApp.iosUrl;
+        return;
+      }
+      if (isMobile && isIOS && !mobileApp?.iosUrl) {
+        setActiveTab('ios');
+        setShowModal(true);
+        return;
+      }
+      if (isMobile && !isIOS && !mobileApp?.androidUrl) {
+        void handleAndroidInstall();
+        return;
+      }
+      setShowStoreModal(true);
+      return;
+    }
+
+    if (isIOS) {
+      setActiveTab('ios');
+      setShowModal(true);
+    } else {
+      void handleAndroidInstall();
+    }
+  };
+
   return (
     <div suppressHydrationWarning>
       {isMounted && shouldShow && (
         <div className={fullWidth ? 'w-full' : 'flex justify-center items-center'}>
           <button
-            onClick={handleInstall}
+            type="button"
+            onClick={handlePrimaryClick}
             className={`text-white font-medium text-sm md:text-base hover-only:hover:text-primary-100 active:text-primary-500 transition-all duration-200 whitespace-nowrap flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none ${fullWidth ? 'w-full justify-center' : ''}`}
             aria-label={t('pwa.mobileApp')}
           >
@@ -158,6 +200,15 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
           </button>
         </div>
       )}
+      {isMounted && showStoreModal && storeLinksActive && mobileApp ? (
+        <PWAStoreDesktopModal
+          isOpen={showStoreModal}
+          onClose={() => setShowStoreModal(false)}
+          mobileApp={mobileApp}
+          androidQrSrc={androidQrSrc}
+          iosQrSrc={iosQrSrc}
+        />
+      ) : null}
       {isMounted && showModal && (
         <Modal
           isOpen={showModal}
@@ -170,6 +221,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
             <div className="border-b border-primary-500/20">
               <div className="flex gap-4">
                 <button
+                  type="button"
                   onClick={() => setActiveTab('ios')}
                   className={`px-4 py-2 font-medium transition-colors duration-200 border-b-2 ${
                     activeTab === 'ios'
@@ -180,6 +232,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
                   {t('pwa.iosTab')}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setActiveTab('android')}
                   className={`px-4 py-2 font-medium transition-colors duration-200 border-b-2 ${
                     activeTab === 'android'

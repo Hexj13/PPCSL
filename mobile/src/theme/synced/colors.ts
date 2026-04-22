@@ -1,0 +1,56 @@
+import type { ThemeColors } from './theme-types';
+
+const colors: ThemeColors = {
+  primary: {
+    50: '#f0f9f6',
+    100: '#d4ede4',
+    200: '#a9dbc9',
+    300: '#75C9A5',
+    400: '#5fa88a',
+    500: '#40916B',
+    600: '#40916B',
+    700: '#2E6F51',
+    800: '#245a45',
+    900: '#1a4534',
+  },
+  dark: {
+    50: '#f9fafb',
+    100: '#f3f4f6',
+    200: '#e5e7eb',
+    300: '#d1d5db',
+    400: '#9ca3af',
+    500: '#6b7280',
+    600: '#4b5563',
+    700: '#374151',
+    800: '#1f2937',
+    900: '#0d1117',
+  },
+  bg: {
+    base: '#F5F5F5',
+    secondary: '#F4F4F4',
+    darker: '#E8E8E8',
+    partnerLogo: '#FFFFFF',
+  },
+  text: {
+    primary: '#1B1B1B',
+    secondary: '#4A4A4A',
+  },
+  divider: '#DADADA',
+  accent: '#ec9e1c',
+  accentSecondary: '#FF5A5F',
+  newBadge: '#6AA4C6',
+  semantic: {
+    success: '#28A745',
+    error: '#DC3545',
+    danger: '#FFC107',
+    warning: '#FFC107',
+    info: '#0D6EFD',
+    rose: '#db2777',
+  },
+  pwa: {
+    backgroundColor: '#F5F5F5',
+    themeColor: '#40916B',
+  },
+};
+
+export default colors;

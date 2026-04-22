@@ -38,7 +38,9 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: isDev
+      ? true
+      : (process.env.FRONTEND_URL ?? 'http://localhost:3000'),
     credentials: true,
   });
 
@@ -64,8 +66,10 @@ async function bootstrap() {
   );
 
   const frontendOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
-  const setUploadsCorsHeaders = (res: Response) => {
-    res.setHeader('Access-Control-Allow-Origin', frontendOrigin);
+  const uploadsAllowOrigin = (req: Request) =>
+    isDev && req.headers.origin ? req.headers.origin : frontendOrigin;
+  const setUploadsCorsHeaders = (res: Response, req?: Request) => {
+    res.setHeader('Access-Control-Allow-Origin', req ? uploadsAllowOrigin(req) : frontendOrigin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range');
@@ -73,7 +77,7 @@ async function bootstrap() {
   };
 
   app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
-    setUploadsCorsHeaders(res);
+    setUploadsCorsHeaders(res, req);
     if (req.method === 'OPTIONS') {
       return res.sendStatus(200);
     }
@@ -83,7 +87,13 @@ async function bootstrap() {
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
     setHeaders: (res, path) => {
-      setUploadsCorsHeaders(res);
+      if (isDev) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      } else {
+        setUploadsCorsHeaders(res);
+      }
       if (
         path.endsWith('.webp') ||
         path.endsWith('.jpg') ||

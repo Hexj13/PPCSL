@@ -1920,7 +1920,12 @@
     "retry": "Try Again",
     "updateAvailable": "New version available",
     "updateNow": "Update Now",
-    "updateLater": "Later"
+    "updateLater": "Later",
+    "openPlayStore": "Open in Google Play",
+    "openAppStore": "Open in App Store",
+    "desktopStoreTitle": "Kupito mobile app",
+    "desktopStoreDescription": "Scan the QR code or use the button below.",
+    "storeModalClose": "Close"
   },
   "metadata": {
     "site": {
@@ -2049,6 +2054,79 @@
       "empty": "No promotion history",
       "active": "Active",
       "loadError": "Error loading history"
+    }
+  },
+  "mobile": {
+    "auth": {
+      "login": "Sign in",
+      "emailOrPhone": "Email or phone",
+      "password": "Password",
+      "signIn": "Sign in",
+      "signUp": "Sign up",
+      "createAccount": "Create account",
+      "haveAccount": "Already have an account? Sign in",
+      "phone": "Phone",
+      "emailOptional": "Email (optional)",
+      "firstNameOptional": "First name (optional)",
+      "signInFailed": "Sign in failed. Check your credentials.",
+      "signUpFailed": "Sign up failed. Try again."
+    },
+    "tabs": {
+      "catalog": "Browse",
+      "favorites": "Favorites",
+      "create": "Sell",
+      "profile": "Profile"
+    },
+    "catalog": {
+      "title": "Listings",
+      "empty": "No listings",
+      "loadMore": "Load more"
+    },
+    "listing": {
+      "price": "Price",
+      "city": "City",
+      "callSeller": "Contact",
+      "favoriteAdd": "Save",
+      "favoriteRemove": "Remove"
+    },
+    "create": {
+      "title": "New listing",
+      "editTitle": "Edit listing",
+      "brand": "Brand",
+      "model": "Model",
+      "year": "Year",
+      "mileage": "Mileage km",
+      "price": "Price (EUR)",
+      "city": "City",
+      "listingTitle": "Title",
+      "description": "Description",
+      "bodyType": "Body type",
+      "pickImages": "Pick images",
+      "takePhoto": "Take photo",
+      "submit": "Publish",
+      "saveDraft": "Save",
+      "uploading": "Uploading…",
+      "success": "Listing created",
+      "publish": "Publish listing",
+      "selectBrand": "Select brand",
+      "selectModel": "Select model"
+    },
+    "favorites": {
+      "title": "Favorites",
+      "empty": "No favorites yet",
+      "needAuth": "Sign in to use favorites"
+    },
+    "profile": {
+      "title": "Profile",
+      "myListings": "My listings",
+      "signOut": "Sign out",
+      "language": "Language",
+      "push": "Enable notifications",
+      "guest": "You are not signed in"
+    },
+    "permissions": {
+      "camera": "Kupito uses the camera for listing photos.",
+      "photos": "Kupito accesses your gallery for listing images."
     }
   }
 }

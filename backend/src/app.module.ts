@@ -20,6 +20,7 @@ import { CipautoImportThrottlerGuard } from './common/guards/cipauto-import-thro
 import { SentryInterceptor } from './common/interceptors/sentry.interceptor';
 import { ComparisonModule } from './comparison/comparison.module';
 import { dataSourceOptions } from './data-source';
+import { DevicesModule } from './devices/devices.module';
 import { DiagnosticsModule } from './diagnostics/diagnostics.module';
 import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
 import { FavoritesModule } from './favorites/favorites.module';
@@ -54,6 +55,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     ListingsModule,
     NotificationsModule,
+    DevicesModule,
     BoardModule,
     FavoritesModule,
     ComparisonModule,
