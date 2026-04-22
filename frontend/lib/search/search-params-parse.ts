@@ -45,6 +45,7 @@ export interface DefaultFiltersShape {
   equipment_match_mode: 'full' | 'partial';
   available_in_credit: boolean;
   down_payment_amount_gte: string;
+  seller_type: string;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
   tire_vehicle_type: '' | 'car' | 'truck' | 'moto';
@@ -95,6 +96,7 @@ export function getDefaultFilters(currentYear: string): DefaultFiltersShape {
     equipment_match_mode: 'full',
     available_in_credit: false,
     down_payment_amount_gte: '',
+    seller_type: '',
     sortBy: 'created_at',
     sortOrder: 'DESC',
     tire_vehicle_type: '',
@@ -245,6 +247,8 @@ function applyLegacyParams(
         'title',
         'category',
         'tireVehicleType',
+        'seller_type',
+        'seller_types',
       ].includes(key) ||
       key.startsWith('tire_') ||
       (ARRAY_PARAMS as readonly string[]).includes(key) ||
@@ -376,6 +380,21 @@ function applyDownPaymentPageLimitSortAndTitle(
   }
   const title = getVal('title');
   if (title) params.title = title;
+  const sellerType = getVal('seller_type');
+  if (sellerType === 'Individual' || sellerType === 'Business') {
+    params.seller_type = sellerType;
+  } else {
+    const legacySellerTypes = getParamValue(urlParams, 'seller_types');
+    if (legacySellerTypes) {
+      const first = legacySellerTypes
+        .split(',')
+        .map((s) => s.trim())
+        .find((v) => v === 'Individual' || v === 'Business');
+      if (first === 'Individual' || first === 'Business') {
+        params.seller_type = first;
+      }
+    }
+  }
 }
 
 export async function parseSearchParams(

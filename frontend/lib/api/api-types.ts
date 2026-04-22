@@ -228,6 +228,7 @@ export interface SearchParams {
   horsepower_gte?: number;
   horsepower_lte?: number;
   drive_types?: string[];
+  seller_type?: 'Individual' | 'Business';
   page?: number;
   limit?: number;
   sortBy?: string;

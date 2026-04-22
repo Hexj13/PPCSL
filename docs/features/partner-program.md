@@ -48,6 +48,12 @@ Promotion history keeps `promotion_source`:
 
 This is used by the user and admin promotion history views to distinguish standard, partner-balance, and admin-unlimited promotions.
 
+## Public pages (`/partners`, `/investors`)
+
+- **`/partners`** — Static marketing copy (i18n), describes how to join the program, benefits, and links to contacts. Included in **`pages.xml`** (priority 0.4, monthly) via `SitemapService.getPagesSitemap()`.
+- **`/investors`** — Static overview for investors (i18n). **Not** included in the sitemap; `core/frontend/app/investors/layout.tsx` exports metadata with **`robots.index: false`** and **`follow: false`** so crawlers should not index it.
+- **Footer:** `Footer.tsx` links to both routes (`footer.partners`, `footer.investors`). This is separate from **footer partner logos**, which still come from platform `config/site.ts` and root assets.
+
 ## Frontend behavior
 
 - Admin users tab shows partner status directly on the card and exposes an edit modal.

@@ -3,6 +3,8 @@ export interface TranslationsPart1 {
     copyright: string;
     tagline: string;
     faq: string;
+    partners: string;
+    investors: string;
     terms: string;
     privacy: string;
     cookieSettings: string;

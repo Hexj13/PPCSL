@@ -54,7 +54,8 @@ The path **`/sitemaps/brands.xml`** is **not** served (404). Older setups must r
 
 | Type                 | Included | File                 | Notes                                                              |
 | -------------------- | -------- | -------------------- | ------------------------------------------------------------------ |
-| Static pages         | Yes      | pages.xml            | `/`, `/listings`, `/terms`, `/privacy`, `/faq`, `/contacts`, `/cookie-settings` |
+| Static pages         | Yes      | pages.xml            | `/`, `/listings`, `/terms`, `/privacy`, `/faq`, `/partners`, `/contacts`, `/cookie-settings` (`/investors` is excluded; see next row) |
+| Investor page        | No       | —                    | `/investors` is a normal route but **omitted** from `pages.xml`; `app/investors/layout.tsx` sets `robots` to **noindex, nofollow** so it is not meant for organic search. |
 | Brand pages          | Yes      | brands-*.xml         | Split by `vehicleType`: `car` / `truck` / `moto` (see below)        |
 | Brand+Model pages    | Yes      | brands-*.xml         | Bucket from first model `vehicle_types` entry, else `car`          |
 | Seller boards        | Yes      | sellers.xml          | `/board/:board_slug` — only active sellers with active listings    |
@@ -73,8 +74,11 @@ The path **`/sitemaps/brands.xml`** is **not** served (404). Older setups must r
 | `/terms`           | 0.3      | monthly    |
 | `/privacy`         | 0.3      | monthly    |
 | `/faq`             | 0.4      | monthly    |
+| `/partners`        | 0.4      | monthly    |
 | `/contacts`        | 0.3      | monthly    |
 | `/cookie-settings` | 0.2      | monthly    |
+
+`/investors` is intentionally **not** in this urlset (same omission in `sitemap.txt` extraction).
 
 ### Brand and Model URLs (`brands-car.xml`, `brands-truck.xml`, `brands-moto.xml`)
 

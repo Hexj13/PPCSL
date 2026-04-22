@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 
+import { Dropdown } from '@/components/common/Dropdown';
 import { MultiSelectDropdown } from '@/components/common/MultiSelectDropdown';
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -65,6 +66,15 @@ export function AdvancedFilters({
   const { t } = useTranslation();
 
   const doorOptions = useMemo(() => getDoorOptions(t), [t]);
+
+  const sellerTypeOptions = useMemo(
+    () => [
+      { value: '', label: t('searchFilters.sellerTypePlaceholder') },
+      { value: 'Individual', label: t('searchFilters.sellerTypeIndividual') },
+      { value: 'Business', label: t('searchFilters.sellerTypeBusiness') },
+    ],
+    [t],
+  );
 
   const handleEngineBlur = (key: string, value: string) => {
     if (value && value.trim() !== '') {
@@ -290,6 +300,21 @@ export function AdvancedFilters({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="min-w-0">
+          <label
+            className="block text-sm font-semibold mb-2 text-primary-900 truncate"
+            title={t('searchFilters.sellerTypeLabel')}
+          >
+            {t('searchFilters.sellerTypeLabel')}
+          </label>
+          <Dropdown
+            value={filters.seller_type}
+            onChange={(value) => onFilterChange('seller_type', value)}
+            options={sellerTypeOptions}
+            placeholder={t('searchFilters.sellerTypePlaceholder')}
+            searchable={false}
+          />
+        </div>
         <div>
           <h3
             className="text-sm font-semibold mb-2 text-primary-900 truncate"
@@ -341,7 +366,6 @@ export function AdvancedFilters({
             label={t('listings.availableInCredit')}
           />
         </div>
-        <div />
       </div>
     </div>
   );

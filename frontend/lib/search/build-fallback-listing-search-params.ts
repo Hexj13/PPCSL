@@ -25,6 +25,7 @@ export function isGetParsedListingSearchParamsFailure(
   return keys.length === 2 && keys.includes('page') && keys.includes('limit');
 }
 
+/* eslint-disable complexity -- tire filter surface with multiple scalar/array/boolean branches */
 function buildTireFallbackListingSearchParams(
   filters: FilterState,
 ): Record<string, string | number | boolean> {
@@ -108,6 +109,10 @@ function buildTireFallbackListingSearchParams(
 
   if (filters.urgent) out.urgent = true;
 
+  if (filters.seller_type === 'Individual' || filters.seller_type === 'Business') {
+    out.seller_type = filters.seller_type;
+  }
+
   if (filters.currency?.trim()) out.currency = filters.currency.trim();
 
   if (filters.sortBy && filters.sortBy !== 'created_at') out.sortBy = filters.sortBy;
@@ -115,6 +120,7 @@ function buildTireFallbackListingSearchParams(
 
   return out;
 }
+/* eslint-enable complexity */
 
 export function buildFallbackListingSearchParamsFromFilters(
   filters: FilterState,
@@ -200,6 +206,10 @@ export function buildFallbackListingSearchParamsFromFilters(
   if (filters.urgent) out.urgent = true;
   if (filters.is_new) out.is_new = true;
   if (filters.available_in_credit) out.available_in_credit = true;
+
+  if (filters.seller_type === 'Individual' || filters.seller_type === 'Business') {
+    out.seller_type = filters.seller_type;
+  }
 
   if (filters.currency?.trim()) out.currency = filters.currency.trim();
 

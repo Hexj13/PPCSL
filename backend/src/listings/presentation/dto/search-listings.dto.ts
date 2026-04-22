@@ -753,6 +753,15 @@ export class SearchListingsDto {
   down_payment_amount_gte?: number;
 
   @ApiPropertyOptional({
+    enum: ['Individual', 'Business'],
+    description: 'Filter by seller account type (private person or business/dealer)',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['Individual', 'Business'])
+  seller_type?: 'Individual' | 'Business';
+
+  @ApiPropertyOptional({
     example: ['Undamaged', 'Damaged'],
     enum: ['Undamaged', 'Damaged', 'ForParts'],
     description: 'Condition types (comma-separated or array)',

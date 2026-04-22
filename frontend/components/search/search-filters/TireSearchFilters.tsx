@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 
+import { Dropdown } from '@/components/common/Dropdown';
 import { MultiSelectDropdown } from '@/components/common/MultiSelectDropdown';
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -53,23 +54,14 @@ const TIRE_QUANTITY_FILTER_OPTIONS = Array.from(
   },
 );
 
-export function TireSearchFilters({
-  activeTab,
-  filters,
-  tireBrands,
-  tireModels,
-  loadingTireModels,
-  cityOptions,
-  onFilterChange,
-  onMultiSelectChange,
-  onCheckboxChange,
-  onPriceChange,
-  onPriceBlur,
-  onWheel,
-  updateMultiple,
-}: TireSearchFiltersProps) {
-  const { t } = useTranslation();
+type TranslateFn = ReturnType<typeof useTranslation>['t'];
 
+function useTireFilterOptions(
+  t: TranslateFn,
+  tireBrands: TireBrand[],
+  tireModels: TireModel[],
+  filters: FilterState,
+) {
   const tireBrandOptions = useMemo(
     () => buildCategorizedTireBrandOptions([...tireBrands], t),
     [tireBrands, t],
@@ -103,6 +95,15 @@ export function TireSearchFilters({
     [t],
   );
 
+  const sellerTypeOptions = useMemo(
+    () => [
+      { value: '', label: t('searchFilters.sellerTypePlaceholder') },
+      { value: 'Individual', label: t('searchFilters.sellerTypeIndividual') },
+      { value: 'Business', label: t('searchFilters.sellerTypeBusiness') },
+    ],
+    [t],
+  );
+
   const tireFeatureMulti = useMemo(() => {
     const options = [
       { value: 'tire_studded', label: t('searchFilters.tireStudded') },
@@ -129,6 +130,42 @@ export function TireSearchFilters({
     filters.tire_tubeless,
     t,
   ]);
+
+  return {
+    tireBrandOptions,
+    tireModelOptions,
+    treadOptions,
+    conditionOptions,
+    sellerTypeOptions,
+    tireFeatureMulti,
+  };
+}
+
+export function TireSearchFilters({
+  activeTab,
+  filters,
+  tireBrands,
+  tireModels,
+  loadingTireModels,
+  cityOptions,
+  onFilterChange,
+  onMultiSelectChange,
+  onCheckboxChange,
+  onPriceChange,
+  onPriceBlur,
+  onWheel,
+  updateMultiple,
+}: TireSearchFiltersProps) {
+  const { t } = useTranslation();
+
+  const {
+    tireBrandOptions,
+    tireModelOptions,
+    treadOptions,
+    conditionOptions,
+    sellerTypeOptions,
+    tireFeatureMulti,
+  } = useTireFilterOptions(t, tireBrands, tireModels, filters);
 
   const widthInput = filters.tire_widths[0] ?? '';
   const profileInput = filters.tire_profiles[0] ?? '';
@@ -437,6 +474,21 @@ export function TireSearchFilters({
           />
         </div>
         <div className="min-w-0">
+          <label
+            className="block text-sm font-semibold mb-2 text-primary-900 truncate"
+            title={t('searchFilters.sellerTypeLabel')}
+          >
+            {t('searchFilters.sellerTypeLabel')}
+          </label>
+          <Dropdown
+            value={filters.seller_type}
+            onChange={(value) => onFilterChange('seller_type', value)}
+            options={sellerTypeOptions}
+            placeholder={t('searchFilters.sellerTypePlaceholder')}
+            searchable={false}
+          />
+        </div>
+        <div className="min-w-0">
           <h3
             className="text-sm font-semibold mb-2 text-primary-900 truncate"
             title={t('searchFilters.labels')}
@@ -459,7 +511,6 @@ export function TireSearchFilters({
             />
           </div>
         </div>
-        <div className="hidden lg:block" />
       </div>
     </div>
   );

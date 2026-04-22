@@ -65,7 +65,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [loading-states.md](./features/loading-states.md) — Loading states
 - [cross-tab-sync.md](./features/cross-tab-sync.md) — Favorites, comparison, listing status, auth session, and refresh-token rotation across tabs (UI: `BroadcastChannel` + storage; auth: `storage` on auth keys — see doc)
 - [paid-promotion.md](./features/paid-promotion.md) — Paid promotion
-- [partner-program.md](./features/partner-program.md) — Platform partners, bonus balance, partner promotion flow, footer partners
+- [partner-program.md](./features/partner-program.md) — Platform partners, bonus balance, partner promotion flow, footer partner logos, public `/partners` and `/investors` pages (sitemap / noindex)
 - [my-listings-page.md](./features/my-listings-page.md) — My listings filters, badge counts, loading behavior
 - Assign listing to user (admin) — on `/listings/new` admin can set listing owner UUID; real-time validation (GET `/api/admin/validate-assign-user/:userId`), backend checks (existence, active, listing limit)
 - Admin edit listings — on the admin listings tab, admin can open `/listings/[id]/edit` and edit any listing (including `Closed`), regardless of ownership. Backend bypasses ownership and `Closed` restrictions only for JWT users with role `Admin`. In edit form, `vehicleType` switcher is available only for admins. For editing VIN, admin requests full VIN via `GET /api/listings/:id?includeFullVin=1`.

@@ -98,9 +98,11 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 | -------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------ |
 | **Engine (l)** — paired From/To inputs | **Power (hp)** — paired From/To inputs | **Color** + **Number of doors** (car/truck) **or** **Color** only (moto) |
 
-### Row 3 (full width)
+### Row 3 (three columns)
 
-- **Labels:** Checkboxes for “Urgent” and “New” (or “New moto” for moto). Styled as badge chips with icons.
+| Column 1 | Column 2 | Column 3 |
+| -------- | -------- | -------- |
+| **Seller type** — `MultiSelectDropdown` used as single-select (`Individual` / `Business`); empty selection means “any” | **Labels** — “Urgent” and “New” (or “New moto” for moto) checkboxes, badge styling | **Credit/installment** — “Available in credit” checkbox |
 
 **Options:**
 
@@ -108,7 +110,9 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 - Has registration: yes/no; placeholder e.g. “Select”; no “All” option.
 - Registration type, Condition, Color, Number of doors: from `useFilterOptions` (backend/options); multi-select or dropdown as in UI.
 
-**Translation keys (examples):** `searchFilters.city`, `searchFilters.currency`, `searchFilters.registration`, `searchFilters.registrationTypeLabel`, `searchFilters.condition`, `searchFilters.engine`, `searchFilters.horsepower`, `searchFilters.color`, `searchFilters.doors`, `searchFilters.labels`, `searchFilters.urgent`, `searchFilters.new`, `searchFilters.newMoto`, plus placeholders.
+**URL / API:** `seller_type` is sent when set to `Individual` or `Business` (mono). Available in both vehicle advanced filters and tire search filters; applied by both `buildVehicleSearchQuery` and `buildTireSearchQuery` on the backend. See `build-fallback-listing-search-params.ts` and `SearchListingsDto.seller_type`.
+
+**Translation keys (examples):** `searchFilters.city`, `searchFilters.currency`, `searchFilters.registration`, `searchFilters.registrationTypeLabel`, `searchFilters.condition`, `searchFilters.engine`, `searchFilters.horsepower`, `searchFilters.color`, `searchFilters.doors`, `searchFilters.labels`, `searchFilters.sellerTypeLabel`, `searchFilters.sellerTypePlaceholder`, `searchFilters.sellerTypeIndividual`, `searchFilters.sellerTypeBusiness`, `searchFilters.urgent`, `searchFilters.new`, `searchFilters.newMoto`, plus placeholders.
 
 ---
 
@@ -205,4 +209,4 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 
 ---
 
-**Last updated:** 2026-03-20
+**Last updated:** 2026-04-22

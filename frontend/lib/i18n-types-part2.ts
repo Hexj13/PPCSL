@@ -359,6 +359,45 @@ export interface TranslationsPart2 {
       email: string;
     };
   };
+  partners: {
+    title: string;
+    intro: string;
+    howToBecome: {
+      title: string;
+      items: string[];
+    };
+    benefits: {
+      title: string;
+      items: string[];
+    };
+    whoCan: {
+      title: string;
+      items: string[];
+    };
+    howToLeave: {
+      title: string;
+      items: string[];
+    };
+    obligations: {
+      title: string;
+      items: string[];
+    };
+    contactCta: string;
+  };
+  investors: {
+    title: string;
+    intro: string;
+    about: { title: string; paragraphs: string[] };
+    done: { title: string; items: string[] };
+    product: { title: string; lead: string; items: string[] };
+    businessModel: { title: string; lead: string; items: string[] };
+    vision: { title: string; paragraphs: string[] };
+    strategy: { title: string; items: string[] };
+    scaling: { title: string; lead: string; items: string[] };
+    whyNow: { title: string; items: string[] };
+    offer: { title: string; lead: string; items: string[]; footer: string };
+    contactCta: string;
+  };
   contacts: {
     title: string;
     intro: string;
@@ -404,6 +443,20 @@ export interface TranslationsPart2 {
       keywords: string[];
     };
     faq: {
+      title: string;
+      description: string;
+      ogTitle: string;
+      ogDescription: string;
+      ogAlt: string;
+    };
+    partners: {
+      title: string;
+      description: string;
+      ogTitle: string;
+      ogDescription: string;
+      ogAlt: string;
+    };
+    investors: {
       title: string;
       description: string;
       ogTitle: string;

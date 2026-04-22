@@ -400,6 +400,7 @@ GET    /api/listings/promotion-access  # Get promotion access status (no auth re
 - When both `brand_ids` and `model_ids` are sent, the backend uses **OR** logic so that “brand-only” selections still return results: a listing matches if its `model_id` is in the list **or** its `brand_id` is in the list and that brand has no selected models (e.g. “all Škoda” + specific models for other brands returns all Škoda listings plus the chosen models). Implementation: `TypeOrmListingRepository.applyBrandModelFilter`.
 - `?equipment=air_conditioning,navigation` - Filter by equipment keys (comma-separated). Options depend on `vehicleType` (car/truck/moto). See `vehicle-equipment.ts` for keys and categories.
 - `?equipmentMatch=full|partial` - Equipment match mode (optional; default `full`). **Full:** listing must contain all selected equipment (AND). **Partial:** listing must contain at least one selected option (OR).
+- `?seller_type=Individual|Business` - Restrict results to listings whose owner has that account type (`user.type`). Applied to both vehicle and tire searches. Omit for no filter. Legacy `?seller_types=…` in the URL is still read by the frontend (first valid value is used).
 - Example URLs:
   - `/?brand=toyota` - All Toyota listings
   - `/?brand=toyota&model=yaris` - Toyota Yaris listings

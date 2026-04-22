@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   useCallback,
   useEffect,
@@ -20,6 +21,15 @@ import { getCountry } from '@/lib/utils';
 
 type FooterPartner = NonNullable<SiteConfig['footerPartners']>[number];
 type FooterPartnerLogoSurface = NonNullable<SiteConfig['footerPartnerLogoSurfaceDefault']>;
+
+function shuffledFooterPartnersCopy(partners: readonly FooterPartner[]): FooterPartner[] {
+  const a = partners.slice() as FooterPartner[];
+  for (let i = a.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 function getPartnerLogoSurfaceClasses(surface: FooterPartnerLogoSurface): string {
   if (surface === 'transparent') {
@@ -178,9 +188,22 @@ function FooterPartnersRow({
 
 export function Footer() {
   const { t } = useTranslation();
+  const pathname = usePathname();
   const siteConfig = loadSiteConfigSync(getCountry());
-  const footerPartners = siteConfig.footerPartners ?? [];
+  const fromConfig = siteConfig.footerPartners;
+  const [partnersInDisplayOrder, setPartnersInDisplayOrder] = useState<FooterPartner[]>(() => [
+    ...(fromConfig ?? []),
+  ]);
   const footerPartnerLogoSurfaceDefault = siteConfig.footerPartnerLogoSurfaceDefault ?? 'light';
+  const footerNavLinkClassName =
+    'text-white hover-only:hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline';
+
+  useLayoutEffect(() => {
+    if (!fromConfig?.length) {
+      return;
+    }
+    setPartnersInDisplayOrder(shuffledFooterPartnersCopy(fromConfig));
+  }, [pathname, fromConfig]);
 
   return (
     <footer className="bg-primary-700 shadow-lg text-white mt-auto border-t-2 border-primary-500/20 backdrop-blur-xs">
@@ -192,13 +215,13 @@ export function Footer() {
             </div>
           </div>
 
-          {footerPartners.length > 0 && (
+          {partnersInDisplayOrder.length > 0 && (
             <div className="mb-6" suppressHydrationWarning>
-              <div className="text-sm sm:text-base font-semibold text-white/90 mb-4">
+              <div className="text-sm sm:text-base font-semibold text-white mb-4">
                 {t('footer.partnersTitle')}
               </div>
               <FooterPartnersRow
-                partners={footerPartners}
+                partners={partnersInDisplayOrder}
                 logoSurfaceDefault={footerPartnerLogoSurfaceDefault}
                 t={t}
               />
@@ -206,59 +229,114 @@ export function Footer() {
           )}
 
           <div
-            className="flex flex-col lg:flex-row justify-center gap-2 lg:gap-4 text-xs sm:text-sm mb-4 mt-6"
+            className="mb-4 mt-6 border-b border-primary-500/25 pb-4 text-xs sm:text-sm"
             suppressHydrationWarning
           >
-            <Link
-              href="/faq"
-              className="text-white hover-only:hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
+            <div className="flex flex-col items-center gap-2 md:hidden" suppressHydrationWarning>
+              <Link href="/faq" className={footerNavLinkClassName} suppressHydrationWarning>
+                {t('footer.faq')}
+              </Link>
+              <Link href="/partners" className={footerNavLinkClassName} suppressHydrationWarning>
+                {t('footer.partners')}
+              </Link>
+              <Link href="/investors" className={footerNavLinkClassName} suppressHydrationWarning>
+                {t('footer.investors')}
+              </Link>
+              <Link href="/contacts" className={footerNavLinkClassName} suppressHydrationWarning>
+                {t('footer.contacts')}
+              </Link>
+              <Link href="/terms" className={footerNavLinkClassName} suppressHydrationWarning>
+                {t('footer.terms')}
+              </Link>
+              <Link href="/privacy" className={footerNavLinkClassName} suppressHydrationWarning>
+                {t('footer.privacy')}
+              </Link>
+              <Link
+                href="/cookie-settings"
+                className={footerNavLinkClassName}
+                suppressHydrationWarning
+              >
+                {t('footer.cookieSettings')}
+              </Link>
+            </div>
+            <div
+              className="hidden md:flex md:flex-col md:items-center md:gap-2"
               suppressHydrationWarning
             >
-              {t('footer.faq')}
-            </Link>
-            <span className="hidden lg:inline text-white" suppressHydrationWarning>
-              |
-            </span>
-            <Link
-              href="/terms"
-              className="text-white hover-only:hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
-              suppressHydrationWarning
-            >
-              {t('footer.terms')}
-            </Link>
-            <span className="hidden lg:inline text-white" suppressHydrationWarning>
-              |
-            </span>
-            <Link
-              href="/privacy"
-              className="text-white hover-only:hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
-              suppressHydrationWarning
-            >
-              {t('footer.privacy')}
-            </Link>
-            <span className="hidden lg:inline text-white" suppressHydrationWarning>
-              |
-            </span>
-            <Link
-              href="/cookie-settings"
-              className="text-white hover-only:hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
-              suppressHydrationWarning
-            >
-              {t('footer.cookieSettings')}
-            </Link>
-            <span className="hidden lg:inline text-white" suppressHydrationWarning>
-              |
-            </span>
-            <Link
-              href="/contacts"
-              className="text-white hover-only:hover:text-primary-100 active:text-primary-300 transition-colors duration-200 underline"
-              suppressHydrationWarning
-            >
-              {t('footer.contacts')}
-            </Link>
+              <div
+                className="flex flex-row flex-wrap items-center justify-center gap-x-2 gap-y-1"
+                suppressHydrationWarning
+              >
+                <Link href="/faq" className={footerNavLinkClassName} suppressHydrationWarning>
+                  {t('footer.faq')}
+                </Link>
+                <span
+                  className="select-none text-base leading-none text-primary-500 sm:text-lg"
+                  aria-hidden
+                  suppressHydrationWarning
+                >
+                  ·
+                </span>
+                <Link href="/partners" className={footerNavLinkClassName} suppressHydrationWarning>
+                  {t('footer.partners')}
+                </Link>
+                <span
+                  className="select-none text-base leading-none text-primary-500 sm:text-lg"
+                  aria-hidden
+                  suppressHydrationWarning
+                >
+                  ·
+                </span>
+                <Link href="/investors" className={footerNavLinkClassName} suppressHydrationWarning>
+                  {t('footer.investors')}
+                </Link>
+                <span
+                  className="select-none text-base leading-none text-primary-500 sm:text-lg"
+                  aria-hidden
+                  suppressHydrationWarning
+                >
+                  ·
+                </span>
+                <Link href="/contacts" className={footerNavLinkClassName} suppressHydrationWarning>
+                  {t('footer.contacts')}
+                </Link>
+              </div>
+              <div
+                className="flex flex-row flex-wrap items-center justify-center gap-x-2 gap-y-1"
+                suppressHydrationWarning
+              >
+                <Link href="/terms" className={footerNavLinkClassName} suppressHydrationWarning>
+                  {t('footer.terms')}
+                </Link>
+                <span
+                  className="select-none text-base leading-none text-primary-500 sm:text-lg"
+                  aria-hidden
+                  suppressHydrationWarning
+                >
+                  ·
+                </span>
+                <Link href="/privacy" className={footerNavLinkClassName} suppressHydrationWarning>
+                  {t('footer.privacy')}
+                </Link>
+                <span
+                  className="select-none text-base leading-none text-primary-500 sm:text-lg"
+                  aria-hidden
+                  suppressHydrationWarning
+                >
+                  ·
+                </span>
+                <Link
+                  href="/cookie-settings"
+                  className={footerNavLinkClassName}
+                  suppressHydrationWarning
+                >
+                  {t('footer.cookieSettings')}
+                </Link>
+              </div>
+            </div>
           </div>
           <p className="text-xs sm:text-sm" suppressHydrationWarning>
-            <span className="font-medium text-white" suppressHydrationWarning>
+            <span className="text-white" suppressHydrationWarning>
               {t('footer.copyright')}
             </span>
             <span className="text-white mx-2">|</span>
