@@ -29,6 +29,7 @@ import { Listing } from '../../entities/listing.entity';
 import { Vehicle } from '../../entities/vehicle.entity';
 import { UpdateListingDto } from '../../presentation/dto/update-listing.dto';
 import { UpdateTireDto } from '../../presentation/dto/update-tire.dto';
+import { ListingAiReportService } from '../listing-ai-report.service';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 import {
   coverBlurHashFromImageBlurHashes,
@@ -97,6 +98,7 @@ export class UpdateListingUseCase {
     private readonly listingCache: IListingCache,
     @Inject(BRANDS_CACHE)
     private readonly brandsCache: IBrandsCache,
+    private readonly listingAiReportService: ListingAiReportService,
   ) {}
 
   private assertTireMergedRules(tire: Tire): void {
@@ -347,6 +349,7 @@ export class UpdateListingUseCase {
     }
 
     await this.listingsRepository.update(id, listingUpdateData);
+    await this.listingAiReportService.deleteByListingId(id);
     await this.listingsRepository.manager.connection.queryResultCache?.remove([`listing_${id}`]);
 
     const freshListing = await this.listingsRepository.findOne({
@@ -555,6 +558,7 @@ export class UpdateListingUseCase {
     }
 
     await this.listingsRepository.update(id, listingUpdateData);
+    await this.listingAiReportService.deleteByListingId(id);
     await this.listingsRepository.manager.connection.queryResultCache?.remove([`listing_${id}`]);
 
     const freshListing = await this.listingsRepository.findOne({

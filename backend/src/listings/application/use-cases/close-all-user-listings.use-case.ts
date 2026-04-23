@@ -4,6 +4,7 @@ import { In, Repository } from 'typeorm';
 
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { Listing } from '../../entities/listing.entity';
+import { ListingAiReportService } from '../listing-ai-report.service';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 import { IPromotionHistoryWriter, PROMOTION_HISTORY_WRITER } from '../ports/promotion-history.port';
 
@@ -16,6 +17,7 @@ export class CloseAllUserListingsUseCase {
     private readonly promotionHistoryWriter: IPromotionHistoryWriter,
     @Inject(LISTING_CACHE)
     private readonly listingCache: IListingCache,
+    private readonly listingAiReportService: ListingAiReportService,
   ) {}
 
   async execute(userId: string): Promise<number> {
@@ -32,6 +34,15 @@ export class CloseAllUserListingsUseCase {
       await this.promotionHistoryWriter.updateEndDateForListing(listing.id);
     }
 
+    const listingsToClose = await this.listingsRepository.find({
+      where: {
+        user_id: userId,
+        status: In([ListingStatusEnum.Active, ListingStatusEnum.Paused]),
+      },
+      select: ['id'],
+    });
+    const listingIdsToPurge = listingsToClose.map((l) => l.id);
+
     const closedAt = new Date();
     const result = await this.listingsRepository.update(
       {
@@ -47,6 +58,8 @@ export class CloseAllUserListingsUseCase {
         promoted_paused_at: null,
       },
     );
+
+    await this.listingAiReportService.deleteByListingIds(listingIdsToPurge);
 
     try {
       await this.listingCache.invalidateSearch();

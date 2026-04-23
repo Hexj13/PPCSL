@@ -6,6 +6,8 @@ export const currencies = ['EUR', 'MDL'] as const;
 
 export const LISTING_GRID_PAGE_SIZE = 32;
 
+export const MAIN_VIEWPORT_MIN_HEIGHT_CLASS = 'min-h-[calc(100vh-200px)]';
+
 export const CARD_EXIT_ANIMATION_MS = 300;
 export const MAX_SEARCH_BRAND_SELECTIONS = 20;
 export const MAX_SEARCH_MODEL_SELECTIONS = 20;

@@ -22,6 +22,7 @@ import { Listing } from '../../entities/listing.entity';
 import { Vehicle } from '../../entities/vehicle.entity';
 import { UpdateListingDto } from '../../presentation/dto/update-listing.dto';
 import { LISTING_CACHE } from '../ports/listing-cache.port';
+import { ListingAiReportService } from '../listing-ai-report.service';
 
 import { UpdateListingUseCase } from './update-listing.use-case';
 
@@ -129,6 +130,10 @@ describe('UpdateListingUseCase', () => {
         {
           provide: BRANDS_CACHE,
           useValue: { invalidateModels: jest.fn() },
+        },
+        {
+          provide: ListingAiReportService,
+          useValue: { deleteByListingId: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

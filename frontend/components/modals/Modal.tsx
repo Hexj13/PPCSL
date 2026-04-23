@@ -11,6 +11,8 @@ interface ModalProps {
   children: React.ReactNode;
   size?: 'small' | 'medium' | 'large' | 'full';
   className?: string;
+  /** When false, no border under the title bar (default: true). */
+  titleBottomBorder?: boolean;
 }
 
 export function Modal({
@@ -20,6 +22,7 @@ export function Modal({
   children,
   size = 'medium',
   className = '',
+  titleBottomBorder = true,
 }: ModalProps) {
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -85,10 +88,14 @@ export function Modal({
       }}
     >
       <div
-        className={`bg-bg-base rounded-lg w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto scrollbar-custom ${className}`}
+        className={`bg-bg-base rounded-lg w-full ${sizeClasses[size]} flex max-h-[90vh] flex-col overflow-hidden scrollbar-custom ${className}`}
       >
         {title && (
-          <div className="sticky top-0 z-10 bg-bg-base border-b border-primary-700/30 p-5 sm:p-6 flex justify-between items-center">
+          <div
+            className={`shrink-0 bg-bg-base p-5 sm:p-6 flex justify-between items-center ${
+              titleBottomBorder ? 'border-b border-primary-700' : ''
+            }`}
+          >
             <h2 className="text-2xl font-bold text-primary-900">{title}</h2>
             <button
               onClick={() => onCloseRef.current()}
@@ -98,7 +105,9 @@ export function Modal({
             </button>
           </div>
         )}
-        <div className="p-5 sm:p-6">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-5 sm:p-6">
+          {children}
+        </div>
       </div>
     </div>
   );

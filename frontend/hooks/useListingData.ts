@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { useCrossTabListingStatusRefetch } from '@/hooks/useCrossTabListingStatusRefetch';
 import { analytics, buildListingViewItemParams } from '@/lib/analytics';
@@ -26,11 +26,8 @@ export function useListingData({
   const checkTire = useComparisonStore((s) => s.checkTire);
 
   const [listing, setListing] = useState<Listing | null>(initialListing);
-  const [isFavorite, setIsFavorite] = useState(() => check(id));
-  const [isInComparison, setIsInComparison] = useState(() => {
-    if (!initialListing) return false;
-    return isTireListing(initialListing) ? checkTire(id) : checkVehicle(id);
-  });
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isInComparison, setIsInComparison] = useState(false);
   const [previousListings, setPreviousListings] = useState<Listing[]>([]);
   const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [activeListingsCount, setActiveListingsCount] = useState<number>(0);
@@ -39,6 +36,29 @@ export function useListingData({
   const hasInitialListingRef = useRef<boolean>(!!initialListing);
   const listingRef = useRef<Listing | null>(initialListing);
   const onListingUpdateRef = useRef(onListingUpdate);
+
+  useLayoutEffect(() => {
+    if (!listing) {
+      return;
+    }
+    const applyFavoritesAndComparisonFromClientStores = () => {
+      setIsFavorite(check(id));
+      setIsInComparison(isTireListing(listing) ? checkTire(id) : checkVehicle(id));
+    };
+    if (useFavoritesStore.persist.hasHydrated() && useComparisonStore.persist.hasHydrated()) {
+      applyFavoritesAndComparisonFromClientStores();
+    }
+    const unfav = useFavoritesStore.persist.onFinishHydration(
+      applyFavoritesAndComparisonFromClientStores,
+    );
+    const uncomp = useComparisonStore.persist.onFinishHydration(
+      applyFavoritesAndComparisonFromClientStores,
+    );
+    return () => {
+      unfav();
+      uncomp();
+    };
+  }, [listing, id, check, checkTire, checkVehicle]);
 
   useEffect(() => {
     onListingUpdateRef.current = onListingUpdate;

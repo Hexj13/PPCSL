@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { SavedFiltersList, updateSavedFiltersCache } from '@/components/search/SavedFiltersList';
@@ -10,6 +10,7 @@ import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import { savedFiltersApi } from '@/lib/api';
 import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
+import { MAIN_VIEWPORT_MIN_HEIGHT_CLASS } from '@/lib/constants';
 
 import { FavoritesListingsTab } from './FavoritesListingsTab';
 import { useFavoritesListings } from './useFavoritesListings';
@@ -26,7 +27,7 @@ function FavoritesContent() {
   const searchParams = useSearchParams();
   const { user, isLoading, isAuthorized } = useRequireAuth();
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<FavoritesTab>(() => getInitialTab(searchParams));
+  const activeTab = useMemo((): FavoritesTab => getInitialTab(searchParams), [searchParams]);
   const [filtersCount, setFiltersCount] = useState(0);
   const listingsTabRef = useRef<HTMLButtonElement>(null);
   const filtersTabRef = useRef<HTMLButtonElement>(null);
@@ -51,13 +52,6 @@ function FavoritesContent() {
   );
 
   useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'filters' || tabParam === 'listings') {
-      setActiveTab(tabParam);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
     if (!isAuthorized || !user) return;
     savedFiltersApi
       .getAll()
@@ -74,7 +68,6 @@ function FavoritesContent() {
 
   const handleTabChange = (tab: FavoritesTab) => {
     const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-    setActiveTab(tab);
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', tab);
     sessionStorageSetItem('scrollPreserved', 'true');
@@ -92,7 +85,7 @@ function FavoritesContent() {
   };
 
   if (isLoading || !isAuthorized) {
-    return null;
+    return <div className={`${MAIN_VIEWPORT_MIN_HEIGHT_CLASS} pb-12 md:pb-16`} aria-hidden />;
   }
 
   const breadcrumbExtra =
@@ -110,7 +103,7 @@ function FavoritesContent() {
     }`;
 
   return (
-    <div className="min-h-[calc(100vh-200px)] pb-12 md:pb-16">
+    <div className={`${MAIN_VIEWPORT_MIN_HEIGHT_CLASS} pb-12 md:pb-16`}>
       <Breadcrumbs
         items={[
           { label: t('favorites.home'), href: '/' },
@@ -183,11 +176,13 @@ function FavoritesContent() {
   );
 }
 
-export default function FavoritesPage() {
-  const { t } = useTranslation();
+function FavoritesSuspenseFallback() {
+  return <div className={`${MAIN_VIEWPORT_MIN_HEIGHT_CLASS} pb-12 md:pb-16`} aria-hidden />;
+}
 
+export default function FavoritesPage() {
   return (
-    <Suspense fallback={<div>{t('common.loading')}</div>}>
+    <Suspense fallback={<FavoritesSuspenseFallback />}>
       <FavoritesContent />
     </Suspense>
   );

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Logger,
   NotFoundException,
   Param,
@@ -29,9 +30,11 @@ import { OptionalJwtAuthGuard } from '../../auth/infrastructure/guards/optional-
 import type { AuthenticatedRequest } from '../../common/express-augmentation';
 import { CronSecretGuard } from '../../common/guards/cron-secret.guard';
 import { buildVisitorHash } from '../../common/utils/visitor-identity.util';
+import { ListingAiReportService } from '../application/listing-ai-report.service';
 import { ListingsService } from '../listings.service';
 
 import { CreateListingDto } from './dto/create-listing.dto';
+import { PostListingAiReportDto } from './dto/post-listing-ai-report.dto';
 import { SearchListingsDto } from './dto/search-listings.dto';
 import { SimilarListingsQueryDto } from './dto/similar-listings.dto';
 import { TogglePromotionDto } from './dto/toggle-promotion.dto';
@@ -46,7 +49,10 @@ function normalizeReportLocale(locale?: string): 'ro' | 'ru' {
 export class ListingsController {
   private readonly logger = new Logger(ListingsController.name);
 
-  constructor(private readonly listingsService: ListingsService) {}
+  constructor(
+    private readonly listingsService: ListingsService,
+    private readonly listingAiReportService: ListingAiReportService,
+  ) {}
 
   @ApiOperation({ summary: 'Search listings' })
   @ApiResponse({
@@ -326,7 +332,7 @@ export class ListingsController {
   @ApiResponse({ status: 404, description: 'Listing not found or no VIN' })
   @ApiResponse({
     status: 429,
-    description: 'Too many VIN reveal requests (max 20 unique listings per hour).',
+    description: 'Too many VIN reveal requests (max 50 unique listings per hour).',
   })
   @UseGuards(JwtAuthGuard)
   @Get(':id/vin')
@@ -345,7 +351,7 @@ export class ListingsController {
   @ApiResponse({
     status: 429,
     description:
-      'Too many phone reveal requests: max 5 unique listings/hour (anonymous), max 20/hour (authenticated). Listing owner and Admin bypass.',
+      'Too many phone reveal requests: max 20 unique listings/hour (anonymous), max 50/hour (authenticated). Listing owner and Admin bypass.',
   })
   @UseGuards(OptionalJwtAuthGuard)
   @Get(':id/phones')
@@ -406,6 +412,31 @@ export class ListingsController {
     }
   }
 
+  @ApiOperation({ summary: 'Request AI listing report (cached, async generation)' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'id', description: 'Listing UUID' })
+  @ApiResponse({ status: 200, description: 'ready | pending | unavailable' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Listing not found' })
+  @ApiResponse({ status: 429, description: 'User hourly generation limit' })
+  @Post(':id/ai-report')
+  @UseGuards(JwtAuthGuard)
+  postListingAiReport(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: AuthenticatedRequest,
+    @Body() body: PostListingAiReportDto,
+    @Headers('accept-language') acceptLanguage?: string,
+    @Headers('x-report-language') xReportLanguage?: string,
+  ) {
+    return this.listingAiReportService.requestReport({
+      listingId: id,
+      userId: req.user.id,
+      headerReportLanguage: xReportLanguage,
+      acceptLanguage,
+      bodyLanguage: body.language,
+    });
+  }
+
   @ApiOperation({ summary: 'Get listing details' })
   @ApiParam({
     name: 'id',
@@ -443,9 +474,17 @@ export class ListingsController {
     } catch (error) {
       if (!(error instanceof NotFoundException)) {
         if (error instanceof Error) {
-          this.logger.error('Error in findOne controller:', error.message, error.stack);
+          this.logger.error(
+            `Error in findOne controller: ${error.message} | id=${id}`,
+            error.stack,
+            ListingsController.name,
+          );
         } else {
-          this.logger.error('Error in findOne controller:', error);
+          this.logger.error(
+            `Error in findOne controller: ${String(error)} | id=${id}`,
+            undefined,
+            ListingsController.name,
+          );
         }
       }
       throw error;

@@ -1498,4 +1498,27 @@
   .mobile-menu-backdrop-leave {
     opacity: 0;
   }
+
+  .listing-ai-report-content {
+    animation: none;
+    filter: none;
+  }
+}
+
+@keyframes listing-ai-report-content-fade {
+  0% {
+    opacity: 0;
+    filter: brightness(1.65) saturate(0.45);
+  }
+
+  100% {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .listing-ai-report-content {
+    animation: listing-ai-report-content-fade 0.72s ease-out both;
+  }
 }

@@ -58,6 +58,10 @@ export class SignPage {
     }
   }
 
+  async openWithPath(path: string): Promise<void> {
+    await this.gotoWithRetry(path);
+  }
+
   async openLogin(): Promise<void> {
     await this.gotoWithRetry('/sign');
   }

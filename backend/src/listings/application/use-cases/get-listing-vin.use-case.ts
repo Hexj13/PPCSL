@@ -11,7 +11,7 @@ import { RedisService } from '../../../common/redis.service';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
 
 const VIN_RATE_LIMIT_TTL_SEC = 3600;
-const VIN_RATE_LIMIT_MAX = 20;
+const VIN_RATE_LIMIT_MAX = 50;
 const VIN_RATE_LIMIT_KEY_PREFIX = 'vin:seen:u:';
 
 @Injectable()

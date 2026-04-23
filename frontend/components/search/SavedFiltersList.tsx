@@ -6,6 +6,7 @@ import { flushSync } from 'react-dom';
 
 import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
 import { useI18n } from '@/components/providers/I18nProvider';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { SavedFilter } from '@/lib/api';
 import { brandsApi, savedFiltersApi } from '@/lib/api';
@@ -83,6 +84,12 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
 
   const [loading, setLoading] = useState(() => {
     return !(hasLoadedRef.current && cachedFiltersRef.current !== null);
+  });
+
+  const { visible: showSavedFiltersSkeleton } = useLoadingState({
+    isLoading: loading,
+    showDelay: 200,
+    minDisplayTime: 450,
   });
 
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
@@ -305,7 +312,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
     router.push(`/?${queryString}`);
   };
 
-  if (loading) {
+  if (showSavedFiltersSkeleton) {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (

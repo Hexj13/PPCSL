@@ -2,6 +2,7 @@ import { api } from './api-client';
 import type {
   CreateListingDto,
   Listing,
+  ListingAiReportPostResponse,
   PaginationMeta,
   PromotionAccessStatus,
   PromotionHistory,
@@ -108,4 +109,16 @@ export const listingsApi = {
       },
     });
   },
+  postAiReport: (id: string, options?: { signal?: AbortSignal; reportLanguage?: 'ru' | 'ro' }) =>
+    api.post<ListingAiReportPostResponse>(
+      `/api/listings/${id}/ai-report`,
+      {},
+      {
+        headers: {
+          'X-Skip-Error-Handling': 'true',
+          ...(options?.reportLanguage ? { 'X-Report-Language': options.reportLanguage } : {}),
+        },
+        signal: options?.signal,
+      },
+    ),
 };

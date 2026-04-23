@@ -1,11 +1,11 @@
 import type { UpdateProfileDto, User } from '@/lib/api';
-import { favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+import { savedFiltersApi } from '@/lib/api';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
 import { compactE164Phone } from '@/lib/phone';
 import { sanitizeReturnUrl } from '@/lib/return-url';
+import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
-import { silentCatch } from '@/lib/utils';
 
 export const hasCompleteProfileEmailNotificationsEnabled = (
   email: string,
@@ -13,26 +13,7 @@ export const hasCompleteProfileEmailNotificationsEnabled = (
 ): boolean => Boolean(email.trim()) && emailNotifications;
 
 export async function processPendingFavorites(userId: string): Promise<void> {
-  const pendingFavorites = JSON.parse(localStorageGetItem('pendingFavorites') || '[]');
-  if (pendingFavorites.length === 0) return;
-  const validFavorites: string[] = [];
-  for (const listingId of pendingFavorites) {
-    try {
-      const listingRes = await listingsApi.getOne(listingId);
-      const listing = listingRes.data;
-      if (listing.user && listing.user.id !== userId) validFavorites.push(listingId);
-    } catch {
-      // skip
-    }
-  }
-  if (validFavorites.length > 0) {
-    await Promise.all(
-      validFavorites.map((id: string) =>
-        favoritesApi.add(id).catch(silentCatch('completeProfile.syncFavorites')),
-      ),
-    );
-  }
-  localStorageRemoveItem('pendingFavorites');
+  await syncPendingFavoritesAfterAuth(userId);
 }
 
 export async function processPendingComparisons(): Promise<void> {
@@ -58,7 +39,7 @@ export async function processPendingSavedFilter(
     localStorageRemoveItem('pendingSavedFilter');
     toast.success(t('login.filterSavedSuccess'));
     if (typeof window !== 'undefined' && window.location) {
-      window.location.href = '/favorites?tab=filters';
+      window.location.replace('/favorites?tab=filters');
     }
     return true;
   } catch (error: unknown) {
@@ -71,13 +52,13 @@ export async function processPendingSavedFilter(
     const limitErrorText = t('login.filterLimitError');
     if (errorMessage === limitErrorText) {
       if (typeof window !== 'undefined' && window.location) {
-        window.location.href = '/favorites?tab=filters';
+        window.location.replace('/favorites?tab=filters');
       }
       return true;
     }
     const safeReturnUrl = sanitizeReturnUrl(returnUrl);
     if (safeReturnUrl && typeof window !== 'undefined' && window.location) {
-      window.location.href = safeReturnUrl;
+      window.location.replace(safeReturnUrl);
       return true;
     }
   }

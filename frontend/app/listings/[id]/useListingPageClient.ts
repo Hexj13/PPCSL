@@ -31,6 +31,8 @@ import {
   sortOptionsByLabel,
 } from '@/lib/utils';
 
+import { applyListingPromotionSelection } from './applyListingPromotionSelection';
+import { useListingAiReport } from './useListingAiReport';
 import { useListingPageCreatedToast } from './useListingPageCreatedToast';
 
 const LISTING_LIFETIME_DAYS = 90;
@@ -151,19 +153,13 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   }, [isHydrated, listing, descriptionLocale]);
 
   useEffect(() => {
-    const checkPromotionAccess = async () => {
-      try {
-        const res = await listingsApi.getPromotionAccess();
-        setPromotionAccess(res.data);
-      } catch {
-        setPromotionAccess(null);
-      }
-    };
-    void checkPromotionAccess();
+    void listingsApi
+      .getPromotionAccess()
+      .then((res) => setPromotionAccess(res.data))
+      .catch(() => setPromotionAccess(null));
   }, []);
   const canPromote =
     (promotionAccess?.canPromote ?? false) || (promotionAccess?.isPartner ?? false);
-
   const displayTitle = listing ? getListingDisplayTitle(listing, t) : '';
   useEffect(() => {
     if (!displayTitle) return;
@@ -337,8 +333,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     t,
   ]);
 
-  const showCompare = listing ? listing.status !== 'Closed' : false;
-
   const handlePromoteClick = useCallback(() => setPromotionModalOpen(true), []);
 
   const handleCopyLink = useCallback(async () => {
@@ -372,33 +366,15 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
 
   const handlePromotionSelect = useCallback(
     async (days: number | null) => {
-      if (!listing) {
-        return;
-      }
-      try {
-        await listingsApi.togglePromotion(
-          listing.id,
-          true,
-          days,
-          days === null ? 'partner_balance' : 'default',
-        );
-        toast.success(t('listings.promotionEnabled'));
-        const updatedListing = await listingsApi.getOne(listing.id);
-        setListing(updatedListing.data);
-        listingRef.current = updatedListing.data;
-      } catch (error: unknown) {
-        const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
-        const backendMessage = axiosError.response?.data?.message;
-        if (axiosError.response?.status === 403) {
-          toast.error(backendMessage || t('listings.promotionNotAvailable'));
-        } else if (axiosError.response?.status === 400) {
-          toast.error(backendMessage || t('listings.promotionOnlyActive'));
-        } else {
-          toast.error(backendMessage || t('listings.promotionError'));
-        }
-      } finally {
-        setPromotionModalOpen(false);
-      }
+      if (!listing) return;
+      await applyListingPromotionSelection({
+        listing,
+        days,
+        setListing,
+        listingRef,
+        t,
+        setPromotionModalOpen,
+      });
     },
     [listing, t, setListing, listingRef],
   );
@@ -409,6 +385,23 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   }, []);
 
   const closeImageModal = useCallback(() => setIsImageModalOpen(false), []);
+
+  const {
+    aiReportModalOpen,
+    aiReportPhase,
+    aiReportPayload,
+    aiReportMessage,
+    handleAiReportClick,
+    closeAiReportModal,
+  } = useListingAiReport({
+    listingId: id,
+    listing,
+    user,
+    isInitialized,
+    locale,
+    isHydrated,
+    router,
+  });
 
   return {
     router,
@@ -443,13 +436,19 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     listingRef,
     handleToggleFavorite,
     handleToggleComparison,
-    showCompare,
+    showCompare: listing ? listing.status !== 'Closed' : false,
     handlePromoteClick,
     handleCopyLink,
     handleShare,
     handlePromotionSelect,
     openImageModal,
     closeImageModal,
+    aiReportModalOpen,
+    aiReportPhase,
+    aiReportPayload,
+    aiReportMessage,
+    handleAiReportClick,
+    closeAiReportModal,
   };
 }
 

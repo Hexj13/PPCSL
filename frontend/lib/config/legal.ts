@@ -1,4 +1,4 @@
-import type { LegalConfig } from '../content/legal';
+import type { LegalConfig } from '@/lib/content/legal';
 
 const legal: LegalConfig = {
   terms: {
@@ -994,6 +994,7 @@ const legal: LegalConfig = {
             '7.3. Cu prelucrătorii de date și terți:',
             'Kupito folosește următoarele servicii terțe care pot accesa datele dvs.:',
             '• Google Analytics: Pentru analizarea utilizării Platformei și îmbunătățirea serviciilor. Google Analytics colectează date statistice anonime despre vizite. Pentru mai multe informații, consultați Politica de confidențialitate Google: https://policies.google.com/privacy',
+            '• Google AI (Gemini): Când sunteți autentificat și folosiți opțional „Prezentarea AI” pentru un anunț de vehicul, Platforma trimite către serviciul de inteligență artificială generativă Google informațiile din anunț deja afișate pe pagină (titlu, descriere, caracteristici tehnice și coduri de echipament—nu telefonul sau e-mailul vânzătorului) pentru a genera un scurt text informativ. Pentru detalii, consultați Politica de confidențialitate Google: https://policies.google.com/privacy',
             '• Twilio: Pentru trimiterea mesajelor SMS pentru verificarea numărului de telefon. Twilio accesează doar numărul de telefon necesar pentru trimiterea SMS. Pentru mai multe informații, consultați Politica de confidențialitate Twilio: https://www.twilio.com/legal/privacy',
             '• Furnizor de stocare media în cloud (UE): pentru stocarea și livrarea fotografiilor din anunțuri printr-o rețea de distribuție a conținutului; furnizorul este ales în baza unor standarde recunoscute de securitate și conformitate (inclusiv ISO 27001, SOC 2) și angajamente GDPR.',
             '• Furnizori de hosting: Pentru stocarea și prelucrarea datelor pe servere situate în Republica Moldova',
@@ -1225,7 +1226,7 @@ const legal: LegalConfig = {
             'The data controller for processing your personal data is the Kupito project team operating under the Kupito brand.',
             'Email: support@kupito.club',
             'Platform: kupito.club',
-            'Applicable law: Republic of Moldova. If the controller\'s legal details change, this section will be updated in a timely manner.',
+            "Applicable law: Republic of Moldova. If the controller's legal details change, this section will be updated in a timely manner.",
             'For any questions or requests regarding the processing of your personal data, please contact us at the email address mentioned above.',
           ],
         },
@@ -1358,6 +1359,7 @@ const legal: LegalConfig = {
             '7.3. With data processors and third parties:',
             'Kupito uses the following third-party services that may have access to your data:',
             "• Google Analytics: For analyzing Platform usage and improving services. Google Analytics collects anonymous statistical data about visits. For more information, see Google's Privacy Policy: https://policies.google.com/privacy",
+            '• Google AI (Gemini): When you are signed in and use the optional "AI overview" on a vehicle listing, the Platform sends listing information already shown on that page (such as title, description, vehicle attributes, and equipment codes—not seller phone or email) to Google\'s generative AI to produce a short informational text. For more information, see Google\'s Privacy Policy: https://policies.google.com/privacy',
             "• Twilio: For sending SMS messages to verify phone numbers. Twilio only has access to the phone number necessary for sending SMS. For more information, see Twilio's Privacy Policy: https://www.twilio.com/legal/privacy",
             '• EU cloud media storage provider: for storing and delivering listing photos through a content delivery network; the provider is selected based on recognized security and compliance standards (including ISO 27001, SOC 2) and GDPR commitments.',
             '• Hosting providers: For storing and processing data on servers located in the Republic of Moldova',
@@ -1403,9 +1405,9 @@ const legal: LegalConfig = {
             '• You can delete your saved filters at any time through the "Favorites" page → "Filters" tab',
             '• Upon account deletion, all your saved filters are deleted from the database',
             '8.6. Comparison, favorites, and filters for guests:',
-            '• For signed-in users, comparison lists (up to 3 vehicles and up to 3 tire listings) are stored in the database and linked to your account; for guests, the same lists may be kept temporarily in the browser\'s local storage until you sign in.',
+            "• For signed-in users, comparison lists (up to 3 vehicles and up to 3 tire listings) are stored in the database and linked to your account; for guests, the same lists may be kept temporarily in the browser's local storage until you sign in.",
             '• On login or registration, relevant local data may be merged into your server-side account; on logout, comparison data is cleared from the local device but may remain on the server until you change it or delete your account.',
-            '• Guests may mark favorites or save a filter locally; after login or registration, those choices are transferred to the server and cleared from the browser\'s local storage.',
+            "• Guests may mark favorites or save a filter locally; after login or registration, those choices are transferred to the server and cleared from the browser's local storage.",
             '8.7. Logs and technical data:',
             '• Logs and technical data are stored for up to 12 months',
             '8.8. Database backups:',
@@ -1453,7 +1455,7 @@ const legal: LegalConfig = {
             '10.2. Local storage (localStorage):',
             '• We use localStorage for authentication tokens and session renewal',
             '• We use localStorage for favorites, comparison (within the limits described), and other preferences; for signed-in users, the primary source for this data is the database',
-            '• For guests, certain actions (favorites, comparison, saved filter) may be kept temporarily in the browser\'s local storage and migrated to the server after login or registration',
+            "• For guests, certain actions (favorites, comparison, saved filter) may be kept temporarily in the browser's local storage and migrated to the server after login or registration",
             '10.3. Session storage (sessionStorage):',
             '• We use sessionStorage for temporary data storage during your session',
             '10.4. Service Worker and caching:',
@@ -1722,6 +1724,7 @@ const legal: LegalConfig = {
             '7.3. С обработчиками данных и третьими сторонами:',
             'Kupito использует следующие сторонние сервисы, которые могут получить доступ к вашим данным:',
             '• Google Analytics: Для анализа использования Платформы и улучшения услуг. Google Analytics собирает анонимные статистические данные о посещениях. Для получения дополнительной информации см. Политику конфиденциальности Google: https://policies.google.com/privacy',
+            '• Google AI (Gemini): Когда вы авторизованы и по своему выбору запрашиваете «AI-обзор» по объявлению о транспортном средстве, Платформа передаёт в генеративный сервис Google уже отображаемые на странице данные объявления (заголовок, описание, характеристики и коды комплектации — без телефона и e-mail продавца) для формирования краткого информационного текста. Подробнее см. Политику конфиденциальности Google: https://policies.google.com/privacy',
             '• Twilio: Для отправки SMS-сообщений для проверки номера телефона. Twilio получает доступ только к номеру телефона, необходимому для отправки SMS. Для получения дополнительной информации см. Политику конфиденциальности Twilio: https://www.twilio.com/legal/privacy',
             '• Поставщик облачного хранения медиа в ЕС: для хранения и доставки фотографий из объявлений через сеть доставки контента; поставщик выбирается с учётом признанных стандартов безопасности и соответствия (включая ISO 27001, SOC 2) и обязательств по GDPR.',
             '• Хостинг-провайдеры: Для хранения и обработки данных на серверах, расположенных в Республике Молдова',

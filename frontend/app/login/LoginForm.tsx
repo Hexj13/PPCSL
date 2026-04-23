@@ -17,6 +17,7 @@ type LoginFormProps = {
   handleSubmit: (e: React.FormEvent) => void | Promise<void>;
   showTitle?: boolean;
   showRegisterLink?: boolean;
+  registerHref?: string;
   formClassName?: string;
 };
 
@@ -35,6 +36,7 @@ export function LoginForm({
   handleSubmit,
   showTitle = true,
   showRegisterLink = true,
+  registerHref = '/sign?tab=register',
   formClassName = 'card p-6 md:p-8',
 }: LoginFormProps) {
   return (
@@ -154,7 +156,7 @@ export function LoginForm({
           <p className="mt-6 text-center text-sm text-hint">
             {t('login.noAccount')}{' '}
             <a
-              href="/sign?tab=register"
+              href={registerHref}
               data-testid="auth-login-register-link"
               className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
             >

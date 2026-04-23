@@ -215,6 +215,12 @@ CRON_SECRET=your-secret-key-here
 INFOCAR_SECRET_KEY=<secret-from-infocar>
 # Required for report URL with encrypted VIN (GET /api/listings/:id/report-url). If unset, endpoint returns 404.
 # Optional: INFOCAR_BASE_URL (default https://infocar.md for RO), INFOCAR_BASE_URL_RU (default https://ru.infocar.md for RU).
+
+# Google Gemini (optional) — AI listing report (POST /api/listings/:id/ai-report). If GEMINI_API_KEY is unset, the endpoint returns status unavailable.
+GEMINI_API_KEY=<google-ai-studio-api-key>
+# Optional: GEMINI_MODEL (default gemini-3-flash-preview).
+# Production only: max new AI report generations per user per rolling hour (Redis). Unset = 5. Non-production (e.g. development): quota disabled.
+# AI_REPORT_MAX_GENERATIONS_PER_HOUR=5
 ```
 
 ### Frontend (`frontend/.env.local`)
@@ -327,7 +333,7 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 - **Adaptive Quality:** Different quality levels for different contexts (70% for thumbnails, 75-80% for cards and detail pages, 85% for full-size modal views)
 - **File Storage:** AWS S3 for persistent image storage (using AWS SDK v3, required for production on Render.com), AWS CloudFront CDN for fast global delivery
 - **Search:** PostgreSQL Full-Text Search with extensive filtering options
-- **Caching:** Redis for SMS codes, cache optimization (SCAN instead of KEYS)
+- **Caching:** Redis for SMS codes, cache optimization (SCAN instead of KEYS), AI listing report generation locks and per-user hourly quotas (production; see `POST /api/listings/:id/ai-report` and `AI_REPORT_MAX_GENERATIONS_PER_HOUR`)
 - **Monitoring:** Health check endpoint (`/health`) with database and Redis connectivity checks
 - **Code Quality:** TypeScript strict mode, CI/CD automation, bundle optimization
 
@@ -379,6 +385,7 @@ GET    /api/listings/:id/phones       # Full seller phone numbers (optional JWT)
 GET    /api/listings/:id/history      # Previous listings with same VIN
 GET    /api/listings/:id/report-url        # Infocar report URL (AES-256-CBC encrypted VIN, param vin); optional query locale=ro|ru
 GET    /api/listings/:id/report-redirect   # 302 redirect to Infocar (direct link for iOS); optional query locale=ro|ru
+POST   /api/listings/:id/ai-report         # Optional AI text report for vehicle listings (JWT). Body optional { language?: ru|ro } (lower priority than Accept-Language / X-Report-Language). Returns { status: ready|pending|unavailable } or 429 rate_limited. Cached by listing + language + input hash; Redis lock dedupes parallel generation. User hourly quota: disabled when NODE_ENV is not production; in production see AI_REPORT_MAX_GENERATIONS_PER_HOUR (default 5).
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon, throttle: 5 req/min/user)
 POST   /api/listings/cron/close-old            # Close old listings (cron job, requires x-cron-secret header)
 POST   /api/listings/cron/expire-promotions   # Expire promotions (cron job, requires x-cron-secret header)

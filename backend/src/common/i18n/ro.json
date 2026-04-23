@@ -143,7 +143,7 @@
     "invalidModel": "Model invalid",
     "vehicleNotFound": "Vehiculul nu a fost găsit",
     "vehicleNotFoundForListing": "Vehiculul nu a fost găsit pentru anunț",
-    "vinRateLimitExceeded": "Puteți afișa VIN-ul pentru maximum 20 anunțuri diferite pe oră. Încercați mai târziu.",
+    "vinRateLimitExceeded": "Puteți afișa VIN-ul pentru maximum 50 anunțuri diferite pe oră. Încercați mai târziu.",
     "phoneRateLimitExceeded": "Ați atins limita pentru afișarea numerelor de telefon. Încercați mai târziu.",
     "vehicleIdNotFound": "ID vehicul negăsit",
     "brandNotFoundById": "Marca nu a fost găsită",

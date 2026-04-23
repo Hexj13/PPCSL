@@ -53,9 +53,9 @@ describe('GetListingVinUseCase', () => {
     expect(redis.rollbackRateLimitUniqueMember).not.toHaveBeenCalled();
   });
 
-  it('throws 429 when unique listings exceed 20', async () => {
+  it('throws 429 when unique listings exceed 50', async () => {
     listingRepo.findById.mockResolvedValue({ id: listingId, vin } as Listing);
-    redis.rateLimitUnique.mockResolvedValue({ added: 1, unique: 21 });
+    redis.rateLimitUnique.mockResolvedValue({ added: 1, unique: 51 });
 
     await expect(useCase.execute(listingId, userId, 'reveal')).rejects.toMatchObject({
       status: 429,

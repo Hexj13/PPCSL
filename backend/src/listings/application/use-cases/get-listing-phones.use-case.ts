@@ -12,8 +12,8 @@ import { RedisService } from '../../../common/redis.service';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
 
 const PHONE_RATE_LIMIT_TTL_SEC = 3600;
-const PHONE_RATE_LIMIT_AUTH_MAX = 20;
-const PHONE_RATE_LIMIT_ANON_MAX = 5;
+const PHONE_RATE_LIMIT_AUTH_MAX = 50;
+const PHONE_RATE_LIMIT_ANON_MAX = 20;
 const PHONE_RATE_LIMIT_KEY_AUTH_PREFIX = 'phone:seen:u:';
 const PHONE_RATE_LIMIT_KEY_ANON_PREFIX = 'phone:seen:a:';
 
@@ -33,12 +33,24 @@ export class GetListingPhonesUseCase {
     private readonly redisService: RedisService,
   ) {}
 
+  private buildViewerLogLabel(viewer: GetListingPhonesViewer): string {
+    if (viewer.userId) {
+      return `userId=${viewer.userId}`;
+    }
+    if (viewer.visitorHash) {
+      return `visitorHash=${viewer.visitorHash.slice(0, 8)}`;
+    }
+    return 'viewer=unknown';
+  }
+
   async execute(
     listingId: string,
     viewer: GetListingPhonesViewer,
   ): Promise<{ phone: string | null; additionalPhone: string | null }> {
+    const logLabel = this.buildViewerLogLabel(viewer);
     const listing = await this.listingRepo.findById(listingId);
     if (!listing) {
+      this.logger.log(`Phone request listingId=${listingId} ${logLabel} status=not_found`);
       throw new NotFoundException('errors.listingNotFound');
     }
 
@@ -46,6 +58,7 @@ export class GetListingPhonesUseCase {
     const rawPhone = user?.phone?.trim() ?? '';
     const rawAdditional = user?.additionalPhone?.trim() ?? '';
     if (!rawPhone && !rawAdditional) {
+      this.logger.log(`Phone request listingId=${listingId} ${logLabel} status=no_phones`);
       throw new NotFoundException('errors.listingNotFound');
     }
 
@@ -71,10 +84,12 @@ export class GetListingPhonesUseCase {
           },
         );
       } else {
+        this.logger.log(`Phone request listingId=${listingId} ${logLabel} status=invalid_request`);
         throw new BadRequestException('errors.invalidRequest');
       }
     }
 
+    this.logger.log(`Phone request listingId=${listingId} ${logLabel} status=success`);
     return {
       phone: rawPhone || null,
       additionalPhone: rawAdditional || null,
