@@ -14,6 +14,33 @@ import type {
 
 export type ListingCategory = 'vehicle' | 'tire';
 
+export interface ListingAiReportListingAnalysis {
+  priceComment: string;
+  mileageComment: string;
+  descriptionComment: string;
+  registrationComment?: string;
+  optionsComment?: string;
+}
+
+export interface ListingAiReportPayload {
+  modelContext: string[];
+  summary: string;
+  listingAnalysis: ListingAiReportListingAnalysis;
+  strengths: string[];
+  weaknesses: string[];
+  buyingChecks: string[];
+  questionsForSeller: string[];
+  redFlags: string[];
+  confidence: number;
+  disclaimer: string;
+}
+
+export type ListingAiReportPostResponse =
+  | { status: 'ready'; report: ListingAiReportPayload }
+  | { status: 'pending' }
+  | { status: 'unavailable'; message: string }
+  | { status: 'rate_limited'; message: string };
+
 export interface TireOnListing {
   id: string;
   brand_id: string;

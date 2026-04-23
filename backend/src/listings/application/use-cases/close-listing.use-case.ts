@@ -2,6 +2,7 @@ import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } fro
 
 import { logUserEvent } from '../../../common/utils/log-user-event';
 import { Listing } from '../../entities/listing.entity';
+import { ListingAiReportService } from '../listing-ai-report.service';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
 import { IPromotionHistoryWriter, PROMOTION_HISTORY_WRITER } from '../ports/promotion-history.port';
@@ -17,6 +18,7 @@ export class CloseListingUseCase {
     private readonly listingCache: IListingCache,
     @Inject(PROMOTION_HISTORY_WRITER)
     private readonly promotionHistory: IPromotionHistoryWriter,
+    private readonly listingAiReportService: ListingAiReportService,
   ) {}
 
   async execute(listingId: string, userId: string): Promise<Listing> {
@@ -32,6 +34,8 @@ export class CloseListingUseCase {
     const previousStatus = listing.status;
     listing.close();
     const saved = await this.listingRepo.save(listing);
+
+    await this.listingAiReportService.deleteByListingId(listingId);
 
     if (wasPromoted) {
       await this.promotionHistory.updateEndDateForListing(listingId);

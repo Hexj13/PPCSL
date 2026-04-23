@@ -203,7 +203,12 @@ export class ListingsService {
       return await this.getListingUseCase.execute(id, context);
     } catch (error) {
       if (!(error instanceof NotFoundException)) {
-        this.logger.error('Error in findOne for listing ' + id, error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        this.logger.error(
+          `Error in findOne for listing ${id}: ${err.message}`,
+          err.stack,
+          ListingsService.name,
+        );
       }
       throw error;
     }

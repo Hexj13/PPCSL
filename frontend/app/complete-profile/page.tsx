@@ -13,6 +13,7 @@ import {
   localStorageSetItem,
 } from '@/lib/browser-local-storage';
 import { holdComparisonApiLoadUntilReleased } from '@/lib/comparisonMigration';
+import { MAIN_VIEWPORT_MIN_HEIGHT_CLASS } from '@/lib/constants';
 import {
   compactE164Phone,
   formatPhoneForDisplay,
@@ -21,6 +22,7 @@ import {
 } from '@/lib/phone';
 import { getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
+import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
 import { LoadingButton, InfoBlock } from '@/ui';
 
@@ -120,6 +122,19 @@ function CompleteProfileContent() {
         }
       };
     }
+  }, [isInitialized, user, t]);
+
+  useEffect(() => {
+    if (!isInitialized || !user) return;
+    const ac = new AbortController();
+    void (async () => {
+      const added = await syncPendingFavoritesAfterAuth(user.id);
+      if (ac.signal.aborted) return;
+      if (added > 0) {
+        toast.success(t('listings.addToFavorites'));
+      }
+    })();
+    return () => ac.abort();
   }, [isInitialized, user, t]);
 
   const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -370,11 +385,19 @@ function CompleteProfileContent() {
   };
 
   if (!isInitialized || !user) {
-    return null;
+    return (
+      <div
+        className={`max-w-md mx-auto mt-6 md:mt-12 mb-16 ${MAIN_VIEWPORT_MIN_HEIGHT_CLASS}`}
+        aria-hidden
+      />
+    );
   }
 
   return (
-    <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16" data-testid="complete-profile-page">
+    <div
+      className={`max-w-md mx-auto mt-6 md:mt-12 mb-16 ${MAIN_VIEWPORT_MIN_HEIGHT_CLASS}`}
+      data-testid="complete-profile-page"
+    >
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
         {t('completeProfile.title')}
       </h1>
@@ -444,23 +467,18 @@ function CompleteProfileContent() {
   );
 }
 
-function CompleteProfileFallback() {
-  const { t } = useTranslation();
+function CompleteProfileSuspenseFallback() {
   return (
-    <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16">
-      <div className="card p-6 md:p-8 text-center">
-        <div className="mb-4">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
-        </div>
-        <h1 className="text-2xl font-bold mb-4 text-primary-400">{t('common.loading')}</h1>
-      </div>
-    </div>
+    <div
+      className={`max-w-md mx-auto mt-6 md:mt-12 mb-16 ${MAIN_VIEWPORT_MIN_HEIGHT_CLASS}`}
+      aria-hidden
+    />
   );
 }
 
 export default function CompleteProfilePage() {
   return (
-    <Suspense fallback={<CompleteProfileFallback />}>
+    <Suspense fallback={<CompleteProfileSuspenseFallback />}>
       <CompleteProfileContent />
     </Suspense>
   );

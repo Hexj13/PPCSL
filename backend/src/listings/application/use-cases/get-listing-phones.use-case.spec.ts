@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { RedisService } from '../../../common/redis.service';
@@ -49,12 +50,15 @@ describe('GetListingPhonesUseCase', () => {
   });
 
   it('returns phones for listing owner without rate limit', async () => {
+    const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
     listingRepo.findById.mockResolvedValue(makeListing());
 
     const result = await useCase.execute(listingId, { userId: ownerId, visitorHash: null });
 
     expect(result).toEqual({ phone: '+37369123456', additionalPhone: '+37369111111' });
     expect(redis.rateLimitUnique).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/status=success/));
+    logSpy.mockRestore();
   });
 
   it('returns phones for admin without rate limit', async () => {
@@ -71,6 +75,7 @@ describe('GetListingPhonesUseCase', () => {
   });
 
   it('throws when no phones', async () => {
+    const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
     listingRepo.findById.mockResolvedValue(
       makeListing({
         user: { id: ownerId, phone: '', additionalPhone: '' } as User,
@@ -80,6 +85,8 @@ describe('GetListingPhonesUseCase', () => {
     await expect(
       useCase.execute(listingId, { userId: viewerId, visitorHash: null }),
     ).rejects.toMatchObject({ status: 404 });
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/status=no_phones/));
+    logSpy.mockRestore();
   });
 
   it('allows duplicate listing for same viewer without counting again', async () => {
@@ -94,7 +101,7 @@ describe('GetListingPhonesUseCase', () => {
 
   it('throws 429 when new unique exceeds auth limit', async () => {
     listingRepo.findById.mockResolvedValue(makeListing());
-    redis.rateLimitUnique.mockResolvedValue({ added: 1, unique: 21 });
+    redis.rateLimitUnique.mockResolvedValue({ added: 1, unique: 51 });
 
     await expect(
       useCase.execute(listingId, { userId: viewerId, visitorHash: null }),
@@ -105,7 +112,7 @@ describe('GetListingPhonesUseCase', () => {
 
   it('throws 429 when new unique exceeds anon limit', async () => {
     listingRepo.findById.mockResolvedValue(makeListing());
-    redis.rateLimitUnique.mockResolvedValue({ added: 1, unique: 6 });
+    redis.rateLimitUnique.mockResolvedValue({ added: 1, unique: 21 });
 
     await expect(
       useCase.execute(listingId, { userId: null, visitorHash: 'abc' }),
@@ -113,11 +120,25 @@ describe('GetListingPhonesUseCase', () => {
   });
 
   it('skips rate limit when Redis errors', async () => {
+    const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
     listingRepo.findById.mockResolvedValue(makeListing());
     redis.rateLimitUnique.mockRejectedValue(new Error('redis down'));
 
     const result = await useCase.execute(listingId, { userId: viewerId, visitorHash: null });
 
     expect(result.phone).toBe('+37369123456');
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/status=success/));
+    logSpy.mockRestore();
+  });
+
+  it('logs not_found when listing is missing', async () => {
+    const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
+    listingRepo.findById.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute(listingId, { userId: viewerId, visitorHash: null }),
+    ).rejects.toMatchObject({ status: 404 });
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/status=not_found/));
+    logSpy.mockRestore();
   });
 });

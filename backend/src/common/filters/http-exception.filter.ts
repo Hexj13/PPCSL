@@ -89,6 +89,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       this.logger.error(
         `${logLabel}: ${exception.message} | ${request.method} ${request.url}`,
         exception.stack,
+        HttpExceptionFilter.name,
       );
 
       Sentry.captureException(exception, {
@@ -111,10 +112,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (status >= 500 && exception instanceof HttpException) {
       this.logger.error(
-        `HTTP ${status} Error: ${message}`,
-        `Path: ${request.url}`,
-        `Method: ${request.method}`,
+        `HTTP ${status} Error: ${message} | ${request.method} ${request.url}`,
         exception instanceof Error ? exception.stack : undefined,
+        HttpExceptionFilter.name,
       );
 
       Sentry.captureException(exception, {

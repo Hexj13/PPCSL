@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useState, useCallback, startTransition, useEffect } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
@@ -11,7 +11,6 @@ const AUTH_PATHS = ['/sign', '/verify-phone', '/reset-password'];
 
 export function useHeaderState() {
   const { user, logout, isInitialized } = useAuthStore();
-  const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -29,9 +28,8 @@ export function useHeaderState() {
     startTransition(() => {
       logout();
       setIsMobileMenuOpen(false);
-      router.replace('/');
     });
-  }, [logout, router]);
+  }, [logout]);
 
   const handleMobileMenuToggle = useCallback(() => {
     setIsMobileMenuOpen((prev) => !prev);

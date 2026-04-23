@@ -30,6 +30,8 @@
     "reset-and-seed": "ts-node -r tsconfig-paths/register src/scripts/stage/reset-and-seed.ts",
     "clear-cache": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-cache.ts",
     "clear-cache:prod": "ts-node -r tsconfig-paths/register src/scripts/production/clear-cache.ts",
+    "clear-listing-ai-reports": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-listing-ai-reports.ts",
+    "clear-listing-ai-reports:prod": "ts-node -r tsconfig-paths/register src/scripts/production/clear-listing-ai-reports.ts",
     "clear-cache:listings": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-listing-cache.ts",
     "clear-cache:listing": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-listing-cache.ts",
     "clear-cache:brands": "ts-node -r tsconfig-paths/register src/scripts/stage/clear-brands-cache.ts",
@@ -119,6 +121,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.999.0",
+    "@google/generative-ai": "^0.21.0",
     "@nestjs/common": "^11.1.19",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.19",

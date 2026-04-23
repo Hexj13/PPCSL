@@ -13,6 +13,7 @@ import { UploadModule } from '../upload/upload.module';
 import { UsersModule } from '../users/users.module';
 
 import { UserAccountDeletedListener } from './application/listeners/user-account-deleted.listener';
+import { ListingAiReportService } from './application/listing-ai-report.service';
 import { LISTING_CACHE } from './application/ports/listing-cache.port';
 import { LISTING_REPOSITORY } from './application/ports/listing.repository.port';
 import { PROMOTION_HISTORY_WRITER } from './application/ports/promotion-history.port';
@@ -47,11 +48,13 @@ import { UpdatePromotionHistoryEndDateUseCase } from './application/use-cases/up
 import { ListingTitleService } from './domain/services/listing-title.service';
 import { PromotionRulesService } from './domain/services/promotion-rules.service';
 import { SimilarListingsRankingService } from './domain/services/similar-ranking.service';
+import { ListingAiReport } from './entities/listing-ai-report.entity';
 import { ListingView } from './entities/listing-view.entity';
 import { Listing } from './entities/listing.entity';
 import { PromotionHistory } from './entities/promotion-history.entity';
 import { Vehicle } from './entities/vehicle.entity';
 import { RedisListingCache } from './infrastructure/cache/redis-listing-cache';
+import { GeminiListingAiReportClient } from './infrastructure/gemini-listing-ai-report.client';
 import { InfocarReportUrlProvider } from './infrastructure/infocar-report-url.provider';
 import { TypeOrmPromotionHistoryWriter } from './infrastructure/persistence/promotion-history-writer';
 import { TypeOrmListingRepository } from './infrastructure/persistence/typeorm-listing.repository';
@@ -62,6 +65,7 @@ import { ListingsController } from './presentation/listings.controller';
   imports: [
     TypeOrmModule.forFeature([
       Listing,
+      ListingAiReport,
       Vehicle,
       ListingView,
       PromotionHistory,
@@ -127,6 +131,8 @@ import { ListingsController } from './presentation/listings.controller';
     ExpirePromotionsUseCase,
     CronSecretGuard,
     UserAccountDeletedListener,
+    GeminiListingAiReportClient,
+    ListingAiReportService,
   ],
   exports: [ListingsService, LISTING_CACHE, TypeOrmModule],
 })

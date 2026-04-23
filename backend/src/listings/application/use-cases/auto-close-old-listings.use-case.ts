@@ -4,6 +4,7 @@ import { LessThan, LessThanOrEqual, Repository } from 'typeorm';
 
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { Listing } from '../../entities/listing.entity';
+import { ListingAiReportService } from '../listing-ai-report.service';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 import { IPromotionHistoryWriter, PROMOTION_HISTORY_WRITER } from '../ports/promotion-history.port';
 
@@ -18,6 +19,7 @@ export class AutoCloseOldListingsUseCase {
     private readonly promotionHistoryWriter: IPromotionHistoryWriter,
     @Inject(LISTING_CACHE)
     private readonly listingCache: IListingCache,
+    private readonly listingAiReportService: ListingAiReportService,
   ) {}
 
   async execute(): Promise<{ closed: number }> {
@@ -44,6 +46,19 @@ export class AutoCloseOldListingsUseCase {
           await this.promotionHistoryWriter.updateEndDateForListing(listing.id);
         }
 
+        const listingIdsToClose = await this.listingsRepository
+          .createQueryBuilder('l')
+          .select('l.id', 'id')
+          .where('l.status = :status', { status: ListingStatusEnum.Active })
+          .andWhere('l.last_updated_at <= :ninetyDaysAgo', { ninetyDaysAgo })
+          .andWhere(
+            '(l.is_promoted = false OR (l.is_promoted = true AND l.promoted_until IS NOT NULL AND l.promoted_until < :now))',
+            { now },
+          )
+          .getRawMany<{ id: string }>();
+
+        const listingIds = listingIdsToClose.map((row) => row.id);
+
         const result = await this.listingsRepository
           .createQueryBuilder()
           .update(Listing)
@@ -62,6 +77,8 @@ export class AutoCloseOldListingsUseCase {
             { now },
           )
           .execute();
+
+        await this.listingAiReportService.deleteByListingIds(listingIds);
 
         this.logger.log(`Auto-closed ${result.affected || 0} old listings`);
 

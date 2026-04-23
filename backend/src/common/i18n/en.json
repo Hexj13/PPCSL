@@ -149,7 +149,7 @@
     "onlyImagesSupported": "Only images are supported",
     "vehicleNotFound": "Vehicle not found",
     "vehicleNotFoundForListing": "Vehicle not found for listing",
-    "vinRateLimitExceeded": "You can reveal the VIN for up to 20 different listings per hour. Please try again later.",
+    "vinRateLimitExceeded": "You can reveal the VIN for up to 50 different listings per hour. Please try again later.",
     "phoneRateLimitExceeded": "You have reached the limit for revealing phone numbers. Please try again later.",
     "vehicleIdNotFound": "Vehicle ID not found",
     "brandNotFoundById": "Brand not found",

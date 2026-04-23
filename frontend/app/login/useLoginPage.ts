@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
-import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+import { authApi, savedFiltersApi } from '@/lib/api';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import {
   applyComparisonAfterAuth,
@@ -19,9 +19,8 @@ import {
 } from '@/lib/phone';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
+import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
-import { silentCatch } from '@/lib/utils';
-
 const isValidEmail = (value: string): boolean => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 };
@@ -29,36 +28,6 @@ const isValidEmail = (value: string): boolean => {
 const isValidPhone = (value: string): boolean => {
   return /^\+\d{1,4}\d{6,15}$/.test(value);
 };
-
-async function processPendingFavorites(userId: string): Promise<void> {
-  let pending: unknown[] = [];
-  try {
-    pending = JSON.parse(localStorageGetItem('pendingFavorites') || '[]') as unknown[];
-  } catch {
-    localStorageRemoveItem('pendingFavorites');
-    return;
-  }
-  if (!Array.isArray(pending) || pending.length === 0) return;
-  const validFavorites: string[] = [];
-  for (const listingId of pending) {
-    if (typeof listingId !== 'string') continue;
-    try {
-      const listingRes = await listingsApi.getOne(listingId);
-      const listing = listingRes.data;
-      if (listing.user && listing.user.id !== userId) validFavorites.push(listingId);
-    } catch {
-      // skip
-    }
-  }
-  if (validFavorites.length > 0) {
-    await Promise.all(
-      validFavorites.map((id: string) =>
-        favoritesApi.add(id).catch(silentCatch('login.syncFavorites')),
-      ),
-    );
-  }
-  localStorageRemoveItem('pendingFavorites');
-}
 
 async function processPendingSavedFilter(
   pendingSavedFilter: string | null,
@@ -127,9 +96,10 @@ export function useLoginPage() {
   const queryReturnUrl = getReturnUrlFromSearchParams(searchParams);
   const resolvedReturnUrl = queryReturnUrl ?? referrerReturnUrl;
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const suppressSignedInReturnNavigationRef = useRef(false);
 
   useEffect(() => {
-    if (isInitialized && user && !isRedirecting) {
+    if (isInitialized && user && !isRedirecting && !suppressSignedInReturnNavigationRef.current) {
       router.push(resolvedReturnUrl ?? '/');
     }
   }, [user, isInitialized, router, isRedirecting, resolvedReturnUrl]);
@@ -221,6 +191,7 @@ export function useLoginPage() {
     };
     try {
       const res = await authApi.login({ ...formData, login: loginForApi });
+      suppressSignedInReturnNavigationRef.current = true;
       setIsRedirecting(true);
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
       try {
@@ -230,7 +201,7 @@ export function useLoginPage() {
           analytics.formSubmit('login', true, filledFields);
           return;
         }
-        await processPendingFavorites(res.data.user.id);
+        await syncPendingFavoritesAfterAuth(res.data.user.id);
         await applyComparisonAfterAuth();
       } finally {
         releaseComparisonHold();
@@ -246,6 +217,7 @@ export function useLoginPage() {
       const returnUrl = resolvedReturnUrl || '/';
       applyLoginSuccessRedirect(returnUrl, loginMethod, filledFields);
     } catch {
+      suppressSignedInReturnNavigationRef.current = false;
       analytics.formSubmit('login', false, filledFields);
     } finally {
       setLoading(false);

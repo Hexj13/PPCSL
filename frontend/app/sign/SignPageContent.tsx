@@ -9,6 +9,7 @@ import { RegisterPanel } from '@/app/register/RegisterPanel';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
+import { buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
 
 export type AuthTab = 'login' | 'register';
 
@@ -16,6 +17,7 @@ export function SignPageContent() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const returnUrl = getReturnUrlFromSearchParams(searchParams);
   const tab: AuthTab = searchParams.get('tab') === 'register' ? 'register' : 'login';
 
   const loginTabRef = useRef<HTMLButtonElement>(null);
@@ -33,7 +35,8 @@ export function SignPageContent() {
   const handleTabClick = (next: AuthTab) => {
     if (next === tab) return;
     analytics.authTabSelect(next);
-    router.replace(next === 'register' ? '/sign?tab=register' : '/sign', { scroll: false });
+    const href = buildSignPageHref({ tab: next, returnUrl });
+    router.replace(href, { scroll: false });
   };
 
   if (login.isInitialized && login.user) {
@@ -117,6 +120,7 @@ export function SignPageContent() {
             handleSubmit={login.handleSubmit}
             showTitle={false}
             showRegisterLink={false}
+            registerHref={buildSignPageHref({ tab: 'register', returnUrl })}
             formClassName="p-6 md:p-8"
           />
         </div>

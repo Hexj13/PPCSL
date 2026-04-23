@@ -30,34 +30,13 @@ import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { reportImageLoadFailure } from '@/lib/image-failure-monitor';
 import { listingHasAnyDescription } from '@/lib/listingDescriptionLocale';
-import {
-  formatDate,
-  formatMileage,
-  formatRegistrationType,
-  getTireModelDisplayLabel,
-  isTireListing,
-} from '@/lib/utils';
+import { formatDate, formatMileage, formatRegistrationType, isTireListing } from '@/lib/utils';
 import { Spinner } from '@/ui';
 
 import { ListingPageHistorySection } from './ListingPageHistorySection';
 import { listingPageShowsHeaderDivider } from './listing-page-header-divider';
+import { getBoardSlug, listingPagePrimaryHeadingTitle } from './listing-page-helpers';
 import { useListingPageClient, type UseListingPageClientReturn } from './useListingPageClient';
-
-function getShowPromoteButton(listing: Listing, userId: string | undefined): boolean {
-  return !!(
-    userId &&
-    listing.user &&
-    userId === listing.user.id &&
-    listing.status === 'Active' &&
-    !listing.is_promoted
-  );
-}
-
-function getBoardSlug(listing: Listing): string | null {
-  if (!listing.user) return null;
-  const u = listing.user as { board_slug?: string; boardSlug?: string };
-  return u.board_slug ?? u.boardSlug ?? null;
-}
 
 function ListingPageListingInfoSection({
   listing,
@@ -350,24 +329,6 @@ function useListingPageGalleryKeyboard(
   }, [imagesLength, isImageModalOpen, previewRef]);
 }
 
-function listingPagePrimaryHeadingTitle(listing: Listing, t: (k: string) => string): string {
-  if (isTireListing(listing)) {
-    const tire = listing.tire;
-    const tireTitleParts =
-      tire && [tire.brand?.name, getTireModelDisplayLabel(tire)].filter(Boolean);
-    return (
-      (tireTitleParts?.length ? tireTitleParts.join(' ') : listing.title) ||
-      t('listings.defaultTitle')
-    );
-  }
-  const vehicle = listing.vehicle;
-  const brand = vehicle?.brand?.name || '';
-  const model = vehicle?.model?.name || '';
-  const year = vehicle?.year || '';
-  const vehicleInfo = [brand, model, year].filter(Boolean).join(' ');
-  return vehicleInfo || listing.title || t('listings.defaultTitle');
-}
-
 function ListingPageMainContent(props: UseListingPageClientReturn) {
   const { t } = useTranslation();
   const { locale } = useI18n();
@@ -376,7 +337,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     router,
     listing,
     id,
-    user,
+    user: _user,
     isInitialized,
     isInComparison,
     isFavorite,
@@ -396,7 +357,6 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     promotionModalOpen,
     setPromotionModalOpen,
     promotionAccess,
-    canPromote,
     canShare,
     previousListings,
     loadingPrevious,
@@ -410,6 +370,12 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     handlePromotionSelect,
     openImageModal,
     closeImageModal,
+    aiReportModalOpen,
+    aiReportPhase,
+    aiReportPayload,
+    aiReportMessage,
+    handleAiReportClick,
+    closeAiReportModal,
   } = props;
   const previewRef = useRef<ListingPageImagesHandle>(null);
   const listingRef = useRef(listing);
@@ -505,12 +471,12 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
                 isInComparison={isInComparison}
                 isFavorite={isFavorite}
                 isOwnListing={isOwnListing}
-                canPromote={canPromote}
-                showPromoteButton={getShowPromoteButton(listing, user?.id)}
                 showCompare={showCompare}
+                onAiReportClick={!isTireListing(listing) ? handleAiReportClick : undefined}
                 onToggleComparison={handleToggleComparison}
                 onToggleFavorite={handleToggleFavorite}
                 onPromoteClick={handlePromoteClick}
+                promotionAccess={promotionAccess}
               />
             </div>
           </div>
@@ -557,6 +523,11 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
                 t={t}
                 formatDate={formatDateWithLocale}
                 formatMileage={formatMileage}
+                aiReportModalOpen={aiReportModalOpen}
+                aiReportPhase={aiReportPhase}
+                aiReportPayload={aiReportPayload}
+                aiReportMessage={aiReportMessage}
+                onCloseAiReportModal={closeAiReportModal}
               />
             )}
           </div>

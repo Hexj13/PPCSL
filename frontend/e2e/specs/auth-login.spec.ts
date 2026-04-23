@@ -42,4 +42,18 @@ test.describe('Auth: login @p0', () => {
       await loginByUi(page, credentials);
     });
   });
+
+  test('keeps returnUrl in query when switching to register tab', async ({ page, signPage }) => {
+    const returnPath = '/listings/e2e-return-path';
+    const openUrl = `/sign?returnUrl=${encodeURIComponent(returnPath)}`;
+    await test.step('Open sign page with returnUrl on login tab', async () => {
+      await signPage.openWithPath(openUrl);
+      await expect(page).toHaveURL(new RegExp(`returnUrl=${encodeURIComponent(returnPath)}`));
+    });
+    await test.step('Switch to register tab and keep returnUrl', async () => {
+      await page.getByTestId('auth-tab-register').click();
+      await expect(page).toHaveURL(new RegExp(`returnUrl=${encodeURIComponent(returnPath)}`));
+      await expect(page).toHaveURL(/[?&]tab=register/);
+    });
+  });
 });

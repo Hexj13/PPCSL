@@ -31,3 +31,19 @@ export function getReturnUrlFromSearchParams(
 ): string | null {
   return sanitizeReturnUrl(searchParams.get('returnUrl'));
 }
+
+export function buildSignPageHref(options: {
+  tab: 'login' | 'register';
+  returnUrl?: string | null;
+}): string {
+  const params = new URLSearchParams();
+  if (options.tab === 'register') {
+    params.set('tab', 'register');
+  }
+  const safe = sanitizeReturnUrl(options.returnUrl ?? null);
+  if (safe) {
+    params.set('returnUrl', safe);
+  }
+  const query = params.toString();
+  return query ? `/sign?${query}` : '/sign';
+}
