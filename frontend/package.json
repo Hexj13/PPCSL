@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "rm -rf .next && next dev",
     "dev:clean": "rm -rf .next node_modules/.cache && next dev",
-    "prebuild": "[ -d ../../assets/frontend/public ] && cp -r ../../assets/frontend/public/* public/ || true",
+    "prebuild": "node ../../scripts/sync-platform-to-core.cjs && TS_NODE_PROJECT=tsconfig.json node -r ts-node/register scripts/write-theme-json.js && ([ -d ../../assets/frontend/public ] && cp -r ../../assets/frontend/public/* public/ || true)",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . -c config/eslint.config.mjs && npm run lint:translations",

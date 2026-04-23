@@ -1,4 +1,4 @@
-import type { LegalConfig } from '@/lib/content/legal';
+import type { LegalConfig } from '../content/legal';
 
 const legal: LegalConfig = {
   terms: {
