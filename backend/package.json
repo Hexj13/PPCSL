@@ -165,7 +165,7 @@
     "swagger-ui-express": "^5.0.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "twilio": "^5.12.2",
+    "twilio": "^6.0.0",
     "typeorm": "^0.3.28",
     "uuid": "^13.0.0"
   },
