@@ -2,6 +2,7 @@ import type { UpdateProfileDto, User } from '@/lib/api';
 import { favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
+import { compactE164Phone } from '@/lib/phone';
 import { sanitizeReturnUrl } from '@/lib/return-url';
 import { toast } from '@/lib/toast';
 import { silentCatch } from '@/lib/utils';
@@ -115,7 +116,7 @@ export function buildUpdateData(
   if (isBusiness) {
     updateData.companyWebsiteUrl = formData.companyWebsiteUrl?.trim() || '';
     updateData.additionalPhone = formData.additionalPhone?.trim()
-      ? formData.additionalPhone.trim()
+      ? compactE164Phone(formData.additionalPhone)
       : null;
   } else {
     if (formData.firstName?.trim()) updateData.firstName = formData.firstName.trim();

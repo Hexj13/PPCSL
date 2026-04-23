@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
+import { maskPhoneLastDigits } from '../../../common/utils/phone-mask.util';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { UsersService } from '../../../users/application/users.service';
 import { Listing } from '../../entities/listing.entity';
@@ -83,6 +84,12 @@ export class GetBoardListingsUseCase {
     const listingsWithoutPasswords = listings.map((listing) => {
       if (listing.user) {
         listing.user = removePasswordFromUser(listing.user) as typeof listing.user;
+        if (listing.user.phone) {
+          listing.user.phone = maskPhoneLastDigits(listing.user.phone);
+        }
+        if (listing.user.additionalPhone) {
+          listing.user.additionalPhone = maskPhoneLastDigits(listing.user.additionalPhone);
+        }
       }
       return listing;
     });

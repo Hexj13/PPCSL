@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { formatPhoneForDisplay } from '@/lib/phone';
 
 import { Modal } from './Modal';
 
@@ -148,7 +149,9 @@ export function SmsVerificationModal({
           <p className="text-text-secondary mb-2">
             {t('smsVerification.codeSentTo')}{' '}
             {phoneNumber && (
-              <span className="font-semibold text-text-secondary">{phoneNumber}</span>
+              <span className="font-semibold text-text-secondary">
+                {formatPhoneForDisplay(phoneNumber)}
+              </span>
             )}
           </p>
           <p className="text-sm text-text-secondary">{t('smsVerification.enterCode')}</p>

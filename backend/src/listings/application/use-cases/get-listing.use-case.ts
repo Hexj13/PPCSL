@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 
 import * as constants from '../../../common/constants';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
+import { maskPhoneLastDigits } from '../../../common/utils/phone-mask.util';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { UsersService } from '../../../users/application/users.service';
 import { ListingView } from '../../entities/listing-view.entity';
@@ -92,6 +93,16 @@ export class GetListingUseCase {
     if (listing.vin && listing.vin.length === 17 && !shouldIncludeFullVin) {
       (listing as Partial<Listing>).vin =
         listing.vin.slice(0, 4) + '*'.repeat(9) + listing.vin.slice(-4);
+    }
+
+    const shouldIncludeFullPhones = isOwner || !!context?.isAdmin;
+    if (listing.user && !shouldIncludeFullPhones) {
+      if (listing.user.phone) {
+        listing.user.phone = maskPhoneLastDigits(listing.user.phone);
+      }
+      if (listing.user.additionalPhone) {
+        listing.user.additionalPhone = maskPhoneLastDigits(listing.user.additionalPhone);
+      }
     }
 
     const defaultCurrency = constants.getDefaultCurrency();

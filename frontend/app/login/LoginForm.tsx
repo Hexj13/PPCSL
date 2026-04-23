@@ -12,6 +12,8 @@ type LoginFormProps = {
   showPassword: boolean;
   setShowPassword: (v: boolean | ((p: boolean) => boolean)) => void;
   handleFormFieldFocus: () => void;
+  handleLoginChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleLoginBlur: () => void;
   handleSubmit: (e: React.FormEvent) => void | Promise<void>;
   showTitle?: boolean;
   showRegisterLink?: boolean;
@@ -28,6 +30,8 @@ export function LoginForm({
   showPassword,
   setShowPassword,
   handleFormFieldFocus,
+  handleLoginChange,
+  handleLoginBlur,
   handleSubmit,
   showTitle = true,
   showRegisterLink = true,
@@ -48,12 +52,8 @@ export function LoginForm({
           <input
             type="text"
             value={formData.login}
-            onChange={(e) => {
-              setFormData({ ...formData, login: e.target.value });
-              if (errors.login) {
-                setErrors({ ...errors, login: undefined });
-              }
-            }}
+            onChange={handleLoginChange}
+            onBlur={handleLoginBlur}
             onFocus={handleFormFieldFocus}
             className={`input-field ${errors.login ? 'border-red-500' : ''}`}
             placeholder={t('login.emailOrPhone')}

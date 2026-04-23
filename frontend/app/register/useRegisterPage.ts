@@ -9,6 +9,7 @@ import { analytics } from '@/lib/analytics';
 import type { RegisterDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { localStorageSetItem } from '@/lib/browser-local-storage';
+import { compactE164Phone, finalizePhoneFromRawInput, sanitizePhoneInput } from '@/lib/phone';
 import { getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
@@ -112,28 +113,24 @@ export function useRegisterPage() {
   }, [formData.type]);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    if (value === '') {
+    const raw = e.target.value;
+    if (raw === '') {
       setFormData((prev) => ({ ...prev, phone: '' }));
       if (phoneTouched) setPhoneError('');
       return;
     }
-    value = value.replace(/[^\d+]/g, '');
-    const plusCount = (value.match(/\+/g) || []).length;
-    if (plusCount > 1) value = '+' + value.replace(/\+/g, '');
-    if (value.length > 0 && value[0] !== '+') {
-      value = value.startsWith('0') ? '+373' + value.substring(1) : '+' + value.replace(/\+/g, '');
-    } else if (value.startsWith('+0')) {
-      value = '+373' + value.substring(2);
-    }
-    if (value.length > 20) value = value.slice(0, 20);
+    const value = sanitizePhoneInput(raw);
     setFormData((prev) => ({ ...prev, phone: value }));
-    if (phoneTouched && value) setPhoneError(validatePhone(value, t));
+    if (phoneTouched) {
+      setPhoneError(value ? validatePhone(value, t) : '');
+    }
   };
 
-  const handlePhoneBlur = () => {
+  const handlePhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setPhoneTouched(true);
-    if (formData.phone) setPhoneError(validatePhone(formData.phone, t));
+    const { phone, error } = finalizePhoneFromRawInput(e.target.value, t);
+    setFormData((prev) => ({ ...prev, phone }));
+    setPhoneError(error);
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -228,10 +225,14 @@ export function useRegisterPage() {
         return;
       }
       try {
-        await authApi.sendSms({ phone: formData.phone });
+        const phoneE164 = compactE164Phone(formData.phone);
+        await authApi.sendSms({ phone: phoneE164 });
         analytics.formSubmit('register', true, getFilledFields(formData));
-        localStorageSetItem('pendingRegistration', JSON.stringify(submitData));
-        const query = new URLSearchParams({ phone: formData.phone });
+        localStorageSetItem(
+          'pendingRegistration',
+          JSON.stringify({ ...submitData, phone: phoneE164 }),
+        );
+        const query = new URLSearchParams({ phone: phoneE164 });
         if (returnUrl) {
           query.set('returnUrl', returnUrl);
         }

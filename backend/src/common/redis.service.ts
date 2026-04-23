@@ -2,6 +2,16 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, RedisClientType } from 'redis';
 
+const RATE_LIMIT_UNIQUE_SCRIPT = `
+local added = redis.call('SADD', KEYS[1], ARGV[1])
+local n = redis.call('SCARD', KEYS[1])
+local ttl = redis.call('TTL', KEYS[1])
+if ttl == -1 then
+  redis.call('EXPIRE', KEYS[1], tonumber(ARGV[2]))
+end
+return {added, n}
+`;
+
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: RedisClientType;
@@ -252,5 +262,28 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       return count;
     }
     return first as number;
+  }
+
+  async rateLimitUnique(
+    key: string,
+    memberId: string,
+    ttlSeconds: number,
+  ): Promise<{ added: number; unique: number }> {
+    if (!this.client?.isOpen) {
+      throw new Error('Redis client is not connected');
+    }
+    const raw = await this.client.eval(RATE_LIMIT_UNIQUE_SCRIPT, {
+      keys: [key],
+      arguments: [memberId, String(ttlSeconds)],
+    });
+    const tuple = raw as [number, number];
+    return { added: Number(tuple[0]), unique: Number(tuple[1]) };
+  }
+
+  async rollbackRateLimitUniqueMember(key: string, memberId: string): Promise<void> {
+    if (!this.client?.isOpen) {
+      return;
+    }
+    await this.client.sRem(key, memberId);
   }
 }

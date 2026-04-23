@@ -112,6 +112,8 @@ export function SignPageContent() {
             showPassword={login.showPassword}
             setShowPassword={login.setShowPassword}
             handleFormFieldFocus={login.handleFormFieldFocus}
+            handleLoginChange={login.handleLoginChange}
+            handleLoginBlur={login.handleLoginBlur}
             handleSubmit={login.handleSubmit}
             showTitle={false}
             showRegisterLink={false}

@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
+import { maskPhoneLastDigits } from '../../../common/utils/phone-mask.util';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { Listing } from '../../entities/listing.entity';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
@@ -98,6 +99,13 @@ export class SearchListingsUseCase {
           listing.user.lastName = null;
           listing.user.companyName = null;
           listing.user.companyWebsiteUrl = null;
+        } else {
+          if (listing.user.phone) {
+            listing.user.phone = maskPhoneLastDigits(listing.user.phone);
+          }
+          if (listing.user.additionalPhone) {
+            listing.user.additionalPhone = maskPhoneLastDigits(listing.user.additionalPhone);
+          }
         }
       }
       return listing;

@@ -1,7 +1,11 @@
 {
   "validation": {
     "name": "Field can only contain letters, spaces, hyphens and dashes",
-    "phone": "Phone number must be in format +country code (1-4 digits) + number (6-15 digits)",
+    "phone": "Enter a valid phone number in international format",
+    "phoneMustStartWithPlus": "Use international format with the + prefix (e.g. +373...)",
+    "phoneInvalidCountry": "Unknown country calling code",
+    "phoneInvalidLength": "Incorrect number length for this country",
+    "phoneNotMobile": "Enter a mobile number suitable for SMS (fixed-line numbers are not accepted)",
     "password": "Password must contain at least one uppercase letter and one lowercase letter",
     "registrationType": "Registration type must be Local, Foreign, Cleared, or NotCleared",
     "string": "Value must be a string",
@@ -145,7 +149,8 @@
     "onlyImagesSupported": "Only images are supported",
     "vehicleNotFound": "Vehicle not found",
     "vehicleNotFoundForListing": "Vehicle not found for listing",
-    "vinRateLimitExceeded": "You can request VIN no more than 5 times per hour. Please try again later.",
+    "vinRateLimitExceeded": "You can reveal the VIN for up to 20 different listings per hour. Please try again later.",
+    "phoneRateLimitExceeded": "You have reached the limit for revealing phone numbers. Please try again later.",
     "vehicleIdNotFound": "Vehicle ID not found",
     "brandNotFoundById": "Brand not found",
     "tireBrandNotFound": "Tire brand not found",

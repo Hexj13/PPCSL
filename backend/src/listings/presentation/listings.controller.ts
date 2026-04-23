@@ -28,6 +28,7 @@ import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import type { AuthenticatedRequest } from '../../common/express-augmentation';
 import { CronSecretGuard } from '../../common/guards/cron-secret.guard';
+import { buildVisitorHash } from '../../common/utils/visitor-identity.util';
 import { ListingsService } from '../listings.service';
 
 import { CreateListingDto } from './dto/create-listing.dto';
@@ -323,7 +324,10 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Full VIN' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Listing not found or no VIN' })
-  @ApiResponse({ status: 429, description: 'Too many VIN requests. Max 5 per hour.' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many VIN reveal requests (max 20 unique listings per hour).',
+  })
   @UseGuards(JwtAuthGuard)
   @Get(':id/vin')
   async getListingVin(
@@ -332,6 +336,27 @@ export class ListingsController {
     @Query('action') action?: string,
   ) {
     return this.listingsService.getListingVin(id, req.user.id, action || 'unknown');
+  }
+
+  @ApiOperation({ summary: 'Get full seller phone numbers for listing' })
+  @ApiParam({ name: 'id', description: 'Listing UUID' })
+  @ApiResponse({ status: 200, description: 'Phone numbers' })
+  @ApiResponse({ status: 404, description: 'Listing not found or no phones' })
+  @ApiResponse({
+    status: 429,
+    description:
+      'Too many phone reveal requests: max 5 unique listings/hour (anonymous), max 20/hour (authenticated). Listing owner and Admin bypass.',
+  })
+  @UseGuards(OptionalJwtAuthGuard)
+  @Get(':id/phones')
+  async getListingPhones(@Param('id', ParseUUIDPipe) id: string, @Request() req: ExpressRequest) {
+    const userId = req.user?.id ?? null;
+    const visitorHash = userId ? null : buildVisitorHash(req);
+    return this.listingsService.getListingPhones(id, {
+      userId,
+      visitorHash,
+      isAdmin: req.user?.type === 'Admin',
+    });
   }
 
   @ApiOperation({ summary: 'Get listing history by VIN' })

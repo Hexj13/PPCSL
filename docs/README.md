@@ -62,6 +62,8 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see [TECHNICAL.md](./architecture/TECHNICAL.md) §6 Exchange Rates)
 - [image-preview.md](./features/image-preview.md) — Image preview system (card carousel vs listing hero layers, modal; blurhash; `image_blur_hashes` + backfill scripts)
 - [infocar-history-section.md](./features/infocar-history-section.md) — Infocar report card + on-site VIN history (two cards, RO/RU links)
+- [ai-listing-report-ru.md](./features/ai-listing-report-ru.md) — AI listing report (Gemini, PDP modal, RU spec: API, cache, prompts)
+- Listing seller phones and full VIN — masked in public listing payloads; optional reveal on the listing page with per-viewer Redis rate limits (`GET /api/listings/:id/phones`, `GET /api/listings/:id/vin`); see [TECHNICAL.md](./architecture/TECHNICAL.md) § API Reference → Listings
 - [loading-states.md](./features/loading-states.md) — Loading states
 - [cross-tab-sync.md](./features/cross-tab-sync.md) — Favorites, comparison, listing status, auth session, and refresh-token rotation across tabs (UI: `BroadcastChannel` + storage; auth: `storage` on auth keys — see doc)
 - [paid-promotion.md](./features/paid-promotion.md) — Paid promotion

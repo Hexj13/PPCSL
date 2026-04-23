@@ -1,5 +1,6 @@
 import { isBusinessUser } from '@/app/admin/components/adminUsersHelpers';
 import type { User } from '@/lib/api';
+import { formatPhoneForDisplay } from '@/lib/phone';
 
 export const USERS_TABLE_UNAVAILABLE = '—';
 
@@ -25,10 +26,14 @@ export function buildUsersTableRowPhones(user: User): {
   const additionalPhoneRaw = user.additionalPhone?.trim() || '';
   const normalizedPrimaryPhone = primaryPhoneRaw.replace(/\s+/g, '');
   const normalizedAdditionalPhone = additionalPhoneRaw.replace(/\s+/g, '');
-  const displayPrimaryPhone = primaryPhoneRaw || additionalPhoneRaw || USERS_TABLE_UNAVAILABLE;
+  const displayPrimaryPhone = primaryPhoneRaw
+    ? formatPhoneForDisplay(primaryPhoneRaw)
+    : additionalPhoneRaw
+      ? formatPhoneForDisplay(additionalPhoneRaw)
+      : USERS_TABLE_UNAVAILABLE;
   const displayAdditionalPhone =
     primaryPhoneRaw && additionalPhoneRaw && normalizedPrimaryPhone !== normalizedAdditionalPhone
-      ? additionalPhoneRaw
+      ? formatPhoneForDisplay(additionalPhoneRaw)
       : '';
   return { displayPrimaryPhone, displayAdditionalPhone };
 }

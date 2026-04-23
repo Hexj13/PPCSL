@@ -19,6 +19,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { localStorageGetItem } from '@/lib/browser-local-storage';
+import { compactE164Phone, formatPhoneForDisplay } from '@/lib/phone';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
@@ -101,6 +102,28 @@ export function getProfileSubmitState(
   };
 }
 
+export function getAdditionalPhoneFieldError(
+  user: NonNullable<ReturnType<typeof useAuthStore.getState>['user']>,
+  additionalPhone: string | null | undefined,
+  t: (key: string) => string,
+): string | null {
+  if (user.type !== 'Business') {
+    return null;
+  }
+  const trimmed = additionalPhone?.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const phoneErr = validatePhone(trimmed, t);
+  if (phoneErr) {
+    return phoneErr;
+  }
+  if (compactE164Phone(trimmed) === compactE164Phone(user.phone || '')) {
+    return t('errors.additionalPhoneSameAsPrimary');
+  }
+  return null;
+}
+
 function getProfileValidationError(
   user: NonNullable<ReturnType<typeof useAuthStore.getState>['user']>,
   formData: UpdateProfileDto,
@@ -115,15 +138,9 @@ function getProfileValidationError(
   if (formData.companyWebsiteUrl && !validateCompanyWebsiteUrl(formData.companyWebsiteUrl)) {
     return t('profile.invalidCompanyWebsiteUrl');
   }
-  if (user.type === 'Business' && formData.additionalPhone?.trim()) {
-    const trimmedAdditionalPhone = formData.additionalPhone.trim();
-    const phoneErr = validatePhone(trimmedAdditionalPhone, t);
-    if (phoneErr) {
-      return phoneErr;
-    }
-    if (trimmedAdditionalPhone === (user.phone || '').trim()) {
-      return t('errors.additionalPhoneSameAsPrimary');
-    }
+  const additionalPhoneErr = getAdditionalPhoneFieldError(user, formData.additionalPhone, t);
+  if (additionalPhoneErr) {
+    return additionalPhoneErr;
   }
   return getProfilePasswordChangeError(curPw, neuPw, t);
 }
@@ -186,11 +203,7 @@ export function useProfilePage() {
     ) {
       return false;
     }
-    if (
-      user.type === 'Business' &&
-      formData.additionalPhone?.trim() &&
-      validatePhone(formData.additionalPhone.trim(), t)
-    ) {
+    if (getAdditionalPhoneFieldError(user, formData.additionalPhone, t)) {
       return false;
     }
     const initialData = initializeFormData(user);
@@ -203,6 +216,11 @@ export function useProfilePage() {
     const passwordComplete = isProfilePasswordChangeComplete(cur, neu);
     return hasProfileChanges || hasEmailChange || passwordComplete;
   }, [user, formData, emailForChange, currentPassword, newPassword, t]);
+
+  const additionalPhoneError = useMemo(
+    () => (user ? getAdditionalPhoneFieldError(user, formData.additionalPhone, t) : null),
+    [user, formData.additionalPhone, t],
+  );
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -226,7 +244,7 @@ export function useProfilePage() {
           lastName: profileUser.lastName || '',
           companyName: profileUser.companyName || '',
           companyWebsiteUrl: profileUser.companyWebsiteUrl || '',
-          additionalPhone: profileUser.additionalPhone || '',
+          additionalPhone: formatPhoneForDisplay(profileUser.additionalPhone || ''),
           emailNotifications: convertToBoolean(profileUser.emailNotifications),
           emailNotificationListingRefreshReminders: convertToBoolean(
             profileUser.emailNotificationListingRefreshReminders,
@@ -341,7 +359,13 @@ export function useProfilePage() {
       setLoading(true);
       try {
         if (submitState.hasProfileChanges) {
-          const response = await authApi.updateProfile(formData);
+          const profilePayload: UpdateProfileDto = {
+            ...formData,
+            additionalPhone: formData.additionalPhone?.trim()
+              ? compactE164Phone(formData.additionalPhone)
+              : formData.additionalPhone || '',
+          };
+          const response = await authApi.updateProfile(profilePayload);
           setAuth(
             response.data,
             localStorageGetItem('token') || useAuthStore.getState().token,
@@ -407,6 +431,7 @@ export function useProfilePage() {
     handleChange,
     handleSubmit,
     canSave,
+    additionalPhoneError,
     currentPassword,
     setCurrentPassword,
     newPassword,

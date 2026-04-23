@@ -70,7 +70,7 @@ The VIN field on the listing form (create and edit) uses `listings.vinHint`. The
 |----------|-------------|
 | `INFOCAR_SECRET_KEY` | Secret key from Infocar.md partner agreement. Used to encrypt VIN (AES-256-CBC, key = SHA256(secret), IV 16 bytes random, output base64url(IV \|\| ciphertext)). If unset, `GET /api/listings/:id/report-url` returns 404 and the frontend opens the fallback URL (Infocar base without VIN). |
 
-Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md` for RO), `INFOCAR_BASE_URL_RU` (default `https://ru.infocar.md` for RU), `INFOCAR_PARTNER_FROM` (default `kupito`). See also [technical.md](../architecture/technical.md#3-environment-variables) and [platform-checklist.md](../guides/platform-checklist.md).
+Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md` for RO), `INFOCAR_BASE_URL_RU` (default `https://ru.infocar.md` for RU), `INFOCAR_PARTNER_FROM` (default `kupito`). See also [TECHNICAL.md](../architecture/TECHNICAL.md#3-environment-variables) and [platform-checklist.md](../guides/platform-checklist.md).
 
 ## Implementation
 
@@ -81,7 +81,7 @@ Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md` for RO), `I
   - `GET /api/listings/:id/report-url?locale=ro|ru` — returns Infocar URL with encrypted VIN using `INFOCAR_SECRET_KEY` (AES-256-CBC, param `vin`). Optional query `locale`: `ru` → ru.infocar.md, otherwise RO (infocar.md). If `INFOCAR_SECRET_KEY` is not set, returns 404.
   - `GET /api/listings/:id/report-redirect?locale=ro|ru` — returns 302 redirect to Infocar URL for the given locale (or locale-specific fallback on error: RO → `https://infocar.md/?from=kupito`, RU → `https://ru.infocar.md/?from=kupito`). Used by the "Order report" button as direct link for iOS Safari compatibility.
   - `GET /api/listings/:id/history` — returns previous listings with the same VIN (for the site history table).
-  - VIN on listing detail: `GET /api/listings/:id` returns masked VIN (4+9+4). Full VIN: `GET /api/listings/:id/vin` (JWT required, rate limit 5 per user per hour; query `action=reveal|copy` for logging). See listing characteristics section for Show/Hide/Copy VIN.
+  - VIN on listing detail: `GET /api/listings/:id` returns masked VIN (4+9+4). Full VIN: `GET /api/listings/:id/vin` (JWT required; up to 20 **different** listings per rolling hour per user in Redis; repeat reveal/copy for the same listing within the hour does not consume quota; query `action=reveal|copy` for logging). See listing characteristics section for Show/Hide/Copy VIN.
 
 ## Partner tracking
 

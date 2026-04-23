@@ -13,6 +13,12 @@ import {
   localStorageSetItem,
 } from '@/lib/browser-local-storage';
 import { holdComparisonApiLoadUntilReleased } from '@/lib/comparisonMigration';
+import {
+  compactE164Phone,
+  formatPhoneForDisplay,
+  formatPhoneOnBlur,
+  sanitizePhoneInput,
+} from '@/lib/phone';
 import { getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
@@ -77,7 +83,7 @@ function CompleteProfileContent() {
         lastName: user.lastName || '',
         email: nextEmail,
         companyWebsiteUrl: user.companyWebsiteUrl || '',
-        additionalPhone: user.additionalPhone || '',
+        additionalPhone: formatPhoneForDisplay(user.additionalPhone || ''),
         emailNotifications: canInteractWithEmailNotifications(nextEmail)
           ? true
           : (user.emailNotifications ?? false),
@@ -199,18 +205,31 @@ function CompleteProfileContent() {
     value.trim() ? validatePhone(value.trim(), t) : '';
 
   const handleAdditionalPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFormData({ ...formData, additionalPhone: value });
+    const raw = e.target.value;
+    if (raw === '') {
+      setFormData({ ...formData, additionalPhone: '' });
+    } else {
+      setFormData({ ...formData, additionalPhone: sanitizePhoneInput(raw) });
+    }
+    const nextValue = raw === '' ? '' : sanitizePhoneInput(raw);
     if (touched.additionalPhone) {
-      setErrors({ ...errors, additionalPhone: validateAdditionalPhoneField(value) });
+      setErrors({ ...errors, additionalPhone: validateAdditionalPhoneField(nextValue) });
     }
   };
 
   const handleAdditionalPhoneBlur = () => {
     setTouched({ ...touched, additionalPhone: true });
+    let valueForValidation = formData.additionalPhone;
+    if (valueForValidation.trim()) {
+      const formatted = formatPhoneOnBlur(valueForValidation);
+      valueForValidation = formatted;
+      if (formatted !== formData.additionalPhone) {
+        setFormData({ ...formData, additionalPhone: formatted });
+      }
+    }
     setErrors({
       ...errors,
-      additionalPhone: validateAdditionalPhoneField(formData.additionalPhone),
+      additionalPhone: validateAdditionalPhoneField(valueForValidation),
     });
   };
 
@@ -287,7 +306,7 @@ function CompleteProfileContent() {
     if (
       isBusiness &&
       formData.additionalPhone?.trim() &&
-      formData.additionalPhone.trim() === (user.phone || '').trim()
+      compactE164Phone(formData.additionalPhone.trim()) === compactE164Phone(user.phone || '')
     ) {
       toast.error(t('errors.additionalPhoneSameAsPrimary'));
       return;

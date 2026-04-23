@@ -17,17 +17,17 @@ const btnPrimaryClass =
 
 function ResetPasswordPhoneStep({
   phone,
-  setPhone,
+  onPhoneChange,
+  onPhoneBlur,
   errors,
-  setErrors,
   loading,
   onSubmit,
   t,
 }: {
   phone: string;
-  setPhone: (v: string) => void;
+  onPhoneChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onPhoneBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
   errors: ResetPasswordErrors;
-  setErrors: (e: ResetPasswordErrors) => void;
   loading: boolean;
   onSubmit: (e: React.FormEvent) => void;
   t: TranslationFn;
@@ -39,12 +39,12 @@ function ResetPasswordPhoneStep({
           {t('resetPassword.phoneNumber')}
         </label>
         <input
-          type="text"
+          type="tel"
+          inputMode="tel"
           value={phone}
-          onChange={(e) => {
-            setPhone(e.target.value);
-            if (errors.phone) setErrors({ ...errors, phone: undefined });
-          }}
+          onChange={onPhoneChange}
+          onBlur={onPhoneBlur}
+          aria-invalid={errors.phone ? true : undefined}
           className={`input-field ${errors.phone ? 'border-red-500' : ''}`}
           placeholder={t('register.phonePlaceholder')}
           autoComplete="tel"
@@ -392,7 +392,8 @@ export default function ResetPasswordPage() {
   const {
     step,
     phone,
-    setPhone,
+    handlePhoneFieldChange,
+    handlePhoneFieldBlur,
     code,
     password,
     setPassword,
@@ -429,9 +430,9 @@ export default function ResetPasswordPage() {
       {step === 'phone' && (
         <ResetPasswordPhoneStep
           phone={phone}
-          setPhone={setPhone}
+          onPhoneChange={handlePhoneFieldChange}
+          onPhoneBlur={handlePhoneFieldBlur}
           errors={errors}
-          setErrors={setErrors}
           loading={loading}
           onSubmit={handleRequestReset}
           t={t}

@@ -55,6 +55,7 @@ describe('ListingsController', () => {
       findByVin: jest.fn(),
       findOne: jest.fn(),
       getListingVin: jest.fn(),
+      getListingPhones: jest.fn(),
       getListingHistory: jest.fn(),
       getReportUrl: jest.fn(),
       create: jest.fn(),

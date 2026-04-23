@@ -365,8 +365,8 @@ Refresh tokens rotate on each successful refresh (the previous refresh token is 
 ### Listings
 
 ```http
-GET    /api/listings                  # List listings (with filters)
-GET    /api/listings/:id              # Get listing details (supports includeFullVin=1 for Admin)
+GET    /api/listings                  # List listings (with filters); embedded `user.phone` / `user.additionalPhone` are last-three-digits masked for public payloads (same rules as single listing when contact fields are present)
+GET    /api/listings/:id              # Get listing details (supports includeFullVin=1 for Admin). Non-owner/non-admin: masked 17-char VIN; seller phones last-three-digits masked
 POST   /api/listings                  # Create listing
 PATCH  /api/listings/:id              # Update listing (owner: non-closed only; Admin can edit any status)
 POST   /api/listings/:id/publish      # Activate listing
@@ -374,7 +374,8 @@ POST   /api/listings/:id/pause        # Pause listing
 POST   /api/listings/:id/close        # Close listing
 GET    /api/listings/my               # Get user's listings; query: page, limit, status (Active|Paused|Closed), promoted (true|false), search (brand/model text); meta: last_listing_refresh_at, refreshCooldownMs for 48h timer
 GET    /api/listings/vin/:vin         # Find listings by VIN
-GET    /api/listings/:id/vin          # Get full VIN (JWT required; rate limit 5/hour; query action=reveal|copy)
+GET    /api/listings/:id/vin          # Get full VIN (JWT required; up to 20 different listings per rolling hour per user in Redis; repeat same listing in the hour does not consume quota; query action=reveal|copy)
+GET    /api/listings/:id/phones       # Full seller phone numbers (optional JWT). Anonymous: visitor id sha256(ip|user-agent); up to 5 different listings/hour. Authenticated: up to 20 different listings/hour. Listing owner and Admin skip rate limits. One call returns both numbers; repeat same listing in the hour does not consume quota
 GET    /api/listings/:id/history      # Previous listings with same VIN
 GET    /api/listings/:id/report-url        # Infocar report URL (AES-256-CBC encrypted VIN, param vin); optional query locale=ro|ru
 GET    /api/listings/:id/report-redirect   # 302 redirect to Infocar (direct link for iOS); optional query locale=ro|ru
@@ -386,6 +387,8 @@ GET    /api/listings/promotion-history # Get user's promotion history (JWT requi
 GET    /api/listings/promotion-history/check # Check if user has promotion history (JWT required)
 GET    /api/listings/promotion-access  # Get promotion access status (no auth required)
 ```
+
+**Listing detail — seller phones (frontend):** For guests and non-owner viewers, masked numbers from `GET /api/listings/:id` are shown with a reveal control; `GET /api/listings/:id/phones` runs on reveal. Copy is available after reveal for that flow. Listing owner and Admin see full numbers from `GET /api/listings/:id` with copy and no reveal control (no `GET .../phones` needed for display).
 
 **Listing images / blurhash:** Listings store `cover_blur_hash` (first photo, for cards) and optional `image_blur_hashes` (JSON array aligned with `images`, entries may be `null`). `POST /api/listings` and `PATCH /api/listings/:id` accept `image_blur_hashes` when its length matches `images`. For existing rows without the array, run `npm run backfill:blurhash:all` (see `core/backend/docs/SCRIPTS.md`). The listing UI shows blur placeholders only when these fields are populated; a local DB without blurhash data will not show them compared to production—see `core/docs/features/image-preview.md` (Local development vs production).
 
@@ -460,7 +463,7 @@ Public seller board page: all active listings of a seller by slug (no auth requi
 
 ```http
 GET    /api/board/:slug                 # Get board info (displayName, boardSlug)
-GET    /api/board/:slug/listings        # Get active listings (page, limit, sortBy, sortOrder)
+GET    /api/board/:slug/listings        # Get active listings (page, limit, sortBy, sortOrder); embedded seller phones last-three-digits masked on `user`
 ```
 
 ### Upload
@@ -736,9 +739,9 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 - ValidationPipe with whitelist and transform
 - Custom validation decorators:
   - `@IsName()` - Validates name fields (letters, spaces, hyphens, dashes only)
-  - `@IsPhone()` - Validates phone number format (+country code 1-4 digits + number 6-15 digits)
+  - `@IsPhone()` - Validates SMS-capable phone via `libphonenumber-js` (E.164, real country code, correct length, mobile/fixed-line-or-mobile only)
   - `@IsPassword()` - Validates password strength (uppercase, lowercase required)
-- Phone number format validation
+- **Frontend** (`frontend/lib/phone/`): same `libphonenumber-js` rules (default country `MD` for parsing), plus input sanitization, blur formatting (`finalizePhoneFromRawInput` reads the live input value on blur so validation matches the last keystroke before focus leaves), E.164 for API payloads, and backend validation-key mapping; used on register, profile change-phone, and reset-password
 - Email validation
 - VIN length validation (17 characters)
 - SMS code validation (6 digits, numeric only)
@@ -789,12 +792,11 @@ cd core/frontend && npm test
 **Frontend API:** ✅ Client-side API functions tested (`lib/api/api.test.ts`; modules: api-types, api-listings, api-auth, etc.)
 **Frontend Utilities:** ✅ Utility functions tested (`lib/utils/utils.test.ts`)
 
-**Test Statistics:**
+**Test Statistics (indicative; run `npm test` for current counts):**
 
-- **Total Tests:** 324 tests across 27 test suites
-- **Backend Unit:** 195 tests across 14 test suites
-- **Backend Integration:** 44 tests across 5 test suites
-- **Frontend:** 85 tests across 8 test suites (component tests, utility tests, API tests, server API tests)
+- **Backend unit:** on the order of 650+ tests across 85+ suites
+- **Backend integration:** 50 tests across 6 suites
+- **Frontend:** on the order of 280+ tests across 40+ suites (components, utilities, API, server API)
 
 ### CI/CD
 
@@ -1522,11 +1524,12 @@ cd core/backend && npm run test -- listings.service.spec.ts
 
 ---
 
-**Last Updated:** 2026-03-26
-**Version:** 1.12
+**Last Updated:** 2026-04-23
+**Version:** 1.13
 
 ### Recent Updates
 
+- **Listing seller phones and VIN (2026-04):** Search and listing payloads mask seller phone fields; full numbers via `GET /api/listings/:id/phones` (guest hash or JWT user, hourly distinct-listing caps). Full VIN via `GET /api/listings/:id/vin` (JWT, hourly distinct-listing cap). Phone validation uses `libphonenumber-js` on backend and in `frontend/lib/phone/`.
 - **Slug-based URLs & SEO Improvements (2025-12-17):**
   - Implemented slug-based URLs for brand and model filters (`?brand=toyota&model=yaris`) for better SEO and user-friendly URLs
   - Added utility functions `createSlug()` and `slugToName()` in `lib/utils/utils.ts` for URL-friendly text conversion
@@ -1560,4 +1563,4 @@ cd core/backend && npm run test -- listings.service.spec.ts
 - Added tab counters on Favorites page
 - Added breadcrumbs navigation on key pages
 - Optimized filter loading to prevent skeleton flickering
-- Comprehensive test coverage: 52 frontend tests across 4 test suites, 195 backend tests across 14 test suites
+- Comprehensive test coverage across frontend and backend (see Test Statistics above)

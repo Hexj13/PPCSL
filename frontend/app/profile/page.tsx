@@ -9,6 +9,7 @@ import { ProfilePasswordSection } from '@/app/profile/ProfilePasswordSection';
 import { useProfilePage } from '@/app/profile/useProfilePage';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto, User } from '@/lib/api';
+import { formatPhoneForDisplay, formatPhoneOnBlur, sanitizePhoneInput } from '@/lib/phone';
 import { HintTooltip, LoadingButton } from '@/ui';
 
 type TranslationFn = ReturnType<typeof useTranslation>['t'];
@@ -18,11 +19,13 @@ const PROFILE_EDIT_FORM_ID = 'profile-edit';
 function ProfileContactSection({
   user,
   formData,
+  additionalPhoneError,
   t,
   onChange,
 }: {
   user: User;
   formData: UpdateProfileDto;
+  additionalPhoneError: string | null;
   t: TranslationFn;
   onChange: (field: keyof UpdateProfileDto, value: string | boolean) => void;
 }) {
@@ -120,7 +123,7 @@ function ProfileContactSection({
             id="profile-phone-input"
             name="profilePhoneDisplay"
             type="tel"
-            value={user.phone || ''}
+            value={formatPhoneForDisplay(user.phone || '')}
             disabled
             autoComplete="off"
             data-1p-ignore
@@ -162,11 +165,32 @@ function ProfileContactSection({
                 name="profileAdditionalPhone"
                 type="tel"
                 value={formData.additionalPhone || ''}
-                onChange={(e) => onChange('additionalPhone', e.target.value)}
-                className="input-field w-full"
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === '') {
+                    onChange('additionalPhone', '');
+                    return;
+                  }
+                  onChange('additionalPhone', sanitizePhoneInput(raw));
+                }}
+                onBlur={() => {
+                  const v = (formData.additionalPhone || '').trim();
+                  if (!v) {
+                    return;
+                  }
+                  const formatted = formatPhoneOnBlur(formData.additionalPhone || '');
+                  if (formatted !== (formData.additionalPhone || '')) {
+                    onChange('additionalPhone', formatted);
+                  }
+                }}
+                aria-invalid={additionalPhoneError ? true : undefined}
+                className={`input-field w-full ${additionalPhoneError ? 'border-red-500' : ''}`}
                 placeholder={t('profile.additionalPhonePlaceholder')}
                 autoComplete="tel"
               />
+              {additionalPhoneError && (
+                <p className="mt-1 text-sm text-red-400">{additionalPhoneError}</p>
+              )}
             </div>
           </div>
         )}
@@ -359,6 +383,7 @@ export default function ProfilePage() {
     handleChange,
     handleSubmit,
     canSave,
+    additionalPhoneError,
     currentPassword,
     setCurrentPassword,
     newPassword,
@@ -405,7 +430,13 @@ export default function ProfilePage() {
             aria-hidden="true"
             className="hidden"
           />
-          <ProfileContactSection user={user} formData={formData} t={t} onChange={handleChange} />
+          <ProfileContactSection
+            user={user}
+            formData={formData}
+            additionalPhoneError={additionalPhoneError}
+            t={t}
+            onChange={handleChange}
+          />
           <ProfileEmailSection
             user={user}
             formData={formData}

@@ -1,7 +1,11 @@
 {
   "validation": {
     "name": "Câmpul poate conține doar litere, spații, cratime și liniuțe",
-    "phone": "Numărul de telefon trebuie să fie în format +cod țară (1-4 cifre) + număr (6-15 cifre)",
+    "phone": "Introduceți un număr de telefon valid în format internațional",
+    "phoneMustStartWithPlus": "Folosiți format internațional cu prefixul + (ex. +373...)",
+    "phoneInvalidCountry": "Prefix de țară necunoscut",
+    "phoneInvalidLength": "Lungimea numărului nu corespunde țării",
+    "phoneNotMobile": "Indicați un număr mobil pentru SMS (liniile fixe nu sunt acceptate)",
     "password": "Parola trebuie să conțină cel puțin o literă mare și o literă mică",
     "registrationType": "Tipul de înmatriculare trebuie să fie Local, Foreign, Cleared sau NotCleared",
     "string": "Valoarea trebuie să fie un șir de caractere",
@@ -139,7 +143,8 @@
     "invalidModel": "Model invalid",
     "vehicleNotFound": "Vehiculul nu a fost găsit",
     "vehicleNotFoundForListing": "Vehiculul nu a fost găsit pentru anunț",
-    "vinRateLimitExceeded": "Puteți solicita VIN de maximum 5 ori pe oră. Încercați mai târziu.",
+    "vinRateLimitExceeded": "Puteți afișa VIN-ul pentru maximum 20 anunțuri diferite pe oră. Încercați mai târziu.",
+    "phoneRateLimitExceeded": "Ați atins limita pentru afișarea numerelor de telefon. Încercați mai târziu.",
     "vehicleIdNotFound": "ID vehicul negăsit",
     "brandNotFoundById": "Marca nu a fost găsită",
     "tireBrandNotFound": "Marca de anvelope nu a fost găsită",

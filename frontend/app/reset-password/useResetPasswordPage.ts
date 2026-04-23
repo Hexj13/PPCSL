@@ -4,13 +4,19 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  isValidPhone,
   validatePassword as validatePasswordUtil,
   isPasswordValid,
 } from '@/app/reset-password/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
+import {
+  compactE164Phone,
+  finalizePhoneFromRawInput,
+  getPhoneSubmitErrorMessage,
+  sanitizePhoneInput,
+  validatePhone,
+} from '@/lib/phone';
 import { toast } from '@/lib/toast';
 
 export type ResetPasswordStep = 'phone' | 'code' | 'password';
@@ -40,15 +46,6 @@ export function useResetPasswordPage() {
   const [isVerificationBlocked, setIsVerificationBlocked] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const resolveApiMessage = useCallback(
-    (message: string | undefined, fallbackKey: string): string => {
-      if (!message) return t(fallbackKey);
-      const translatedMessage = t(message);
-      return translatedMessage !== message ? translatedMessage : message;
-    },
-    [t],
-  );
 
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -83,34 +80,52 @@ export function useResetPasswordPage() {
         setErrors({ phone: t('resetPassword.phoneRequired') });
         return;
       }
-      if (!isValidPhone(phone)) {
-        setErrors({ phone: t('resetPassword.phoneInvalid') });
+      const phoneErr = validatePhone(phone, t);
+      if (phoneErr) {
+        setErrors({ phone: phoneErr });
         return;
       }
       setLoading(true);
       setErrors({});
       try {
-        await authApi.requestPasswordReset({ phone });
+        await authApi.requestPasswordReset({ phone: compactE164Phone(phone) });
         toast.success(t('resetPassword.codeSent'));
         setResendSmsAttempts(0);
         setStep('code');
         setResendCooldown(60);
       } catch (err: unknown) {
-        const axiosError = err as {
-          response?: { data?: { message?: string; errorKey?: string } };
-        };
+        const axiosError = err as Parameters<typeof getPhoneSubmitErrorMessage>[0];
         const data = axiosError.response?.data;
-        setErrors({
-          phone:
-            data?.errorKey === 'errors.smsHourlyLimit'
-              ? t('errors.smsHourlyLimit')
-              : resolveApiMessage(data?.message, 'resetPassword.sendError'),
-        });
+        if (data?.errorKey === 'errors.smsHourlyLimit') {
+          setErrors({ phone: t('errors.smsHourlyLimit') });
+        } else {
+          setErrors({ phone: getPhoneSubmitErrorMessage(axiosError, t) });
+        }
       } finally {
         setLoading(false);
       }
     },
-    [phone, resolveApiMessage, t],
+    [phone, t],
+  );
+
+  const handlePhoneFieldChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    if (raw === '') {
+      setPhone('');
+      setErrors((prev) => ({ ...prev, phone: undefined }));
+      return;
+    }
+    setPhone(sanitizePhoneInput(raw));
+    setErrors((prev) => ({ ...prev, phone: undefined }));
+  }, []);
+
+  const handlePhoneFieldBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      const { phone: next, error } = finalizePhoneFromRawInput(e.target.value, t);
+      setPhone(next);
+      setErrors((prev) => ({ ...prev, phone: error || undefined }));
+    },
+    [t],
   );
 
   const handleCodeChange = useCallback(
@@ -185,7 +200,7 @@ export function useResetPasswordPage() {
       setLoading(true);
       setErrors({});
       try {
-        await authApi.verifyResetCode({ phone, code: fullCode });
+        await authApi.verifyResetCode({ phone: compactE164Phone(phone), code: fullCode });
         toast.success(t('resetPassword.codeVerified'));
         setStep('password');
       } catch (err: unknown) {
@@ -261,7 +276,11 @@ export function useResetPasswordPage() {
       setErrors({});
       const fullCode = code.join('').trim();
       try {
-        await authApi.resetPassword({ phone, code: fullCode, newPassword: password });
+        await authApi.resetPassword({
+          phone: compactE164Phone(phone),
+          code: fullCode,
+          newPassword: password,
+        });
         toast.success(t('resetPassword.passwordResetSuccess'));
         router.push('/sign');
       } catch {
@@ -281,23 +300,21 @@ export function useResetPasswordPage() {
     setIsVerificationBlocked(false);
     inputRefs.current[0]?.focus();
     try {
-      await authApi.requestPasswordReset({ phone });
+      await authApi.requestPasswordReset({ phone: compactE164Phone(phone) });
       setResendSmsAttempts((p) => p + 1);
       toast.success(t('resetPassword.codeResent'));
     } catch (err: unknown) {
-      const axiosError = err as {
-        response?: { data?: { message?: string; errorKey?: string } };
-      };
+      const axiosError = err as Parameters<typeof getPhoneSubmitErrorMessage>[0];
       const data = axiosError.response?.data;
       if (data?.errorKey === 'errors.smsHourlyLimit') {
         setResendCooldown(SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS);
         toast.error(t('errors.smsHourlyLimit'));
       } else {
         setResendCooldown(0);
-        toast.error(resolveApiMessage(data?.message, 'resetPassword.sendError'));
+        toast.error(getPhoneSubmitErrorMessage(axiosError, t));
       }
     }
-  }, [phone, resendCooldown, resendSmsAttempts, resolveApiMessage, t]);
+  }, [phone, resendCooldown, resendSmsAttempts, t]);
 
   const handleBack = useCallback(() => {
     setLoading(false);
@@ -328,6 +345,8 @@ export function useResetPasswordPage() {
     step,
     phone,
     setPhone,
+    handlePhoneFieldChange,
+    handlePhoneFieldBlur,
     code,
     password,
     setPassword,

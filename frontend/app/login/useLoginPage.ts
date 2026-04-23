@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
@@ -11,6 +11,12 @@ import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
+import {
+  compactE164Phone,
+  formatPhoneOnBlur,
+  normalizeLoginFieldInput,
+  sanitizePhoneInput,
+} from '@/lib/phone';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
@@ -159,12 +165,23 @@ export function useLoginPage() {
     }
   };
 
+  const handleLoginChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    const login = normalizeLoginFieldInput(raw);
+    setFormData((prev) => ({ ...prev, login }));
+    setErrors((prev) => (prev.login ? { ...prev, login: undefined } : prev));
+  }, []);
+
   const validateForm = (): boolean => {
     const newErrors: { login?: string; password?: string } = {};
+    const loginTrimmed = formData.login.trim();
+    const loginPhoneCompact = loginTrimmed.includes('@')
+      ? loginTrimmed
+      : compactE164Phone(loginTrimmed);
 
-    if (!formData.login.trim()) {
+    if (!loginTrimmed) {
       newErrors.login = t('login.emailOrPhoneRequired');
-    } else if (!isValidEmail(formData.login) && !isValidPhone(formData.login)) {
+    } else if (!isValidEmail(loginTrimmed) && !isValidPhone(loginPhoneCompact)) {
       newErrors.login = t('login.emailOrPhoneInvalid');
     }
 
@@ -176,6 +193,18 @@ export function useLoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleLoginBlur = useCallback(() => {
+    const trimmed = formData.login.trim();
+    if (!trimmed || trimmed.includes('@')) {
+      return;
+    }
+    const sanitized = sanitizePhoneInput(trimmed);
+    const formatted = formatPhoneOnBlur(sanitized);
+    if (formatted !== formData.login) {
+      setFormData((prev) => ({ ...prev, login: formatted }));
+    }
+  }, [formData.login]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
@@ -183,13 +212,15 @@ export function useLoginPage() {
       return;
     }
     setLoading(true);
-    const loginMethod = isValidEmail(formData.login) ? 'email' : 'phone';
+    const loginTrimmed = formData.login.trim();
+    const loginForApi = isValidEmail(loginTrimmed) ? loginTrimmed : compactE164Phone(loginTrimmed);
+    const loginMethod = isValidEmail(loginTrimmed) ? 'email' : 'phone';
     const filledFields: Record<string, boolean> = {
       login: !!formData.login,
       password: !!formData.password,
     };
     try {
-      const res = await authApi.login(formData);
+      const res = await authApi.login({ ...formData, login: loginForApi });
       setIsRedirecting(true);
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
       try {
@@ -233,6 +264,8 @@ export function useLoginPage() {
     showPassword,
     setShowPassword,
     handleFormFieldFocus,
+    handleLoginChange,
+    handleLoginBlur,
     handleSubmit,
   };
 }

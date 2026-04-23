@@ -7,6 +7,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 import { localStorageGetItem } from '@/lib/browser-local-storage';
 import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
+import { formatPhoneForDisplay } from '@/lib/phone';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import { smsResendCooldownButtonLabel } from '@/lib/utils';
@@ -289,7 +290,11 @@ function VerifyPhoneChangeContent() {
           <div className="text-center text-primary-900">
             <p className="mb-2">
               {t('profile.verifyPhoneChange.codeSent')}{' '}
-              {phoneNumber && <span className="font-semibold text-primary-700">{phoneNumber}</span>}
+              {phoneNumber && (
+                <span className="font-semibold text-primary-700">
+                  {formatPhoneForDisplay(phoneNumber)}
+                </span>
+              )}
             </p>
             <p className="text-sm">{t('profile.verifyPhoneChange.enterCode')}</p>
           </div>

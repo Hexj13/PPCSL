@@ -19,6 +19,7 @@ export function ProfilePartnerSection({ user, t }: { user: User; t: TranslationF
 
       <InfoBlock className="mb-5">
         <ul className="list-disc pl-5 space-y-2 m-0">
+          <li>{t('profile.partnerProgramSync')}</li>
           <li>{t('profile.partnerProgramHint')}</li>
           <li>{t('profile.partnerProgramDescription')}</li>
           {isPartner ? <li>{t('profile.partnerUsageHint')}</li> : null}
@@ -60,10 +61,16 @@ export function ProfilePartnerSection({ user, t }: { user: User; t: TranslationF
       </div>
 
       {!isPartner ? (
-        <div className="mt-5">
+        <div className="mt-5 flex flex-col md:flex-row md:flex-wrap md:justify-center gap-3">
+          <Link
+            href="/partners"
+            className="inline-flex w-full md:w-auto min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none"
+          >
+            {t('profile.partnerLearnMore')}
+          </Link>
           <Link
             href="/contacts"
-            className="inline-flex min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none"
+            className="inline-flex w-full md:w-auto min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none"
           >
             {t('profile.partnerContactCta')}
           </Link>

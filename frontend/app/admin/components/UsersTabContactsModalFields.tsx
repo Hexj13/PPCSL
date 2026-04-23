@@ -1,5 +1,6 @@
 import { CopyButton } from '@/components/common/CopyButton';
 import type { User } from '@/lib/api';
+import { formatPhoneForDisplay } from '@/lib/phone';
 
 type TFn = (key: string) => string;
 
@@ -49,12 +50,15 @@ function ContactsMainPhoneRow({ user, t }: { user: User; t: TFn }) {
     return null;
   }
   const phone = user.phone?.trim() || '';
+  const phoneDisplay = phone ? formatPhoneForDisplay(phone) : '';
   return (
     <div>
       <span className="text-primary-900">{t('admin.usersTab.contactsMainPhone')}:</span>{' '}
       <span className="inline-flex items-center gap-2">
-        <span>{phone || '—'}</span>
-        {phone ? <CopyButton text={phone} label={t('admin.usersTab.contactsMainPhone')} /> : null}
+        <span>{phoneDisplay || '—'}</span>
+        {phone ? (
+          <CopyButton text={phoneDisplay} label={t('admin.usersTab.contactsMainPhone')} />
+        ) : null}
       </span>
     </div>
   );
@@ -65,13 +69,14 @@ function ContactsAdditionalPhoneRow({ user, t }: { user: User; t: TFn }) {
     return null;
   }
   const phone = user.additionalPhone?.trim() || '';
+  const phoneDisplay = phone ? formatPhoneForDisplay(phone) : '';
   return (
     <div>
       <span className="text-primary-900">{t('admin.usersTab.contactsAdditionalPhone')}:</span>{' '}
       <span className="inline-flex items-center gap-2">
-        <span>{phone || '—'}</span>
+        <span>{phoneDisplay || '—'}</span>
         {phone ? (
-          <CopyButton text={phone} label={t('admin.usersTab.contactsAdditionalPhone')} />
+          <CopyButton text={phoneDisplay} label={t('admin.usersTab.contactsAdditionalPhone')} />
         ) : null}
       </span>
     </div>

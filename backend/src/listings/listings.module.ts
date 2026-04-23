@@ -29,6 +29,7 @@ import { GetActiveUserListingsCountUseCase } from './application/use-cases/get-a
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
 import { GetBoardListingsUseCase } from './application/use-cases/get-board-listings.use-case';
 import { GetListingHistoryUseCase } from './application/use-cases/get-listing-history.use-case';
+import { GetListingPhonesUseCase } from './application/use-cases/get-listing-phones.use-case';
 import { GetListingVinUseCase } from './application/use-cases/get-listing-vin.use-case';
 import { GetListingUseCase } from './application/use-cases/get-listing.use-case';
 import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion-access.use-case';
@@ -112,6 +113,7 @@ import { ListingsController } from './presentation/listings.controller';
     GetBoardListingsUseCase,
     FindByVinUseCase,
     GetListingVinUseCase,
+    GetListingPhonesUseCase,
     GetListingHistoryUseCase,
     GetReportUrlUseCase,
     RefreshAllDatesUseCase,

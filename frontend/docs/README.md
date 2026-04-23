@@ -27,6 +27,10 @@ Frontend-specific documentation for PPCSL Next.js application.
   - `useFavoritesStore` - Favorites (auth + guest support)
   - `useComparisonStore` - Car comparison (up to 3 cars)
 
+### Phone (SMS flows)
+- **`lib/phone/`** — shared `libphonenumber-js` validation aligned with backend `@IsPhone()`; sanitization, blur commit via `finalizePhoneFromRawInput` (uses the input’s live value on blur), E.164 compaction, and Axios error mapping for register, change-phone, and reset-password. The sign-in **email or phone** field uses `normalizeLoginFieldInput` / `isLoginFieldPhoneLike` so phone entry matches register sanitization without stripping letters before `@`.
+- **Listing detail:** seller numbers are loaded with `listingsApi.getListingPhones` only after the user reveals them (`components/ListingPage/ListingPageSeller.tsx`), matching backend rate limits. Optional Viber/WhatsApp/Telegram links (`ListingPageSellerMessengers.tsx`) render only when the seller enabled a channel and a dialable number is available (for guests, after reveal).
+
 ### Data Fetching
 - **Server Components:** Initial data loaded on server (SEO)
 - **Server API:** `lib/api/server-api.ts` - Server-side fetching
@@ -78,4 +82,4 @@ For core documentation (this repo):
 
 ---
 
-**Stack:** Next.js 15, React 19, TailwindCSS, Zustand, PWA
+**Stack:** Next.js 16, React 19, TailwindCSS, Zustand, PWA

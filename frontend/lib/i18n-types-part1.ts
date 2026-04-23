@@ -121,6 +121,12 @@ export interface TranslationsPart1 {
     filterSaveError: string;
     filterLimitError: string;
   };
+  phone: {
+    mustStartWithPlus: string;
+    invalidCountry: string;
+    invalidLength: string;
+    notMobile: string;
+  };
   register: {
     title: string;
     userType: string;
@@ -131,12 +137,6 @@ export interface TranslationsPart1 {
     emailHint: string;
     phoneRequired: string;
     phoneInvalid: string;
-    phoneMustStartWithPlus: string;
-    phoneLength: string;
-    phoneDigitsOnly: string;
-    phoneFormat: string;
-    countryCodeLength: string;
-    numberLength: string;
     messengers: string;
     optional: string;
     email: string;

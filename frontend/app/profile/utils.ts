@@ -1,4 +1,5 @@
 import type { UpdateProfileDto, User } from '@/lib/api';
+import { formatPhoneForDisplay } from '@/lib/phone';
 
 export const convertToBoolean = (value: unknown): boolean => {
   if (value === true || value === 'true' || value === 1 || value === '1') {
@@ -85,7 +86,7 @@ export const initializeFormData = (user: User | null): UpdateProfileDto => {
     lastName: user.lastName || '',
     companyName: user.companyName || '',
     companyWebsiteUrl: user.companyWebsiteUrl || '',
-    additionalPhone: user.additionalPhone || '',
+    additionalPhone: formatPhoneForDisplay(user.additionalPhone || ''),
     emailNotifications: convertToBoolean(user.emailNotifications),
     emailNotificationListingRefreshReminders: convertToBoolean(
       user.emailNotificationListingRefreshReminders,

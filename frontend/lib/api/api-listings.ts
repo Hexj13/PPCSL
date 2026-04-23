@@ -40,6 +40,13 @@ export const listingsApi = {
       params: { action },
       headers: { 'X-Skip-Error-Handling': 'true' },
     }),
+  getPhones: (id: string) =>
+    api.get<{ phone: string | null; additionalPhone: string | null }>(
+      `/api/listings/${id}/phones`,
+      {
+        headers: { 'X-Skip-Error-Handling': 'true' },
+      },
+    ),
   getHistoryByListingId: (id: string) => api.get<Listing[]>(`/api/listings/${id}/history`),
   getReportUrl: (id: string) =>
     api.get<{ url: string }>(`/api/listings/${id}/report-url`, {

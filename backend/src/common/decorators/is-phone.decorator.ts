@@ -1,10 +1,12 @@
 import {
   registerDecorator,
+  ValidationArguments,
   ValidationOptions,
   ValidatorConstraint,
   ValidatorConstraintInterface,
-  ValidationArguments,
 } from 'class-validator';
+
+import { validatePhoneForSms, PHONE_SMS_ERROR_KEYS } from '../utils/validate-phone-for-sms';
 
 @ValidatorConstraint({ name: 'isPhone', async: false })
 export class IsPhoneConstraint implements ValidatorConstraintInterface {
@@ -12,11 +14,17 @@ export class IsPhoneConstraint implements ValidatorConstraintInterface {
     if (typeof value !== 'string') {
       return false;
     }
-    return /^\+\d{1,4}\d{6,15}$/.test(value);
+    return validatePhoneForSms(value).ok;
   }
 
-  defaultMessage(_args: ValidationArguments): string {
-    return 'validation.phone';
+  defaultMessage(args: ValidationArguments): string {
+    const record = args.object as Record<string, unknown>;
+    const raw = record[args.property];
+    if (typeof raw !== 'string') {
+      return PHONE_SMS_ERROR_KEYS.generic;
+    }
+    const result = validatePhoneForSms(raw);
+    return result.ok ? PHONE_SMS_ERROR_KEYS.generic : result.errorKey;
   }
 }
 
@@ -24,7 +32,7 @@ export function IsPhone(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
-      propertyName: propertyName,
+      propertyName,
       options: validationOptions,
       constraints: [],
       validator: IsPhoneConstraint,

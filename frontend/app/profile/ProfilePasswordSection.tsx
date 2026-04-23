@@ -20,6 +20,7 @@ function PasswordInputWithToggle({
   maxLength,
   rules,
   passwordManagerIgnore,
+  readOnlyUntilFocused,
 }: {
   id: string;
   name: string;
@@ -32,7 +33,11 @@ function PasswordInputWithToggle({
   maxLength?: number;
   rules?: PasswordValidationRule[];
   passwordManagerIgnore?: boolean;
+  readOnlyUntilFocused?: boolean;
 }) {
+  const [focusUnlocked, setFocusUnlocked] = useState(false);
+  const readOnly = Boolean(readOnlyUntilFocused && !focusUnlocked);
+
   return (
     <div className="w-full min-w-0">
       <label className="block text-sm font-semibold mb-2 text-primary-900" htmlFor={id}>
@@ -45,6 +50,12 @@ function PasswordInputWithToggle({
           name={name}
           value={value}
           maxLength={maxLength}
+          readOnly={readOnly}
+          onFocus={() => {
+            if (readOnlyUntilFocused && !focusUnlocked) {
+              queueMicrotask(() => setFocusUnlocked(true));
+            }
+          }}
           onChange={(e) => onChange(e.target.value)}
           autoComplete={autoComplete}
           {...(passwordManagerIgnore
@@ -172,11 +183,12 @@ export function ProfilePasswordSection({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <PasswordInputWithToggle
           id="profile-current-password"
-          name="current-password"
+          name="profile_password_existing"
           label={t('profile.currentPasswordLabel')}
           value={currentPassword}
           onChange={onCurrentPasswordChange}
-          autoComplete="current-password"
+          autoComplete="off"
+          readOnlyUntilFocused
           passwordManagerIgnore
           show={showCurrentPassword}
           onToggle={() => setShowCurrentPassword((v) => !v)}

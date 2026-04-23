@@ -199,6 +199,12 @@
     "filterSaveError": "Error saving filter",
     "filterLimitError": "You can save a maximum of 20 filters. Please delete one of the existing filters."
   },
+  "phone": {
+    "mustStartWithPlus": "Use international format with the + prefix (e.g. +373...)",
+    "invalidCountry": "Unknown country calling code",
+    "invalidLength": "Incorrect number length for this country",
+    "notMobile": "Enter a mobile number suitable for SMS (fixed-line numbers are not accepted)"
+  },
   "register": {
     "title": "Register",
     "userType": "User Type",
@@ -212,12 +218,6 @@
     "emailHint": "You can log in with this email or with your phone number",
     "phoneRequired": "Phone is required",
     "phoneInvalid": "Enter a valid phone (format: +country code number)",
-    "phoneMustStartWithPlus": "Phone must start with +",
-    "phoneLength": "Phone must contain 7-19 digits (including country code)",
-    "phoneDigitsOnly": "Phone must contain only digits after +",
-    "phoneFormat": "Phone must be in format +country code (1-4 digits) + number (6-15 digits)",
-    "countryCodeLength": "Country code must be 1-4 digits",
-    "numberLength": "Number must be 6-15 digits",
     "messengers": "Available messengers",
     "optional": "(optional)",
     "optionalShort": "(opt.)",
@@ -710,7 +710,12 @@
     "revealVin": "Show VIN",
     "hideVin": "Hide VIN",
     "vinLoadError": "Could not load VIN. Please try again.",
-    "vinRateLimitExceeded": "You can request VIN no more than 5 times per hour. Please try again later.",
+    "vinRateLimitExceeded": "You can reveal the VIN for up to 20 different listings per hour. Please try again later.",
+    "revealPhone": "Show number",
+    "hidePhone": "Hide number",
+    "phoneLoadError": "Could not load phone number. Please try again.",
+    "phoneRateLimitExceededGuest": "You can show phone numbers for up to 5 listings per hour. Please try again later.",
+    "phoneRateLimitExceededAuth": "You can show phone numbers for up to 20 different listings per hour. Please try again later.",
     "copied": "{label} copied",
     "copyError": "Error copying",
     "engine": "Engine",
@@ -1011,6 +1016,7 @@
     "companyWebsiteUrlPlaceholder": "https://example.com",
     "invalidCompanyWebsiteUrl": "Enter a valid URL starting with http:// or https://",
     "partnerProgramTitle": "Partnership",
+    "partnerProgramSync": "Partners can enable automatic syncing with their website or any platform where their listings are already published.",
     "partnerProgramHint": "Platform partners receive free unlimited promotions.",
     "partnerProgramDescription": "Every 20 new listings adds 1 free promotion to the balance.",
     "partnerStatus": "Status:",
@@ -1019,7 +1025,8 @@
     "partnerNextRewardCounter": "Until the next free promotion:",
     "partnerNextRewardCounterValue": "{count} new listings",
     "partnerUsageHint": "You can use the balance on a specific listing page or in My Listings by choosing the unlimited promotion from the partner balance.",
-    "partnerContactCta": "Contact us about partnership",
+    "partnerLearnMore": "Learn more",
+    "partnerContactCta": "Contact us",
     "personalData": "Personal Data",
     "firstName": "First Name",
     "firstNamePlaceholder": "Enter your first name",
@@ -1955,13 +1962,7 @@
     "scaling": {
       "title": "Scaling",
       "lead": "After the model is validated, we plan launches in other countries with similar market conditions:",
-      "items": [
-        "Eastern Europe",
-        "Balkans",
-        "Latin America",
-        "Africa",
-        "Asia"
-      ]
+      "items": ["Eastern Europe", "Balkans", "Latin America", "Africa", "Asia"]
     },
     "whyNow": {
       "title": "Why now",
@@ -1974,11 +1975,7 @@
     "offer": {
       "title": "Investment offer",
       "lead": "We are raising to:",
-      "items": [
-        "Scale marketing",
-        "Accelerate product development",
-        "Enter new markets"
-      ],
+      "items": ["Scale marketing", "Accelerate product development", "Enter new markets"],
       "footer": "We are open to discuss partnership terms and can share more details on request."
     },
     "contactCta": "Contact us"
