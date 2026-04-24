@@ -125,7 +125,7 @@
     "registrationDateInvalid": "Registration date cannot be earlier than user creation date",
     "phoneSameAsCurrent": "New phone number is the same as current",
     "additionalPhoneSameAsPrimary": "Additional number must differ from your account phone number",
-    "partnerSettingsBusinessOnly": "Platform partnership is available only for legal entity (business) accounts.",
+    "partnerSettingsBusinessOnly": "Platform partnership is available only for accounts registered as a legal entity.",
     "favoriteNotFound": "Favorite listing not found",
     "comparisonNotFound": "Comparison entry not found",
     "comparisonLimitVehicleReached": "You can compare at most three vehicle listings",

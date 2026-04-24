@@ -39,16 +39,16 @@ const DEFAULT_MAX_GEN_PER_HOUR_PROD = 5;
 
 const MESSAGES = {
   rate_limited: {
-    ru: 'Вы временно исчерпали лимит AI-обзоров. Попробуйте позже.',
-    ro: 'Ați atins limita temporară de prezentări AI. Încercați mai târziu.',
+    ru: 'Вы временно исчерпали лимит AI-анализов. Попробуйте позже.',
+    ro: 'Ați atins limita temporară de analize AI. Încercați mai târziu.',
   },
   unavailable: {
-    ru: 'AI-обзор временно недоступен. Попробуйте позже.',
-    ro: 'Prezentarea AI este temporar indisponibilă. Încercați mai târziu.',
+    ru: 'AI-анализ временно недоступен. Попробуйте позже.',
+    ro: 'Analiza AI este temporar indisponibilă. Încercați mai târziu.',
   },
   tire: {
-    ru: 'AI-обзор доступен только для объявлений об автомобилях.',
-    ro: 'Prezentarea AI este disponibilă doar pentru anunțuri de vehicule.',
+    ru: 'AI-анализ доступен только для объявлений об автомобилях.',
+    ro: 'Analiza AI este disponibilă doar pentru anunțuri de vehicule.',
   },
 } as const;
 
@@ -290,19 +290,54 @@ export class ListingAiReportService {
     quotaConsumed: boolean;
   }): Promise<void> {
     let success = false;
+    let lastInvokedGeminiModel: string | null = null;
     try {
-      const raw = await this.geminiClient.generateReportJson(ctx.snapshot, ctx.reportLanguage);
+      const geminiResult = await this.geminiClient.generateReportJson(
+        ctx.snapshot,
+        ctx.reportLanguage,
+      );
+      lastInvokedGeminiModel = geminiResult.lastInvokedGeminiModel;
+      const raw = geminiResult.text;
       if (!raw) {
+        if (lastInvokedGeminiModel) {
+          logUserEvent(this.logger, {
+            event: 'ai_report_generation_no_output',
+            userId: ctx.userId,
+            listingId: ctx.listingId,
+            reportLanguage: ctx.reportLanguage,
+            geminiModel: lastInvokedGeminiModel,
+          });
+        }
         return;
       }
       let parsed: unknown;
       try {
         parsed = JSON.parse(raw) as unknown;
       } catch {
+        if (lastInvokedGeminiModel) {
+          logUserEvent(this.logger, {
+            event: 'ai_report_generation_invalid_output',
+            userId: ctx.userId,
+            listingId: ctx.listingId,
+            reportLanguage: ctx.reportLanguage,
+            geminiModel: lastInvokedGeminiModel,
+            reason: 'json_parse_error',
+          });
+        }
         return;
       }
       const report = parseAndValidateAiListingReportPayload(parsed);
       if (!report) {
+        if (lastInvokedGeminiModel) {
+          logUserEvent(this.logger, {
+            event: 'ai_report_generation_invalid_output',
+            userId: ctx.userId,
+            listingId: ctx.listingId,
+            reportLanguage: ctx.reportLanguage,
+            geminiModel: lastInvokedGeminiModel,
+            reason: 'validation_failed',
+          });
+        }
         return;
       }
       await this.persistReport(ctx.listingId, ctx.reportLanguage, ctx.inputHash, report);
@@ -311,6 +346,7 @@ export class ListingAiReportService {
         userId: ctx.userId,
         listingId: ctx.listingId,
         reportLanguage: ctx.reportLanguage,
+        geminiModel: geminiResult.geminiModel,
       });
       success = true;
     } catch (e) {
@@ -324,6 +360,7 @@ export class ListingAiReportService {
         userId: ctx.userId,
         reportLanguage: ctx.reportLanguage,
         phase: 'run_generation',
+        geminiModel: lastInvokedGeminiModel,
       });
     } finally {
       if (!success && ctx.quotaConsumed) {
@@ -348,6 +385,7 @@ export class ListingAiReportService {
       userId: string;
       reportLanguage: AiReportLanguage;
       phase: 'run_generation' | 'run_generation_unhandled';
+      geminiModel?: string | null;
     },
   ): void {
     const error = err instanceof Error ? err : new Error(String(err));
@@ -358,6 +396,9 @@ export class ListingAiReportService {
           listingId: ctx.listingId,
           userId: ctx.userId,
           reportLanguage: ctx.reportLanguage,
+          ...(ctx.geminiModel != null && ctx.geminiModel !== ''
+            ? { geminiModel: ctx.geminiModel }
+            : {}),
         },
       });
     });

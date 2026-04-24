@@ -215,6 +215,7 @@ export function ListingPageActions({
       disabled={pageActionsLocked}
       title={compareTitle}
       description={compareDescription}
+      compactDescriptionNarrowLg
       aria-label={compareTitle}
     >
       <CompareIcon filled={isInComparison} />
@@ -229,6 +230,7 @@ export function ListingPageActions({
       showNewBadge={showAiNewBadge}
       title={t('listingDetail.aiReport')}
       description={t('listingDetail.actionCardAiDescription')}
+      compactDescriptionNarrowLg
       titleId="listing-action-ai-title"
       aria-label={t('listingDetail.aiReport')}
     >

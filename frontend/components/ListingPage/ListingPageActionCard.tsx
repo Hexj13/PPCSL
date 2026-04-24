@@ -7,9 +7,9 @@ import { LISTING_ACTION_CARD_FIXED_HEIGHT } from '@/components/ListingPage/listi
 import { LISTING_ACTION_CTA_CARD_SURFACE } from '@/components/listing/CreateListingButton';
 
 const iconWrapBase = 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-inherit';
-const iconWrapDefault = 'bg-primary-50';
+const iconWrapDefault = 'border border-primary-400/40 bg-primary-50';
 const iconWrapAccent = 'border border-primary-400/40 bg-primary-500/5 text-inherit';
-const iconWrapCta = 'bg-accent/10 text-inherit';
+const iconWrapCta = 'border border-primary-400/40 bg-accent/10 text-inherit';
 
 export type ListingPageActionCardProps = {
   variant?: 'default' | 'accent' | 'cta';
@@ -22,6 +22,7 @@ export type ListingPageActionCardProps = {
   showNewBadge?: boolean;
   titleId?: string;
   description: ReactNode;
+  compactDescriptionNarrowLg?: boolean;
   'aria-busy'?: boolean;
   'aria-live'?: 'off' | 'polite' | 'assertive';
   'aria-label'?: string;
@@ -38,6 +39,7 @@ export function ListingPageActionCard({
   showNewBadge = false,
   titleId,
   description,
+  compactDescriptionNarrowLg = false,
   'aria-busy': ariaBusy,
   'aria-live': ariaLive,
   'aria-label': ariaLabel,
@@ -47,14 +49,14 @@ export function ListingPageActionCard({
   const surfaceInteractive = isCta
     ? LISTING_ACTION_CTA_CARD_SURFACE
     : isAccent
-      ? `select-none border-2 border-primary-400 bg-primary-500/5 transition-all duration-200 hover-only:hover:border-primary-500 hover-only:hover:shadow-sm active:border-primary-500`
+      ? `select-none border-2 border-primary-400 bg-linear-to-b from-accent/10 to-accent/[0.01] transition-all duration-200 hover-only:hover:border-primary-500 hover-only:hover:shadow-sm active:border-primary-500`
       : `border-2 border-primary-400 bg-white hover-only:hover:border-primary-500 hover-only:hover:shadow-sm active:bg-primary-50/40`;
   const surface = isCta
     ? LISTING_ACTION_CTA_CARD_SURFACE
     : isAccent
-      ? `select-none border-2 border-primary-400 bg-primary-500/5 transition-all duration-200 ${
+      ? `select-none border-2 border-primary-400 bg-linear-to-b from-accent/10 to-accent/[0.01] transition-all duration-200 ${
           disabled
-            ? 'cursor-not-allowed border-primary-400/50 bg-primary-500/[0.03] opacity-60'
+            ? 'cursor-not-allowed border-primary-400/50 opacity-60'
             : 'hover-only:hover:border-primary-500 hover-only:hover:shadow-sm active:border-primary-500'
         }`
       : `border-2 border-primary-400 bg-white ${
@@ -101,7 +103,11 @@ export function ListingPageActionCard({
         >
           {title}
         </span>
-        <div className="w-full min-w-0 break-words text-center text-[10px] leading-tight text-inherit line-clamp-3 sm:text-[11px] sm:leading-snug">
+        <div
+          className={`w-full min-w-0 break-words text-center text-[10px] leading-tight text-inherit line-clamp-3 sm:text-[11px] sm:leading-snug${
+            compactDescriptionNarrowLg ? ' lg:max-xl:text-[9px] lg:max-xl:leading-tight' : ''
+          }`.trim()}
+        >
           {description}
         </div>
       </div>

@@ -756,14 +756,14 @@
     "actionCardPromoteDescriptionWhenPromoted": "This increases how often it is shown",
     "actionCardAiDescription": "Analysis of this listing",
     "aiReportNewBadge": "New",
-    "aiReportActionCardGenerating": "Generating overview…",
-    "aiReportActionCardAlreadyCreating": "An overview is already being created",
-    "aiReport": "AI overview",
-    "aiReportModalTitle": "AI listing overview",
-    "aiReportLoading": "Preparing your overview…",
-    "aiReportPending": "Overview is being generated…",
+    "aiReportActionCardGenerating": "Generating listing analysis…",
+    "aiReportActionCardAlreadyCreating": "Listing analysis is already being created",
+    "aiReport": "AI Analysis",
+    "aiReportModalTitle": "AI analysis of this listing",
+    "aiReportLoading": "Preparing listing analysis…",
+    "aiReportPending": "Analyzing this listing…",
     "aiReportUnavailableTitle": "Temporarily unavailable",
-    "aiReportUnavailableBody": "The AI overview could not be loaded. Please try again later.",
+    "aiReportUnavailableBody": "The AI analysis could not be loaded. Please try again later.",
     "aiReportSectionSummary": "Summary of the listing",
     "aiReportSectionModelContext": "About this car model",
     "aiReportSectionAnalysis": "Listing analysis",
@@ -777,7 +777,7 @@
     "aiReportSectionChecks": "What to check before buying",
     "aiReportSectionQuestions": "Questions to ask before buying",
     "aiReportSectionRisks": "Possible risks",
-    "aiReportCopy": "Copy full overview",
+    "aiReportCopy": "Copy full analysis",
     "aiReportCopied": "Copied",
     "aiReportProductDisclaimer": "AI-generated (Google Gemini). May be inaccurate; not a substitute for an inspection or diagnostics. Verify what matters before you buy.",
     "sampleReport": "Sample report",
@@ -1898,7 +1898,7 @@
       "title": "How to become a partner",
       "items": [
         "Write to us via the Contacts page and briefly describe your business.",
-        "Only legal entities with a business account on Kupito can join.",
+        "Only accounts registered on the platform as legal entities can take part.",
         "We will reply and, if needed, help set up automatic listing sync with your website or other platforms."
       ]
     },
@@ -1915,14 +1915,14 @@
     "whoCan": {
       "title": "Who can become a partner",
       "items": [
-        "Only a legal entity with a business account (choose the company option when you sign up).",
+        "Only users registered on the platform as a legal entity (when you sign up, choose registration on behalf of a company, not as an individual).",
         "Private sellers do not take part in the program."
       ]
     },
     "howToLeave": {
       "title": "How to end the partnership",
       "items": [
-        "Write to us in the contacts and say you want to end the partnership.",
+        "Contact us via the Contacts page and say you want to end the partnership.",
         "We remove partner status, take you out of the footer and clear the accumulated free promotions.",
         "Full conditions on status and bonuses are in the Terms of Service."
       ]
@@ -1960,13 +1960,14 @@
       "title": "Product",
       "lead": "Kupito.club offers:",
       "items": [
-        "Free listing publishing",
-        "Easy search and comparison",
+        "Free listing publication",
+        "Easy search and comparison of listings",
         "Saving listings to favorites",
         "Saving search filters",
-        "Tools for dealers",
-        "Automatic sync with external sites",
-        "A Mobile-first experience and a growing mobile app"
+        "The option to get short AI-generated informational summaries for eligible vehicle listings (signed-in users; subject to availability and limits)",
+        "A seller listing board with all of one seller’s listings on a single page",
+        "Automatic synchronization with external sites",
+        "A mobile-first interface and ongoing mobile app development"
       ]
     },
     "businessModel": {
@@ -2009,7 +2010,7 @@
     },
     "offer": {
       "title": "Investment offer",
-      "lead": "We are raising to:",
+      "lead": "We are raising funds to:",
       "items": ["Scale marketing", "Accelerate product development", "Enter new markets"],
       "footer": "We are open to discuss partnership terms and can share more details on request."
     },
@@ -2153,9 +2154,9 @@
     },
     "partners": {
       "title": "For partners - Kupito",
-      "description": "Learn about the Kupito platform partner program: automatic listing sync, free promotion balance, a public partner label and footer exposure. For business accounts.",
+      "description": "Learn about the Kupito platform partner program: automatic listing sync, free promotion balance, a public partner label and footer exposure. For legal entities.",
       "ogTitle": "For partners - Kupito",
-      "ogDescription": "Information for business partners: how to apply, what you get, who is eligible, and how to end cooperation.",
+      "ogDescription": "Information for partners: how to apply, what you get, who is eligible, and how to end cooperation.",
       "ogAlt": "Kupito - For partners"
     },
     "investors": {

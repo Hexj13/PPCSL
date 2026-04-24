@@ -123,7 +123,7 @@
     "invalidCurrentPassword": "Неверный текущий пароль",
     "newPasswordMustDiffer": "Новый пароль должен отличаться от текущего",
     "additionalPhoneSameAsPrimary": "Дополнительный номер должен отличаться от номера аккаунта",
-    "partnerSettingsBusinessOnly": "Партнёрство платформы доступно только для юридических лиц.",
+    "partnerSettingsBusinessOnly": "Партнёрство платформы доступно только для аккаунтов, зарегистрированных как юридическое лицо.",
     "listingUpdateForbidden": "У вас нет разрешения на обновление этого объявления",
     "listingDeleteForbidden": "У вас нет разрешения на удаление этого объявления",
     "favoriteNotFound": "Избранное не найдено",

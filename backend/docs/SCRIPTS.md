@@ -84,7 +84,7 @@ These scripts are **blocked from running in production** and can only be execute
 - `clear-cache.ts` - Clear all Redis cache
 - `clear-listing-cache.ts` - Clear listings cache (with optional listing ID)
 - `clear-brands-cache.ts` - Clear brands and models cache
-- `clear-listing-ai-reports.ts` - Delete all rows in `listing_ai_reports` and clear AI-report Redis locks/quotas (stage/dev/test only; run `npm run clear-listing-ai-reports`)
+- `clear-listing-ai-reports.ts` - Delete all rows in `listing_ai_reports` and clear listing AI analysis Redis locks/quotas (stage/dev/test only; run `npm run clear-listing-ai-reports`)
 
 ## Production Scripts
 
@@ -100,7 +100,7 @@ These scripts can be run in production, but should still be used with caution:
 - `check-brands-count.ts` - Check total brands count (production-safe)
 - `check-models-stats.ts` - Check models statistics (production-safe)
 - `remove-body-code-models.ts` - Remove BMW/Mercedes body code models (E30, W124, etc.); skips models in use (production-safe)
-- `clear-listing-ai-reports.ts` - Delete all cached AI listing reports and related Redis keys (`npm run clear-listing-ai-reports:prod` on prod)
+- `clear-listing-ai-reports.ts` - Delete all cached listing AI analyses and related Redis keys (`npm run clear-listing-ai-reports:prod` on prod)
 - `backup-database.ts` - Create database backup (uses pg_dump)
 
 ## Security

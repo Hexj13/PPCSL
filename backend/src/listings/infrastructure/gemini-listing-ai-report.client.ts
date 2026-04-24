@@ -5,6 +5,32 @@ import { ConfigService } from '@nestjs/config';
 import type { ListingAiInputSnapshot } from '../application/listing-ai-report-snapshot';
 import type { AiReportLanguage } from '../application/listing-ai-report.types';
 
+const DEFAULT_GEMINI_PRIMARY_MODEL = 'gemini-3.1-flash-lite-preview';
+const DEFAULT_GEMINI_FALLBACK_MODEL = 'gemini-3-flash-preview';
+
+export type GeminiListingAiReportJsonResult = {
+  text: string | null;
+  geminiModel: string | null;
+  lastInvokedGeminiModel: string | null;
+};
+
+function shouldAttemptFallbackModel(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/\[\s*(429|500|502|503|504)\s/i.test(msg)) {
+    return true;
+  }
+  const l = msg.toLowerCase();
+  return (
+    l.includes('service unavailable') ||
+    l.includes('high demand') ||
+    l.includes('overloaded') ||
+    l.includes('resource exhausted') ||
+    l.includes('econnreset') ||
+    l.includes('etimedout') ||
+    l.includes('eai_again')
+  );
+}
+
 const LIST_THREE_TO_SIX = {
   type: SchemaType.ARRAY,
   items: { type: SchemaType.STRING },
@@ -130,18 +156,12 @@ export class GeminiListingAiReportClient {
     return typeof key === 'string' && key.trim().length > 0;
   }
 
-  async generateReportJson(
-    snapshot: ListingAiInputSnapshot,
+  private getGenerativeModel(
+    genAI: GoogleGenerativeAI,
+    modelName: string,
     reportLanguage: AiReportLanguage,
-  ): Promise<string | null> {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
-    if (!apiKey) {
-      return null;
-    }
-    const modelName =
-      this.configService.get<string>('GEMINI_MODEL')?.trim() || 'gemini-3-flash-preview';
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
+  ) {
+    return genAI.getGenerativeModel({
       model: modelName,
       generationConfig: {
         responseMimeType: 'application/json',
@@ -151,24 +171,93 @@ export class GeminiListingAiReportClient {
       },
       systemInstruction: buildSystemInstruction(reportLanguage),
     });
-    try {
-      const result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: buildUserPrompt(snapshot) }] }],
+  }
+
+  private async generateContentOnce(
+    genAI: GoogleGenerativeAI,
+    modelName: string,
+    snapshot: ListingAiInputSnapshot,
+    reportLanguage: AiReportLanguage,
+  ): Promise<string> {
+    const model = this.getGenerativeModel(genAI, modelName, reportLanguage);
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: buildUserPrompt(snapshot) }] }],
+    });
+    return result.response.text()?.trim() ?? '';
+  }
+
+  private captureGeminiFailure(err: unknown, extra: Record<string, string>): void {
+    const error = err instanceof Error ? err : new Error(String(err));
+    void import('@sentry/node').then((Sentry) => {
+      Sentry.captureException(error, {
+        tags: { source: 'gemini_listing_ai_report', ...extra },
       });
-      const text = result.response.text();
-      return text?.trim() ?? null;
-    } catch (e) {
-      const err = e instanceof Error ? e : new Error(String(e));
+    });
+  }
+
+  async generateReportJson(
+    snapshot: ListingAiInputSnapshot,
+    reportLanguage: AiReportLanguage,
+  ): Promise<GeminiListingAiReportJsonResult> {
+    const nullResult = (
+      lastInvokedGeminiModel: string | null = null,
+    ): GeminiListingAiReportJsonResult => ({
+      text: null,
+      geminiModel: null,
+      lastInvokedGeminiModel,
+    });
+
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
+    if (!apiKey) {
+      return nullResult();
+    }
+    const primaryName =
+      this.configService.get<string>('GEMINI_MODEL')?.trim() || DEFAULT_GEMINI_PRIMARY_MODEL;
+    const fallbackName =
+      this.configService.get<string>('GEMINI_MODEL_FALLBACK')?.trim() ||
+      DEFAULT_GEMINI_FALLBACK_MODEL;
+    const genAI = new GoogleGenerativeAI(apiKey);
+
+    try {
+      const text = await this.generateContentOnce(genAI, primaryName, snapshot, reportLanguage);
+      if (text) {
+        return { text, geminiModel: primaryName, lastInvokedGeminiModel: primaryName };
+      }
+      return nullResult(primaryName);
+    } catch (primaryErr) {
+      const err = primaryErr instanceof Error ? primaryErr : new Error(String(primaryErr));
       this.logger.warn(
-        `Gemini generateReportJson failed: ${err.message}${err.stack ? `\n${err.stack}` : ''}`,
+        `Gemini generateReportJson failed (primary ${primaryName}): ${err.message}${err.stack ? `\n${err.stack}` : ''}`,
         GeminiListingAiReportClient.name,
       );
-      void import('@sentry/node').then((Sentry) => {
-        Sentry.captureException(err, {
-          tags: { source: 'gemini_listing_ai_report' },
+      const useFallback = primaryName !== fallbackName && shouldAttemptFallbackModel(primaryErr);
+      if (!useFallback) {
+        this.captureGeminiFailure(primaryErr, { model_role: 'primary', model: primaryName });
+        return nullResult(primaryName);
+      }
+      this.logger.warn(
+        `Gemini primary model unavailable; retrying with fallback ${fallbackName}`,
+        GeminiListingAiReportClient.name,
+      );
+      try {
+        const text = await this.generateContentOnce(genAI, fallbackName, snapshot, reportLanguage);
+        if (text) {
+          return { text, geminiModel: fallbackName, lastInvokedGeminiModel: fallbackName };
+        }
+        return nullResult(fallbackName);
+      } catch (fallbackErr) {
+        const fe = fallbackErr instanceof Error ? fallbackErr : new Error(String(fallbackErr));
+        this.logger.warn(
+          `Gemini generateReportJson failed (fallback ${fallbackName}): ${fe.message}${fe.stack ? `\n${fe.stack}` : ''}`,
+          GeminiListingAiReportClient.name,
+        );
+        this.captureGeminiFailure(fallbackErr, {
+          model_role: 'fallback',
+          model: fallbackName,
+          primary_model: primaryName,
         });
-      });
-      return null;
+        return nullResult(fallbackName);
+      }
     }
   }
 }
