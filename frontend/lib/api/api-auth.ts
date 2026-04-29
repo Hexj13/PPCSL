@@ -75,4 +75,5 @@ export const authApi = {
     api.post<User>('/api/auth/change-phone-verify', data, {
       headers: { 'X-Skip-Error-Handling': 'true' },
     }),
+  dismissPartnerPromoBanner: () => api.post<User>('/api/auth/partner-promo/dismiss'),
 };

@@ -20,6 +20,7 @@ import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './use-cases/check-phone-availability.use-case';
 import { ConfirmEmailChangeUseCase } from './use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './use-cases/delete-account.use-case';
+import { DismissPartnerPromoBannerUseCase } from './use-cases/dismiss-partner-promo-banner.use-case';
 import { GetUserProfileUseCase } from './use-cases/get-user-profile.use-case';
 import { LoginUserUseCase } from './use-cases/login-user.use-case';
 import { RefreshTokensUseCase } from './use-cases/refresh-tokens.use-case';
@@ -64,6 +65,7 @@ export class AuthService {
     private checkPhoneAvailabilityUseCase: CheckPhoneAvailabilityUseCase,
     private sendVerificationSmsUseCase: SendVerificationSmsUseCase,
     private changePasswordUseCase: ChangePasswordUseCase,
+    private dismissPartnerPromoBannerUseCase: DismissPartnerPromoBannerUseCase,
   ) {}
 
   async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
@@ -166,5 +168,9 @@ export class AuthService {
 
   async deleteAccount(userId: string): Promise<{ success: true }> {
     return this.deleteAccountUseCase.execute(userId);
+  }
+
+  async dismissPartnerPromoBanner(userId: string) {
+    return this.dismissPartnerPromoBannerUseCase.execute(userId);
   }
 }

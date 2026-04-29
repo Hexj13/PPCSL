@@ -46,7 +46,7 @@ All documentation lives in **[`docs/`](./docs/)**:
 npm run install:all
 
 # Start Docker (PostgreSQL + Redis)
-docker-compose up -d
+docker compose up -d
 
 # Run both frontend and backend
 npm run dev

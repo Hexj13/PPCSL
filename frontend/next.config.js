@@ -25,8 +25,8 @@ const nextConfig = {
   ...(process.env.NODE_ENV === 'development' && {
     cacheMaxMemorySize: 0,
     onDemandEntries: {
-      maxInactiveAge: 0,
-      pagesBufferLength: 0,
+      maxInactiveAge: 60 * 1000,
+      pagesBufferLength: 5,
     },
   }),
 

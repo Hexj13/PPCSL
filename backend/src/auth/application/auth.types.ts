@@ -37,5 +37,7 @@ export type LoginResponse = {
     phone: string | null;
     boardSlug: string | null;
     preferredLocale: string | null;
+    hidePartnerPromoBanner: boolean;
+    isPlatformPartner: boolean;
   };
 };

@@ -55,6 +55,8 @@ export class LoginUserUseCase {
         phone: user.phone,
         boardSlug,
         preferredLocale: user.preferredLocale ?? null,
+        hidePartnerPromoBanner: user.hidePartnerPromoBanner ?? false,
+        isPlatformPartner: user.isPlatformPartner ?? false,
       },
     };
   }

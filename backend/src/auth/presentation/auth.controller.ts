@@ -245,6 +245,28 @@ export class AuthController {
     return user;
   }
 
+  @ApiOperation({ summary: 'Hide partner promo banner in catalog search for current user' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({
+    status: 200,
+    description: 'User profile with hidePartnerPromoBanner set to true',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @Throttle(getThrottleLimit(30, 3000))
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(200)
+  @Post('partner-promo/dismiss')
+  async dismissPartnerPromoBanner(@Request() req: AuthenticatedRequest) {
+    return this.authService.dismissPartnerPromoBanner(req.user.id);
+  }
+
   @ApiOperation({ summary: 'Update user profile' })
   @ApiBearerAuth('JWT-auth')
   @ApiResponse({

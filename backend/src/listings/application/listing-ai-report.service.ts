@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 
+import { ListingStatus } from '../../common/constants';
 import { RedisService } from '../../common/redis.service';
 import { logUserEvent } from '../../common/utils/log-user-event';
 import { ListingAiReport } from '../entities/listing-ai-report.entity';
@@ -49,6 +50,10 @@ const MESSAGES = {
   tire: {
     ru: 'AI-анализ доступен только для объявлений об автомобилях.',
     ro: 'Analiza AI este disponibilă doar pentru anunțuri de vehicule.',
+  },
+  closed: {
+    ru: 'AI-анализ недоступен для закрытых объявлений.',
+    ro: 'Analiza AI nu este disponibilă pentru anunțuri închise.',
   },
 } as const;
 
@@ -117,6 +122,21 @@ export class ListingAiReportService {
       return {
         status: 'unavailable',
         message: MESSAGES.tire[reportLanguage],
+      };
+    }
+
+    if (listing.status === ListingStatus.Closed) {
+      logUserEvent(this.logger, {
+        event: 'ai_report_request',
+        userId: params.userId,
+        listingId: params.listingId,
+        reportLanguage,
+        outcome: 'unavailable',
+        reason: 'closed',
+      });
+      return {
+        status: 'unavailable',
+        message: MESSAGES.closed[reportLanguage],
       };
     }
 
@@ -292,6 +312,11 @@ export class ListingAiReportService {
     let success = false;
     let lastInvokedGeminiModel: string | null = null;
     try {
+      const listingNow = await this.listingRepo.findById(ctx.listingId);
+      if (!listingNow || listingNow.status === ListingStatus.Closed) {
+        return;
+      }
+
       const geminiResult = await this.geminiClient.generateReportJson(
         ctx.snapshot,
         ctx.reportLanguage,

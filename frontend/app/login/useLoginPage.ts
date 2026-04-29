@@ -19,6 +19,7 @@ import {
 } from '@/lib/phone';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
+import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
 const isValidEmail = (value: string): boolean => {
@@ -202,6 +203,8 @@ export function useLoginPage() {
           return;
         }
         await syncPendingFavoritesAfterAuth(res.data.user.id);
+        const syncedUser = await syncPartnerPromoDismissAfterAuth(useAuthStore.getState().user!);
+        setAuth(syncedUser, res.data.access_token, res.data.refresh_token);
         await applyComparisonAfterAuth();
       } finally {
         releaseComparisonHold();

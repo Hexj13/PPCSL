@@ -170,7 +170,7 @@ export function ListingPageActions({
 }: ListingPageActionsProps) {
   const { t } = useTranslation();
 
-  const hasAi = Boolean(onAiReportClick);
+  const hasAi = Boolean(onAiReportClick) && listing.status !== 'Closed';
   const hasCompare = listing.status !== 'Closed' && showCompare;
   const showPromoteCard =
     listingPagePromoteDiscoverable(promotionAccess) &&
@@ -198,6 +198,7 @@ export function ListingPageActions({
   const favoriteCard = (
     <ListingPageActionCard
       variant="default"
+      layout={showPromoteCard ? 'stack' : 'inline'}
       onClick={onToggleFavorite}
       disabled={pageActionsLocked}
       title={favoriteTitle}

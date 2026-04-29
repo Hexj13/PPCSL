@@ -13,6 +13,7 @@ import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './use-cases/check-phone-availability.use-case';
 import { ConfirmEmailChangeUseCase } from './use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './use-cases/delete-account.use-case';
+import { DismissPartnerPromoBannerUseCase } from './use-cases/dismiss-partner-promo-banner.use-case';
 import { GetUserProfileUseCase } from './use-cases/get-user-profile.use-case';
 import { LoginUserUseCase } from './use-cases/login-user.use-case';
 import { RefreshTokensUseCase } from './use-cases/refresh-tokens.use-case';
@@ -44,6 +45,7 @@ describe('AuthService', () => {
   let emailService: jest.Mocked<EmailService>;
   let eventEmitter: jest.Mocked<EventEmitter2>;
   let mockRefreshTokenService: jest.Mocked<RefreshTokenService>;
+  let dismissPartnerPromoBannerExecute: jest.Mock;
 
   const mockUser = {
     id: '1',
@@ -59,6 +61,8 @@ describe('AuthService', () => {
     preferredLocale: null as string | null,
     last_listing_refresh_at: null,
     last_listing_refresh_reminder_sent_at: null,
+    hidePartnerPromoBanner: false,
+    isPlatformPartner: false,
   };
 
   const createUserWithDeactivate = (overrides: Partial<User> = {}) => {
@@ -161,6 +165,8 @@ describe('AuthService', () => {
       equals: jest.fn((a: string, b: string) => a === b),
     };
 
+    dismissPartnerPromoBannerExecute = jest.fn();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -216,6 +222,10 @@ describe('AuthService', () => {
         CheckPhoneAvailabilityUseCase,
         SendVerificationSmsUseCase,
         ChangePasswordUseCase,
+        {
+          provide: DismissPartnerPromoBannerUseCase,
+          useValue: { execute: dismissPartnerPromoBannerExecute },
+        },
       ],
     }).compile();
 
@@ -230,6 +240,18 @@ describe('AuthService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('dismissPartnerPromoBanner', () => {
+    it('should delegate to DismissPartnerPromoBannerUseCase', async () => {
+      const profile = { id: '1', hidePartnerPromoBanner: true, boardSlug: 'test-slug' };
+      dismissPartnerPromoBannerExecute.mockResolvedValue(profile);
+
+      const result = await service.dismissPartnerPromoBanner('1');
+
+      expect(dismissPartnerPromoBannerExecute).toHaveBeenCalledWith('1');
+      expect(result).toEqual(profile);
+    });
   });
 
   describe('validateUser', () => {

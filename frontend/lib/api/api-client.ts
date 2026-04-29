@@ -16,6 +16,7 @@ import { buildSignInHref } from '../return-url';
 import { sanitizeForSentryExtra } from '../sentry-sanitize';
 
 import type { User } from './api';
+import { isCatalogReadGetNoResponse } from './is-catalog-read-get-request';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -274,8 +275,12 @@ async function handleTransientGetRetry(
 async function showToastForError(error: AxiosError): Promise<void> {
   if (typeof window === 'undefined') return;
   const errorMessage = getErrorMessage(error);
-  const { toast } = await import('@/lib/toast');
-  toast.error(errorMessage);
+  try {
+    const { toast } = await import('@/lib/toast');
+    toast.error(errorMessage);
+  } catch {
+    return;
+  }
 }
 
 function isDuplicateNameError(error: AxiosError): boolean {
@@ -284,48 +289,61 @@ function isDuplicateNameError(error: AxiosError): boolean {
   return status === 409 || code === 'DUPLICATE_NAME' || code === 'DUPLICATE_NAME_ACTIVE_EXISTS';
 }
 
+function getSafeErrorUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  const path = url.split('?')[0]?.split('#')[0];
+  return path || undefined;
+}
+
 async function showErrorToastAndSentry(error: AxiosError): Promise<void> {
   if (error.config?.headers['X-Skip-Error-Handling']) return;
   if (isDuplicateNameError(error)) return;
   if (isAxiosRequestCanceled(error)) return;
+  if (isCatalogReadGetNoResponse(error, error.config)) return;
   await showToastForError(error);
   if (typeof window === 'undefined') return;
   const reqConfig = error.config as ExtendedAxiosRequestConfig | undefined;
   const requestId = reqConfig?._requestId;
   if (!error.response) {
-    const Sentry = await import('@sentry/nextjs');
-    Sentry.captureMessage('API request failed before HTTP response', {
-      level: 'warning',
-      tags: {
-        apiError: true,
-        noHttpResponse: true,
-        axiosCode: error.code ?? 'unknown',
-        ...(requestId ? { requestId } : {}),
-      },
-      extra: {
-        url: error.config?.url,
-        method: error.config?.method,
-        message: error.message,
-        ...(requestId ? { requestId } : {}),
-      },
-    });
+    try {
+      const Sentry = await import('@sentry/nextjs');
+      Sentry.captureMessage('API request failed before HTTP response', {
+        level: 'warning',
+        tags: {
+          apiError: true,
+          noHttpResponse: true,
+          axiosCode: error.code ?? 'unknown',
+        },
+        extra: {
+          url: getSafeErrorUrl(error.config?.url),
+          method: error.config?.method,
+          message: error.message,
+          ...(requestId ? { requestId } : {}),
+        },
+      });
+    } catch {
+      return;
+    }
     return;
   }
   if (error.response.status >= 500) {
-    const Sentry = await import('@sentry/nextjs');
-    Sentry.captureException(error, {
-      tags: {
-        apiError: true,
-        statusCode: error.response.status,
-        ...(requestId ? { requestId } : {}),
-      },
-      extra: {
-        url: error.config?.url,
-        method: error.config?.method,
-        ...(requestId ? { requestId } : {}),
-        response: sanitizeForSentryExtra(error.response?.data),
-      },
-    });
+    try {
+      const Sentry = await import('@sentry/nextjs');
+      Sentry.captureException(error, {
+        tags: {
+          apiError: true,
+          statusCode: error.response.status,
+        },
+        extra: {
+          url: getSafeErrorUrl(error.config?.url),
+          method: error.config?.method,
+          ...(requestId ? { requestId } : {}),
+          response: sanitizeForSentryExtra(error.response?.data),
+        },
+      });
+    } catch {
+      return;
+    }
   }
 }
 
@@ -366,77 +384,90 @@ function markAuthRefreshAttempt(originalRequest: ExtendedAxiosRequestConfig): vo
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as ExtendedAxiosRequestConfig | undefined;
+    const axiosError = error;
+    const originalRequest = axiosError.config as ExtendedAxiosRequestConfig | undefined;
 
-    if (isAxiosRequestCanceled(error)) {
-      return Promise.reject(error);
-    }
-
-    const retry429 = await handle429Retry(error, originalRequest);
-    if (retry429 !== undefined) return retry429;
-
-    const transientRetry = await handleTransientGetRetry(error, originalRequest);
-    if (transientRetry !== undefined) return transientRetry;
-
-    if (error.response?.status === 401 && originalRequest && canRetryAuthRefresh(originalRequest)) {
-      if (isLoginOrRegisterRequest(originalRequest.url) || isRefreshRequest(originalRequest.url)) {
-        if (error.config && !error.config.headers['X-Skip-Error-Handling']) {
-          await showToastForError(error);
-        }
-        return Promise.reject(error);
+    try {
+      if (isAxiosRequestCanceled(axiosError)) {
+        return Promise.reject(axiosError);
       }
 
-      if (isRefreshing) {
-        markAuthRefreshAttempt(originalRequest);
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-            }
-            return api(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
+      const retry429 = await handle429Retry(axiosError, originalRequest);
+      if (retry429 !== undefined) return retry429;
 
-      markAuthRefreshAttempt(originalRequest);
-      isRefreshing = true;
-      const refreshToken =
-        typeof window !== 'undefined' ? localStorageGetItem('refresh_token') : null;
+      const transientRetry = await handleTransientGetRetry(axiosError, originalRequest);
+      if (transientRetry !== undefined) return transientRetry;
 
-      if (!refreshToken) {
-        processQueue(error);
-        isRefreshing = false;
-        clearAuthSetReturnUrlAndRedirect();
-        return Promise.reject(error);
-      }
-
-      try {
-        const result = await doRefreshAndRetry(originalRequest, refreshToken);
-        isRefreshing = false;
-        return result;
-      } catch (refreshError) {
-        const freshRefresh = localStorageGetItem('refresh_token');
-        if (freshRefresh && freshRefresh !== refreshToken) {
-          try {
-            const retryResult = await doRefreshAndRetry(originalRequest, freshRefresh);
-            isRefreshing = false;
-            return retryResult;
-          } catch {
-            /* second refresh also failed, fall through */
+      if (
+        axiosError.response?.status === 401 &&
+        originalRequest &&
+        canRetryAuthRefresh(originalRequest)
+      ) {
+        if (
+          isLoginOrRegisterRequest(originalRequest.url) ||
+          isRefreshRequest(originalRequest.url)
+        ) {
+          if (axiosError.config && !axiosError.config.headers['X-Skip-Error-Handling']) {
+            await showToastForError(axiosError);
           }
+          return Promise.reject(axiosError);
         }
-        processQueue(refreshError as AxiosError);
-        isRefreshing = false;
-        clearAuthSetReturnUrlAndRedirect();
-        return Promise.reject(refreshError);
-      }
-    }
 
-    if (error.config && !error.config.headers['X-Skip-Error-Handling']) {
-      await showErrorToastAndSentry(error);
+        if (isRefreshing) {
+          markAuthRefreshAttempt(originalRequest);
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          })
+            .then((token) => {
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+              }
+              return api(originalRequest);
+            })
+            .catch((err) => Promise.reject(err));
+        }
+
+        markAuthRefreshAttempt(originalRequest);
+        isRefreshing = true;
+        const refreshToken =
+          typeof window !== 'undefined' ? localStorageGetItem('refresh_token') : null;
+
+        if (!refreshToken) {
+          processQueue(axiosError);
+          isRefreshing = false;
+          clearAuthSetReturnUrlAndRedirect();
+          return Promise.reject(axiosError);
+        }
+
+        try {
+          const result = await doRefreshAndRetry(originalRequest, refreshToken);
+          isRefreshing = false;
+          return result;
+        } catch (refreshError) {
+          const freshRefresh = localStorageGetItem('refresh_token');
+          let finalRefreshError: unknown = refreshError;
+          if (freshRefresh && freshRefresh !== refreshToken) {
+            try {
+              const retryResult = await doRefreshAndRetry(originalRequest, freshRefresh);
+              isRefreshing = false;
+              return retryResult;
+            } catch (secondRefreshError) {
+              finalRefreshError = secondRefreshError;
+            }
+          }
+          processQueue(finalRefreshError as AxiosError);
+          isRefreshing = false;
+          clearAuthSetReturnUrlAndRedirect();
+          return Promise.reject(finalRefreshError);
+        }
+      }
+
+      if (axiosError.config && !axiosError.config.headers['X-Skip-Error-Handling']) {
+        await showErrorToastAndSentry(axiosError);
+      }
+      return Promise.reject(axiosError);
+    } catch {
+      return Promise.reject(axiosError);
     }
-    return Promise.reject(error);
   },
 );

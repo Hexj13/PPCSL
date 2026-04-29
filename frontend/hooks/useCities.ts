@@ -1,23 +1,84 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 
 import type { City } from '@/lib/api';
 import { citiesApi } from '@/lib/api';
 import { sortByName } from '@/lib/utils';
 
-async function fetchCities(): Promise<City[]> {
-  const res = await citiesApi.getAll();
-  return sortByName(res.data);
+const STALE_MS = 10 * 60_000;
+
+let citiesCache: City[] | null = null;
+let citiesFetchedAt = 0;
+let citiesPromise: Promise<City[]> | null = null;
+
+const skipPersistentCache = process.env.NODE_ENV === 'test';
+
+function isCacheFresh(): boolean {
+  if (skipPersistentCache || !citiesCache) return false;
+  return Date.now() - citiesFetchedAt < STALE_MS;
+}
+
+function getCachedCities(): City[] | null {
+  return isCacheFresh() ? citiesCache : null;
+}
+
+function loadCities(): Promise<City[]> {
+  const cachedCities = getCachedCities();
+  if (cachedCities) {
+    return Promise.resolve(cachedCities);
+  }
+  if (!citiesPromise) {
+    citiesPromise = citiesApi
+      .getAll()
+      .then((res) => sortByName(res.data))
+      .then((sorted) => {
+        if (!skipPersistentCache) {
+          citiesCache = sorted;
+          citiesFetchedAt = Date.now();
+        }
+        return sorted;
+      })
+      .finally(() => {
+        citiesPromise = null;
+      });
+  }
+  return citiesPromise;
 }
 
 export function useCities() {
-  const { data: cities = [], isLoading: loading } = useQuery<City[]>({
-    queryKey: ['cities'],
-    queryFn: fetchCities,
-    staleTime: 10 * 60_000,
-    gcTime: 30 * 60_000,
-  });
+  const [cities, setCities] = useState<City[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const cachedCities = getCachedCities();
+
+    if (cachedCities) {
+      setCities(cachedCities);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    loadCities()
+      .then((data) => {
+        if (cancelled) return;
+        setCities(data);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCities([]);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return { cities, loading };
 }

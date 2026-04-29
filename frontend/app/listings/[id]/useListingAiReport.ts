@@ -139,6 +139,9 @@ export function useListingAiReport(options: {
   }, []);
 
   const handleAiReportClick = useCallback(() => {
+    if (listing?.status === 'Closed') {
+      return;
+    }
     if (aiReportPhase === 'loading' || aiReportPhase === 'pending') {
       setAiReportModalOpen(true);
       return;
@@ -190,6 +193,9 @@ export function useListingAiReport(options: {
     const qs = sp.toString();
     const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ''}`;
     router.replace(nextUrl);
+    if (listing.status === 'Closed') {
+      return;
+    }
     setAiReportModalOpen(true);
     setAiReportPhase('loading');
     setAiReportPayload(null);

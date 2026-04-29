@@ -11,6 +11,8 @@ import {
 } from '@/lib/browser-local-storage';
 import { clearClientAuthLocalStorage } from '@/lib/client-auth-storage';
 import { applyPreferredLocaleFromProfile } from '@/lib/i18n';
+import { PARTNER_PROMO_DISMISS_STORAGE_KEY } from '@/lib/partner-promo-dismiss-storage';
+import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 
 const MAX_COMPARE = 3;
 
@@ -63,8 +65,12 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       logout: () => {
+        const prevUser = get().user;
         set({ user: null, token: null, refreshToken: null, isInitialized: true });
         if (typeof window !== 'undefined') {
+          if (prevUser?.hidePartnerPromoBanner) {
+            localStorageSetItem(PARTNER_PROMO_DISMISS_STORAGE_KEY, '1');
+          }
           clearClientAuthLocalStorage({
             clearReturnUrl: true,
             clearAuthPersistKey: true,
@@ -107,7 +113,8 @@ export const useAuthStore = create<AuthState>()(
             const response = await authApi.me();
             const currentToken = localStorageGetItem('token') || actualToken;
             const currentRefreshToken = localStorageGetItem('refresh_token') || refreshToken;
-            get().setAuth(response.data, currentToken, currentRefreshToken);
+            const syncedUser = await syncPartnerPromoDismissAfterAuth(response.data);
+            get().setAuth(syncedUser, currentToken, currentRefreshToken);
           } catch {
             const storedRefreshToken = localStorageGetItem('refresh_token');
             if (storedRefreshToken) {
@@ -117,6 +124,12 @@ export const useAuthStore = create<AuthState>()(
                 });
                 get().setAuth(
                   refreshResponse.data.user,
+                  refreshResponse.data.access_token,
+                  refreshResponse.data.refresh_token,
+                );
+                const syncedUser = await syncPartnerPromoDismissAfterAuth(get().user!);
+                get().setAuth(
+                  syncedUser,
                   refreshResponse.data.access_token,
                   refreshResponse.data.refresh_token,
                 );

@@ -103,6 +103,7 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV,
+  sendDefaultPii: false,
   tracesSampleRate: 1.0,
   debug: false,
   replaysOnErrorSampleRate: 1.0,
@@ -110,11 +111,14 @@ Sentry.init({
   integrations: [
     Sentry.replayIntegration({
       maskAllText: true,
+      maskAllInputs: true,
       blockAllMedia: true,
     }),
   ],
 });
 ```
+
+Client-side Sentry must avoid default PII collection. Session Replay should keep text and inputs masked and media blocked; only lower sampling rates should vary by viewport or environment.
 
 Create `core/frontend/sentry.server.config.ts`:
 

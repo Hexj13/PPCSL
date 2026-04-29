@@ -548,7 +548,17 @@ function ScrollToFiltersButtonWrapper() {
   );
 }
 
-export default async function Home({
+function HomePageFallback() {
+  return (
+    <div className="space-y-6">
+      <div className="card animate-pulse h-40" />
+      <div className="card p-4 md:p-5 animate-pulse h-64" />
+      <div className="card animate-pulse h-96" />
+    </div>
+  );
+}
+
+async function HomeContent({
   searchParams,
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
@@ -588,5 +598,17 @@ export default async function Home({
       <ScrollToFiltersButtonWrapper />
       {searchStructuredData}
     </div>
+  );
+}
+
+export default function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>;
+}) {
+  return (
+    <Suspense fallback={<HomePageFallback />}>
+      <HomeContent searchParams={searchParams} />
+    </Suspense>
   );
 }

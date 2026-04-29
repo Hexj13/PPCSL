@@ -342,7 +342,7 @@ function CompleteProfileContent() {
           localStorageGetItem('token') || useAuthStore.getState().token,
           localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
         );
-        redirected = await processPendingData(user, t, returnUrl);
+        redirected = await processPendingData(response.data, t, returnUrl);
       } finally {
         releaseComparisonHold();
       }

@@ -25,8 +25,8 @@ import { useListingCardImageError } from '@/hooks/useListingCardImageError';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { setBlurForListing } from '@/lib/blur-navigation-cache';
-import { sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
+import { preserveHomeScrollPosition } from '@/lib/preserve-home-scroll';
 import {
   formatDateShort,
   formatDateRelative,
@@ -409,8 +409,7 @@ function ListingCardComponent({
     }
     if (typeof window !== 'undefined' && window.location.pathname === '/') {
       startTransition(() => {
-        sessionStorageSetItem('homeScrollPosition', window.scrollY.toString());
-        sessionStorageSetItem('homeScrollTimestamp', Date.now().toString());
+        preserveHomeScrollPosition('/');
       });
     }
   }, [listing.id, listing.cover_blur_hash, images]);

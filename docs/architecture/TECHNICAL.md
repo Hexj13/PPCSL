@@ -85,7 +85,7 @@ cd core
 npm run install:all
 
 # Start database
-docker-compose up -d
+docker compose up -d
 
 # Start backend (Terminal 1)
 cd backend && npm run start:dev
@@ -104,7 +104,7 @@ If you see `Cannot connect to the Docker daemon`:
 
 1. Open Docker Desktop application
 2. Wait for full startup
-3. Run `cd core && docker-compose up -d`
+3. Run `cd core && docker compose up -d`
 
 **Option 2: Install PostgreSQL and Redis locally**
 
@@ -1188,7 +1188,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 npm run install:all
 
 # Ensure database is running
-docker-compose up -d
+docker compose up -d
 
 # Create uploads folder (if needed)
 mkdir -p backend/uploads

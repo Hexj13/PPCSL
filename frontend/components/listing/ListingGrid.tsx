@@ -2,10 +2,19 @@
 
 import { isAxiosError } from 'axios';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback, useRef, useMemo, startTransition } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+  startTransition,
+} from 'react';
 import { flushSync } from 'react-dom';
 
 import { useLoadingState } from '@/hooks/useLoadingState';
+import { usePartnerPromoBannerInGrid } from '@/hooks/usePartnerPromoBannerInGrid';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics, listingToViewItemListEntry } from '@/lib/analytics';
 import type { Listing, PaginationMeta, SearchParams } from '@/lib/api';
@@ -23,6 +32,7 @@ import { silentCatch } from '@/lib/utils';
 import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { LoadMoreButton } from './LoadMoreButton';
+import { PartnerPromoBanner } from './PartnerPromoBanner';
 
 interface ListingGridProps {
   initialData?: { data: Listing[]; meta: PaginationMeta };
@@ -152,6 +162,8 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const listingsRef = useRef<Listing[]>(initialData?.data || []);
   const restoredFromStorageRef = useRef(false);
   const { user } = useAuthStore();
+  const { showBanner: showPartnerPromoBanner, dismiss: dismissPartnerPromoBanner } =
+    usePartnerPromoBannerInGrid();
   const { setFavorites } = useFavoritesStore();
   const prevSearchParamsStringRef = useRef<string | null>(null);
   const fetchControllerRef = useRef<AbortController | null>(null);
@@ -473,9 +485,30 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch"
                 data-testid="listings-results-grid"
               >
-                {uniqueListings.map((listing, index) => (
-                  <ListingCard key={listing.id} listing={listing} priority={index < 8} />
-                ))}
+                {uniqueListings.map((listing, index) => {
+                  const cardPosition = index + 1;
+
+                  return (
+                    <Fragment key={listing.id}>
+                      <ListingCard listing={listing} priority={index < 8} />
+                      {showPartnerPromoBanner && cardPosition === 8 && (
+                        <div className="col-span-full lg:hidden">
+                          <PartnerPromoBanner onDismiss={dismissPartnerPromoBanner} />
+                        </div>
+                      )}
+                      {showPartnerPromoBanner && cardPosition === 12 && (
+                        <div className="col-span-full hidden lg:block xl:hidden">
+                          <PartnerPromoBanner onDismiss={dismissPartnerPromoBanner} />
+                        </div>
+                      )}
+                      {showPartnerPromoBanner && cardPosition === 16 && (
+                        <div className="col-span-full hidden xl:block">
+                          <PartnerPromoBanner onDismiss={dismissPartnerPromoBanner} />
+                        </div>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </div>
 
               {(() => {

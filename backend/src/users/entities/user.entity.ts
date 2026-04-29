@@ -70,6 +70,9 @@ export class User {
   @Column({ type: 'integer', default: 0, name: 'partner_listing_progress' })
   partnerListingProgress: number;
 
+  @Column({ type: 'boolean', default: false, name: 'hide_partner_promo_banner' })
+  hidePartnerPromoBanner: boolean;
+
   @Column({ type: 'boolean', default: false })
   emailNotifications: boolean;
 

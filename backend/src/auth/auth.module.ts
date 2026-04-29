@@ -11,6 +11,7 @@ import { ChangePasswordUseCase } from './application/use-cases/change-password.u
 import { CheckPhoneAvailabilityUseCase } from './application/use-cases/check-phone-availability.use-case';
 import { ConfirmEmailChangeUseCase } from './application/use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './application/use-cases/delete-account.use-case';
+import { DismissPartnerPromoBannerUseCase } from './application/use-cases/dismiss-partner-promo-banner.use-case';
 import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.use-case';
 import { LoginUserUseCase } from './application/use-cases/login-user.use-case';
 import { RefreshTokensUseCase } from './application/use-cases/refresh-tokens.use-case';
@@ -93,6 +94,7 @@ import { AuthController } from './presentation/auth.controller';
     CheckPhoneAvailabilityUseCase,
     SendVerificationSmsUseCase,
     ChangePasswordUseCase,
+    DismissPartnerPromoBannerUseCase,
   ],
   exports: [
     AuthService,

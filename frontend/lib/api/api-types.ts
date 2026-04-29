@@ -189,6 +189,7 @@ export interface User {
   isPlatformPartner?: boolean;
   freePromotionBalance?: number;
   partnerListingProgress?: number;
+  hidePartnerPromoBanner?: boolean;
 }
 
 export interface RegisterResponse extends User {

@@ -21,6 +21,16 @@ jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
 }));
 
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: ({
+    fill: _fill,
+    priority: _priority,
+    ...props
+  }: React.ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean; priority?: boolean }) =>
+    React.createElement('img', props),
+}));
+
 jest.mock('@/lib/store', () => {
   const mockGetState = jest.fn().mockReturnValue({ favorites: [] });
   const mockSetFavorites = jest.fn();
@@ -69,6 +79,19 @@ jest.mock('@/hooks/useTranslation', () => ({
         'listings.viewAllListings': 'View all listings',
         'listings.loadError': 'Error loading',
         'listings.noMoreListings': 'No more listings',
+        'listings.partnerPromo.titleQuestion': 'Do you sell many cars?',
+        'listings.partnerPromo.titlePartnerLead': 'Become a Kupito.club ',
+        'listings.partnerPromo.titlePartnerEmphasis': 'partner',
+        'listings.partnerPromo.titlePartnerTail': '',
+        'listings.partnerPromo.description': 'Special partnership terms for professional sellers.',
+        'listings.partnerPromo.features.sync': 'Automatic listing sync',
+        'listings.partnerPromo.features.promotion': 'Free promotions',
+        'listings.partnerPromo.features.visibility': 'Extra visibility on the platform',
+        'listings.partnerPromo.sideTitle': 'Together — stronger',
+        'listings.partnerPromo.sideDescription': 'Grow your business with Kupito.club.',
+        'listings.partnerPromo.cta': 'Details',
+        'listings.partnerPromo.dismiss': "Don't show again",
+        'listings.partnerPromo.imageAlt': 'Cars for the Kupito partner program',
         'common.error': 'Error',
         'common.loading': 'Loading...',
       })[key] ?? key,
@@ -150,6 +173,17 @@ const mockMeta: PaginationMeta = {
   totalPages: 1,
 };
 
+const authStoreMockState = {
+  user: null as {
+    id: string;
+    isPlatformPartner?: boolean;
+    hidePartnerPromoBanner?: boolean;
+  } | null,
+  token: null as string | null,
+  refreshToken: null as string | null,
+  setAuth: jest.fn(),
+};
+
 describe('ListingGrid', () => {
   const mockSearchParams = {
     get: jest.fn(),
@@ -174,9 +208,18 @@ describe('ListingGrid', () => {
     });
     (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
     (usePathname as jest.Mock).mockReturnValue('/');
-    (useAuthStore as unknown as jest.Mock).mockReturnValue({
-      user: null,
-    });
+    authStoreMockState.user = null;
+    authStoreMockState.token = null;
+    authStoreMockState.refreshToken = null;
+    authStoreMockState.setAuth = jest.fn();
+    (useAuthStore as unknown as jest.Mock).mockImplementation(
+      (selector?: (s: typeof authStoreMockState) => unknown) => {
+        if (typeof selector === 'function') {
+          return selector(authStoreMockState);
+        }
+        return authStoreMockState;
+      },
+    );
     (useFavoritesStore as unknown as jest.Mock).mockReturnValue({
       favorites: [],
       setFavorites: (useFavoritesStore as unknown as { _setFavorites: jest.Mock })._setFavorites,
@@ -265,9 +308,7 @@ describe('ListingGrid', () => {
     });
 
     it('should load favorites for initialData when user is logged in', async () => {
-      (useAuthStore as unknown as jest.Mock).mockReturnValue({
-        user: { id: 'user-1' },
-      });
+      authStoreMockState.user = { id: 'user-1' };
 
       (favoritesApi.checkBatch as jest.Mock).mockResolvedValue({
         data: { 'listing-1': true, 'listing-2': false },
@@ -295,9 +336,7 @@ describe('ListingGrid', () => {
     });
 
     it('should not load favorites when user is not logged in', async () => {
-      (useAuthStore as unknown as jest.Mock).mockReturnValue({
-        user: null,
-      });
+      authStoreMockState.user = null;
 
       const initialData = {
         data: [mockListing1],
@@ -326,10 +365,96 @@ describe('ListingGrid', () => {
       expect(listingsApi.getAll).not.toHaveBeenCalled();
     });
 
-    it('should not load favorites when initialData is empty', async () => {
-      (useAuthStore as unknown as jest.Mock).mockReturnValue({
-        user: { id: 'user-1' },
+    it('should render partner promo banner with link to partners page when enough listings are shown', async () => {
+      const listings = Array.from({ length: 16 }, (_, index) => ({
+        ...mockListing1,
+        id: `listing-${index + 1}`,
+        title: `Test Car ${index + 1}`,
+      }));
+      const initialData = {
+        data: listings,
+        meta: { ...mockMeta, total: listings.length },
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      expect(await screen.findByTestId('listing-listing-16')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getAllByTestId('partner-promo-banner')).toHaveLength(3);
       });
+      expect(screen.getAllByRole('link', { name: /details/i })[0]).toHaveAttribute(
+        'href',
+        '/partners',
+      );
+    });
+
+    it('should not render partner promo banner when guest dismissed it in localStorage', async () => {
+      (window.localStorage.getItem as jest.Mock).mockImplementation((key: string) =>
+        key === 'kupito_hide_partner_promo' ? '1' : null,
+      );
+
+      const listings = Array.from({ length: 16 }, (_, index) => ({
+        ...mockListing1,
+        id: `listing-${index + 1}`,
+        title: `Test Car ${index + 1}`,
+      }));
+      const initialData = {
+        data: listings,
+        meta: { ...mockMeta, total: listings.length },
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      expect(await screen.findByTestId('listing-listing-16')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId('partner-promo-banner')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should not render partner promo banner when user is platform partner', async () => {
+      authStoreMockState.user = { id: 'user-1', isPlatformPartner: true };
+
+      const listings = Array.from({ length: 16 }, (_, index) => ({
+        ...mockListing1,
+        id: `listing-${index + 1}`,
+        title: `Test Car ${index + 1}`,
+      }));
+      const initialData = {
+        data: listings,
+        meta: { ...mockMeta, total: listings.length },
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      expect(await screen.findByTestId('listing-listing-16')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId('partner-promo-banner')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should not render partner promo banner when user dismissed it in profile', async () => {
+      authStoreMockState.user = { id: 'user-1', hidePartnerPromoBanner: true };
+
+      const listings = Array.from({ length: 16 }, (_, index) => ({
+        ...mockListing1,
+        id: `listing-${index + 1}`,
+        title: `Test Car ${index + 1}`,
+      }));
+      const initialData = {
+        data: listings,
+        meta: { ...mockMeta, total: listings.length },
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      expect(await screen.findByTestId('listing-listing-16')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId('partner-promo-banner')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should not load favorites when initialData is empty', async () => {
+      authStoreMockState.user = { id: 'user-1' };
 
       const initialData = {
         data: [],

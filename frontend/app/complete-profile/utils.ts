@@ -4,6 +4,8 @@ import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local
 import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
 import { compactE164Phone } from '@/lib/phone';
 import { sanitizeReturnUrl } from '@/lib/return-url';
+import { useAuthStore } from '@/lib/store';
+import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
 
@@ -71,7 +73,12 @@ export async function processPendingData(
   returnUrl?: string | null,
 ): Promise<boolean> {
   if (typeof window === 'undefined') return false;
-  await processPendingFavorites(user.id);
+  const syncedUser = await syncPartnerPromoDismissAfterAuth(user);
+  const { token, refreshToken } = useAuthStore.getState();
+  if (token && syncedUser.hidePartnerPromoBanner !== user.hidePartnerPromoBanner) {
+    useAuthStore.getState().setAuth(syncedUser, token, refreshToken ?? null);
+  }
+  await processPendingFavorites(syncedUser.id);
   await processPendingComparisons();
   return processPendingSavedFilter(t, returnUrl);
 }

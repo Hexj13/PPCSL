@@ -8,6 +8,7 @@ import {
   sessionStorageRemoveItem,
   sessionStorageSetItem,
 } from '@/lib/browser-session-storage';
+import { shouldRestoreHomeScrollAfterPath } from '@/lib/preserve-home-scroll';
 
 export function ScrollReset() {
   const pathname = usePathname();
@@ -90,7 +91,7 @@ export function ScrollReset() {
 
       const savedScroll = sessionStorageGetItem('homeScrollPosition');
       const timestamp = sessionStorageGetItem('homeScrollTimestamp');
-      if (savedScroll && timestamp && previousPath?.startsWith('/listings/')) {
+      if (savedScroll && timestamp && shouldRestoreHomeScrollAfterPath(previousPath)) {
         const savedTime = parseInt(timestamp, 10);
         if (Date.now() - savedTime < 5 * 60 * 1000) {
           const scrollY = parseInt(savedScroll, 10);

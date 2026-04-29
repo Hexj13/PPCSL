@@ -6,6 +6,8 @@ import {
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
 import { sanitizeReturnUrl } from '@/lib/return-url';
+import { useAuthStore } from '@/lib/store';
+import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 
 type LoginResponse = {
   data: {
@@ -29,6 +31,9 @@ export async function runAfterRegistration(
     try {
       await authApi.verifyPhone();
     } catch {}
+
+    const syncedUser = await syncPartnerPromoDismissAfterAuth(useAuthStore.getState().user!);
+    setAuth(syncedUser, loginRes.data.access_token, loginRes.data.refresh_token);
 
     if (typeof window === 'undefined') return;
     localStorageRemoveItem('pendingRegistration');
