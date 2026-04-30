@@ -7,8 +7,12 @@ import { useEffect, useState } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { preserveHomeScrollPosition } from '@/lib/preserve-home-scroll';
+import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
 const DISMISS_FADE_MS = 300;
+
+const PARTNER_BANNER_BLUR_HASH = 'L85?L}DPM0.luNR6MeyC8_xutkM{';
+const PARTNER_BANNER_BLUR_DATA_URL = blurhashToDataURL(PARTNER_BANNER_BLUR_HASH);
 
 const features = [
   {
@@ -66,7 +70,7 @@ export function PartnerPromoBanner({ onDismiss }: PartnerPromoBannerProps) {
   return (
     <section
       data-testid="partner-promo-banner"
-      className={`overflow-hidden rounded-2xl bg-gradient-to-br from-primary-900 via-primary-900 to-primary-700 text-white shadow-lg border border-primary-500/30 transition-opacity duration-300 ease-out ${exiting ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+      className={`overflow-hidden rounded-xl bg-gradient-to-br from-primary-900 via-primary-900 to-primary-700 text-white shadow-lg border border-primary-500/30 transition-opacity duration-300 ease-out ${exiting ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
     >
       <div className="grid gap-5 lg:grid-cols-[minmax(220px,0.48fr)_minmax(0,1fr)_minmax(200px,0.3fr)] lg:items-stretch lg:gap-4 xl:grid-cols-[minmax(280px,0.55fr)_minmax(0,0.82fr)_minmax(250px,0.32fr)] xl:gap-6">
         <div className="relative min-h-[180px] overflow-hidden sm:min-h-[220px] lg:min-h-0 lg:h-full">
@@ -74,6 +78,9 @@ export function PartnerPromoBanner({ onDismiss }: PartnerPromoBannerProps) {
             src="/partner-banner.webp"
             alt={t('listings.partnerPromo.imageAlt')}
             fill
+            priority
+            placeholder={PARTNER_BANNER_BLUR_DATA_URL ? 'blur' : undefined}
+            blurDataURL={PARTNER_BANNER_BLUR_DATA_URL}
             sizes="(min-width: 1280px) 40vw, (min-width: 1024px) 44vw, 100vw"
             className="object-cover object-left [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_45%,transparent_100%)] [mask-image:linear-gradient(to_bottom,black_0%,black_45%,transparent_100%)] lg:[-webkit-mask-image:linear-gradient(to_right,black_0%,black_45%,transparent_100%)] lg:[mask-image:linear-gradient(to_right,black_0%,black_45%,transparent_100%)]"
           />
@@ -118,7 +125,7 @@ export function PartnerPromoBanner({ onDismiss }: PartnerPromoBannerProps) {
           </div>
         </div>
 
-        <div className="mx-4 mb-4 flex flex-col gap-5 rounded-2xl border border-primary-300/30 bg-primary-900/45 p-4 backdrop-blur-sm sm:mx-5 sm:mb-5 sm:p-5 lg:mt-4 lg:mb-4 lg:mr-3 lg:ml-0 xl:m-5 xl:ml-0">
+        <div className="mx-4 mb-4 flex flex-col gap-5 border-t border-primary-300/30 p-4 sm:mx-5 sm:mb-5 sm:p-5 lg:mt-4 lg:mb-4 lg:mr-3 lg:ml-0 lg:border-l lg:border-t-0 lg:border-primary-300/30 lg:pl-6 xl:m-5 xl:ml-0">
           <div className="text-center">
             <h3 className="text-base md:text-lg font-bold text-white">
               {t('listings.partnerPromo.sideTitle')}
