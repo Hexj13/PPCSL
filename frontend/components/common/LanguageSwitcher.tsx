@@ -96,6 +96,7 @@ export function LanguageSwitcher({
           placeholder={currentLanguageName}
           buttonClassName={mobileButtonClassName}
           autoPosition={true}
+          renderMenuInPortal
           searchable={false}
           rightIcon={languageIcon}
           menuSelectedStyle="checkmark"
