@@ -4,10 +4,13 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
+import { designTokens } from '@/ui';
 
 export function CookieConsent() {
   const { t } = useTranslation();
+  const { href } = useLocalizedNavigation();
   const { hasConsent, isLoading, grantConsent, denyConsent } = useCookieConsent();
   const [isVisible, setIsVisible] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -34,9 +37,10 @@ export function CookieConsent() {
 
   return (
     <div
-      className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-full sm:max-w-sm z-50 bg-bg-secondary rounded-xl shadow-2xl border border-primary-900 p-3 sm:p-4 md:p-5 transition-all duration-300 ${
+      className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-full sm:max-w-sm bg-bg-secondary rounded-xl shadow-2xl border border-primary-900 p-3 sm:p-4 md:p-5 transition-all duration-300 ${
         isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
+      style={{ zIndex: designTokens.zIndex.modal }}
       role="dialog"
       aria-label={t('common.acceptCookies')}
     >
@@ -65,14 +69,14 @@ export function CookieConsent() {
         <p className="text-xs sm:text-sm text-primary-900 leading-relaxed px-1">
           {t('common.cookieConsentMessage')}{' '}
           <Link
-            href="/cookie-settings"
+            href={href('/cookie-settings')}
             className="text-primary-700 hover-only:hover:text-primary-900 underline transition-colors"
           >
             {t('common.cookieConsentSettings')}
           </Link>
           {' · '}
           <Link
-            href="/privacy"
+            href={href('/privacy')}
             className="text-primary-700 hover-only:hover:text-primary-900 underline transition-colors"
           >
             {t('common.cookieConsentMoreInfo')}

@@ -12,9 +12,12 @@ import {
 import { ListingCardTireSpecs } from '@/components/listing/ListingCardBadgesAndSpecs';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
-import { setBlurForListing } from '@/lib/blur-navigation-cache';
+import { setBlurForListing, setIndexForListing } from '@/lib/blur-navigation-cache';
+import type { Locale } from '@/lib/i18n-types';
+import { localizedHref } from '@/lib/localized-href';
 import {
   formatBodyType,
   formatDriveType,
@@ -22,6 +25,7 @@ import {
   formatFuel,
   formatMileage,
   getListingDisplayTitle,
+  getListingHref,
   getOptimizedImageUrl,
   getVehicleType,
   isTireListing,
@@ -136,6 +140,19 @@ function ManagementCardBadges({
           <span className="relative z-10">{t('listings.promoted')}</span>
         </span>
       )}
+      {(listing.has_video || listing.video?.status === 'published') && (
+        <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold bg-white/90 border-2 border-newBadge text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none">
+          <svg
+            className="relative z-10 w-4 h-4 shrink-0"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden
+          >
+            <path d="M8 5v14l11-7L8 5z" />
+          </svg>
+          <span className="relative z-10">{t('listings.videoBadge')}</span>
+        </span>
+      )}
       {listing.is_new && !isTireListing(listing) && (
         <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-semibold bg-white/90 border-2 border-newBadge text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none">
           <span
@@ -181,12 +198,14 @@ function ManagementCardActionBar({
   onAction,
   onPromoteClick,
   t,
+  locale,
 }: {
   listing: Listing;
   mode: 'admin' | 'my-listings' | 'board';
   onAction?: (_id: string, _action: 'publish' | 'pause' | 'close') => void;
   onPromoteClick?: (_id: string) => void;
   t: (_key: string) => string;
+  locale: Locale;
 }) {
   const status = listing.status;
   const showPromoteMyListings =
@@ -197,9 +216,10 @@ function ManagementCardActionBar({
   const showClose = status !== 'Closed';
   const showEdit = (mode === 'my-listings' && status !== 'Closed') || mode === 'admin';
   const editFrom = mode === 'admin' ? 'admin' : mode === 'my-listings' ? 'my-listings' : null;
-  const editHref = editFrom
+  const editRest = editFrom
     ? `/listings/${listing.id}/edit?from=${editFrom}`
     : `/listings/${listing.id}/edit`;
+  const editHref = localizedHref(editRest, locale);
   const editLinkTestId = mode === 'my-listings' ? `my-listings-edit-link-${listing.id}` : undefined;
 
   return (
@@ -313,6 +333,7 @@ export function ListingManagementCard({
   onPromoteClick,
 }: ListingManagementCardProps) {
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const [imageError, setImageError] = useState(false);
   const displayTitle = getListingDisplayTitle(listing, t);
   const vehicleType = getVehicleType(listing);
@@ -332,6 +353,7 @@ export function ListingManagementCard({
     if (listing.cover_blur_hash) {
       setBlurForListing(listing.id, listing.cover_blur_hash, listing.images?.[0]);
     }
+    setIndexForListing(listing.id, 0);
   };
 
   const isAdminMode = mode === 'admin';
@@ -345,7 +367,7 @@ export function ListingManagementCard({
     <div className="card overflow-visible group" data-testid={myListingsCardTestId}>
       <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-0 lg:gap-6 lg:items-stretch">
         <Link
-          href={`/listings/${listing.id}`}
+          href={getListingHref(listing, locale)}
           className="shrink-0"
           data-testid={myListingsCardLinkTestId}
           onClick={handleLinkClick}
@@ -386,7 +408,7 @@ export function ListingManagementCard({
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 lg:gap-6">
             <div className="flex-1 min-w-0">
               <Link
-                href={`/listings/${listing.id}`}
+                href={getListingHref(listing, locale)}
                 className="mb-3 block group"
                 onClick={handleLinkClick}
               >
@@ -454,6 +476,7 @@ export function ListingManagementCard({
               onAction={onAction}
               onPromoteClick={onPromoteClick}
               t={t}
+              locale={locale}
             />
           )}
         </div>

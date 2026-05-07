@@ -1,6 +1,9 @@
 'use client';
 
+import Link from 'next/link';
+
 import { useTranslation } from '@/hooks/useTranslation';
+import { buildSignPageHref } from '@/lib/return-url';
 import { LoadingButton } from '@/ui';
 
 import { RegisterFormFields } from './RegisterFormFields';
@@ -82,13 +85,13 @@ export function RegisterPanel({
         {showLoginLink && (
           <p className="mt-5 text-center text-sm text-hint">
             {t('register.alreadyHaveAccount')}{' '}
-            <a
-              href="/sign"
+            <Link
+              href={buildSignPageHref({ tab: 'login' })}
               data-testid="auth-register-login-link"
               className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
             >
               {t('header.login')}
-            </a>
+            </Link>
           </p>
         )}
       </form>

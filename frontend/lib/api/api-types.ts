@@ -79,6 +79,7 @@ export interface TireOnListing {
 
 export interface Listing {
   id: string;
+  slug?: string | null;
   title: string;
   category?: ListingCategory;
   price?: number;
@@ -123,6 +124,48 @@ export interface Listing {
     freePromotionBalance: number;
     partnerListingProgress: number;
   };
+  has_video?: boolean;
+  video?: ListingVideoPayload | null;
+}
+
+export interface ListingVideoPayload {
+  status: string;
+  webmUrl?: string | null;
+  mp4Url?: string | null;
+  thumbUrl?: string | null;
+  durationSec?: number | null;
+  error?: string | null;
+  jobId?: string | null;
+  uploadedAt?: string | null;
+}
+
+export interface ListingVideoConstraints {
+  maxFileSizeBytes: number;
+  maxDurationSec: number;
+  partSizeBytes: number;
+  allowedContentTypes: string[];
+}
+
+export interface ListingVideoUploadInitResponse {
+  uploadId: string;
+  key: string;
+  partCount: number;
+  parts: { partNumber: number; url: string }[];
+  maxFileSizeBytes: number;
+  maxDurationSec: number;
+  partSizeBytes: number;
+  allowedContentTypes: string[];
+}
+
+export interface StagedListingVideoUploadInitResponse extends ListingVideoUploadInitResponse {
+  stagedVideoToken: string;
+}
+
+export interface StagedListingVideoStatusResponse {
+  status: 'pending' | 'processing' | 'published' | 'failed';
+  progress: number | null;
+  stagedVideoToken: string;
+  video?: ListingVideoPayload | null;
 }
 
 export interface Brand {
@@ -322,6 +365,7 @@ export interface CreateListingDto {
   };
   tire?: CreateTireDtoPayload;
   assignedUserId?: string;
+  stagedVideoToken?: string;
 }
 
 export type UpdateListingDto = Omit<

@@ -4,14 +4,25 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, startTransition, useState, useEffect } from 'react';
 
 import { Dropdown } from '@/components/common/Dropdown';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
+import { localizedHref } from '@/lib/localized-href';
 import {
   getListingSortOptions,
   LISTING_SORTS,
   isListingSortKey,
   resolveListingSortKey,
 } from '@/lib/search';
+
+function pathWithSearch(localizedBase: string, queryBody: string): string {
+  if (!queryBody) return localizedBase || '/';
+  const q = `?${queryBody}`;
+  if (localizedBase === '/') return `/${q}`;
+  const isPrefixedRootOnly = /^\/[a-z0-9-]+$/i.test(localizedBase) && localizedBase !== '/';
+  if (isPrefixedRootOnly) return `${localizedBase}/${q}`;
+  return `${localizedBase}${q}`;
+}
 
 interface SortDropdownProps {
   basePath?: string;
@@ -27,7 +38,10 @@ export function SortDropdown({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const [mounted, setMounted] = useState(false);
+
+  const resolvedBasePath = useMemo(() => localizedHref(basePath, locale), [basePath, locale]);
 
   useEffect(() => {
     setMounted(true);
@@ -54,7 +68,7 @@ export function SortDropdown({
       currentParams.set('sortBy', sortBy);
       currentParams.set('sortOrder', sortOrder);
       const query = currentParams.toString();
-      const newUrl = basePath === '/' ? `/?${query}` : `${basePath}${query ? `?${query}` : ''}`;
+      const newUrl = pathWithSearch(resolvedBasePath, query);
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
       sessionStorageSetItem('scrollPreserved', 'true');
       if (isInternalSearchRef) {
@@ -70,14 +84,14 @@ export function SortDropdown({
         }
       });
     },
-    [searchParams, router, basePath, isInternalSearchRef, onSortChange],
+    [searchParams, router, resolvedBasePath, isInternalSearchRef, onSortChange],
   );
 
   return (
     <div className="w-full sm:min-w-[200px]">
       <Dropdown
         value={currentSortKey}
-        buttonClassName="h-[52px]! min-h-[52px]! max-h-[52px]!"
+        buttonClassName="h-12! min-h-12! max-h-12!"
         onChange={(value) => {
           if (!isListingSortKey(value) || value === currentSortKey) {
             return;

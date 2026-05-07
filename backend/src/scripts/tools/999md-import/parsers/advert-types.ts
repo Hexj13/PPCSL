@@ -29,6 +29,10 @@ export interface GroupRaw {
 export interface AdvertRaw {
   id: string;
   title: string;
+  state?: string;
+  isExpired?: boolean;
+  expire?: string;
+  moderation?: { status?: string | null } | null;
   subCategory?: SubCategoryRaw | null;
   groups?: GroupRaw[] | null;
 }

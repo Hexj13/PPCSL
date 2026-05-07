@@ -1,7 +1,7 @@
 import type { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, startTransition } from 'react';
 
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { analytics } from '@/lib/analytics';
 import { localStorageGetItem, localStorageSetItem } from '@/lib/browser-local-storage';
 import { VEHICLE_TYPE_BY_BODY_TYPE } from '@/lib/constants';
@@ -60,7 +60,7 @@ export function useVehicleType({
   setActiveTab,
   scrollTabsToStart,
 }: UseVehicleTypeParams) {
-  const router = useRouter();
+  const { replace } = useLocalizedNavigation();
 
   const [vehicleType, setVehicleType] = useState<'car' | 'moto' | 'truck'>(() =>
     getVehicleTypeFromUrlAndBodyTypesOnly(searchParams),
@@ -112,10 +112,10 @@ export function useVehicleType({
         setLastAppliedFilters(null);
         setActiveTab('basic');
         scrollTabsToStart?.();
-        router.replace(`/?${params.toString()}`, { scroll: false });
+        replace(`/?${params.toString()}`, { scroll: false });
       });
     },
-    [router, resetToVehicleSearchDefaults, setLastAppliedFilters, setActiveTab, scrollTabsToStart],
+    [replace, resetToVehicleSearchDefaults, setLastAppliedFilters, setActiveTab, scrollTabsToStart],
   );
 
   return {

@@ -14,12 +14,14 @@ import {
 } from '@/lib/browser-local-storage';
 import { holdComparisonApiLoadUntilReleased } from '@/lib/comparisonMigration';
 import { MAIN_VIEWPORT_MIN_HEIGHT_CLASS } from '@/lib/constants';
+import { getClientLocale } from '@/lib/i18n';
 import {
   compactE164Phone,
   formatPhoneForDisplay,
   formatPhoneOnBlur,
   sanitizePhoneInput,
 } from '@/lib/phone';
+import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
@@ -74,7 +76,7 @@ function CompleteProfileContent() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      router.push('/sign');
+      router.push(buildPostAuthRedirect('/sign', getClientLocale()));
       return;
     }
 
@@ -354,11 +356,11 @@ function CompleteProfileContent() {
       if (returnUrl) {
         if (typeof window !== 'undefined' && window.location) {
           localStorageSetItem('showProfileSaveSuccess', 'true');
-          window.location.href = returnUrl;
+          window.location.href = buildPostAuthRedirect(returnUrl, getClientLocale());
         }
       } else if (typeof window !== 'undefined' && window.location) {
         localStorageSetItem('showProfileSaveSuccess', 'true');
-        window.location.href = '/';
+        window.location.href = buildPostAuthRedirect('/', getClientLocale());
       }
     } catch {
       analytics.formSubmit('complete_profile', false, filledFields);
@@ -375,9 +377,10 @@ function CompleteProfileContent() {
       const redirected = await processPendingData(user, t, returnUrl);
       if (redirected) return;
       if (returnUrl) {
-        if (typeof window !== 'undefined' && window.location) window.location.href = returnUrl;
+        if (typeof window !== 'undefined' && window.location)
+          window.location.href = buildPostAuthRedirect(returnUrl, getClientLocale());
       } else if (typeof window !== 'undefined' && window.location) {
-        window.location.href = '/';
+        window.location.href = buildPostAuthRedirect('/', getClientLocale());
       }
     } finally {
       setIsSubmitting(false);

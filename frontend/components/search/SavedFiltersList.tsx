@@ -1,12 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 
 import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useLoadingState } from '@/hooks/useLoadingState';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { SavedFilter } from '@/lib/api';
 import { brandsApi, savedFiltersApi } from '@/lib/api';
@@ -32,7 +32,7 @@ export function clearSavedFiltersCache() {
 }
 
 export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}) {
-  const router = useRouter();
+  const { push: localizedPush } = useLocalizedNavigation();
   const { t } = useTranslation();
   const { locale } = useI18n();
   const hasLoadedRef = useRef(moduleHasLoaded);
@@ -309,7 +309,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
     });
 
     const queryString = params.toString();
-    router.push(`/?${queryString}`);
+    localizedPush(`/?${queryString}`);
   };
 
   if (showSavedFiltersSkeleton) {

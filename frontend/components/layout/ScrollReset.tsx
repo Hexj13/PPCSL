@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 import {
   sessionStorageGetItem,
@@ -16,7 +16,7 @@ export function ScrollReset() {
   const isRestoringRef = useRef(false);
   const removeHomeListenersRef = useRef<(() => void) | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }

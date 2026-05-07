@@ -5,40 +5,57 @@ export type ImageHeadStatusResult = {
   reason?: 'timeout' | 'network';
 };
 
+type AllowedOrigin = {
+  protocol: 'http:' | 'https:';
+  hostname: string;
+  port: string;
+  pathPrefix: string;
+};
+
 @Injectable()
 export class DiagnosticsService {
-  private collectAllowedHosts(): Set<string> {
-    const hosts = new Set<string>(['cdn.kupito.club']);
-    for (const raw of [process.env.AWS_CLOUDFRONT_URL, process.env.API_URL]) {
-      if (!raw?.trim()) continue;
+  private collectAllowedOrigins(): AllowedOrigin[] {
+    const origins: AllowedOrigin[] = [
+      {
+        protocol: 'https:',
+        hostname: 'cdn.kupito.club',
+        port: '',
+        pathPrefix: '/uploads/',
+      },
+    ];
+    const cdn = process.env.AWS_CLOUDFRONT_URL?.trim();
+    if (cdn) {
       try {
-        hosts.add(new URL(raw).hostname);
+        const u = new URL(cdn);
+        if (u.protocol === 'http:' || u.protocol === 'https:') {
+          origins.push({
+            protocol: u.protocol,
+            hostname: u.hostname,
+            port: u.port,
+            pathPrefix: '/uploads/',
+          });
+        }
       } catch {
-        continue;
+        void 0;
       }
     }
-    return hosts;
-  }
-
-  private isCdnHost(hostname: string): boolean {
-    if (hostname === 'cdn.kupito.club') return true;
-    const cf = process.env.AWS_CLOUDFRONT_URL;
-    if (!cf?.trim()) return false;
-    try {
-      return new URL(cf).hostname === hostname;
-    } catch {
-      return false;
+    const api = process.env.API_URL?.trim();
+    if (api) {
+      try {
+        const u = new URL(api);
+        if (u.protocol === 'http:' || u.protocol === 'https:') {
+          origins.push({
+            protocol: u.protocol,
+            hostname: u.hostname,
+            port: u.port,
+            pathPrefix: '/api/upload/image/',
+          });
+        }
+      } catch {
+        void 0;
+      }
     }
-  }
-
-  private isApiHost(hostname: string): boolean {
-    const api = process.env.API_URL;
-    if (!api?.trim()) return false;
-    try {
-      return new URL(api).hostname === hostname;
-    } catch {
-      return false;
-    }
+    return origins;
   }
 
   private assertImageUrlAllowed(raw: string): URL {
@@ -51,26 +68,23 @@ export class DiagnosticsService {
     } catch {
       throw new BadRequestException('errors.diagnosticsUrlInvalid');
     }
-    if (parsed.protocol !== 'https:') {
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       throw new BadRequestException('errors.diagnosticsUrlInvalid');
     }
-    const allowed = this.collectAllowedHosts();
-    if (!allowed.has(parsed.hostname)) {
+    const origins = this.collectAllowedOrigins();
+    const matched = origins.find(
+      (origin) =>
+        origin.protocol === parsed.protocol &&
+        origin.hostname === parsed.hostname &&
+        origin.port === parsed.port,
+    );
+    if (!matched) {
       throw new BadRequestException('errors.diagnosticsHostNotAllowed');
     }
-    if (this.isCdnHost(parsed.hostname)) {
-      if (!parsed.pathname.startsWith('/uploads/')) {
-        throw new BadRequestException('errors.diagnosticsPathNotAllowed');
-      }
-      return parsed;
+    if (!parsed.pathname.startsWith(matched.pathPrefix)) {
+      throw new BadRequestException('errors.diagnosticsPathNotAllowed');
     }
-    if (this.isApiHost(parsed.hostname)) {
-      if (!parsed.pathname.startsWith('/api/upload/image/')) {
-        throw new BadRequestException('errors.diagnosticsPathNotAllowed');
-      }
-      return parsed;
-    }
-    throw new BadRequestException('errors.diagnosticsHostNotAllowed');
+    return parsed;
   }
 
   async getImageHeadStatus(rawUrl: string): Promise<ImageHeadStatusResult> {

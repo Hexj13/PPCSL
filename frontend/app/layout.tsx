@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import { cookies } from 'next/headers';
 
 import { PageScrollTracker } from '@/components/PageScrollTracker';
 import { ProfileSaveSuccessToast } from '@/components/ProfileSaveSuccessToast';
@@ -11,8 +10,10 @@ import { GoogleAnalyticsConsent } from '@/components/analytics/GoogleAnalyticsCo
 import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
 import { GoogleTagManagerNoscript } from '@/components/analytics/GoogleTagManagerNoscript';
 import { OrganizationSchema } from '@/components/analytics/OrganizationSchema';
+import { WebsiteSearchSchema } from '@/components/analytics/WebsiteSearchSchema';
 import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
 import { Header } from '@/components/layout/Header';
+import { MainContentShell } from '@/components/layout/MainContentShell';
 import { NavigationTelemetry } from '@/components/layout/NavigationTelemetry';
 import { ScrollReset } from '@/components/layout/ScrollReset';
 import { AuthProvider } from '@/components/providers/AuthProvider';
@@ -22,9 +23,10 @@ import { QueryProvider } from '@/components/providers/QueryProvider';
 import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 import { getVersionedAssetPath } from '@/lib/assets';
-import { getServerTranslations, type Locale } from '@/lib/i18n';
+import { getServerTranslations, getMetadataLocale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
 import { Toaster } from '@/lib/toast';
+import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
 import { getCountry } from '@/lib/utils';
 import { designTokens } from '@/ui';
 import './globals.css';
@@ -34,15 +36,7 @@ const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' });
 export async function generateMetadata(): Promise<Metadata> {
   const siteConfig = await loadSiteConfig(getCountry());
 
-  const cookieStore = await cookies();
-  const localeCookie = cookieStore.get('kupito-locale')?.value;
-  const defaultLocale = siteConfig.locale.split('-')[0] as Locale;
-  const enableLanguageSwitcher = process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER === 'true';
-
-  let metadataLocale: Locale = defaultLocale;
-  if (enableLanguageSwitcher && localeCookie && (localeCookie === 'ro' || localeCookie === 'ru')) {
-    metadataLocale = localeCookie as Locale;
-  }
+  const metadataLocale = await getMetadataLocale();
 
   const t = getServerTranslations(metadataLocale);
 
@@ -74,8 +68,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     openGraph: {
       type: 'website',
-      locale: siteConfig.locale,
-      url: siteConfig.siteUrl,
+      locale: metadataLocale === 'ru' ? 'ru_RU' : siteConfig.locale,
+      url: absoluteUrlWithLocalePrefix(siteConfig.siteUrl, '/', metadataLocale),
       siteName: siteConfig.name,
       title: defaultTitle,
       description: defaultDescription,
@@ -92,7 +86,12 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title: defaultTitle,
       description: defaultDescription,
-      images: [`${siteConfig.siteUrl}/opengraph-image`],
+      images: [
+        {
+          url: `${siteConfig.siteUrl}/opengraph-image`,
+          alt: siteConfig.name,
+        },
+      ],
     },
     robots: {
       index: true,
@@ -138,15 +137,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const siteConfig = await loadSiteConfig(getCountry());
 
-  const cookieStore = await cookies();
-  const localeCookie = cookieStore.get('kupito-locale')?.value;
-  const defaultLocale = siteConfig.locale.split('-')[0] as Locale;
-  const enableLanguageSwitcher = process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER === 'true';
-
-  let initialLocale: Locale = defaultLocale;
-  if (enableLanguageSwitcher && localeCookie && (localeCookie === 'ro' || localeCookie === 'ru')) {
-    initialLocale = localeCookie as Locale;
-  }
+  const initialLocale = await getMetadataLocale();
 
   return (
     <html lang={initialLocale} suppressHydrationWarning>
@@ -172,6 +163,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <GoogleAnalyticsConsent />
           <GoogleAnalytics />
           <OrganizationSchema />
+          <WebsiteSearchSchema />
           <I18nProvider
             initialLocale={initialLocale}
             initialTranslations={getServerTranslations(initialLocale)}
@@ -187,7 +179,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <div className="min-h-screen flex flex-col">
                 <Header />
                 <OfflineBanner />
-                <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">{children}</main>
+                <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">
+                  <MainContentShell>{children}</MainContentShell>
+                </main>
                 <ConditionalFooter />
               </div>
               <Toaster

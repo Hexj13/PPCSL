@@ -3,12 +3,8 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 import { TrackedNextImage } from '@/components/common/TrackedNextImage';
-import {
-  bindImageReadiness,
-  useListingCardCarouselPreload,
-} from '@/components/listing/useListingCardCarouselPreload';
+import { useListingCardCarouselPreload } from '@/components/listing/useListingCardCarouselPreload';
 import { getOptimizedImageUrl } from '@/lib/utils';
-import { Spinner } from '@/ui';
 
 export function ListingCardImageArea({
   showImage,
@@ -62,10 +58,6 @@ export function ListingCardImageArea({
   );
 }
 
-type CarouselState =
-  | { type: 'idle'; index: number }
-  | { type: 'preloading'; fromIndex: number; toIndex: number };
-
 export interface ListingCardImageCarouselHandle {
   goNext: () => void;
   goPrev: () => void;
@@ -79,55 +71,29 @@ export const ListingCardImageCarousel = React.forwardRef<
     images: string[];
     imageErrors: Set<number>;
     onImageError: (index: number) => void;
-    onBusyChange?: (busy: boolean) => void;
     onIndexChange?: (index: number) => void;
     imageAltTitle: string;
     priority: boolean;
-    blurDataURL?: string;
+    blurDataURLs?: (string | undefined)[];
     t: (_key: string, _params?: Record<string, string>) => string;
   }
 >(function ListingCardImageCarousel(
-  {
-    images,
-    imageErrors,
-    onImageError,
-    onBusyChange,
-    onIndexChange,
-    imageAltTitle,
-    priority,
-    blurDataURL,
-    t,
-  },
+  { images, imageErrors, onImageError, onIndexChange, imageAltTitle, priority, blurDataURLs, t },
   ref,
 ) {
-  const [state, setState] = useState<CarouselState>({ type: 'idle', index: 0 });
+  const [index, setIndex] = useState(0);
   const loadedRef = useRef<Set<number>>(new Set());
   const preloadingRef = useRef<Set<number>>(new Set());
-  const hasPreloadedAllRef = useRef(false);
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
   const imagesSignature = images.join('\u0001');
   const onIndexChangeRef = useRef(onIndexChange);
-  const onBusyChangeRef = useRef(onBusyChange);
   onIndexChangeRef.current = onIndexChange;
-  onBusyChangeRef.current = onBusyChange;
-
-  const isBusy = state.type !== 'idle';
-  const currentIndex = state.type === 'idle' ? state.index : state.fromIndex;
 
   useEffect(() => {
-    onBusyChangeRef.current?.(isBusy);
-  }, [isBusy]);
-
-  const isIdle = state.type === 'idle';
-  const idleIndex = isIdle ? state.index : -1;
-  useEffect(() => {
-    if (isIdle && idleIndex >= 0) {
-      onIndexChangeRef.current?.(idleIndex);
-    }
-  }, [isIdle, idleIndex]);
+    onIndexChangeRef.current?.(index);
+  }, [index]);
 
   useEffect(() => {
-    hasPreloadedAllRef.current = false;
     loadedRef.current.clear();
     preloadingRef.current.clear();
     for (const img of imagesCacheRef.current) {
@@ -135,139 +101,38 @@ export const ListingCardImageCarousel = React.forwardRef<
       img.onerror = null;
     }
     imagesCacheRef.current = [];
-    setState({ type: 'idle', index: 0 });
+    setIndex(0);
   }, [imagesSignature]);
 
-  const markLoaded = useCallback((index: number) => {
-    loadedRef.current.add(index);
-    preloadingRef.current.delete(index);
+  const markLoaded = useCallback((idx: number) => {
+    loadedRef.current.add(idx);
+    preloadingRef.current.delete(idx);
   }, []);
 
-  const isTargetReady = useCallback(
-    (index: number) => {
-      const src = images[index];
-      if (!src || src === '/placeholder-car.jpg' || imageErrors.has(index)) return true;
-      return loadedRef.current.has(index);
-    },
-    [images, imageErrors],
-  );
-
-  const preloadAllRemaining = useCallback(() => {
-    if (hasPreloadedAllRef.current || images.length <= 1) return;
-    hasPreloadedAllRef.current = true;
-
-    for (let index = 0; index < images.length; index += 1) {
-      const src = images[index];
-      if (!src || src === '/placeholder-car.jpg' || imageErrors.has(index)) {
-        continue;
-      }
-      if (loadedRef.current.has(index) || preloadingRef.current.has(index)) {
-        continue;
-      }
-
-      const url = getOptimizedImageUrl(src, 65, 640);
-      const img = new window.Image();
-      imagesCacheRef.current.push(img);
-      preloadingRef.current.add(index);
-      const resolveReadiness = bindImageReadiness(
-        img,
-        () => {
-          markLoaded(index);
-        },
-        () => {
-          preloadingRef.current.delete(index);
-        },
-      );
-      img.src = url;
-      if (img.complete) {
-        resolveReadiness();
-      }
-    }
-  }, [images, imageErrors, markLoaded]);
-
-  const loadTargetThenCommit = useCallback(
-    (toIndex: number) => {
-      const src = images[toIndex];
-      if (!src || src === '/placeholder-car.jpg' || imageErrors.has(toIndex)) {
-        setState({ type: 'idle', index: toIndex });
-        return;
-      }
-      if (loadedRef.current.has(toIndex)) {
-        markLoaded(toIndex);
-        setState({ type: 'idle', index: toIndex });
-        return;
-      }
-
-      const url = getOptimizedImageUrl(src, 65, 640);
-      const img = new window.Image();
-      imagesCacheRef.current.push(img);
-      preloadingRef.current.add(toIndex);
-      const resolveReadiness = bindImageReadiness(
-        img,
-        () => {
-          markLoaded(toIndex);
-          setState({ type: 'idle', index: toIndex });
-        },
-        () => {
-          preloadingRef.current.delete(toIndex);
-          setState({ type: 'idle', index: toIndex });
-        },
-      );
-      img.src = url;
-      if (img.complete) {
-        resolveReadiness();
-      }
-    },
-    [images, imageErrors, markLoaded],
-  );
-
+  const len = images.length;
   const goNext = useCallback(() => {
-    if (state.type !== 'idle') return;
-    const fromIndex = state.index;
-    const len = images.length;
     if (len <= 1) return;
-    if (!hasPreloadedAllRef.current) {
-      preloadAllRemaining();
-    }
-    const toIndex = (fromIndex + 1) % len;
-    if (isTargetReady(toIndex)) {
-      setState({ type: 'idle', index: toIndex });
-    } else {
-      setState({ type: 'preloading', fromIndex, toIndex });
-      loadTargetThenCommit(toIndex);
-    }
-  }, [images.length, state, isTargetReady, loadTargetThenCommit, preloadAllRemaining]);
+    setIndex((i) => (i + 1) % len);
+  }, [len]);
 
   const goPrev = useCallback(() => {
-    if (state.type !== 'idle') return;
-    const fromIndex = state.index;
-    const len = images.length;
     if (len <= 1) return;
-    if (!hasPreloadedAllRef.current) {
-      preloadAllRemaining();
-    }
-    const toIndex = (fromIndex - 1 + len) % len;
-    if (isTargetReady(toIndex)) {
-      setState({ type: 'idle', index: toIndex });
-    } else {
-      setState({ type: 'preloading', fromIndex, toIndex });
-      loadTargetThenCommit(toIndex);
-    }
-  }, [images.length, state, isTargetReady, loadTargetThenCommit, preloadAllRemaining]);
+    setIndex((i) => (i - 1 + len) % len);
+  }, [len]);
 
   useImperativeHandle(
     ref,
     () => ({
       goNext,
       goPrev,
-      isBusy: () => state.type !== 'idle',
-      getIndex: () => (state.type === 'idle' ? state.index : state.fromIndex),
+      isBusy: () => false,
+      getIndex: () => index,
     }),
-    [goNext, goPrev, state],
+    [goNext, goPrev, index],
   );
 
   useListingCardCarouselPreload(
-    currentIndex,
+    index,
     images,
     imageErrors,
     markLoaded,
@@ -295,68 +160,40 @@ export const ListingCardImageCarousel = React.forwardRef<
     [],
   );
 
-  const renderNativeSlide = useCallback(
-    (index: number) => {
-      const src = images[index];
-      if (!src) return null;
-      if (imageErrors.has(index)) return errorPlaceholder;
-      const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 640);
-      return (
-        <TrackedNextImage
-          key={`card-native-${index}`}
-          src={imageUrl}
-          alt={t('listings.imageAltWithTotal', {
-            title: imageAltTitle,
-            index: String(index + 1),
-            total: String(images.length),
-          })}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          draggable={false}
-          className="object-cover"
-          unoptimized
-          onLoad={() => markLoaded(index)}
-          onError={() => onImageError(index)}
-        />
-      );
-    },
-    [images, imageErrors, imageAltTitle, t, markLoaded, onImageError, errorPlaceholder],
-  );
+  const slideBlur = useCallback((idx: number) => blurDataURLs?.[idx], [blurDataURLs]);
 
   const renderSlide = useCallback(
-    (index: number) => {
-      const src = images[index];
+    (idx: number) => {
+      const src = images[idx];
       if (!src) return null;
-      if (imageErrors.has(index)) return errorPlaceholder;
+      if (imageErrors.has(idx)) return errorPlaceholder;
       const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 640);
-      if (index !== 0) {
-        return renderNativeSlide(index);
-      }
-      const isFirst = priority && index === 0;
+      const isFirst = priority && idx === 0;
+      const b = slideBlur(idx);
       return (
         <TrackedNextImage
-          key={`card-slide-${index}`}
+          key={`card-slide-${idx}`}
           src={imageUrl}
           alt={t('listings.imageAltWithTotal', {
             title: imageAltTitle,
-            index: String(index + 1),
+            index: String(idx + 1),
             total: String(images.length),
           })}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          className="object-cover"
+          className="object-cover transition-opacity duration-200 ease-out"
           loading={isFirst ? undefined : 'lazy'}
           priority={isFirst}
           draggable={false}
           onLoad={() => {
-            markLoaded(index);
+            markLoaded(idx);
           }}
           onError={() => {
-            onImageError(index);
+            onImageError(idx);
           }}
           unoptimized
-          placeholder={blurDataURL ? 'blur' : undefined}
-          blurDataURL={blurDataURL}
+          placeholder={b ? 'blur' : undefined}
+          blurDataURL={b}
         />
       );
     },
@@ -365,26 +202,17 @@ export const ListingCardImageCarousel = React.forwardRef<
       imageErrors,
       imageAltTitle,
       priority,
-      blurDataURL,
       t,
       markLoaded,
       onImageError,
       errorPlaceholder,
-      renderNativeSlide,
+      slideBlur,
     ],
   );
 
-  const displayIndex = state.type === 'idle' ? state.index : state.fromIndex;
-  const isPreloading = state.type === 'preloading';
-
   return (
     <div className="absolute inset-0 overflow-hidden" style={{ isolation: 'isolate' }}>
-      {isPreloading && (
-        <div className="absolute inset-0 z-[2] flex items-center justify-center bg-black/10 pointer-events-none">
-          <Spinner size="sm" inline />
-        </div>
-      )}
-      <div className="absolute inset-0">{renderSlide(displayIndex)}</div>
+      <div className="absolute inset-0">{renderSlide(index)}</div>
     </div>
   );
 });

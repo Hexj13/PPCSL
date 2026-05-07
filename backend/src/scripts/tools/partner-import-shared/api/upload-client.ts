@@ -27,6 +27,73 @@ export class UploadClient {
     return data;
   }
 
+  async uploadVideoFromUrl(videoUrl: string, listingId: string): Promise<void> {
+    const uploadUrl = `${this.config.kupitoApiUrl}/api/upload/video/from-url`;
+    const body = JSON.stringify({ listingId, videoUrl });
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.authClient.getAccessToken()}`,
+      'Content-Type': 'application/json',
+    };
+    if (this.config.importSecret) {
+      headers['x-import-secret'] = this.config.importSecret;
+    }
+
+    const doUpload = async (): Promise<void> => {
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers,
+        body,
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new UploadHttpError(
+          response.status,
+          `Video import failed with HTTP ${response.status}: ${text || response.statusText}`,
+        );
+      }
+    };
+
+    const maxAttempts = Math.max(1, this.config.maxRetries);
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await doUpload();
+        return;
+      } catch (error) {
+        lastError = error;
+
+        if (!(error instanceof UploadHttpError)) {
+          throw error;
+        }
+
+        const { status } = error;
+        const isAuthError = status === 401;
+        const isThrottlingError = status === 429;
+        const isServerError = status >= 500 && status <= 599;
+        const isRetryable = isThrottlingError || isServerError;
+
+        if (attempt >= maxAttempts) {
+          throw error;
+        }
+
+        if (isAuthError) {
+          await this.authClient.refresh();
+          continue;
+        }
+
+        if (!isRetryable) {
+          throw error;
+        }
+
+        const delayMs = Math.round(this.config.imageStepDelayMs * Math.pow(2, attempt - 1));
+        await sleep(delayMs);
+      }
+    }
+
+    throw lastError;
+  }
+
   private async uploadImage(
     buffer: Buffer,
     filename: string,

@@ -4,6 +4,7 @@ import { expect, test } from '../fixtures/base';
 import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
 import type { SearchHomePage } from '../page-objects/search-home.page';
+import { pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { loginByUi } from '../utils/auth';
 import { openFirstListingFromResults } from '../utils/listings';
 import { useClearedBrowserState } from '../utils/spec-hooks';
@@ -27,7 +28,7 @@ async function createListingForViewScenario(
   await listingCreatePage.submitCreateForm();
   await expect(page).toHaveURL(
     (url) => {
-      const path = url.pathname;
+      const path = pathnameWithoutLocalePrefix(url.pathname);
       return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
     },
     { timeout: 30_000 },
@@ -112,7 +113,7 @@ test.describe('Listing detail: view and interaction @p0', () => {
         name: 'Verify current page stays on listing detail URL',
         action: async () => {
           await expect(page).toHaveURL((url) => {
-            const path = url.pathname;
+            const path = pathnameWithoutLocalePrefix(url.pathname);
             return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
           });
         },

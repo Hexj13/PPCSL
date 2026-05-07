@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
@@ -13,7 +14,9 @@ import {
   sessionStorageRemoveItem,
   sessionStorageSetItem,
 } from '@/lib/browser-session-storage';
+import { localizedHref } from '@/lib/localized-href';
 import { toast } from '@/lib/toast';
+import { localePrefixPath } from '@/lib/url-locale';
 
 const ListingForm = dynamic(
   () => import('@/components/ListingForm').then((mod) => ({ default: mod.ListingForm })),
@@ -34,18 +37,21 @@ export default function EditListingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const listingId = params.id as string;
   const { user, isLoading, isAuthorized } = useRequireAuth();
   const isAdmin = user?.type === 'Admin';
   const from = searchParams.get('from');
+  const adminHref = localePrefixPath('/admin', locale);
+  const myListingsHref = localizedHref('/my-listings', locale);
   const redirectTo =
     from === 'my-listings'
-      ? '/my-listings'
+      ? myListingsHref
       : from === 'admin'
-        ? '/admin'
+        ? adminHref
         : isAdmin
-          ? '/admin'
-          : '/my-listings';
+          ? adminHref
+          : myListingsHref;
   const [listing, setListing] = useState<Listing | null>(null);
   const [loadingListing, setLoadingListing] = useState(true);
   const [formKey, setFormKey] = useState(0);

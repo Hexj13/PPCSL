@@ -202,7 +202,20 @@
     "parsingPlpFileNameAlreadyUsed": "A PLP file with this name is already used by another active schedule.",
     "parsingRunCannotCancel": "This run cannot be cancelled.",
     "parsingRegistrySyncUnavailable": "Registry sync is not available for this parser.",
-    "parsingSyncAssignedUserRequired": "Kupito partner user id is required for registry sync (enter UUID or run PDP/PLP with assigned user first)."
+    "parsingSyncAssignedUserRequired": "Kupito partner user id is required for registry sync (enter UUID or run PDP/PLP with assigned user first).",
+    "video": {
+      "tooLarge": "Video exceeds the maximum allowed size.",
+      "invalidFormat": "Unsupported video format.",
+      "notOwner": "You can upload video only for your own listing.",
+      "tooLong": "Video exceeds the maximum allowed duration.",
+      "transcodingFailed": "Video transcoding failed.",
+      "transcodingUnavailable": "Video transcoding is temporarily unavailable.",
+      "replaceRequiresDelete": "Remove the existing video before uploading a new one.",
+      "processingInProgress": "Video is already being processed.",
+      "uploadNotInitialized": "Video upload was not started correctly.",
+      "uploadIdMismatch": "Video upload session does not match.",
+      "importDownloadFailed": "Could not download video from the provided URL."
+    }
   },
   "vehicleOptions": {
     "transmission": {

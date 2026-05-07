@@ -122,6 +122,13 @@ export const parsersConfig: ParserConfigItem[] = [
     },
     defaultPdpCity: 'Chișinău',
     defaultPdpCityNames: chisinauAliases,
+    availabilityProbe: {
+      sourceUrl: 'https://999.md',
+      plpFirstPagePath: '/ro/',
+      plpPagePathTemplate: '/ro/?probe={page}',
+      defaultPageProbeCount: 3,
+      timeoutMs: 15000,
+    },
     registrySyncEnabled: true,
   },
 ];

@@ -118,9 +118,7 @@ export interface CreatePlpRunPayload {
   pageSize?: number;
   maxItems?: number;
   delayMs?: number;
-  resume?: boolean;
   dryRun?: boolean;
-  removeClosed?: boolean;
 }
 
 export interface CreatePdpRunPayload {

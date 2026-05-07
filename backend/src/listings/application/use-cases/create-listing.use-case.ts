@@ -23,16 +23,19 @@ import { TireModel } from '../../../tires/entities/tire-model.entity';
 import { Tire } from '../../../tires/entities/tire.entity';
 import { UsersService } from '../../../users/application/users.service';
 import { ListingTitleService } from '../../domain/services/listing-title.service';
+import type { ListingVideoJson } from '../../domain/types/listing-video.types';
 import { Listing } from '../../entities/listing.entity';
 import { Vehicle } from '../../entities/vehicle.entity';
 import { CreateListingDto } from '../../presentation/dto/create-listing.dto';
 import { CreateTireDto } from '../../presentation/dto/create-tire.dto';
+import { ListingVideoService } from '../../video/listing-video.service';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
 import {
   coverBlurHashFromImageBlurHashes,
   validateImageBlurHashesMatchImages,
 } from '../utils/image-blur-hashes.utils';
+import { buildListingSlugPart } from '../utils/listing-url-slug.utils';
 import {
   assertPartnerListingCanonicalUrlShape,
   normalizePartnerListingCanonicalUrlInput,
@@ -48,6 +51,7 @@ const CREATE_LISTING_EXCLUDED_FIELDS = [
   'partner_source_code',
   'partner_listing_external_key',
   'partner_listing_canonical_url',
+  'stagedVideoToken',
 ] as const;
 
 @Injectable()
@@ -63,6 +67,7 @@ export class CreateListingUseCase {
     private readonly usersService: UsersService,
     private readonly brandsService: BrandsService,
     private readonly i18nService: I18nService,
+    private readonly listingVideoService: ListingVideoService,
     @InjectRepository(TireModel)
     private readonly tireModelRepository: Repository<TireModel>,
     @InjectRepository(TireBrand)
@@ -121,17 +126,31 @@ export class CreateListingUseCase {
       if (!dto.tire) {
         throw new BadRequestException('errors.tirePayloadRequired');
       }
-      return this.executeTire(dto, ownerId);
+      return this.executeTire(dto, ownerId, userId);
     }
 
     if (!dto.vehicle) {
       throw new BadRequestException('errors.vehiclePayloadRequired');
     }
 
-    return this.executeVehicle(dto, ownerId, userType ?? '');
+    return this.executeVehicle(dto, ownerId, userType ?? '', userId);
   }
 
-  private async executeTire(dto: CreateListingDto, ownerId: string): Promise<Listing> {
+  private resolveStagedVideo(
+    dto: CreateListingDto,
+    requesterUserId: string,
+  ): Promise<ListingVideoJson | null> {
+    return this.listingVideoService.consumePublishedStagedVideo(
+      dto.stagedVideoToken,
+      requesterUserId,
+    );
+  }
+
+  private async executeTire(
+    dto: CreateListingDto,
+    ownerId: string,
+    requesterUserId: string,
+  ): Promise<Listing> {
     const td = dto.tire as CreateTireDto;
     await this.assertTirePayloadValid(td);
 
@@ -161,6 +180,7 @@ export class CreateListingUseCase {
     }
 
     const status = dto.status || ListingStatusEnum.Active;
+    const stagedVideo = await this.resolveStagedVideo(dto, requesterUserId);
 
     const blurHashesError = validateImageBlurHashesMatchImages(dto.image_blur_hashes, dto.images);
     if (blurHashesError) {
@@ -209,7 +229,13 @@ export class CreateListingUseCase {
       ),
     ) as Omit<
       CreateListingDto,
-      'vehicle' | 'tire' | 'assignedUserId' | 'description' | 'description_ro' | 'description_ru'
+      | 'vehicle'
+      | 'tire'
+      | 'assignedUserId'
+      | 'description'
+      | 'description_ro'
+      | 'description_ru'
+      | 'stagedVideoToken'
     >;
 
     const listing = new Listing();
@@ -233,8 +259,10 @@ export class CreateListingUseCase {
       is_new: false,
       available_in_credit: false,
       down_payment_amount: null,
+      video: stagedVideo,
     });
     listing.tire = tire;
+    listing.slug = buildListingSlugPart(title, listing.city);
     if (dto.image_blur_hashes != null) {
       listing.cover_blur_hash = coverBlurHashFromImageBlurHashes(dto.image_blur_hashes);
     }
@@ -288,12 +316,14 @@ export class CreateListingUseCase {
     dto: CreateListingDto,
     ownerId: string,
     userType: string,
+    requesterUserId: string,
   ): Promise<Listing> {
     const vehicle = Object.assign(new Vehicle(), dto.vehicle) as Vehicle;
     if (vehicle.fuel === 'Electric') vehicle.engine_displ_l = null;
     const title = await this.generateTitle(vehicle);
 
     const status = dto.status || ListingStatusEnum.Active;
+    const stagedVideo = await this.resolveStagedVideo(dto, requesterUserId);
 
     const blurHashesError = validateImageBlurHashesMatchImages(dto.image_blur_hashes, dto.images);
     if (blurHashesError) {
@@ -335,7 +365,13 @@ export class CreateListingUseCase {
       ),
     ) as Omit<
       CreateListingDto,
-      'vehicle' | 'tire' | 'assignedUserId' | 'description' | 'description_ro' | 'description_ru'
+      | 'vehicle'
+      | 'tire'
+      | 'assignedUserId'
+      | 'description'
+      | 'description_ro'
+      | 'description_ru'
+      | 'stagedVideoToken'
     >;
     const listing = new Listing();
     Object.assign(listing, {
@@ -352,11 +388,13 @@ export class CreateListingUseCase {
       partner_source_code: partnerSource ?? null,
       partner_listing_external_key: partnerKey ?? null,
       partner_listing_canonical_url: partnerCanonicalUrl,
+      video: stagedVideo,
     });
     if (!listing.available_in_credit) {
       listing.down_payment_amount = null;
     }
     listing.vehicle = vehicle;
+    listing.slug = buildListingSlugPart(title, listing.city);
     if (dto.image_blur_hashes != null) {
       listing.cover_blur_hash = coverBlurHashFromImageBlurHashes(dto.image_blur_hashes);
     }

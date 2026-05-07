@@ -14,15 +14,19 @@ import { StatusFilterButtons } from '@/components/listing/StatusFilterButtons';
 import { Modal } from '@/components/modals/Modal';
 import { PromotionHistoryModal } from '@/components/modals/PromotionHistoryModal';
 import { PromotionModal } from '@/components/modals/PromotionModal';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
+import { localizedHref } from '@/lib/localized-href';
 
 type TranslationFn = ReturnType<typeof useTranslation>['t'];
 
 function MyListingsSkeleton({ t }: { t: TranslationFn }) {
+  const { locale } = useI18n();
+  const homeHref = localizedHref('/', locale);
   return (
     <>
       <Breadcrumbs
-        items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
+        items={[{ label: t('myListings.home'), href: homeHref }, { label: t('myListings.title') }]}
         className="mb-6"
       />
       <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900 mb-6 md:mb-8">
@@ -332,6 +336,10 @@ function MyListingsContent(props: ContentProps) {
     setSearchQuery,
     promotedFilter,
   } = props;
+  const { locale } = useI18n();
+  const homeHref = localizedHref('/', locale);
+  const boardHref = user?.boardSlug ? localizedHref(`/board/${user.boardSlug}`, locale) : '';
+  const newListingHref = localizedHref('/listings/new', locale);
   const showBoardLink = Boolean(user?.boardSlug);
   const showPromotionHistory = (hasPromotionHistory || promotionAccess?.isPartner) && canPromote;
   const showCreateLink = !hasActiveListingsOverall;
@@ -396,7 +404,7 @@ function MyListingsContent(props: ContentProps) {
       </LoadMoreButton>
       {showBoardLink && user?.boardSlug && (
         <Link
-          href={`/board/${user.boardSlug}`}
+          href={boardHref}
           className="w-full lg:w-auto min-w-0 h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none overflow-hidden"
         >
           <span className="flex items-center justify-center shrink-0 w-5 h-5 md:w-6 md:h-6">
@@ -452,7 +460,7 @@ function MyListingsContent(props: ContentProps) {
       )}
       {showCreateLink && (
         <Link
-          href="/listings/new"
+          href={newListingHref}
           className="w-full lg:w-auto min-w-0 h-[48px] text-primary-700 font-medium text-base hover-only:hover:text-primary-900 transition-colors duration-200 whitespace-nowrap flex flex-row items-center justify-center gap-2 px-4 rounded-lg border-2 border-primary-700 hover-only:hover:border-primary-900 bg-primary-500/10 select-none overflow-hidden"
         >
           <span className="flex items-center justify-center shrink-0 w-5 h-5 md:w-6 md:h-6">
@@ -479,7 +487,7 @@ function MyListingsContent(props: ContentProps) {
   return (
     <>
       <Breadcrumbs
-        items={[{ label: t('myListings.home'), href: '/' }, { label: t('myListings.title') }]}
+        items={[{ label: t('myListings.home'), href: homeHref }, { label: t('myListings.title') }]}
         className="mb-6"
       />
       <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900 mb-6 md:mb-8">

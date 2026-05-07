@@ -97,7 +97,6 @@ function useTireFilterOptions(
 
   const sellerTypeOptions = useMemo(
     () => [
-      { value: '', label: t('searchFilters.sellerTypePlaceholder') },
       { value: 'Individual', label: t('searchFilters.sellerTypeIndividual') },
       { value: 'Business', label: t('searchFilters.sellerTypeBusiness') },
     ],

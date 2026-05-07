@@ -240,9 +240,7 @@ export class AdminParsingController {
       pageSize: dto.pageSize,
       maxItems: dto.maxItems,
       delayMs: dto.delayMs ?? 3000,
-      resume: dto.resume,
       dryRun: dto.dryRun,
-      removeClosed: dto.removeClosed,
     });
   }
 

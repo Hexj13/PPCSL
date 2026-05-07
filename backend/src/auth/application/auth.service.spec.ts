@@ -403,6 +403,50 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('refresh_token', 'mock-refresh-token');
       expect(usersService.findByEmail).toHaveBeenCalledWith('test@test.com');
     });
+
+    it('persists preferredLocale from request when user has none', async () => {
+      usersService.findByEmail.mockResolvedValue(mockUser as User);
+      passwordService.verify.mockResolvedValue(true);
+      jwtService.sign.mockReturnValue('mock-jwt-token');
+      mockRefreshTokenService.generateToken.mockResolvedValue('mock-refresh-token');
+      usersService.update.mockResolvedValue({} as User);
+
+      const result = await service.login(
+        { login: 'test@test.com', password: 'password123' },
+        '127.0.0.1',
+        'ru',
+      );
+
+      expect(usersService.update).toHaveBeenCalledWith(
+        mockUser.id,
+        expect.objectContaining({
+          preferredLocale: 'ru',
+        }),
+      );
+      expect(result.user.preferredLocale).toBe('ru');
+    });
+
+    it('does not overwrite existing preferredLocale on login', async () => {
+      const userWithLocale = { ...mockUser, preferredLocale: 'ro' };
+      usersService.findByEmail.mockResolvedValue(userWithLocale as User);
+      passwordService.verify.mockResolvedValue(true);
+      jwtService.sign.mockReturnValue('mock-jwt-token');
+      mockRefreshTokenService.generateToken.mockResolvedValue('mock-refresh-token');
+      usersService.update.mockResolvedValue({} as User);
+
+      const result = await service.login(
+        { login: 'test@test.com', password: 'password123' },
+        '127.0.0.1',
+        'ru',
+      );
+
+      const payload = (usersService.update as jest.Mock).mock.calls[0][1] as Record<
+        string,
+        unknown
+      >;
+      expect(payload).not.toHaveProperty('preferredLocale');
+      expect(result.user.preferredLocale).toBe('ro');
+    });
   });
 
   describe('register', () => {

@@ -1,9 +1,10 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
 import { getPasswordValidationRules, validatePassword } from '@/app/reset-password/utils';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { RegisterDto } from '@/lib/api';
@@ -77,7 +78,7 @@ function getFilledFields(formData: RegisterFormState): Record<string, boolean> {
 }
 
 export function useRegisterPage() {
-  const router = useRouter();
+  const { push } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
@@ -93,9 +94,9 @@ export function useRegisterPage() {
 
   useEffect(() => {
     if (isInitialized && user) {
-      router.push('/');
+      push('/');
     }
-  }, [user, isInitialized, router]);
+  }, [user, isInitialized, push]);
 
   useEffect(() => {
     if (formData.type === 'Individual' && prevTypeRef.current !== formData.type) {
@@ -236,7 +237,7 @@ export function useRegisterPage() {
         if (returnUrl) {
           query.set('returnUrl', returnUrl);
         }
-        router.push(`/verify-phone?${query.toString()}`);
+        push(`/verify-phone?${query.toString()}`);
       } catch (checkError: unknown) {
         const axiosError = checkError as Parameters<typeof getRegisterSubmitErrorMessage>[0];
         const errorMessage = getRegisterSubmitErrorMessage(axiosError, t);

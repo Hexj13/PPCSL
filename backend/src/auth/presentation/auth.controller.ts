@@ -159,7 +159,7 @@ export class AuthController {
   async login(@Request() req: AuthenticatedRequest, @Body() loginDto: LoginDto) {
     const ip = this.ipBlockService.getClientIp(req);
     try {
-      const result = await this.authService.login(loginDto, ip);
+      const result = await this.authService.login(loginDto, ip, this.getRequestLocale(req));
       this.ipBlockService.resetAttempts(ip);
       return result;
     } catch (error) {

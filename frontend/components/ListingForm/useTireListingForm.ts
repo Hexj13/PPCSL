@@ -12,6 +12,7 @@ import {
   getTireFilledFields,
 } from '@/components/ListingForm/tireListingFormUtils';
 import { runTireListingValidation } from '@/components/ListingForm/tireListingValidation';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -21,9 +22,10 @@ import { listingsApi, tiresApi } from '@/lib/api';
 import { sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { sortTireModelsForDisplay } from '@/lib/tire-catalog-sort';
 import { toast } from '@/lib/toast';
-import { getTireModelDisplayLabel } from '@/lib/utils';
+import { getListingHref, getTireModelDisplayLabel } from '@/lib/utils';
 
 import { useListingFormImages } from './useListingFormImages';
+import { useListingFormVideo } from './useListingFormVideo';
 
 const LISTING_UPDATED_TOAST_KEY = 'listingUpdatedToast';
 
@@ -65,12 +67,16 @@ async function executeTireListingApiMutation(
   mode: 'create' | 'edit',
   formData: TireListingFormData,
   listingId: string | undefined,
+  stagedVideoToken?: string | null,
 ): Promise<
   | { branch: 'create'; res: Awaited<ReturnType<typeof listingsApi.create>> }
   | { branch: 'edit'; result: Awaited<ReturnType<typeof listingsApi.update>> }
 > {
   if (mode === 'create') {
     const payload = buildTireCreatePayload(formData);
+    if (stagedVideoToken) {
+      payload.stagedVideoToken = stagedVideoToken;
+    }
     const res = await listingsApi.create(payload);
     return { branch: 'create', res };
   }
@@ -96,6 +102,7 @@ export function useTireListingForm({
   onInitialLoadReady,
 }: UseTireListingFormProps) {
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const { afterHidden } = useLoadingState({
@@ -136,6 +143,12 @@ export function useTireListingForm({
     t,
     setFormData,
     formSubmittedSuccessfullyRef,
+  });
+
+  const listingVideo = useListingFormVideo({
+    t,
+    listingId: mode === 'edit' ? listingId : undefined,
+    initialListingVideo: initialData?.video,
   });
 
   useEffect(() => {
@@ -274,6 +287,9 @@ export function useTireListingForm({
     }
   }, [mode]);
 
+  const createBlockedByVideo =
+    mode === 'create' && (listingVideo.blocksCreate || !listingVideo.isReadyForCreate);
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -298,7 +314,17 @@ export function useTireListingForm({
       const filledFields = getTireFilledFields(formData);
 
       try {
-        const outcome = await executeTireListingApiMutation(mode, formData, listingId);
+        if (createBlockedByVideo) {
+          setLoading(false);
+          toast.error(t('listingForm.video.status.processing'));
+          return;
+        }
+        const outcome = await executeTireListingApiMutation(
+          mode,
+          formData,
+          listingId,
+          listingVideo.stagedVideoToken,
+        );
         if (outcome.branch === 'create') {
           const res = outcome.res;
           formSubmittedSuccessfullyRef.current = true;
@@ -327,7 +353,7 @@ export function useTireListingForm({
               partnerRewardAwarded: res.data.partnerReward?.awardedPromotions ?? 0,
             }),
           );
-          router.push(`/listings/${res.data.id}`);
+          router.push(getListingHref(res.data, locale));
           return;
         }
 
@@ -373,14 +399,17 @@ export function useTireListingForm({
       validateForm,
       formData,
       mode,
+      createBlockedByVideo,
       listingId,
       t,
       router,
+      locale,
       loadModels,
       afterHidden,
       onSuccess,
       loading,
       resetUploadedImagesState,
+      listingVideo,
     ],
   );
 
@@ -398,6 +427,15 @@ export function useTireListingForm({
     onFormFieldFocus: handleFormFieldFocus,
     uploadSlots,
     onUploadedImageLoaded,
+    initialListingVideo: initialData?.video ?? null,
+    videoPhase: listingVideo.phase,
+    videoProgress: listingVideo.progress,
+    onVideoFileSelected: listingVideo.uploadSelectedFile,
+    onVideoRemove: listingVideo.removeVideo,
+    listingVideoResolved: listingVideo.resolvedVideo,
+    videoMaxSizeMb: listingVideo.videoMaxSizeMb,
+    videoMaxDurationMin: listingVideo.videoMaxDurationMin,
+    selectedVideoFileName: listingVideo.selectedFile?.name ?? null,
   };
 
   return {
@@ -413,6 +451,7 @@ export function useTireListingForm({
     showSkeleton,
     isMounted,
     loading,
+    videoBlocksCreate: createBlockedByVideo,
     uploading,
     handleFileUpload,
     uploadSlots,

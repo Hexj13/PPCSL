@@ -83,10 +83,10 @@ The path **`/sitemaps/brands.xml`** is **not** served (404). Older setups must r
 ### Brand and Model URLs (`brands-car.xml`, `brands-truck.xml`, `brands-moto.xml`)
 
 - The root **`/sitemap.xml`** lists these three **urlset** files directly (not via an intermediate `brands.xml` sitemap index).
-- **Brand rows:** each entry in `brand.vehicle_types` goes to the matching bucket; if the array is empty, defaults to **car** (one URL, no `vehicleType` query param).
-- **Model rows:** first value in `model.vehicle_types` selects the bucket; if missing, **car**.
+- **Brand rows:** each entry in `brand.vehicle_types` goes to the matching bucket. Car URLs use `/{brand}`; truck and moto URLs use `/{brand}?vehicleType=truck|moto`.
+- **Model rows:** first value in `model.vehicle_types` selects the bucket. Car URLs use `/{brand}/{model}`; truck and moto URLs use `/{brand}/{model}?vehicleType=truck|moto`.
 
-Same URL rules as before: `vehicleType` query param for truck/moto, omitted for cars. All `<loc>` values use query parameters and are escaped in XML (`&` → `&amp;`).
+Brand and model path segments are slugified without diacritics. All `<loc>` values are escaped in XML (`&` → `&amp;`).
 
 ### Seller Boards (sellers.xml)
 

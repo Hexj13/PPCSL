@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStatusBadge';
 import type { Listing } from '@/lib/api';
+import type { Locale } from '@/lib/i18n-types';
 import { getColorLabel } from '@/lib/options';
 import {
   formatPrice,
@@ -13,6 +14,7 @@ import {
   formatBodyType,
   formatFuel,
   formatRegistrationType,
+  getListingHref,
   horsepowerToKw,
   getVehicleType,
 } from '@/lib/utils';
@@ -25,6 +27,7 @@ export interface ComparisonField {
     _listing: Listing,
     _t: (_key: string) => string,
     _siteConfig?: { currency: string },
+    _locale?: Locale,
   ) => React.ReactNode;
 }
 
@@ -42,7 +45,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'photo',
     labelKey: 'compare.photo',
-    renderCell: (listing, _t, _siteConfig) => {
+    renderCell: (listing, _t, _siteConfig, locale) => {
       const imageUrl = listing.images?.[0] || '/placeholder-car.jpg';
       const isPlaceholder = imageUrl === '/placeholder-car.jpg';
       const isExternal = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
@@ -54,7 +57,7 @@ export const comparisonFields: ComparisonField[] = [
         <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center">
           <div className="flex justify-center">
             <Link
-              href={`/listings/${listing.id}`}
+              href={getListingHref(listing, locale ?? 'ro')}
               className="relative w-24 h-16 bg-bg-darker rounded-lg overflow-hidden block"
             >
               {isPlaceholder ? (
@@ -106,11 +109,11 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'title',
     labelKey: 'compare.titleColumn',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, locale) => (
       <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base">
         <div className="flex flex-col items-center gap-2">
           <Link
-            href={`/listings/${listing.id}`}
+            href={getListingHref(listing, locale ?? 'ro')}
             className="text-text-primary hover-only:hover:text-primary-700 transition-colors underline font-medium inline-flex items-center gap-1.5"
           >
             {getCompareCellValue(listing.title, t)}
@@ -140,7 +143,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'brand',
     labelKey: 'compare.brand',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -153,7 +156,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'model',
     labelKey: 'compare.model',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -166,7 +169,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'year',
     labelKey: 'compare.year',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -179,7 +182,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'mileage',
     labelKey: 'compare.mileage',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -194,7 +197,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'engine',
     labelKey: 'compare.engine',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -209,7 +212,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'power',
     labelKey: 'listingDetail.power',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -226,7 +229,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'fuel',
     labelKey: 'compare.fuel',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -239,7 +242,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'transmission',
     labelKey: 'compare.transmission',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -254,7 +257,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'driveType',
     labelKey: 'compare.driveType',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -269,7 +272,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'bodyType',
     labelKey: 'compare.bodyType',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -284,7 +287,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'color',
     labelKey: 'compare.color',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -299,7 +302,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'doors',
     labelKey: 'compare.doors',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -312,7 +315,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'condition',
     labelKey: 'compare.condition',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -327,7 +330,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'registrationType',
     labelKey: 'compare.registrationType',
-    renderCell: (listing, t) => (
+    renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
@@ -342,7 +345,7 @@ export const comparisonFields: ComparisonField[] = [
   {
     key: 'price',
     labelKey: 'compare.price',
-    renderCell: (listing, t, siteConfig) => (
+    renderCell: (listing, t, siteConfig, _locale) => (
       <td
         key={listing.id}
         className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"

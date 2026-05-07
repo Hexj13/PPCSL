@@ -63,7 +63,7 @@ Core application framework for creating car marketplace platforms for different 
 - **Database:** PostgreSQL 15 with comprehensive indexing and triggers
 - **Search:** PostgreSQL Full-Text Search
 - **Image Processing:** Sharp library for optimization and WebP conversion
-- **File Storage:** AWS S3 for image storage (using AWS SDK v3), AWS CloudFront CDN for delivery
+- **File Storage:** AWS S3 for images and optional listing video (using AWS SDK v3), AWS CloudFront CDN for delivery when configured
 - **Authentication:** JWT tokens (1 hour expiration), Refresh tokens (7 days)
 - **Task Scheduling:** NestJS Schedule module (cron jobs)
 
@@ -221,6 +221,8 @@ GEMINI_API_KEY=<google-ai-studio-api-key>
 # Optional: GEMINI_MODEL (default gemini-3.1-flash-lite-preview). GEMINI_MODEL_FALLBACK (default gemini-3-flash-preview) is used when the primary model returns transient errors (e.g. 503 / overload).
 # Production only: max new AI report generations per user per rolling hour (Redis). Unset = 5. Non-production (e.g. development): quota disabled.
 # AI_REPORT_MAX_GENERATIONS_PER_HOUR=5
+
+# Listing video (optional) — same AWS S3 credentials as images; add MediaConvert endpoint/queue/role and SNS → /api/webhooks/mediaconvert for transcoding. Full checklist: ../guides/listing-video-production-setup-ru.md (operators, Russian); API behavior: ../features/listings.md
 ```
 
 ### Frontend (`frontend/.env.local`)
@@ -331,7 +333,7 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 
 - **Image Processing:** Automatic compression, resizing (max 1920px width), conversion to WebP format (75% quality by default)
 - **Adaptive Quality:** Different quality levels for different contexts (70% for thumbnails, 75-80% for cards and detail pages, 85% for full-size modal views)
-- **File Storage:** AWS S3 for persistent image storage (using AWS SDK v3, required for production on Render.com), AWS CloudFront CDN for fast global delivery
+- **File Storage:** AWS S3 for persistent images and optional listing video (using AWS SDK v3, required for production on Render.com), AWS CloudFront CDN for fast global delivery when configured
 - **Search:** PostgreSQL Full-Text Search with extensive filtering options
 - **Caching:** Redis for SMS codes, cache optimization (SCAN instead of KEYS), listing AI analysis generation locks and per-user hourly quotas (production; see `POST /api/listings/:id/ai-report` and `AI_REPORT_MAX_GENERATIONS_PER_HOUR`)
 - **Monitoring:** Health check endpoint (`/health`) with database and Redis connectivity checks
@@ -394,6 +396,8 @@ GET    /api/listings/promotion-history # Get user's promotion history (JWT requi
 GET    /api/listings/promotion-history/check # Check if user has promotion history (JWT required)
 GET    /api/listings/promotion-access  # Get promotion access status (no auth required)
 ```
+
+**Listing video (optional, JWT):** `GET /api/listings/video/constraints`. Staged flow (no listing id yet): `POST /api/listings/video/staged-upload-init`, `POST /api/listings/video/staged-upload-complete`, `POST /api/listings/video/staged-status`. Bound to an existing id: `POST /api/listings/:id/video/upload-init`, `POST /api/listings/:id/video/upload-complete`, `DELETE /api/listings/:id/video`. Create payload may include `stagedVideoToken` when a staged upload has finished processing. Partner CLI imports call `POST /api/upload/video/from-url` with the import JWT and optional `x-import-secret` (`KUPITO_IMPORT_SECRET` / legacy `CIPAUTO_IMPORT_SECRET`). Job completion: `POST /api/webhooks/mediaconvert` (SNS). Env, S3 prefixes, MediaConvert, and Render steps: [listings.md](../features/listings.md), [listing-video-production-setup-ru.md](../guides/listing-video-production-setup-ru.md) (operators, Russian).
 
 **Listing detail — seller phones (frontend):** For guests and non-owner viewers, masked numbers from `GET /api/listings/:id` are shown with a reveal control; `GET /api/listings/:id/phones` runs on reveal. Copy is available after reveal for that flow. Listing owner and Admin see full numbers from `GET /api/listings/:id` with copy and no reveal control (no `GET .../phones` needed for display).
 
@@ -482,6 +486,7 @@ POST /api/upload/image                # Upload and optimize image
 GET  /api/upload/image/:filename      # Get optimized image version
                                      # Query params: ?quality=X&width=Y
                                      # Response: Cache-Control: public, max-age=31536000, immutable, stale-while-revalidate=604800; ETag for 304 Not Modified
+POST /api/upload/video/from-url       # Ingest listing video from HTTPS URL (import JWT + optional x-import-secret); SSRF-hardened download; used by partner import CLIs
 ```
 
 **Watermark Details:**
@@ -1368,6 +1373,7 @@ For deploying kupito.club backend on Render.com, configure the following:
 - `AWS_SECRET_ACCESS_KEY` - AWS S3 secret key (required for file storage)
 - `AWS_S3_BUCKET_NAME` - S3 bucket name
 - `AWS_REGION` - AWS region (e.g., `eu-north-1`)
+- Optional listing video: MediaConvert account endpoint, queue ARN, role ARN, webhook SNS → `POST /api/webhooks/mediaconvert`, plus optional `AWS_CLOUDFRONT_URL`, `LISTING_VIDEO_WATERMARK_S3_URI`, `VIDEO_MAX_SIZE_BYTES`, `VIDEO_MAX_DURATION_SEC` — see [listing-video-production-setup-ru.md](../guides/listing-video-production-setup-ru.md) (operators, Russian) and [listings.md](../features/listings.md)
 - `REDIS_HOST` - Redis host (if using external Redis)
 - `REDIS_PORT` - Redis port (if using external Redis)
 - `ONNXRUNTIME_NODE_INSTALL` - Optional. Set to `skip` if `npm ci` fails on `onnxruntime-node` postinstall (NuGet download for optional GPU binaries). Plate masking uses CPU only.

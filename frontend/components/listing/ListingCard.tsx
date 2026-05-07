@@ -24,9 +24,10 @@ import { getFavoriteButtonClassName, useListingCardFavorite } from '@/hooks/useL
 import { useListingCardImageError } from '@/hooks/useListingCardImageError';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
-import { setBlurForListing } from '@/lib/blur-navigation-cache';
+import { setBlurForListing, setIndexForListing } from '@/lib/blur-navigation-cache';
 import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
 import { preserveHomeScrollPosition } from '@/lib/preserve-home-scroll';
+import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 import {
   formatDateShort,
   formatDateRelative,
@@ -34,6 +35,7 @@ import {
   getOptimizedImageUrl,
   getCityName,
   getListingDisplayTitle,
+  getListingHref,
   getVehicleType,
   isTireListing,
 } from '@/lib/utils';
@@ -256,7 +258,6 @@ function useCardCarouselRewind(
         resetToFirstTimerRef.current = null;
         setIsAutoRewinding(true);
         rewindIntervalRef.current = setInterval(() => {
-          if (carouselRef.current?.isBusy()) return;
           carouselRef.current?.goPrev();
         }, REWIND_STEP_MS);
       }, RESET_TO_FIRST_DELAY_MS);
@@ -377,8 +378,8 @@ function ListingCardComponent({
 
   const [imageErrors, setImageErrors] = React.useState<Set<number>>(() => new Set());
   const [isHydrated, setIsHydrated] = React.useState(false);
-  const [isCarouselBusy, setIsCarouselBusy] = React.useState(false);
   const [carouselIndex, setCarouselIndex] = React.useState(0);
+  const [suppressBadgeHoverExpand, setSuppressBadgeHoverExpand] = React.useState(false);
   const carouselRef = React.useRef<ListingCardImageCarouselHandle>(null);
   const cardRef = React.useRef<HTMLDivElement>(null);
 
@@ -395,24 +396,35 @@ function ListingCardComponent({
     (index: number) => {
       setCarouselIndex(index);
       if (index === 0) clearRewind();
+      if (images.length > 1 && index !== 0) {
+        setSuppressBadgeHoverExpand(true);
+      }
     },
-    [clearRewind],
+    [clearRewind, images.length],
   );
 
-  const handleCarouselBusyChange = useCallback((busy: boolean) => {
-    setIsCarouselBusy(busy);
-  }, []);
+  const handleCardMouseLeaveCombined = useCallback(() => {
+    setSuppressBadgeHoverExpand(false);
+    handleCardMouseLeave();
+  }, [handleCardMouseLeave]);
 
   const handleClick = useCallback(() => {
     if (listing.cover_blur_hash) {
       setBlurForListing(listing.id, listing.cover_blur_hash, images[0]);
     }
+    const fromHome =
+      typeof window !== 'undefined' &&
+      stripLocalePrefixFromPathname(window.location.pathname).restPath === '/';
+    setIndexForListing(
+      listing.id,
+      fromHome ? 0 : (carouselRef.current?.getIndex() ?? carouselIndex),
+    );
     if (typeof window !== 'undefined' && window.location.pathname === '/') {
       startTransition(() => {
         preserveHomeScrollPosition('/');
       });
     }
-  }, [listing.id, listing.cover_blur_hash, images]);
+  }, [listing.id, listing.cover_blur_hash, images, carouselIndex]);
 
   const favoriteDisabled = isToggling;
   const favoriteButtonClass = getFavoriteButtonClassName(isToggling, isFavorite);
@@ -448,7 +460,7 @@ function ListingCardComponent({
     [goCarouselNext],
   );
 
-  const cardUrl = `/listings/${listing.id}`;
+  const cardUrl = getListingHref(listing, locale);
 
   const singleImageUrl =
     images[0] && images[0] !== '/placeholder-car.jpg'
@@ -462,6 +474,29 @@ function ListingCardComponent({
     () => (listing.cover_blur_hash ? blurhashToDataURL(listing.cover_blur_hash) : undefined),
     [listing.cover_blur_hash],
   );
+
+  const imageBlurDataURLs = useMemo(() => {
+    const hashes = listing.image_blur_hashes ?? [];
+    let coverDataUrl: string | undefined;
+    if (listing.cover_blur_hash) {
+      try {
+        coverDataUrl = blurhashToDataURL(listing.cover_blur_hash);
+      } catch {
+        coverDataUrl = undefined;
+      }
+    }
+    return images.map((_, i) => {
+      const h = hashes[i];
+      if (typeof h === 'string' && h.length > 0) {
+        try {
+          return blurhashToDataURL(h);
+        } catch {
+          return coverDataUrl;
+        }
+      }
+      return coverDataUrl;
+    });
+  }, [listing.image_blur_hashes, listing.cover_blur_hash, images]);
 
   const handleImageError = useListingCardImageError(
     listing.id,
@@ -487,7 +522,7 @@ function ListingCardComponent({
         .filter(Boolean)
         .join(' ')}
       style={cardFavoriteExitMotionStyle(isHydrated, isRemovingFromFavorites)}
-      onMouseLeave={handleCardMouseLeave}
+      onMouseLeave={handleCardMouseLeaveCombined}
       onMouseEnter={handleCardMouseEnter}
     >
       <Link
@@ -509,11 +544,10 @@ function ListingCardComponent({
               images={images}
               imageErrors={imageErrors}
               onImageError={handleImageError}
-              onBusyChange={handleCarouselBusyChange}
               onIndexChange={handleCarouselIndexChange}
               imageAltTitle={imageAltTitle}
               priority={priority}
-              blurDataURL={blurDataURL}
+              blurDataURLs={imageBlurDataURLs}
               t={t}
             />
           ) : (
@@ -527,10 +561,16 @@ function ListingCardComponent({
               t={t}
             />
           )}
-          <ListingCardBadges listing={listing} newLabel={newLabel} t={t} />
+          <ListingCardBadges
+            listing={listing}
+            newLabel={newLabel}
+            t={t}
+            carouselBrowsingCompact={images.length > 1 && carouselIndex !== 0}
+            allowCollapsedBadgesHoverExpand={!suppressBadgeHoverExpand}
+          />
           {images.length > 1 && (
             <CarouselNavButtons
-              disabled={isCarouselBusy || isAutoRewinding}
+              disabled={isAutoRewinding}
               onPrev={handlePrevPhoto}
               onNext={handleNextPhoto}
               prevLabel={t('listings.previousPhoto')}

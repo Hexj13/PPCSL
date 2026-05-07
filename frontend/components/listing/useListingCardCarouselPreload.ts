@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, type MutableRefObject } from 'react';
 
 import { getOptimizedImageUrl } from '@/lib/utils';
 
@@ -57,9 +57,9 @@ export function useListingCardCarouselPreload(
   images: string[],
   imageErrors: Set<number>,
   markLoaded: (index: number) => void,
-  loadedRef: React.MutableRefObject<Set<number>>,
-  preloadingRef: React.MutableRefObject<Set<number>>,
-  imagesCacheRef: React.MutableRefObject<HTMLImageElement[]>,
+  loadedRef: MutableRefObject<Set<number>>,
+  preloadingRef: MutableRefObject<Set<number>>,
+  imagesCacheRef: MutableRefObject<HTMLImageElement[]>,
 ) {
   useEffect(() => {
     const next = (currentIndex + 1) % images.length;
@@ -73,7 +73,9 @@ export function useListingCardCarouselPreload(
         const resolveReadiness = bindImageReadiness(
           img,
           () => markLoaded(next),
-          () => preloadingRef.current.delete(next),
+          () => {
+            preloadingRef.current.delete(next);
+          },
         );
         img.src = url;
         if (img.complete) {
@@ -95,7 +97,9 @@ export function useListingCardCarouselPreload(
         const resolveReadiness = bindImageReadiness(
           img,
           () => markLoaded(prev),
-          () => preloadingRef.current.delete(prev),
+          () => {
+            preloadingRef.current.delete(prev);
+          },
         );
         img.src = url;
         if (img.complete) {
@@ -104,32 +108,4 @@ export function useListingCardCarouselPreload(
       }
     }
   }, [currentIndex, images, imageErrors, markLoaded, loadedRef, preloadingRef, imagesCacheRef]);
-
-  useEffect(() => {
-    if (images.length <= 1) return;
-    const t = setTimeout(() => {
-      const idx = 1;
-      if (
-        images[idx] &&
-        images[idx] !== '/placeholder-car.jpg' &&
-        !loadedRef.current.has(idx) &&
-        !preloadingRef.current.has(idx)
-      ) {
-        const url = getOptimizedImageUrl(images[idx], 65, 640);
-        const img = new window.Image();
-        imagesCacheRef.current.push(img);
-        preloadingRef.current.add(idx);
-        const resolveReadiness = bindImageReadiness(
-          img,
-          () => markLoaded(idx),
-          () => preloadingRef.current.delete(idx),
-        );
-        img.src = url;
-        if (img.complete) {
-          resolveReadiness();
-        }
-      }
-    }, 1500);
-    return () => clearTimeout(t);
-  }, [images, markLoaded, loadedRef, preloadingRef, imagesCacheRef]);
 }

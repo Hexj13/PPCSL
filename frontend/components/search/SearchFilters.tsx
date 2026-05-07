@@ -1,5 +1,8 @@
 'use client';
 
+/* eslint-disable max-lines, max-lines-per-function -- search form orchestration */
+
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, startTransition, useCallback, useRef, useMemo } from 'react';
 
@@ -11,6 +14,7 @@ import { useCities } from '@/hooks/useCities';
 import { useFilterHandlers } from '@/hooks/useFilterHandlers';
 import { useFilterOptions } from '@/hooks/useFilterOptions';
 import { useLoadingState } from '@/hooks/useLoadingState';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useSearchFilterFlags } from '@/hooks/useSearchFilterFlags';
 import { useSearchFilters, type FilterState } from '@/hooks/useSearchFilters';
 import { useModelsForBrands, useVehicleTypeFromUrl } from '@/hooks/useSearchFiltersEffects';
@@ -41,13 +45,36 @@ import { SearchFormActions } from './search-filters/SearchFormActions';
 import { SearchTabs } from './search-filters/SearchTabs';
 import { TireSearchFilters } from './search-filters/TireSearchFilters';
 import { VehicleTypeSelector } from './search-filters/VehicleTypeSelector';
+import { MobileSearchFilters } from './search-filters/mobile/MobileSearchFilters';
+
+const PopularBodyTypesFilter = dynamic(() => import('./search-filters/PopularBodyTypesFilter'), {
+  ssr: false,
+});
 
 const NO_BRAND_IDS_FOR_MODELS: string[] = [];
 
-/* eslint-disable max-lines-per-function -- search form orchestration */
-export function SearchFilters() {
+interface SearchFiltersProps {
+  landingBrandSlug?: string;
+  landingModelSlug?: string;
+}
+
+export function SearchFilters({ landingBrandSlug, landingModelSlug }: SearchFiltersProps = {}) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { replace: localizedReplace } = useLocalizedNavigation();
+  const rawSearchParams = useSearchParams();
+  const searchParams = useMemo(() => {
+    if (!landingBrandSlug) {
+      return rawSearchParams;
+    }
+    const next = new URLSearchParams(rawSearchParams.toString());
+    if (!next.has('brand')) {
+      next.set('brand', landingBrandSlug);
+    }
+    if (landingModelSlug && !next.has('model')) {
+      next.set('model', landingModelSlug);
+    }
+    return next as unknown as ReturnType<typeof useSearchParams>;
+  }, [landingBrandSlug, landingModelSlug, rawSearchParams]);
   const { user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
   const [isHydrated, setIsHydrated] = useState(false);
@@ -114,9 +141,9 @@ export function SearchFilters() {
     tabs.setActiveTab('basic');
     scrollTabsToStart();
     startTransition(() => {
-      router.replace('/?category=tire', { scroll: false });
+      localizedReplace('/?category=tire', { scroll: false });
     });
-  }, [currentYear, router, scrollTabsToStart, setFilters, setLastAppliedFilters, tabs]);
+  }, [currentYear, localizedReplace, scrollTabsToStart, setFilters, setLastAppliedFilters, tabs]);
 
   useEffect(() => {
     const handler = () => {
@@ -298,19 +325,19 @@ export function SearchFilters() {
       resetFilters();
       if (searchParams.toString()) {
         startTransition(() => {
-          router.replace('/');
+          localizedReplace('/');
         });
       }
     }
-  }, [user, router, searchParams, resetFilters]);
+  }, [user, localizedReplace, searchParams, resetFilters]);
 
   useEffect(() => {
     const handleResetEvent = () => {
       resetFilters();
       setLastAppliedFilters(null);
-      const href = buildMinimalCategorySearchUrl(new URLSearchParams(window.location.search));
+      const nextPath = buildMinimalCategorySearchUrl(new URLSearchParams(window.location.search));
       startTransition(() => {
-        router.replace(href, { scroll: false });
+        localizedReplace(nextPath, { scroll: false });
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -325,7 +352,7 @@ export function SearchFilters() {
         window.removeEventListener('resetFiltersFromListingGrid', handleResetEvent);
       };
     }
-  }, [router, resetFilters, setLastAppliedFilters]);
+  }, [localizedReplace, resetFilters, setLastAppliedFilters]);
 
   const canSaveFilter = () => {
     return hasActiveFilters;
@@ -382,75 +409,224 @@ export function SearchFilters() {
       </div>
 
       {filters.listing_category === 'tire' && (
-        <TireSearchFilters
-          activeTab={tabs.activeTab === 'popular' ? 'popular' : 'basic'}
-          filters={filters}
-          tireBrands={tireBrands}
-          tireModels={tireModels}
-          loadingTireModels={loadingTireModels}
-          cityOptions={filterOptions.getCityOptions()}
-          onFilterChange={handlers.handleChange}
-          onMultiSelectChange={handlers.handleMultiSelectChange}
-          onCheckboxChange={handlers.handleCheckboxChange}
-          onPriceChange={handlers.handlePriceChange}
-          onPriceBlur={handlers.handlePriceBlur}
-          onWheel={handlers.handleWheel}
-          updateMultiple={updateMultiple}
-        />
+        <>
+          <div className="hidden md:block">
+            <TireSearchFilters
+              activeTab={tabs.activeTab === 'popular' ? 'popular' : 'basic'}
+              filters={filters}
+              tireBrands={tireBrands}
+              tireModels={tireModels}
+              loadingTireModels={loadingTireModels}
+              cityOptions={filterOptions.getCityOptions()}
+              onFilterChange={handlers.handleChange}
+              onMultiSelectChange={handlers.handleMultiSelectChange}
+              onCheckboxChange={handlers.handleCheckboxChange}
+              onPriceChange={handlers.handlePriceChange}
+              onPriceBlur={handlers.handlePriceBlur}
+              onWheel={handlers.handleWheel}
+              updateMultiple={updateMultiple}
+            />
+          </div>
+          <div className="md:hidden">
+            <MobileSearchFilters
+              variant="tire"
+              activeTab={tabs.activeTab === 'popular' ? 'popular' : 'basic'}
+              filters={filters}
+              tireBrands={tireBrands}
+              tireModels={tireModels}
+              loadingTireModels={loadingTireModels}
+              cityOptions={filterOptions.getCityOptions()}
+              onFilterChange={handlers.handleChange}
+              onMultiSelectChange={handlers.handleMultiSelectChange}
+              onCheckboxChange={handlers.handleCheckboxChange}
+              onYearBlur={handlers.handleYearBlur}
+              onPriceChange={handlers.handlePriceChange}
+              onPriceBlur={handlers.handlePriceBlur}
+              onWheel={handlers.handleWheel}
+              updateMultiple={updateMultiple}
+            />
+          </div>
+        </>
       )}
 
       {filters.listing_category === 'vehicle' && tabs.activeTab === 'basic' && (
-        <BasicFilters
-          filters={filters}
-          onFilterChange={handlers.handleChange}
-          onMultiSelectChange={handlers.handleMultiSelectChange}
-          onYearBlur={handlers.handleYearBlur}
-          onPriceChange={handlers.handlePriceChange}
-          onPriceBlur={handlers.handlePriceBlur}
-          onWheel={handlers.handleWheel}
-          brandOptions={filterOptions.getBrandOptions()}
-          modelOptions={filterOptions.getModelOptions()}
-          loadingModels={loadingModels}
-          currentYear={currentYear}
-          vehicleType={vehicleType}
-        />
+        <>
+          <div className="hidden md:block">
+            <BasicFilters
+              filters={filters}
+              onFilterChange={handlers.handleChange}
+              onMultiSelectChange={handlers.handleMultiSelectChange}
+              onYearBlur={handlers.handleYearBlur}
+              onPriceChange={handlers.handlePriceChange}
+              onPriceBlur={handlers.handlePriceBlur}
+              onWheel={handlers.handleWheel}
+              brandOptions={filterOptions.getBrandOptions()}
+              modelOptions={filterOptions.getModelOptions()}
+              loadingModels={loadingModels}
+              currentYear={currentYear}
+              vehicleType={vehicleType}
+              includePopularBodyTypes={false}
+            />
+          </div>
+          <div className="md:hidden">
+            <MobileSearchFilters
+              variant="vehicle"
+              activeTab="basic"
+              filters={filters}
+              vehicleType={vehicleType}
+              brandOptions={filterOptions.getBrandOptions()}
+              modelOptions={filterOptions.getModelOptions()}
+              loadingModels={loadingModels}
+              cityOptions={filterOptions.getCityOptions()}
+              colorOptions={filterOptions.COLOR_OPTIONS}
+              getConditionOptions={filterOptions.getConditionOptions}
+              getRegistrationTypeOptions={filterOptions.getRegistrationTypeOptions}
+              brands={brands}
+              models={models}
+              setFilters={setFilters}
+              onFilterChange={handlers.handleChange}
+              onMultiSelectChange={handlers.handleMultiSelectChange}
+              onCheckboxChange={handlers.handleCheckboxChange}
+              onYearBlur={handlers.handleYearBlur}
+              onPriceChange={handlers.handlePriceChange}
+              onPriceBlur={handlers.handlePriceBlur}
+              onWheel={handlers.handleWheel}
+              updateMultiple={updateMultiple}
+            />
+          </div>
+          <PopularBodyTypesFilter
+            selectedBodyTypes={filters.body_types}
+            onSelectionChange={(bodyTypes) =>
+              handlers.handleMultiSelectChange('body_types', bodyTypes)
+            }
+            vehicleType={vehicleType}
+          />
+        </>
       )}
 
       {filters.listing_category === 'vehicle' && tabs.activeTab === 'advanced' && (
-        <AdvancedFilters
-          filters={filters}
-          onFilterChange={handlers.handleChange}
-          onMultiSelectChange={handlers.handleMultiSelectChange}
-          onCheckboxChange={handlers.handleCheckboxChange}
-          onWheel={handlers.handleWheel}
-          cityOptions={filterOptions.getCityOptions()}
-          colorOptions={filterOptions.COLOR_OPTIONS}
-          getConditionOptions={filterOptions.getConditionOptions}
-          getRegistrationTypeOptions={filterOptions.getRegistrationTypeOptions}
-          vehicleType={vehicleType}
-        />
+        <>
+          <div className="hidden md:block">
+            <AdvancedFilters
+              filters={filters}
+              onFilterChange={handlers.handleChange}
+              onMultiSelectChange={handlers.handleMultiSelectChange}
+              onCheckboxChange={handlers.handleCheckboxChange}
+              onWheel={handlers.handleWheel}
+              cityOptions={filterOptions.getCityOptions()}
+              colorOptions={filterOptions.COLOR_OPTIONS}
+              getConditionOptions={filterOptions.getConditionOptions}
+              getRegistrationTypeOptions={filterOptions.getRegistrationTypeOptions}
+              vehicleType={vehicleType}
+            />
+          </div>
+          <div className="md:hidden">
+            <MobileSearchFilters
+              variant="vehicle"
+              activeTab="advanced"
+              filters={filters}
+              vehicleType={vehicleType}
+              brandOptions={filterOptions.getBrandOptions()}
+              modelOptions={filterOptions.getModelOptions()}
+              loadingModels={loadingModels}
+              cityOptions={filterOptions.getCityOptions()}
+              colorOptions={filterOptions.COLOR_OPTIONS}
+              getConditionOptions={filterOptions.getConditionOptions}
+              getRegistrationTypeOptions={filterOptions.getRegistrationTypeOptions}
+              brands={brands}
+              models={models}
+              setFilters={setFilters}
+              onFilterChange={handlers.handleChange}
+              onMultiSelectChange={handlers.handleMultiSelectChange}
+              onCheckboxChange={handlers.handleCheckboxChange}
+              onYearBlur={handlers.handleYearBlur}
+              onPriceChange={handlers.handlePriceChange}
+              onPriceBlur={handlers.handlePriceBlur}
+              onWheel={handlers.handleWheel}
+              updateMultiple={updateMultiple}
+            />
+          </div>
+        </>
       )}
 
       {filters.listing_category === 'vehicle' && tabs.activeTab === 'equipment' && (
-        <EquipmentFilters
-          equipment={filters.equipment}
-          equipmentMatchMode={filters.equipment_match_mode}
-          onEquipmentMatchModeChange={(mode) => updateFilter('equipment_match_mode', mode)}
-          onChange={(keys) => updateFilter('equipment', keys)}
-          vehicleType={vehicleType}
-        />
+        <>
+          <div className="hidden md:block">
+            <EquipmentFilters
+              equipment={filters.equipment}
+              equipmentMatchMode={filters.equipment_match_mode}
+              onEquipmentMatchModeChange={(mode) => updateFilter('equipment_match_mode', mode)}
+              onChange={(keys) => updateFilter('equipment', keys)}
+              vehicleType={vehicleType}
+            />
+          </div>
+          <div className="md:hidden">
+            <MobileSearchFilters
+              variant="vehicle"
+              activeTab="equipment"
+              filters={filters}
+              vehicleType={vehicleType}
+              brandOptions={filterOptions.getBrandOptions()}
+              modelOptions={filterOptions.getModelOptions()}
+              loadingModels={loadingModels}
+              cityOptions={filterOptions.getCityOptions()}
+              colorOptions={filterOptions.COLOR_OPTIONS}
+              getConditionOptions={filterOptions.getConditionOptions}
+              getRegistrationTypeOptions={filterOptions.getRegistrationTypeOptions}
+              brands={brands}
+              models={models}
+              setFilters={setFilters}
+              onFilterChange={handlers.handleChange}
+              onMultiSelectChange={handlers.handleMultiSelectChange}
+              onCheckboxChange={handlers.handleCheckboxChange}
+              onYearBlur={handlers.handleYearBlur}
+              onPriceChange={handlers.handlePriceChange}
+              onPriceBlur={handlers.handlePriceBlur}
+              onWheel={handlers.handleWheel}
+              updateMultiple={updateMultiple}
+            />
+          </div>
+        </>
       )}
 
       {filters.listing_category === 'vehicle' && (
         <div className={tabs.activeTab === 'popular' ? '' : 'hidden'}>
-          <PopularFilters
-            key={vehicleType}
-            brands={brands}
-            models={models}
-            filters={filters}
-            setFilters={setFilters}
-            vehicleType={vehicleType}
-          />
+          <div className="hidden md:block">
+            <PopularFilters
+              key={vehicleType}
+              brands={brands}
+              models={models}
+              filters={filters}
+              setFilters={setFilters}
+              vehicleType={vehicleType}
+            />
+          </div>
+          <div className="md:hidden">
+            <MobileSearchFilters
+              variant="vehicle"
+              activeTab="popular"
+              filters={filters}
+              vehicleType={vehicleType}
+              brandOptions={filterOptions.getBrandOptions()}
+              modelOptions={filterOptions.getModelOptions()}
+              loadingModels={loadingModels}
+              cityOptions={filterOptions.getCityOptions()}
+              colorOptions={filterOptions.COLOR_OPTIONS}
+              getConditionOptions={filterOptions.getConditionOptions}
+              getRegistrationTypeOptions={filterOptions.getRegistrationTypeOptions}
+              brands={brands}
+              models={models}
+              setFilters={setFilters}
+              onFilterChange={handlers.handleChange}
+              onMultiSelectChange={handlers.handleMultiSelectChange}
+              onCheckboxChange={handlers.handleCheckboxChange}
+              onYearBlur={handlers.handleYearBlur}
+              onPriceChange={handlers.handlePriceChange}
+              onPriceBlur={handlers.handlePriceBlur}
+              onWheel={handlers.handleWheel}
+              updateMultiple={updateMultiple}
+            />
+          </div>
         </div>
       )}
 

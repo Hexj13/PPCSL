@@ -14,6 +14,7 @@ import {
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { PWAInstallButtonGray } from '@/components/pwa/PWAInstallButtonGray';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { SiteConfig } from '@/lib/site-config';
 import { loadSiteConfigSync } from '@/lib/site-config';
@@ -188,6 +189,7 @@ function FooterPartnersRow({
 
 export function Footer() {
   const { t } = useTranslation();
+  const { href } = useLocalizedNavigation();
   const pathname = usePathname();
   const siteConfig = loadSiteConfigSync(getCountry());
   const fromConfig = siteConfig.footerPartners;
@@ -233,26 +235,46 @@ export function Footer() {
             suppressHydrationWarning
           >
             <div className="flex flex-col items-center gap-2 md:hidden" suppressHydrationWarning>
-              <Link href="/faq" className={footerNavLinkClassName} suppressHydrationWarning>
+              <Link href={href('/faq')} className={footerNavLinkClassName} suppressHydrationWarning>
                 {t('footer.faq')}
               </Link>
-              <Link href="/partners" className={footerNavLinkClassName} suppressHydrationWarning>
+              <Link
+                href={href('/partners')}
+                className={footerNavLinkClassName}
+                suppressHydrationWarning
+              >
                 {t('footer.partners')}
               </Link>
-              <Link href="/investors" className={footerNavLinkClassName} suppressHydrationWarning>
+              <Link
+                href={href('/investors')}
+                className={footerNavLinkClassName}
+                suppressHydrationWarning
+              >
                 {t('footer.investors')}
               </Link>
-              <Link href="/contacts" className={footerNavLinkClassName} suppressHydrationWarning>
+              <Link
+                href={href('/contacts')}
+                className={footerNavLinkClassName}
+                suppressHydrationWarning
+              >
                 {t('footer.contacts')}
               </Link>
-              <Link href="/terms" className={footerNavLinkClassName} suppressHydrationWarning>
+              <Link
+                href={href('/terms')}
+                className={footerNavLinkClassName}
+                suppressHydrationWarning
+              >
                 {t('footer.terms')}
               </Link>
-              <Link href="/privacy" className={footerNavLinkClassName} suppressHydrationWarning>
+              <Link
+                href={href('/privacy')}
+                className={footerNavLinkClassName}
+                suppressHydrationWarning
+              >
                 {t('footer.privacy')}
               </Link>
               <Link
-                href="/cookie-settings"
+                href={href('/cookie-settings')}
                 className={footerNavLinkClassName}
                 suppressHydrationWarning
               >
@@ -267,7 +289,11 @@ export function Footer() {
                 className="flex flex-row flex-wrap items-center justify-center gap-x-2 gap-y-1"
                 suppressHydrationWarning
               >
-                <Link href="/faq" className={footerNavLinkClassName} suppressHydrationWarning>
+                <Link
+                  href={href('/faq')}
+                  className={footerNavLinkClassName}
+                  suppressHydrationWarning
+                >
                   {t('footer.faq')}
                 </Link>
                 <span
@@ -277,7 +303,11 @@ export function Footer() {
                 >
                   ·
                 </span>
-                <Link href="/partners" className={footerNavLinkClassName} suppressHydrationWarning>
+                <Link
+                  href={href('/partners')}
+                  className={footerNavLinkClassName}
+                  suppressHydrationWarning
+                >
                   {t('footer.partners')}
                 </Link>
                 <span
@@ -287,7 +317,11 @@ export function Footer() {
                 >
                   ·
                 </span>
-                <Link href="/investors" className={footerNavLinkClassName} suppressHydrationWarning>
+                <Link
+                  href={href('/investors')}
+                  className={footerNavLinkClassName}
+                  suppressHydrationWarning
+                >
                   {t('footer.investors')}
                 </Link>
                 <span
@@ -297,7 +331,11 @@ export function Footer() {
                 >
                   ·
                 </span>
-                <Link href="/contacts" className={footerNavLinkClassName} suppressHydrationWarning>
+                <Link
+                  href={href('/contacts')}
+                  className={footerNavLinkClassName}
+                  suppressHydrationWarning
+                >
                   {t('footer.contacts')}
                 </Link>
               </div>
@@ -305,7 +343,11 @@ export function Footer() {
                 className="flex flex-row flex-wrap items-center justify-center gap-x-2 gap-y-1"
                 suppressHydrationWarning
               >
-                <Link href="/terms" className={footerNavLinkClassName} suppressHydrationWarning>
+                <Link
+                  href={href('/terms')}
+                  className={footerNavLinkClassName}
+                  suppressHydrationWarning
+                >
                   {t('footer.terms')}
                 </Link>
                 <span
@@ -315,7 +357,11 @@ export function Footer() {
                 >
                   ·
                 </span>
-                <Link href="/privacy" className={footerNavLinkClassName} suppressHydrationWarning>
+                <Link
+                  href={href('/privacy')}
+                  className={footerNavLinkClassName}
+                  suppressHydrationWarning
+                >
                   {t('footer.privacy')}
                 </Link>
                 <span
@@ -326,7 +372,7 @@ export function Footer() {
                   ·
                 </span>
                 <Link
-                  href="/cookie-settings"
+                  href={href('/cookie-settings')}
                   className={footerNavLinkClassName}
                   suppressHydrationWarning
                 >

@@ -23,13 +23,27 @@ export class LoginUserUseCase {
     private refreshTokenService: RefreshTokenService,
   ) {}
 
-  async execute(loginDto: LoginDto, ip?: string): Promise<LoginResponse> {
+  async execute(loginDto: LoginDto, ip?: string, requestLocale?: string): Promise<LoginResponse> {
     const user = await this.authenticateUser(loginDto.login, loginDto.password);
+
+    const normalizedRequestLocale = requestLocale?.trim().toLowerCase();
+    const preferredLocalePatch =
+      !user.preferredLocale &&
+      (normalizedRequestLocale === 'ro' || normalizedRequestLocale === 'ru')
+        ? { preferredLocale: normalizedRequestLocale }
+        : {};
 
     await this.usersService.update(user.id, {
       last_login_at: new Date(),
       ...(ip ? { last_login_ip: ip } : {}),
+      ...preferredLocalePatch,
     });
+
+    const effectivePreferredLocale =
+      user.preferredLocale ??
+      (normalizedRequestLocale === 'ro' || normalizedRequestLocale === 'ru'
+        ? normalizedRequestLocale
+        : null);
 
     const payload = { email: user.email || '', sub: user.id, type: user.type };
     const accessToken = this.jwtService.sign(payload);
@@ -54,7 +68,7 @@ export class LoginUserUseCase {
         companyWebsiteUrl: user.companyWebsiteUrl,
         phone: user.phone,
         boardSlug,
-        preferredLocale: user.preferredLocale ?? null,
+        preferredLocale: effectivePreferredLocale,
         hidePartnerPromoBanner: user.hidePartnerPromoBanner ?? false,
         isPlatformPartner: user.isPlatformPartner ?? false,
       },

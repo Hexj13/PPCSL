@@ -283,6 +283,7 @@ async function main(): Promise<void> {
           sourceListingId: sourceId,
           url: item.url,
           canonicalUrl: item.canonicalUrl,
+          profileLogin: login.trim().toLowerCase(),
           title: item.title ?? parsed.title,
           subCategoryId: item.subCategoryId,
           subCategoryUrl: item.subCategoryUrl,

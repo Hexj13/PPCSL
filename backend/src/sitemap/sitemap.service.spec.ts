@@ -95,7 +95,8 @@ describe('SitemapService', () => {
       expect(xml).toContain('/faq</loc>');
       expect(xml).toContain('/contacts</loc>');
       expect(xml).toContain('/cookie-settings</loc>');
-      expect(xml).toContain('<changefreq>daily</changefreq>');
+      expect(xml).toContain('/ru</loc>');
+      expect(xml).toContain('/ru/listings</loc>');
       expect(xml).toContain('<priority>1</priority>');
     });
 
@@ -113,7 +114,7 @@ describe('SitemapService', () => {
       await service.getPagesSitemap();
 
       expect(mockRedis.set).toHaveBeenCalledWith(
-        'sitemap:pages',
+        'sitemap:v2:pages',
         expect.stringContaining('<?xml'),
         3600,
       );
@@ -148,6 +149,9 @@ describe('SitemapService', () => {
       expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
       expect(xml).toContain('/listings/listing-1</loc>');
       expect(xml).toContain('/listings/listing-2</loc>');
+      expect(xml).toContain('/ru/listings/listing-1</loc>');
+      expect(xml).toContain('/ru/listings/listing-2</loc>');
+      expect((xml!.match(/<url>/g) ?? []).length).toBe(4);
       expect(xml).toContain('<changefreq>hourly</changefreq>');
       expect(xml).toContain('<priority>0.9</priority>');
     });

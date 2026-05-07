@@ -17,30 +17,49 @@ export function ListingCardBadges({
   listing,
   newLabel,
   t,
+  carouselBrowsingCompact = false,
+  allowCollapsedBadgesHoverExpand = true,
 }: {
   listing: Listing;
   newLabel: string;
   t: (_key: string) => string;
+  carouselBrowsingCompact?: boolean;
+  allowCollapsedBadgesHoverExpand?: boolean;
 }) {
   const showNewVehicleBadge = Boolean(listing.is_new && !isTireListing(listing));
-  const compact = !!(listing.is_promoted && showNewVehicleBadge && listing.urgent);
+  const showVideoBadge = Boolean(listing.has_video || listing.video?.status === 'published');
+  const badgeCount =
+    (listing.is_promoted ? 1 : 0) +
+    (showVideoBadge ? 1 : 0) +
+    (showNewVehicleBadge ? 1 : 0) +
+    (listing.urgent ? 1 : 0);
+  const compact = badgeCount >= 3 || carouselBrowsingCompact;
   const badgeCollapseClass = compact
-    ? 'px-3 py-1.5 gap-1.5 lg:px-1.5 lg:py-1.5 lg:gap-0 lg:group-hover:px-3 lg:group-hover:gap-1.5'
-    : 'px-3 py-1.5 gap-1.5';
+    ? allowCollapsedBadgesHoverExpand
+      ? 'px-2 py-1 gap-1 lg:px-1 lg:py-0.5 lg:gap-0 lg:group-hover:px-2 lg:group-hover:gap-1'
+      : 'px-2 py-1 gap-1 lg:px-1 lg:py-0.5 lg:gap-0'
+    : 'px-2 py-1 gap-1';
+  const labelTransition =
+    'inline-block min-w-0 overflow-hidden transition-[max-width,opacity] duration-300 ease-in-out';
   const labelCollapseClass = compact
-    ? 'w-auto opacity-100 lg:w-0 lg:opacity-0 lg:overflow-hidden lg:group-hover:w-auto lg:group-hover:opacity-100'
-    : 'w-auto opacity-100';
+    ? allowCollapsedBadgesHoverExpand
+      ? `${labelTransition} opacity-100 lg:max-w-0 lg:opacity-0 lg:group-hover:max-w-[13rem] lg:group-hover:opacity-100`
+      : `${labelTransition} opacity-100 lg:max-w-0 lg:opacity-0`
+    : 'inline-block';
+  const badgeShellMotion = compact
+    ? 'min-w-0 transition-[padding,gap] duration-300 ease-in-out'
+    : '';
+
+  const cardBadgeText = 'text-[11px] md:text-xs font-semibold';
+  const cardBadgeIcon = 'relative z-10 w-3 h-3 shrink-0';
 
   return (
-    <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
+    <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10">
       {listing.is_promoted && (
-        <span className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accent text-text-secondary shadow-lg whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none">
-          <svg
-            className="relative z-10 w-4 h-4 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+        <span
+          className={`relative inline-flex items-center gap-1 px-2 py-1 rounded-md ${cardBadgeText} bg-white/90 border-2 border-accent text-text-secondary shadow-md whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-md before:bg-accent/10 before:pointer-events-none`}
+        >
+          <svg className={cardBadgeIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -51,9 +70,19 @@ export function ListingCardBadges({
           <span className="relative z-10">{t('listings.promoted')}</span>
         </span>
       )}
+      {showVideoBadge && (
+        <span
+          className={`relative inline-flex items-center gap-1 px-2 py-1 rounded-md ${cardBadgeText} bg-white/90 border-2 border-newBadge text-text-secondary shadow-md whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-md before:bg-newBadge/10 before:pointer-events-none`}
+        >
+          <svg className={cardBadgeIcon} fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path d="M8 5v14l11-7L8 5z" />
+          </svg>
+          <span className="relative z-10">{t('listings.videoBadge')}</span>
+        </span>
+      )}
       {showNewVehicleBadge && (
         <span
-          className={`relative inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-newBadge text-text-secondary shadow-lg whitespace-nowrap transition-all duration-300 w-fit before:absolute before:inset-0 before:rounded-lg before:bg-newBadge/10 before:pointer-events-none ${badgeCollapseClass}`}
+          className={`relative inline-flex items-center overflow-hidden rounded-md ${cardBadgeText} bg-white/90 border-2 border-newBadge text-text-secondary shadow-md whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-md before:bg-newBadge/10 before:pointer-events-none ${badgeShellMotion} ${badgeCollapseClass}`}
         >
           <span
             className="relative z-10 shrink-0 text-text-secondary"
@@ -62,14 +91,12 @@ export function ListingCardBadges({
           >
             {SPARKLES_EMOJI}
           </span>
-          <span className={`relative z-10 transition-all duration-300 ${labelCollapseClass}`}>
-            {newLabel}
-          </span>
+          <span className={`relative z-10 ${labelCollapseClass}`}>{newLabel}</span>
         </span>
       )}
       {listing.urgent && (
         <span
-          className={`relative inline-flex items-center overflow-hidden rounded-lg text-xs md:text-sm font-semibold bg-white/90 border-2 border-accentSecondary text-text-secondary shadow-lg whitespace-nowrap transition-all duration-300 w-fit before:absolute before:inset-0 before:rounded-lg before:bg-accentSecondary/10 before:pointer-events-none ${badgeCollapseClass}`}
+          className={`relative inline-flex items-center overflow-hidden rounded-md ${cardBadgeText} bg-white/90 border-2 border-accentSecondary text-text-secondary shadow-md whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-md before:bg-accentSecondary/10 before:pointer-events-none ${badgeShellMotion} ${badgeCollapseClass}`}
         >
           <span
             className="relative z-10 shrink-0 text-text-secondary"
@@ -77,9 +104,7 @@ export function ListingCardBadges({
           >
             🔥
           </span>
-          <span className={`relative z-10 transition-all duration-300 ${labelCollapseClass}`}>
-            {t('listings.urgent')}
-          </span>
+          <span className={`relative z-10 ${labelCollapseClass}`}>{t('listings.urgent')}</span>
         </span>
       )}
     </div>

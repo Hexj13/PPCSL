@@ -36,6 +36,8 @@
   },
   "home": {
     "title": "Cars in Moldova",
+    "titleWithBrand": "{brand} in Moldova",
+    "titleWithBrandModel": "{brand} {model} in Moldova",
     "subtitle": "Buy or sell a car on",
     "subtitleBold": "Kupito!",
     "subtitle2": "Post an ad",
@@ -69,6 +71,7 @@
     "no": "No",
     "search": "Search",
     "choose": "Choose...",
+    "rangeDash": "—",
     "selectedCount": "Selected {count}",
     "requiredAsterisk": "*",
     "apiErrors": {
@@ -131,7 +134,8 @@
     "daysAgo": "{days} days ago",
     "languageEn": "English",
     "languageRo": "Română",
-    "languageRu": "Русский"
+    "languageRu": "Русский",
+    "languageLocaleCode": "{code}"
   },
   "errors": {
     "smsHourlyLimit": "SMS limit reached for this number. You can request a new code in one hour.",
@@ -179,7 +183,62 @@
       "description": "For more information about how we use cookies and how we protect your data, please read our"
     },
     "privacyPolicy": "Privacy Policy",
-    "preferencesSavedMessage": "Your preferences are saved in your browser and will remain active for 365 days. You can change them at any time from this page."
+    "preferencesSavedMessage": "Your preferences are saved in your browser and will remain active for 365 days. You can change them at any time from this page.",
+    "cookieTable": {
+      "title": "Cookie and storage inventory",
+      "intro": "Below are the main HTTP cookies and similar browser storage keys we use. Sign-in session data is kept in localStorage (not HTTP cookies). When you allow analytical cookies, Google Analytics runs with Consent Mode defaults and updates.",
+      "headers": {
+        "name": "Name",
+        "type": "Type",
+        "purpose": "Purpose",
+        "duration": "Retention",
+        "provider": "Provider"
+      },
+      "rows": {
+        "ga": {
+          "name": "_ga",
+          "type": "Analytical",
+          "purpose": "Google Analytics client ID; used only after you grant analytical cookies.",
+          "duration": "Up to 2 years (Google default)",
+          "provider": "Google Ireland Limited / Google LLC"
+        },
+        "gid": {
+          "name": "_gid",
+          "type": "Analytical",
+          "purpose": "Google Analytics session grouping; used only after you grant analytical cookies.",
+          "duration": "24 hours (Google default)",
+          "provider": "Google Ireland Limited / Google LLC"
+        },
+        "consentCookie": {
+          "name": "cookie_consent",
+          "type": "Essential",
+          "purpose": "Stores your cookie choice (JSON with timestamp) so the site and Consent Mode stay in sync.",
+          "duration": "365 days",
+          "provider": "Kupito"
+        },
+        "localeCookie": {
+          "name": "kupito-locale",
+          "type": "Functional",
+          "purpose": "Remembers interface language (ro or ru) when the language switcher is enabled.",
+          "duration": "365 days",
+          "provider": "Kupito"
+        },
+        "gtm": {
+          "name": "gtag.js (Google Tag)",
+          "type": "Analytical",
+          "purpose": "Loads Google Analytics after consent and sends Consent Mode updates (analytics_storage).",
+          "duration": "Session / per Google policy",
+          "provider": "Google Ireland Limited / Google LLC"
+        },
+        "authLocalStorage": {
+          "name": "auth-storage (localStorage)",
+          "type": "Essential (local storage)",
+          "purpose": "Persists authentication session state (tokens) for signed-in users; not an HTTP cookie.",
+          "duration": "Until logout or expiry handled by the app",
+          "provider": "Kupito"
+        }
+      }
+    }
   },
   "login": {
     "title": "Login",
@@ -356,6 +415,30 @@
     "closed": "Closed",
     "loadingTimeout": "Timeout loading listings"
   },
+  "listingForm": {
+    "video": {
+      "title": "Video",
+      "posterAlt": "Video preview image",
+      "addButton": "Add video",
+      "remove": "Remove video",
+      "fileLabel": "File:",
+      "constraints": "Maximum file size {maxSizeMb} MB, maximum length {maxDurationMin} minutes. Supported formats: MP4, MOV, AVI, WebM, MKV.",
+      "stagedHintTooltip": "This video will upload automatically right after the listing is created.",
+      "status": {
+        "uploading": "Uploading…",
+        "processing": "Processing video…",
+        "ready": "Video is ready",
+        "failed": "Video processing failed"
+      },
+      "errors": {
+        "invalidType": "Unsupported video format",
+        "tooLarge": "File is too large",
+        "uploadFailed": "Video upload failed",
+        "uploadAfterCreateFailed": "Listing created, but the video could not be uploaded. You can add it when editing the listing.",
+        "deleteFailed": "Could not remove video"
+      }
+    }
+  },
   "listings": {
     "defaultTitle": "Car for sale",
     "imageAlt": "{title} - Image {index}",
@@ -363,6 +446,8 @@
     "closeImageModal": "Close photo view",
     "previousPhoto": "Previous photo",
     "nextPhoto": "Next photo",
+    "cardImageCounter": "{current} / {total}",
+    "modalThumbnailAlt": "Image {index} of {total}",
     "negotiable": "Price negotiable",
     "notFoundTitle": "Listing not found",
     "notFoundDescription": "The listing does not exist or is not available.",
@@ -542,6 +627,7 @@
     "liters": "L",
     "km": "km",
     "priceLabel": "Price",
+    "currency": "Currency",
     "availableInCredit": "Available in credit/installment",
     "downPaymentFrom": "Down payment from",
     "downPaymentFromOptional": "Down payment from (opt.)",
@@ -580,6 +666,7 @@
     "tireCardPriceScopePerUnit": "(per tire)",
     "tireCardPriceScopePerSet": "(per set)",
     "promoted": "Promoted",
+    "videoBadge": "Video",
     "promote": "Promote",
     "unpromote": "Cancel promotion",
     "promotionEnabled": "Promotion activated",
@@ -693,12 +780,16 @@
     "ownerNoticeText": "Here are all your active listings. You can use the link to this page to share it in messengers or social networks and show all your listings on one page."
   },
   "listingDetail": {
+    "video": {
+      "playButton": "Play listing video",
+      "playIcon": "▶",
+      "captionsTrackLabel": "No dialogue captions"
+    },
     "home": "Home",
     "addToFavorites": "To favorites",
     "removeFromFavorites": "Remove from favorites",
     "yourListing": "Your listing",
-    "cannotAddOwnListing": "You cannot add your own listing to favorites",
-    "cannotFavoriteOwnListingToast": "You cannot add your own listings to favorites.\nThey are in the «My listings» section.",
+    "cannotFavoriteOwnListingToast": "You cannot add your own listings to favorites.",
     "compare": "Compare",
     "alreadyInComparison": "Already in comparison",
     "cannotCompareMore": "You can compare a maximum of 3 vehicles",
@@ -987,6 +1078,8 @@
     "city": "City",
     "yearFrom": "Year from",
     "yearTo": "Year to",
+    "yearRangeSummary": "from {from} to {to}",
+    "priceRangeSummary": "from {from} to {to}",
     "selectYear": "Select year",
     "currency": "Currency",
     "priceFrom": "Price from",
@@ -1338,8 +1431,6 @@
       "archiveDisabledHasListings": "There are active listings with this brand/model"
     },
     "parsing": {
-      "envTitle": "Parser environment",
-      "envBody": "Runs are executed against target environment: {env}. This value is configured on the server and cannot be changed from the UI.",
       "subtabPlp": "Catalog (PLP)",
       "subtabPdp": "Listing pages (PDP)",
       "subtabScheduler": "Schedules",
@@ -1543,7 +1634,6 @@
       "plpFileDeleted": "PLP file deleted",
       "searchPlaceholder": "Search in text",
       "searchMatches": "Matches: {count}",
-      "searchNoMatches": "No matches found",
       "copy": "Copy",
       "copySuccess": "{label} copied",
       "copyError": "Error copying",
@@ -2028,7 +2118,11 @@
     "offer": {
       "title": "Investment offer",
       "lead": "We are raising funds to:",
-      "items": ["Scale marketing", "Accelerate product development", "Enter new markets"],
+      "items": [
+        "Scale marketing",
+        "Accelerate product development",
+        "Enter new markets"
+      ],
       "footer": "We are open to discuss partnership terms and can share more details on request."
     },
     "contactCta": "Contact us"
@@ -2211,10 +2305,27 @@
       "ogDescription": "Learn how Kupito collects, uses and protects your personal data. Read our Privacy Policy to understand how we process your data.",
       "ogAlt": "Kupito - Privacy Policy"
     },
+    "brandLanding": {
+      "title": "Buy {brand} in Moldova: used and new cars for sale",
+      "titleWithPrice": "Buy {brand} in Moldova: used and new cars for sale from {price}",
+      "description": "Browse {brand} listings on Kupito. Current offers in Moldova.",
+      "h1": "{brand} — for sale",
+      "intro": "Find {brand} cars from private sellers and dealers.",
+      "ogAlt": "{brand} — Kupito car listings"
+    },
+    "brandModelLanding": {
+      "title": "Buy {brand} {model} in Moldova: used and new cars for sale",
+      "titleWithPrice": "Buy {brand} {model} in Moldova: used and new cars for sale from {price}",
+      "description": "Browse {brand} {model} on Kupito. Current prices in Moldova.",
+      "h1": "{brand} {model} — for sale",
+      "ogAlt": "{brand} {model} — Kupito"
+    },
     "listing": {
       "notFoundTitle": "Listing not found",
       "notFoundDescription": "The listing does not exist or is not available.",
       "defaultDescription": "Buy or sell a car on Kupito! Post a listing for free.",
+      "ogAltVehicle": "{brand} {model} {year} — for sale in {city}",
+      "ogAltTire": "{title} — for sale in {city}",
       "keywords": {
         "cars": "cars",
         "buyCar": "buy car",

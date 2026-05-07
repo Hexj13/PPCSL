@@ -4,13 +4,28 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
+import type { Translations } from '@/lib/i18n';
 import { toast } from '@/lib/toast';
 
+const COOKIE_TABLE_ROW_KEYS = [
+  'ga',
+  'gid',
+  'consentCookie',
+  'localeCookie',
+  'gtm',
+  'authLocalStorage',
+] as const satisfies ReadonlyArray<
+  keyof NonNullable<NonNullable<Translations['cookieSettings']>['cookieTable']>['rows']
+>;
+
 export default function CookieSettingsPage() {
-  const { t } = useTranslation();
+  const { t, translations } = useTranslation();
+  const { href } = useLocalizedNavigation();
   const { consent, isLoading, grantConsent, denyConsent } = useCookieConsent();
   const [isSaving, setIsSaving] = useState(false);
+  const cookieTable = translations?.cookieSettings?.cookieTable;
 
   const handleSave = (newConsent: 'granted' | 'denied') => {
     setIsSaving(true);
@@ -118,6 +133,40 @@ export default function CookieSettingsPage() {
         </div>
       </div>
 
+      {cookieTable ? (
+        <div className="surface mb-6">
+          <h2 className="text-2xl font-bold text-primary-900 mb-4">{cookieTable.title}</h2>
+          <p className="text-text-secondary text-sm mb-4 leading-relaxed">{cookieTable.intro}</p>
+          <div className="overflow-x-auto rounded-lg border border-primary-500/10">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="bg-bg-darker text-primary-900">
+                <tr>
+                  <th className="px-3 py-2 font-semibold">{cookieTable.headers.name}</th>
+                  <th className="px-3 py-2 font-semibold">{cookieTable.headers.type}</th>
+                  <th className="px-3 py-2 font-semibold">{cookieTable.headers.purpose}</th>
+                  <th className="px-3 py-2 font-semibold">{cookieTable.headers.duration}</th>
+                  <th className="px-3 py-2 font-semibold">{cookieTable.headers.provider}</th>
+                </tr>
+              </thead>
+              <tbody className="text-text-secondary divide-y divide-primary-500/10">
+                {COOKIE_TABLE_ROW_KEYS.map((key) => {
+                  const row = cookieTable.rows[key];
+                  return (
+                    <tr key={row.name} className="align-top">
+                      <td className="px-3 py-2 font-medium text-primary-900">{row.name}</td>
+                      <td className="px-3 py-2">{row.type}</td>
+                      <td className="px-3 py-2">{row.purpose}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{row.duration}</td>
+                      <td className="px-3 py-2">{row.provider}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+
       <div className="surface mb-6">
         <h2 className="text-2xl font-bold text-primary-900 mb-4">
           {t('cookieSettings.yourChoice.title')}
@@ -149,7 +198,7 @@ export default function CookieSettingsPage() {
         <p className="text-text-secondary text-sm mb-4 leading-relaxed">
           {t('cookieSettings.moreInfo.description')}{' '}
           <Link
-            href="/privacy"
+            href={href('/privacy')}
             className="text-primary-900 hover-only:hover:text-primary-600 underline transition-colors"
           >
             {t('cookieSettings.privacyPolicy')}

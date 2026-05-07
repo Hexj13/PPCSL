@@ -1,6 +1,7 @@
 import { getVersionedAssetPath } from '@/lib/assets';
 import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
 import { getCountry, toSafeJsonLdHtml } from '@/lib/utils';
 
 export async function OrganizationSchema() {
@@ -9,19 +10,15 @@ export async function OrganizationSchema() {
   const locale = await getMetadataLocale();
   const t = getServerTranslations(locale);
 
-  const localeTag = siteConfig.locale;
-  const languageNames: Record<string, string> = {
-    'ro-MD': 'Romanian',
-    'ru-MD': 'Russian',
-  };
-  const availableLanguage = languageNames[localeTag] || 'Romanian';
+  const sitePageUrl = absoluteUrlWithLocalePrefix(siteConfig.siteUrl, '/', locale);
   const logoUrl = `${siteConfig.siteUrl}${getVersionedAssetPath('/logo.png', siteConfig.assetVersion)}`;
 
   const schemaData = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: siteConfig.name,
-    url: siteConfig.siteUrl,
+    url: sitePageUrl,
+    inLanguage: locale,
     logo: logoUrl,
     description: t.metadata.site.organizationDescription,
     address: {
@@ -33,7 +30,7 @@ export async function OrganizationSchema() {
       '@type': 'ContactPoint',
       contactType: 'Customer Service',
       areaServed: siteConfig.countryCode,
-      availableLanguage,
+      availableLanguage: ['Romanian', 'Russian'],
     },
   };
 

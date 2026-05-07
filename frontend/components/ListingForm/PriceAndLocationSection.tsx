@@ -1,12 +1,16 @@
 'use client';
 
-import { Dropdown } from '@/components/common/Dropdown';
 import { useI18n } from '@/components/providers/I18nProvider';
+import {
+  SearchFilterCityIcon,
+  SearchFilterPriceIcon,
+} from '@/components/search/search-filters/search-filter-field-icons';
 import type { Currency } from '@/lib/types';
 import { CurrencyEnum } from '@/lib/types';
 import { sortOptionsByLabel } from '@/lib/utils';
 import { Checkbox } from '@/ui';
 
+import { MobileSelectField } from './MobileSelectField';
 import { RequiredAsterisk } from './RequiredAsterisk';
 import type { ListingFormSectionProps } from './types';
 
@@ -32,60 +36,8 @@ export function PriceAndLocationSection({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:auto-rows-min">
         <div className="sm:row-start-1 sm:col-span-1">
-          <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="shrink-0"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="12.04"
-                cy="12"
-                r="2.87"
-                fill="none"
-                stroke="currentColor"
-                strokeMiterlimit="10"
-                strokeWidth="1.92"
-                strokeLinecap="square"
-              />
-              <path
-                d="M22.58,6.25v9.58a2.87,2.87,0,0,1-2.87,2.88H7.25l3.83,3.83"
-                fill="none"
-                stroke="currentColor"
-                strokeMiterlimit="10"
-                strokeWidth="1.92"
-              />
-              <line
-                x1="4.38"
-                y1="12"
-                x2="6.29"
-                y2="12"
-                fill="none"
-                stroke="currentColor"
-                strokeMiterlimit="10"
-                strokeWidth="1.92"
-              />
-              <line
-                x1="17.79"
-                y1="12"
-                x2="19.71"
-                y2="12"
-                fill="none"
-                stroke="currentColor"
-                strokeMiterlimit="10"
-                strokeWidth="1.92"
-              />
-              <path
-                d="M1.5,17.75V8.17A2.88,2.88,0,0,1,4.38,5.29H16.83L13,1.46"
-                fill="none"
-                stroke="currentColor"
-                strokeMiterlimit="10"
-                strokeWidth="1.92"
-              />
-            </svg>
+          <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary-900">
+            <SearchFilterPriceIcon />
             {t('listings.priceLabel')}
             <RequiredAsterisk filled={!!formData.price.trim()} />
           </label>
@@ -116,13 +68,15 @@ export function PriceAndLocationSection({
               placeholder={t('listings.pricePlaceholder')}
               title={t('listings.priceTitle')}
             />
-            <Dropdown
+            <MobileSelectField
               value={formData.currency}
               onChange={(value) =>
                 setFormData((prev) => ({ ...prev, currency: value as Currency }))
               }
+              sheetTitle={t('listings.currency')}
+              leadingIcon={<SearchFilterPriceIcon />}
               className="w-32 shrink-0"
-              placeholder={t('searchFilters.allCurrencies')}
+              mobileValueOnlyTrigger={true}
               autoPosition={true}
               menuMaxHeight={300}
               options={CURRENCY_OPTIONS}
@@ -165,7 +119,7 @@ export function PriceAndLocationSection({
         </div>
 
         <div className="sm:row-start-4 sm:col-span-1">
-          <label className="block text-sm font-semibold mb-2 text-primary-700">
+          <label className="block text-sm font-semibold mb-2 text-primary-900">
             {t('listings.downPaymentFrom')}{' '}
             <span className="text-text-secondary">{t('listings.optionalShort')}</span>
           </label>
@@ -196,32 +150,20 @@ export function PriceAndLocationSection({
         </div>
 
         <div className="sm:row-start-5 sm:col-span-1">
-          <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="shrink-0"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M5.7 15C4.03377 15.6353 3 16.5205 3 17.4997C3 19.4329 7.02944 21 12 21C16.9706 21 21 19.4329 21 17.4997C21 16.5205 19.9662 15.6353 18.3 15M12 9H12.01M18 9C18 13.0637 13.5 15 12 18C10.5 15 6 13.0637 6 9C6 5.68629 8.68629 3 12 3C15.3137 3 18 5.68629 18 9ZM13 9C13 9.55228 12.5523 10 12 10C11.4477 10 11 9.55228 11 9C11 8.44772 11.4477 8 12 8C12.5523 8 13 8.44772 13 9Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+          <label className="mb-2 hidden items-center gap-2 text-sm font-semibold text-primary-900 md:flex">
+            <SearchFilterCityIcon />
             {t('listings.cityLabel')}
             <RequiredAsterisk filled={!!formData.city} />
           </label>
-          <Dropdown
+          <MobileSelectField
             value={formData.city}
             onChange={(value) => {
               clearError('city');
               setFormData((prev) => ({ ...prev, city: value }));
             }}
+            sheetTitle={t('listings.cityLabel')}
+            leadingIcon={<SearchFilterCityIcon />}
+            requiredAsteriskFilled={!!formData.city}
             searchable={true}
             placeholder={t('listings.selectCity')}
             error={!!errors['city']}

@@ -197,7 +197,20 @@
     "parsingPlpFileNameAlreadyUsed": "PLP-файл с таким именем уже используется другим активным расписанием.",
     "parsingRunCannotCancel": "Этот запуск нельзя отменить.",
     "parsingRegistrySyncUnavailable": "Синхронизация реестра для этого парсера недоступна.",
-    "parsingSyncAssignedUserRequired": "Для синхронизации реестра нужен UUID пользователя‑партнёра на Kupito (введите вручную или сначала выполните PDP/PLP с назначенным пользователем)."
+    "parsingSyncAssignedUserRequired": "Для синхронизации реестра нужен UUID пользователя‑партнёра на Kupito (введите вручную или сначала выполните PDP/PLP с назначенным пользователем).",
+    "video": {
+      "tooLarge": "Видео превышает максимально допустимый размер.",
+      "invalidFormat": "Неподдерживаемый формат видео.",
+      "notOwner": "Видео можно загрузить только к своему объявлению.",
+      "tooLong": "Видео длиннее максимально допустимой длительности.",
+      "transcodingFailed": "Не удалось перекодировать видео.",
+      "transcodingUnavailable": "Перекодирование видео временно недоступно.",
+      "replaceRequiresDelete": "Удалите текущее видео перед загрузкой нового.",
+      "processingInProgress": "Видео уже обрабатывается.",
+      "uploadNotInitialized": "Загрузка видео не была корректно начата.",
+      "uploadIdMismatch": "Сессия загрузки видео не совпадает.",
+      "importDownloadFailed": "Не удалось скачать видео по указанному URL."
+    }
   },
   "vehicleOptions": {
     "transmission": {

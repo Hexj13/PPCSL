@@ -16,8 +16,6 @@ import {
   publishListingDetailComparisonCrossTab,
   publishListingDetailFavoriteCrossTab,
 } from '@/lib/cross-tab-listing-detail-publish';
-import { prepareListingDescriptionHtml } from '@/lib/listingDescriptionHtml';
-import { getListingDescriptionForLocale } from '@/lib/listingDescriptionLocale';
 import { buildSignInHref } from '@/lib/return-url';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
@@ -32,6 +30,7 @@ import {
 } from '@/lib/utils';
 
 import { applyListingPromotionSelection } from './applyListingPromotionSelection';
+import { listingPageInitialGalleryImageIndex } from './listing-page-helpers';
 import { useListingAiReport } from './useListingAiReport';
 import { useListingPageCreatedToast } from './useListingPageCreatedToast';
 
@@ -51,7 +50,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const { add: addFavorite, remove: removeFavorite } = useFavoritesStore();
   const { t } = useTranslation();
   const { locale } = useI18n();
-  const descriptionLocale = locale === 'ru' ? 'ru' : 'ro';
   const { cities } = useCities();
   const addVehicle = useComparisonStore((s) => s.addVehicle);
   const removeVehicle = useComparisonStore((s) => s.removeVehicle);
@@ -60,7 +58,9 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const vehicleCompareCount = useComparisonStore((s) => s.vehicleComparisons.length);
   const tireCompareCount = useComparisonStore((s) => s.tireComparisons.length);
 
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(() =>
+    listingPageInitialGalleryImageIndex(initialListing),
+  );
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [modalImageIndex, setModalImageIndex] = useState(0);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
@@ -70,7 +70,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const [isHydrated, setIsHydrated] = useState(false);
 
   const {
-    listing,
+    listing: listingFromApi,
     setListing,
     isFavorite,
     setIsFavorite,
@@ -80,20 +80,25 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     loadingPrevious,
     activeListingsCount,
     listingRef,
+    fetchListingData,
   } = useListingData({
     listingId: id,
     initialListing,
-    onListingUpdate: () => {
-      setCurrentImageIndex(0);
-      setImageErrors(new Set());
+    onListingUpdate: (next, prev) => {
+      const sig = (l: Listing | null) => (l?.images ?? []).join('\u0001');
+      if (!prev || sig(next) !== sig(prev)) {
+        setCurrentImageIndex(listingPageInitialGalleryImageIndex(next));
+        setImageErrors(new Set());
+      }
     },
   });
 
+  const listing = listingFromApi ?? initialListing;
+
   const isOwnListing = useMemo(() => {
-    const currentListing = listing || initialListing;
-    if (!currentListing?.user || !user) return false;
-    return user.id === currentListing.user.id;
-  }, [user, listing, initialListing]);
+    if (!listing?.user || !user) return false;
+    return user.id === listing.user.id;
+  }, [user, listing]);
 
   const equipmentColumns = useMemo(() => {
     const eq = listing?.equipment;
@@ -108,7 +113,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     return { left: sorted.slice(0, mid), right: sorted.slice(mid) };
   }, [listing?.equipment, t]);
 
-  const isLoadingListing = listing === null && !initialListing;
+  const isLoadingListing = listingFromApi === null && !initialListing;
   const { visible: showSkeleton } = useLoadingState({
     isLoading: isLoadingListing,
     immediate: true,
@@ -146,18 +151,24 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     return [listing.title, details, city].filter((v) => v && v.trim() !== '').join(' - ');
   }, [listing, locale, cities]);
 
-  const descriptionHtml = useMemo(() => {
-    const html = listing ? getListingDescriptionForLocale(listing, descriptionLocale) : undefined;
-    if (!html || !isHydrated || typeof window === 'undefined') return null;
-    return prepareListingDescriptionHtml(html, window);
-  }, [isHydrated, listing, descriptionLocale]);
-
   useEffect(() => {
     void listingsApi
       .getPromotionAccess()
       .then((res) => setPromotionAccess(res.data))
       .catch(() => setPromotionAccess(null));
   }, []);
+
+  useEffect(() => {
+    const status = listing?.video?.status;
+    if (!isOwnListing || (status !== 'processing' && status !== 'pending')) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      fetchListingData(true);
+    }, 10_000);
+    return () => window.clearInterval(timer);
+  }, [fetchListingData, isOwnListing, listing?.video?.status]);
+
   const canPromote =
     (promotionAccess?.canPromote ?? false) || (promotionAccess?.isPartner ?? false);
   const displayTitle = listing ? getListingDisplayTitle(listing, t) : '';
@@ -416,7 +427,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     equipmentColumns,
     displayTitle,
     imageAltTitle,
-    descriptionHtml,
     getClosingDate,
     currentImageIndex,
     setCurrentImageIndex,

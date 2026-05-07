@@ -136,6 +136,20 @@ export function linkifyPlainUrlsInHtml(html: string, doc: Document): string {
   return container.innerHTML;
 }
 
+function hardenExistingLinksInHtml(html: string, doc: Document): string {
+  if (!html) return html;
+  const container = doc.createElement('div');
+  container.innerHTML = html;
+  container.querySelectorAll('a').forEach((a) => {
+    const href = a.getAttribute('href') ?? '';
+    const target = a.getAttribute('target') ?? '';
+    if (target.toLowerCase() === '_blank' || isSafeHttpOrHttpsHref(href)) {
+      a.setAttribute('rel', 'noopener noreferrer');
+    }
+  });
+  return container.innerHTML;
+}
+
 export function prepareListingDescriptionHtml(raw: string, win: Window): string {
   const DOMPurify = createDOMPurify(win as unknown as DomPurifyWindow);
   const sanitized = DOMPurify.sanitize(raw, {
@@ -143,5 +157,5 @@ export function prepareListingDescriptionHtml(raw: string, win: Window): string 
     ALLOWED_ATTR: ['size', 'href', 'target', 'rel'],
     ALLOWED_URI_REGEXP: /^(?:https?:\/\/|mailto:)/i,
   });
-  return linkifyPlainUrlsInHtml(sanitized, win.document);
+  return linkifyPlainUrlsInHtml(hardenExistingLinksInHtml(sanitized, win.document), win.document);
 }

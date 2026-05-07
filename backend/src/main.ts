@@ -16,6 +16,7 @@ async function bootstrap() {
   const isDev = process.env.NODE_ENV !== 'production';
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: isDev ? new PrettyLogger() : undefined,
+    rawBody: true,
   });
 
   app.set('trust proxy', true);

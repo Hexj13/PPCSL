@@ -8,6 +8,7 @@ import { maskPhoneLastDigits } from '../../../common/utils/phone-mask.util';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { UsersService } from '../../../users/application/users.service';
 import { Listing } from '../../entities/listing.entity';
+import { stripListingVideoForListResponse } from '../utils/listing-video-public.util';
 import { buildPriceInDefaultCurrencyOrderExpression } from '../utils/price-sort.utils';
 
 @Injectable()
@@ -91,6 +92,7 @@ export class GetBoardListingsUseCase {
           listing.user.additionalPhone = maskPhoneLastDigits(listing.user.additionalPhone);
         }
       }
+      stripListingVideoForListResponse(listing);
       return listing;
     });
 

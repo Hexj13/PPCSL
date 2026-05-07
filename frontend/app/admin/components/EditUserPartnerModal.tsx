@@ -320,16 +320,20 @@ export function EditUserPartnerModal({
           </>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2 shrink-0">
           <AdminActionButton
             variant="secondary"
-            className="flex-1"
+            className="w-full shrink-0 sm:flex-1"
             onClick={onClose}
             disabled={saving}
           >
             {t('common.cancel')}
           </AdminActionButton>
-          <AdminActionButton className="flex-1" onClick={onSubmit} disabled={saving}>
+          <AdminActionButton
+            className="w-full shrink-0 sm:flex-1"
+            onClick={onSubmit}
+            disabled={saving}
+          >
             {saving ? t('common.loading') : t('common.save')}
           </AdminActionButton>
         </div>

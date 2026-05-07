@@ -15,6 +15,7 @@ import {
   getFilledFields,
   reportFormSubmit,
 } from '@/components/ListingForm/submitHelpers';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
 import { useLoadingState } from '@/hooks/useLoadingState';
@@ -27,11 +28,12 @@ import type { VehicleEquipmentKey } from '@/lib/options';
 import { getEquipmentKeysByVehicleType } from '@/lib/options';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { toast } from '@/lib/toast';
-import { getCountry } from '@/lib/utils';
+import { getCountry, getListingHref } from '@/lib/utils';
 
 import { handleVehicleListingSubmitApiError } from './handleVehicleListingSubmitApiError';
 import type { ListingFormData } from './listingFormTypes';
 import { useListingFormImages } from './useListingFormImages';
+import { useListingFormVideo } from './useListingFormVideo';
 
 const LISTING_UPDATED_TOAST_KEY = 'listingUpdatedToast';
 
@@ -59,6 +61,7 @@ export function useListingForm({
   onInitialLoadReady,
 }: UseListingFormProps) {
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const { afterHidden } = useLoadingState({
@@ -116,6 +119,12 @@ export function useListingForm({
     t,
     setFormData,
     formSubmittedSuccessfullyRef,
+  });
+
+  const listingVideo = useListingFormVideo({
+    t,
+    listingId: mode === 'edit' ? listingId : undefined,
+    initialListingVideo: initialData?.video,
   });
 
   useEffect(() => {
@@ -311,6 +320,14 @@ export function useListingForm({
         const payload = buildListingPayload(formData, vehicleType);
 
         if (mode === 'create') {
+          if (listingVideo.blocksCreate || !listingVideo.isReadyForCreate) {
+            setLoading(false);
+            toast.error(t('listingForm.video.status.processing'));
+            return;
+          }
+          if (listingVideo.stagedVideoToken) {
+            payload.stagedVideoToken = listingVideo.stagedVideoToken;
+          }
           const res = await listingsApi.create(payload);
           formSubmittedSuccessfullyRef.current = true;
           resetUploadedImagesState();
@@ -331,7 +348,7 @@ export function useListingForm({
               partnerRewardAwarded: res.data.partnerReward?.awardedPromotions ?? 0,
             }),
           );
-          router.push(`/listings/${res.data.id}`);
+          router.push(getListingHref(res.data, locale));
           return;
         }
 
@@ -372,11 +389,13 @@ export function useListingForm({
       listingId,
       t,
       router,
+      locale,
       loadModels,
       afterHidden,
       onSuccess,
       loading,
       resetUploadedImagesState,
+      listingVideo,
     ],
   );
 
@@ -399,6 +418,15 @@ export function useListingForm({
     onFormFieldFocus: handleFormFieldFocus,
     uploadSlots,
     onUploadedImageLoaded,
+    initialListingVideo: initialData?.video ?? null,
+    videoPhase: listingVideo.phase,
+    videoProgress: listingVideo.progress,
+    onVideoFileSelected: listingVideo.uploadSelectedFile,
+    onVideoRemove: listingVideo.removeVideo,
+    listingVideoResolved: listingVideo.resolvedVideo,
+    videoMaxSizeMb: listingVideo.videoMaxSizeMb,
+    videoMaxDurationMin: listingVideo.videoMaxDurationMin,
+    selectedVideoFileName: listingVideo.selectedFile?.name ?? null,
   };
 
   return {
@@ -416,6 +444,7 @@ export function useListingForm({
     isMounted,
     isChangingType,
     loading,
+    videoBlocksCreate: listingVideo.blocksCreate || !listingVideo.isReadyForCreate,
     uploading,
     hidePlates,
     setHidePlates,

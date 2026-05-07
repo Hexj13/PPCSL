@@ -36,6 +36,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 - **[platform-checklist.md](./guides/platform-checklist.md)** — **Checklist for new platforms**
 - [platform-guide.md](./guides/platform-guide.md) — Setup and development (GA, GTM, Sentry)
+- [listing-video-production-setup-ru.md](./guides/listing-video-production-setup-ru.md) — Listing video on production (AWS, Render; Russian operators)
 - [SENTRY.md](./guides/SENTRY.md) — Sentry setup and monitoring
 - [logging.md](./guides/logging.md) — Structured Sentry payloads, request correlation, sanitization
 - [DEPLOYMENT.md](./guides/DEPLOYMENT.md) — Deploy (optional Telegram support bot)
@@ -61,6 +62,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [search-title-url.md](./features/search-title-url.md) — Search page URL and title (slugs, diacritics)
 - Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see [TECHNICAL.md](./architecture/TECHNICAL.md) §6 Exchange Rates)
 - [image-preview.md](./features/image-preview.md) — Image preview system (card carousel vs listing hero layers, modal; blurhash; `image_blur_hashes` + backfill scripts)
+- [listings.md](./features/listings.md) — Optional listing video (seller upload, transcoding) and partner-import video-from-URL
 - [infocar-history-section.md](./features/infocar-history-section.md) — Infocar report card + on-site VIN history (two cards, RO/RU links)
 - [ai-listing-report-ru.md](./features/ai-listing-report-ru.md) — Listing AI analysis (Gemini, PDP modal, RU spec: API, cache, prompts). Clear persisted rows: `npm run clear-listing-ai-reports(:prod)` from `core/backend` ([SCRIPTS.md](../backend/docs/SCRIPTS.md)); Render steps: platform repo [`docs/deployment/production-deployment.md`](../../docs/deployment/production-deployment.md) §2.3.
 - Listing seller phones and full VIN — masked in public listing payloads; optional reveal on the listing page with per-viewer Redis rate limits (`GET /api/listings/:id/phones`, `GET /api/listings/:id/vin`); see [TECHNICAL.md](./architecture/TECHNICAL.md) § API Reference → Listings
@@ -155,4 +157,4 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 When adding a new feature: create a doc in `features/`, describe architecture/API/UI, update the list in the features section above.
 
-**Last updated:** 2026-04
+**Last updated:** 2026-05

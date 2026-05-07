@@ -1,11 +1,12 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 import {
+  getClientLocale,
   getDefaultLocale,
-  getStoredLocale,
   loadTranslationsDynamic,
   type Locale,
   type Translations,
@@ -33,6 +34,9 @@ const I18nContext = createContext<I18nContextType>({
 
 export function I18nProvider({ children, initialLocale, initialTranslations }: I18nProviderProps) {
   const serverLocale = initialLocale || defaultLocale;
+  const pathname = usePathname();
+  const hydratedTranslations = useRef(Boolean(initialTranslations));
+  const syncGeneration = useRef(0);
 
   const [locale, setLocale] = useState<Locale>(serverLocale);
   const [translations, setTranslations] = useState<Translations>(
@@ -41,17 +45,30 @@ export function I18nProvider({ children, initialLocale, initialTranslations }: I
   const [isLoading, setIsLoading] = useState(!initialTranslations);
 
   useEffect(() => {
-    const storedLocale = getStoredLocale();
-    if (storedLocale !== locale || !initialTranslations) {
+    const clientLocale = getClientLocale();
+    const sync = () => {
+      const gen = ++syncGeneration.current;
       setIsLoading(true);
-      void loadTranslationsDynamic(storedLocale).then((loaded) => {
-        setLocale(storedLocale);
+      void loadTranslationsDynamic(clientLocale).then((loaded) => {
+        if (gen !== syncGeneration.current) {
+          return;
+        }
+        setLocale(clientLocale);
         setTranslations(loaded);
         setIsLoading(false);
+        hydratedTranslations.current = true;
       });
+    };
+
+    if (clientLocale !== locale) {
+      sync();
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    if (!hydratedTranslations.current) {
+      sync();
+    }
+  }, [pathname, locale]);
 
   return (
     <I18nContext.Provider value={{ locale, translations, isLoading }}>

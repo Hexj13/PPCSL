@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
 
+import { MultiSelectOptionLeadingLogo } from '@/components/common/MultiSelectOptionLeadingLogo';
 import { useTranslation } from '@/hooks/useTranslation';
 import { designTokens } from '@/ui';
 
@@ -11,6 +12,7 @@ interface MultiSelectOption {
   value: string;
   label: string;
   category?: string;
+  logoSrc?: string;
 }
 
 interface MultiSelectDropdownProps {
@@ -324,11 +326,14 @@ function MultiSelectDropdownComponent({
                     <button
                       type="button"
                       onClick={() => handleToggle(option.value)}
-                      className={`w-full px-4 py-3 text-left text-text-primary hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between ${
+                      className={`w-full px-4 py-3 text-left text-text-primary hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between gap-2 ${
                         isSelected ? 'bg-primary-500/20' : ''
                       } ${isSelected ? 'font-semibold' : ''} ${option.category ? 'pl-8' : ''}`}
                     >
-                      <span>{option.label}</span>
+                      <span className="flex items-center gap-2 min-w-0 flex-1">
+                        <MultiSelectOptionLeadingLogo src={option.logoSrc} />
+                        <span className="truncate">{option.label}</span>
+                      </span>
                       {isSelected && (
                         <svg
                           className="w-5 h-5 text-primary-900"

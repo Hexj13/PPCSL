@@ -1,5 +1,15 @@
 import { useTranslation } from '@/hooks/useTranslation';
 
+export function BreadcrumbsSkeletonDecorative() {
+  return (
+    <nav className="flex items-center space-x-2 text-sm mb-6" aria-hidden="true">
+      <div className="h-4 bg-bg-secondary/30 rounded-sm w-20 animate-pulse" />
+      <span className="text-gray-500">/</span>
+      <div className="h-4 bg-bg-secondary/30 rounded-sm w-48 animate-pulse" />
+    </nav>
+  );
+}
+
 export function BreadcrumbsSkeleton() {
   const { t } = useTranslation();
   return (

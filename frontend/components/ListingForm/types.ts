@@ -1,4 +1,4 @@
-import type { Brand, City, VehicleModel } from '@/lib/api';
+import type { Brand, City, ListingVideoPayload, VehicleModel } from '@/lib/api';
 
 import type { ListingFormData } from './listingFormTypes';
 
@@ -31,4 +31,13 @@ export interface ListingFormSectionProps {
   }>;
   onUploadedImageLoaded?: (_slotId: string) => void;
   minPhotosRequired?: number;
+  initialListingVideo?: ListingVideoPayload | null;
+  videoPhase?: 'idle' | 'selected' | 'uploading' | 'processing' | 'ready' | 'failed';
+  videoProgress?: number;
+  onVideoFileSelected?: (_file: File) => void;
+  onVideoRemove?: () => void | Promise<void>;
+  listingVideoResolved?: ListingVideoPayload | null;
+  videoMaxSizeMb?: number;
+  videoMaxDurationMin?: number;
+  selectedVideoFileName?: string | null;
 }

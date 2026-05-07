@@ -9,7 +9,9 @@ export class CipautoImportThrottlerGuard extends ThrottlerGuard {
     if (!request || request.method !== 'POST') return false;
 
     const url = String(request.originalUrl ?? request.url ?? '');
-    if (!url.includes('/api/upload/image')) return false;
+    if (!url.includes('/api/upload/image') && !url.includes('/api/upload/video/from-url')) {
+      return false;
+    }
 
     const expectedSecret = process.env.CIPAUTO_IMPORT_SECRET?.trim();
     if (!expectedSecret) return false;
@@ -20,6 +22,9 @@ export class CipautoImportThrottlerGuard extends ThrottlerGuard {
 
     const controllerName = context.getClass()?.name;
     const handlerName = context.getHandler()?.name;
-    return controllerName === 'UploadController' && handlerName === 'uploadImage';
+    if (controllerName === 'UploadController' && handlerName === 'uploadImage') {
+      return true;
+    }
+    return controllerName === 'ListingVideoImportController' && handlerName === 'importFromUrl';
   }
 }

@@ -60,6 +60,13 @@ import { TypeOrmPromotionHistoryWriter } from './infrastructure/persistence/prom
 import { TypeOrmListingRepository } from './infrastructure/persistence/typeorm-listing.repository';
 import { ListingsService } from './listings.service';
 import { ListingsController } from './presentation/listings.controller';
+import { ParseListingIdPipe } from './presentation/pipes/parse-listing-id.pipe';
+import { ListingVideoImportController } from './video/listing-video-import.controller';
+import { ListingVideoReconcileCronService } from './video/listing-video-reconcile.cron';
+import { ListingVideoController } from './video/listing-video.controller';
+import { ListingVideoService } from './video/listing-video.service';
+import { MediaConvertWebhookController } from './video/mediaconvert-webhook.controller';
+import { MediaConvertService } from './video/mediaconvert.service';
 
 @Module({
   imports: [
@@ -79,8 +86,14 @@ import { ListingsController } from './presentation/listings.controller';
     UsersModule,
     BrandsModule,
   ],
-  controllers: [ListingsController],
+  controllers: [
+    ListingsController,
+    ListingVideoController,
+    ListingVideoImportController,
+    MediaConvertWebhookController,
+  ],
   providers: [
+    ParseListingIdPipe,
     ListingsService,
     ListingTitleService,
     {
@@ -133,7 +146,10 @@ import { ListingsController } from './presentation/listings.controller';
     UserAccountDeletedListener,
     GeminiListingAiReportClient,
     ListingAiReportService,
+    ListingVideoService,
+    MediaConvertService,
+    ListingVideoReconcileCronService,
   ],
-  exports: [ListingsService, LISTING_CACHE, TypeOrmModule],
+  exports: [ListingsService, LISTING_CACHE, TypeOrmModule, ListingVideoService],
 })
 export class ListingsModule {}

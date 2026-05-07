@@ -28,4 +28,5 @@ export function clearClientAuthLocalStorage(options?: {
   if (clearReturnUrl) {
     localStorageRemoveItem('returnUrl');
   }
+  document.cookie = 'kupito-preferred-locale=; path=/; max-age=0; SameSite=Lax';
 }

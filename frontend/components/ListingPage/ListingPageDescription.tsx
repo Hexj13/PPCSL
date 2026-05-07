@@ -1,25 +1,35 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { prepareListingDescriptionHtml } from '@/lib/listingDescriptionHtml';
 
 interface ListingPageDescriptionProps {
-  descriptionHtml: string | null;
+  rawHtml: string;
 }
 
 const COLLAPSED_HEIGHT = 400;
 
-export function ListingPageDescription({ descriptionHtml }: ListingPageDescriptionProps) {
+export function ListingPageDescription({ rawHtml }: ListingPageDescriptionProps) {
   const { t } = useTranslation();
+  const [preparedHtml, setPreparedHtml] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [needsExpansion, setNeedsExpansion] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined' || !rawHtml) {
+      setPreparedHtml(null);
+      return;
+    }
+    setPreparedHtml(prepareListingDescriptionHtml(rawHtml, window));
+  }, [rawHtml]);
+
   useEffect(() => {
-    if (!contentRef.current) return;
+    if (!preparedHtml || !contentRef.current) return;
 
     const measure = () => {
       if (contentRef.current) {
@@ -34,7 +44,7 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
     const observer = new ResizeObserver(measure);
     observer.observe(contentRef.current);
     return () => observer.disconnect();
-  }, [descriptionHtml]);
+  }, [preparedHtml]);
 
   const handleToggle = useCallback(() => {
     if (isExpanded && wrapperRef.current) {
@@ -47,25 +57,12 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
     }
   }, [isExpanded]);
 
-  if (!descriptionHtml) {
-    return (
-      <div className="surface" style={{ height: '400px' }}>
-        <div className="h-10 bg-primary-500/10 rounded-sm mb-4 animate-pulse w-32" />
-        <div className="space-y-3">
-          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse" />
-          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse w-5/6" />
-          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse" />
-          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse w-4/5" />
-          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse" />
-          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse w-11/12" />
-          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse" />
-          <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse w-3/4" />
-        </div>
-      </div>
-    );
+  if (!rawHtml) {
+    return null;
   }
 
-  const targetHeight = isExpanded ? contentHeight : COLLAPSED_HEIGHT;
+  const ready = preparedHtml !== null;
+  const targetHeight = ready ? (isExpanded ? contentHeight : COLLAPSED_HEIGHT) : COLLAPSED_HEIGHT;
 
   return (
     <div ref={wrapperRef} className="surface relative">
@@ -73,99 +70,116 @@ export function ListingPageDescription({ descriptionHtml }: ListingPageDescripti
         {t('listingDetail.description')}
       </h2>
 
-      <div
-        id="listing-description-content"
-        className="overflow-hidden relative"
-        style={{
-          maxHeight: `${targetHeight}px`,
-          transition: 'max-height 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-        }}
-      >
+      {!ready ? (
         <div
-          ref={contentRef}
-          className="leading-relaxed max-w-none listing-description whitespace-pre-wrap [&_a]:text-primary-900 [&_a]:underline [&_a]:transition-colors [&_a]:duration-200 hover-only:[&_a:hover]:text-primary-700"
-          style={{
-            color: 'rgb(var(--text-secondary-rgb))',
-            paddingBottom: !needsExpansion ? '0' : isExpanded ? '24px' : '60px',
-          }}
-          dangerouslySetInnerHTML={{
-            __html: descriptionHtml,
-          }}
-        />
-      </div>
-
-      {!isExpanded && needsExpansion && (
-        <div
-          className="absolute left-0 right-0 pointer-events-none"
-          style={{
-            bottom: '0',
-            height: '100px',
-            background:
-              'linear-gradient(to top, rgba(var(--bg-secondary-rgb, 244, 244, 244), 0.96) 0%, rgba(var(--bg-secondary-rgb, 244, 244, 244), 0.65) 40px, transparent 100%)',
-          }}
-        />
-      )}
-
-      {needsExpansion && (
-        <div
-          className={`flex justify-center ${isExpanded ? 'mt-0' : 'absolute left-0 right-0 bottom-4'}`}
-          style={{ zIndex: 10 }}
+          className="rounded-lg bg-bg-secondary/15 min-h-[400px]"
+          aria-busy="true"
+          style={{ minHeight: COLLAPSED_HEIGHT }}
         >
-          <button
-            onClick={handleToggle}
-            aria-expanded={isExpanded}
-            aria-controls="listing-description-content"
-            className="min-h-0 h-12 min-h-12 max-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-white select-none"
-          >
-            {isExpanded ? (
-              <>
-                <svg
-                  className="w-4 h-4 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16l5-5 5 5"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 11l5-5 5 5"
-                  />
-                </svg>
-                {t('listingDetail.collapse')}
-              </>
-            ) : (
-              <>
-                <svg
-                  className="w-4 h-4 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 8l5 5 5-5"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 13l5 5 5-5"
-                  />
-                </svg>
-                {t('listingDetail.expand')}
-              </>
-            )}
-          </button>
+          <div className="h-10 bg-primary-500/10 rounded-sm mb-4 animate-pulse w-32 mx-0" />
+          <div className="space-y-3 px-0">
+            <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse" />
+            <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse w-5/6" />
+            <div className="h-4 bg-primary-500/10 rounded-sm animate-pulse" />
+          </div>
         </div>
+      ) : (
+        <>
+          <div
+            id="listing-description-content"
+            className="overflow-hidden relative"
+            style={{
+              maxHeight: `${targetHeight}px`,
+              transition: 'max-height 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            }}
+          >
+            <div
+              ref={contentRef}
+              className="leading-relaxed max-w-none listing-description whitespace-pre-wrap [&_a]:text-primary-900 [&_a]:underline [&_a]:transition-colors [&_a]:duration-200 hover-only:[&_a:hover]:text-primary-700"
+              style={{
+                color: 'rgb(var(--text-secondary-rgb))',
+                paddingBottom: !needsExpansion ? '0' : isExpanded ? '24px' : '60px',
+              }}
+              dangerouslySetInnerHTML={{
+                __html: preparedHtml,
+              }}
+            />
+          </div>
+
+          {!isExpanded && needsExpansion && (
+            <div
+              className="absolute left-0 right-0 pointer-events-none"
+              style={{
+                bottom: '0',
+                height: '100px',
+                background:
+                  'linear-gradient(to top, rgba(var(--bg-secondary-rgb, 244, 244, 244), 0.96) 0%, rgba(var(--bg-secondary-rgb, 244, 244, 244), 0.65) 40px, transparent 100%)',
+              }}
+            />
+          )}
+
+          {needsExpansion && (
+            <div
+              className={`flex justify-center ${isExpanded ? 'mt-0' : 'absolute left-0 right-0 bottom-4'}`}
+              style={{ zIndex: 10 }}
+            >
+              <button
+                onClick={handleToggle}
+                aria-expanded={isExpanded}
+                aria-controls="listing-description-content"
+                className="min-h-0 h-12 min-h-12 max-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-white select-none"
+              >
+                {isExpanded ? (
+                  <>
+                    <svg
+                      className="w-4 h-4 shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 16l5-5 5 5"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 11l5-5 5 5"
+                      />
+                    </svg>
+                    {t('listingDetail.collapse')}
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-4 h-4 shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 8l5 5 5-5"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 13l5 5 5-5"
+                      />
+                    </svg>
+                    {t('listingDetail.expand')}
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </>
       )}
       <style jsx>{`
         .listing-description {

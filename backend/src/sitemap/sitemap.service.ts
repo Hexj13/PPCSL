@@ -6,6 +6,7 @@ import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
 import { RedisService } from '../common/redis.service';
 import { createSlug } from '../common/utils/slug.utils';
+import { listingPublicPathSegment } from '../listings/application/utils/listing-url-slug.utils';
 import { Listing } from '../listings/entities/listing.entity';
 import { TireBrand } from '../tires/entities/tire-brand.entity';
 import { TireModel } from '../tires/entities/tire-model.entity';
@@ -13,7 +14,7 @@ import { User } from '../users/entities/user.entity';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club').replace(/\/$/, '');
 const CACHE_TTL = 3600;
-const CACHE_PREFIX = 'sitemap:';
+const CACHE_PREFIX = 'sitemap:v2:';
 
 const BRAND_SITEMAP_VEHICLE_TYPES = ['car', 'truck', 'moto'] as const;
 type BrandSitemapVehicleType = (typeof BRAND_SITEMAP_VEHICLE_TYPES)[number];
@@ -44,6 +45,29 @@ export class SitemapService {
     private readonly tireModelRepo: Repository<TireModel>,
     private readonly redis: RedisService,
   ) {}
+
+  private ruAlternateLoc(roLoc: string): string {
+    const u = new URL(roLoc);
+    const pq = `${u.pathname}${u.search}`;
+    if (pq === '/ru' || pq.startsWith('/ru/')) {
+      return roLoc;
+    }
+    if (pq === '/' || pq === '') {
+      return `${u.origin}/ru`;
+    }
+    return `${u.origin}/ru${pq}`;
+  }
+
+  private withRuDuplicates(urls: SitemapUrl[]): SitemapUrl[] {
+    const out: SitemapUrl[] = [...urls];
+    for (const entry of urls) {
+      const altLoc = this.ruAlternateLoc(entry.loc);
+      if (altLoc !== entry.loc) {
+        out.push({ ...entry, loc: altLoc });
+      }
+    }
+    return out;
+  }
 
   async getSitemapIndex(): Promise<string> {
     const cached = await this.getFromCache('index');
@@ -116,7 +140,7 @@ export class SitemapService {
       { loc: `${SITE_URL}/cookie-settings`, lastmod: now, changefreq: 'monthly', priority: 0.2 },
     ];
 
-    const xml = this.buildUrlset(urls);
+    const xml = this.buildUrlset(this.withRuDuplicates(urls));
     await this.saveToCache('pages', xml);
     return xml;
   }
@@ -174,7 +198,7 @@ export class SitemapService {
       });
     }
 
-    const xml = this.buildUrlset(urls);
+    const xml = this.buildUrlset(this.withRuDuplicates(urls));
     await this.saveToCache('tires', xml);
     return xml;
   }
@@ -193,10 +217,16 @@ export class SitemapService {
     return (BRAND_SITEMAP_VEHICLE_TYPES as readonly string[]).includes(v);
   }
 
-  private modelBrandSitemapVehicleType(model: VehicleModel): BrandSitemapVehicleType {
-    const vt = model.vehicle_types?.[0];
-    if (vt && this.isBrandSitemapVehicleType(vt)) return vt;
-    return 'car';
+  private modelBrandSitemapVehicleTypes(model: VehicleModel): BrandSitemapVehicleType[] {
+    const raw = model.vehicle_types || [];
+    const filtered = raw.filter((t): t is BrandSitemapVehicleType =>
+      this.isBrandSitemapVehicleType(t),
+    );
+    const unique = [...new Set(filtered)];
+    if (unique.length === 0) {
+      return ['car'];
+    }
+    return unique;
   }
 
   private groupBrandModelUrlsByVehicleType(
@@ -226,9 +256,9 @@ export class SitemapService {
       }
 
       for (const vt of types) {
-        const param = vt !== 'car' ? `&vehicleType=${vt}` : '';
+        const param = vt !== 'car' ? `?vehicleType=${vt}` : '';
         grouped[vt].push({
-          loc: `${SITE_URL}/?brand=${slug}${param}`,
+          loc: `${SITE_URL}/${slug}${param}`,
           lastmod: now,
           changefreq: 'daily',
           priority: 0.8,
@@ -242,14 +272,15 @@ export class SitemapService {
       const modelSlug = createSlug(model.name);
       if (!brandSlug || !modelSlug) continue;
 
-      const vt = this.modelBrandSitemapVehicleType(model);
-      const param = vt !== 'car' ? `&vehicleType=${vt}` : '';
-      grouped[vt].push({
-        loc: `${SITE_URL}/?brand=${brandSlug}&model=${modelSlug}${param}`,
-        lastmod: now,
-        changefreq: 'daily',
-        priority: 0.7,
-      });
+      for (const vt of this.modelBrandSitemapVehicleTypes(model)) {
+        const param = vt !== 'car' ? `?vehicleType=${vt}` : '';
+        grouped[vt].push({
+          loc: `${SITE_URL}/${brandSlug}/${modelSlug}${param}`,
+          lastmod: now,
+          changefreq: 'daily',
+          priority: 0.7,
+        });
+      }
     }
 
     return grouped;
@@ -305,7 +336,7 @@ export class SitemapService {
 
     for (const vt of BRAND_SITEMAP_VEHICLE_TYPES) {
       const urls = grouped[vt];
-      const xml = this.buildUrlset(urls);
+      const xml = this.buildUrlset(this.withRuDuplicates(urls));
       result[vt] = xml;
       await this.saveToCache(`brands-${vt}`, xml);
     }
@@ -335,7 +366,7 @@ export class SitemapService {
       priority: 0.6,
     }));
 
-    const xml = this.buildUrlset(urls);
+    const xml = this.buildUrlset(this.withRuDuplicates(urls));
     await this.saveToCache('sellers', xml);
     return xml;
   }
@@ -357,9 +388,9 @@ export class SitemapService {
     let hasMore = true;
 
     while (hasMore) {
-      const batch: { id: string; updated_at: Date }[] = await this.listingRepo
+      const batch: { id: string; updated_at: Date; slug: string | null }[] = await this.listingRepo
         .createQueryBuilder('l')
-        .select(['l.id', 'l.updated_at'])
+        .select(['l.id', 'l.updated_at', 'l.slug'])
         .where('l.status = :status', { status: 'Active' })
         .andWhere('l.created_at >= :start', { start: startDate })
         .andWhere('l.created_at < :end', { end: endDate })
@@ -370,8 +401,15 @@ export class SitemapService {
         .getMany();
 
       for (const l of batch) {
+        const pathSeg = listingPublicPathSegment(l.slug, l.id);
+        const roLoc = `${SITE_URL}/listings/${pathSeg}`;
+        const ruLoc = this.ruAlternateLoc(roLoc);
+        const lastmod = l.updated_at.toISOString().split('T')[0];
         urlEntries.push(
-          `  <url>\n    <loc>${this.escapeXml(`${SITE_URL}/listings/${l.id}`)}</loc>\n    <lastmod>${l.updated_at.toISOString().split('T')[0]}</lastmod>\n    <changefreq>hourly</changefreq>\n    <priority>0.9</priority>\n  </url>`,
+          `  <url>\n    <loc>${this.escapeXml(roLoc)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>hourly</changefreq>\n    <priority>0.9</priority>\n  </url>`,
+        );
+        urlEntries.push(
+          `  <url>\n    <loc>${this.escapeXml(ruLoc)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>hourly</changefreq>\n    <priority>0.9</priority>\n  </url>`,
         );
       }
 

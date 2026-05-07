@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 import {
@@ -13,12 +14,14 @@ import {
   sanitizePhoneInput,
   validatePhone,
 } from '@/lib/phone';
+import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
 export default function ChangePhonePage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { push } = useLocalizedNavigation();
   const { user, isInitialized } = useAuthStore();
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,7 +30,7 @@ export default function ChangePhonePage() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      router.push('/sign');
+      router.push(buildSignInHref());
     }
   }, [user, isInitialized, router]);
 
@@ -80,7 +83,7 @@ export default function ChangePhonePage() {
       const phoneE164 = compactE164Phone(phone);
       await authApi.changePhoneRequest({ phone: phoneE164 });
       toast.success(t('profile.changePhone.codeSent'));
-      router.push(`/profile/verify-phone-change?phone=${encodeURIComponent(phoneE164)}`);
+      push(`/profile/verify-phone-change?phone=${encodeURIComponent(phoneE164)}`);
     } catch (err: unknown) {
       const axiosError = err as Parameters<typeof getPhoneSubmitErrorMessage>[0];
       const data = axiosError.response?.data;
@@ -146,7 +149,7 @@ export default function ChangePhonePage() {
         <p className="mt-6 text-center text-sm text-gray-300">
           <button
             type="button"
-            onClick={() => router.push('/profile')}
+            onClick={() => push('/profile')}
             className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
           >
             {t('profile.changePhone.backToProfile')}

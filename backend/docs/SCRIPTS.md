@@ -392,12 +392,7 @@ The API exposes normalized summaries on runs while the CLI files remain the raw 
 
 Shared code lives in `src/scripts/tools/partner-import-shared/` (Kupito API client, upload, mappers, registry/report helpers).
 
-Parser source of truth is platform-specific:
-
-- `parsers/cipauto-import/` in platform root
-- `parsers/999md-import/` in platform root
-
-Runtime copies are created in core by `npm run prepare:build` under `src/scripts/tools/`.
+Parser implementation lives in the core submodule (`src/scripts/tools/cipauto-import/`, `src/scripts/tools/999md-import/`). Admin visibility and defaults come from the platform root `config/parsers.ts` (copied into core by `npm run prepare:build`).
 
 | npm script                                                   | Effect                                                      |
 | ------------------------------------------------------------ | ----------------------------------------------------------- |
@@ -408,6 +403,8 @@ Runtime copies are created in core by `npm run prepare:build` under `src/scripts
 | `npm run partner:check-urls`                                 | PDP check for listings with saved `partner_listing_canonical_url` (JSON+CSV report)          |
 | `npm run cipauto:audit-stale`                                | Find and close listings removed from CipAuto                |
 | `npm run 999md:dealer-audit`                                 | Brand/model audit report vs live Kupito API                 |
+
+**PDP import — optional listing video:** when PDP yields a `videoUrl`, imports call `POST /api/upload/video/from-url` after the listing exists; failures are non-fatal (see `core/docs/features/listings.md`).
 
 **PDP import — optional DB dedup:** `cipauto:import` and `999md:import` accept `--check-user-duplicates-before-create` (opens the same Postgres connection pattern as `seed-registry`, skips `createListing` when a same-user duplicate is detected). `999md:import` also accepts `--dedupe-999-price-tolerance-pct` and `--dedupe-999-photo-count-tolerance` for fingerprint tolerances (defaults `0` and `1`). The admin **Parsing → PDP** modal and PDP schedules persist the same flag in run/schedule `config_snapshot`. See `docs/parsing/cipauto-import.md`, `docs/parsing/999md-import.md`, and `core/docs/features/parsing-framework.md`.
 

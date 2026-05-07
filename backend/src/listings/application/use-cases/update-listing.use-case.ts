@@ -35,6 +35,7 @@ import {
   coverBlurHashFromImageBlurHashes,
   validateImageBlurHashesMatchImages,
 } from '../utils/image-blur-hashes.utils';
+import { buildListingSlugPart } from '../utils/listing-url-slug.utils';
 import { assertPartnerListingCanonicalUrlShape } from '../utils/partner-listing-canonical-url.utils';
 
 function sanitizeListingDescriptionInput(value: string | null | undefined): string | null {
@@ -342,6 +343,12 @@ export class UpdateListingUseCase {
       is_new: false,
     };
 
+    const mergedCityTire =
+      listingUpdateData.city !== undefined && listingUpdateData.city !== null
+        ? String(listingUpdateData.city)
+        : listing.city;
+    listingUpdateData.slug = buildListingSlugPart(title, mergedCityTire);
+
     if (updateListingDto.image_blur_hashes !== undefined) {
       listingUpdateData.cover_blur_hash = coverBlurHashFromImageBlurHashes(
         updateListingDto.image_blur_hashes,
@@ -541,13 +548,20 @@ export class UpdateListingUseCase {
 
     const localizedPatch = buildLocalizedDescriptionUpdate(listing, updateListingDto);
 
+    const newTitle = await this.generateTitle(updatedVehicle);
+
     const listingUpdateData: Partial<Listing> = {
       ...(listingFields as Partial<Listing>),
       ...localizedPatch,
       ...partnerFieldsPatch,
       last_edited_at: new Date(),
-      title: await this.generateTitle(updatedVehicle),
+      title: newTitle,
     };
+    const mergedCityVehicle =
+      listingUpdateData.city !== undefined && listingUpdateData.city !== null
+        ? String(listingUpdateData.city)
+        : listing.city;
+    listingUpdateData.slug = buildListingSlugPart(newTitle, mergedCityVehicle);
     if (listingUpdateData.available_in_credit === false) {
       listingUpdateData.down_payment_amount = null;
     }

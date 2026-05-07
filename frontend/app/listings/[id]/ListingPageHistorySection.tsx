@@ -3,6 +3,7 @@
 import { useI18n } from '@/components/providers/I18nProvider';
 import { analytics } from '@/lib/analytics';
 import type { Listing, ListingAiReportPayload } from '@/lib/api';
+import { getListingHref } from '@/lib/utils';
 import { InfoBlock, HintTooltip, CoinsIcon, EyeIcon, LoadingSpinner } from '@/ui';
 
 import type { ListingAiReportModalPhase } from './ListingPageAiReportModal';
@@ -146,7 +147,7 @@ export function ListingPageHistorySection({
                     <tr
                       key={prevListing.id}
                       className="border-b border-primary-500/10 hover-only:hover:bg-bg-darker/50 transition-colors cursor-pointer"
-                      onClick={() => router.push(`/listings/${prevListing.id}`)}
+                      onClick={() => router.push(getListingHref(prevListing, locale))}
                     >
                       <td
                         className="py-3 px-2 sm:px-3 text-xs sm:text-sm"

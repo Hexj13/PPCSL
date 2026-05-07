@@ -89,6 +89,15 @@ export class CreateListingDto {
   title?: string;
 
   @ApiPropertyOptional({
+    description: 'Ready staged listing video token returned by staged video upload flow',
+    maxLength: 20000,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20000)
+  stagedVideoToken?: string;
+
+  @ApiPropertyOptional({
     enum: constants.listingCategories,
     description: 'Listing category; omit for legacy vehicle listings',
   })

@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { isSignRoutePathname } from '@/components/layout/header-flow-paths';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import type { User } from '@/lib/api';
 
 import { HeaderMoreDropdown } from './HeaderMoreDropdown';
@@ -25,17 +27,18 @@ export function UserDesktopNavLinks({
   onLogout,
   t,
 }: UserDesktopNavLinksProps) {
+  const { href } = useLocalizedNavigation();
   return (
     <>
-      <Link href="/my-listings" className={navLinkClasses}>
+      <Link href={href('/my-listings')} className={navLinkClasses}>
         <DocumentsIcon />
         <span suppressHydrationWarning>{t('header.myListings')}</span>
       </Link>
-      <Link href="/favorites" className={navLinkClasses}>
+      <Link href={href('/favorites')} className={navLinkClasses}>
         <HeartIcon />
         <span suppressHydrationWarning>{t('header.favorites')}</span>
       </Link>
-      <Link href="/compare" className={`${navLinkClasses} hidden xl:flex`}>
+      <Link href={href('/compare')} className={`${navLinkClasses} hidden xl:flex`}>
         <ScaleIcon />
         <span suppressHydrationWarning>{t('header.compare')}</span>
         {comparisonCount > 0 && (
@@ -62,7 +65,7 @@ type UserDesktopNavActionsProps = {
 
 export function UserDesktopNavActions({ isAuthPage, isErrorPage }: UserDesktopNavActionsProps) {
   const pathname = usePathname();
-  const showLang = (!isAuthPage && !isErrorPage) || (pathname === '/sign' && !isErrorPage);
+  const showLang = (!isAuthPage && !isErrorPage) || (isSignRoutePathname(pathname) && !isErrorPage);
 
   return (
     <>

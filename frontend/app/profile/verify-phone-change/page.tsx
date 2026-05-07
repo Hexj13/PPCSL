@@ -3,11 +3,13 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 import { localStorageGetItem } from '@/lib/browser-local-storage';
 import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
 import { formatPhoneForDisplay } from '@/lib/phone';
+import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import { smsResendCooldownButtonLabel } from '@/lib/utils';
@@ -16,6 +18,7 @@ import { LoadingButton } from '@/ui';
 function VerifyPhoneChangeContent() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { push } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { setAuth, user, isInitialized } = useAuthStore();
   const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -31,7 +34,7 @@ function VerifyPhoneChangeContent() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      router.push('/sign');
+      router.push(buildSignInHref());
       return;
     }
   }, [user, isInitialized, router]);
@@ -41,7 +44,7 @@ function VerifyPhoneChangeContent() {
     if (phone) {
       setPhoneNumber(phone);
     } else {
-      router.push('/profile/change-phone');
+      push('/profile/change-phone');
       return;
     }
 
@@ -54,7 +57,7 @@ function VerifyPhoneChangeContent() {
         clearInterval(cooldownTimerRef.current);
       }
     };
-  }, [searchParams, router]);
+  }, [searchParams, push]);
 
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -182,7 +185,7 @@ function VerifyPhoneChangeContent() {
         localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
       );
       toast.success(t('profile.verifyPhoneChange.phoneChangedSuccess'));
-      router.push('/profile');
+      push('/profile');
     } catch (err: unknown) {
       const axiosError = err as {
         response?: {
@@ -277,7 +280,7 @@ function VerifyPhoneChangeContent() {
   };
 
   const handleBack = () => {
-    router.push('/profile/change-phone');
+    push('/profile/change-phone');
   };
 
   return (

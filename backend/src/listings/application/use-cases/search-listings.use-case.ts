@@ -11,6 +11,7 @@ import {
   LISTING_REPOSITORY,
   SearchCriteria,
 } from '../ports/listing.repository.port';
+import { stripListingVideoForListResponse } from '../utils/listing-video-public.util';
 
 export interface SearchListingsResult {
   data: Listing[];
@@ -108,6 +109,7 @@ export class SearchListingsUseCase {
           }
         }
       }
+      stripListingVideoForListResponse(listing);
       return listing;
     });
   }

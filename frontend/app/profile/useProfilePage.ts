@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -15,11 +14,13 @@ import {
 } from '@/app/profile/utils';
 import { validatePhone } from '@/app/register/utils';
 import { isPasswordValid, validatePassword } from '@/app/reset-password/utils';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { localStorageGetItem } from '@/lib/browser-local-storage';
 import { compactE164Phone, formatPhoneForDisplay } from '@/lib/phone';
+import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
@@ -177,7 +178,7 @@ function handleProfileSubmitError(err: unknown, t: (key: string) => string): voi
 }
 
 export function useProfilePage() {
-  const router = useRouter();
+  const { push, replace } = useLocalizedNavigation();
   const { user, isInitialized, setAuth, token, logout } = useAuthStore();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -225,7 +226,7 @@ export function useProfilePage() {
   useEffect(() => {
     if (!isInitialized) return;
     if (!token) {
-      router.push('/sign');
+      push(buildSignInHref());
       return;
     }
     if (hasLoadedRef.current) return;
@@ -268,14 +269,14 @@ export function useProfilePage() {
       } catch {
         hasLoadedRef.current = true;
         logoutRef.current();
-        router.push('/sign');
+        push(buildSignInHref());
       } finally {
         setLoadingProfile(false);
       }
     };
 
     void loadProfile();
-  }, [isInitialized, router, setAuth, token, user]);
+  }, [isInitialized, push, setAuth, token, user]);
 
   useEffect(() => {
     if (!user || !hasLoadedRef.current) return;
@@ -408,13 +409,13 @@ export function useProfilePage() {
       await authApi.deleteAccount();
       toast.success(t('profile.deleteSuccess'));
       logout();
-      router.replace('/');
+      replace('/');
     } catch {
     } finally {
       setDeleting(false);
       setShowDeleteModal(false);
     }
-  }, [user, router, logout, t]);
+  }, [user, replace, logout, t]);
 
   return {
     user,

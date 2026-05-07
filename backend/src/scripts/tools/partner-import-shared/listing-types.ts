@@ -34,11 +34,14 @@ export interface ParsedPdpData {
   price?: number;
   currency?: Currency;
   description?: string;
+  description_ro?: string;
+  description_ru?: string;
   creditAvailable: boolean;
   downPaymentAmount?: number;
   monthlyPayment?: number;
   creditPeriodMonths?: number;
   images: string[];
+  videoUrl?: string;
   trimRaw?: string;
   equipmentOptions: ParsedPdpEquipmentOption[];
   equipmentKeys: string[];
@@ -79,7 +82,16 @@ export type SourceCloseReason =
   | 'plp_missing_candidate'
   | 'pdp_closed_template'
   | 'pdp_http_404'
-  | 'pdp_http_410';
+  | 'pdp_http_410'
+  | 'graphql_advert_null'
+  | 'graphql_is_expired'
+  | 'graphql_ad_state_removed'
+  | 'graphql_ad_state_blocked'
+  | 'graphql_ad_state_need_pay'
+  | 'graphql_ad_state_hidden'
+  | 'graphql_ad_state_draft'
+  | 'graphql_ad_state_pre_moderation'
+  | 'graphql_ad_state_unspecified';
 
 export type SourceCloseOutcome = 'listing_closed' | 'source_only';
 
@@ -203,6 +215,8 @@ export interface KupitoCreateListingPayload {
   available_in_credit?: boolean;
   down_payment_amount?: number | null;
   description?: string;
+  description_ro?: string;
+  description_ru?: string;
   images: string[];
   image_blur_hashes?: (string | null)[];
   status?: ListingStatus;

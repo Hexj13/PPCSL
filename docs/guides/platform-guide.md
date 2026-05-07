@@ -215,6 +215,70 @@ const config: SiteConfig = {
 export default config;
 ```
 
+#### Locale routing (optional)
+
+If you omit `localeRouting`, the Next.js frontend uses core defaults (Moldova-style `ro` without a URL prefix and `ru` under `/ru`). For a new country or a single-language site, set `localeRouting` explicitly on `SiteConfig`.
+
+Fields:
+
+- `defaultLocale` — URL segment omitted for the primary language (no leading slash in the value; use `ro`, `en`, `bg`).
+- `supportedLocales` — all UI locales; order is preserved for the language switcher.
+- `prefixedLocales` — locales that appear as the first path segment (`/ru/...`, `/en/...`). Must not include `defaultLocale`.
+- `enableLegacyDefaultLocaleRedirect` — when `true`, requests to `/<defaultLocale>/...` are redirected with 308 to strip that segment (useful if you previously published default-locale URLs with a prefix). Ignored when `defaultLocale` is listed in `prefixedLocales`. The older config key `enableLegacyRoPathRedirect` is still read as a fallback when `enableLegacyDefaultLocaleRedirect` is omitted.
+- `languageSwitcherTranslationKeys` — map of locale code to a frontend translation key for the label in `LanguageSwitcher` (for example `ro` → `common.languageRo`). Locales without an entry use `common.languageLocaleCode` with a `{code}` placeholder.
+
+Single-locale example (English only, no URL prefix):
+
+```typescript
+const config: SiteConfig = {
+  country: 'us',
+  name: 'Your Platform Name',
+  domain: 'your-platform.com',
+  locale: 'en-US',
+  currency: 'USD',
+  currencies: ['USD'] as const,
+  countryCode: 'US',
+  supportEmail: 'support@your-platform.com',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://your-platform.com',
+  localeRouting: {
+    defaultLocale: 'en',
+    supportedLocales: ['en'],
+    prefixedLocales: [],
+    enableLegacyDefaultLocaleRedirect: false,
+  },
+};
+```
+
+Moldova-style example (default `ro` at `/`, Russian at `/ru`):
+
+```typescript
+const config: SiteConfig = {
+  country: 'md',
+  name: 'Example',
+  domain: 'example.md',
+  locale: 'ro-MD',
+  currency: 'EUR',
+  currencies: ['EUR', 'MDL'] as const,
+  countryCode: 'MD',
+  supportEmail: 'support@example.md',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://example.md',
+  localeRouting: {
+    defaultLocale: 'ro',
+    supportedLocales: ['ro', 'ru'],
+    prefixedLocales: ['ru'],
+    enableLegacyDefaultLocaleRedirect: true,
+    languageSwitcherTranslationKeys: {
+      ro: 'common.languageRo',
+      ru: 'common.languageRu',
+    },
+  },
+};
+```
+
+The header and footer `LanguageSwitcher` is shown only when `NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER` is set to `true` in the frontend environment and `supportedLocales` has more than one entry.
+
+When the switcher is enabled, the Next.js middleware may redirect a path **without** a locale prefix to a prefixed URL (for example `/ru/...`) using cookies: **`kupito-locale`** (explicit choice from the UI) takes precedence over **`kupito-preferred-locale`** (first-visit hint). If `kupito-locale` is the `defaultLocale`, that redirect does not run to the prefixed locale even when the preferred cookie suggests one.
+
 ### Step 7: Create CI/CD Workflow
 
 Create `.github/workflows/ci.yml`:

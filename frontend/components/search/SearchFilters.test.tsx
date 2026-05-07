@@ -357,6 +357,18 @@ describe('SearchFilters', () => {
       writable: true,
     });
 
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      configurable: true,
+      value: jest.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+    });
+
     window.sessionStorage.removeItem('kupito_popular_filters_open');
     window.sessionStorage.removeItem('kupito_advanced_filters_open');
     window.sessionStorage.removeItem('scrollPreserved');
@@ -414,7 +426,7 @@ describe('SearchFilters', () => {
       expect(screen.getByText('Basic criteria')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Brand')).toBeInTheDocument();
+    expect(screen.getAllByText('Brand').length).toBeGreaterThanOrEqual(1);
 
     await waitFor(
       () => {

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 
 import type { Listing } from '@/lib/api';
 import {
@@ -7,6 +7,7 @@ import {
   getServerTranslations,
   getTFromTranslations,
   type Locale,
+  type Translations,
 } from '@/lib/i18n';
 import {
   getListingPlainDescriptionForSchema,
@@ -14,13 +15,24 @@ import {
 } from '@/lib/listingDescriptionLocale';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import {
+  absoluteUrlWithLocalePrefix,
+  canonicalForLocaleFromRo,
+  hreflangLanguagesFromRoCanonical,
+  isLanguageSwitcherEnabled,
+} from '@/lib/url-locale';
+import {
   formatTireSize,
+  getCityName,
   getCountry,
   getListingDisplayTitle,
+  getListingHref,
+  getListingPublicPathSegment,
   getOptimizedImageUrl,
   getTireModelDisplayLabel,
+  getVehicleType,
   isTireListing,
   isVinMasked,
+  extractListingIdFromRouteParam,
   toSafeJsonLdHtml,
 } from '@/lib/utils';
 
@@ -57,6 +69,48 @@ function getListingImages(listing: Listing): string[] {
   return [`${siteUrl}/placeholder-car.jpg`];
 }
 
+function listingPageUrlOnSite(listing: Listing, locale: Locale): string {
+  return `${siteUrl}${getListingHref(listing, locale)}`;
+}
+
+function fillMetaTemplate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+}
+
+function buildListingOgAltForMeta(listing: Listing, locale: Locale, t: Translations): string {
+  const cityLabel = getCityName(listing.city, locale);
+  if (isTireListing(listing) && listing.tire) {
+    return fillMetaTemplate(t.metadata.listing.ogAltTire, {
+      title: listing.title,
+      city: cityLabel,
+    });
+  }
+  const v = listing.vehicle;
+  const brand = v?.brand?.name ?? '';
+  const model = v?.model?.name ?? '';
+  const year = v?.year != null ? String(v.year) : '';
+  return fillMetaTemplate(t.metadata.listing.ogAltVehicle, {
+    brand,
+    model,
+    year,
+    city: cityLabel,
+  });
+}
+
+function getVehicleSchemaKind(listing: Listing): 'Car' | 'MotorVehicle' {
+  const vt = getVehicleType(listing);
+  return vt === 'car' ? 'Car' : 'MotorVehicle';
+}
+
+function getListingItemCondition(listing: Listing): string {
+  if (isTireListing(listing) && listing.tire) {
+    return listing.tire.condition === 'new'
+      ? 'https://schema.org/NewCondition'
+      : 'https://schema.org/UsedCondition';
+  }
+  return listing.is_new ? 'https://schema.org/NewCondition' : 'https://schema.org/UsedCondition';
+}
+
 function getVehicleJsonLdPart(listing: Listing): Record<string, unknown> {
   const vehicle = listing.vehicle;
   if (!vehicle) return {};
@@ -88,7 +142,7 @@ function getVehicleJsonLdPart(listing: Listing): Record<string, unknown> {
   };
 }
 
-function getOffersJsonLd(listing: Listing): Record<string, unknown> | undefined {
+function getOffersJsonLd(listing: Listing, locale: Locale): Record<string, unknown> | undefined {
   if (listing.price === undefined || listing.price === null) {
     return undefined;
   }
@@ -100,7 +154,7 @@ function getOffersJsonLd(listing: Listing): Record<string, unknown> | undefined 
     priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     availability:
       listing.status === 'Active' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-    url: `${siteUrl}/listings/${listing.id}`,
+    url: listingPageUrlOnSite(listing, locale),
     hasMerchantReturnPolicy: {
       '@type': 'MerchantReturnPolicy',
       applicableCountry: siteConfig.countryCode,
@@ -152,6 +206,7 @@ function buildTireProductJsonLd(
   listing: Listing,
   tFn: (_key: string, _params?: Record<string, string | number>) => string,
   descriptionLocale: 'ro' | 'ru',
+  locale: Locale,
 ): Record<string, unknown> {
   const tire = listing.tire!;
   const brandName = tire.brand?.name || '';
@@ -162,7 +217,7 @@ function buildTireProductJsonLd(
     listing.title,
   );
   const seller = getSellerJsonLd(listing);
-  const offers = getOffersJsonLd(listing);
+  const offers = getOffersJsonLd(listing, locale);
   const additional: Array<{ '@type': string; name: string; value: string }> = [
     { '@type': 'PropertyValue', name: 'Size', value: formatTireSize(tire) },
     {
@@ -193,7 +248,8 @@ function buildTireProductJsonLd(
     additionalProperty: additional,
     ...(offers && { offers }),
     ...(seller && { seller }),
-    url: `${siteUrl}/listings/${listing.id}`,
+    itemCondition: getListingItemCondition(listing),
+    url: listingPageUrlOnSite(listing, locale),
   };
 }
 
@@ -201,9 +257,10 @@ function buildListingJsonLd(
   listing: Listing,
   tFn: (_key: string, _params?: Record<string, string | number>) => string,
   descriptionLocale: 'ro' | 'ru',
+  locale: Locale,
 ): Record<string, unknown> {
   if (isTireListing(listing) && listing.tire) {
-    return buildTireProductJsonLd(listing, tFn, descriptionLocale);
+    return buildTireProductJsonLd(listing, tFn, descriptionLocale, locale);
   }
   const vehicle = listing.vehicle;
   const brandName = vehicle?.brand?.name || '';
@@ -214,20 +271,21 @@ function buildListingJsonLd(
     listing.title,
   );
   const seller = getSellerJsonLd(listing);
-  const offers = getOffersJsonLd(listing);
+  const offers = getOffersJsonLd(listing, locale);
 
   return {
     '@context': 'https://schema.org',
-    '@type': 'Vehicle',
+    '@type': getVehicleSchemaKind(listing),
     name: listing.title,
     description,
     image: getListingImages(listing),
     brand: brandName ? { '@type': 'Brand', name: brandName } : undefined,
     model: modelName || undefined,
+    itemCondition: getListingItemCondition(listing),
     ...getVehicleJsonLdPart(listing),
     ...(offers && { offers }),
     ...(seller && { seller }),
-    url: `${siteUrl}/listings/${listing.id}`,
+    url: listingPageUrlOnSite(listing, locale),
   };
 }
 
@@ -236,13 +294,14 @@ function buildListingBreadcrumbJsonLd(
   homeLabel: string,
   tiresCategoryLabel: string,
   listingDisplayTitle: string,
+  locale: Locale,
 ): Record<string, unknown> {
   const elements: Array<{ '@type': string; position: number; name: string; item: string }> = [
     {
       '@type': 'ListItem',
       position: 1,
       name: homeLabel,
-      item: siteUrl,
+      item: absoluteUrlWithLocalePrefix(siteUrl, '/', locale),
     },
   ];
   if (isTireListing(listing) && listing.tire) {
@@ -250,14 +309,14 @@ function buildListingBreadcrumbJsonLd(
       '@type': 'ListItem',
       position: 2,
       name: tiresCategoryLabel,
-      item: `${siteUrl}?category=tire`,
+      item: absoluteUrlWithLocalePrefix(siteUrl, '/?category=tire', locale),
     });
   }
   elements.push({
     '@type': 'ListItem',
     position: elements.length + 1,
     name: listingDisplayTitle,
-    item: `${siteUrl}/listings/${listing.id}`,
+    item: listingPageUrlOnSite(listing, locale),
   });
   return {
     '@context': 'https://schema.org',
@@ -295,9 +354,30 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const locale = await getMetadataLocale();
   const t = getServerTranslations(locale);
-  const { id } = await params;
+  const rawId = (await params).id;
+  const resolvedId = extractListingIdFromRouteParam(rawId);
+  if (!resolvedId) {
+    return {
+      title: t.metadata.listing.notFoundTitle,
+      description: t.metadata.listing.notFoundDescription,
+      robots: {
+        index: false,
+        follow: false,
+        googleBot: {
+          index: false,
+          follow: false,
+        },
+      },
+      alternates: {
+        canonical: canonicalForLocaleFromRo(
+          `${siteUrl}/listings/${encodeURIComponent(rawId)}`,
+          locale,
+        ),
+      },
+    };
+  }
 
-  const listing = await getListing(id);
+  const listing = await getListing(resolvedId);
   if (!listing) {
     return {
       title: t.metadata.listing.notFoundTitle,
@@ -311,9 +391,17 @@ export async function generateMetadata({
         },
       },
       alternates: {
-        canonical: `${siteUrl}/listings/${id}`,
+        canonical: canonicalForLocaleFromRo(
+          `${siteUrl}/listings/${encodeURIComponent(rawId)}`,
+          locale,
+        ),
       },
     };
+  }
+
+  const canonicalSeg = getListingPublicPathSegment(listing);
+  if (rawId !== canonicalSeg) {
+    permanentRedirect(getListingHref(listing, locale));
   }
 
   const tFn = getTFromTranslations(t);
@@ -334,6 +422,13 @@ export async function generateMetadata({
         ? firstImage
         : `${siteUrl}${firstImage}`
       : `${siteUrl}/og-image.jpg`;
+  const ogImageAlt = buildListingOgAltForMeta(listing, locale, t);
+
+  const roCanonical = `${siteUrl}${getListingHref(listing, 'ro')}`;
+  const canonical = canonicalForLocaleFromRo(roCanonical, locale);
+  const alternates = isLanguageSwitcherEnabled()
+    ? { canonical, languages: hreflangLanguagesFromRoCanonical(roCanonical) }
+    : { canonical };
 
   return {
     title,
@@ -347,9 +442,7 @@ export async function generateMetadata({
       t.metadata.listing.keywords.carsForSale,
       t.metadata.listing.keywords.moldova,
     ].filter(Boolean),
-    alternates: {
-      canonical: `${siteUrl}/listings/${listing.id}`,
-    },
+    alternates,
     ...(listing.status === 'Closed' && {
       robots: {
         index: false,
@@ -362,7 +455,7 @@ export async function generateMetadata({
     }),
     openGraph: {
       type: 'website',
-      url: `${siteUrl}/listings/${listing.id}`,
+      url: canonical,
       title,
       description,
       images: [
@@ -370,7 +463,7 @@ export async function generateMetadata({
           url: ogImage,
           width: 1200,
           height: 630,
-          alt: displayTitle,
+          alt: ogImageAlt,
         },
       ],
       siteName: 'Kupito',
@@ -380,20 +473,29 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title,
       description,
-      images: [ogImage],
+      images: [{ url: ogImage, alt: ogImageAlt }],
     },
   };
 }
 
 export default async function ListingPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const listing = await getListing(id);
+  const locale = await getMetadataLocale();
+  const rawId = (await params).id;
+  const resolvedId = extractListingIdFromRouteParam(rawId);
+  if (!resolvedId) {
+    notFound();
+  }
+  const listing = await getListing(resolvedId);
 
   if (!listing || !listing.id) {
     notFound();
   }
 
-  const locale = await getMetadataLocale();
+  const canonicalSeg = getListingPublicPathSegment(listing);
+  if (rawId !== canonicalSeg) {
+    permanentRedirect(getListingHref(listing, locale));
+  }
+
   const t = getServerTranslations(locale);
   const tFn = getTFromTranslations(t);
   const displayTitle = getListingDisplayTitle(listing, tFn) || listing.title;
@@ -402,8 +504,9 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     t.listingDetail.home,
     t.searchFilters.tiresCategory,
     displayTitle,
+    locale,
   );
-  const listingJsonLd = buildListingJsonLd(listing, tFn, localeToDescriptionLocale(locale));
+  const listingJsonLd = buildListingJsonLd(listing, tFn, localeToDescriptionLocale(locale), locale);
 
   return (
     <>
@@ -417,7 +520,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(listingJsonLd) }}
       />
-      <ListingPageClient listingId={id} initialListing={listing} />
+      <ListingPageClient key={resolvedId} listingId={resolvedId} initialListing={listing} />
     </>
   );
 }

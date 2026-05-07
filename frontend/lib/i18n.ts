@@ -1,14 +1,30 @@
-import { localStorageGetItem, localStorageSetItem } from './browser-local-storage';
+import { localStorageSetItem } from './browser-local-storage';
 import type { Locale, Translations } from './i18n-types';
 export type { Locale, Translations } from './i18n-types';
+import { resolveLocaleRouting } from './locale-routing';
 import { loadSiteConfigSync } from './site-config';
+import { getLocaleFromPathname, isLanguageSwitcherEnabled, URL_LOCALE_HEADER } from './url-locale';
 import { getCountry } from './utils';
 
 const STORAGE_KEY = 'kupito-locale';
 const COOKIE_KEY = 'kupito-locale';
+export const PREFERRED_LOCALE_COOKIE_KEY = 'kupito-preferred-locale';
 
-let roTranslations: Translations | null = null;
-let ruTranslations: Translations | null = null;
+const translationCache = new Map<string, Translations>();
+
+function getRouting() {
+  return resolveLocaleRouting(loadSiteConfigSync(getCountry()));
+}
+
+function supportedLocaleSet(): Set<string> {
+  return new Set(getRouting().supportedLocales.map((x) => x.toLowerCase()));
+}
+
+function pickKnownLocale(value: string | null | undefined): Locale | null {
+  if (!value) return null;
+  const low = value.toLowerCase();
+  return supportedLocaleSet().has(low) ? low : null;
+}
 
 function createEmptyTranslations(): Translations {
   const handler: ProxyHandler<object> = {
@@ -19,9 +35,11 @@ function createEmptyTranslations(): Translations {
   return new Proxy({} as object, handler) as Translations;
 }
 
-function loadRoTranslations(): Translations {
-  if (roTranslations) {
-    return roTranslations;
+function requireTranslations(locale: string): Translations {
+  const low = locale.toLowerCase();
+  const cached = translationCache.get(low);
+  if (cached) {
+    return cached;
   }
 
   if (typeof window !== 'undefined') {
@@ -29,56 +47,31 @@ function loadRoTranslations(): Translations {
   }
 
   try {
-    const translations = require('./locales/ro.json');
-    roTranslations = translations as unknown as Translations;
-    return roTranslations;
+    const translations = require(`./locales/${low}.json`) as Translations;
+    translationCache.set(low, translations);
+    return translations;
   } catch {
     console.warn(
-      'Translations file ro.json not found, using empty translations. This is expected in core repository.',
+      `Translations file ${low}.json not found, using empty translations. This is expected in core repository.`,
     );
-    roTranslations = createEmptyTranslations();
-    return roTranslations;
-  }
-}
-
-function loadRuTranslations(): Translations {
-  if (ruTranslations) {
-    return ruTranslations;
-  }
-
-  if (typeof window !== 'undefined') {
-    return createEmptyTranslations();
-  }
-
-  try {
-    const translations = require('./locales/ru.json');
-    ruTranslations = translations as unknown as Translations;
-    return ruTranslations;
-  } catch {
-    console.warn(
-      'Translations file ru.json not found, using empty translations. This is expected in core repository.',
-    );
-    ruTranslations = createEmptyTranslations();
-    return ruTranslations;
+    const empty = createEmptyTranslations();
+    translationCache.set(low, empty);
+    return empty;
   }
 }
 
 export async function loadTranslationsDynamic(locale: Locale): Promise<Translations> {
-  if (locale === 'ru') {
-    if (ruTranslations) return ruTranslations;
-    try {
-      const translations = require('./locales/ru.json');
-      ruTranslations = translations as unknown as Translations;
-      return ruTranslations;
-    } catch {
-      return createEmptyTranslations();
-    }
+  const def = getDefaultLocale();
+  const raw = String(locale).toLowerCase();
+  const loc = supportedLocaleSet().has(raw) ? raw : def;
+  const cached = translationCache.get(loc);
+  if (cached) {
+    return cached;
   }
-  if (roTranslations) return roTranslations;
   try {
-    const translations = require('./locales/ro.json');
-    roTranslations = translations as unknown as Translations;
-    return roTranslations;
+    const translations = require(`./locales/${loc}.json`) as Translations;
+    translationCache.set(loc, translations);
+    return translations;
   } catch {
     return createEmptyTranslations();
   }
@@ -86,17 +79,14 @@ export async function loadTranslationsDynamic(locale: Locale): Promise<Translati
 
 export function getDefaultLocale(): Locale {
   try {
-    const siteConfig = loadSiteConfigSync(getCountry());
-    return siteConfig.locale.split('-')[0] as Locale;
+    return getRouting().defaultLocale;
   } catch {
     return 'ro';
   }
 }
 
-export function getStoredLocale(): Locale {
-  const enableLanguageSwitcher = process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER === 'true';
-
-  if (!enableLanguageSwitcher) {
+export function getClientLocale(): Locale {
+  if (!isLanguageSwitcherEnabled()) {
     return getDefaultLocale();
   }
 
@@ -105,22 +95,15 @@ export function getStoredLocale(): Locale {
   }
 
   try {
-    const cookieValue = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith(`${COOKIE_KEY}=`))
-      ?.split('=')[1];
-
-    if (cookieValue && (cookieValue === 'ro' || cookieValue === 'ru')) {
-      return cookieValue as Locale;
-    }
-
-    const stored = localStorageGetItem(STORAGE_KEY);
-    if (stored && (stored === 'ro' || stored === 'ru')) {
-      return stored as Locale;
-    }
+    const fromUrl = getLocaleFromPathname(window.location.pathname);
+    if (fromUrl) return fromUrl;
   } catch {}
 
   return getDefaultLocale();
+}
+
+export function getStoredLocale(): Locale {
+  return getClientLocale();
 }
 
 export function setStoredLocale(locale: Locale): void {
@@ -128,50 +111,55 @@ export function setStoredLocale(locale: Locale): void {
     return;
   }
 
-  localStorageSetItem(STORAGE_KEY, locale);
+  const picked = pickKnownLocale(locale);
+  if (!picked) {
+    return;
+  }
+
+  localStorageSetItem(STORAGE_KEY, picked);
 
   const maxAge = 365 * 24 * 60 * 60;
-  document.cookie = `${COOKIE_KEY}=${locale}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  document.cookie = `${COOKIE_KEY}=${picked}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  document.cookie = `${PREFERRED_LOCALE_COOKIE_KEY}=${picked}; path=/; max-age=${maxAge}; SameSite=Lax`;
 }
 
 export function applyPreferredLocaleFromProfile(preferredLocale: string | null | undefined): void {
   if (typeof window === 'undefined') {
     return;
   }
-  if (preferredLocale === 'ro' || preferredLocale === 'ru') {
-    setStoredLocale(preferredLocale);
+  const picked = pickKnownLocale(preferredLocale ?? undefined);
+  if (picked) {
+    setStoredLocale(picked);
   }
 }
 
 export function loadTranslations(locale?: Locale): Translations {
-  if (!locale) {
-    locale = getDefaultLocale();
-  }
-
-  if (locale === 'ru') {
-    return loadRuTranslations();
-  }
-
-  return loadRoTranslations();
+  const def = getDefaultLocale();
+  const raw = locale !== undefined ? String(locale).toLowerCase() : def;
+  const loc = supportedLocaleSet().has(raw) ? raw : def;
+  return requireTranslations(loc);
 }
 
 export function getServerTranslations(locale?: Locale): Translations {
-  if (!locale) {
-    locale = getDefaultLocale();
-  }
   return loadTranslations(locale);
 }
 
 export async function getMetadataLocale(): Promise<Locale> {
   const defaultLocale = getDefaultLocale();
-  if (process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER !== 'true') {
+  if (!isLanguageSwitcherEnabled()) {
     return defaultLocale;
+  }
+  const supported = supportedLocaleSet();
+  const { headers } = await import('next/headers');
+  const headerLocale = (await headers()).get(URL_LOCALE_HEADER)?.toLowerCase();
+  if (headerLocale && supported.has(headerLocale)) {
+    return headerLocale;
   }
   const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
-  const localeCookie = cookieStore.get('kupito-locale')?.value;
-  if (localeCookie && (localeCookie === 'ro' || localeCookie === 'ru')) {
-    return localeCookie as Locale;
+  const localeCookie = cookieStore.get('kupito-locale')?.value?.toLowerCase();
+  if (localeCookie && supported.has(localeCookie)) {
+    return localeCookie;
   }
   return defaultLocale;
 }

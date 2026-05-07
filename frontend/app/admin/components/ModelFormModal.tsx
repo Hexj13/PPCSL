@@ -191,13 +191,17 @@ export function ModelFormModal({
             ))}
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <AdminActionButton variant="secondary" className="flex-1" onClick={onClose}>
+        <div className="flex flex-col sm:flex-row gap-3 pt-2 shrink-0">
+          <AdminActionButton
+            variant="secondary"
+            className="w-full shrink-0 sm:flex-1"
+            onClick={onClose}
+          >
             {t('common.cancel')}
           </AdminActionButton>
           <AdminActionButton
             type="submit"
-            className="flex-1"
+            className="w-full shrink-0 sm:flex-1"
             disabled={submitting || !brandId || vehicleTypes.length === 0}
           >
             {t('common.save')}

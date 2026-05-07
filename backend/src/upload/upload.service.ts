@@ -8,7 +8,14 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand,
+  HeadObjectCommand,
 } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   BadRequestException,
   Injectable,
@@ -34,6 +41,24 @@ const RETRY_BASE_DELAY_MS = 500;
 const DELETE_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const THUMBNAIL_WIDTH = 400;
 const THUMBNAIL_QUALITY = 65;
+
+const VIDEO_PART_SIZE_BYTES = 5 * 1024 * 1024;
+const PRESIGNED_PART_TTL_SECONDS = 3600;
+
+export function buildPublicMediaUrl(filePath: string): string {
+  const path = filePath.startsWith('/') ? filePath : `/${filePath}`;
+  if (process.env.AWS_CLOUDFRONT_URL) {
+    return `${process.env.AWS_CLOUDFRONT_URL.replace(/\/$/, '')}${path}`;
+  }
+  if (process.env.AWS_S3_BUCKET_NAME && process.env.AWS_REGION) {
+    return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com${path}`;
+  }
+  let baseUrl = process.env.API_URL || 'http://localhost:4000';
+  if (process.env.NODE_ENV === 'production' && baseUrl.startsWith('http://')) {
+    baseUrl = baseUrl.replace('http://', 'https://');
+  }
+  return `${baseUrl}${path}`;
+}
 
 export type PlateMaskResult = 'mask_applied' | 'not_found' | null;
 
@@ -632,5 +657,249 @@ export class UploadService {
     this.optimizedImageCache.set(cacheKey, buffer);
 
     return buffer;
+  }
+
+  usesS3(): boolean {
+    return this.useS3 && !!this.s3Client;
+  }
+
+  validateVideoFileStart(buffer: Buffer): boolean {
+    if (buffer.length < 12) {
+      return false;
+    }
+    if (buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3) {
+      return true;
+    }
+    if (buffer.slice(4, 8).toString('ascii') === 'ftyp') {
+      return true;
+    }
+    if (
+      buffer.slice(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.slice(8, 12).toString('ascii') === 'AVI '
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  async createListingVideoMultipartUpload(
+    s3Key: string,
+    contentType: string,
+  ): Promise<{ uploadId: string }> {
+    if (!this.useS3 || !this.s3Client) {
+      throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+    }
+    const key = s3Key.replace(/^\//, '');
+    const result = await this.s3Client.send(
+      new CreateMultipartUploadCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        ContentType: contentType,
+      }),
+    );
+    if (!result.UploadId) {
+      throw new BadRequestException('errors.videoUploadInitFailed');
+    }
+    return { uploadId: result.UploadId };
+  }
+
+  async presignListingVideoPartUpload(
+    s3Key: string,
+    uploadId: string,
+    partNumber: number,
+  ): Promise<string> {
+    if (!this.useS3 || !this.s3Client) {
+      throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+    }
+    const key = s3Key.replace(/^\//, '');
+    const command = new UploadPartCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      UploadId: uploadId,
+      PartNumber: partNumber,
+    });
+    return getSignedUrl(this.s3Client, command, { expiresIn: PRESIGNED_PART_TTL_SECONDS });
+  }
+
+  async completeListingVideoMultipartUpload(
+    s3Key: string,
+    uploadId: string,
+    parts: { PartNumber: number; ETag: string }[],
+  ): Promise<void> {
+    if (!this.useS3 || !this.s3Client) {
+      throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+    }
+    const key = s3Key.replace(/^\//, '');
+    const sorted = [...parts].sort((a, b) => a.PartNumber - b.PartNumber);
+    await this.s3Client.send(
+      new CompleteMultipartUploadCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        UploadId: uploadId,
+        MultipartUpload: {
+          Parts: sorted.map((p) => ({ PartNumber: p.PartNumber, ETag: p.ETag })),
+        },
+      }),
+    );
+  }
+
+  async abortListingVideoMultipartUpload(s3Key: string, uploadId: string): Promise<void> {
+    if (!this.useS3 || !this.s3Client) {
+      return;
+    }
+    const key = s3Key.replace(/^\//, '');
+    try {
+      await this.s3Client.send(
+        new AbortMultipartUploadCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          UploadId: uploadId,
+        }),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `abort multipart failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async deleteListingVideoKeys(keys: string[]): Promise<void> {
+    if (!this.useS3 || !this.s3Client) {
+      return;
+    }
+    for (const raw of keys) {
+      const key = raw.replace(/^\//, '');
+      if (!key) continue;
+      try {
+        await this.s3Client.send(
+          new DeleteObjectCommand({
+            Bucket: this.bucketName,
+            Key: key,
+          }),
+        );
+      } catch (error) {
+        this.logger.warn(
+          `delete video key ${key}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+  }
+
+  async getObjectBufferByKey(s3Key: string): Promise<Buffer> {
+    if (!this.useS3 || !this.s3Client) {
+      throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+    }
+    const key = s3Key.replace(/^\//, '');
+    const result = await this.s3Client.send(
+      new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      }),
+    );
+    if (!result.Body) {
+      throw new BadRequestException('errors.videoThumbNotFound');
+    }
+    const stream = result.Body as Readable;
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  }
+
+  async putObjectBuffer(s3Key: string, body: Buffer, contentType: string): Promise<string> {
+    if (!this.useS3 || !this.s3Client) {
+      throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+    }
+    const key = s3Key.replace(/^\//, '');
+    await this.s3Client.send(
+      new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+      }),
+    );
+    return `/${key}`;
+  }
+
+  async putObjectStream(s3Key: string, body: Readable, contentType: string): Promise<void> {
+    if (!this.useS3 || !this.s3Client) {
+      throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+    }
+    const key = s3Key.replace(/^\//, '');
+    const upload = new Upload({
+      client: this.s3Client,
+      params: {
+        Bucket: this.bucketName,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+      },
+    });
+    await upload.done();
+  }
+
+  async headObjectContentLength(s3Key: string): Promise<number | null> {
+    if (!this.useS3 || !this.s3Client) {
+      return null;
+    }
+    const key = s3Key.replace(/^\//, '');
+    try {
+      const result = await this.s3Client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+        }),
+      );
+      return result.ContentLength ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async getObjectByteRange(s3Key: string, start: number, endInclusive: number): Promise<Buffer> {
+    if (!this.useS3 || !this.s3Client) {
+      throw new BadRequestException('errors.uploadDirectoryNotConfigured');
+    }
+    const key = s3Key.replace(/^\//, '');
+    const result = await this.s3Client.send(
+      new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Range: `bytes=${start}-${endInclusive}`,
+      }),
+    );
+    if (!result.Body) {
+      throw new BadRequestException('errors.video.invalidFormat');
+    }
+    const stream = result.Body as Readable;
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  }
+
+  async headObjectExists(s3Key: string): Promise<boolean> {
+    if (!this.useS3 || !this.s3Client) {
+      return false;
+    }
+    const key = s3Key.replace(/^\//, '');
+    try {
+      await this.s3Client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+        }),
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  getVideoPartSizeBytes(): number {
+    return VIDEO_PART_SIZE_BYTES;
   }
 }

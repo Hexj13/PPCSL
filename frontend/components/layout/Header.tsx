@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
-import { isHideFooterPath } from '@/components/layout/header-flow-paths';
+import { isHideFooterPath, isSignRoutePathname } from '@/components/layout/header-flow-paths';
 import { MOBILE_MENU_ENTER_ANIM_MS, useMenuDrawerPresence } from '@/hooks/useMenuDrawerPresence';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useComparisonStore } from '@/lib/store';
@@ -71,7 +71,7 @@ export function Header() {
   const isMenuToggleLocked = drawerExiting || enterAnimating;
 
   useEffect(() => {
-    if (pathname === '/sign' && isMobileMenuOpen) {
+    if (isSignRoutePathname(pathname) && isMobileMenuOpen) {
       handleMobileMenuClose();
     }
   }, [pathname, isMobileMenuOpen, handleMobileMenuClose]);
@@ -113,7 +113,7 @@ export function Header() {
     typeof document !== 'undefined' &&
     createPortal(
       <div
-        className={`${backdropMotionClass} fixed inset-0 z-40 lg:hidden bg-dark-900/35`}
+        className={`${backdropMotionClass} fixed left-0 right-0 top-[4.5rem] bottom-0 z-40 lg:hidden bg-dark-900/35`}
         aria-hidden
         onClick={handleBackdropClick}
       />,
@@ -160,7 +160,7 @@ export function Header() {
                     toggleAriaLabel={t('header.toggleMenu')}
                     toggleId={MOBILE_MENU_TOGGLE_ID}
                     drawerId={MOBILE_DRAWER_ID}
-                    showMenuToggle={pathname !== '/sign'}
+                    showMenuToggle={!isSignRoutePathname(pathname)}
                     showCreateListing={!hideMobileCreateListing}
                   />
                 )}

@@ -7,8 +7,11 @@ import { ProfileEmailSection } from '@/app/profile/ProfileEmailSection';
 import { ProfilePartnerSection } from '@/app/profile/ProfilePartnerSection';
 import { ProfilePasswordSection } from '@/app/profile/ProfilePasswordSection';
 import { useProfilePage } from '@/app/profile/useProfilePage';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto, User } from '@/lib/api';
+import type { Locale } from '@/lib/i18n-types';
+import { localizedHref } from '@/lib/localized-href';
 import { formatPhoneForDisplay, formatPhoneOnBlur, sanitizePhoneInput } from '@/lib/phone';
 import { HintTooltip, LoadingButton } from '@/ui';
 
@@ -21,12 +24,14 @@ function ProfileContactSection({
   formData,
   additionalPhoneError,
   t,
+  locale,
   onChange,
 }: {
   user: User;
   formData: UpdateProfileDto;
   additionalPhoneError: string | null;
   t: TranslationFn;
+  locale: Locale;
   onChange: (field: keyof UpdateProfileDto, value: string | boolean) => void;
 }) {
   const Checkbox = ({
@@ -106,7 +111,7 @@ function ProfileContactSection({
               {t('profile.phoneChangeBoardUrlNoticeBefore')}
               {user?.boardSlug ? (
                 <Link
-                  href={`/board/${user.boardSlug}`}
+                  href={localizedHref(`/board/${user.boardSlug}`, locale)}
                   className="text-primary-700 underline hover-only:hover:text-primary-900"
                 >
                   {t('myListings.myBoard')}
@@ -131,7 +136,7 @@ function ProfileContactSection({
             className="input-field w-full bg-bg-secondary/50 cursor-not-allowed opacity-70 pr-12"
           />
           <Link
-            href="/profile/change-phone"
+            href={localizedHref('/profile/change-phone', locale)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-700 hover-only:hover:text-primary-900 transition-colors duration-200 p-1"
             title={t('common.changePhone')}
           >
@@ -369,6 +374,7 @@ function ProfileActions({
 
 export default function ProfilePage() {
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const {
     user,
     isInitialized,
@@ -435,6 +441,7 @@ export default function ProfilePage() {
             formData={formData}
             additionalPhoneError={additionalPhoneError}
             t={t}
+            locale={locale}
             onChange={handleChange}
           />
           <ProfileEmailSection

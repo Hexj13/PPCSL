@@ -25,7 +25,6 @@ export class CliParserRunnerService {
     login?: string;
     pageSize?: number;
     maxItems?: number;
-    resume?: boolean;
     dryRun?: boolean;
     delayMs: number;
     extraEnv: NodeJS.ProcessEnv;
@@ -127,7 +126,6 @@ export class CliParserRunnerService {
     login?: string;
     pageSize?: number;
     maxItems?: number;
-    resume?: boolean;
     dryRun?: boolean;
     delayMs: number;
   }): string[] {
@@ -146,9 +144,6 @@ export class CliParserRunnerService {
       if (params.pageTo !== undefined) {
         parts.push('--page-to', String(params.pageTo));
       }
-    }
-    if (params.resume) {
-      parts.push('--resume');
     }
     if (params.dryRun) {
       parts.push('--dry-run');

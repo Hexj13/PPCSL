@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
+import { localizedHref } from '@/lib/localized-href';
 import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 
@@ -33,6 +35,7 @@ export function CreateListingButton({
 }: CreateListingButtonProps) {
   const { user } = useAuthStore();
   const { t } = useTranslation();
+  const { locale } = useI18n();
 
   const handleClick = () => {
     if (onClick) {
@@ -48,7 +51,10 @@ export function CreateListingButton({
 
   const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';
 
-  const href = user ? '/listings/new' : buildSignInHref('/listings/new');
+  const newListingPath = '/listings/new';
+  const href = user
+    ? localizedHref(newListingPath, locale)
+    : buildSignInHref(newListingPath, locale);
 
   return (
     <Link

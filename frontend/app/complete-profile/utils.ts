@@ -2,7 +2,9 @@ import type { UpdateProfileDto, User } from '@/lib/api';
 import { savedFiltersApi } from '@/lib/api';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
+import { getClientLocale } from '@/lib/i18n';
 import { compactE164Phone } from '@/lib/phone';
+import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
@@ -41,7 +43,7 @@ export async function processPendingSavedFilter(
     localStorageRemoveItem('pendingSavedFilter');
     toast.success(t('login.filterSavedSuccess'));
     if (typeof window !== 'undefined' && window.location) {
-      window.location.replace('/favorites?tab=filters');
+      window.location.replace(buildPostAuthRedirect('/favorites?tab=filters', getClientLocale()));
     }
     return true;
   } catch (error: unknown) {
@@ -54,13 +56,13 @@ export async function processPendingSavedFilter(
     const limitErrorText = t('login.filterLimitError');
     if (errorMessage === limitErrorText) {
       if (typeof window !== 'undefined' && window.location) {
-        window.location.replace('/favorites?tab=filters');
+        window.location.replace(buildPostAuthRedirect('/favorites?tab=filters', getClientLocale()));
       }
       return true;
     }
     const safeReturnUrl = sanitizeReturnUrl(returnUrl);
     if (safeReturnUrl && typeof window !== 'undefined' && window.location) {
-      window.location.replace(safeReturnUrl);
+      window.location.replace(buildPostAuthRedirect(safeReturnUrl, getClientLocale()));
       return true;
     }
   }

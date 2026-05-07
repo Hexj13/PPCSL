@@ -4,7 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { isSignRoutePathname } from '@/components/layout/header-flow-paths';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
+import { buildSignPageHref } from '@/lib/return-url';
 
 import { ScaleIcon } from './icons';
 
@@ -33,7 +36,8 @@ export function GuestMobileNav({
   t,
 }: GuestMobileNavProps) {
   const pathname = usePathname();
-  const isSignPage = pathname === '/sign';
+  const { href } = useLocalizedNavigation();
+  const isSignPage = isSignRoutePathname(pathname);
 
   if (isErrorPage) return null;
 
@@ -46,9 +50,8 @@ export function GuestMobileNav({
   const handleSignClick = () => {
     onClose();
     if (typeof window !== 'undefined') {
-      const currentUrl = window.location.pathname + window.location.search;
-      if (currentUrl !== '/sign' && !currentUrl.startsWith('/sign?')) {
-        onSetReturnUrl(currentUrl);
+      if (!isSignRoutePathname(window.location.pathname)) {
+        onSetReturnUrl(window.location.pathname + window.location.search);
       }
     }
   };
@@ -56,11 +59,15 @@ export function GuestMobileNav({
   return (
     <div className="flex flex-col gap-4">
       <CreateListingButton variant="mobile" onClick={onClose} className="py-3.5!" />
-      <Link href="/sign" onClick={handleSignClick} className={guestLinkClasses}>
+      <Link
+        href={buildSignPageHref({ tab: 'login' })}
+        onClick={handleSignClick}
+        className={guestLinkClasses}
+      >
         <span suppressHydrationWarning>{t('header.loginAndRegister')}</span>
       </Link>
       <div className="flex flex-col gap-4 border-t border-primary-700 pt-4">
-        <Link href="/compare" onClick={onClose} className={mobileNavLinkClasses}>
+        <Link href={href('/compare')} onClick={onClose} className={mobileNavLinkClasses}>
           <ScaleIcon className={iconClass} />
           <span suppressHydrationWarning>{t('header.compare')}</span>
           {comparisonCount > 0 && (

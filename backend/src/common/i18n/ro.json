@@ -197,7 +197,20 @@
     "parsingPlpFileNameAlreadyUsed": "Un fișier PLP cu acest nume este deja folosit de o altă programare activă.",
     "parsingRunCannotCancel": "Această rulare nu poate fi anulată.",
     "parsingRegistrySyncUnavailable": "Sincronizarea registrului nu este disponibilă pentru acest parser.",
-    "parsingSyncAssignedUserRequired": "Pentru sincronizarea registrului este necesar UUID-ul utilizatorului-partener Kupito (introduceți manual sau rulați mai întâi PDP/PLP cu utilizator atribuit)."
+    "parsingSyncAssignedUserRequired": "Pentru sincronizarea registrului este necesar UUID-ul utilizatorului-partener Kupito (introduceți manual sau rulați mai întâi PDP/PLP cu utilizator atribuit).",
+    "video": {
+      "tooLarge": "Videoclipul depășește dimensiunea maximă permisă.",
+      "invalidFormat": "Format video neacceptat.",
+      "notOwner": "Puteți încărca video doar pentru propriul anunț.",
+      "tooLong": "Videoclipul depășește durata maximă permisă.",
+      "transcodingFailed": "Procesarea video a eșuat.",
+      "transcodingUnavailable": "Procesarea video nu este disponibilă momentan.",
+      "replaceRequiresDelete": "Eliminați videoclipul existent înainte de a încărca unul nou.",
+      "processingInProgress": "Videoclipul este deja în procesare.",
+      "uploadNotInitialized": "Încărcarea video nu a fost pornită corect.",
+      "uploadIdMismatch": "Sesiunea de încărcare video nu se potrivește.",
+      "importDownloadFailed": "Nu s-a putut descărca videoclipul de la URL-ul furnizat."
+    }
   },
   "vehicleOptions": {
     "transmission": {

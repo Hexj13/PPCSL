@@ -201,6 +201,7 @@ export default [
     },
     rules: {
       'no-hardcoded-text/no-hardcoded-text': 'off',
+      '@next/next/no-img-element': 'off',
       'no-restricted-syntax': [
         'error',
         {

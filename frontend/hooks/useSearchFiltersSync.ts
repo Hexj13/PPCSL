@@ -1,7 +1,7 @@
-import { useRouter } from 'next/navigation';
 import type { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import type { Brand, VehicleModel } from '@/lib/api';
 import { sessionStorageSetItem } from '@/lib/browser-session-storage';
 import {
@@ -60,7 +60,7 @@ export function useSearchFiltersSync({
   hasActiveFilters,
   isInternalSearchRef: isInternalSearchRefParam,
 }: UseSearchFiltersSyncParams) {
-  const router = useRouter();
+  const { replace } = useLocalizedNavigation();
   const [isSyncingFromUrl, setIsSyncingFromUrl] = useState(false);
 
   const prevUrlForSyncRef = useRef<string>('');
@@ -90,7 +90,7 @@ export function useSearchFiltersSync({
         modelCount: countCommaSeparatedParam(modelParam),
         currentUrl,
       });
-      router.replace('/');
+      replace('/');
       return;
     }
     const urlChanged = currentUrl !== prevUrlForSyncRef.current;
@@ -163,7 +163,7 @@ export function useSearchFiltersSync({
     isSyncingFromUrl,
     setLastAppliedFilters,
     isInternalSearchRef,
-    router,
+    replace,
   ]);
 
   useEffect(() => {

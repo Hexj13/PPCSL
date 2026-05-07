@@ -10,7 +10,7 @@ import type { RegisterDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
-import { getReturnUrlFromSearchParams } from '@/lib/return-url';
+import { buildSignInHref, buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
@@ -38,9 +38,7 @@ export function useVerifyPhonePage() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const returnUrl = getReturnUrlFromSearchParams(searchParams);
-  const signTabUrl = returnUrl
-    ? `/sign?tab=register&returnUrl=${encodeURIComponent(returnUrl)}`
-    : '/sign?tab=register';
+  const signTabUrl = buildSignPageHref({ tab: 'register', returnUrl });
 
   const sendSmsCode = async (phone: string): Promise<'success' | 'hourly_limit' | 'error'> => {
     try {
@@ -214,7 +212,7 @@ export function useVerifyPhonePage() {
         );
       } catch {
         toast.error(t('verifyPhone.registrationSuccessButLoginFailed'));
-        router.push(returnUrl ? `/sign?returnUrl=${encodeURIComponent(returnUrl)}` : '/sign');
+        router.push(returnUrl ? buildSignInHref(returnUrl) : buildSignInHref());
       }
     } catch {
       // Error is already handled by API interceptor

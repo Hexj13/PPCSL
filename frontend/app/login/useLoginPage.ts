@@ -1,8 +1,10 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { isAuthRoutePathname } from '@/components/layout/header-flow-paths';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, savedFiltersApi } from '@/lib/api';
@@ -11,6 +13,8 @@ import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
+import { getClientLocale } from '@/lib/i18n';
+import { localizedHref } from '@/lib/localized-href';
 import {
   compactE164Phone,
   formatPhoneOnBlur,
@@ -53,7 +57,7 @@ async function processPendingSavedFilter(
     analytics.formSubmit('login', true, filledFields);
     toast.success(t('login.filterSavedSuccess'));
     if (typeof window !== 'undefined' && window.location) {
-      window.location.href = '/favorites?tab=filters';
+      window.location.href = localizedHref('/favorites?tab=filters', getClientLocale());
     }
     return true;
   } catch (error: unknown) {
@@ -65,7 +69,9 @@ async function processPendingSavedFilter(
     const url = isLimitError ? '/favorites?tab=filters' : (returnUrl ?? '/');
     analytics.login(loginMethod as 'email' | 'phone');
     analytics.formSubmit('login', true, filledFields);
-    if (typeof window !== 'undefined' && window.location) window.location.href = url;
+    if (typeof window !== 'undefined' && window.location) {
+      window.location.href = localizedHref(url, getClientLocale());
+    }
     return true;
   }
 }
@@ -78,18 +84,12 @@ function applyLoginSuccessRedirect(
   analytics.login(loginMethod as 'email' | 'phone');
   analytics.formSubmit('login', true, filledFields);
   if (typeof window !== 'undefined' && (window as Window).location) {
-    (window as Window).location.href = returnUrl;
+    (window as Window).location.href = localizedHref(returnUrl, getClientLocale());
   }
 }
 
-const AUTH_PATH_PREFIXES = ['/sign', '/login', '/register'];
-
-function isAuthPath(path: string): boolean {
-  return AUTH_PATH_PREFIXES.some((p) => path === p || path.startsWith(`${p}?`));
-}
-
 export function useLoginPage() {
-  const router = useRouter();
+  const { push } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { setAuth, user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
@@ -101,9 +101,9 @@ export function useLoginPage() {
 
   useEffect(() => {
     if (isInitialized && user && !isRedirecting && !suppressSignedInReturnNavigationRef.current) {
-      router.push(resolvedReturnUrl ?? '/');
+      push(resolvedReturnUrl ?? '/');
     }
-  }, [user, isInitialized, router, isRedirecting, resolvedReturnUrl]);
+  }, [user, isInitialized, push, isRedirecting, resolvedReturnUrl]);
 
   useEffect(() => {
     if (queryReturnUrl || typeof window === 'undefined') return;
@@ -112,7 +112,7 @@ export function useLoginPage() {
     try {
       const referrerUrl = new URL(referrer);
       const referrerPath = sanitizeReturnUrl(referrerUrl.pathname + referrerUrl.search);
-      if (referrerPath && !isAuthPath(referrerUrl.pathname) && referrerPath !== '/') {
+      if (referrerPath && !isAuthRoutePathname(referrerUrl.pathname) && referrerPath !== '/') {
         setReferrerReturnUrl(referrerPath);
       }
     } catch {

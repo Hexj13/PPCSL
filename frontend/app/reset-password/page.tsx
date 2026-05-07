@@ -7,6 +7,7 @@ import {
   type ResetPasswordErrors,
 } from '@/app/reset-password/useResetPasswordPage';
 import { getPasswordValidationRules } from '@/app/reset-password/utils';
+import { buildSignPageHref } from '@/lib/return-url';
 import { smsResendCooldownButtonLabel } from '@/lib/utils';
 import { LoadingButton } from '@/ui';
 
@@ -61,7 +62,7 @@ function ResetPasswordPhoneStep({
       </LoadingButton>
       <p className="mt-6 text-center text-sm text-gray-300">
         <Link
-          href="/sign"
+          href={buildSignPageHref({ tab: 'login' })}
           className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
         >
           {t('resetPassword.backToLogin')}

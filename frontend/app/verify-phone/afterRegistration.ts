@@ -5,6 +5,8 @@ import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
+import { getClientLocale } from '@/lib/i18n';
+import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
@@ -47,10 +49,16 @@ export async function runAfterRegistration(
   if (emailVerificationSent) {
     localStorageSetItem('showRegistrationEmailVerificationNotice', 'true');
   }
+  const locale = getClientLocale();
   const safeReturnUrl = sanitizeReturnUrl(returnUrlFromQuery);
   if (safeReturnUrl) {
-    window.location.href = `/complete-profile?returnUrl=${encodeURIComponent(safeReturnUrl)}`;
+    const localizedReturn = buildPostAuthRedirect(safeReturnUrl, locale);
+    const complete = buildPostAuthRedirect(
+      `/complete-profile?returnUrl=${encodeURIComponent(localizedReturn)}`,
+      locale,
+    );
+    window.location.href = complete;
     return;
   }
-  window.location.href = '/complete-profile';
+  window.location.href = buildPostAuthRedirect('/complete-profile', locale);
 }

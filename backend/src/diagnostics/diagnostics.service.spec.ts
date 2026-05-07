@@ -53,6 +53,31 @@ describe('DiagnosticsService', () => {
     expect(result).toEqual({ status: 200 });
   });
 
+  it('allows http URL when API_URL itself is http (dev)', async () => {
+    process.env.API_URL = 'http://localhost:4000';
+    global.fetch = jest.fn().mockResolvedValue({ status: 200 });
+    const service = new DiagnosticsService();
+    const url = 'http://localhost:4000/api/upload/image/foo.webp?quality=65&width=800';
+    const result = await service.getImageHeadStatus(url);
+    expect(result).toEqual({ status: 200 });
+  });
+
+  it('rejects http URL when configured API host is https', async () => {
+    process.env.API_URL = 'https://kupito.onrender.com';
+    const service = new DiagnosticsService();
+    await expect(
+      service.getImageHeadStatus('http://kupito.onrender.com/api/upload/image/foo.webp'),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('rejects http URL on different port than configured API host', async () => {
+    process.env.API_URL = 'http://localhost:4000';
+    const service = new DiagnosticsService();
+    await expect(
+      service.getImageHeadStatus('http://localhost:9999/api/upload/image/foo.webp'),
+    ).rejects.toThrow(BadRequestException);
+  });
+
   it('maps AbortError from HEAD to timeout reason', async () => {
     process.env.API_URL = 'https://kupito.onrender.com';
     global.fetch = jest

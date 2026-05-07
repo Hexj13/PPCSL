@@ -1,8 +1,8 @@
 'use client';
 
-import { Dropdown } from '@/components/common/Dropdown';
 import type { ConditionType, RegistrationType } from '@/lib/types';
 
+import { MobileSelectField } from '../MobileSelectField';
 import { RequiredAsterisk } from '../RequiredAsterisk';
 import { getConditionOptions, getRegistrationTypeOptions } from '../listingFormUtils';
 import type { ListingFormSectionProps } from '../types';
@@ -21,11 +21,11 @@ export function ConditionRegistration({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-700">
+          <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
             {t('listings.conditionLabel')}
             <RequiredAsterisk filled={!!formData.condition} />
           </label>
-          <Dropdown
+          <MobileSelectField
             value={formData.condition}
             onChange={(value) => {
               clearError('condition');
@@ -34,6 +34,8 @@ export function ConditionRegistration({
                 condition: value as ConditionType,
               }));
             }}
+            sheetTitle={t('listings.conditionLabel')}
+            requiredAsteriskFilled={!!formData.condition}
             placeholder={t('searchFilters.selectCondition')}
             error={!!errors['condition']}
             autoPosition={true}
@@ -44,11 +46,11 @@ export function ConditionRegistration({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-700">
+          <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
             {t('listings.registrationTypeLabel')}
             <RequiredAsterisk filled={!!formData.registration_type} />
           </label>
-          <Dropdown
+          <MobileSelectField
             value={formData.registration_type}
             onChange={(value) => {
               clearError('registration_type');
@@ -57,6 +59,8 @@ export function ConditionRegistration({
                 registration_type: value as RegistrationType,
               }));
             }}
+            sheetTitle={t('listings.registrationTypeLabel')}
+            requiredAsteriskFilled={!!formData.registration_type}
             placeholder={t('searchFilters.selectRegistrationType')}
             error={!!errors['registration_type']}
             autoPosition={true}

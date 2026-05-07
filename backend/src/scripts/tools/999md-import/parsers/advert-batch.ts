@@ -7,6 +7,12 @@ import type { AdvertRaw } from './advert-types';
 const ADVERT_FRAGMENT = `
   id
   title
+  state
+  isExpired
+  expire
+  moderation {
+    status
+  }
   subCategory {
     id
     url
@@ -36,8 +42,12 @@ export class AdvertBatchFetcher999 {
     this.gql = new GraphqlClient999(config);
   }
 
-  async fetchByIds(ids: string[]): Promise<Map<string, AdvertRaw>> {
-    const result = new Map<string, AdvertRaw>();
+  async fetchByIds(ids: string[]): Promise<{
+    found: Map<string, AdvertRaw>;
+    missing: Set<string>;
+  }> {
+    const found = new Map<string, AdvertRaw>();
+    const missing = new Set<string>();
     const batchSize = this.config.advertBatchSize;
 
     for (let i = 0; i < ids.length; i += batchSize) {
@@ -51,12 +61,14 @@ export class AdvertBatchFetcher999 {
         const alias = aliasForId(id);
         const advert = data[alias];
         if (advert) {
-          result.set(id, advert);
+          found.set(id, advert);
+        } else {
+          missing.add(id);
         }
       }
     }
 
-    return result;
+    return { found, missing };
   }
 
   private buildBatchQuery(ids: string[]): string {

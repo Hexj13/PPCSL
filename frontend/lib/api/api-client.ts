@@ -11,9 +11,10 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
 
 import { localStorageGetItem, localStorageSetItem } from '../browser-local-storage';
 import { clearClientAuthLocalStorage } from '../client-auth-storage';
-import { getDefaultLocale, loadTranslations, type Translations } from '../i18n';
+import { getClientLocale, loadTranslations, type Translations } from '../i18n';
 import { buildSignInHref } from '../return-url';
 import { sanitizeForSentryExtra } from '../sentry-sanitize';
+import { stripLocalePrefixFromPathname } from '../url-locale';
 
 import type { User } from './api';
 import { isCatalogReadGetNoResponse } from './is-catalog-read-get-request';
@@ -58,22 +59,13 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   if (typeof window !== 'undefined') {
-    const storedLocale = localStorageGetItem('kupito-locale') as 'ro' | 'ru' | null;
-    const locale =
-      storedLocale === 'ro' || storedLocale === 'ru' ? storedLocale : getDefaultLocale();
-    config.headers['Accept-Language'] = locale;
+    config.headers['Accept-Language'] = getClientLocale();
   }
   if (config.data instanceof FormData) {
     delete config.headers['Content-Type'];
   }
   return config;
 });
-
-function getStoredLocale(): 'ro' | 'ru' | null {
-  if (typeof window === 'undefined') return null;
-  const stored = localStorageGetItem('kupito-locale') as 'ro' | 'ru' | null;
-  return stored === 'ro' || stored === 'ru' ? stored : null;
-}
 
 function createErrorT(
   translations: Translations | null,
@@ -171,8 +163,9 @@ function clearAuthAndRedirectToLogin(): void {
     clearAuthPersistKey: true,
     clearPendingMigrationAndFilters: false,
   });
-  if (window.location.pathname !== '/sign') {
-    window.location.href = '/sign';
+  const rest = stripLocalePrefixFromPathname(window.location.pathname).restPath;
+  if (rest !== '/sign' && !rest.startsWith('/sign?')) {
+    window.location.href = buildSignInHref();
   }
 }
 
@@ -188,7 +181,7 @@ function clearAuthSetReturnUrlAndRedirect(): void {
 }
 
 const getErrorMessage = (error: AxiosError): string => {
-  const locale = getStoredLocale() ?? getDefaultLocale();
+  const locale = getClientLocale();
   let translations: Translations | null = null;
   try {
     translations = loadTranslations(locale);

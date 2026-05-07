@@ -140,11 +140,12 @@ export function PromotionModal({
           )}
         </div>
 
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end pt-2 shrink-0">
           <button
+            type="button"
             onClick={handleConfirm}
             disabled={!hasSelection}
-            className="px-8 py-2 md:py-2.5 text-xs md:text-sm lg:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto shrink-0 min-h-[48px] h-[48px] px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.confirm')}
           </button>

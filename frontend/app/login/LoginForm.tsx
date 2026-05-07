@@ -1,5 +1,10 @@
 'use client';
 
+import Link from 'next/link';
+
+import { useI18n } from '@/components/providers/I18nProvider';
+import { buildSignPageHref } from '@/lib/return-url';
+import { localePrefixPath } from '@/lib/url-locale';
 import { LoadingButton } from '@/ui';
 
 type LoginFormProps = {
@@ -36,9 +41,11 @@ export function LoginForm({
   handleSubmit,
   showTitle = true,
   showRegisterLink = true,
-  registerHref = '/sign?tab=register',
+  registerHref,
   formClassName = 'card p-6 md:p-8',
 }: LoginFormProps) {
+  const { locale } = useI18n();
+  const registerLink = registerHref ?? buildSignPageHref({ tab: 'register' });
   return (
     <>
       {showTitle && (
@@ -70,13 +77,13 @@ export function LoginForm({
             <label className="block text-sm font-semibold text-primary-900">
               {t('login.password')}
             </label>
-            <a
-              href="/reset-password"
+            <Link
+              href={localePrefixPath('/reset-password', locale)}
               data-testid="auth-login-forgot-password-link"
               className="text-sm text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
             >
               {t('login.forgotPassword')}
-            </a>
+            </Link>
           </div>
           <div className="relative">
             <input
@@ -156,7 +163,7 @@ export function LoginForm({
           <p className="mt-6 text-center text-sm text-hint">
             {t('login.noAccount')}{' '}
             <a
-              href={registerHref}
+              href={registerLink}
               data-testid="auth-login-register-link"
               className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
             >

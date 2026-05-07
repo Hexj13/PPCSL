@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
 import {
@@ -12,6 +12,7 @@ import {
   EmailFlowSuccessState,
   EmailFlowSuspenseFallback,
 } from '@/components/email-flow';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
@@ -19,7 +20,7 @@ import { toast } from '@/lib/toast';
 
 function VerifyEmailContent() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const { push, href } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { setAuth } = useAuthStore();
   const token = searchParams.get('token');
@@ -57,7 +58,7 @@ function VerifyEmailContent() {
             );
           }
         }
-        router.push('/verify-email/success');
+        push('/verify-email/success');
       } catch (err: unknown) {
         const axiosError = err as {
           response?: { data?: { message?: string; errorKey?: string } };
@@ -82,7 +83,7 @@ function VerifyEmailContent() {
     };
 
     void verifyEmail();
-  }, [searchParams, router, setAuth, t, token]);
+  }, [searchParams, push, setAuth, t, token]);
 
   const handleResend = async () => {
     if (!token) {
@@ -134,7 +135,7 @@ function VerifyEmailContent() {
       <EmailFlowPageShell title={t('verifyEmail.title')}>
         <EmailFlowSuccessState
           description={t('verifyEmail.resendSuccess')}
-          ctaHref="/"
+          ctaHref={href('/')}
           ctaLabel={t('common.goToHome')}
         />
       </EmailFlowPageShell>
@@ -167,7 +168,7 @@ function VerifyEmailContent() {
         <EmailFlowErrorState
           message={error}
           ctaLabel={t('common.goToHome')}
-          onCtaClick={() => router.push('/')}
+          onCtaClick={() => push('/')}
         />
       </EmailFlowPageShell>
     );

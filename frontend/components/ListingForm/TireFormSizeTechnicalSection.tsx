@@ -2,6 +2,7 @@
 
 import { type Dispatch, type SetStateAction, type WheelEvent } from 'react';
 
+import { MobileSelectField } from '@/components/ListingForm/MobileSelectField';
 import { RequiredAsterisk } from '@/components/ListingForm/RequiredAsterisk';
 import {
   TIRE_ASPECT_RATIO_INPUT_MAX_LEN,
@@ -12,7 +13,10 @@ import {
   TIRE_WIDTH_MM_INPUT_MAX_LEN,
 } from '@/components/ListingForm/tireListingFormConstants';
 import type { TireListingFormData } from '@/components/ListingForm/tireListingFormTypes';
-import { Dropdown } from '@/components/common/Dropdown';
+import {
+  SearchFilterBoltIcon,
+  SearchFilterHashtagIcon,
+} from '@/components/search/search-filters/search-filter-field-icons';
 import {
   TIRE_ASPECT_RATIO_MAX,
   TIRE_ASPECT_RATIO_MIN,
@@ -51,7 +55,7 @@ export function TireFormSizeTechnicalSection({
       </h2>
       <div className="mb-4 min-w-0 flex flex-col gap-4 sm:flex-row sm:gap-4">
         <div className="w-full min-w-0 sm:flex-1 sm:basis-0">
-          <label className="block text-sm font-semibold mb-2 text-primary-700">
+          <label className="block text-sm font-semibold mb-2 text-primary-900">
             {t('searchFilters.tireSizeCriteria')}
             <RequiredAsterisk
               filled={
@@ -133,21 +137,31 @@ export function TireFormSizeTechnicalSection({
           </div>
         </div>
         <div className="w-full min-w-0 sm:flex-1 sm:basis-0">
-          <div className="flex items-center gap-1.5 mb-2">
-            <label className="text-sm font-semibold text-primary-700">
-              {t('listings.tireForm.quantityLabel')}
-              <RequiredAsterisk filled={!!formData.quantity} />
-            </label>
-            <HintTooltip ariaLabel={t('listings.tireForm.quantityHintAria')} width="w-96">
-              {t('listings.tireForm.quantityHint')}
-            </HintTooltip>
+          <div className="mb-2 flex items-center justify-between gap-2 md:justify-start">
+            <div className="hidden items-center gap-1.5 md:flex">
+              <label className="text-sm font-semibold text-primary-900">
+                {t('listings.tireForm.quantityLabel')}
+                <RequiredAsterisk filled={!!formData.quantity} />
+              </label>
+              <HintTooltip ariaLabel={t('listings.tireForm.quantityHintAria')} width="w-96">
+                {t('listings.tireForm.quantityHint')}
+              </HintTooltip>
+            </div>
+            <div className="md:hidden">
+              <HintTooltip ariaLabel={t('listings.tireForm.quantityHintAria')} width="w-96">
+                {t('listings.tireForm.quantityHint')}
+              </HintTooltip>
+            </div>
           </div>
-          <Dropdown
+          <MobileSelectField
             value={formData.quantity}
             onChange={(value) => {
               clearError('quantity');
               setFormData((prev) => ({ ...prev, quantity: value }));
             }}
+            sheetTitle={t('listings.tireForm.quantityLabel')}
+            leadingIcon={<SearchFilterHashtagIcon />}
+            requiredAsteriskFilled={!!formData.quantity}
             autoPosition={true}
             menuMaxHeight={300}
             error={!!errors['quantity']}
@@ -159,7 +173,7 @@ export function TireFormSizeTechnicalSection({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
           <div className="flex items-center gap-1.5 mb-2">
-            <label className="text-sm font-semibold text-primary-700">
+            <label className="text-sm font-semibold text-primary-900">
               {t('listings.tireForm.loadIndex')}
             </label>
             <HintTooltip
@@ -193,19 +207,30 @@ export function TireFormSizeTechnicalSection({
           />
         </div>
         <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <label className="text-sm font-semibold text-primary-700">
-              {t('listings.tireForm.speedIndex')}
-            </label>
-            <HintTooltip
-              ariaLabel={t('listings.tireForm.speedIndexHintAria')}
-              width="w-96"
-              contentHtml={t('listings.tireForm.speedIndexHint')}
-            />
+          <div className="mb-2 flex items-center justify-between gap-2 md:justify-start">
+            <div className="hidden items-center gap-1.5 md:flex">
+              <label className="text-sm font-semibold text-primary-900">
+                {t('listings.tireForm.speedIndex')}
+              </label>
+              <HintTooltip
+                ariaLabel={t('listings.tireForm.speedIndexHintAria')}
+                width="w-96"
+                contentHtml={t('listings.tireForm.speedIndexHint')}
+              />
+            </div>
+            <div className="md:hidden">
+              <HintTooltip
+                ariaLabel={t('listings.tireForm.speedIndexHintAria')}
+                width="w-96"
+                contentHtml={t('listings.tireForm.speedIndexHint')}
+              />
+            </div>
           </div>
-          <Dropdown
+          <MobileSelectField
             value={formData.speed_index}
             onChange={(value) => setFormData((prev) => ({ ...prev, speed_index: value }))}
+            sheetTitle={t('listings.tireForm.speedIndex')}
+            leadingIcon={<SearchFilterBoltIcon />}
             autoPosition={true}
             menuMaxHeight={300}
             options={[

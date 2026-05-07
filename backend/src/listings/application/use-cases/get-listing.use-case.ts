@@ -11,6 +11,7 @@ import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.ser
 import { UsersService } from '../../../users/application/users.service';
 import { ListingView } from '../../entities/listing-view.entity';
 import { Listing } from '../../entities/listing.entity';
+import { buildListingVideoForGetListing } from '../../video/listing-video-response.util';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
 import { maskClosedListingForPublicView } from '../utils/mask-closed-listing-for-public-view';
 
@@ -113,6 +114,7 @@ export class GetListingUseCase {
         listing.currency,
       );
     }
+    buildListingVideoForGetListing(listing, context?.userId ?? null, context?.isAdmin);
     return {
       ...listing,
       approxPriceDefaultCurrency,

@@ -65,13 +65,5 @@ export class CreatePlpRunDto {
 
   @IsOptional()
   @IsBoolean()
-  resume?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
   dryRun?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  removeClosed?: boolean;
 }

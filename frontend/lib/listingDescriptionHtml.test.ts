@@ -1,4 +1,4 @@
-import { linkifyPlainUrlsInHtml } from './listingDescriptionHtml';
+import { linkifyPlainUrlsInHtml, prepareListingDescriptionHtml } from './listingDescriptionHtml';
 
 describe('linkifyPlainUrlsInHtml', () => {
   it('keeps balanced closing paren in Wikipedia-style URLs', () => {
@@ -20,5 +20,13 @@ describe('linkifyPlainUrlsInHtml', () => {
     const out = linkifyPlainUrlsInHtml(html, document);
     expect(out).toContain('href="https://en.wikipedia.org/wiki/Example_(disambiguation)"');
     expect(out).toMatch(/disambiguation\)<\/a>\./);
+  });
+});
+
+describe('prepareListingDescriptionHtml', () => {
+  it('adds noopener noreferrer to existing blank links', () => {
+    const html = '<p><a href="https://example.com" target="_blank">Example</a></p>';
+    const out = prepareListingDescriptionHtml(html, window);
+    expect(out).toContain('rel="noopener noreferrer"');
   });
 });

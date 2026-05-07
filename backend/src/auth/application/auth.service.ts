@@ -72,8 +72,8 @@ export class AuthService {
     return this.loginUserUseCase.validateUser(login, password);
   }
 
-  async login(loginDto: LoginDto, ip?: string) {
-    return this.loginUserUseCase.execute(loginDto, ip);
+  async login(loginDto: LoginDto, ip?: string, requestLocale?: string) {
+    return this.loginUserUseCase.execute(loginDto, ip, requestLocale);
   }
 
   async refreshTokens(refreshTokenDto: RefreshTokenDto) {

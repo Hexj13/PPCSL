@@ -63,7 +63,7 @@ export function AdminActionButton({
     <button
       type={type}
       className={joinClasses(
-        'font-medium text-base transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 h-[48px] rounded-lg border-2 select-none disabled:opacity-50 disabled:cursor-not-allowed',
+        'shrink-0 font-medium text-base transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 h-[48px] rounded-lg border-2 select-none disabled:opacity-50 disabled:cursor-not-allowed',
         variantClasses[variant],
         fullWidth && 'w-full',
         className,

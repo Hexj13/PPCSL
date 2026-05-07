@@ -4,8 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
-import { isHideFooterPath, isProfilePhoneFlowPath } from '@/components/layout/header-flow-paths';
+import {
+  isHideFooterPath,
+  isProfilePhoneFlowPath,
+  isSignRoutePathname,
+} from '@/components/layout/header-flow-paths';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import type { User } from '@/lib/api';
 
 import { DocumentsIcon, HeartIcon, ScaleIcon, ShieldIcon, UserIcon, LogoutIcon } from './icons';
@@ -33,9 +38,10 @@ export function UserMobileNav({
   onClose,
   t,
 }: UserMobileNavProps) {
+  const { href } = useLocalizedNavigation();
   const pathname = usePathname();
   const showLang =
-    ((!isAuthPage && !isErrorPage) || (pathname === '/sign' && !isErrorPage)) &&
+    ((!isAuthPage && !isErrorPage) || (isSignRoutePathname(pathname) && !isErrorPage)) &&
     !isProfilePhoneFlowPath(pathname);
   const showCreateListingInDrawer = !isHideFooterPath(pathname);
 
@@ -46,15 +52,15 @@ export function UserMobileNav({
       {showCreateListingInDrawer && (
         <CreateListingButton variant="mobile" onClick={onClose} className="py-3.5!" />
       )}
-      <Link href="/my-listings" {...linkProps}>
+      <Link href={href('/my-listings')} {...linkProps}>
         <DocumentsIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.myListings')}</span>
       </Link>
-      <Link href="/favorites" {...linkProps}>
+      <Link href={href('/favorites')} {...linkProps}>
         <HeartIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.favorites')}</span>
       </Link>
-      <Link href="/compare" {...linkProps}>
+      <Link href={href('/compare')} {...linkProps}>
         <ScaleIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.compare')}</span>
         {comparisonCount > 0 && (
@@ -63,12 +69,12 @@ export function UserMobileNav({
           </span>
         )}
       </Link>
-      <Link href="/profile" {...linkProps}>
+      <Link href={href('/profile')} {...linkProps}>
         <UserIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.profile')}</span>
       </Link>
       {user.type === 'Admin' && (
-        <Link href="/admin" {...linkProps}>
+        <Link href={href('/admin')} {...linkProps}>
           <ShieldIcon className={iconClass} />
           <span suppressHydrationWarning>{t('header.admin')}</span>
         </Link>

@@ -1,7 +1,7 @@
 import type { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, startTransition } from 'react';
 
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import type { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Brand, VehicleModel, City } from '@/lib/api';
@@ -66,7 +66,7 @@ export function useFilterHandlers({
   getCityOptions,
   t,
 }: UseFilterHandlersParams) {
-  const router = useRouter();
+  const { replace } = useLocalizedNavigation();
 
   const handleChange = useCallback(
     (key: keyof typeof filters, value: string) => {
@@ -267,7 +267,7 @@ export function useFilterHandlers({
       sessionStorageSetItem('scrollPreserved', 'true');
       sessionStorageSetItem('scrollToResultsAfterLoad', 'true');
       startTransition(() => {
-        router.replace(newUrl, { scroll: false });
+        replace(newUrl, { scroll: false });
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
             window.scrollTo({ top: scrollY, behavior: 'instant' });
@@ -286,7 +286,7 @@ export function useFilterHandlers({
       cities,
       currentYear,
       searchParams,
-      router,
+      replace,
       validateRanges,
       setFilters,
       isSearching,
@@ -321,7 +321,7 @@ export function useFilterHandlers({
         } else if (vehicleType !== 'car') {
           params.set('vehicleType', vehicleType);
         }
-        router.replace(`/?${params.toString()}`, { scroll: false });
+        replace(`/?${params.toString()}`, { scroll: false });
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
             if (scrollToTop) {
@@ -334,7 +334,7 @@ export function useFilterHandlers({
         }
       });
     },
-    [resetFilters, setLastAppliedFilters, vehicleType, router, filters.listing_category],
+    [resetFilters, setLastAppliedFilters, vehicleType, replace, filters.listing_category],
   );
 
   const hasFiltersChanged = useMemo(() => {

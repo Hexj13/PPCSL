@@ -1,7 +1,7 @@
 'use client';
 
 import { isAxiosError } from 'axios';
-import { useSearchParams, usePathname, useRouter } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import {
   Fragment,
   useEffect,
@@ -14,6 +14,7 @@ import {
 import { flushSync } from 'react-dom';
 
 import { useLoadingState } from '@/hooks/useLoadingState';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { usePartnerPromoBannerInGrid } from '@/hooks/usePartnerPromoBannerInGrid';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics, listingToViewItemListEntry } from '@/lib/analytics';
@@ -33,6 +34,8 @@ import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { LoadMoreButton } from './LoadMoreButton';
 import { PartnerPromoBanner } from './PartnerPromoBanner';
+
+const LISTING_GRID_LINK_PREFETCH_COUNT = 8;
 
 interface ListingGridProps {
   initialData?: { data: Listing[]; meta: PaginationMeta };
@@ -115,7 +118,7 @@ async function buildFetchParams(searchParamsString: string) {
 function handleSearchLimitOverflowError(
   error: unknown,
   searchParamsString: string,
-  router: ReturnType<typeof useRouter>,
+  replaceLocalized: (_path: string) => void,
 ): boolean {
   if (!isAxiosError(error) || error.response?.status !== 400) return false;
   const errorKey = (error.response.data as { errorKey?: string } | undefined)?.errorKey;
@@ -132,7 +135,7 @@ function handleSearchLimitOverflowError(
     errorKey,
     searchParams: searchParamsString,
   });
-  router.replace('/');
+  replaceLocalized('/');
   return true;
 }
 
@@ -150,7 +153,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const router = useRouter();
+  const { replace } = useLocalizedNavigation();
   const [listings, setListings] = useState<Listing[]>(initialData?.data || []);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -258,7 +261,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         }
       } catch (error) {
         if (controller.signal.aborted) return;
-        if (handleSearchLimitOverflowError(error, searchParamsString, router)) return;
+        if (handleSearchLimitOverflowError(error, searchParamsString, replace)) return;
         if (!append) {
           setListings([]);
           setError(t('listings.loadError'));
@@ -278,7 +281,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         }
       }
     },
-    [searchParamsString, t, checkFavorites, router],
+    [searchParamsString, t, checkFavorites, replace],
   );
 
   const fetchListingsRef = useRef(fetchListings);
@@ -490,7 +493,11 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
                   return (
                     <Fragment key={listing.id}>
-                      <ListingCard listing={listing} priority={index < 8} />
+                      <ListingCard
+                        listing={listing}
+                        priority={index < 8}
+                        linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
+                      />
                       {showPartnerPromoBanner && cardPosition === 8 && (
                         <div className="col-span-full lg:hidden">
                           <PartnerPromoBanner onDismiss={dismissPartnerPromoBanner} />

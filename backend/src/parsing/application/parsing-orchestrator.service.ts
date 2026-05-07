@@ -192,9 +192,7 @@ export class ParsingOrchestratorService {
     pageSize?: number;
     maxItems?: number;
     delayMs: number;
-    resume?: boolean;
     dryRun?: boolean;
-    removeClosed?: boolean;
   }): Promise<ParserRun> {
     const targetEnv = resolveParsingTargetEnv();
     this.logger.log(
@@ -261,9 +259,7 @@ export class ParsingOrchestratorService {
       pageSize,
       maxItems,
       delayMs: params.delayMs,
-      resume: Boolean(params.resume),
       dryRun: Boolean(params.dryRun),
-      removeClosed: Boolean(params.removeClosed),
     };
     this.resolvePlpOutputFileKey(params.parserCode, configSnapshot);
     const run = this.runRepo.create({
@@ -692,10 +688,9 @@ export class ParsingOrchestratorService {
       const maxItems =
         cfg.maxItems !== undefined && cfg.maxItems !== null ? Number(cfg.maxItems) : undefined;
       const delayMs = Number(cfg.delayMs ?? 3000);
-      const resume = Boolean(cfg.resume);
       const dryRun = Boolean(cfg.dryRun);
       this.logger.log(
-        `[PLP][start] runId=${runId} parser=${claimedRun.parser_code} targetEnv=${targetEnv} scanMode=${scanMode} pages=${pages} pageFrom=${pageFrom ?? '-'} pageTo=${pageTo ?? '-'} resume=${resume} dryRun=${dryRun} delayMs=${delayMs}`,
+        `[PLP][start] runId=${runId} parser=${claimedRun.parser_code} targetEnv=${targetEnv} scanMode=${scanMode} pages=${pages} pageFrom=${pageFrom ?? '-'} pageTo=${pageTo ?? '-'} dryRun=${dryRun} delayMs=${delayMs}`,
       );
       let doneSummary: PlpDoneSummary | null = null;
       const handle = this.cliRunner.runScan({
@@ -707,7 +702,6 @@ export class ParsingOrchestratorService {
         login,
         pageSize,
         maxItems,
-        resume,
         dryRun,
         delayMs,
         extraEnv,
@@ -977,21 +971,25 @@ export class ParsingOrchestratorService {
       const cfg = claimedRun.config_snapshot;
       const targetEnv = claimedRun.target_env;
       const extraEnv = buildParsingChildProcessEnv(targetEnv);
-      const listingStatus = String(cfg.listingStatus ?? 'paused') as 'active' | 'paused';
+      const catalogItem = getParserCatalogItem(claimedRun.parser_code);
+      const defaults = catalogItem?.pdpDefaults ?? {};
+      const listingStatus = String(cfg.listingStatus ?? defaults.listingStatus ?? 'paused') as
+        | 'active'
+        | 'paused';
       const limit = cfg.limit !== undefined && cfg.limit !== null ? Number(cfg.limit) : undefined;
-      const resume = Boolean(cfg.resume);
-      const dryRun = Boolean(cfg.dryRun);
-      const onlyFailed = Boolean(cfg.onlyFailed);
-      const updateExisting = Boolean(cfg.updateExisting);
-      const registrationType = String(cfg.registrationType ?? 'Local');
-      const defaultHp = Number(cfg.defaultHp ?? 150);
-      const parserDefaultCity = getParserCatalogItem(claimedRun.parser_code)?.defaultPdpCity;
+      const resume = Boolean(cfg.resume ?? defaults.resume ?? false);
+      const dryRun = Boolean(cfg.dryRun ?? defaults.dryRun ?? false);
+      const onlyFailed = Boolean(cfg.onlyFailed ?? defaults.onlyFailed ?? false);
+      const updateExisting = Boolean(cfg.updateExisting ?? defaults.updateExisting ?? false);
+      const registrationType = String(cfg.registrationType ?? defaults.registrationType ?? 'Local');
+      const defaultHp = Number(cfg.defaultHp ?? defaults.defaultHp ?? 100);
+      const parserDefaultCity = catalogItem?.defaultPdpCity;
       const city = String(cfg.city ?? parserDefaultCity ?? '').trim();
       if (!city) {
         throw new Error('PDP run city is required');
       }
-      const delayMs = Number(cfg.delayMs ?? 3000);
-      const removeClosed = Boolean(cfg.removeClosed);
+      const delayMs = Number(cfg.delayMs ?? defaults.delayMs ?? 3000);
+      const removeClosed = Boolean(cfg.removeClosed ?? defaults.removeClosed ?? false);
       const plpFileKey = String(cfg.plpFileKey ?? '').trim();
       await this.ensurePlpFileLocal(claimedRun.parser_code, plpFileKey);
       const plpFilePath = this.resolvePdpPlpFilePath(claimedRun.parser_code, plpFileKey);

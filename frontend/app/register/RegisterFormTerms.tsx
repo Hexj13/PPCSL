@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 
 import type { RegisterFormState } from './useRegisterPage';
@@ -13,6 +14,7 @@ type RegisterFormTermsProps = {
 
 export function RegisterFormTerms({ formData, setFormData }: RegisterFormTermsProps) {
   const { t } = useTranslation();
+  const { href } = useLocalizedNavigation();
   return (
     <div className="mb-5">
       <div className="flex items-start gap-3 group">
@@ -58,7 +60,7 @@ export function RegisterFormTerms({ formData, setFormData }: RegisterFormTermsPr
         <span className="text-sm leading-relaxed text-primary-900">
           {t('register.termsAccept')}{' '}
           <Link
-            href="/terms"
+            href={href('/terms')}
             target="_blank"
             onClick={(e) => e.stopPropagation()}
             className="text-primary-700 hover-only:hover:text-primary-900 underline font-semibold"

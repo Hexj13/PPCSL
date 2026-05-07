@@ -5,14 +5,17 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { loadComparisonFromApi } from '@/lib/comparisonMigration';
 import { subscribeToCrossTabEvents } from '@/lib/cross-tab-events';
+import type { Locale } from '@/lib/i18n-types';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { useAuthStore, useComparisonStore } from '@/lib/store';
+import { localePrefixPath } from '@/lib/url-locale';
 import { getCountry } from '@/lib/utils';
 import { Button, TrashIcon } from '@/ui';
 
@@ -72,6 +75,7 @@ function CompareTableBlock({
   parameterLabel,
   siteConfig,
   t,
+  locale,
 }: {
   listings: Listing[];
   fields: ComparisonField[];
@@ -79,6 +83,7 @@ function CompareTableBlock({
   parameterLabel: string;
   siteConfig: { currency: string };
   t: (key: string, params?: Record<string, string | number>) => string;
+  locale: Locale;
 }) {
   return (
     <div className="surface overflow-x-auto">
@@ -126,7 +131,7 @@ function CompareTableBlock({
               <td className="py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-700 font-semibold">
                 {t(field.labelKey)}
               </td>
-              {listings.map((listing) => field.renderCell(listing, t, siteConfig))}
+              {listings.map((listing) => field.renderCell(listing, t, siteConfig, locale))}
             </tr>
           ))}
         </tbody>
@@ -139,6 +144,7 @@ function ComparePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const user = useAuthStore((s) => s.user);
   const vehicleComparisons = useComparisonStore((s) => s.vehicleComparisons);
   const tireComparisons = useComparisonStore((s) => s.tireComparisons);
@@ -219,7 +225,7 @@ function ComparePageContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', tab);
     sessionStorageSetItem('scrollPreserved', 'true');
-    router.replace(`/compare?${params.toString()}`, { scroll: false });
+    router.replace(localePrefixPath(`/compare?${params.toString()}`, locale), { scroll: false });
     if (typeof window !== 'undefined') {
       requestAnimationFrame(() => {
         window.scrollTo({ top: scrollY, behavior: 'instant' });
@@ -286,8 +292,8 @@ function ComparePageContent() {
       <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)] pb-12 md:pb-16">
         <Breadcrumbs
           items={[
-            { label: t('breadcrumbs.home'), href: '/' },
-            { label: breadcrumbLabel, href: '/compare' },
+            { label: t('breadcrumbs.home'), href: localePrefixPath('/', locale) },
+            { label: breadcrumbLabel, href: localePrefixPath('/compare', locale) },
             ...(comparisonStoreHydrated ? breadcrumbExtra : []),
           ]}
           className="mb-6"
@@ -309,8 +315,8 @@ function ComparePageContent() {
     <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)] pb-12 md:pb-16">
       <Breadcrumbs
         items={[
-          { label: t('breadcrumbs.home'), href: '/' },
-          { label: breadcrumbLabel, href: '/compare' },
+          { label: t('breadcrumbs.home'), href: localePrefixPath('/', locale) },
+          { label: breadcrumbLabel, href: localePrefixPath('/compare', locale) },
           ...breadcrumbExtra,
         ]}
         className="mb-6"
@@ -328,7 +334,7 @@ function ComparePageContent() {
             hint={t('compare.addVehiclesHint')}
             onBrowse={() => {
               if (typeof window !== 'undefined') {
-                window.location.href = '/';
+                window.location.href = localePrefixPath('/', locale);
               }
             }}
             browseLabel={t('compare.browseListings')}
@@ -356,6 +362,7 @@ function ComparePageContent() {
               parameterLabel={t('compare.parameter')}
               siteConfig={siteConfig}
               t={t}
+              locale={locale}
             />
           </>
         ))}
@@ -367,7 +374,7 @@ function ComparePageContent() {
             hint={t('compare.addTiresHint')}
             onBrowse={() => {
               if (typeof window !== 'undefined') {
-                window.location.href = '/listings?category=tire';
+                window.location.href = localePrefixPath('/listings?category=tire', locale);
               }
             }}
             browseLabel={t('compare.browseTireListings')}
@@ -395,6 +402,7 @@ function ComparePageContent() {
               parameterLabel={t('compare.parameter')}
               siteConfig={siteConfig}
               t={t}
+              locale={locale}
             />
           </>
         ))}

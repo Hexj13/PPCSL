@@ -17,6 +17,7 @@ import {
   sanitizePhoneInput,
   validatePhone,
 } from '@/lib/phone';
+import { buildSignInHref } from '@/lib/return-url';
 import { toast } from '@/lib/toast';
 
 export type ResetPasswordStep = 'phone' | 'code' | 'password';
@@ -282,7 +283,7 @@ export function useResetPasswordPage() {
           newPassword: password,
         });
         toast.success(t('resetPassword.passwordResetSuccess'));
-        router.push('/sign');
+        router.push(buildSignInHref());
       } catch {
       } finally {
         setLoading(false);

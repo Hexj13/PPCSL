@@ -194,18 +194,58 @@ describe('AuthController', () => {
       const req = { ip: '127.0.0.1' };
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
+      i18nService.getLocaleFromHeader.mockReturnValue(undefined as unknown as string);
       authService.login.mockResolvedValue(mockResponse);
       ipBlockService.resetAttempts.mockReturnValue(undefined);
 
       const result = await controller.login(req as unknown as AuthenticatedRequest, loginDto);
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
-      expect(authService.login).toHaveBeenCalledWith(loginDto, '127.0.0.1');
+      expect(authService.login).toHaveBeenCalledWith(loginDto, '127.0.0.1', undefined);
       expect(ipBlockService.resetAttempts).toHaveBeenCalledWith('127.0.0.1');
       expect(result).toEqual(mockResponse);
     });
 
-    it('should record failed attempt when login fails', async () => {
+    it('passes request locale from Accept-Language to authService.login', async () => {
+      const loginDto: LoginDto = {
+        login: 'test@example.com',
+        password: 'Test123!@#',
+      };
+      const mockResponse = {
+        access_token: 'jwt-token',
+        refresh_token: 'refresh-token',
+        user: {
+          id: mockUser.id,
+          email: mockUser.email,
+          type: mockUser.type,
+          firstName: mockUser.firstName,
+          lastName: mockUser.lastName,
+          companyName: mockUser.companyName,
+          companyWebsiteUrl: mockUser.companyWebsiteUrl,
+          phone: mockUser.phone,
+          boardSlug: mockUser.board_slug,
+          preferredLocale: mockUser.preferredLocale,
+          hidePartnerPromoBanner: mockUser.hidePartnerPromoBanner,
+          isPlatformPartner: mockUser.isPlatformPartner,
+        },
+      };
+      const req = {
+        ip: '127.0.0.1',
+        headers: { 'accept-language': 'ru-RU,ru;q=0.9' },
+      };
+
+      ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
+      i18nService.getLocaleFromHeader.mockReturnValue('ru');
+      authService.login.mockResolvedValue(mockResponse);
+      ipBlockService.resetAttempts.mockReturnValue(undefined);
+
+      await controller.login(req as unknown as AuthenticatedRequest, loginDto);
+
+      expect(i18nService.getLocaleFromHeader).toHaveBeenCalledWith('ru-RU,ru;q=0.9');
+      expect(authService.login).toHaveBeenCalledWith(loginDto, '127.0.0.1', 'ru');
+    });
+
+    it('should record failed attempt when login rejects', async () => {
       const req = { ip: '127.0.0.1' };
       const loginDto: LoginDto = { login: 'test@example.com', password: 'wrong-password' };
 

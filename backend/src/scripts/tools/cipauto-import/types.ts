@@ -5,7 +5,12 @@ import type {
   KupitoImportClientConfig,
   RuntimeEnv,
 } from '../partner-import-shared/kupito-import-types';
-import type { ParsedPdpData } from '../partner-import-shared/listing-types';
+import type {
+  ParsedPdpData,
+  SourceCloseOutcome,
+  SourceCloseReason,
+  SourceStatus,
+} from '../partner-import-shared/listing-types';
 
 export type { CliStatus, RuntimeEnv };
 export type {
@@ -26,6 +31,9 @@ export type {
   ParsedPdpEquipmentOption,
   ParsedPlpItem,
   RefreshResponse,
+  SourceCloseOutcome,
+  SourceCloseReason,
+  SourceStatus,
   UploadResult,
   KupitoCreateListingPayload,
   KupitoListingResponse,
@@ -36,7 +44,6 @@ export interface ScanCommandOptions {
   pageFrom?: number;
   pageTo?: number;
   env: RuntimeEnv;
-  resume?: boolean;
   dryRun?: boolean;
   delay: number;
 }
@@ -44,16 +51,6 @@ export interface ScanCommandOptions {
 export interface AuditBrandsModelsCommandOptions {
   env: RuntimeEnv;
 }
-
-export type SourceStatus = 'active' | 'missing_candidate' | 'closed';
-
-export type SourceCloseReason =
-  | 'plp_missing_candidate'
-  | 'pdp_closed_template'
-  | 'pdp_http_404'
-  | 'pdp_http_410';
-
-export type SourceCloseOutcome = 'listing_closed' | 'source_only';
 
 export interface RegistryItem {
   source: 'cipauto';

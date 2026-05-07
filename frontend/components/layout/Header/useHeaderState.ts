@@ -3,11 +3,10 @@
 import { usePathname } from 'next/navigation';
 import { useState, useCallback, startTransition, useEffect } from 'react';
 
+import { isAuthRoutePathname, isSignRoutePathname } from '@/components/layout/header-flow-paths';
 import { useTranslation } from '@/hooks/useTranslation';
 import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
-
-const AUTH_PATHS = ['/sign', '/verify-phone', '/reset-password'];
 
 export function useHeaderState() {
   const { user, logout, isInitialized } = useAuthStore();
@@ -18,7 +17,7 @@ export function useHeaderState() {
 
   const showSkeleton = !isInitialized && !user;
 
-  const isAuthPage = AUTH_PATHS.includes(pathname);
+  const isAuthPage = isAuthRoutePathname(pathname);
 
   useEffect(() => {
     setIsErrorPage(document.querySelector('[data-error-page="true"]') !== null);
@@ -51,7 +50,7 @@ export function useHeaderState() {
   const mobileNavLinkClasses =
     'text-primary-900 text-[14px] font-medium hover-only:hover:text-primary-700 active:text-primary-700 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base';
 
-  const showNav = (!isAuthPage || pathname === '/sign') && !isErrorPage;
+  const showNav = !isErrorPage && (!isAuthPage || isSignRoutePathname(pathname));
 
   return {
     user,

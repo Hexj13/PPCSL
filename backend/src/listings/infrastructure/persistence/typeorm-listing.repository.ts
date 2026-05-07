@@ -355,6 +355,8 @@ export class TypeOrmListingRepository implements IListingRepository {
         'listing.category',
         'listing.created_at',
         'listing.last_updated_at',
+        'listing.slug',
+        'listing.video',
       ])
       .leftJoin('listing.vehicle', 'vehicle')
       .addSelect([
@@ -528,6 +530,8 @@ export class TypeOrmListingRepository implements IListingRepository {
         'listing.category',
         'listing.created_at',
         'listing.last_updated_at',
+        'listing.slug',
+        'listing.video',
       ])
       .leftJoin('listing.tire', 'tire')
       .addSelect([

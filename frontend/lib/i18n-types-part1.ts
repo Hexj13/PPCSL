@@ -29,6 +29,8 @@ export interface TranslationsPart1 {
   };
   home: {
     title: string;
+    titleWithBrand: string;
+    titleWithBrandModel: string;
     subtitle: string;
     subtitleBold: string;
     subtitle2: string;
@@ -421,7 +423,6 @@ export interface TranslationsPart1 {
     addToFavorites: string;
     removeFromFavorites: string;
     yourListing: string;
-    cannotAddOwnListing: string;
     cannotFavoriteOwnListingToast: string;
     compare: string;
     alreadyInComparison: string;

@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '../fixtures/base';
 import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
+import { pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { loginByUi } from '../utils/auth';
 import { useClearedBrowserState } from '../utils/spec-hooks';
 import { runSteps, type E2EStep } from '../utils/steps';
@@ -97,7 +98,7 @@ test.describe('Listing create @p0', () => {
         action: async () => {
           await expect(page).toHaveURL(
             (url) => {
-              const path = url.pathname;
+              const path = pathnameWithoutLocalePrefix(url.pathname);
               return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
             },
             { timeout: 30_000 },
