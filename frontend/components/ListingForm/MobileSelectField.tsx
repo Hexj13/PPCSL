@@ -314,9 +314,14 @@ export function MobileSelectField({
         )}
       </button>
 
-      <BottomSheet isOpen={isSheetOpen} onClose={() => setIsSheetOpen(false)} title={sheetTitle}>
+      <BottomSheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        title={sheetTitle}
+        lockSheetHeight={searchable}
+      >
         {searchable ? (
-          <div className="flex flex-col overflow-hidden">
+          <div className="flex min-h-0 w-full flex-1 flex-col">
             <div className="shrink-0 border-b border-primary-500/20 p-3">
               <input
                 type="search"
@@ -326,7 +331,7 @@ export function MobileSelectField({
                 placeholder={t('common.search')}
               />
             </div>
-            <div className="max-h-[min(76vh,740px)] overflow-y-auto scrollbar-custom">
+            <div className="min-h-0 flex-1 overflow-y-auto scrollbar-custom">
               {renderOptionList()}
             </div>
           </div>

@@ -28,7 +28,16 @@ function pickKnownLocale(value: string | null | undefined): Locale | null {
 
 function createEmptyTranslations(): Translations {
   const handler: ProxyHandler<object> = {
-    get: (_target, _prop) => {
+    get: (_target, prop) => {
+      if (prop === Symbol.toPrimitive) {
+        return () => '';
+      }
+      if (prop === 'toString') {
+        return () => '';
+      }
+      if (prop === 'valueOf') {
+        return () => '';
+      }
       return new Proxy({}, handler);
     },
   };
