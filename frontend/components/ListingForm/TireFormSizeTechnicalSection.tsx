@@ -14,10 +14,6 @@ import {
 } from '@/components/ListingForm/tireListingFormConstants';
 import type { TireListingFormData } from '@/components/ListingForm/tireListingFormTypes';
 import {
-  SearchFilterBoltIcon,
-  SearchFilterHashtagIcon,
-} from '@/components/search/search-filters/search-filter-field-icons';
-import {
   TIRE_ASPECT_RATIO_MAX,
   TIRE_ASPECT_RATIO_MIN,
   TIRE_ASPECT_RATIO_STEP,
@@ -160,7 +156,6 @@ export function TireFormSizeTechnicalSection({
               setFormData((prev) => ({ ...prev, quantity: value }));
             }}
             sheetTitle={t('listings.tireForm.quantityLabel')}
-            leadingIcon={<SearchFilterHashtagIcon />}
             requiredAsteriskFilled={!!formData.quantity}
             autoPosition={true}
             menuMaxHeight={300}
@@ -230,7 +225,6 @@ export function TireFormSizeTechnicalSection({
             value={formData.speed_index}
             onChange={(value) => setFormData((prev) => ({ ...prev, speed_index: value }))}
             sheetTitle={t('listings.tireForm.speedIndex')}
-            leadingIcon={<SearchFilterBoltIcon />}
             autoPosition={true}
             menuMaxHeight={300}
             options={[

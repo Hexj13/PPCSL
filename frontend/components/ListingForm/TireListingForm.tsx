@@ -14,10 +14,6 @@ import { TirePriceAndLocationSection } from '@/components/ListingForm/TirePriceA
 import type { ListingFormData } from '@/components/ListingForm/listingFormTypes';
 import { useTireListingForm } from '@/components/ListingForm/useTireListingForm';
 import { ScrollDropdownIntoViewContext } from '@/components/common/Dropdown';
-import {
-  SearchFilterGaugeIcon,
-  SearchFilterTireSizeIcon,
-} from '@/components/search/search-filters/search-filter-field-icons';
 import type { Listing } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { buildCategorizedTireBrandOptions } from '@/lib/tire-catalog-sort';
@@ -265,7 +261,6 @@ export function TireListingForm({
                       }));
                     }}
                     sheetTitle={t('searchFilters.tireTreadLabel')}
-                    leadingIcon={<SearchFilterTireSizeIcon />}
                     requiredAsteriskFilled={!!formData.season}
                     autoPosition={true}
                     menuMaxHeight={300}
@@ -286,7 +281,6 @@ export function TireListingForm({
                       }))
                     }
                     sheetTitle={t('searchFilters.tireConditionLabel')}
-                    leadingIcon={<SearchFilterGaugeIcon />}
                     requiredAsteriskFilled={!!formData.condition}
                     autoPosition={true}
                     menuMaxHeight={300}

@@ -229,7 +229,7 @@ export function MobileSelectField({
           autoPosition={autoPosition}
           menuMaxHeight={menuMaxHeight}
           dataTestId={dataTestId}
-          rightIcon={triggerIcon}
+          rightIcon={rightIcon}
         />
       </div>
     );

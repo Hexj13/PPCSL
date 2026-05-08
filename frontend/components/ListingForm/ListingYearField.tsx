@@ -89,7 +89,6 @@ export function ListingYearField({
         autoPosition={autoPosition}
         menuMaxHeight={menuMaxHeight}
         dataTestId={dataTestId}
-        rightIcon={triggerIcon}
       />
     );
   }
