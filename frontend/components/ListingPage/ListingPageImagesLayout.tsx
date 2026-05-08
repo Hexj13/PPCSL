@@ -15,6 +15,9 @@ import {
   VIDEO_POSTER_BLUR_DATA_URL,
 } from './ListingPageImagesPreview';
 
+const listingPageVideoPlayOverlayClassName =
+  'pointer-events-none absolute inset-0 z-[4] [background-image:radial-gradient(ellipse_100%_100%_at_50%_50%,color-mix(in_srgb,theme(colors.dark.600)_50%,transparent)_0%,color-mix(in_srgb,theme(colors.dark.600)_40%,transparent)_28%,color-mix(in_srgb,theme(colors.dark.600)_22%,transparent)_55%,transparent_88%,transparent_100%)]';
+
 export type ListingPageImagesLayoutProps = {
   visibleIndex: number;
   images: string[];
@@ -82,7 +85,7 @@ export function ListingPageImagesLayout({
           navigateTo(index, { clearTimer: true });
         }
       }}
-      className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
+      className={`group relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
         visibleIndex === index
           ? 'ring-2 ring-primary-500 shadow-md'
           : 'hover-only:hover:ring-2 hover-only:hover:ring-primary-300'
@@ -100,16 +103,13 @@ export function ListingPageImagesLayout({
               onLoaded={() => handleThumbnailImageLoad(index)}
               onError={() => onImageError(index)}
             />
-            <div
-              className="pointer-events-none absolute inset-0 z-[4] bg-primary-700/50"
-              aria-hidden
-            />
+            <div className={listingPageVideoPlayOverlayClassName} aria-hidden />
             <div
               className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center"
               role="img"
               aria-label={t('listingDetail.video.playButton')}
             >
-              <span className="text-2xl leading-none text-white drop-shadow-md sm:text-3xl">
+              <span className="inline-block text-2xl leading-none text-white drop-shadow-md transition-colors duration-200 group-hover:text-primary-100 sm:text-3xl">
                 {t('listingDetail.video.playIcon')}
               </span>
             </div>
@@ -179,7 +179,7 @@ export function ListingPageImagesLayout({
               className="absolute left-3 top-1/2 -translate-y-1/2 w-14 h-14 flex justify-start items-center z-10 touch-manipulation lg:w-10 lg:h-10 lg:justify-center"
               aria-label={t('listings.previousPhoto')}
             >
-              <span className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100">
+              <span className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 hover-only:hover:bg-primary-100 hover-only:hover:text-primary-900">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
@@ -196,7 +196,7 @@ export function ListingPageImagesLayout({
               className="absolute right-3 top-1/2 -translate-y-1/2 w-14 h-14 flex justify-end items-center z-10 touch-manipulation lg:w-10 lg:h-10 lg:justify-center"
               aria-label={t('listings.nextPhoto')}
             >
-              <span className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100">
+              <span className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 hover-only:hover:bg-primary-100 hover-only:hover:text-primary-900">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
@@ -226,16 +226,13 @@ export function ListingPageImagesLayout({
         })}
         {videoSlide && visibleIndex === 0 ? (
           <>
-            <div
-              className="pointer-events-none absolute inset-0 z-[4] bg-primary-700/50"
-              aria-hidden
-            />
+            <div className={listingPageVideoPlayOverlayClassName} aria-hidden />
             <div
               className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center"
               role="img"
               aria-label={t('listingDetail.video.playButton')}
             >
-              <span className="text-3xl leading-none text-white drop-shadow-md sm:text-4xl">
+              <span className="inline-block text-3xl leading-none text-white drop-shadow-md transition-colors duration-200 group-hover:text-primary-100 sm:text-4xl">
                 {t('listingDetail.video.playIcon')}
               </span>
             </div>
