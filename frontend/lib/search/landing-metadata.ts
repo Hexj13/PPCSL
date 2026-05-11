@@ -1,8 +1,9 @@
 import type { Listing } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
 
-export function fillTemplate(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+export function fillTemplate(template: unknown, vars: Record<string, string>): string {
+  const safeTemplate = typeof template === 'string' ? template : '';
+  return safeTemplate.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
 }
 
 export function getListingPriceLabel(listing: Listing | undefined): string | null {
@@ -29,7 +30,7 @@ export function getListingPriceLabel(listing: Listing | undefined): string | nul
 }
 
 export function buildLandingTitle(
-  templates: { title: string; titleWithPrice: string },
+  templates: { title: unknown; titleWithPrice: unknown },
   vars: Record<string, string>,
 ): string {
   const template = vars.price ? templates.titleWithPrice : templates.title;
