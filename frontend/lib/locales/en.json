@@ -2183,7 +2183,9 @@
     "phoneRequiredTitle": "Verify your phone number",
     "phoneRequiredDescription": "To continue using Kupito, confirm your phone number via SMS. This helps protect your account.",
     "phoneRequiredCurrent": "Number to verify",
-    "phoneRequiredContinue": "Send SMS code"
+    "phoneRequiredContinue": "Send SMS code",
+    "businessOnboardingTitle": "Company details",
+    "businessOnboardingInfo": "Optional fields can be filled in later in \"Profile\"."
   },
   "pwa": {
     "install": "Install App",

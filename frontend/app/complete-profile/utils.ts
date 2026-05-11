@@ -192,3 +192,20 @@ export function validateCompleteProfileCompanyWebsiteUrl(
     return t('profile.invalidCompanyWebsiteUrl');
   }
 }
+
+export function validateCompleteProfileCompanyName(
+  name: string,
+  t: (key: string) => string,
+): string {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return t('register.companyNameRequired');
+  }
+  if (trimmed.length < 2) {
+    return t('register.companyNameMinLength');
+  }
+  if (trimmed.length > 100) {
+    return t('register.companyNameMaxLength');
+  }
+  return '';
+}

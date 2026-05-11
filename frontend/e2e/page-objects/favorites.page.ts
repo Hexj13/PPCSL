@@ -13,7 +13,23 @@ export class FavoritesPage {
   constructor(private readonly page: Page) {}
 
   async open(): Promise<void> {
-    await this.page.goto('/favorites');
+    const favoritesListLoaded = this.page.waitForResponse(
+      (r) => {
+        if (r.request().method() !== 'GET') {
+          return false;
+        }
+        const u = r.url();
+        return (
+          u.includes('/api/favorites') &&
+          !u.includes('/favorites/ids') &&
+          !u.includes('/favorites/check') &&
+          r.ok()
+        );
+      },
+      { timeout: 30_000 },
+    );
+    await this.page.goto('/favorites', { waitUntil: 'domcontentloaded' });
+    await favoritesListLoaded;
   }
 
   async openFiltersTab(): Promise<void> {
@@ -39,8 +55,7 @@ export class FavoritesPage {
   }
 
   async expectListingCardVisible(listingId: string): Promise<void> {
-    await expect(this.page.getByTestId(`listing-card-${listingId}`)).toBeVisible({
-      timeout: 20_000,
-    });
+    const card = this.page.getByTestId(`listing-card-${listingId}`);
+    await expect(card).toBeVisible({ timeout: 25_000 });
   }
 }

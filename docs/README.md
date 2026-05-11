@@ -70,6 +70,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - Listing seller phones and full VIN — masked in public listing payloads; optional reveal on the listing page with per-viewer Redis rate limits (`GET /api/listings/:id/phones`, `GET /api/listings/:id/vin`); see [TECHNICAL.md](./architecture/TECHNICAL.md) § API Reference → Listings
 - [loading-states.md](./features/loading-states.md) — Loading states
 - [cross-tab-sync.md](./features/cross-tab-sync.md) — Favorites, comparison, listing status, auth session, and refresh-token rotation across tabs (UI: `BroadcastChannel` + storage; auth: `storage` on auth keys — see doc)
+- [auth-onboarding-gates.md](./features/auth-onboarding-gates.md) — Mandatory phone verification and business company onboarding (middleware, client guards, verify-phone branching)
 - [paid-promotion.md](./features/paid-promotion.md) — Paid promotion
 - [partner-program.md](./features/partner-program.md) — Platform partners, bonus balance, partner promotion flow, footer partner logos, public `/partners` and `/investors` pages (sitemap / noindex)
 - [my-listings-page.md](./features/my-listings-page.md) — My listings filters, badge counts, loading behavior

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { expect, type Page } from '@playwright/test';
 
 import { createRandomListingPrice } from '../test-data/listings';
+import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
 
 export class ListingCreatePage {
   private readonly testIds = {
@@ -44,7 +45,8 @@ export class ListingCreatePage {
   constructor(private readonly page: Page) {}
 
   async open(): Promise<void> {
-    await this.page.goto('/listings/new');
+    await forceDefaultCanonicalLocaleCookies(this.page);
+    await this.page.goto('/listings/new', { waitUntil: 'domcontentloaded' });
   }
 
   async openAndExpectPageView(): Promise<void> {
@@ -69,12 +71,18 @@ export class ListingCreatePage {
 
   async selectFirstDropdownOption(testId: string): Promise<void> {
     await this.page.getByTestId(testId).click();
-    await this.page.locator(`[data-testid^="${testId}-option-"]`).first().click();
+    const options = this.page.locator(`[data-testid^="${testId}-option-"]`);
+    await expect(options.first()).toBeVisible({ timeout: 15_000 });
+    await expect(options.first()).toBeEnabled({ timeout: 15_000 });
+    await options.first().click();
   }
 
   async selectLastDropdownOption(testId: string): Promise<void> {
     await this.page.getByTestId(testId).click();
-    await this.page.locator(`[data-testid^="${testId}-option-"]`).last().click();
+    const options = this.page.locator(`[data-testid^="${testId}-option-"]`);
+    await expect(options.last()).toBeVisible({ timeout: 15_000 });
+    await expect(options.last()).toBeEnabled({ timeout: 15_000 });
+    await options.last().click();
   }
 
   async setCheckboxCheckedById(

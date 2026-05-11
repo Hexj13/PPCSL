@@ -147,6 +147,15 @@ export class UpdateProfileDto {
   phone?: string;
 
   @ApiPropertyOptional({
+    example: 'Business',
+    description: 'Account type (only while primary phone is not verified)',
+    enum: ['Individual', 'Business'],
+  })
+  @IsOptional()
+  @IsIn(['Individual', 'Business'], { message: 'validation.userTypeEnum' })
+  type?: 'Individual' | 'Business';
+
+  @ApiPropertyOptional({
     example: 'ro',
     description: 'Preferred UI locale (ro or ru)',
     enum: ['ro', 'ru'],

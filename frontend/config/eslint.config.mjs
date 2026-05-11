@@ -263,6 +263,7 @@ export default [
     rules: {
       'no-empty-pattern': 'off',
       'no-restricted-imports': 'off',
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
   {

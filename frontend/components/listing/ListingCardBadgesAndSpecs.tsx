@@ -36,9 +36,9 @@ export function ListingCardBadges({
   const compact = badgeCount >= 3 || carouselBrowsingCompact;
   const badgeCollapseClass = compact
     ? allowCollapsedBadgesHoverExpand
-      ? 'px-2 py-1 gap-1 lg:px-1 lg:py-0.5 lg:gap-0 lg:group-hover:px-2 lg:group-hover:gap-1'
-      : 'px-2 py-1 gap-1 lg:px-1 lg:py-0.5 lg:gap-0'
-    : 'px-2 py-1 gap-1';
+      ? 'h-7 px-2 gap-1 lg:px-1 lg:gap-0 lg:group-hover:px-2 lg:group-hover:gap-1'
+      : 'h-7 px-2 gap-1 lg:px-1 lg:gap-0'
+    : 'h-7 px-2 gap-1';
   const labelTransition =
     'inline-block min-w-0 overflow-hidden transition-[max-width,opacity] duration-300 ease-in-out';
   const labelCollapseClass = compact
@@ -57,7 +57,7 @@ export function ListingCardBadges({
     <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10">
       {listing.is_promoted && (
         <span
-          className={`relative inline-flex items-center gap-1 px-2 py-1 rounded-md ${cardBadgeText} bg-white/90 border-2 border-accent text-text-secondary shadow-md whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-md before:bg-accent/10 before:pointer-events-none`}
+          className={`relative inline-flex items-center h-7 gap-1 px-2 rounded-md ${cardBadgeText} bg-white/90 border-2 border-accent text-text-secondary shadow-md whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-md before:bg-accent/10 before:pointer-events-none`}
         >
           <svg className={cardBadgeIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -72,7 +72,7 @@ export function ListingCardBadges({
       )}
       {showVideoBadge && (
         <span
-          className={`relative inline-flex items-center gap-1 px-2 py-1 rounded-md ${cardBadgeText} bg-white/90 border-2 border-newBadge text-text-secondary shadow-md whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-md before:bg-newBadge/10 before:pointer-events-none`}
+          className={`relative inline-flex items-center h-7 gap-1 px-2 rounded-md ${cardBadgeText} bg-white/90 border-2 border-newBadge text-text-secondary shadow-md whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded-md before:bg-newBadge/10 before:pointer-events-none`}
         >
           <svg className={cardBadgeIcon} fill="currentColor" viewBox="0 0 24 24" aria-hidden>
             <path d="M8 5v14l11-7L8 5z" />

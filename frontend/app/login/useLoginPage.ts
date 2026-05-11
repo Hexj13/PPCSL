@@ -89,7 +89,8 @@ function applyLoginSuccessRedirect(
   }
 }
 
-export function useLoginPage() {
+export function useLoginPage(options?: { suppressSignedInReturnNavigation?: boolean }) {
+  const suppressExternalSignedInNav = options?.suppressSignedInReturnNavigation ?? false;
   const { push } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { setAuth, user, isInitialized } = useAuthStore();
@@ -101,10 +102,16 @@ export function useLoginPage() {
   const suppressSignedInReturnNavigationRef = useRef(false);
 
   useEffect(() => {
-    if (isInitialized && user && !isRedirecting && !suppressSignedInReturnNavigationRef.current) {
+    if (
+      isInitialized &&
+      user &&
+      !isRedirecting &&
+      !suppressSignedInReturnNavigationRef.current &&
+      !suppressExternalSignedInNav
+    ) {
       push(resolvedReturnUrl ?? '/');
     }
-  }, [user, isInitialized, push, isRedirecting, resolvedReturnUrl]);
+  }, [user, isInitialized, push, isRedirecting, resolvedReturnUrl, suppressExternalSignedInNav]);
 
   useEffect(() => {
     if (queryReturnUrl || typeof window === 'undefined') return;

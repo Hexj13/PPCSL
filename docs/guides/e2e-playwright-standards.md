@@ -63,16 +63,34 @@ npx playwright install chromium
 - `E2E_USER_LOGIN` (optional; default `admin@admin.com` when unset)
 - `E2E_USER_PASSWORD` (optional; default `GGGgggTEST777` when unset — matches stage `seed.ts` admin)
 - `API_URL` or `E2E_API_URL` (optional; default `http://localhost:4000` for API helpers such as `buildAvailableMdPhone`)
+- For browser-side API helpers (`e2e/utils/api-origin.ts`), only **absolute** `http(s)` URLs are used from env. Priority: `E2E_API_URL`, then `API_URL`, then `NEXT_PUBLIC_API_URL` (relative values such as `/api` are ignored so helpers do not call the wrong host).
+- Run the backend API with `SMS_OUTBOUND_DISABLED=true` (and `NODE_ENV` not `production`) when Twilio credentials are present in `.env` so Playwright flows do not trigger real outbound SMS; codes in Redis are still written; UI verification can use `000000` locally (see below).
 
 If you set `E2E_USER_*` explicitly, values must match a user in your database (password must match the hashed password from seed or your own reset).
 
-Use `testInfo.skip(true, reason)` inside a test when credentials or environment cannot satisfy the scenario. Do not use `test.skip(...)` for per-run gating.
+`e2e/utils/auth.ts` `loginByUi` throws if post-login navigation lands on `/complete-profile` with `mode=phone_required` or `mode=business_onboarding` (seeded E2E admin must have `phoneVerified: true`; Business users need `companyName`).
+
+Use `testInfo.skip(condition, reason)` only for rare environment constraints documented in the spec. Prefer fixing data or config so tests **run** (pass or fail) rather than staying skipped.
 
 Local registration flow expectation:
 
 - On local environment SMS verification code is `000000`.
 - Registration E2E should cover both user types: individual and business.
 - Registration flow is complete only after `verify-phone` -> `complete-profile` (with additional data) -> home page.
+
+## Playwright projects
+
+`playwright.config.ts` defines two Chromium projects:
+
+- **`chromium-serial-account`**: specs that share the seeded E2E admin account and mutate backend or UI state (favorites, comparison, saved filters, listing create/view, my listings, **`sync-favorites-cross-tab.spec.ts`**), plus **`search-filters.spec.ts`** (URL-driven search UI is sensitive to parallel load on the dev server). Runs with **one worker** to reduce cross-file races. Match list is the `statefulAccountSpecs` regex in `playwright.config.ts`.
+- **`chromium`**: remaining specs; in CI uses two workers where safe.
+
+Run a single project explicitly:
+
+```bash
+npx playwright test --project=chromium
+npx playwright test --project=chromium-serial-account
+```
 
 ## Required architecture for specs
 
@@ -228,8 +246,11 @@ Current suite is aligned with this standard:
 - Shared fixtures: `e2e/fixtures/base.ts` (page objects + Allure auto layer)
 - Browser reset helper: `e2e/utils/session.ts` (no `beforeEach` UI hooks)
 - Shared step runner: `e2e/utils/steps.ts` (`prependClearBrowserState`, `runSteps`)
-- API helpers: `e2e/utils/api/auth.ts`, `e2e/utils/api/check-phone.ts`
+- API helpers: `e2e/utils/api/auth.ts`, `e2e/utils/api/check-phone.ts`, `e2e/utils/api/listing-actions.ts`, `e2e/utils/api/saved-filters.ts`, `e2e/utils/api/wait-favorite-api.ts`
 - Shared auth/listing helpers: `e2e/utils/auth.ts`, `e2e/utils/listings.ts`, `e2e/utils/listing-flow.ts`
+- API origin + locale cookies: `e2e/utils/api-origin.ts`, `e2e/utils/e2e-locale.ts`
+- URL assertions: `e2e/utils/app-path.ts` `pathnameWithoutLocalePrefix()` strips only configured URL locale prefixes (e.g. `ru`), not arbitrary two-letter path segments (so `/listings/...` is not mangled).
+- Saved filters quota: `e2e/utils/api/saved-filters.ts` `deleteAllSavedFiltersForSession` (used by `saved-filters.spec.ts` so `POST /api/saved-filters` does not hit the per-user cap during repeated local runs)
 - Shared test-data factories: `e2e/test-data/auth.ts`
 - Shared component objects:
   - `components/auth/register-form.component.ts`

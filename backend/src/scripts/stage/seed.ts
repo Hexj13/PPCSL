@@ -622,6 +622,8 @@ async function getOrCreateAdminUser() {
       firstName: 'Admin',
       lastName: 'User',
       phone: `${platformConfig.phonePrefix}70111111`,
+      phoneVerified: true,
+      preferredLocale: 'ro',
       type: UserTypeEnum.Admin,
       active: true,
     });
@@ -631,6 +633,8 @@ async function getOrCreateAdminUser() {
     admin.type = UserTypeEnum.Admin;
     admin.active = true;
     admin.phone = `${platformConfig.phonePrefix}70111111`;
+    admin.phoneVerified = true;
+    admin.preferredLocale = 'ro';
     admin.password = await bcrypt.hash(STAGE_ADMIN_PASSWORD, 10);
     admin = await userRepo.save(admin);
     console.log('✅ Updated admin user');

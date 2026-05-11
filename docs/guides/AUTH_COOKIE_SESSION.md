@@ -4,6 +4,8 @@ Session tokens are issued as `httpOnly` cookies (`kupito_access_token`, `kupito_
 
 Deploying Google Sign-In requires both `GOOGLE_CLIENT_ID` (NestJS) and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (Next.js build) with the same Web client ID. Next.js middleware validates the access cookie using `JWT_SECRET`; set the same secret as the backend JWT signing secret.
 
+Beyond `phoneVerified`, the SPA may enforce an extra **business company** step for verified Business users without `companyName` (client redirect to `/complete-profile?mode=business_onboarding`). That gate is not encoded in the JWT; see [auth-onboarding-gates.md](../features/auth-onboarding-gates.md).
+
 After migrating guests from legacy `localStorage` tokens to cookies, users were signed out once and must log in again.
 
 ## Guest refresh and `401`

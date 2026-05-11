@@ -1,4 +1,4 @@
-import type { APIRequestContext, Page, TestInfo } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
 
 import { expect, test } from '../fixtures/base';
 import type { CompleteProfilePage } from '../page-objects/complete-profile.page';
@@ -21,7 +21,6 @@ async function registerVerifyAndCompleteProfile(
   verifyPhonePage: VerifyPhonePage,
   completeProfilePage: CompleteProfilePage,
   searchHomePage: SearchHomePage,
-  testInfo: TestInfo,
 ): Promise<void> {
   const phone = await buildAvailableMdPhone(request);
   const registerProfileData = createRegisterProfileData();
@@ -75,7 +74,9 @@ async function registerVerifyAndCompleteProfile(
           { timeout: 30_000 },
         );
         if (pathnameWithoutLocalePrefix(new URL(page.url()).pathname).startsWith('/sign')) {
-          testInfo.skip(true, 'Local phone verification did not create an authenticated session');
+          throw new Error(
+            'Phone verification did not establish a session (check API SMS bypass 000000 in development and auth cookies).',
+          );
         }
         await expect(page).toHaveURL(/\/complete-profile(\?|$)/, { timeout: 30_000 });
       },
@@ -146,7 +147,7 @@ test.describe('Auth: register @p0', () => {
     verifyPhonePage,
     completeProfilePage,
     searchHomePage,
-  }, testInfo) => {
+  }) => {
     await registerVerifyAndCompleteProfile(
       page,
       request,
@@ -155,7 +156,6 @@ test.describe('Auth: register @p0', () => {
       verifyPhonePage,
       completeProfilePage,
       searchHomePage,
-      testInfo,
     );
   });
 
@@ -166,7 +166,7 @@ test.describe('Auth: register @p0', () => {
     verifyPhonePage,
     completeProfilePage,
     searchHomePage,
-  }, testInfo) => {
+  }) => {
     await registerVerifyAndCompleteProfile(
       page,
       request,
@@ -175,7 +175,6 @@ test.describe('Auth: register @p0', () => {
       verifyPhonePage,
       completeProfilePage,
       searchHomePage,
-      testInfo,
     );
   });
 });

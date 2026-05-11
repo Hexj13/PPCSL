@@ -15,11 +15,6 @@ export function getAuthCredentials(): AuthCredentials {
   };
 }
 
-export function hasAuthCredentials(): boolean {
-  const credentials = getAuthCredentials();
-  return credentials.login.length > 0 && credentials.password.length > 0;
-}
-
 export function requireAuthCredentials(): AuthCredentials {
   const credentials = getAuthCredentials();
   if (!credentials.login || !credentials.password) {

@@ -1,7 +1,6 @@
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../fixtures/base';
-import { hasAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
 import type { SearchHomePage } from '../page-objects/search-home.page';
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
@@ -31,11 +30,7 @@ test.describe('Listing detail: view and interaction @p0', () => {
     searchHomePage,
     listingCreatePage,
     listingDetailPage,
-  }, testInfo) => {
-    if (!hasAuthCredentials()) {
-      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
-      return;
-    }
+  }) => {
     await openListingFromResultsOrPrepare(page, searchHomePage, listingCreatePage);
     const steps: E2EStep[] = [
       {
@@ -54,11 +49,7 @@ test.describe('Listing detail: view and interaction @p0', () => {
     searchHomePage,
     listingCreatePage,
     listingDetailPage,
-  }, testInfo) => {
-    if (!hasAuthCredentials()) {
-      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
-      return;
-    }
+  }) => {
     await openListingFromResultsOrPrepare(page, searchHomePage, listingCreatePage);
     const steps: E2EStep[] = [
       {

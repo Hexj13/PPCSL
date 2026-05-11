@@ -1,5 +1,5 @@
 import { expect, test } from '../fixtures/base';
-import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
+import { requireAuthCredentials } from '../fixtures/env';
 import { loginByUi } from '../utils/auth';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
@@ -32,11 +32,7 @@ test.describe('Auth: login @p0', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('allows successful login with valid credentials', async ({ page }, testInfo) => {
-    if (!hasAuthCredentials()) {
-      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
-      return;
-    }
+  test('allows successful login with valid credentials', async ({ page }) => {
     const credentials = requireAuthCredentials();
     await runSteps(
       prependClearBrowserState(page, [
@@ -73,14 +69,7 @@ test.describe('Auth: login @p0', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('rejects invalid credentials and stays on sign page', async ({
-    page,
-    signPage,
-  }, testInfo) => {
-    if (!hasAuthCredentials()) {
-      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
-      return;
-    }
+  test('rejects invalid credentials and stays on sign page', async ({ page, signPage }) => {
     const credentials = requireAuthCredentials();
     const steps: E2EStep[] = [
       {

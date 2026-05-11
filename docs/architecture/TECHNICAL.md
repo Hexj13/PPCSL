@@ -193,6 +193,8 @@ REDIS_PORT=6379
 TWILIO_ACCOUNT_SID=your-twilio-account-sid
 TWILIO_AUTH_TOKEN=your-twilio-auth-token
 TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
+# Optional: skip real Twilio sends outside production (codes still stored in Redis); see SMS Verification in this doc
+# SMS_OUTBOUND_DISABLED=true
 
 # SMTP Email Configuration
 SMTP_HOST=smtp.gmail.com
@@ -468,6 +470,8 @@ DELETE /api/saved-filters/:id          # Delete saved filter
 
 **Saved filters payload sanitization:** Client-side create requests keep only allowed filter keys before calling `POST /api/saved-filters`. This prevents accidental UI-only/transient fields from being persisted.
 
+**E2E:** Reusing the same authenticated user across runs can hit the per-user cap (`400` from `POST`). Specs that create filters should clear existing rows first (see [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md)).
+
 ### Seller Listings Board
 
 Public seller board page: all active listings of a seller by slug (no auth required). Pages `/board/*` are noindex. See [seller-listings-board.md](../features/seller-listings-board.md) for full specification.
@@ -716,6 +720,8 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 
 - IP-based brute force protection (40 failed attempts per IP on guarded auth endpoints, 1-hour block)
 - Per phone number: at most 3 SMS sends per rolling hour (Redis); at most 3 incorrect code submissions per active code (Redis), separate counters for registration/phone-change codes vs password-reset codes
+- **Development only:** when `NODE_ENV=development`, `DISABLE_SMS_SEND_RATE_LIMIT=true` on the API skips the per-phone hourly send counter (`SmsService`). Do not use outside local development.
+- **Non-production:** when `SMS_OUTBOUND_DISABLED=true` or `SMS_OUTBOUND_DISABLED=1` and `NODE_ENV` is not `production`, the API stores SMS codes in Redis but does not call Twilio `messages.create`. The flag has no effect in production. Use for local development and Playwright runs so Twilio credentials can stay in `.env` without sending real SMS.
 - Frontend: 3 attempts per code before prompting for a new SMS; up to 2 resends after the initial send (3 SMS total per hour aligned with backend)
 - Frontend: when a resend fails with API error key `errors.smsHourlyLimit`, the client sets the resend cooldown to one hour (instead of clearing it) on registration verify, password reset, and profile phone-change verify, so the UI does not allow immediate repeated resend clicks against an exhausted per-phone quota
 - Automatic cleanup of expired IP blocks (hourly cron job)

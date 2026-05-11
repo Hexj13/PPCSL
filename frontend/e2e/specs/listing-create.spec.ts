@@ -1,7 +1,7 @@
-import type { Page, TestInfo } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 import { expect, test } from '../fixtures/base';
-import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
+import { requireAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { loginByUi } from '../utils/auth';
@@ -11,12 +11,8 @@ import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps
 async function loginAndOpenCreateListing(
   page: Page,
   listingCreatePage: ListingCreatePage,
-  testInfo: TestInfo,
 ): Promise<ListingCreatePage> {
-  const result = await loginByUi(page, requireAuthCredentials());
-  if (result.phoneRequired) {
-    testInfo.skip(true, 'E2E user must verify phone before creating listings');
-  }
+  await loginByUi(page, requireAuthCredentials());
   await listingCreatePage.openAndExpectPageView();
   return listingCreatePage;
 }
@@ -47,20 +43,13 @@ test.describe('Listing create @p0', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('opens create listing form for authenticated user', async ({
-    page,
-    listingCreatePage,
-  }, testInfo) => {
-    if (!hasAuthCredentials()) {
-      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
-      return;
-    }
+  test('opens create listing form for authenticated user', async ({ page, listingCreatePage }) => {
     await runSteps(
       prependClearBrowserState(page, [
         {
           name: 'Login and open create listing page',
           action: async () => {
-            await loginAndOpenCreateListing(page, listingCreatePage, testInfo);
+            await loginAndOpenCreateListing(page, listingCreatePage);
           },
         },
       ]),
@@ -71,11 +60,7 @@ test.describe('Listing create @p0', () => {
     page,
     listingCreatePage,
     listingDetailPage,
-  }, testInfo) => {
-    if (!hasAuthCredentials()) {
-      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
-      return;
-    }
+  }) => {
     let listingDescription = '';
     let selectedEquipmentLabels: string[] = [];
     await runSteps(
@@ -83,7 +68,7 @@ test.describe('Listing create @p0', () => {
         {
           name: 'Login and open create listing page',
           action: async () => {
-            await loginAndOpenCreateListing(page, listingCreatePage, testInfo);
+            await loginAndOpenCreateListing(page, listingCreatePage);
           },
         },
       ]),

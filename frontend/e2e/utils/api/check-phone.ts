@@ -1,11 +1,10 @@
 import type { APIRequestContext } from '@playwright/test';
 
 import { buildUniqueMdPhone } from '../../fixtures/env';
-
-const API_BASE_URL = process.env.API_URL ?? process.env.E2E_API_URL ?? 'http://localhost:4000';
+import { getE2eBackendApiOrigin } from '../api-origin';
 
 export async function buildAvailableMdPhone(request: APIRequestContext): Promise<string> {
-  const base = API_BASE_URL.replace(/\/$/, '');
+  const base = getE2eBackendApiOrigin();
   const url = `${base}/api/auth/check-phone`;
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const candidatePhone = buildUniqueMdPhone();

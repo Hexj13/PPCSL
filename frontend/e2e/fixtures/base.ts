@@ -12,6 +12,7 @@ import { ProfilePage } from '../page-objects/profile.page';
 import { SearchHomePage } from '../page-objects/search-home.page';
 import { SignPage } from '../page-objects/sign.page';
 import { VerifyPhonePage } from '../page-objects/verify-phone.page';
+import { applyDefaultLocaleCookiesToBrowserContext } from '../utils/e2e-locale';
 
 type E2EFixtures = {
   allureLayer: void;
@@ -29,6 +30,11 @@ type E2EFixtures = {
 };
 
 export const test = base.extend<E2EFixtures>({
+  page: async ({ page, context, baseURL }, use) => {
+    const appBase = (baseURL ?? 'http://localhost:3000').replace(/\/$/, '');
+    await applyDefaultLocaleCookiesToBrowserContext(context, appBase);
+    await use(page);
+  },
   allureLayer: [
     async ({}, use) => {
       await layer('e2e-ui');

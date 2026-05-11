@@ -15,6 +15,8 @@ export async function submitVerifyPhoneWithAuthCode(params: {
   code: string;
   mode: 'complete-profile' | 'post-register';
   returnUrl: string | null;
+  source: string | null;
+  selectedType: string | null;
   setAuth: (user: User | null) => void;
   setError: (msg: string) => void;
   setCode: (c: string[]) => void;
@@ -30,6 +32,8 @@ export async function submitVerifyPhoneWithAuthCode(params: {
     code,
     mode,
     returnUrl,
+    source: _source,
+    selectedType,
     setAuth,
     setError,
     setCode,
@@ -52,10 +56,22 @@ export async function submitVerifyPhoneWithAuthCode(params: {
       localStorageRemoveItem('postRegisterEmailVerificationSent');
       await completeRegistrationAndGoToProfile(flag === '1', returnUrl);
     } else if (typeof window !== 'undefined' && window.location) {
-      const target = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
-      window.location.href = target
-        ? buildPostAuthRedirect(target, getClientLocale())
-        : buildPostAuthRedirect('/', getClientLocale());
+      if (selectedType === 'Business') {
+        const qs = new URLSearchParams();
+        qs.set('mode', 'business_onboarding');
+        if (returnUrl) {
+          qs.set('returnUrl', returnUrl);
+        }
+        window.location.href = buildPostAuthRedirect(
+          `/complete-profile?${qs.toString()}`,
+          getClientLocale(),
+        );
+      } else {
+        const target = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
+        window.location.href = target
+          ? buildPostAuthRedirect(target, getClientLocale())
+          : buildPostAuthRedirect('/', getClientLocale());
+      }
     }
   } catch (err: unknown) {
     const axiosError = err as AxiosError<{

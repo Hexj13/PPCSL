@@ -9,11 +9,13 @@ import { useLoginPage } from '@/app/login/useLoginPage';
 import { RegisterPanel } from '@/app/register/RegisterPanel';
 import { useRegisterPage } from '@/app/register/useRegisterPage';
 import { GoogleSignInButton } from '@/app/sign/GoogleSignInButton';
+import { useGoogleAuth } from '@/app/sign/useGoogleAuth';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
+import { Spinner } from '@/ui';
 
 export type AuthTab = 'login' | 'register';
 
@@ -42,14 +44,22 @@ export function SignPageContent() {
     tabsContainerRef,
   );
 
-  const login = useLoginPage();
-  const registerPage = useRegisterPage();
   const [gisReady, setGisReady] = useState(false);
   const gisHl = useMemo(() => gisScriptHl(locale), [locale]);
 
   useEffect(() => {
     setGisReady(false);
   }, [gisHl]);
+
+  const registerPage = useRegisterPage();
+  const googleAuth = useGoogleAuth({
+    mode: tab === 'register' ? 'register' : 'login',
+    userType: tab === 'register' ? registerPage.formData.type : undefined,
+    gisScriptLoaded: gisReady,
+  });
+  const login = useLoginPage({
+    suppressSignedInReturnNavigation: googleAuth.isGoogleAuthInFlight,
+  });
 
   const handleTabClick = (next: AuthTab) => {
     if (next === tab) return;
@@ -58,8 +68,18 @@ export function SignPageContent() {
     router.replace(href, { scroll: false });
   };
 
-  if (login.isInitialized && login.user) {
+  if (login.isInitialized && login.user && !googleAuth.isGoogleAuthInFlight) {
     return null;
+  }
+
+  if (googleAuth.isGoogleAuthInFlight) {
+    return (
+      <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16" data-testid="auth-page">
+        <div className="card p-6 md:p-8 text-center">
+          <Spinner size="md" text={t('common.loading')} />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -175,11 +195,10 @@ export function SignPageContent() {
             <span className="text-sm text-hint shrink-0">{t('sign.dividerOr')}</span>
             <span className="grow h-px bg-primary-700/25" />
           </div>
-          {tab === 'login' ? (
-            <GoogleSignInButton mode="login" />
-          ) : (
-            <GoogleSignInButton mode="register" userType={registerPage.formData.type} />
-          )}
+          <GoogleSignInButton
+            containerRef={googleAuth.containerRef}
+            clientIdConfigured={googleAuth.clientIdConfigured}
+          />
         </div>
       ) : null}
     </div>

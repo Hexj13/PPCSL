@@ -54,7 +54,7 @@ Layered architecture for Playwright E2E in `core/frontend/e2e`.
 
 - Location: `core/frontend/e2e/utils`.
 - Hold cross-feature helpers:
-  - flow helpers (`auth.ts`, `listings.ts`, `listing-flow.ts`)
+  - flow helpers (`auth.ts` — `loginByUi`, `listings.ts`, `listing-flow.ts`)
   - browser reset (`session.ts`)
   - step runner (`steps.ts`)
   - API helpers (`utils/api/*`)
@@ -98,7 +98,7 @@ Browser: **Chromium only**. Viewports: **desktop default** in Playwright config;
 | Static / legal / partners / offline | yes | n/a | n/a | no |
 | Guest route guards | yes | n/a | n/a | no |
 | Language switcher | yes | n/a | n/a | no |
-| Cross-tab favorites | n/a | yes | n/a | no |
+| Cross-tab favorites | n/a | yes | n/a | no (`sync-favorites-cross-tab.spec.ts`) |
 
 ## Migration Note
 

@@ -123,4 +123,25 @@ describe('UserProfilePatchService', () => {
       BadRequestException,
     );
   });
+
+  it('drops type from patch when phone is verified', async () => {
+    const u = baseUser();
+    u.phoneVerified = true;
+    const patch = await service.buildPatch(u, u.id, { type: UserType.Business });
+    expect(patch.type).toBeUndefined();
+  });
+
+  it('applies type change when phone is not verified', async () => {
+    const u = baseUser();
+    u.phoneVerified = false;
+    const patch = await service.buildPatch(u, u.id, { type: UserType.Business });
+    expect(patch.type).toBe(UserType.Business);
+  });
+
+  it('drops type from patch when unchanged', async () => {
+    const u = baseUser();
+    u.phoneVerified = false;
+    const patch = await service.buildPatch(u, u.id, { type: UserType.Individual });
+    expect(patch.type).toBeUndefined();
+  });
 });

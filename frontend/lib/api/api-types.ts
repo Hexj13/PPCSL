@@ -537,6 +537,7 @@ export interface UpdateProfileDto {
   whatsapp?: boolean;
   telegram?: boolean;
   preferredLocale?: Locale;
+  type?: 'Individual' | 'Business';
 }
 
 export interface ChangePhoneRequestDto {

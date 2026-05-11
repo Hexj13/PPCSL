@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
 
 export class ProfilePage {
   private readonly testIds = {
@@ -12,7 +13,8 @@ export class ProfilePage {
   constructor(private readonly page: Page) {}
 
   async open(): Promise<void> {
-    await this.page.goto('/profile');
+    await forceDefaultCanonicalLocaleCookies(this.page);
+    await this.page.goto('/profile', { waitUntil: 'domcontentloaded' });
   }
 
   async expectPageView(): Promise<void> {

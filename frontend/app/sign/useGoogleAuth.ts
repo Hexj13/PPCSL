@@ -48,6 +48,7 @@ function gisButtonLocale(locale: string): string {
 export function useGoogleAuth(options: {
   mode: 'login' | 'register';
   userType?: GoogleSignInDto['type'];
+  gisScriptLoaded?: boolean;
 }) {
   const { t } = useTranslation();
   const { locale: appLocale } = useI18n();
@@ -55,8 +56,10 @@ export function useGoogleAuth(options: {
   const searchParams = useSearchParams();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [ready, setReady] = useState(false);
+  const [isGoogleAuthInFlight, setIsGoogleAuthInFlight] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const gisScriptLoaded = options.gisScriptLoaded ?? true;
 
   const finishSession = useCallback(
     async (syncedUser: { id: string }) => {
@@ -73,12 +76,18 @@ export function useGoogleAuth(options: {
       const locale = getClientLocale();
       if (!useAuthStore.getState().user?.phoneVerified) {
         const safeReturn = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
-        const target =
-          safeReturn && typeof window !== 'undefined'
-            ? `/complete-profile?mode=phone_required&returnUrl=${encodeURIComponent(buildPostAuthRedirect(safeReturn, locale))}`
-            : '/complete-profile?mode=phone_required';
+        const phoneQs = new URLSearchParams();
+        phoneQs.set('mode', 'phone_required');
+        if (options.mode === 'register') {
+          phoneQs.set('source', 'google_register');
+          phoneQs.set('selectedType', options.userType ?? 'Individual');
+        }
+        if (safeReturn) {
+          phoneQs.set('returnUrl', buildPostAuthRedirect(safeReturn, locale));
+        }
+        const path = `/complete-profile?${phoneQs.toString()}`;
         if (typeof window !== 'undefined' && window.location) {
-          window.location.href = buildPostAuthRedirect(target, locale);
+          window.location.href = buildPostAuthRedirect(path, locale);
         }
         return;
       }
@@ -89,15 +98,26 @@ export function useGoogleAuth(options: {
           : buildPostAuthRedirect('/', locale);
       }
     },
-    [searchParams, setAuth],
+    [searchParams, setAuth, options.mode, options.userType],
   );
 
   useEffect(() => {
-    if (!clientId || typeof window === 'undefined') return;
-    if (!window.google?.accounts?.id) return;
+    if (!clientId || typeof window === 'undefined') {
+      setReady(false);
+      return;
+    }
+    if (!gisScriptLoaded) {
+      setReady(false);
+      return;
+    }
+    if (!window.google?.accounts?.id) {
+      setReady(false);
+      return;
+    }
     window.google.accounts.id.initialize({
       client_id: clientId,
       callback: (resp) => {
+        setIsGoogleAuthInFlight(true);
         void (async () => {
           try {
             const body: GoogleSignInDto = {
@@ -113,13 +133,23 @@ export function useGoogleAuth(options: {
             setAuth(syncedUser);
             await finishSession(syncedUser);
           } catch {
+            setIsGoogleAuthInFlight(false);
             toast.error(t('errors.googleSignInFailed'));
           }
         })();
       },
     });
     setReady(true);
-  }, [clientId, finishSession, gisUiLocale, options.mode, options.userType, setAuth, t]);
+  }, [
+    clientId,
+    finishSession,
+    gisScriptLoaded,
+    gisUiLocale,
+    options.mode,
+    options.userType,
+    setAuth,
+    t,
+  ]);
 
   const renderButton = useCallback(() => {
     if (!ready || !clientId || !containerRef.current || !window.google?.accounts?.id) return;
@@ -138,5 +168,5 @@ export function useGoogleAuth(options: {
     renderButton();
   }, [renderButton]);
 
-  return { containerRef, clientIdConfigured: Boolean(clientId) };
+  return { containerRef, clientIdConfigured: Boolean(clientId), isGoogleAuthInFlight };
 }

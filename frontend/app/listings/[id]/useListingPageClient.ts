@@ -219,8 +219,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
       }
       toast.success(t('listings.addToFavorites'));
     } catch {
-      addFavorite(id);
-      setIsFavorite(true);
+      toast.error(t('common.error'));
     }
   }, [user, id, isFavorite, listing, router, t, addFavorite, removeFavorite, setIsFavorite]);
 

@@ -68,6 +68,10 @@ export class ListingDetailPage {
     await expect(this.favoriteActionButton).toBeVisible();
   }
 
+  async expectFavoriteActionReady(): Promise<void> {
+    await expect(this.favoriteActionButton).toBeEnabled({ timeout: 30_000 });
+  }
+
   async expectFullPageView(
     descriptionText?: string,
     equipmentLabels: string[] = [],

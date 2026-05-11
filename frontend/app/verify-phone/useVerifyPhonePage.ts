@@ -68,11 +68,27 @@ export function useVerifyPhonePage() {
     if (mode === 'complete-profile' || mode === 'post-register') {
       if (!phone) {
         toast.error(t('verifyPhone.phoneNotAvailable'));
-        router.push(
-          mode === 'complete-profile'
-            ? buildPostAuthRedirect('/complete-profile?mode=phone_required', getClientLocale())
-            : signTabUrl,
-        );
+        if (mode === 'complete-profile') {
+          const back = new URLSearchParams();
+          back.set('mode', 'phone_required');
+          const ru = searchParams.get('returnUrl');
+          if (ru) {
+            back.set('returnUrl', ru);
+          }
+          const src = searchParams.get('source');
+          if (src) {
+            back.set('source', src);
+          }
+          const st = searchParams.get('selectedType');
+          if (st) {
+            back.set('selectedType', st);
+          }
+          router.push(
+            buildPostAuthRedirect(`/complete-profile?${back.toString()}`, getClientLocale()),
+          );
+        } else {
+          router.push(signTabUrl);
+        }
         return;
       }
       setPhoneNumber(phone);
@@ -279,6 +295,8 @@ export function useVerifyPhonePage() {
         code: codeToValidate,
         mode,
         returnUrl,
+        source: searchParams.get('source'),
+        selectedType: searchParams.get('selectedType'),
         setAuth,
         setError,
         setCode,
@@ -368,9 +386,21 @@ export function useVerifyPhonePage() {
     const mode = searchParams.get('mode');
     localStorageRemoveItem('pendingRegistration');
     if (mode === 'complete-profile') {
-      router.push(
-        buildPostAuthRedirect('/complete-profile?mode=phone_required', getClientLocale()),
-      );
+      const back = new URLSearchParams();
+      back.set('mode', 'phone_required');
+      const ru = searchParams.get('returnUrl');
+      if (ru) {
+        back.set('returnUrl', ru);
+      }
+      const src = searchParams.get('source');
+      if (src) {
+        back.set('source', src);
+      }
+      const st = searchParams.get('selectedType');
+      if (st) {
+        back.set('selectedType', st);
+      }
+      router.push(buildPostAuthRedirect(`/complete-profile?${back.toString()}`, getClientLocale()));
       return;
     }
     if (mode === 'post-register') {

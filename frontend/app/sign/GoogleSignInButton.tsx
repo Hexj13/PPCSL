@@ -1,24 +1,19 @@
 'use client';
 
 import Link from 'next/link';
+import type { RefObject } from 'react';
 
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 
-import { useGoogleAuth } from './useGoogleAuth';
-
 type GoogleSignInButtonProps = {
-  mode: 'login' | 'register';
-  userType?: 'Individual' | 'Business';
+  containerRef: RefObject<HTMLDivElement | null>;
+  clientIdConfigured: boolean;
 };
 
-export function GoogleSignInButton({ mode, userType }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ containerRef, clientIdConfigured }: GoogleSignInButtonProps) {
   const { t } = useTranslation();
   const { href } = useLocalizedNavigation();
-  const { containerRef, clientIdConfigured } = useGoogleAuth({
-    mode,
-    userType,
-  });
 
   if (!clientIdConfigured) {
     return null;

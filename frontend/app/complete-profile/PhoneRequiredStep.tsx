@@ -1,12 +1,13 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { FormEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { RegisterFormMessengers } from '@/app/register/RegisterFormMessengers';
 import { validatePhone } from '@/app/register/utils';
 import { useTranslation } from '@/hooks/useTranslation';
+import type { UpdateProfileDto, User } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { getClientLocale } from '@/lib/i18n';
 import {
@@ -25,10 +26,23 @@ type PhoneRequiredStepProps = {
   returnUrl: string | null;
 };
 
+function readInitialAccountType(
+  selectedTypeParam: string | null,
+  user: User,
+): 'Individual' | 'Business' {
+  if (selectedTypeParam === 'Business' || selectedTypeParam === 'Individual') {
+    return selectedTypeParam;
+  }
+  return user.type === 'Business' ? 'Business' : 'Individual';
+}
+
 export function PhoneRequiredStep({ returnUrl }: PhoneRequiredStepProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, setAuth } = useAuthStore();
+  const selectedTypeParam = searchParams.get('selectedType');
+  const source = searchParams.get('source');
   const [phoneInput, setPhoneInput] = useState(() =>
     user?.phone ? formatPhoneForDisplay(user.phone) : '',
   );
@@ -39,6 +53,14 @@ export function PhoneRequiredStep({ returnUrl }: PhoneRequiredStepProps) {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [accountType, setAccountType] = useState<'Individual' | 'Business'>('Individual');
+  const didInitAccountTypeRef = useRef(false);
+
+  useEffect(() => {
+    if (!user || didInitAccountTypeRef.current) return;
+    didInitAccountTypeRef.current = true;
+    setAccountType(readInitialAccountType(selectedTypeParam, user));
+  }, [user, selectedTypeParam]);
 
   if (!user) {
     return null;
@@ -48,12 +70,14 @@ export function PhoneRequiredStep({ returnUrl }: PhoneRequiredStepProps) {
     setLoading(true);
     try {
       try {
-        await authApi.updateProfile({
+        const payload: UpdateProfileDto = {
           phone: normalizedPhone,
           viber: messengers.viber,
           whatsapp: messengers.whatsapp,
           telegram: messengers.telegram,
-        });
+          type: accountType,
+        };
+        await authApi.updateProfile(payload);
       } catch (profileErr: unknown) {
         const message = getPhoneSubmitErrorMessage(
           profileErr as Parameters<typeof getPhoneSubmitErrorMessage>[0],
@@ -82,6 +106,10 @@ export function PhoneRequiredStep({ returnUrl }: PhoneRequiredStepProps) {
       if (returnUrl) {
         p.set('returnUrl', returnUrl);
       }
+      if (source) {
+        p.set('source', source);
+      }
+      p.set('selectedType', accountType);
       router.push(buildPostAuthRedirect(`/verify-phone?${p.toString()}`, getClientLocale()));
     } finally {
       setLoading(false);
@@ -106,6 +134,37 @@ export function PhoneRequiredStep({ returnUrl }: PhoneRequiredStepProps) {
       <InfoBlock>
         <p>{t('completeProfile.phoneRequiredDescription')}</p>
       </InfoBlock>
+      <div className="mb-5">
+        <label className="block text-sm font-semibold mb-2 text-primary-900">
+          {t('register.userType')}
+        </label>
+        <div className="flex bg-bg-base rounded-lg p-1 border-2 border-primary-700/30">
+          <button
+            type="button"
+            onClick={() => setAccountType('Individual')}
+            data-testid="complete-profile-phone-required-type-individual"
+            className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all duration-200 ${
+              accountType === 'Individual'
+                ? 'bg-primary-500/10 text-primary-700 border border-primary-700'
+                : 'text-primary-900 hover-only:hover:text-primary-700'
+            }`}
+          >
+            {t('register.individual')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAccountType('Business')}
+            data-testid="complete-profile-phone-required-type-business"
+            className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all duration-200 ${
+              accountType === 'Business'
+                ? 'bg-primary-500/10 text-primary-700 border border-primary-700'
+                : 'text-primary-900 hover-only:hover:text-primary-700'
+            }`}
+          >
+            {t('register.business')}
+          </button>
+        </div>
+      </div>
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
         <div>
           <label

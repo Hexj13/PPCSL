@@ -198,6 +198,12 @@ export interface TranslationsPart1 {
     fillAtLeastOne: string;
     registrationSuccess: string;
     registrationEmailVerificationSent: string;
+    phoneRequiredTitle: string;
+    phoneRequiredDescription: string;
+    phoneRequiredCurrent: string;
+    phoneRequiredContinue: string;
+    businessOnboardingTitle: string;
+    businessOnboardingInfo: string;
   };
   resetPassword: {
     title: string;

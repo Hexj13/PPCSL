@@ -21,6 +21,7 @@ export type UserProfilePatchFields = {
   preferredLocale?: 'ro' | 'ru' | null;
   phone?: string | null;
   phoneVerified?: boolean;
+  type?: 'Individual' | 'Business';
 };
 
 @Injectable()
@@ -172,6 +173,20 @@ export class UserProfilePatchService {
       }
     } else {
       delete cleanedData.phone;
+    }
+
+    if (cleanedData.type !== undefined) {
+      if (currentUser.phoneVerified === true) {
+        delete cleanedData.type;
+      } else if (cleanedData.type === 'Individual' || cleanedData.type === 'Business') {
+        if (cleanedData.type === currentUser.type) {
+          delete cleanedData.type;
+        }
+      } else {
+        delete cleanedData.type;
+      }
+    } else {
+      delete cleanedData.type;
     }
 
     for (const key of Object.keys(cleanedData) as (keyof Partial<User>)[]) {
