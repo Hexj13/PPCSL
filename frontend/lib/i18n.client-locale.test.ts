@@ -32,14 +32,27 @@ describe('getClientLocale', () => {
     expect(getClientLocale()).toBe('ru');
   });
 
-  it('uses default locale on RO path even when cookie is ru', () => {
+  it('uses pathname override for URL locale before window path and cookie', () => {
     window.location.pathname = '/dacia';
-    document.cookie = 'kupito-locale=ru; path=/';
-    expect(getClientLocale()).toBe('ro');
+    document.cookie = 'kupito-locale=ro; path=/';
+    expect(getClientLocale('/ru/sign')).toBe('ru');
   });
 
-  it('uses default locale on RO path even when localStorage is ru', () => {
+  it('returns ru from cookie when pathname has no locale prefix', () => {
     window.location.pathname = '/dacia';
+    document.cookie = 'kupito-locale=ru; path=/';
+    expect(getClientLocale()).toBe('ru');
+  });
+
+  it('returns ru from localStorage when pathname has no prefix and cookie is absent', () => {
+    window.location.pathname = '/dacia';
+    localStorage.setItem('kupito-locale', 'ru');
+    expect(getClientLocale()).toBe('ru');
+  });
+
+  it('prioritizes cookie over localStorage when pathname has no prefix', () => {
+    window.location.pathname = '/compare';
+    document.cookie = 'kupito-locale=ro; path=/';
     localStorage.setItem('kupito-locale', 'ru');
     expect(getClientLocale()).toBe('ro');
   });

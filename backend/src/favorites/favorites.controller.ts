@@ -19,6 +19,7 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
+import { PhoneVerifiedGuard } from '../auth/infrastructure/guards/phone-verified.guard';
 import type { AuthenticatedRequest } from '../common/express-augmentation';
 
 import { CheckBatchDto } from './dto/check-batch.dto';
@@ -242,7 +243,7 @@ export class FavoritesController {
     },
   })
   @Post(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   add(@Param('id') listingId: string, @Request() req: AuthenticatedRequest) {
     return this.favoritesService.add(req.user.id, listingId);
   }
@@ -276,7 +277,7 @@ export class FavoritesController {
     },
   })
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   remove(@Param('id') listingId: string, @Request() req: AuthenticatedRequest) {
     return this.favoritesService.remove(req.user.id, listingId);
   }

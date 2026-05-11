@@ -29,18 +29,22 @@ export function FavoritesListingsTab({
 
   if (showSkeleton) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-        {[...Array(4)].map((_, i) => (
-          <ListingCardSkeleton key={i} />
-        ))}
+      <div data-testid="favorites-listings-tab">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+          {[...Array(4)].map((_, i) => (
+            <ListingCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     );
   }
 
   if (listings.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-text-primary text-lg">{t('favorites.empty')}</p>
+      <div data-testid="favorites-listings-tab">
+        <div className="text-center py-12" data-testid="favorites-listings-empty">
+          <p className="text-text-primary text-lg">{t('favorites.empty')}</p>
+        </div>
       </div>
     );
   }
@@ -49,7 +53,7 @@ export function FavoritesListingsTab({
   const noMorePages = meta && (meta.totalPages ?? 0) > 0 && currentPage >= (meta.totalPages ?? 0);
 
   return (
-    <>
+    <div data-testid="favorites-listings-tab">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
         {listings.map((listing) => (
           <ListingCard
@@ -74,6 +78,6 @@ export function FavoritesListingsTab({
           <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>{t('listings.noMoreListings')}</p>
         </div>
       )}
-    </>
+    </div>
   );
 }

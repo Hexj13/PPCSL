@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
@@ -56,7 +55,6 @@ type PartnerPromoBannerProps = {
 
 export function PartnerPromoBanner({ onDismiss }: PartnerPromoBannerProps) {
   const { t } = useTranslation();
-  const pathname = usePathname();
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
@@ -93,7 +91,7 @@ export function PartnerPromoBanner({ onDismiss }: PartnerPromoBannerProps) {
               {t('listings.partnerPromo.titlePartnerLead')}
               <Link
                 href="/partners"
-                onClick={() => preserveHomeScrollPosition(pathname)}
+                onClick={() => preserveHomeScrollPosition()}
                 className="text-primary-100 underline decoration-primary-100 underline-offset-2 transition-colors duration-200 hover-only:hover:decoration-white focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-100 focus-visible:ring-offset-2 focus-visible:ring-offset-primary-900"
               >
                 {t('listings.partnerPromo.titlePartnerEmphasis')}
@@ -137,7 +135,7 @@ export function PartnerPromoBanner({ onDismiss }: PartnerPromoBannerProps) {
           <div className="flex flex-col gap-4">
             <Link
               href="/partners"
-              onClick={() => preserveHomeScrollPosition(pathname)}
+              onClick={() => preserveHomeScrollPosition()}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border-2 border-primary-200 bg-primary-500 px-4 text-sm font-bold text-white transition-colors duration-200 hover-only:hover:border-primary-100 active:border-primary-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-100 focus-visible:ring-offset-2 focus-visible:ring-offset-primary-900"
             >
               {t('listings.partnerPromo.cta')}

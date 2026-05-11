@@ -1,6 +1,7 @@
 /// <reference path="./jest-openapi.d.ts" />
 import * as supertest from 'supertest';
 
+import { cookieHeaderFromAuthResponse } from './auth-cookie-integration';
 import { getTestRequest } from './setup-integration';
 import { createTestCredentials } from './test-data-cleanup';
 
@@ -24,6 +25,7 @@ describe('Saved Filters API Integration Tests', () => {
       firstName: credentials.firstName,
       lastName: credentials.lastName,
       termsAccepted: true,
+      smsVerificationCode: '000000',
     });
     if (registerRes.status !== 201) {
       throw new Error(`Registration failed: ${JSON.stringify(registerRes.body)}`);
@@ -34,11 +36,11 @@ describe('Saved Filters API Integration Tests', () => {
       password: testPassword,
     });
 
-    if (!loginResponse.body.access_token) {
-      throw new Error('Failed to get auth token');
+    if (!loginResponse.body?.user?.id) {
+      throw new Error('Failed to get auth session');
     }
 
-    authToken = loginResponse.body.access_token;
+    authToken = cookieHeaderFromAuthResponse(loginResponse);
   });
 
   describe('POST /api/saved-filters', () => {
@@ -54,7 +56,7 @@ describe('Saved Filters API Integration Tests', () => {
 
       const response = await request
         .post('/api/saved-filters')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .send(filterData)
         .expect(201);
 
@@ -78,7 +80,7 @@ describe('Saved Filters API Integration Tests', () => {
 
       const response = await request
         .post('/api/saved-filters')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .send(filterData)
         .expect(201);
 
@@ -98,7 +100,7 @@ describe('Saved Filters API Integration Tests', () => {
 
       const response = await request
         .post('/api/saved-filters')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .send(filterData)
         .expect(201);
 
@@ -118,7 +120,7 @@ describe('Saved Filters API Integration Tests', () => {
 
       const response = await request
         .post('/api/saved-filters')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .send(filterData)
         .expect(201);
 
@@ -138,7 +140,7 @@ describe('Saved Filters API Integration Tests', () => {
 
       const response = await request
         .post('/api/saved-filters')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .send(filterData)
         .expect(400);
 
@@ -154,7 +156,7 @@ describe('Saved Filters API Integration Tests', () => {
 
       const response = await request
         .post('/api/saved-filters')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .send(filterData)
         .expect(400);
 
@@ -164,7 +166,7 @@ describe('Saved Filters API Integration Tests', () => {
     it('should return 400 when limit of 20 filters is reached', async () => {
       const existingFiltersResponse = await request
         .get('/api/saved-filters')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .expect(200);
 
       const existingCount = existingFiltersResponse.body.length;
@@ -173,7 +175,7 @@ describe('Saved Filters API Integration Tests', () => {
       for (let i = 0; i < filtersToCreate; i++) {
         await request
           .post('/api/saved-filters')
-          .set('Authorization', `Bearer ${authToken}`)
+          .set('Cookie', authToken)
           .send({
             name: `Филтер ${i}`,
             filters: { brand_ids: ['brand-1'] },
@@ -183,7 +185,7 @@ describe('Saved Filters API Integration Tests', () => {
 
       const response = await request
         .post('/api/saved-filters')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .send({
           name: '21-й фильтр',
           filters: { brand_ids: ['brand-1'] },
@@ -209,10 +211,7 @@ describe('Saved Filters API Integration Tests', () => {
 
   describe('GET /api/saved-filters', () => {
     it('should return list of saved filters and match OpenAPI schema', async () => {
-      const response = await request
-        .get('/api/saved-filters')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
+      const response = await request.get('/api/saved-filters').set('Cookie', authToken).expect(200);
 
       expect(response).toSatisfyApiSpec();
       expect(Array.isArray(response.body)).toBe(true);
@@ -232,7 +231,7 @@ describe('Saved Filters API Integration Tests', () => {
       if (!filterIdToUpdate) {
         const filtersResponse = await request
           .get('/api/saved-filters')
-          .set('Authorization', `Bearer ${authToken}`)
+          .set('Cookie', authToken)
           .expect(200);
 
         if (filtersResponse.body.length > 0) {
@@ -240,7 +239,7 @@ describe('Saved Filters API Integration Tests', () => {
         } else {
           const createResponse = await request
             .post('/api/saved-filters')
-            .set('Authorization', `Bearer ${authToken}`)
+            .set('Cookie', authToken)
             .send({
               name: 'Тест филтер',
               filters: { brand_ids: ['brand-1'] },
@@ -252,7 +251,7 @@ describe('Saved Filters API Integration Tests', () => {
 
       const response = await request
         .patch(`/api/saved-filters/${filterIdToUpdate}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .send({ name: 'Ажурирано име' })
         .expect(200);
 
@@ -264,7 +263,7 @@ describe('Saved Filters API Integration Tests', () => {
       const fakeId = '00000000-0000-0000-0000-000000000000';
       const response = await request
         .patch(`/api/saved-filters/${fakeId}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .send({ name: 'Ново име' })
         .expect(400);
 
@@ -285,7 +284,7 @@ describe('Saved Filters API Integration Tests', () => {
     it('should delete saved filter and match OpenAPI schema', async () => {
       const filtersResponse = await request
         .get('/api/saved-filters')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .expect(200);
 
       let filterToDelete: string;
@@ -295,7 +294,7 @@ describe('Saved Filters API Integration Tests', () => {
       } else {
         const createResponse = await request
           .post('/api/saved-filters')
-          .set('Authorization', `Bearer ${authToken}`)
+          .set('Cookie', authToken)
           .send({
             name: 'Filter to delete',
             filters: { brand_ids: ['brand-1'] },
@@ -306,7 +305,7 @@ describe('Saved Filters API Integration Tests', () => {
 
       const response = await request
         .delete(`/api/saved-filters/${filterToDelete}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .expect(200);
 
       expect(response).toSatisfyApiSpec();
@@ -316,7 +315,7 @@ describe('Saved Filters API Integration Tests', () => {
       const fakeId = '00000000-0000-0000-0000-000000000000';
       const response = await request
         .delete(`/api/saved-filters/${fakeId}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .expect(400);
 
       expect(response).toSatisfyApiSpec();

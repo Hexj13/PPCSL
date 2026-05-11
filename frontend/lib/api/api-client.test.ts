@@ -133,6 +133,26 @@ describe('api-client auth refresh guards', () => {
     });
   });
 
+  it('does not start refresh when request has X-Skip-Auth-Redirect', async () => {
+    const onRejected = getResponseRejectedHandler();
+
+    const quietRequest = {
+      headers: { 'X-Skip-Auth-Redirect': 'true', 'X-Skip-Error-Handling': 'true' },
+      url: '/api/auth/me',
+      method: 'get',
+    };
+    const quietError = {
+      response: { status: 401, headers: {}, data: {} },
+      config: quietRequest,
+      code: 'ERR_BAD_REQUEST',
+      name: 'AxiosError',
+      message: 'Unauthorized',
+    };
+
+    await expect(onRejected(quietError)).rejects.toEqual(quietError);
+    expect(mockApiInstance.post).not.toHaveBeenCalled();
+  });
+
   it('does not start refresh when request reached refresh attempts limit', async () => {
     const onRejected = getResponseRejectedHandler();
 

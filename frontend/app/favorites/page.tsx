@@ -127,6 +127,7 @@ function FavoritesContent() {
               type="button"
               onClick={() => handleTabChange('listings')}
               className={tabButtonClass(activeTab === 'listings')}
+              data-testid="favorites-tab-listings"
             >
               {t('favorites.listings')}
               {(meta?.total ?? 0) > 0 && (
@@ -140,6 +141,7 @@ function FavoritesContent() {
               type="button"
               onClick={() => handleTabChange('filters')}
               className={tabButtonClass(activeTab === 'filters')}
+              data-testid="favorites-tab-filters"
             >
               {t('favorites.filters')}
               {filtersCount > 0 && (

@@ -419,9 +419,9 @@ function ListingCardComponent({
       listing.id,
       fromHome ? 0 : (carouselRef.current?.getIndex() ?? carouselIndex),
     );
-    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+    if (fromHome) {
       startTransition(() => {
-        preserveHomeScrollPosition('/');
+        preserveHomeScrollPosition();
       });
     }
   }, [listing.id, listing.cover_blur_hash, images, carouselIndex]);

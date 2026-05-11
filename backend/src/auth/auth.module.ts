@@ -7,12 +7,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from '../users/users.module';
 
 import { AuthService } from './application/auth.service';
+import { AuthTokenIssuerService } from './application/services/auth-token-issuer.service';
 import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './application/use-cases/check-phone-availability.use-case';
 import { ConfirmEmailChangeUseCase } from './application/use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './application/use-cases/delete-account.use-case';
 import { DismissPartnerPromoBannerUseCase } from './application/use-cases/dismiss-partner-promo-banner.use-case';
 import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.use-case';
+import { GoogleSignInUseCase } from './application/use-cases/google-sign-in.use-case';
 import { LoginUserUseCase } from './application/use-cases/login-user.use-case';
 import { RefreshTokensUseCase } from './application/use-cases/refresh-tokens.use-case';
 import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
@@ -31,7 +33,11 @@ import { UserProfilePatchService } from './application/user-profile-patch.servic
 import { PasswordService } from './domain/services/password.service';
 import { PhoneService } from './domain/services/phone.service';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { JwtAuthGuard } from './infrastructure/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from './infrastructure/guards/optional-jwt-auth.guard';
+import { PhoneVerifiedGuard } from './infrastructure/guards/phone-verified.guard';
 import { EmailService } from './infrastructure/services/email.service';
+import { GoogleTokenVerifierService } from './infrastructure/services/google-token-verifier.service';
 import { IpBlockService } from './infrastructure/services/ip-block.service';
 import { RefreshTokenService } from './infrastructure/services/refresh-token.service';
 import { SmsService } from './infrastructure/services/sms.service';
@@ -66,8 +72,13 @@ import { AuthController } from './presentation/auth.controller';
   controllers: [AuthController],
   providers: [
     AuthService,
+    AuthTokenIssuerService,
     JwtStrategy,
     LocalStrategy,
+    JwtAuthGuard,
+    OptionalJwtAuthGuard,
+    PhoneVerifiedGuard,
+    GoogleTokenVerifierService,
     IpBlockService,
     PasswordService,
     PhoneService,
@@ -77,6 +88,7 @@ import { AuthController } from './presentation/auth.controller';
     RegisterUserUseCase,
     LoginUserUseCase,
     RefreshTokensUseCase,
+    GoogleSignInUseCase,
     ResetPasswordUseCase,
     DeleteAccountUseCase,
     UserProfilePatchService,
@@ -97,11 +109,14 @@ import { AuthController } from './presentation/auth.controller';
     DismissPartnerPromoBannerUseCase,
   ],
   exports: [
+    UsersModule,
     AuthService,
+    AuthTokenIssuerService,
     IpBlockService,
     RefreshTokenService,
     UserProfilePatchService,
     EmailService,
+    PhoneVerifiedGuard,
   ],
 })
 export class AuthModule {}

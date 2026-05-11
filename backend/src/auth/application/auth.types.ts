@@ -39,5 +39,11 @@ export type LoginResponse = {
     preferredLocale: string | null;
     hidePartnerPromoBanner: boolean;
     isPlatformPartner: boolean;
+    phoneVerified: boolean;
   };
+};
+
+export type GoogleSignInResponse = LoginResponse & {
+  requiresPhoneVerification: boolean;
+  isNewUser: boolean;
 };

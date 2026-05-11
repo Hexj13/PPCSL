@@ -36,15 +36,6 @@ const siteUrl = siteConfig.siteUrl;
 
 export const revalidate = 3600;
 
-export async function generateStaticParams(): Promise<{ brand: string }[]> {
-  const brands = await fetchBrands();
-  const slugs = brands
-    .filter((b) => !(b as { is_archived?: boolean }).is_archived)
-    .map((b) => createSlug(b.name))
-    .filter((slug) => slug && !isReservedBrandLandingSegment(slug));
-  return [...new Set(slugs)].map((brand) => ({ brand }));
-}
-
 export async function generateMetadata({
   params,
   searchParams,

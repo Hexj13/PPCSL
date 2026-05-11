@@ -138,7 +138,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status >= HttpStatus.BAD_REQUEST &&
       status < HttpStatus.INTERNAL_SERVER_ERROR &&
       errorKey?.startsWith('errors.') &&
-      shouldLogUserActionFailure(request.path, request.method)
+      shouldLogUserActionFailure(request.path, request.method, errorKey)
     ) {
       logUserActionFailure(this.logger, buildUserActionFailureContext(request, status, errorKey));
     }

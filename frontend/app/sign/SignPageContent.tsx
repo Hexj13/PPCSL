@@ -1,11 +1,15 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useRef } from 'react';
+import Script from 'next/script';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { LoginForm } from '@/app/login/LoginForm';
 import { useLoginPage } from '@/app/login/useLoginPage';
 import { RegisterPanel } from '@/app/register/RegisterPanel';
+import { useRegisterPage } from '@/app/register/useRegisterPage';
+import { GoogleSignInButton } from '@/app/sign/GoogleSignInButton';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
@@ -13,8 +17,16 @@ import { buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-ur
 
 export type AuthTab = 'login' | 'register';
 
+function gisScriptHl(locale: string): string {
+  const low = locale.toLowerCase();
+  if (low === 'ro') return 'ro';
+  if (low === 'ru') return 'ru';
+  return 'en';
+}
+
 export function SignPageContent() {
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = getReturnUrlFromSearchParams(searchParams);
@@ -31,6 +43,13 @@ export function SignPageContent() {
   );
 
   const login = useLoginPage();
+  const registerPage = useRegisterPage();
+  const [gisReady, setGisReady] = useState(false);
+  const gisHl = useMemo(() => gisScriptHl(locale), [locale]);
+
+  useEffect(() => {
+    setGisReady(false);
+  }, [gisHl]);
 
   const handleTabClick = (next: AuthTab) => {
     if (next === tab) return;
@@ -45,6 +64,14 @@ export function SignPageContent() {
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16" data-testid="auth-page">
+      {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+        <Script
+          key={`gsi-client-${gisHl}`}
+          src={`https://accounts.google.com/gsi/client?hl=${encodeURIComponent(gisHl)}`}
+          strategy="afterInteractive"
+          onLoad={() => setGisReady(true)}
+        />
+      ) : null}
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
         {t('sign.greeting')}
       </h1>
@@ -133,9 +160,28 @@ export function SignPageContent() {
           hidden={tab !== 'register'}
           className={tab === 'register' ? 'block' : 'hidden'}
         >
-          <RegisterPanel showTitle={false} showLoginLink={false} formClassName="p-6 md:p-8" />
+          <RegisterPanel
+            registerPage={registerPage}
+            showTitle={false}
+            showLoginLink={false}
+            formClassName="p-6 md:p-8"
+          />
         </div>
       </div>
+      {gisReady ? (
+        <div className="mt-6 space-y-4" data-testid="auth-google-outside-card">
+          <div className="flex items-center gap-3">
+            <span className="grow h-px bg-primary-700/25" />
+            <span className="text-sm text-hint shrink-0">{t('sign.dividerOr')}</span>
+            <span className="grow h-px bg-primary-700/25" />
+          </div>
+          {tab === 'login' ? (
+            <GoogleSignInButton mode="login" />
+          ) : (
+            <GoogleSignInButton mode="register" userType={registerPage.formData.type} />
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

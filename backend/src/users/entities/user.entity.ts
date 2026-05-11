@@ -34,8 +34,14 @@ export class User {
   @Column({ type: 'varchar', unique: true, nullable: true })
   email: string | null;
 
-  @Column({ type: 'varchar', select: false })
-  password: string;
+  @Column({ type: 'varchar', nullable: true, name: 'google_id' })
+  googleId: string | null;
+
+  @Column({ type: 'varchar', length: 16, default: 'local', name: 'auth_provider' })
+  authProvider: 'local' | 'google';
+
+  @Column({ type: 'varchar', select: false, nullable: true })
+  password: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   phone: string | null;

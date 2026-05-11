@@ -25,6 +25,8 @@ import { useListingFormVideo } from './useListingFormVideo';
 
 const t = (key: string) => key;
 
+type AsyncApiResponseMock = jest.Mock<(...args: unknown[]) => Promise<{ data: unknown }>>;
+
 describe('useListingFormVideo', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -60,7 +62,7 @@ describe('useListingFormVideo', () => {
   });
 
   it('uploads and transcodes staged video without listingId', async () => {
-    (listingsApi.stagedVideoUploadInit as jest.Mock).mockResolvedValue({
+    (listingsApi.stagedVideoUploadInit as unknown as AsyncApiResponseMock).mockResolvedValue({
       data: {
         uploadId: 'up-staged',
         stagedVideoToken: 'pending-token',
@@ -68,10 +70,10 @@ describe('useListingFormVideo', () => {
         partSizeBytes: 5242880,
       },
     });
-    (listingsApi.stagedVideoUploadComplete as jest.Mock).mockResolvedValue({
+    (listingsApi.stagedVideoUploadComplete as unknown as AsyncApiResponseMock).mockResolvedValue({
       data: { jobId: 'job-staged', stagedVideoToken: 'processing-token' },
     });
-    (listingsApi.getStagedVideoStatus as jest.Mock).mockResolvedValue({
+    (listingsApi.getStagedVideoStatus as unknown as AsyncApiResponseMock).mockResolvedValue({
       data: {
         status: 'published',
         progress: 100,
@@ -117,14 +119,16 @@ describe('useListingFormVideo', () => {
   });
 
   it('uploads immediately when listingId is present', async () => {
-    (listingsApi.videoUploadInit as jest.Mock).mockResolvedValue({
+    (listingsApi.videoUploadInit as unknown as AsyncApiResponseMock).mockResolvedValue({
       data: {
         uploadId: 'up-1',
         parts: [{ partNumber: 1, url: 'https://example.com/p1' }],
         partSizeBytes: 5242880,
       },
     });
-    (listingsApi.videoUploadComplete as jest.Mock).mockResolvedValue({ data: { jobId: 'job-1' } });
+    (listingsApi.videoUploadComplete as unknown as AsyncApiResponseMock).mockResolvedValue({
+      data: { jobId: 'job-1' },
+    });
 
     global.XMLHttpRequest = class {
       public status = 200;

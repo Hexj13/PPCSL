@@ -1,4 +1,4 @@
-import { localStorageSetItem } from './browser-local-storage';
+import { localStorageGetItem, localStorageSetItem } from './browser-local-storage';
 import type { Locale, Translations } from './i18n-types';
 export type { Locale, Translations } from './i18n-types';
 import { resolveLocaleRouting } from './locale-routing';
@@ -24,6 +24,26 @@ function pickKnownLocale(value: string | null | undefined): Locale | null {
   if (!value) return null;
   const low = value.toLowerCase();
   return supportedLocaleSet().has(low) ? low : null;
+}
+
+function readBrowserCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const prefix = `${name}=`;
+  const parts = document.cookie.split(';');
+  for (let i = 0; i < parts.length; i += 1) {
+    let part = parts[i];
+    while (part.startsWith(' ')) {
+      part = part.slice(1);
+    }
+    if (!part.startsWith(prefix)) continue;
+    const raw = part.slice(prefix.length);
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
+  }
+  return null;
 }
 
 function createEmptyTranslations(): Translations {
@@ -94,19 +114,34 @@ export function getDefaultLocale(): Locale {
   }
 }
 
-export function getClientLocale(): Locale {
+export function getClientLocale(pathnameForRouting?: string): Locale {
   if (!isLanguageSwitcherEnabled()) {
     return getDefaultLocale();
   }
+
+  const pathForUrlLocale =
+    typeof pathnameForRouting === 'string' && pathnameForRouting.trim()
+      ? pathnameForRouting
+      : typeof window !== 'undefined'
+        ? window.location.pathname
+        : '';
+
+  try {
+    if (pathForUrlLocale) {
+      const fromUrl = getLocaleFromPathname(pathForUrlLocale);
+      if (fromUrl) return fromUrl;
+    }
+  } catch {}
 
   if (typeof window === 'undefined') {
     return getDefaultLocale();
   }
 
-  try {
-    const fromUrl = getLocaleFromPathname(window.location.pathname);
-    if (fromUrl) return fromUrl;
-  } catch {}
+  const fromCookie = pickKnownLocale(readBrowserCookie(COOKIE_KEY));
+  if (fromCookie) return fromCookie;
+
+  const fromLs = pickKnownLocale(localStorageGetItem(STORAGE_KEY) ?? undefined);
+  if (fromLs) return fromLs;
 
   return getDefaultLocale();
 }

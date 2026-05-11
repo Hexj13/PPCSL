@@ -49,8 +49,8 @@ describe('I18nProvider', () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = 'true';
     jest.clearAllMocks();
-    (loadTranslationsDynamic as jest.Mock).mockImplementation((locale: string) =>
-      Promise.resolve({ __testLocale: locale } as unknown as Translations),
+    (loadTranslationsDynamic as jest.Mock).mockImplementation((locale: unknown) =>
+      Promise.resolve({ __testLocale: String(locale) } as unknown as Translations),
     );
     delete (window as unknown as { location?: unknown }).location;
     (window as unknown as { location: Location }).location = {
@@ -93,11 +93,11 @@ describe('I18nProvider', () => {
       finishRu = resolve;
     });
 
-    (loadTranslationsDynamic as jest.Mock).mockImplementation((locale: string) => {
+    (loadTranslationsDynamic as jest.Mock).mockImplementation((locale: unknown) => {
       if (locale === 'ru') {
         return ruPromise as Promise<Translations>;
       }
-      return Promise.resolve({ __testLocale: locale } as unknown as Translations);
+      return Promise.resolve({ __testLocale: String(locale) } as unknown as Translations);
     });
 
     const { rerender } = render(

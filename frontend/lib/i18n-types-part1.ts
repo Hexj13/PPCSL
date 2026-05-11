@@ -174,6 +174,7 @@ export interface TranslationsPart1 {
     registering: string;
     registerButton: string;
     phoneExists: string;
+    primaryPhoneMustUseChangeFlow: string;
     serviceUnavailable: string;
     invalidPhoneFormat: string;
     serverError: string;

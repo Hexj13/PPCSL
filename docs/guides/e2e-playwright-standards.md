@@ -21,8 +21,8 @@ Project-specific standard for E2E tests in PPCSL frontend.
   - `core/frontend/e2e/utils`
   - `core/frontend/e2e/fixtures`
   - `core/frontend/e2e/test-data`
-  - `core/frontend/e2e/constants`
-- Playwright config: `core/frontend/playwright.config.ts`.
+  - `core/frontend/e2e/types`
+- Playwright config: `core/frontend/playwright.config.ts` (`testDir: ./e2e/specs`).
 
 ## Runtime and commands
 
@@ -35,6 +35,7 @@ npm run test:e2e
 Optional modes:
 
 ```bash
+npm run test:e2e:p0
 npm run test:e2e:headed
 npm run test:e2e:ui
 ```
@@ -57,13 +58,15 @@ npx playwright install chromium
 
 ## Environment contract
 
-- `E2E_BASE_URL` (optional, default `http://localhost:3000`)
+- `E2E_BASE_URL` or `PLAYWRIGHT_BASE_URL` (optional; Playwright default `http://localhost:3000`)
+- `PLAYWRIGHT_SKIP_WEBSERVER=1` to skip `webServer` when the dev server is already running
 - `E2E_USER_LOGIN` (optional; default `admin@admin.com` when unset)
 - `E2E_USER_PASSWORD` (optional; default `GGGgggTEST777` when unset — matches stage `seed.ts` admin)
+- `API_URL` or `E2E_API_URL` (optional; default `http://localhost:4000` for API helpers such as `buildAvailableMdPhone`)
 
 If you set `E2E_USER_*` explicitly, values must match a user in your database (password must match the hashed password from seed or your own reset).
 
-Authenticated tests must use `test.skip(...)` when credentials are missing.
+Use `testInfo.skip(true, reason)` inside a test when credentials or environment cannot satisfy the scenario. Do not use `test.skip(...)` for per-run gating.
 
 Local registration flow expectation:
 
@@ -83,16 +86,17 @@ Each spec must follow these rules:
    - Page objects must compose component objects instead of duplicating region-level logic.
 3. **Fixture-based dependency injection**
    - Specs must import `test`/`expect` from `e2e/fixtures/base.ts`.
-   - Page objects should be injected through fixtures instead of `new` in every spec.
+   - Page objects should be injected through fixtures instead of `new` in every spec (except rare multi-page-context cases such as cross-tab scenarios).
 4. **Visibility gate before interaction**
    - The test must call page `expectPageView()` before any interaction on that page.
-5. **No duplicated setup**
-   - Use shared hooks/utilities for repeated setup (`useClearedBrowserState`).
+5. **Browser reset is a step, not a hook**
+   - Do not perform navigation, storage clearing, or cookie consent dismissal inside `beforeEach` hooks.
+   - Use `prependClearBrowserState` from `e2e/utils/steps.ts` as the first steps in a scenario, executed inside `test(...)`.
 6. **No locator literals inside test bodies**
    - Locator values must come from page object/component APIs.
    - Keep locator definitions in the related page object/component file, not in separate shared constants files.
 7. **Reusable flow utilities**
-   - Repeated cross-spec flows (auth, listing navigation, common checks) must be extracted to `e2e/utils` or page objects.
+   - Repeated cross-spec flows (auth, listing navigation, common checks) must live in `e2e/utils` or page objects.
 8. **Step-based execution style**
    - Use explicit `test.step(...)` for meaningful user actions and validations.
    - For multi-step flows, group steps in arrays and execute via shared helper (`e2e/utils/steps.ts`).
@@ -103,6 +107,10 @@ Each spec must follow these rules:
 
 - Reusable runtime scenario data should live in `e2e/test-data`.
 - Specs should consume factory helpers instead of duplicating generation logic.
+
+## Step typing
+
+- Shared step shape: `E2EStep` in `e2e/types/e2e-step.ts` (re-exported from `e2e/utils/steps.ts`).
 
 ## Selector policy
 
@@ -193,6 +201,10 @@ await page.locator(`[data-testid^="${testId}-option-"]`).first().click();
 - Keep assertions deterministic and language-independent.
 - Use Allure as the source of truth for E2E run reports.
 
+## Allure defaults
+
+- `e2e/fixtures/base.ts` applies an automatic Allure `layer` label (`e2e-ui`) for every test via an auto fixture.
+
 ## P0 smoke scope
 
 P0 is the minimum E2E subset that protects release readiness for the primary marketplace flow.
@@ -203,6 +215,9 @@ P0 is the minimum E2E subset that protects release readiness for the primary mar
 - Registration flow reaches home through `verify-phone` and `complete-profile`.
 - Listing creation flow covers guest guard and successful authenticated publish.
 - My listings page is accessible for authenticated users and route guard works after logout.
+- Mobile viewport smoke for search filters (`@p0` in `mobile-search.spec.ts`).
+
+Tag P0 scenarios with `@p0` in the `test.describe` title. Run `npm run test:e2e:p0` to execute only tagged tests.
 
 All other end-to-end checks are considered non-P0 coverage and can run in the full suite.
 
@@ -210,10 +225,11 @@ All other end-to-end checks are considered non-P0 coverage and can run in the fu
 
 Current suite is aligned with this standard:
 
-- Shared fixtures: `e2e/fixtures/base.ts`
-- Shared setup hook: `e2e/utils/spec-hooks.ts`
-- Shared auth/listing helpers: `e2e/utils/auth.ts`, `e2e/utils/listings.ts`
-- Shared step runner: `e2e/utils/steps.ts`
+- Shared fixtures: `e2e/fixtures/base.ts` (page objects + Allure auto layer)
+- Browser reset helper: `e2e/utils/session.ts` (no `beforeEach` UI hooks)
+- Shared step runner: `e2e/utils/steps.ts` (`prependClearBrowserState`, `runSteps`)
+- API helpers: `e2e/utils/api/auth.ts`, `e2e/utils/api/check-phone.ts`
+- Shared auth/listing helpers: `e2e/utils/auth.ts`, `e2e/utils/listings.ts`, `e2e/utils/listing-flow.ts`
 - Shared test-data factories: `e2e/test-data/auth.ts`
 - Shared component objects:
   - `components/auth/register-form.component.ts`
@@ -227,3 +243,7 @@ Current suite is aligned with this standard:
   - `ListingDetailPage`
   - `ListingCreatePage`
   - `MyListingsPage`
+  - `FavoritesPage`
+  - `ComparePage`
+  - `ProfilePage`
+  - `AdminPage`

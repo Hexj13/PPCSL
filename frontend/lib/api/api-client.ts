@@ -9,12 +9,23 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _requestId?: string;
 }
 
-import { localStorageGetItem, localStorageSetItem } from '../browser-local-storage';
+const SKIP_AUTH_REDIRECT_HEADER = 'x-skip-auth-redirect';
+
+function shouldSkipAuthRedirectOn401(config: InternalAxiosRequestConfig | undefined): boolean {
+  if (!config?.headers) return false;
+  const h = config.headers;
+  const v =
+    typeof (h as { get?: (k: string) => string | undefined }).get === 'function'
+      ? (h as { get: (k: string) => string | undefined }).get(SKIP_AUTH_REDIRECT_HEADER)
+      : ((h as Record<string, unknown>)[SKIP_AUTH_REDIRECT_HEADER] ??
+        (h as Record<string, unknown>)['X-Skip-Auth-Redirect']);
+  return v === 'true' || v === '1' || v === 1;
+}
+
 import { clearClientAuthLocalStorage } from '../client-auth-storage';
 import { getClientLocale, loadTranslations, type Translations } from '../i18n';
 import { buildSignInHref } from '../return-url';
 import { sanitizeForSentryExtra } from '../sentry-sanitize';
-import { stripLocalePrefixFromPathname } from '../url-locale';
 
 import type { User } from './api';
 import { isCatalogReadGetNoResponse } from './is-catalog-read-get-request';
@@ -23,6 +34,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,12 +47,12 @@ let failedQueue: Array<{
 }> = [];
 const MAX_REFRESH_ATTEMPTS_PER_REQUEST = 1;
 
-const processQueue = (error: AxiosError | null, token: string | null = null) => {
+const processQueue = (error: AxiosError | null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token);
+      prom.resolve(undefined);
     }
   });
 
@@ -53,10 +65,6 @@ api.interceptors.request.use((config) => {
     (config as ExtendedAxiosRequestConfig)._requestId = rid;
     config.headers = config.headers ?? {};
     config.headers['X-Request-Id'] = rid;
-  }
-  const token = typeof window !== 'undefined' ? localStorageGetItem('token') : null;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
   }
   if (typeof window !== 'undefined') {
     config.headers['Accept-Language'] = getClientLocale();
@@ -156,19 +164,6 @@ function translateBackendKeyIfNeeded(
   return t(key, params);
 }
 
-function clearAuthAndRedirectToLogin(): void {
-  if (typeof window === 'undefined') return;
-  clearClientAuthLocalStorage({
-    clearReturnUrl: false,
-    clearAuthPersistKey: true,
-    clearPendingMigrationAndFilters: false,
-  });
-  const rest = stripLocalePrefixFromPathname(window.location.pathname).restPath;
-  if (rest !== '/sign' && !rest.startsWith('/sign?')) {
-    window.location.href = buildSignInHref();
-  }
-}
-
 function clearAuthSetReturnUrlAndRedirect(): void {
   if (typeof window === 'undefined') return;
   const currentUrl = window.location.pathname + window.location.search;
@@ -203,11 +198,6 @@ const getErrorMessage = (error: AxiosError): string => {
     return translatedBackendMessage;
   }
   const useTranslation = !translatedBackendMessage;
-
-  if (status === 401 && typeof window !== 'undefined') {
-    const refreshToken = localStorageGetItem('refresh_token');
-    if (!refreshToken) clearAuthAndRedirectToLogin();
-  }
 
   return getMessageForStatus(status, t, translatedBackendMessage, useTranslation);
 };
@@ -340,28 +330,13 @@ async function showErrorToastAndSentry(error: AxiosError): Promise<void> {
   }
 }
 
-async function doRefreshAndRetry(
-  originalRequest: ExtendedAxiosRequestConfig,
-  refreshToken: string,
-): Promise<unknown> {
-  const response = await api.post<{
-    access_token: string;
-    refresh_token: string;
-    user: User;
-  }>(
+async function doRefreshAndRetry(originalRequest: ExtendedAxiosRequestConfig): Promise<unknown> {
+  await api.post<{ user: User }>(
     '/api/auth/refresh',
-    { refresh_token: refreshToken },
+    {},
     { headers: { 'X-Skip-Error-Handling': 'true' } },
   );
-  const { access_token } = response.data;
-  if (typeof window !== 'undefined') {
-    localStorageSetItem('token', access_token);
-    localStorageSetItem('refresh_token', response.data.refresh_token);
-  }
-  if (originalRequest.headers) {
-    originalRequest.headers.Authorization = `Bearer ${access_token}`;
-  }
-  processQueue(null, access_token);
+  processQueue(null);
   return api(originalRequest);
 }
 
@@ -396,6 +371,9 @@ api.interceptors.response.use(
         originalRequest &&
         canRetryAuthRefresh(originalRequest)
       ) {
+        if (shouldSkipAuthRedirectOn401(originalRequest)) {
+          return Promise.reject(axiosError);
+        }
         if (
           isLoginOrRegisterRequest(originalRequest.url) ||
           isRefreshRequest(originalRequest.url)
@@ -411,47 +389,22 @@ api.interceptors.response.use(
           return new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject });
           })
-            .then((token) => {
-              if (originalRequest.headers) {
-                originalRequest.headers.Authorization = `Bearer ${token}`;
-              }
-              return api(originalRequest);
-            })
+            .then(() => api(originalRequest))
             .catch((err) => Promise.reject(err));
         }
 
         markAuthRefreshAttempt(originalRequest);
         isRefreshing = true;
-        const refreshToken =
-          typeof window !== 'undefined' ? localStorageGetItem('refresh_token') : null;
-
-        if (!refreshToken) {
-          processQueue(axiosError);
-          isRefreshing = false;
-          clearAuthSetReturnUrlAndRedirect();
-          return Promise.reject(axiosError);
-        }
 
         try {
-          const result = await doRefreshAndRetry(originalRequest, refreshToken);
+          const result = await doRefreshAndRetry(originalRequest);
           isRefreshing = false;
           return result;
         } catch (refreshError) {
-          const freshRefresh = localStorageGetItem('refresh_token');
-          let finalRefreshError: unknown = refreshError;
-          if (freshRefresh && freshRefresh !== refreshToken) {
-            try {
-              const retryResult = await doRefreshAndRetry(originalRequest, freshRefresh);
-              isRefreshing = false;
-              return retryResult;
-            } catch (secondRefreshError) {
-              finalRefreshError = secondRefreshError;
-            }
-          }
-          processQueue(finalRefreshError as AxiosError);
+          processQueue(refreshError as AxiosError);
           isRefreshing = false;
           clearAuthSetReturnUrlAndRedirect();
-          return Promise.reject(finalRefreshError);
+          return Promise.reject(refreshError);
         }
       }
 

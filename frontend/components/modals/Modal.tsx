@@ -13,6 +13,7 @@ interface ModalProps {
   className?: string;
   /** When false, no border under the title bar (default: true). */
   titleBottomBorder?: boolean;
+  dataTestId?: string;
 }
 
 export function Modal({
@@ -23,6 +24,7 @@ export function Modal({
   size = 'medium',
   className = '',
   titleBottomBorder = true,
+  dataTestId,
 }: ModalProps) {
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -89,6 +91,7 @@ export function Modal({
     >
       <div
         className={`bg-bg-base rounded-lg w-full ${sizeClasses[size]} flex max-h-[90vh] flex-col overflow-hidden scrollbar-custom ${className}`}
+        data-testid={dataTestId}
       >
         {title && (
           <div

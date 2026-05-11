@@ -1,15 +1,14 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 
 import { UserType } from '../../../common/types';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
 import { logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
 import { PasswordService } from '../../domain/services/password.service';
-import { RefreshTokenService } from '../../infrastructure/services/refresh-token.service';
 import { SmsService } from '../../infrastructure/services/sms.service';
 import { LoginDto } from '../../presentation/dto/login.dto';
 import { LoginResponse, UserWithoutPassword } from '../auth.types';
+import { AuthTokenIssuerService } from '../services/auth-token-issuer.service';
 
 @Injectable()
 export class LoginUserUseCase {
@@ -17,10 +16,9 @@ export class LoginUserUseCase {
 
   constructor(
     private usersService: UsersService,
-    private jwtService: JwtService,
     private passwordService: PasswordService,
     private smsService: SmsService,
-    private refreshTokenService: RefreshTokenService,
+    private authTokenIssuer: AuthTokenIssuerService,
   ) {}
 
   async execute(loginDto: LoginDto, ip?: string, requestLocale?: string): Promise<LoginResponse> {
@@ -39,40 +37,14 @@ export class LoginUserUseCase {
       ...preferredLocalePatch,
     });
 
-    const effectivePreferredLocale =
-      user.preferredLocale ??
-      (normalizedRequestLocale === 'ro' || normalizedRequestLocale === 'ru'
-        ? normalizedRequestLocale
-        : null);
-
-    const payload = { email: user.email || '', sub: user.id, type: user.type };
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = await this.refreshTokenService.generateToken(user.id);
-    const boardSlug = await this.usersService.ensureBoardSlug(user.id);
+    const fresh = await this.usersService.findOneById(user.id);
 
     logUserEvent(this.logger, {
       event: 'user_logged_in',
       userId: user.id,
     });
 
-    return {
-      access_token: accessToken,
-      refresh_token: refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        type: user.type,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        companyName: user.companyName,
-        companyWebsiteUrl: user.companyWebsiteUrl,
-        phone: user.phone,
-        boardSlug,
-        preferredLocale: effectivePreferredLocale,
-        hidePartnerPromoBanner: user.hidePartnerPromoBanner ?? false,
-        isPlatformPartner: user.isPlatformPartner ?? false,
-      },
-    };
+    return this.authTokenIssuer.issueLoginResponse(fresh);
   }
 
   async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
@@ -93,7 +65,15 @@ export class LoginUserUseCase {
         ? await this.usersService.findByPhoneWithPassword(normalizedPhone)
         : null;
 
-    if (!user || !(await this.passwordService.verify(password, user.password))) {
+    if (!user) {
+      throw new UnauthorizedException('errors.invalidLoginCredentials');
+    }
+
+    if (!user.password) {
+      throw new UnauthorizedException('errors.useGoogleSignIn');
+    }
+
+    if (!(await this.passwordService.verify(password, user.password))) {
       throw new UnauthorizedException('errors.invalidLoginCredentials');
     }
 

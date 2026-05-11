@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import type { Request as ExpressRequest } from 'express';
 
+import { PhoneVerifiedGuard } from '../../auth/infrastructure/guards/phone-verified.guard';
 import { Currency, DriveType, ListingStatus } from '../../common/types';
 import type { AuthenticatedRequest } from '../../common/express-augmentation';
 
@@ -85,7 +86,10 @@ describe('ListingsController', () => {
           useValue: mockListingAiReportService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(PhoneVerifiedGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<ListingsController>(ListingsController);
     service = module.get(ListingsService);

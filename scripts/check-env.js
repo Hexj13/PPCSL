@@ -16,7 +16,17 @@ const BUILD_REQUIRED = [
 const BUILD_REQUIRED_PRODUCTION = [
   { name: "NEXT_PUBLIC_API_URL", get: () => process.env.NEXT_PUBLIC_API_URL },
   { name: "NEXT_PUBLIC_SITE_URL", get: () => process.env.NEXT_PUBLIC_SITE_URL },
+  { name: "JWT_SECRET", get: () => process.env.JWT_SECRET },
 ];
+
+const BUILD_GOOGLE_PAIR_OK = {
+  name: "GOOGLE_CLIENT_ID (when NEXT_PUBLIC_GOOGLE_CLIENT_ID is set)",
+  check: () => {
+    const pub = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
+    if (!pub) return true;
+    return Boolean(process.env.GOOGLE_CLIENT_ID?.trim());
+  },
+};
 
 const RUNTIME_REQUIRED_PRODUCTION = [
   { name: "JWT_SECRET", get: () => process.env.JWT_SECRET },
@@ -37,6 +47,7 @@ function runBuildChecks() {
       const v = item.get();
       if (!v || String(v).trim() === "") missing.push(item.name);
     }
+    if (!BUILD_GOOGLE_PAIR_OK.check()) missing.push(BUILD_GOOGLE_PAIR_OK.name);
   }
   return missing;
 }

@@ -11,6 +11,7 @@ import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
 import { GoogleTagManagerNoscript } from '@/components/analytics/GoogleTagManagerNoscript';
 import { OrganizationSchema } from '@/components/analytics/OrganizationSchema';
 import { WebsiteSearchSchema } from '@/components/analytics/WebsiteSearchSchema';
+import { PhoneRequiredGuard } from '@/components/auth/PhoneRequiredGuard';
 import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
 import { Header } from '@/components/layout/Header';
 import { MainContentShell } from '@/components/layout/MainContentShell';
@@ -170,63 +171,65 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           >
             <CookieConsent />
             <AuthProvider>
-              <ProfileSaveSuccessToast />
-              <ServiceWorkerRegistration />
-              <ScrollReset />
-              <PageScrollTracker />
-              <NavigationTelemetry />
-              <ExternalLinkTracker />
-              <div className="min-h-screen flex flex-col">
-                <Header />
-                <OfflineBanner />
-                <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">
-                  <MainContentShell>{children}</MainContentShell>
-                </main>
-                <ConditionalFooter />
-              </div>
-              <Toaster
-                position="top-right"
-                containerStyle={{
-                  top: '80px',
-                  zIndex: designTokens.zIndex.toast,
-                }}
-                toastOptions={{
-                  style: {
+              <PhoneRequiredGuard>
+                <ProfileSaveSuccessToast />
+                <ServiceWorkerRegistration />
+                <ScrollReset />
+                <PageScrollTracker />
+                <NavigationTelemetry />
+                <ExternalLinkTracker />
+                <div className="min-h-screen flex flex-col">
+                  <Header />
+                  <OfflineBanner />
+                  <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">
+                    <MainContentShell>{children}</MainContentShell>
+                  </main>
+                  <ConditionalFooter />
+                </div>
+                <Toaster
+                  position="top-right"
+                  containerStyle={{
+                    top: '80px',
                     zIndex: designTokens.zIndex.toast,
-                    minWidth: '320px',
-                    maxWidth: '400px',
-                    width: '100%',
-                    background: '#FFFFFF',
-                    color: '#1B1B1B',
-                    border: '2px solid rgba(74, 154, 126, 0.4)',
-                    borderRadius: '0.75rem',
-                    padding: '16px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                  },
-                  success: {
+                  }}
+                  toastOptions={{
                     style: {
+                      zIndex: designTokens.zIndex.toast,
+                      minWidth: '320px',
+                      maxWidth: '400px',
+                      width: '100%',
                       background: '#FFFFFF',
                       color: '#1B1B1B',
-                      border: '2px solid rgba(40, 167, 69, 0.6)',
+                      border: '2px solid rgba(74, 154, 126, 0.4)',
                       borderRadius: '0.75rem',
                       padding: '16px',
-                      boxShadow:
-                        '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                     },
-                  },
-                  error: {
-                    style: {
-                      background: '#FFFFFF',
-                      color: '#1B1B1B',
-                      border: '2px solid rgba(220, 53, 69, 0.6)',
-                      borderRadius: '0.75rem',
-                      padding: '16px',
-                      boxShadow:
-                        '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                    success: {
+                      style: {
+                        background: '#FFFFFF',
+                        color: '#1B1B1B',
+                        border: '2px solid rgba(40, 167, 69, 0.6)',
+                        borderRadius: '0.75rem',
+                        padding: '16px',
+                        boxShadow:
+                          '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                      },
                     },
-                  },
-                }}
-              />
+                    error: {
+                      style: {
+                        background: '#FFFFFF',
+                        color: '#1B1B1B',
+                        border: '2px solid rgba(220, 53, 69, 0.6)',
+                        borderRadius: '0.75rem',
+                        padding: '16px',
+                        boxShadow:
+                          '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                      },
+                    },
+                  }}
+                />
+              </PhoneRequiredGuard>
             </AuthProvider>
           </I18nProvider>
         </QueryProvider>

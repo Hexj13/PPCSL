@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AuthModule } from '../auth/auth.module';
 import { BrandsModule } from '../brands/brands.module';
 import { CommonModule } from '../common/common.module';
 import { CronSecretGuard } from '../common/guards/cron-secret.guard';
@@ -81,6 +82,7 @@ import { MediaConvertService } from './video/mediaconvert.service';
       TireBrand,
     ]),
     CommonModule,
+    AuthModule,
     ExchangeRatesModule,
     UploadModule,
     UsersModule,

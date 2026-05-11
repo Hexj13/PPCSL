@@ -1,43 +1,14 @@
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../fixtures/base';
-import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
+import { hasAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
 import type { SearchHomePage } from '../page-objects/search-home.page';
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
-import { loginByUi } from '../utils/auth';
-import { openFirstListingFromResults } from '../utils/listings';
-import { useClearedBrowserState } from '../utils/spec-hooks';
-import { runSteps, type E2EStep } from '../utils/steps';
-
-const LISTING_PHOTO_FILES = [
-  'e2e/fixtures/photos/2.jpg',
-  'e2e/fixtures/photos/3.jpg',
-  'e2e/fixtures/photos/4.jpg',
-  'e2e/fixtures/photos/5.jpg',
-] as const;
-
-async function createListingForViewScenario(
-  page: Page,
-  listingCreatePage: ListingCreatePage,
-): Promise<void> {
-  await loginByUi(page, requireAuthCredentials());
-  await listingCreatePage.openAndExpectPageView();
-  await listingCreatePage.fillRequiredFields();
-  await listingCreatePage.uploadPhotos(LISTING_PHOTO_FILES);
-  await listingCreatePage.submitCreateForm();
-  await expect(page).toHaveURL(
-    (url) => {
-      const path = pathnameWithoutLocalePrefix(url.pathname);
-      return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
-    },
-    { timeout: 30_000 },
-  );
-}
+import { ensureListingDetailFromSearch } from '../utils/listings';
+import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Listing detail: view and interaction @p0', () => {
-  useClearedBrowserState(test);
-
   async function openListingFromResultsOrPrepare(
     page: Page,
     searchHomePage: SearchHomePage,
@@ -45,27 +16,14 @@ test.describe('Listing detail: view and interaction @p0', () => {
   ): Promise<void> {
     const steps: E2EStep[] = [
       {
-        name: 'Open search page and validate page view',
+        name: 'Open search page and open first listing detail',
         action: async () => {
-          await searchHomePage.openAndExpectPageView();
-        },
-      },
-      {
-        name: 'Open first listing from results',
-        action: async () => {
-          const opened = await openFirstListingFromResults(searchHomePage);
-          if (opened) {
-            return;
-          }
-          await createListingForViewScenario(page, listingCreatePage);
-          await searchHomePage.openAndExpectPageView();
-          const openedAfterCreate = await openFirstListingFromResults(searchHomePage);
-          expect(openedAfterCreate).toBeTruthy();
+          await ensureListingDetailFromSearch(page, searchHomePage, listingCreatePage);
         },
       },
     ];
 
-    await runSteps(steps);
+    await runSteps(prependClearBrowserState(page, steps));
   }
 
   test('opens listing detail page from listing card', async ({
@@ -73,8 +31,11 @@ test.describe('Listing detail: view and interaction @p0', () => {
     searchHomePage,
     listingCreatePage,
     listingDetailPage,
-  }) => {
-    test.skip(!hasAuthCredentials(), 'E2E credentials are required for authenticated scenarios');
+  }, testInfo) => {
+    if (!hasAuthCredentials()) {
+      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
+      return;
+    }
     await openListingFromResultsOrPrepare(page, searchHomePage, listingCreatePage);
     const steps: E2EStep[] = [
       {
@@ -93,8 +54,11 @@ test.describe('Listing detail: view and interaction @p0', () => {
     searchHomePage,
     listingCreatePage,
     listingDetailPage,
-  }) => {
-    test.skip(!hasAuthCredentials(), 'E2E credentials are required for authenticated scenarios');
+  }, testInfo) => {
+    if (!hasAuthCredentials()) {
+      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
+      return;
+    }
     await openListingFromResultsOrPrepare(page, searchHomePage, listingCreatePage);
     const steps: E2EStep[] = [
       {

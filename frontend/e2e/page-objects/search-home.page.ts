@@ -15,7 +15,20 @@ export class SearchHomePage {
   constructor(private readonly page: Page) {}
 
   async open(): Promise<void> {
-    await this.page.goto('/');
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        await this.page.goto('/', { waitUntil: 'load' });
+        return;
+      } catch (error) {
+        lastError = error;
+        const message = error instanceof Error ? error.message : String(error);
+        if (!message.includes('net::ERR_ABORTED')) {
+          throw error;
+        }
+      }
+    }
+    throw lastError;
   }
 
   async openAndExpectPageView(): Promise<void> {
@@ -44,19 +57,35 @@ export class SearchHomePage {
   }
 
   async selectVehicleTypeCar(): Promise<void> {
-    await this.page.getByTestId(this.testIds.vehicleTypeCar).click();
+    await this.clickAndExpectPressed(this.testIds.vehicleTypeCar);
   }
 
   async selectVehicleTypeTruck(): Promise<void> {
-    await this.page.getByTestId(this.testIds.vehicleTypeTruck).click();
+    await this.clickAndExpectPressed(this.testIds.vehicleTypeTruck);
   }
 
   async selectVehicleTypeMoto(): Promise<void> {
-    await this.page.getByTestId(this.testIds.vehicleTypeMoto).click();
+    await this.clickAndExpectPressed(this.testIds.vehicleTypeMoto);
   }
 
   async selectListingCategoryTire(): Promise<void> {
-    await this.page.getByTestId(this.testIds.listingCategoryTire).click();
+    await this.clickAndExpectPressed(this.testIds.listingCategoryTire);
+  }
+
+  private async clickAndExpectPressed(testId: string): Promise<void> {
+    const target = this.page.getByTestId(testId);
+    await expect(target).toBeEnabled();
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await target.click();
+      try {
+        await expect(target).toHaveAttribute('aria-pressed', 'true', { timeout: 2500 });
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError;
   }
 
   async expectResultsOrEmptyVisible(): Promise<void> {
@@ -82,5 +111,19 @@ export class SearchHomePage {
     await firstCardLink.click();
     await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
     return true;
+  }
+
+  async openSaveFilterModal(): Promise<void> {
+    await this.page.getByTestId('search-save-filter').click();
+  }
+
+  async expectSaveFilterModalVisible(): Promise<void> {
+    await expect(this.page.getByTestId('save-filter-modal')).toBeVisible();
+  }
+
+  async submitSaveFilterWithName(name: string): Promise<void> {
+    await this.page.getByTestId('save-filter-name-input').fill(name);
+    await this.page.getByTestId('save-filter-submit').click();
+    await expect(this.page.getByTestId('save-filter-modal')).toBeHidden({ timeout: 20_000 });
   }
 }

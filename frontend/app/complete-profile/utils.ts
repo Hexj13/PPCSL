@@ -76,10 +76,7 @@ export async function processPendingData(
 ): Promise<boolean> {
   if (typeof window === 'undefined') return false;
   const syncedUser = await syncPartnerPromoDismissAfterAuth(user);
-  const { token, refreshToken } = useAuthStore.getState();
-  if (token && syncedUser.hidePartnerPromoBanner !== user.hidePartnerPromoBanner) {
-    useAuthStore.getState().setAuth(syncedUser, token, refreshToken ?? null);
-  }
+  useAuthStore.getState().setAuth(syncedUser);
   await processPendingFavorites(syncedUser.id);
   await processPendingComparisons();
   return processPendingSavedFilter(t, returnUrl);

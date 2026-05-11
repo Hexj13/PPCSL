@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStatusBadge';
 import type { Listing } from '@/lib/api';
+import { getClientLocale } from '@/lib/i18n';
 import type { Locale } from '@/lib/i18n-types';
 import { getColorLabel } from '@/lib/options';
 import {
@@ -57,7 +58,7 @@ export const comparisonFields: ComparisonField[] = [
         <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center">
           <div className="flex justify-center">
             <Link
-              href={getListingHref(listing, locale ?? 'ro')}
+              href={getListingHref(listing, locale ?? getClientLocale())}
               className="relative w-24 h-16 bg-bg-darker rounded-lg overflow-hidden block"
             >
               {isPlaceholder ? (
@@ -113,7 +114,7 @@ export const comparisonFields: ComparisonField[] = [
       <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base">
         <div className="flex flex-col items-center gap-2">
           <Link
-            href={getListingHref(listing, locale ?? 'ro')}
+            href={getListingHref(listing, locale ?? getClientLocale())}
             className="text-text-primary hover-only:hover:text-primary-700 transition-colors underline font-medium inline-flex items-center gap-1.5"
           >
             {getCompareCellValue(listing.title, t)}

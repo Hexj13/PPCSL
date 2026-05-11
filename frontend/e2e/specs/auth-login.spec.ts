@@ -1,12 +1,9 @@
 import { expect, test } from '../fixtures/base';
 import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
 import { loginByUi } from '../utils/auth';
-import { useClearedBrowserState } from '../utils/spec-hooks';
-import { runSteps, type E2EStep } from '../utils/steps';
+import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Auth: login @p0', () => {
-  useClearedBrowserState(test);
-
   test('renders login controls and keeps user on sign page when empty submit', async ({
     page,
     signPage,
@@ -32,28 +29,80 @@ test.describe('Auth: login @p0', () => {
       },
     ];
 
-    await runSteps(steps);
+    await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('allows successful login with valid credentials', async ({ page }) => {
-    test.skip(!hasAuthCredentials(), 'E2E credentials are required for authenticated scenarios');
+  test('allows successful login with valid credentials', async ({ page }, testInfo) => {
+    if (!hasAuthCredentials()) {
+      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
+      return;
+    }
     const credentials = requireAuthCredentials();
-    await test.step('Login with valid user credentials', async () => {
-      await loginByUi(page, credentials);
-    });
+    await runSteps(
+      prependClearBrowserState(page, [
+        {
+          name: 'Login with valid user credentials',
+          action: async () => {
+            await loginByUi(page, credentials);
+          },
+        },
+      ]),
+    );
   });
 
   test('keeps returnUrl in query when switching to register tab', async ({ page, signPage }) => {
     const returnPath = '/listings/e2e-return-path';
     const openUrl = `/sign?returnUrl=${encodeURIComponent(returnPath)}`;
-    await test.step('Open sign page with returnUrl on login tab', async () => {
-      await signPage.openWithPath(openUrl);
-      await expect(page).toHaveURL(new RegExp(`returnUrl=${encodeURIComponent(returnPath)}`));
-    });
-    await test.step('Switch to register tab and keep returnUrl', async () => {
-      await page.getByTestId('auth-tab-register').click();
-      await expect(page).toHaveURL(new RegExp(`returnUrl=${encodeURIComponent(returnPath)}`));
-      await expect(page).toHaveURL(/[?&]tab=register/);
-    });
+    const steps: E2EStep[] = [
+      {
+        name: 'Open sign page with returnUrl on login tab',
+        action: async () => {
+          await signPage.openWithPath(openUrl);
+          await expect(page).toHaveURL(new RegExp(`returnUrl=${encodeURIComponent(returnPath)}`));
+        },
+      },
+      {
+        name: 'Switch to register tab and keep returnUrl',
+        action: async () => {
+          await page.getByTestId('auth-tab-register').click();
+          await expect(page).toHaveURL(new RegExp(`returnUrl=${encodeURIComponent(returnPath)}`));
+          await expect(page).toHaveURL(/[?&]tab=register/);
+        },
+      },
+    ];
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
+  test('rejects invalid credentials and stays on sign page', async ({
+    page,
+    signPage,
+  }, testInfo) => {
+    if (!hasAuthCredentials()) {
+      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
+      return;
+    }
+    const credentials = requireAuthCredentials();
+    const steps: E2EStep[] = [
+      {
+        name: 'Open login page',
+        action: async () => {
+          await signPage.openLoginAndExpectPageView();
+        },
+      },
+      {
+        name: 'Submit wrong password',
+        action: async () => {
+          await signPage.fillLoginCredentials(credentials.login, `${credentials.password}wrong`);
+          await signPage.submitLogin();
+        },
+      },
+      {
+        name: 'Verify user remains on sign page',
+        action: async () => {
+          await expect(page).toHaveURL(/\/sign/);
+        },
+      },
+    ];
+    await runSteps(prependClearBrowserState(page, steps));
   });
 });

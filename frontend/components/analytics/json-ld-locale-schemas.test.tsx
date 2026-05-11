@@ -36,7 +36,7 @@ describe('WebsiteSearchSchema', () => {
   });
 
   it('uses /ru base url when x-kupito-url-locale is ru', async () => {
-    headersGet.mockImplementation((name: string) => (name === URL_LOCALE_HEADER ? 'ru' : null));
+    headersGet.mockImplementation((name: unknown) => (name === URL_LOCALE_HEADER ? 'ru' : null));
     const el = await WebsiteSearchSchema();
     const view = ReactDOMServer.renderToString(el);
     const data = firstLdJsonFromMarkup(view);
@@ -72,7 +72,7 @@ describe('OrganizationSchema', () => {
   });
 
   it('uses /ru organization url when x-kupito-url-locale is ru', async () => {
-    headersGet.mockImplementation((name: string) => (name === URL_LOCALE_HEADER ? 'ru' : null));
+    headersGet.mockImplementation((name: unknown) => (name === URL_LOCALE_HEADER ? 'ru' : null));
     const el = await OrganizationSchema();
     const view = ReactDOMServer.renderToString(el);
     const data = firstLdJsonFromMarkup(view);

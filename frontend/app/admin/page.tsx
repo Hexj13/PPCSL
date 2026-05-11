@@ -106,7 +106,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div>
+    <div data-testid="admin-page">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
         <h1 className="text-3xl md:text-4xl font-extrabold text-primary-900">{t('admin.title')}</h1>
       </div>
@@ -123,6 +123,7 @@ export default function AdminPage() {
                   ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
                   : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
               }`}
+              data-testid="admin-tab-users"
             >
               {t('admin.usersTabLabel')}
             </button>
@@ -135,6 +136,7 @@ export default function AdminPage() {
                   ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
                   : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
               }`}
+              data-testid="admin-tab-brands-models"
             >
               {t('admin.brandsModelsTabLabel')}
             </button>
@@ -147,6 +149,7 @@ export default function AdminPage() {
                   ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
                   : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
               }`}
+              data-testid="admin-tab-parsing"
             >
               {t('admin.parsingTabLabel')}
             </button>
@@ -159,6 +162,7 @@ export default function AdminPage() {
                   ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
                   : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
               }`}
+              data-testid="admin-tab-listings"
             >
               {t('admin.listingsTabLabel')}
             </button>
@@ -171,6 +175,7 @@ export default function AdminPage() {
                   ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
                   : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
               }`}
+              data-testid="admin-tab-promotions"
             >
               {t('admin.promotionsTabLabel')}
             </button>

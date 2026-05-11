@@ -9,15 +9,17 @@ import { LoadingButton } from '@/ui';
 import { RegisterFormFields } from './RegisterFormFields';
 import { RegisterFormTerms } from './RegisterFormTerms';
 import { RegisterFormType } from './RegisterFormType';
-import { useRegisterPage } from './useRegisterPage';
+import type { RegisterPageHandle } from './useRegisterPage';
 
 type RegisterPanelProps = {
+  registerPage: RegisterPageHandle;
   showTitle?: boolean;
   showLoginLink?: boolean;
   formClassName?: string;
 };
 
 export function RegisterPanel({
+  registerPage,
   showTitle = true,
   showLoginLink = true,
   formClassName = 'card p-6 md:p-8',
@@ -38,7 +40,7 @@ export function RegisterPanel({
     handlePasswordChange,
     handleFormFieldFocus,
     handleSubmit,
-  } = useRegisterPage();
+  } = registerPage;
 
   return (
     <>

@@ -39,14 +39,16 @@ function CompareEmptyBlock({
   hint,
   onBrowse,
   browseLabel,
+  dataTestId,
 }: {
   heading: string;
   hint: string;
   onBrowse: () => void;
   browseLabel: string;
+  dataTestId: string;
 }) {
   return (
-    <div className="surface text-center py-12">
+    <div className="surface text-center py-12" data-testid={dataTestId}>
       <svg
         className="w-24 h-24 mx-auto text-text-secondary mb-4"
         fill="none"
@@ -87,7 +89,7 @@ function CompareTableBlock({
 }) {
   return (
     <div className="surface overflow-x-auto">
-      <table className="w-full min-w-[800px]">
+      <table className="w-full min-w-[800px]" data-testid="compare-table">
         <thead>
           <tr className="border-b border-primary-700/30">
             <th className="text-left py-2 px-2 md:py-4 md:px-4 text-sm md:text-base text-primary-900 font-semibold">
@@ -104,6 +106,7 @@ function CompareTableBlock({
                     onClick={() => onRemove(listing.id)}
                     className="p-2 text-text-secondary hover-only:hover:text-red-400 transition-colors"
                     title={t('common.removeFromComparison')}
+                    data-testid={`compare-remove-${listing.id}`}
                   >
                     <svg
                       className="w-5 h-5 md:w-6 md:h-6"
@@ -253,6 +256,7 @@ function ComparePageContent() {
             type="button"
             onClick={() => handleTabChange('vehicles')}
             className={tabButtonClass(activeTab === 'vehicles')}
+            data-testid="compare-tab-vehicles"
           >
             {t('compare.vehiclesSectionTitle')}
             {vehicleCount > 0 && (
@@ -266,6 +270,7 @@ function ComparePageContent() {
             type="button"
             onClick={() => handleTabChange('tires')}
             className={tabButtonClass(activeTab === 'tires')}
+            data-testid="compare-tab-tires"
           >
             {t('compare.tiresSectionTitle')}
             {tireCount > 0 && (
@@ -289,7 +294,10 @@ function ComparePageContent() {
 
   if (!comparisonStoreHydrated || !hasInitialized) {
     return (
-      <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)] pb-12 md:pb-16">
+      <div
+        className="max-w-7xl mx-auto min-h-[calc(100vh-200px)] pb-12 md:pb-16"
+        data-testid="compare-page"
+      >
         <Breadcrumbs
           items={[
             { label: t('breadcrumbs.home'), href: localePrefixPath('/', locale) },
@@ -312,7 +320,10 @@ function ComparePageContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto min-h-[calc(100vh-200px)] pb-12 md:pb-16">
+    <div
+      className="max-w-7xl mx-auto min-h-[calc(100vh-200px)] pb-12 md:pb-16"
+      data-testid="compare-page"
+    >
       <Breadcrumbs
         items={[
           { label: t('breadcrumbs.home'), href: localePrefixPath('/', locale) },
@@ -338,6 +349,7 @@ function ComparePageContent() {
               }
             }}
             browseLabel={t('compare.browseListings')}
+            dataTestId="compare-empty-vehicles"
           />
         ) : (
           <>
@@ -349,6 +361,7 @@ function ComparePageContent() {
                   size="sm"
                   className="group inline-flex items-center gap-2 !text-primary-700 !border-primary-700 transition-colors hover-only:hover:!text-primary-900 hover-only:hover:!border-primary-900"
                   onClick={() => void handleClearAllVehicles()}
+                  data-testid="compare-clear-all-vehicles"
                 >
                   <TrashIcon className="w-4 h-4 shrink-0 transition-colors group-hover:text-primary-900" />
                   {t('compare.clearAll')}
@@ -378,6 +391,7 @@ function ComparePageContent() {
               }
             }}
             browseLabel={t('compare.browseTireListings')}
+            dataTestId="compare-empty-tires"
           />
         ) : (
           <>
@@ -389,6 +403,7 @@ function ComparePageContent() {
                   size="sm"
                   className="group inline-flex items-center gap-2 !text-primary-700 !border-primary-700 transition-colors hover-only:hover:!text-primary-900 hover-only:hover:!border-primary-900"
                   onClick={() => void handleClearAllTires()}
+                  data-testid="compare-clear-all-tires"
                 >
                   <TrashIcon className="w-4 h-4 shrink-0 transition-colors group-hover:text-primary-900" />
                   {t('compare.clearAll')}

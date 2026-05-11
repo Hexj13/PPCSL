@@ -5,6 +5,8 @@ export const BACKEND_PHONE_ERROR_TO_I18N: Record<string, string> = {
   'validation.phoneInvalidLength': 'phone.invalidLength',
   'validation.phoneNotMobile': 'phone.notMobile',
   'errors.phoneAlreadyExists': 'register.phoneExists',
+  'errors.primaryPhoneMustUseChangeFlow': 'register.primaryPhoneMustUseChangeFlow',
+  'errors.smsHourlyLimit': 'errors.smsHourlyLimit',
 };
 
 export type AxiosLikeWithPhoneError = {

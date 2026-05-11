@@ -4,6 +4,7 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 
@@ -20,6 +21,19 @@ async function bootstrap() {
   });
 
   app.set('trust proxy', true);
+
+  app.use(cookieParser());
+
+  const corsOrigins = (() => {
+    const raw = process.env.CORS_ORIGINS?.trim();
+    if (raw) {
+      return raw
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+    return [process.env.FRONTEND_URL?.trim() || 'http://localhost:3000'];
+  })();
 
   app.use(requestIdMiddleware);
 
@@ -39,7 +53,20 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      if (corsOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(null, false);
+    },
     credentials: true,
   });
 
@@ -64,7 +91,7 @@ async function bootstrap() {
     }),
   );
 
-  const frontendOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const frontendOrigin = corsOrigins[0] || 'http://localhost:3000';
   const setUploadsCorsHeaders = (res: Response) => {
     res.setHeader('Access-Control-Allow-Origin', frontendOrigin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');

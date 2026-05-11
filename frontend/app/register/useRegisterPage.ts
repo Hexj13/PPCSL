@@ -77,6 +77,8 @@ function getFilledFields(formData: RegisterFormState): Record<string, boolean> {
   };
 }
 
+export type RegisterPageHandle = ReturnType<typeof useRegisterPage>;
+
 export function useRegisterPage() {
   const { push } = useLocalizedNavigation();
   const searchParams = useSearchParams();

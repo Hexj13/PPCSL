@@ -29,10 +29,32 @@ function withAuthPathLocale(href: string, locale?: Locale): string {
   return localePrefixPath(href, resolveLocaleForAuthNavigation(locale));
 }
 
+function containsControlChar(input: string): boolean {
+  for (let i = 0; i < input.length; i += 1) {
+    const code = input.charCodeAt(i);
+    if (code <= 31 || code === 127) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function sanitizeReturnUrl(value: string | null | undefined): string | null {
   if (!value) return null;
   if (!value.startsWith('/')) return null;
   if (value.startsWith('//')) return null;
+  if (value.startsWith('/\\') || value.startsWith('\\')) return null;
+  if (containsControlChar(value)) return null;
+  let decoded = value;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    return null;
+  }
+  if (decoded.startsWith('//') || decoded.startsWith('/\\') || decoded.startsWith('\\')) {
+    return null;
+  }
+  if (containsControlChar(decoded)) return null;
   const { restPath } = stripLocalePrefixFromPathname(value);
   if (isAuthPath(restPath)) return null;
   return value;

@@ -9,7 +9,11 @@ export const USER_ACTION_FAILURE_LOG_PREFIXES = [
   '/api/saved-filters',
 ] as const;
 
-export function shouldLogUserActionFailure(path: string, method: string): boolean {
+export function shouldLogUserActionFailure(
+  path: string,
+  method: string,
+  errorKey?: string,
+): boolean {
   const normalized = (path.split('?')[0] || path).replace(/\/$/, '') || '/';
   const matchesPrefix = USER_ACTION_FAILURE_LOG_PREFIXES.some(
     (p) => normalized === p || normalized.startsWith(`${p}/`),
@@ -18,6 +22,13 @@ export function shouldLogUserActionFailure(path: string, method: string): boolea
     return false;
   }
   if (method === 'GET' && normalized === '/api/listings') {
+    return false;
+  }
+  if (
+    method === 'POST' &&
+    normalized === '/api/auth/refresh' &&
+    errorKey === 'errors.unauthorized'
+  ) {
     return false;
   }
   return true;

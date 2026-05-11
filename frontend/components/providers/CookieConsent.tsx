@@ -43,6 +43,7 @@ export function CookieConsent() {
       style={{ zIndex: designTokens.zIndex.modal }}
       role="dialog"
       aria-label={t('common.acceptCookies')}
+      data-testid="cookie-consent-dialog"
     >
       <button
         onClick={handleClose}
@@ -87,6 +88,7 @@ export function CookieConsent() {
       <button
         onClick={handleAccept}
         className="w-full px-4 py-2 sm:py-2.5 text-primary-700 font-semibold text-sm sm:text-base rounded-lg border-2 border-primary-700 bg-primary-500/10 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 transition-all duration-200 touch-manipulation"
+        data-testid="cookie-consent-accept"
       >
         {t('common.cookieConsentAccept')}
       </button>

@@ -25,7 +25,7 @@ export function handleDuplicateKeyError(
   throw error;
 }
 
-export function removePasswordFromUser<T extends { password?: string }>(
+export function removePasswordFromUser<T extends { password?: string | null }>(
   user: T,
 ): Omit<T, 'password'> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -10,7 +10,7 @@ import { UserProfilePatchService } from './user-profile-patch.service';
 
 describe('UserProfilePatchService', () => {
   let service: UserProfilePatchService;
-  let usersService: jest.Mocked<Pick<UsersService, 'findByEmail'>>;
+  let usersService: jest.Mocked<Pick<UsersService, 'findByEmail' | 'findByPhone'>>;
   let smsService: jest.Mocked<Pick<SmsService, 'normalizePhoneNumber'>>;
 
   const baseUser = (): User =>
@@ -32,6 +32,7 @@ describe('UserProfilePatchService', () => {
   beforeEach(async () => {
     usersService = {
       findByEmail: jest.fn(),
+      findByPhone: jest.fn(),
     };
     smsService = {
       normalizePhoneNumber: jest.fn((p: string) => p.replace(/\s/g, '')),
@@ -71,5 +72,55 @@ describe('UserProfilePatchService', () => {
   it('includes preferredLocale when set', async () => {
     const patch = await service.buildPatch(baseUser(), 'u1', { preferredLocale: 'ru' });
     expect(patch.preferredLocale).toBe('ru');
+  });
+
+  it('sets primary phone when user has none', async () => {
+    const u = baseUser();
+    u.phone = null as unknown as string;
+    usersService.findByPhone.mockResolvedValue(null);
+    const patch = await service.buildPatch(u, u.id, { phone: '+37360111222' });
+    expect(patch.phone).toBe('+37360111222');
+    expect(patch.phoneVerified).toBe(false);
+  });
+
+  it('drops primary phone from patch when unchanged', async () => {
+    const u = baseUser();
+    const patch = await service.buildPatch(u, u.id, { phone: '+37360000001' });
+    expect(patch.phone).toBeUndefined();
+  });
+
+  it('throws when changing verified primary phone via profile patch', async () => {
+    const u = baseUser();
+    u.phoneVerified = true;
+    await expect(service.buildPatch(u, u.id, { phone: '+37360999999' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('allows changing primary phone when not yet verified', async () => {
+    const u = baseUser();
+    u.phoneVerified = false;
+    usersService.findByPhone.mockResolvedValue(null);
+    const patch = await service.buildPatch(u, u.id, { phone: '+37360999999' });
+    expect(patch.phone).toBe('+37360999999');
+    expect(patch.phoneVerified).toBe(false);
+  });
+
+  it('throws when new unverified primary phone is already taken', async () => {
+    const u = baseUser();
+    u.phoneVerified = false;
+    usersService.findByPhone.mockResolvedValue({ id: 'other' } as User);
+    await expect(service.buildPatch(u, u.id, { phone: '+37360999999' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('throws when new primary phone is already taken', async () => {
+    const u = baseUser();
+    u.phone = null as unknown as string;
+    usersService.findByPhone.mockResolvedValue({ id: 'other' } as User);
+    await expect(service.buildPatch(u, u.id, { phone: '+37360111222' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 });

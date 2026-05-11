@@ -409,6 +409,7 @@ export interface RegisterDto {
   password: string;
   type: Extract<UserType, 'Individual' | 'Business'>;
   phone: string;
+  smsVerificationCode?: string;
   firstName?: string;
   lastName?: string;
   companyName?: string;
@@ -526,6 +527,7 @@ export interface UpdateProfileDto {
   lastName?: string;
   companyName?: string;
   companyWebsiteUrl?: string;
+  phone?: string;
   additionalPhone?: string | null;
   emailNotifications?: boolean;
   emailNotificationListingRefreshReminders?: boolean;
@@ -555,7 +557,26 @@ export interface ChangePhoneVerifyDto {
 }
 
 export interface RefreshTokenDto {
-  refresh_token: string;
+  refresh_token?: string;
+}
+
+export interface LoginResponse {
+  user: User;
+}
+
+export interface GoogleSignInDto {
+  idToken: string;
+  type?: 'Individual' | 'Business';
+  termsAccepted?: boolean;
+}
+
+export interface GoogleSignInResponse extends LoginResponse {
+  requiresPhoneVerification: boolean;
+  isNewUser: boolean;
+}
+
+export interface VerifyPhoneDto {
+  code: string;
 }
 
 export interface FavoriteItem {

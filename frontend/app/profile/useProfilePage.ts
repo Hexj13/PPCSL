@@ -18,7 +18,6 @@ import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
-import { localStorageGetItem } from '@/lib/browser-local-storage';
 import { compactE164Phone, formatPhoneForDisplay } from '@/lib/phone';
 import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
@@ -179,7 +178,7 @@ function handleProfileSubmitError(err: unknown, t: (key: string) => string): voi
 
 export function useProfilePage() {
   const { push, replace } = useLocalizedNavigation();
-  const { user, isInitialized, setAuth, token, logout } = useAuthStore();
+  const { user, isInitialized, setAuth, logout } = useAuthStore();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
@@ -225,7 +224,7 @@ export function useProfilePage() {
 
   useEffect(() => {
     if (!isInitialized) return;
-    if (!token) {
+    if (!user) {
       push(buildSignInHref());
       return;
     }
@@ -236,10 +235,7 @@ export function useProfilePage() {
         if (!user) setLoadingProfile(true);
         const response = await authApi.me();
         const profileUser = response.data;
-        const currentToken = localStorageGetItem('token') || useAuthStore.getState().token;
-        const currentRefreshToken =
-          localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken;
-        setAuth(profileUser, currentToken, currentRefreshToken);
+        setAuth(profileUser);
         const formDataToSet = {
           firstName: profileUser.firstName || '',
           lastName: profileUser.lastName || '',
@@ -276,7 +272,7 @@ export function useProfilePage() {
     };
 
     void loadProfile();
-  }, [isInitialized, push, setAuth, token, user]);
+  }, [isInitialized, push, setAuth, user]);
 
   useEffect(() => {
     if (!user || !hasLoadedRef.current) return;
@@ -367,21 +363,13 @@ export function useProfilePage() {
               : formData.additionalPhone || '',
           };
           const response = await authApi.updateProfile(profilePayload);
-          setAuth(
-            response.data,
-            localStorageGetItem('token') || useAuthStore.getState().token,
-            localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
-          );
+          setAuth(response.data);
           toast.success(t('profile.updateSuccess'));
         }
         if (submitState.hasEmailChange) {
           await authApi.changeEmailRequest({ newEmail: submitState.normalizedNextEmail });
           const profileResponse = await authApi.me();
-          setAuth(
-            profileResponse.data,
-            localStorageGetItem('token') || useAuthStore.getState().token,
-            localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
-          );
+          setAuth(profileResponse.data);
           toast.success(t('profile.emailChangeLinkSent'));
         }
         if (submitState.passwordComplete) {
@@ -420,7 +408,6 @@ export function useProfilePage() {
   return {
     user,
     isInitialized,
-    token,
     loading,
     loadingProfile,
     formData,

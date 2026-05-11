@@ -119,6 +119,7 @@ export function LanguageSwitcher({
           rightIcon={languageIcon}
           menuSelectedStyle="checkmark"
           menuExpandToContent
+          dataTestId="language-switcher"
         />
       </div>
     </div>

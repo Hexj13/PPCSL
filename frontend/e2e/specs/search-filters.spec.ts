@@ -1,10 +1,7 @@
 import { expect, test } from '../fixtures/base';
-import { useClearedBrowserState } from '../utils/spec-hooks';
-import { runSteps, type E2EStep } from '../utils/steps';
+import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Search: filters @p0', () => {
-  useClearedBrowserState(test);
-
   test('changes vehicle type filter to truck and submits search', async ({
     page,
     searchHomePage,
@@ -36,7 +33,7 @@ test.describe('Search: filters @p0', () => {
       },
     ];
 
-    await runSteps(steps);
+    await runSteps(prependClearBrowserState(page, steps));
   });
 
   test('resets filters after changes', async ({ page, searchHomePage }) => {
@@ -79,7 +76,7 @@ test.describe('Search: filters @p0', () => {
       },
     ];
 
-    await runSteps(steps);
+    await runSteps(prependClearBrowserState(page, steps));
   });
 
   test('changes vehicle type filter to moto and submits search', async ({
@@ -113,6 +110,6 @@ test.describe('Search: filters @p0', () => {
       },
     ];
 
-    await runSteps(steps);
+    await runSteps(prependClearBrowserState(page, steps));
   });
 });

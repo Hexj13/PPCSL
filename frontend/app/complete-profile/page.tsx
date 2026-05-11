@@ -31,6 +31,7 @@ import { LoadingButton, InfoBlock } from '@/ui';
 import { validatePhone } from '../register/utils';
 
 import { CompleteProfileFormFields } from './CompleteProfileFormFields';
+import { CompleteProfilePhoneGate } from './CompleteProfilePhoneGate';
 import {
   buildUpdateData,
   getFilledFields,
@@ -47,6 +48,7 @@ function CompleteProfileContent() {
   const { user, isInitialized, setAuth } = useAuthStore();
   const { t } = useTranslation();
   const returnUrl = getReturnUrlFromSearchParams(searchParams);
+  const phoneRequiredMode = searchParams.get('mode') === 'phone_required';
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -339,11 +341,7 @@ function CompleteProfileContent() {
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
       let redirected = false;
       try {
-        setAuth(
-          response.data,
-          localStorageGetItem('token') || useAuthStore.getState().token,
-          localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
-        );
+        setAuth(response.data);
         redirected = await processPendingData(response.data, t, returnUrl);
       } finally {
         releaseComparisonHold();
@@ -394,6 +392,10 @@ function CompleteProfileContent() {
         aria-hidden
       />
     );
+  }
+
+  if (phoneRequiredMode && !user.phoneVerified) {
+    return <CompleteProfilePhoneGate />;
   }
 
   return (

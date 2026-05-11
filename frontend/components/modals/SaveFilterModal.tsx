@@ -87,6 +87,7 @@ export function SaveFilterModal({
       onClose={handleClose}
       title={filterId ? t('saveFilter.editTitle') : t('saveFilter.saveTitle')}
       size="small"
+      dataTestId="save-filter-modal"
     >
       <div className="space-y-4">
         <div>
@@ -105,6 +106,7 @@ export function SaveFilterModal({
             maxLength={100}
             className="input-field"
             placeholder={t('saveFilter.nameRequired')}
+            data-testid="save-filter-name-input"
           />
           <p className="text-xs text-text-secondary mt-1">
             {name.length}
@@ -118,6 +120,7 @@ export function SaveFilterModal({
             onClick={handleClose}
             disabled={saving}
             className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="save-filter-cancel"
           >
             {t('common.cancel')}
           </button>
@@ -126,6 +129,7 @@ export function SaveFilterModal({
             onClick={handleSave}
             disabled={saving || !name.trim()}
             className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="save-filter-submit"
           >
             {saving ? t('saveFilter.saving') : t('saveFilter.save')}
           </button>

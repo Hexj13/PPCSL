@@ -19,6 +19,10 @@ export class ChangePasswordUseCase {
   async execute(userId: string, dto: ChangePasswordDto, requestLocale?: string): Promise<void> {
     const user = await this.usersService.findOneByIdWithPassword(userId);
 
+    if (!user.password) {
+      throw new BadRequestException('errors.useGoogleSignIn');
+    }
+
     const currentOk = await this.passwordService.verify(dto.currentPassword, user.password);
     if (!currentOk) {
       throw new BadRequestException('errors.invalidCurrentPassword');

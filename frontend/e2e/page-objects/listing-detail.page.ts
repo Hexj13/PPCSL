@@ -44,6 +44,30 @@ export class ListingDetailPage {
     await this.copyLinkButton.click();
   }
 
+  get compareActionButton() {
+    return this.page.getByTestId('listing-detail-action-compare');
+  }
+
+  get favoriteActionButton() {
+    return this.page.getByTestId('listing-detail-action-favorite');
+  }
+
+  async clickCompareAction(): Promise<void> {
+    await this.compareActionButton.click();
+  }
+
+  async clickFavoriteAction(): Promise<void> {
+    await this.favoriteActionButton.click();
+  }
+
+  async expectCompareActionVisible(): Promise<void> {
+    await expect(this.compareActionButton).toBeVisible();
+  }
+
+  async expectFavoriteActionVisible(): Promise<void> {
+    await expect(this.favoriteActionButton).toBeVisible();
+  }
+
   async expectFullPageView(
     descriptionText?: string,
     equipmentLabels: string[] = [],

@@ -21,6 +21,7 @@ import {
   normalizeLoginFieldInput,
   sanitizePhoneInput,
 } from '@/lib/phone';
+import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
@@ -191,20 +192,22 @@ export function useLoginPage() {
       password: !!formData.password,
     };
     try {
-      const res = await authApi.login({ ...formData, login: loginForApi });
+      await authApi.login({ ...formData, login: loginForApi });
       suppressSignedInReturnNavigationRef.current = true;
       setIsRedirecting(true);
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
       try {
-        setAuth(res.data.user, res.data.access_token, res.data.refresh_token);
+        const me = await authApi.me();
+        const syncedUser = await syncPartnerPromoDismissAfterAuth(me.data);
+        setAuth(syncedUser);
         if (typeof window === 'undefined') {
           analytics.login(loginMethod as 'email' | 'phone');
           analytics.formSubmit('login', true, filledFields);
           return;
         }
-        await syncPendingFavoritesAfterAuth(res.data.user.id);
-        const syncedUser = await syncPartnerPromoDismissAfterAuth(useAuthStore.getState().user!);
-        setAuth(syncedUser, res.data.access_token, res.data.refresh_token);
+        await syncPendingFavoritesAfterAuth(syncedUser.id);
+        const syncedAgain = await syncPartnerPromoDismissAfterAuth(useAuthStore.getState().user!);
+        setAuth(syncedAgain);
         await applyComparisonAfterAuth();
       } finally {
         releaseComparisonHold();
@@ -217,6 +220,17 @@ export function useLoginPage() {
         resolvedReturnUrl,
       );
       if (filterHandled) return;
+      if (!useAuthStore.getState().user?.phoneVerified) {
+        const safeReturn = resolvedReturnUrl ? sanitizeReturnUrl(resolvedReturnUrl) : null;
+        const target =
+          safeReturn && typeof window !== 'undefined'
+            ? `/complete-profile?mode=phone_required&returnUrl=${encodeURIComponent(buildPostAuthRedirect(safeReturn, getClientLocale()))}`
+            : '/complete-profile?mode=phone_required';
+        if (typeof window !== 'undefined' && window.location) {
+          window.location.href = buildPostAuthRedirect(target, getClientLocale());
+        }
+        return;
+      }
       const returnUrl = resolvedReturnUrl || '/';
       applyLoginSuccessRedirect(returnUrl, loginMethod, filledFields);
     } catch {

@@ -122,6 +122,7 @@ export type ListingPageActionCardProps = {
   'aria-busy'?: boolean;
   'aria-live'?: 'off' | 'polite' | 'assertive';
   'aria-label'?: string;
+  dataTestId?: string;
 };
 
 export function ListingPageActionCard({
@@ -140,6 +141,7 @@ export function ListingPageActionCard({
   'aria-busy': ariaBusy,
   'aria-live': ariaLive,
   'aria-label': ariaLabel,
+  dataTestId,
 }: ListingPageActionCardProps) {
   const isInline = layout === 'inline';
   const { surfaceInteractive, surface, focusRing } = listingPageActionCardSurfaces(
@@ -190,6 +192,7 @@ export function ListingPageActionCard({
         aria-live={ariaLive}
         aria-label={ariaLabel}
         role="group"
+        data-testid={dataTestId}
       >
         {body}
       </div>
@@ -205,6 +208,7 @@ export function ListingPageActionCard({
       aria-busy={ariaBusy}
       aria-live={ariaLive}
       aria-label={ariaLabel}
+      data-testid={dataTestId}
     >
       {body}
     </button>

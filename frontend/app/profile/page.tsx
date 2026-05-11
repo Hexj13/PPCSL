@@ -45,8 +45,8 @@ function ProfileContactSection({
   }) => {
     const checked = formData[field] === true;
     return (
-      <div className="flex items-center gap-3 group">
-        <div className="relative">
+      <div className="flex items-start gap-3 group">
+        <div className="relative shrink-0 mt-0.5">
           <input
             type="checkbox"
             checked={checked}
@@ -89,7 +89,7 @@ function ProfileContactSection({
           id={labelId}
           type="button"
           onClick={() => onChange(field, !formData[field])}
-          className="text-sm text-text-primary cursor-pointer"
+          className="text-sm text-left text-text-primary cursor-pointer"
         >
           {label}
         </button>
@@ -351,6 +351,7 @@ function ProfileActions({
           disabled={saveDisabled}
           loadingText={t('profile.saving')}
           className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          data-testid="profile-save"
         >
           {t('profile.saveChanges')}
         </LoadingButton>
@@ -409,7 +410,7 @@ export default function ProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="max-w-4xl mx-auto mt-6 md:mt-12">
+    <div className="max-w-4xl mx-auto mt-6 md:mt-12" data-testid="profile-page">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 text-primary-900">
         {t('profile.title')}
       </h1>
@@ -419,6 +420,7 @@ export default function ProfilePage() {
           onSubmit={handleSubmit}
           className="space-y-6"
           autoComplete="off"
+          data-testid="profile-edit-form"
         >
           <input
             type="text"

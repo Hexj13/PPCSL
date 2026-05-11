@@ -21,7 +21,7 @@ const legal: LegalConfig = {
           {
             term: 'Registered User',
             definition:
-              'A user who has created a profile on the Platform by verifying their phone number and setting a password. An email address is optional and may be added later in the profile.',
+              'A user who has created a profile on the Platform by verifying their phone number and either setting a password or using Google Sign-In where offered. An email address is optional and may be added later in the profile.',
           },
           {
             term: 'Listing',
@@ -288,7 +288,7 @@ const legal: LegalConfig = {
           {
             term: 'Utilizator înregistrat',
             definition:
-              'Un utilizator care a creat un profil pe Platformă prin verificarea numărului de telefon și setarea unei parole. Adresa de email este opțională și poate fi adăugată ulterior în profil.',
+              'Un utilizator care a creat un profil pe Platformă prin verificarea numărului de telefon și fie setarea unei parole, fie folosind autentificarea Google, unde este disponibilă. Adresa de email este opțională și poate fi adăugată ulterior în profil.',
           },
           {
             term: 'Anunț',
@@ -558,7 +558,7 @@ const legal: LegalConfig = {
           {
             term: 'Зарегистрированный пользователь',
             definition:
-              'Пользователь, создавший профиль на Платформе путём подтверждения номера телефона и установки пароля. Адрес электронной почты необязателен и может быть добавлен позже в профиле.',
+              'Пользователь, создавший профиль на Платформе путём подтверждения номера телефона и либо установки пароля, либо входа через Google Sign-In, где это предлагается. Адрес электронной почты необязателен и может быть добавлен позже в профиле.',
           },
           {
             term: 'Объявление',
@@ -1114,7 +1114,7 @@ const legal: LegalConfig = {
             '• Cookies funcționale: Aceste cookies permit funcționalitate îmbunătățită și personalizare',
             '• Cookies analitice: Google Analytics și Google Tag Manager folosesc cookies pentru a analiza utilizarea Platformei. Aceste cookies ne ajută să înțelegem modul în care utilizatorii folosesc Platforma',
             '10.2. Stocare locală (localStorage):',
-            '• Folosim localStorage pentru token-uri de autentificare și reînnoirea sesiunii',
+            '• Folosim cookie-uri httpOnly pentru tokenurile de sesiune de autentificare (acces și reîmprospătare); autentificarea Google poate încărca scriptul Google Identity Services pe pagina de autentificare când este activată',
             '• Folosim localStorage pentru favorite, comparație (până la limitele menționate) și alte preferințe; pentru utilizatorii autentificați, sursa principală pentru aceste date este baza de date',
             '• Pentru oaspeți, anumite acțiuni (favorite, comparație, filtru salvat) pot fi păstrate temporar în memoria locală a browserului și migrate pe server după autentificare sau înregistrare',
             '10.3. Stocare de sesiune (sessionStorage):',
@@ -1485,7 +1485,7 @@ const legal: LegalConfig = {
             '• Functional cookies: These cookies provide enhanced functionality and personalization',
             '• Analytical cookies: Google Analytics and Google Tag Manager use cookies to analyze Platform usage. These cookies help us understand how users use the Platform',
             '10.2. Local storage (localStorage):',
-            '• We use localStorage for authentication tokens and session renewal',
+            '• We use httpOnly cookies for authentication session tokens (access and refresh); Google Sign-In may load the Google Identity Services script on the sign-in page when enabled',
             '• We use localStorage for favorites, comparison (within the limits described), and other preferences; for signed-in users, the primary source for this data is the database',
             "• For guests, certain actions (favorites, comparison, saved filter) may be kept temporarily in the browser's local storage and migrated to the server after login or registration",
             '10.3. Session storage (sessionStorage):',
@@ -1856,7 +1856,7 @@ const legal: LegalConfig = {
             '• Функциональные cookies: Эти cookies обеспечивают расширенную функциональность и персонализацию',
             '• Аналитические cookies: Google Analytics и Google Tag Manager используют cookies для анализа использования Платформы. Эти cookies помогают нам понять, как пользователи используют Платформу',
             '10.2. Локальное хранилище (localStorage):',
-            '• Мы используем localStorage для токенов аутентификации и обновления сессии',
+            '• Мы используем httpOnly cookie для токенов сессии (access и refresh); вход через Google Sign-In может загружать скрипт Google Identity Services на странице входа, если он включён',
             '• Мы используем localStorage для избранного, сравнения (в указанных пределах) и других предпочтений; для авторизованных пользователей основным источником этих данных является база данных',
             '• Для гостей отдельные действия (избранное, сравнение, сохранённый фильтр) могут временно храниться в локальной памяти браузера и переноситься на сервер после входа или регистрации',
             '10.3. Хранилище сессии (sessionStorage):',

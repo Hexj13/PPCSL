@@ -26,6 +26,7 @@ import type { Request as ExpressRequest, Response } from 'express';
 
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import { PhoneVerifiedGuard } from '../../auth/infrastructure/guards/phone-verified.guard';
 import type { AuthenticatedRequest } from '../../common/express-augmentation';
 import { CronSecretGuard } from '../../common/guards/cron-secret.guard';
 import { buildVisitorHash } from '../../common/utils/visitor-identity.util';
@@ -426,7 +427,7 @@ export class ListingsController {
   @ApiResponse({ status: 404, description: 'Listing not found' })
   @ApiResponse({ status: 429, description: 'User hourly generation limit' })
   @Post(':id/ai-report')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   postListingAiReport(
     @Param('id', ParseListingIdPipe) id: string,
     @Request() req: AuthenticatedRequest,
@@ -549,7 +550,7 @@ export class ListingsController {
     },
   })
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   create(@Body() createListingDto: CreateListingDto, @Request() req: AuthenticatedRequest) {
     return this.listingsService.create(createListingDto, req.user.id, req.user.type);
   }
@@ -566,7 +567,7 @@ export class ListingsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   update(
     @Param('id', ParseListingIdPipe) id: string,
     @Body() updateListingDto: UpdateListingDto,
@@ -586,7 +587,7 @@ export class ListingsController {
   @ApiResponse({ status: 400, description: 'Active listings limit reached' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post(':id/publish')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   publish(@Param('id', ParseListingIdPipe) id: string, @Request() req: AuthenticatedRequest) {
     return this.listingsService.publish(id, req.user.id);
   }
@@ -601,7 +602,7 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Listing paused successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post(':id/pause')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   pause(@Param('id', ParseListingIdPipe) id: string, @Request() req: AuthenticatedRequest) {
     return this.listingsService.pause(id, req.user.id);
   }
@@ -616,7 +617,7 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Listing closed successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post(':id/close')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   close(@Param('id', ParseListingIdPipe) id: string, @Request() req: AuthenticatedRequest) {
     return this.listingsService.close(id, req.user.id);
   }
@@ -627,7 +628,7 @@ export class ListingsController {
   @ApiResponse({ status: 400, description: 'Must wait 48 hours' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post('refresh-dates')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   refreshDates(@Request() req: AuthenticatedRequest) {
     return this.listingsService.refreshAllDates(req.user.id);
@@ -654,7 +655,7 @@ export class ListingsController {
   }
 
   @Patch(':id/promote')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Toggle listing promotion (user)' })

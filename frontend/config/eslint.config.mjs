@@ -244,6 +244,31 @@ export default [
     files: ['e2e/**/*.spec.{ts,tsx}'],
     rules: {
       'testing-library/prefer-screen-queries': 'off',
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@playwright/test',
+              importNames: ['test', 'expect'],
+              message: 'Import test and expect from ../fixtures/base in Playwright specs.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['e2e/fixtures/base.ts'],
+    rules: {
+      'no-empty-pattern': 'off',
+      'no-restricted-imports': 'off',
+    },
+  },
+  {
+    files: ['**/page.metadata.test.ts'],
+    rules: {
+      'import/order': 'off',
     },
   },
   {

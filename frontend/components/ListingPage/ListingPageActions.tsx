@@ -204,6 +204,7 @@ export function ListingPageActions({
       title={favoriteTitle}
       description={favoriteDescription}
       aria-label={favoriteTitle}
+      dataTestId="listing-detail-action-favorite"
     >
       <HeartIcon filled={isFavorite} />
     </ListingPageActionCard>
@@ -218,6 +219,7 @@ export function ListingPageActions({
       description={compareDescription}
       compactDescriptionNarrowLg
       aria-label={compareTitle}
+      dataTestId="listing-detail-action-compare"
     >
       <CompareIcon filled={isInComparison} />
     </ListingPageActionCard>

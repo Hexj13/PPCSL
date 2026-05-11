@@ -179,8 +179,6 @@ const authStoreMockState = {
     isPlatformPartner?: boolean;
     hidePartnerPromoBanner?: boolean;
   } | null,
-  token: null as string | null,
-  refreshToken: null as string | null,
   setAuth: jest.fn(),
 };
 
@@ -209,8 +207,6 @@ describe('ListingGrid', () => {
     (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
     (usePathname as jest.Mock).mockReturnValue('/');
     authStoreMockState.user = null;
-    authStoreMockState.token = null;
-    authStoreMockState.refreshToken = null;
     authStoreMockState.setAuth = jest.fn();
     (useAuthStore as unknown as jest.Mock).mockImplementation(
       (selector?: (s: typeof authStoreMockState) => unknown) => {

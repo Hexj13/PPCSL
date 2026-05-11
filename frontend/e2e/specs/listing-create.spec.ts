@@ -1,32 +1,27 @@
-import type { Page } from '@playwright/test';
+import type { Page, TestInfo } from '@playwright/test';
 
 import { expect, test } from '../fixtures/base';
 import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { loginByUi } from '../utils/auth';
-import { useClearedBrowserState } from '../utils/spec-hooks';
-import { runSteps, type E2EStep } from '../utils/steps';
-
-const LISTING_PHOTO_FILES = [
-  'e2e/fixtures/photos/2.jpg',
-  'e2e/fixtures/photos/3.jpg',
-  'e2e/fixtures/photos/4.jpg',
-  'e2e/fixtures/photos/5.jpg',
-] as const;
+import { LISTING_PHOTO_FILES } from '../utils/listing-flow';
+import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 async function loginAndOpenCreateListing(
   page: Page,
   listingCreatePage: ListingCreatePage,
+  testInfo: TestInfo,
 ): Promise<ListingCreatePage> {
-  await loginByUi(page, requireAuthCredentials());
+  const result = await loginByUi(page, requireAuthCredentials());
+  if (result.phoneRequired) {
+    testInfo.skip(true, 'E2E user must verify phone before creating listings');
+  }
   await listingCreatePage.openAndExpectPageView();
   return listingCreatePage;
 }
 
 test.describe('Listing create @p0', () => {
-  useClearedBrowserState(test);
-
   test('redirects guest user from create listing page to sign page', async ({ page, signPage }) => {
     const steps: E2EStep[] = [
       {
@@ -49,27 +44,50 @@ test.describe('Listing create @p0', () => {
       },
     ];
 
-    await runSteps(steps);
+    await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('opens create listing form for authenticated user', async ({ page, listingCreatePage }) => {
-    test.skip(!hasAuthCredentials(), 'E2E credentials are required for authenticated scenarios');
-    await test.step('Login and open create listing page', async () => {
-      await loginAndOpenCreateListing(page, listingCreatePage);
-    });
+  test('opens create listing form for authenticated user', async ({
+    page,
+    listingCreatePage,
+  }, testInfo) => {
+    if (!hasAuthCredentials()) {
+      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
+      return;
+    }
+    await runSteps(
+      prependClearBrowserState(page, [
+        {
+          name: 'Login and open create listing page',
+          action: async () => {
+            await loginAndOpenCreateListing(page, listingCreatePage, testInfo);
+          },
+        },
+      ]),
+    );
   });
 
   test('creates a listing and redirects to listing detail page', async ({
     page,
     listingCreatePage,
     listingDetailPage,
-  }) => {
-    test.skip(!hasAuthCredentials(), 'E2E credentials are required for authenticated scenarios');
+  }, testInfo) => {
+    if (!hasAuthCredentials()) {
+      testInfo.skip(true, 'E2E credentials are required for authenticated scenarios');
+      return;
+    }
     let listingDescription = '';
     let selectedEquipmentLabels: string[] = [];
-    await test.step('Login and open create listing page', async () => {
-      await loginAndOpenCreateListing(page, listingCreatePage);
-    });
+    await runSteps(
+      prependClearBrowserState(page, [
+        {
+          name: 'Login and open create listing page',
+          action: async () => {
+            await loginAndOpenCreateListing(page, listingCreatePage, testInfo);
+          },
+        },
+      ]),
+    );
 
     await test.step('Fill extended listing fields and options', async () => {
       const payload = await listingCreatePage.fillExtendedFields();

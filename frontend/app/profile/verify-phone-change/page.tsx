@@ -6,7 +6,6 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
-import { localStorageGetItem } from '@/lib/browser-local-storage';
 import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
 import { formatPhoneForDisplay } from '@/lib/phone';
 import { buildSignInHref } from '@/lib/return-url';
@@ -175,15 +174,12 @@ function VerifyPhoneChangeContent() {
     setError('');
 
     try {
-      const response = await authApi.changePhoneVerify({
+      await authApi.changePhoneVerify({
         phone: phoneNumber,
         code: fullCode,
       });
-      setAuth(
-        response.data,
-        localStorageGetItem('token') || useAuthStore.getState().token,
-        localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
-      );
+      const me = await authApi.me();
+      setAuth(me.data);
       toast.success(t('profile.verifyPhoneChange.phoneChangedSuccess'));
       push('/profile');
     } catch (err: unknown) {

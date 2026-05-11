@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 
+import { resolveLocaleRouting } from '@/lib/locale-routing';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 
@@ -8,6 +9,7 @@ const PRIVATE_PATHS = [
   '/reset-password',
   '/verify-email',
   '/verify-phone',
+  '/profile',
   '/profile/',
   '/favorites',
   '/my-listings',
@@ -23,15 +25,17 @@ const PRIVATE_PATHS = [
 export default function robots(): MetadataRoute.Robots {
   const siteConfig = loadSiteConfigSync(getCountry());
   const siteUrl = siteConfig.siteUrl;
-
-  const ruMirrored = PRIVATE_PATHS.map((p) => `/ru${p}`);
+  const routing = resolveLocaleRouting(siteConfig);
+  const mirrored = routing.prefixedLocales.flatMap((seg) =>
+    PRIVATE_PATHS.map((p) => `/${seg}${p}`),
+  );
 
   return {
     rules: [
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/admin/', ...PRIVATE_PATHS, ...ruMirrored],
+        disallow: ['/api/', '/admin/', ...PRIVATE_PATHS, ...mirrored],
       },
     ],
     sitemap: [`${siteUrl}/sitemap.xml`, `${siteUrl}/sitemap.txt`],

@@ -1,7 +1,11 @@
+import { jwtVerify } from 'jose';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { ACCESS_TOKEN_COOKIE_NAME } from '@/lib/auth-access-cookie';
 import { resolveLocaleRouting } from '@/lib/locale-routing';
+import { isPhoneVerificationExemptRestPath } from '@/lib/phone-verification-paths';
+import { sanitizeReturnUrl } from '@/lib/return-url';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import {
   canonicalLowercasePrefixedPathname,
@@ -153,12 +157,53 @@ function redirectPreferredPrefixedLocale(
   return NextResponse.redirect(url, 307);
 }
 
-export function middleware(request: NextRequest) {
+async function enforcePhoneVerifiedCookie(
+  request: NextRequest,
+  pathname: string,
+  search: string,
+  routing: ReturnType<typeof getRouting>,
+): Promise<NextResponse | null> {
+  const { restPath, hasPrefix, matchedPrefix } = stripPrefixedLocaleFromPathname(pathname, routing);
+  if (isPhoneVerificationExemptRestPath(restPath)) {
+    return null;
+  }
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    return null;
+  }
+  const raw = request.cookies.get(ACCESS_TOKEN_COOKIE_NAME)?.value;
+  if (!raw) {
+    return null;
+  }
+  let phoneVerified: boolean | undefined;
+  try {
+    const { payload } = await jwtVerify(raw, new TextEncoder().encode(secret));
+    phoneVerified = payload.phoneVerified as boolean | undefined;
+  } catch {
+    return null;
+  }
+  if (phoneVerified === true) {
+    return null;
+  }
+  const url = request.nextUrl.clone();
+  url.pathname = hasPrefix ? `${matchedPrefix}/complete-profile` : '/complete-profile';
+  url.searchParams.set('mode', 'phone_required');
+  const returnCandidate = sanitizeReturnUrl(`${pathname}${search}`);
+  if (returnCandidate) {
+    url.searchParams.set('returnUrl', returnCandidate);
+  }
+  return NextResponse.redirect(url, 307);
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const routing = getRouting();
 
   const excluded = passthroughIfExcludedPath(pathname);
   if (excluded) return excluded;
+
+  const phoneRedirect = await enforcePhoneVerifiedCookie(request, pathname, search, routing);
+  if (phoneRedirect) return phoneRedirect;
 
   const legacyDefaultLocale = redirectLegacyDefaultLocalePath(request, pathname, search, routing);
   if (legacyDefaultLocale) return legacyDefaultLocale;

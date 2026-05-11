@@ -37,10 +37,8 @@ function stripComparisonBackup() {
 
 interface AuthState {
   user: User | null;
-  token: string | null;
-  refreshToken: string | null;
   isInitialized: boolean;
-  setAuth: (_user: User | null, _token: string | null, _refreshToken?: string | null) => void;
+  setAuth: (_user: User | null) => void;
   logout: () => void;
   initAuth: () => Promise<void>;
 }
@@ -49,24 +47,19 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
-      refreshToken: null,
       isInitialized: false,
-      setAuth: (_user, _token, _refreshToken = null) => {
+      setAuth: (_user) => {
         applyPreferredLocaleFromProfile(_user?.preferredLocale);
-        set({ user: _user, token: _token, refreshToken: _refreshToken, isInitialized: true });
+        set({ user: _user, isInitialized: true });
         if (typeof window !== 'undefined') {
-          if (_token) {
-            localStorageSetItem('token', _token);
-          }
-          if (_refreshToken) {
-            localStorageSetItem('refresh_token', _refreshToken);
-          }
+          localStorageRemoveItem('token');
+          localStorageRemoveItem('refresh_token');
         }
       },
       logout: () => {
         const prevUser = get().user;
-        set({ user: null, token: null, refreshToken: null, isInitialized: true });
+        void authApi.logout().catch(() => {});
+        set({ user: null, isInitialized: true });
         if (typeof window !== 'undefined') {
           if (prevUser?.hidePartnerPromoBanner) {
             localStorageSetItem(PARTNER_PROMO_DISMISS_STORAGE_KEY, '1');
@@ -86,74 +79,39 @@ export const useAuthStore = create<AuthState>()(
           return;
         }
 
-        const storedToken = localStorageGetItem('token');
+        localStorageRemoveItem('token');
+        localStorageRemoveItem('refresh_token');
 
-        if (!storedToken) {
-          const authRaw = localStorageGetItem('auth-storage');
-          let persistedToken: string | null = null;
-          if (authRaw) {
-            try {
-              persistedToken =
-                (JSON.parse(authRaw) as { state?: { token?: string } })?.state?.token ?? null;
-            } catch {
-              /* corrupted – treat as empty */
-            }
-          }
-          if (!persistedToken) {
-            set({ user: null, token: null, refreshToken: null, isInitialized: true });
-            return;
-          }
-        }
-
-        const { token, refreshToken } = get();
-        const actualToken = storedToken || token;
-
-        if (actualToken) {
+        try {
+          const response = await authApi.meQuiet();
+          const syncedUser = await syncPartnerPromoDismissAfterAuth(response.data);
+          set({ user: syncedUser, isInitialized: true });
+        } catch {
           try {
-            const response = await authApi.me();
-            const currentToken = localStorageGetItem('token') || actualToken;
-            const currentRefreshToken = localStorageGetItem('refresh_token') || refreshToken;
-            const syncedUser = await syncPartnerPromoDismissAfterAuth(response.data);
-            get().setAuth(syncedUser, currentToken, currentRefreshToken);
+            const refreshResponse = await authApi.refreshQuiet();
+            const syncedUser = await syncPartnerPromoDismissAfterAuth(refreshResponse.data.user);
+            set({ user: syncedUser, isInitialized: true });
           } catch {
-            const storedRefreshToken = localStorageGetItem('refresh_token');
-            if (storedRefreshToken) {
-              try {
-                const refreshResponse = await authApi.refresh({
-                  refresh_token: storedRefreshToken,
-                });
-                get().setAuth(
-                  refreshResponse.data.user,
-                  refreshResponse.data.access_token,
-                  refreshResponse.data.refresh_token,
-                );
-                const syncedUser = await syncPartnerPromoDismissAfterAuth(get().user!);
-                get().setAuth(
-                  syncedUser,
-                  refreshResponse.data.access_token,
-                  refreshResponse.data.refresh_token,
-                );
-              } catch {
-                get().logout();
-                set({ isInitialized: true });
-              }
-            } else {
-              get().logout();
-              set({ isInitialized: true });
-            }
+            clearClientAuthLocalStorage({
+              clearReturnUrl: false,
+              clearAuthPersistKey: true,
+              clearPendingMigrationAndFilters: false,
+            });
+            set({ user: null, isInitialized: true });
           }
-        } else {
-          set({ isInitialized: true });
         }
       },
     }),
     {
       name: 'auth-storage',
+      version: 2,
+      migrate: (persisted) => {
+        const p = persisted as { user?: User | null } | null | undefined;
+        return { user: p?.user ?? null };
+      },
       storage: createPersistJSONStorage(),
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
-        refreshToken: state.refreshToken,
       }),
       skipHydration: true,
     },

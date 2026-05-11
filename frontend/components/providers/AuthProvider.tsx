@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const onStorage = (e: StorageEvent) => {
-      if (e.key === 'auth-storage' || e.key === 'token' || e.key === 'refresh_token') {
+      if (e.key === 'auth-storage') {
         if (syncTimer) clearTimeout(syncTimer);
         syncTimer = setTimeout(() => void syncAuthFromOtherTab(), 50);
         return;

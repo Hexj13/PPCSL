@@ -14,6 +14,7 @@ import { CheckPhoneAvailabilityUseCase } from './use-cases/check-phone-availabil
 import { ConfirmEmailChangeUseCase } from './use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './use-cases/delete-account.use-case';
 import { DismissPartnerPromoBannerUseCase } from './use-cases/dismiss-partner-promo-banner.use-case';
+import { GoogleSignInUseCase } from './use-cases/google-sign-in.use-case';
 import { GetUserProfileUseCase } from './use-cases/get-user-profile.use-case';
 import { LoginUserUseCase } from './use-cases/login-user.use-case';
 import { RefreshTokensUseCase } from './use-cases/refresh-tokens.use-case';
@@ -35,6 +36,7 @@ import { PhoneService } from '../domain/services/phone.service';
 import { EmailService } from '../infrastructure/services/email.service';
 import { RefreshTokenService } from '../infrastructure/services/refresh-token.service';
 import { SmsService } from '../infrastructure/services/sms.service';
+import { AuthTokenIssuerService } from './services/auth-token-issuer.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -52,10 +54,13 @@ describe('AuthService', () => {
     email: 'test@test.com',
     emailVerified: true,
     phone: '+37370123456',
+    phoneVerified: true,
     password: 'hashedPassword',
     type: UserType.Individual,
     firstName: 'Test',
     lastName: 'User',
+    companyName: null,
+    companyWebsiteUrl: null,
     active: true,
     board_slug: 'test-slug',
     preferredLocale: null as string | null,
@@ -202,6 +207,14 @@ describe('AuthService', () => {
           provide: RefreshTokenService,
           useValue: mockRefreshTokenService,
         },
+        {
+          provide: AuthTokenIssuerService,
+          useValue: {
+            issueLoginResponse: jest.fn(),
+            attachLoginCookies: jest.fn(),
+            clearAuthCookies: jest.fn(),
+          },
+        },
         RegisterUserUseCase,
         LoginUserUseCase,
         RefreshTokensUseCase,
@@ -226,6 +239,10 @@ describe('AuthService', () => {
           provide: DismissPartnerPromoBannerUseCase,
           useValue: { execute: dismissPartnerPromoBannerExecute },
         },
+        {
+          provide: GoogleSignInUseCase,
+          useValue: { execute: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -236,6 +253,38 @@ describe('AuthService', () => {
     smsService = module.get(SmsService);
     emailService = module.get(EmailService);
     eventEmitter = module.get(EventEmitter2);
+
+    usersService.findOneById.mockResolvedValue(mockUser as User);
+
+    const authTokenIssuer = module.get(AuthTokenIssuerService) as {
+      issueLoginResponse: jest.Mock;
+      attachLoginCookies: jest.Mock;
+      clearAuthCookies: jest.Mock;
+    };
+    authTokenIssuer.issueLoginResponse.mockImplementation(async (user: User) => ({
+      access_token: jwtService.sign({
+        sub: user.id,
+        email: user.email || '',
+        type: user.type,
+        phoneVerified: !!(user.phone && user.phoneVerified),
+      }),
+      refresh_token: await mockRefreshTokenService.generateToken(user.id),
+      user: {
+        id: user.id,
+        email: user.email,
+        type: user.type,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        companyName: user.companyName,
+        companyWebsiteUrl: user.companyWebsiteUrl,
+        phone: user.phone,
+        boardSlug: user.board_slug ?? null,
+        preferredLocale: user.preferredLocale ?? null,
+        hidePartnerPromoBanner: user.hidePartnerPromoBanner ?? false,
+        isPlatformPartner: user.isPlatformPartner ?? false,
+        phoneVerified: user.phoneVerified ?? false,
+      },
+    }));
   });
 
   it('should be defined', () => {
@@ -410,6 +459,7 @@ describe('AuthService', () => {
       jwtService.sign.mockReturnValue('mock-jwt-token');
       mockRefreshTokenService.generateToken.mockResolvedValue('mock-refresh-token');
       usersService.update.mockResolvedValue({} as User);
+      usersService.findOneById.mockResolvedValue({ ...mockUser, preferredLocale: 'ru' } as User);
 
       const result = await service.login(
         { login: 'test@test.com', password: 'password123' },
@@ -433,6 +483,7 @@ describe('AuthService', () => {
       jwtService.sign.mockReturnValue('mock-jwt-token');
       mockRefreshTokenService.generateToken.mockResolvedValue('mock-refresh-token');
       usersService.update.mockResolvedValue({} as User);
+      usersService.findOneById.mockResolvedValue(userWithLocale as User);
 
       const result = await service.login(
         { login: 'test@test.com', password: 'password123' },
@@ -459,13 +510,15 @@ describe('AuthService', () => {
         firstName: 'New',
         lastName: 'User',
         termsAccepted: true,
+        smsVerificationCode: '123456',
       };
 
       const hashedPassword = 'hashedPassword123';
       passwordService.hash.mockResolvedValue(hashedPassword);
+      smsService.verifyCode.mockResolvedValue(true);
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { termsAccepted, ...userData } = registerDto;
+      const { termsAccepted, smsVerificationCode, ...userData } = registerDto;
       const createdUser = {
         ...mockUser,
         ...userData,
@@ -483,8 +536,10 @@ describe('AuthService', () => {
       expect(usersService.create).toHaveBeenCalledWith(
         expect.objectContaining({
           preferredLocale: 'ru',
+          phoneVerified: true,
         }),
       );
+      expect(smsService.verifyCode).toHaveBeenCalledWith('+37370123456', '123456');
       expect(passwordService.hash).toHaveBeenCalledWith(registerDto.password);
       expect(emailService.sendVerificationEmail).toHaveBeenCalledWith('1', 'new@test.com', 'ru');
     });
@@ -497,6 +552,7 @@ describe('AuthService', () => {
         phone: '+37370123456',
         firstName: 'New',
         termsAccepted: false,
+        smsVerificationCode: '123456',
       };
 
       await expect(service.register(registerDto)).rejects.toThrow(BadRequestException);

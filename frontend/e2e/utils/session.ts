@@ -1,24 +1,34 @@
 import type { Page } from '@playwright/test';
-import { expect } from '@playwright/test';
 
-async function dismissCookieConsentIfPresent(page: Page): Promise<void> {
-  const cookieDialog = page.locator('div[role="dialog"]:has-text("🍪")');
-  try {
-    await cookieDialog.waitFor({ state: 'visible', timeout: 1500 });
-  } catch {
-    return;
+async function gotoRoot(page: Page): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      return;
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('net::ERR_ABORTED')) {
+        throw error;
+      }
+    }
   }
-  await cookieDialog.getByRole('button').last().click();
-  await expect(cookieDialog).toBeHidden({ timeout: 5000 });
+  throw lastError;
 }
 
 export async function clearBrowserState(page: Page): Promise<void> {
   await page.context().clearCookies();
-  await page.goto('/', { waitUntil: 'load' });
+  await gotoRoot(page);
   await page.evaluate(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
   });
-  await page.reload({ waitUntil: 'load' });
-  await dismissCookieConsentIfPresent(page);
+  await gotoRoot(page);
+  const accept = page.getByTestId('cookie-consent-accept');
+  try {
+    await accept.click({ timeout: 2500 });
+  } catch {
+    void 0;
+  }
 }

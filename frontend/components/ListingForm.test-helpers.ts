@@ -75,7 +75,6 @@ export function setupListingFormMocks(): void {
   (useAuthStore as unknown as MockLike).mockReturnValue({
     user: { id: 'user-1' },
     isInitialized: true,
-    token: 'test-token',
     setAuth: getJestFn(),
     logout: getJestFn(),
     initAuth: getJestFn(),

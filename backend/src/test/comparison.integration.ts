@@ -1,4 +1,5 @@
 /// <reference path="./jest-openapi.d.ts" />
+import { cookieHeaderFromAuthResponse } from './auth-cookie-integration';
 import { getTestRequest } from './setup-integration';
 import { createTestCredentials } from './test-data-cleanup';
 
@@ -22,6 +23,7 @@ describe('Comparison API Integration Tests', () => {
       firstName: credentials.firstName,
       lastName: credentials.lastName,
       termsAccepted: true,
+      smsVerificationCode: '000000',
     });
     if (registerRes.status !== 201) {
       throw new Error(`Registration failed: ${JSON.stringify(registerRes.body)}`);
@@ -32,11 +34,11 @@ describe('Comparison API Integration Tests', () => {
       password: testPassword,
     });
 
-    if (!loginResponse.body.access_token) {
-      throw new Error('Failed to get auth token');
+    if (!loginResponse.body?.user?.id) {
+      throw new Error('Failed to get auth session');
     }
 
-    authToken = loginResponse.body.access_token;
+    authToken = cookieHeaderFromAuthResponse(loginResponse);
 
     const listingsRes = await request.get('/api/listings').query({ page: 1, limit: 5 }).expect(200);
     const first = listingsRes.body?.data?.[0];
@@ -50,10 +52,7 @@ describe('Comparison API Integration Tests', () => {
   });
 
   it('returns empty ids for new user', async () => {
-    const res = await request
-      .get('/api/comparison/ids')
-      .set('Authorization', `Bearer ${authToken}`)
-      .expect(200);
+    const res = await request.get('/api/comparison/ids').set('Cookie', authToken).expect(200);
 
     expect(res.body).toMatchObject({ vehicleListingIds: [], tireListingIds: [] });
     expect(res).toSatisfyApiSpec();
@@ -62,7 +61,7 @@ describe('Comparison API Integration Tests', () => {
   it('sync merges and returns shape', async () => {
     const res = await request
       .post('/api/comparison/sync')
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Cookie', authToken)
       .send({ vehicleListingIds: [], tireListingIds: [] })
       .expect(200);
 
@@ -78,43 +77,31 @@ describe('Comparison API Integration Tests', () => {
 
     const addRes = await request
       .post(`/api/comparison/${publicListingId}`)
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Cookie', authToken)
       .expect(201);
 
     expect(addRes.body).toHaveProperty('listing_id', publicListingId);
     expect(addRes).toSatisfyApiSpec();
 
-    const idsRes = await request
-      .get('/api/comparison/ids')
-      .set('Authorization', `Bearer ${authToken}`)
-      .expect(200);
+    const idsRes = await request.get('/api/comparison/ids').set('Cookie', authToken).expect(200);
 
     const inVehicle = idsRes.body.vehicleListingIds?.includes(publicListingId);
     const inTire = idsRes.body.tireListingIds?.includes(publicListingId);
     expect(inVehicle || inTire).toBe(true);
 
-    await request
-      .delete(`/api/comparison/${publicListingId}`)
-      .set('Authorization', `Bearer ${authToken}`)
-      .expect(200);
+    await request.delete(`/api/comparison/${publicListingId}`).set('Cookie', authToken).expect(200);
 
-    await request
-      .delete(`/api/comparison/${publicListingId}`)
-      .set('Authorization', `Bearer ${authToken}`)
-      .expect(404);
+    await request.delete(`/api/comparison/${publicListingId}`).set('Cookie', authToken).expect(404);
   });
 
   it('returns 400 for invalid listing UUID on POST', async () => {
-    await request
-      .post('/api/comparison/not-a-uuid')
-      .set('Authorization', `Bearer ${authToken}`)
-      .expect(400);
+    await request.post('/api/comparison/not-a-uuid').set('Cookie', authToken).expect(400);
   });
 
   it('returns 404 for non-existent listing on POST', async () => {
     const res = await request
       .post('/api/comparison/f47ac10b-58cc-4372-a567-0e02b2c3d479')
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Cookie', authToken)
       .expect(404);
 
     expect(res.body).toMatchObject({ statusCode: 404, errorKey: 'errors.listingNotFound' });
