@@ -158,7 +158,7 @@
     "lru-cache": "^11.2.7",
     "mjml": "^4.18.0",
     "multer": "^2.1.1",
-    "nodemailer": "^8.0.5",
+    "nodemailer": "^8.0.7",
     "onnxruntime-node": "^1.24.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -173,7 +173,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "twilio": "^5.12.2",
-    "typeorm": "^0.3.28",
+    "typeorm": "^0.3.29",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
