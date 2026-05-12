@@ -35,7 +35,7 @@ GET /sitemaps/:name.xml   → Next.js route handler → GET /api/sitemaps/:name 
 | URL                              | Content                                                    | Priority | changefreq    |
 | -------------------------------- | ---------------------------------------------------------- | -------- | ------------- |
 | `/sitemap.xml`                   | Sitemap index (`pages`, `brands-{car\|truck\|moto}`, `tires`, `sellers`, `listings-*` — **no nested sitemap index**, per Google) | —        | —             |
-| `/sitemap.txt`                   | Plain-text sitemap mirror for crawlers and diagnostics     | —        | —             |
+| `/sitemap.txt`                   | Plain-text sitemap mirror for crawlers and diagnostics (includes both default-locale and `/ru` URLs derived from each `<loc>`) | —        | —             |
 | `/sitemaps/tires.xml`           | Tire category and tire taxonomy URLs                       | 0.7–0.8  | daily         |
 | `/sitemaps/pages.xml`            | Static pages                                               | 0.2–1.0  | daily/monthly |
 | `/sitemaps/brands-car.xml`      | Brand + brand+model URLs for passenger cars (`car`)       | 0.7–0.8  | daily         |
@@ -64,6 +64,8 @@ The path **`/sitemaps/brands.xml`** is **not** served (404). Older setups must r
 | Auth, profile, admin | No       | —                    | Excluded by design                                                 |
 
 ## URL Structure
+
+Each indexable URL is emitted **once** per child sitemap as a `<url>` entry. The Romanian (default) canonical URL is in `<loc>`. The Russian locale is referenced with `<xhtml:link rel="alternate" hreflang="ru" href="..."/>` (plus `hreflang="ro"` and `hreflang="x-default"` pointing at the same URL as `<loc>`). Child urlsets declare `xmlns:xhtml="http://www.w3.org/1999/xhtml"` on `<urlset>`.
 
 ### Static Pages (pages.xml)
 
@@ -95,8 +97,8 @@ Brand and model path segments are slugified without diacritics. All `<loc>` valu
 
 ### Listings (listings-YYYY-MM.xml)
 
-- URL: `https://kupito.club/listings/{id}`
-- Partitioned by `created_at` month to keep each file under 50,000 URLs
+- URL: `https://kupito.club/listings/{id}` in `<loc>`; Russian listing URL in `hreflang="ru"` alternate (same path under `/ru/...`).
+- Partitioned by `created_at` month to keep each file under 50,000 URLs (one `<url>` per listing, not doubled by locale).
 - `lastmod`: listing `updated_at`
 
 ## Backend Implementation
@@ -111,8 +113,8 @@ Brand and model path segments are slugified without diacritics. All `<loc>` valu
 
 ### Caching
 
-- Key prefix: `sitemap:`
-- Keys: `sitemap:index`, `sitemap:pages`, `sitemap:brands-car`, `sitemap:brands-truck`, `sitemap:brands-moto`, `sitemap:sellers`, `sitemap:listings-YYYY-MM`
+- Key prefix: `sitemap:v3:` (Redis; bump when sitemap XML shape changes to avoid stale cached XML)
+- Keys: `sitemap:v3:index`, `sitemap:v3:pages`, `sitemap:v3:brands-car`, `sitemap:v3:brands-truck`, `sitemap:v3:brands-moto`, `sitemap:v3:sellers`, `sitemap:v3:listings-YYYY-MM`, `sitemap:v3:tires`, `sitemap:v3:txt`
 - TTL: 3600 seconds (1 hour)
 
 ### Database Queries
@@ -125,7 +127,8 @@ Brand and model path segments are slugified without diacritics. All `<loc>` valu
 
 - Prolog: `<?xml version="1.0" encoding="UTF-8"?>` at the start of every XML sitemap (index and child files).
 - Encoding: UTF-8.
-- URL escaping in `<loc>`: `&` → `&amp;`, `<` → `&lt;`, etc. (handled in `SitemapService.escapeXml()`).
+- Child **urlsets** include `xmlns:xhtml="http://www.w3.org/1999/xhtml"` and, for bilingual URLs, three self-closing elements: `<xhtml:link rel="alternate" hreflang="ro" href="..."/>`, `<xhtml:link rel="alternate" hreflang="ru" href="..."/>`, `<xhtml:link rel="alternate" hreflang="x-default" href="..."/>` (see [Google: localized versions](https://developers.google.com/search/docs/specialized/international/localized-versions#sitemap)).
+- URL escaping in `<loc>` and in `href` attributes: `&` → `&amp;`, `<` → `&lt;`, etc. (handled in `SitemapService.escapeXml()`).
 - Limits per file: up to 50,000 URLs and 50 MB uncompressed (listings are split by month to stay under the limit).
 
 ## Fallback (if frontend proxy fails in production)

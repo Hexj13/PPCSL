@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 
 import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
 import { TrackedNextImage } from '@/components/common/TrackedNextImage';
+import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhotoCarouselNavButtons';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getOptimizedImageUrl } from '@/lib/utils';
 
@@ -80,7 +81,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-black z-50 flex items-center justify-center p-4"
+      className="group fixed inset-0 bg-black z-50 flex items-center justify-center p-4"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -123,53 +124,19 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
       </button>
 
       {images.length > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrev();
-            }}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all duration-200 z-10 bg-primary-500/85 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block hover-only:hover:scale-110"
-          >
-            <svg
-              className="w-8 h-8 sm:w-10 sm:h-10"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNext();
-            }}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all duration-200 z-10 bg-primary-500/85 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block hover-only:hover:scale-110"
-          >
-            <svg
-              className="w-8 h-8 sm:w-10 sm:h-10"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
-        </>
+        <ListingPhotoCarouselNavButtons
+          variant="modal"
+          onPrev={(e) => {
+            e.stopPropagation();
+            onPrev();
+          }}
+          onNext={(e) => {
+            e.stopPropagation();
+            onNext();
+          }}
+          prevLabel={t('listings.previousPhoto')}
+          nextLabel={t('listings.nextPhoto')}
+        />
       )}
 
       <div

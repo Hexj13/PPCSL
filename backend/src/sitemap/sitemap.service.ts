@@ -14,7 +14,7 @@ import { User } from '../users/entities/user.entity';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club').replace(/\/$/, '');
 const CACHE_TTL = 3600;
-const CACHE_PREFIX = 'sitemap:v2:';
+const CACHE_PREFIX = 'sitemap:v3:';
 
 const BRAND_SITEMAP_VEHICLE_TYPES = ['car', 'truck', 'moto'] as const;
 type BrandSitemapVehicleType = (typeof BRAND_SITEMAP_VEHICLE_TYPES)[number];
@@ -58,15 +58,35 @@ export class SitemapService {
     return `${u.origin}/ru${pq}`;
   }
 
-  private withRuDuplicates(urls: SitemapUrl[]): SitemapUrl[] {
-    const out: SitemapUrl[] = [...urls];
-    for (const entry of urls) {
-      const altLoc = this.ruAlternateLoc(entry.loc);
-      if (altLoc !== entry.loc) {
-        out.push({ ...entry, loc: altLoc });
-      }
+  private buildHreflangAlternateXml(roLoc: string): string | null {
+    const ruLoc = this.ruAlternateLoc(roLoc);
+    if (ruLoc === roLoc) {
+      return null;
     }
-    return out;
+    const escapedRo = this.escapeXml(roLoc);
+    const escapedRu = this.escapeXml(ruLoc);
+    return [
+      `    <xhtml:link rel="alternate" hreflang="ro" href="${escapedRo}"/>`,
+      `    <xhtml:link rel="alternate" hreflang="ru" href="${escapedRu}"/>`,
+      `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapedRo}"/>`,
+    ].join('\n');
+  }
+
+  private buildUrlXmlEntry(u: SitemapUrl): string {
+    const alternates = this.buildHreflangAlternateXml(u.loc);
+    let xml = `  <url>\n    <loc>${this.escapeXml(u.loc)}</loc>`;
+    if (alternates) {
+      xml += `\n${alternates}`;
+    }
+    xml += `\n    <lastmod>${u.lastmod}</lastmod>`;
+    if (u.changefreq) {
+      xml += `\n    <changefreq>${u.changefreq}</changefreq>`;
+    }
+    if (u.priority !== undefined) {
+      xml += `\n    <priority>${u.priority}</priority>`;
+    }
+    xml += '\n  </url>';
+    return xml;
   }
 
   async getSitemapIndex(): Promise<string> {
@@ -117,8 +137,17 @@ export class SitemapService {
       }
     }
 
-    const urls = xmlSitemaps.flatMap((xml) => this.extractLocValues(xml));
-    const txt = `${Array.from(new Set(urls)).join('\n')}\n`;
+    const ordered = new Set<string>();
+    for (const xml of xmlSitemaps) {
+      for (const u of this.extractLocValues(xml)) {
+        ordered.add(u);
+        const ru = this.ruAlternateLoc(u);
+        if (ru !== u) {
+          ordered.add(ru);
+        }
+      }
+    }
+    const txt = `${Array.from(ordered).join('\n')}\n`;
 
     await this.saveToCache('txt', txt);
     return txt;
@@ -140,7 +169,7 @@ export class SitemapService {
       { loc: `${SITE_URL}/cookie-settings`, lastmod: now, changefreq: 'monthly', priority: 0.2 },
     ];
 
-    const xml = this.buildUrlset(this.withRuDuplicates(urls));
+    const xml = this.buildUrlset(urls);
     await this.saveToCache('pages', xml);
     return xml;
   }
@@ -198,7 +227,7 @@ export class SitemapService {
       });
     }
 
-    const xml = this.buildUrlset(this.withRuDuplicates(urls));
+    const xml = this.buildUrlset(urls);
     await this.saveToCache('tires', xml);
     return xml;
   }
@@ -336,7 +365,7 @@ export class SitemapService {
 
     for (const vt of BRAND_SITEMAP_VEHICLE_TYPES) {
       const urls = grouped[vt];
-      const xml = this.buildUrlset(this.withRuDuplicates(urls));
+      const xml = this.buildUrlset(urls);
       result[vt] = xml;
       await this.saveToCache(`brands-${vt}`, xml);
     }
@@ -366,7 +395,7 @@ export class SitemapService {
       priority: 0.6,
     }));
 
-    const xml = this.buildUrlset(this.withRuDuplicates(urls));
+    const xml = this.buildUrlset(urls);
     await this.saveToCache('sellers', xml);
     return xml;
   }
@@ -403,13 +432,14 @@ export class SitemapService {
       for (const l of batch) {
         const pathSeg = listingPublicPathSegment(l.slug, l.id);
         const roLoc = `${SITE_URL}/listings/${pathSeg}`;
-        const ruLoc = this.ruAlternateLoc(roLoc);
         const lastmod = l.updated_at.toISOString().split('T')[0];
         urlEntries.push(
-          `  <url>\n    <loc>${this.escapeXml(roLoc)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>hourly</changefreq>\n    <priority>0.9</priority>\n  </url>`,
-        );
-        urlEntries.push(
-          `  <url>\n    <loc>${this.escapeXml(ruLoc)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>hourly</changefreq>\n    <priority>0.9</priority>\n  </url>`,
+          this.buildUrlXmlEntry({
+            loc: roLoc,
+            lastmod,
+            changefreq: 'hourly',
+            priority: 0.9,
+          }),
         );
       }
 
@@ -419,7 +449,7 @@ export class SitemapService {
 
     if (urlEntries.length === 0) return null;
 
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries.join('\n')}\n</urlset>\n`;
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urlEntries.join('\n')}\n</urlset>\n`;
     await this.saveToCache(cacheKey, xml);
     return xml;
   }
@@ -469,17 +499,8 @@ export class SitemapService {
   }
 
   private buildUrlset(urls: SitemapUrl[]): string {
-    const entries = urls
-      .map((u) => {
-        let xml = `  <url>\n    <loc>${this.escapeXml(u.loc)}</loc>\n    <lastmod>${u.lastmod}</lastmod>`;
-        if (u.changefreq) xml += `\n    <changefreq>${u.changefreq}</changefreq>`;
-        if (u.priority !== undefined) xml += `\n    <priority>${u.priority}</priority>`;
-        xml += '\n  </url>';
-        return xml;
-      })
-      .join('\n');
-
-    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
+    const entries = urls.map((u) => this.buildUrlXmlEntry(u)).join('\n');
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries}\n</urlset>\n`;
   }
 
   private today(): string {

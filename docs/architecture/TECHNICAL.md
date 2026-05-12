@@ -956,8 +956,8 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
   - Static pages (homepage, listings, terms, privacy, FAQ, contacts, cookie-settings)
   - Brand and brand+model landing pages in `brands-car.xml`, `brands-truck.xml`, `brands-moto.xml` (listed directly in the root index; no nested sitemap index)
   - Seller board pages (`/board/{slug}`) for active sellers with active listings
-  - Active listings by month (`/listings/{id}`) in `listings-YYYY-MM.xml`
-  - Cached in Redis (1 hour); proper XML escaping and Cache-Control headers
+  - Active listings by month in `listings-YYYY-MM.xml` — one `<url>` per listing; default-locale canonical in `<loc>`, Russian locale via `xhtml:link` alternates (`hreflang` ro / ru / x-default); `/sitemap.txt` lists both locale URL forms derived from each `<loc>`
+  - Cached in Redis under prefix `sitemap:v3:` (1 hour TTL; prefix bumped when XML shape changes); proper XML escaping and Cache-Control headers. Detail: [SITEMAP.md](../features/SITEMAP.md).
 - **Image optimization** - WebP format, lazy loading, proper alt text
 - **Performance** - Compression, security headers, optimized image sizes
 

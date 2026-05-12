@@ -87,7 +87,8 @@ describe('SitemapService', () => {
       const xml = await service.getPagesSitemap();
 
       expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-      expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
+      expect(xml).toContain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
+      expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
       expect(xml).toContain('<loc>');
       expect(xml).toContain('/listings</loc>');
       expect(xml).toContain('/terms</loc>');
@@ -95,8 +96,11 @@ describe('SitemapService', () => {
       expect(xml).toContain('/faq</loc>');
       expect(xml).toContain('/contacts</loc>');
       expect(xml).toContain('/cookie-settings</loc>');
-      expect(xml).toContain('/ru</loc>');
-      expect(xml).toContain('/ru/listings</loc>');
+      expect(xml).toContain('hreflang="ro"');
+      expect(xml).toContain('hreflang="ru"');
+      expect(xml).toContain('hreflang="x-default"');
+      expect(xml).toContain('https://kupito.club/ru"');
+      expect(xml).toContain('https://kupito.club/ru/listings"');
       expect(xml).toContain('<priority>1</priority>');
     });
 
@@ -114,7 +118,7 @@ describe('SitemapService', () => {
       await service.getPagesSitemap();
 
       expect(mockRedis.set).toHaveBeenCalledWith(
-        'sitemap:v2:pages',
+        'sitemap:v3:pages',
         expect.stringContaining('<?xml'),
         3600,
       );
@@ -149,9 +153,9 @@ describe('SitemapService', () => {
       expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
       expect(xml).toContain('/listings/listing-1</loc>');
       expect(xml).toContain('/listings/listing-2</loc>');
-      expect(xml).toContain('/ru/listings/listing-1</loc>');
-      expect(xml).toContain('/ru/listings/listing-2</loc>');
-      expect((xml!.match(/<url>/g) ?? []).length).toBe(4);
+      expect(xml).toContain('https://kupito.club/ru/listings/listing-1"');
+      expect(xml).toContain('https://kupito.club/ru/listings/listing-2"');
+      expect((xml!.match(/<url>/g) ?? []).length).toBe(2);
       expect(xml).toContain('<changefreq>hourly</changefreq>');
       expect(xml).toContain('<priority>0.9</priority>');
     });

@@ -38,18 +38,23 @@ jest.mock('@/lib/toast', () => ({
 
 jest.mock('@/lib/api', () => ({
   authApi: {
-    googleSignIn: jest.fn(async () => undefined),
-    me: jest.fn(async () => ({ data: { id: '1', phoneVerified: true } })),
+    googleSignIn: jest.fn(async (..._args: unknown[]) => undefined),
+    me: jest.fn(async (..._args: unknown[]) => ({ data: { id: '1', phoneVerified: true } })),
   },
 }));
 
+type AuthUserSlice = { id: string; phoneVerified: boolean };
+type AuthMeSnapshot = { data: AuthUserSlice };
+type GoogleSignInFnMock = jest.MockedFunction<(...args: unknown[]) => Promise<unknown>>;
+type AuthMeFnMock = jest.MockedFunction<(...args: unknown[]) => Promise<AuthMeSnapshot>>;
+
 const authStoreState: {
-  user: { id: string; phoneVerified: boolean };
-  setAuth: jest.Mock;
+  user: AuthUserSlice;
+  setAuth: jest.MockedFunction<(...args: unknown[]) => void>;
 } = {
   user: { id: '1', phoneVerified: true },
-  setAuth: jest.fn((u: { id: string; phoneVerified: boolean }) => {
-    authStoreState.user = u;
+  setAuth: jest.fn((...args: unknown[]) => {
+    authStoreState.user = args[0] as AuthUserSlice;
   }),
 };
 
@@ -115,12 +120,16 @@ describe('useGoogleAuth', () => {
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-google-client';
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = 'true';
     jest.clearAllMocks();
-    (authApi.googleSignIn as jest.Mock).mockImplementation(async () => undefined);
+    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockImplementation(
+      async () => undefined,
+    );
     authStoreState.user = { id: '1', phoneVerified: true };
-    authStoreState.setAuth.mockImplementation((u: { id: string; phoneVerified: boolean }) => {
-      authStoreState.user = u;
+    authStoreState.setAuth.mockImplementation((...args: unknown[]) => {
+      authStoreState.user = args[0] as AuthUserSlice;
     });
-    (authApi.me as jest.Mock).mockResolvedValue({ data: { id: '1', phoneVerified: true } });
+    (authApi.me as unknown as AuthMeFnMock).mockResolvedValue({
+      data: { id: '1', phoneVerified: true },
+    });
     mockPathname.mockReturnValue('/ru/sign');
     delete (window as unknown as { location?: unknown }).location;
     (window as unknown as { location: Location }).location = {
@@ -193,7 +202,9 @@ describe('useGoogleAuth', () => {
       },
     });
 
-    (authApi.me as jest.Mock).mockResolvedValue({ data: { id: '1', phoneVerified: false } });
+    (authApi.me as unknown as AuthMeFnMock).mockResolvedValue({
+      data: { id: '1', phoneVerified: false },
+    });
 
     render(
       <Tree>
@@ -224,7 +235,7 @@ describe('useGoogleAuth', () => {
 
   it('sets isGoogleAuthInFlight true before googleSignIn resolves', async () => {
     let resolveGoogleSignIn: (value?: unknown) => void = () => {};
-    (authApi.googleSignIn as jest.Mock).mockImplementation(
+    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockImplementation(
       () =>
         new Promise((resolve) => {
           resolveGoogleSignIn = resolve;
@@ -315,7 +326,9 @@ describe('useGoogleAuth', () => {
   });
 
   it('clears isGoogleAuthInFlight and shows toast when googleSignIn fails', async () => {
-    (authApi.googleSignIn as jest.Mock).mockRejectedValueOnce(new Error('network'));
+    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockRejectedValueOnce(
+      new Error('network'),
+    );
 
     render(
       <Tree>

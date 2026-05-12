@@ -12,6 +12,7 @@ import {
   ListingCardVehicleSpecs,
 } from '@/components/listing/ListingCardParts';
 import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStatusBadge';
+import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhotoCarouselNavButtons';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import { useI18n } from '@/components/providers/I18nProvider';
@@ -143,63 +144,6 @@ function ListingCardBody({
         </div>
       </div>
     </div>
-  );
-}
-
-function CarouselNavButtons({
-  disabled,
-  onPrev,
-  onNext,
-  prevLabel,
-  nextLabel,
-}: {
-  disabled: boolean;
-  onPrev: (e: React.MouseEvent) => void;
-  onNext: (e: React.MouseEvent) => void;
-  prevLabel: string;
-  nextLabel: string;
-}) {
-  const btnClass = disabled
-    ? 'opacity-40 cursor-wait'
-    : 'opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100';
-  const hitAreaClass =
-    'absolute w-14 h-14 flex z-10 touch-manipulation touch-pan-y pointer-events-auto lg:w-10 lg:h-10';
-  const iconWrapClass =
-    'w-10 h-10 shrink-0 rounded-full bg-primary-500 flex items-center justify-center transition-all duration-300 ease-out shadow-lg text-white';
-  return (
-    <>
-      <button
-        type="button"
-        onClick={onPrev}
-        aria-disabled={disabled || undefined}
-        className={`bottom-3 left-3 ${hitAreaClass} justify-start items-end lg:justify-center lg:items-center`}
-        aria-label={prevLabel}
-      >
-        <span className={`${iconWrapClass} ${btnClass}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2.5}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </span>
-      </button>
-      <button
-        type="button"
-        onClick={onNext}
-        aria-disabled={disabled || undefined}
-        className={`bottom-3 right-3 ${hitAreaClass} justify-end items-end lg:justify-center lg:items-center`}
-        aria-label={nextLabel}
-      >
-        <span className={`${iconWrapClass} ${btnClass}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-          </svg>
-        </span>
-      </button>
-    </>
   );
 }
 
@@ -569,7 +513,8 @@ function ListingCardComponent({
             allowCollapsedBadgesHoverExpand={!suppressBadgeHoverExpand}
           />
           {images.length > 1 && (
-            <CarouselNavButtons
+            <ListingPhotoCarouselNavButtons
+              variant="card"
               disabled={isAutoRewinding}
               onPrev={handlePrevPhoto}
               onNext={handleNextPhoto}

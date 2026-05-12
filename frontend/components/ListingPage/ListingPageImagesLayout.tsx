@@ -4,6 +4,7 @@ import { type Dispatch, type MutableRefObject, type SetStateAction } from 'react
 
 import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
 import { ImageCounter } from '@/components/listing/ImageCounter';
+import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhotoCarouselNavButtons';
 
 import {
   type HeroPreviewSlotId,
@@ -172,42 +173,13 @@ export function ListingPageImagesLayout({
         onMouseEnter={handlePreviewMouseEnter}
       >
         {images.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={handlePrev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-14 h-14 flex justify-start items-center z-10 touch-manipulation lg:w-10 lg:h-10 lg:justify-center"
-              aria-label={t('listings.previousPhoto')}
-            >
-              <span className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 hover-only:hover:bg-primary-100 hover-only:hover:text-primary-900">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-14 h-14 flex justify-end items-center z-10 touch-manipulation lg:w-10 lg:h-10 lg:justify-center"
-              aria-label={t('listings.nextPhoto')}
-            >
-              <span className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100 hover-only:hover:bg-primary-100 hover-only:hover:text-primary-900">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </span>
-            </button>
-          </>
+          <ListingPhotoCarouselNavButtons
+            variant="preview"
+            onPrev={handlePrev}
+            onNext={handleNext}
+            prevLabel={t('listings.previousPhoto')}
+            nextLabel={t('listings.nextPhoto')}
+          />
         )}
         {images.length > 1 && <ImageCounter current={visibleIndex + 1} total={images.length} />}
         {renderPreviewSlides({
