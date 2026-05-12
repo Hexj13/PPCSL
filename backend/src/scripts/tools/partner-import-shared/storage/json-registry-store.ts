@@ -31,6 +31,14 @@ export class JsonRegistryStore<TItem extends JsonRegistryItemShape> {
     return this.data.items[sourceListingId];
   }
 
+  removeBySourceId(sourceListingId: string): void {
+    if (!this.data.items[sourceListingId]) {
+      return;
+    }
+    delete this.data.items[sourceListingId];
+    this.touch();
+  }
+
   upsert(
     partial: Omit<TItem, 'discoveredAt' | 'updatedAt'> & Partial<Pick<TItem, 'discoveredAt'>>,
   ): TItem {

@@ -33,6 +33,7 @@ export interface SiteConfig {
     logoWidth?: number;
     logoHeight?: number;
     logoSurface?: 'light' | 'transparent';
+    logoBackgroundColor?: string;
     descriptionKey?: string;
   }>;
   reportProvider?: ReportProviderConfig;

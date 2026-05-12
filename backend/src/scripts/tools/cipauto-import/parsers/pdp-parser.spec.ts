@@ -50,7 +50,7 @@ describe('parsePdpHtml', () => {
       'https://cipauto.md/vehicul/j12345-volkswagen-golf/',
     );
 
-    expect(parsed.sourceListingId).toBe('j12345');
+    expect(parsed.sourceListingId).toBe('j12345-volkswagen-golf');
     expect(parsed.sourceStatus).toBe('active');
     expect(parsed.sourceStatusReason).toBeUndefined();
   });
@@ -73,7 +73,7 @@ describe('parsePdpHtml', () => {
       'https://cipauto.md/vehicul/j54321-dacia-logan/',
     );
 
-    expect(parsed.sourceListingId).toBe('j54321');
+    expect(parsed.sourceListingId).toBe('j54321-dacia-logan');
     expect(parsed.sourceStatus).toBe('closed');
     expect(parsed.sourceStatusReason).toBe('pdp_template');
     expect(parsed.warnings).toContain('SOURCE_CLOSED:pdp_template');

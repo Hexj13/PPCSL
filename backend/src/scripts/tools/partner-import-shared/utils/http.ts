@@ -16,6 +16,31 @@ export interface HttpResponse<T> {
   data: T;
 }
 
+export type HttpResponseWithFetchResponse<T> = HttpResponse<T> & { response: Response };
+
+export async function requestJsonWithResponse<T>(
+  options: HttpRequestOptions,
+): Promise<HttpResponseWithFetchResponse<T>> {
+  const retries = options.retries ?? 3;
+  const result = await withRetry(
+    async () => {
+      const response = await runFetch(options);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(
+          `HTTP ${response.status} ${options.method ?? 'GET'} ${options.url}: ${text || response.statusText}`,
+        );
+      }
+      const data = (await response.json()) as T;
+      return { status: response.status, data, response };
+    },
+    { retries },
+  );
+
+  await sleep(options.delayAfterMs ?? 0);
+  return result;
+}
+
 export async function requestJson<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
   const retries = options.retries ?? 3;
   const result = await withRetry(

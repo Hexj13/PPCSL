@@ -8,16 +8,22 @@ import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
 import { resolveMd999Config } from '../../999md-import/config';
 import { PdpParser999 } from '../../999md-import/parsers/pdp-parser';
+import { resolveConfig as resolveAutooutletConfig } from '../../autooutlet-import/config';
+import { PdpParser as AutooutletPdpParser } from '../../autooutlet-import/parsers/pdp-parser';
 import {
   resolveConfig as resolveCipautoConfig,
   normalizeRuntimeEnv,
 } from '../../cipauto-import/config';
 import { PdpParser } from '../../cipauto-import/parsers/pdp-parser';
 import type { ParsedPdpData } from '../listing-types';
-import { PARTNER_SOURCE_CODE_CIPAUTO, PARTNER_SOURCE_CODE_999MD } from '../partner-source-codes';
+import {
+  PARTNER_SOURCE_CODE_AUTOOUTLET,
+  PARTNER_SOURCE_CODE_CIPAUTO,
+  PARTNER_SOURCE_CODE_999MD,
+} from '../partner-source-codes';
 import { sleep } from '../utils/sleep';
 
-type PartnerCode = 'cipauto' | '999md';
+type PartnerCode = 'cipauto' | '999md' | 'autooutlet';
 
 type CheckOutcome = 'active' | 'closed' | 'error';
 
@@ -99,21 +105,34 @@ async function main(): Promise<void> {
   const parsed = parseArgs();
   const { userId, env, dryRun, limit, delayMs } = parsed;
   const partner = parsed.partner;
-  if (!userId || (partner !== 'cipauto' && partner !== '999md')) {
+  if (!userId || (partner !== 'cipauto' && partner !== '999md' && partner !== 'autooutlet')) {
     console.error(
-      'Usage: npm run partner:check-urls -- --partner cipauto|999md --userId <UUID> [--env local|prod] [--dry-run] [--limit N] [--delay ms]',
+      'Usage: npm run partner:check-urls -- --partner cipauto|999md|autooutlet --userId <UUID> [--env local|prod] [--dry-run] [--limit N] [--delay ms]',
     );
     process.exit(1);
   }
 
   const partnerSource =
-    partner === 'cipauto' ? PARTNER_SOURCE_CODE_CIPAUTO : PARTNER_SOURCE_CODE_999MD;
+    partner === 'cipauto'
+      ? PARTNER_SOURCE_CODE_CIPAUTO
+      : partner === '999md'
+        ? PARTNER_SOURCE_CODE_999MD
+        : PARTNER_SOURCE_CODE_AUTOOUTLET;
   const cipautoCfg = resolveCipautoConfig(env, { requireAuth: false, requireImportSecret: false });
   const md999Cfg = resolveMd999Config(env, {
     requireAuth: false,
     requireImportSecret: false,
   });
-  const reportsDir = partner === 'cipauto' ? cipautoCfg.reportsDir : md999Cfg.reportsDir;
+  const autooutletCfg = resolveAutooutletConfig(env, {
+    requireAuth: false,
+    requireImportSecret: false,
+  });
+  const reportsDir =
+    partner === 'cipauto'
+      ? cipautoCfg.reportsDir
+      : partner === '999md'
+        ? md999Cfg.reportsDir
+        : autooutletCfg.reportsDir;
 
   console.log(`[partner:check-urls] Connecting DB partner=${partner} userId=${userId} env=${env}`);
   await AppDataSource.initialize();
@@ -135,6 +154,7 @@ async function main(): Promise<void> {
 
   const pdpCipauto = partner === 'cipauto' ? new PdpParser(cipautoCfg) : null;
   const pdp999 = partner === '999md' ? new PdpParser999(md999Cfg) : null;
+  const pdpAutooutlet = partner === 'autooutlet' ? new AutooutletPdpParser(autooutletCfg) : null;
 
   const rows: CheckRow[] = [];
 
@@ -159,6 +179,8 @@ async function main(): Promise<void> {
         parsed = await pdpCipauto.parse(url);
       } else if (pdp999) {
         parsed = await pdp999.parse(url);
+      } else if (pdpAutooutlet) {
+        parsed = await pdpAutooutlet.parse(url);
       } else {
         throw new Error('Parser not initialized');
       }

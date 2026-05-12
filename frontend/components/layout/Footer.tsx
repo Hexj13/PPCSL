@@ -49,6 +49,12 @@ function FooterPartnerCard({
   t: (key: string) => string;
 }) {
   const effectiveLogoSurface = partner.logoSurface ?? logoSurfaceDefault;
+  const logoSurfaceClasses = partner.logoBackgroundColor
+    ? 'flex h-14 w-full items-center justify-center rounded-lg px-2'
+    : getPartnerLogoSurfaceClasses(effectiveLogoSurface);
+  const logoSurfaceStyle = partner.logoBackgroundColor
+    ? { backgroundColor: partner.logoBackgroundColor }
+    : undefined;
   return (
     <a
       href={partner.href}
@@ -56,7 +62,7 @@ function FooterPartnerCard({
       rel="noopener noreferrer"
       className="group flex w-[156px] shrink-0 sm:w-[172px] flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-3 transition-transform duration-200 hover-only:hover:-translate-y-1 hover-only:hover:bg-white/10"
     >
-      <div className={getPartnerLogoSurfaceClasses(effectiveLogoSurface)}>
+      <div className={logoSurfaceClasses} style={logoSurfaceStyle}>
         <Image
           src={partner.logoSrc}
           alt={partner.name}

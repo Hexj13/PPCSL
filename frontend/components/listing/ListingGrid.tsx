@@ -11,7 +11,6 @@ import {
   useMemo,
   startTransition,
 } from 'react';
-import { flushSync } from 'react-dom';
 
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
@@ -34,8 +33,79 @@ import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { LoadMoreButton } from './LoadMoreButton';
 import { PartnerPromoBanner } from './PartnerPromoBanner';
+import {
+  LISTING_GRID_CARD_LAZY_ROOT_MARGIN_PX,
+  listingGridCardSlotEntryIsIntersecting,
+  listingGridCardSlotHasVisibleIntersection,
+} from './listing-grid-lazy-card-slot';
 
-const LISTING_GRID_LINK_PREFETCH_COUNT = 8;
+const LISTING_GRID_LINK_PREFETCH_COUNT = 4;
+
+function ListingGridCardSlot({ listing, index }: { listing: Listing; index: number }) {
+  const [mounted, setMounted] = useState(index < 8);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mounted) return;
+    if (index < 8) {
+      setMounted(true);
+      return;
+    }
+    const el = wrapRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setMounted(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some(listingGridCardSlotEntryIsIntersecting)) {
+          setMounted(true);
+        }
+      },
+      { rootMargin: `${LISTING_GRID_CARD_LAZY_ROOT_MARGIN_PX}px`, threshold: 0.01 },
+    );
+    const tryMountFromSync = (): boolean => {
+      const node = wrapRef.current;
+      if (!node) return false;
+      if (listingGridCardSlotHasVisibleIntersection(node, io)) {
+        setMounted(true);
+        return true;
+      }
+      return false;
+    };
+    io.observe(el);
+    if (tryMountFromSync()) {
+      return () => io.disconnect();
+    }
+    let raf2Id = 0;
+    const raf1Id = requestAnimationFrame(() => {
+      if (tryMountFromSync()) return;
+      raf2Id = requestAnimationFrame(() => {
+        raf2Id = 0;
+        tryMountFromSync();
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1Id);
+      if (raf2Id !== 0) {
+        cancelAnimationFrame(raf2Id);
+      }
+      io.disconnect();
+    };
+  }, [mounted, index]);
+
+  if (!mounted) {
+    return <ListingCardSkeleton ref={wrapRef} />;
+  }
+
+  return (
+    <ListingCard
+      listing={listing}
+      priority={index < 6}
+      linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
+    />
+  );
+}
 
 interface ListingGridProps {
   initialData?: { data: Listing[]; meta: PaginationMeta };
@@ -170,6 +240,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const { setFavorites } = useFavoritesStore();
   const prevSearchParamsStringRef = useRef<string | null>(null);
   const fetchControllerRef = useRef<AbortController | null>(null);
+  const appendTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gridSearchParamsEffectInitializedRef = useRef(false);
   const skipClientFetchOnMountRef = useRef<boolean | undefined>(undefined);
   if (skipClientFetchOnMountRef.current === undefined) {
@@ -214,7 +285,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       let loadMoreStartedAt = 0;
       let appendDeferred = false;
       if (append) {
-        flushSync(() => setLoadingMore(true));
+        setLoadingMore(true);
         loadMoreStartedAt = Date.now();
       } else {
         setLoading(true);
@@ -245,7 +316,15 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           appendDeferred = true;
           const elapsed = Date.now() - loadMoreStartedAt;
           const remaining = Math.max(0, 1000 - elapsed);
-          setTimeout(() => {
+          if (appendTimeoutRef.current) {
+            clearTimeout(appendTimeoutRef.current);
+          }
+          appendTimeoutRef.current = setTimeout(() => {
+            appendTimeoutRef.current = null;
+            if (controller.signal.aborted) {
+              setLoadingMore(false);
+              return;
+            }
             startTransition(() => {
               setListings((prev) => {
                 const updated = [...prev, ...allNewListings];
@@ -329,6 +408,10 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
     return () => {
       fetchControllerRef.current?.abort();
+      if (appendTimeoutRef.current) {
+        clearTimeout(appendTimeoutRef.current);
+        appendTimeoutRef.current = null;
+      }
     };
   }, [searchParamsString]);
 
@@ -373,7 +456,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   }, [hasLoadedWithFilters, listings.length, error, searchParamsString]);
 
   useEffect(() => {
-    if (initialData && initialData.data.length > 0) {
+    if (!initialData || initialData.data.length === 0) return;
+
+    const run = () => {
       if (user) {
         const listingIds = initialData.data.map((l) => l.id);
         favoritesApi
@@ -392,7 +477,19 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       analytics.viewItemList(
         initialData.data.map((listing) => listingToViewItemListEntry(listing)),
       );
+    };
+
+    let cancel: (() => void) | undefined;
+    if (typeof requestIdleCallback !== 'undefined') {
+      const id = requestIdleCallback(run, { timeout: 1000 });
+      cancel = () => cancelIdleCallback(id);
+    } else {
+      const id = window.setTimeout(run, 0);
+      cancel = () => clearTimeout(id);
     }
+    return () => {
+      cancel?.();
+    };
   }, [initialData, user, setFavorites]);
 
   const handleLoadMore = useCallback(async () => {
@@ -493,22 +590,18 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
                   return (
                     <Fragment key={listing.id}>
-                      <ListingCard
-                        listing={listing}
-                        priority={index < 8}
-                        linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
-                      />
-                      {showPartnerPromoBanner && cardPosition === 8 && (
+                      <ListingGridCardSlot listing={listing} index={index} />
+                      {showPartnerPromoBanner && cardPosition === 6 && (
                         <div className="col-span-full lg:hidden">
                           <PartnerPromoBanner onDismiss={dismissPartnerPromoBanner} />
                         </div>
                       )}
-                      {showPartnerPromoBanner && cardPosition === 12 && (
+                      {showPartnerPromoBanner && cardPosition === 9 && (
                         <div className="col-span-full hidden lg:block xl:hidden">
                           <PartnerPromoBanner onDismiss={dismissPartnerPromoBanner} />
                         </div>
                       )}
-                      {showPartnerPromoBanner && cardPosition === 16 && (
+                      {showPartnerPromoBanner && cardPosition === 12 && (
                         <div className="col-span-full hidden xl:block">
                           <PartnerPromoBanner onDismiss={dismissPartnerPromoBanner} />
                         </div>

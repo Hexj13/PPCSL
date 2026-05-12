@@ -306,6 +306,9 @@ export class ParsingOrchestratorService {
     delayMs: number;
     removeClosed?: boolean;
     checkUserDuplicatesBeforeCreate?: boolean;
+    autoCreateBrands?: boolean;
+    autoCreateModels?: boolean;
+    autoCreateBrandsModels?: boolean;
   }): Promise<ParserRun> {
     const targetEnv = resolveParsingTargetEnv();
     this.logger.log(
@@ -320,6 +323,20 @@ export class ParsingOrchestratorService {
       throw new BadRequestException(validation.error ?? 'errors.invalidUserId');
     }
     const plpFilePath = this.resolvePdpPlpFilePath(params.parserCode, params.plpFileKey);
+    const defaults = catalog?.pdpDefaults ?? {};
+    const legacyAuto = Boolean(params.autoCreateBrandsModels);
+    const autoCreateBrands = Boolean(
+      params.autoCreateBrands ??
+      legacyAuto ??
+      (defaults as { autoCreateBrands?: boolean }).autoCreateBrands ??
+      false,
+    );
+    const autoCreateModels = Boolean(
+      params.autoCreateModels ??
+      legacyAuto ??
+      (defaults as { autoCreateModels?: boolean }).autoCreateModels ??
+      false,
+    );
     const configSnapshot: Record<string, unknown> = {
       listingStatus: params.listingStatus,
       limit: params.limit,
@@ -333,6 +350,8 @@ export class ParsingOrchestratorService {
       delayMs: params.delayMs,
       removeClosed: Boolean(params.removeClosed),
       checkUserDuplicatesBeforeCreate: Boolean(params.checkUserDuplicatesBeforeCreate),
+      autoCreateBrands,
+      autoCreateModels,
       dataSource: 'plp_registry',
       plpFileKey: params.plpFileKey,
       plpFilePath,
@@ -416,7 +435,11 @@ export class ParsingOrchestratorService {
     if (!catalog?.registrySyncEnabled || catalog.adminAvailability !== 'enabled') {
       throw new BadRequestException('errors.parsingRegistrySyncUnavailable');
     }
-    if (params.parserCode !== 'cipauto' && params.parserCode !== '999md') {
+    if (
+      params.parserCode !== 'cipauto' &&
+      params.parserCode !== '999md' &&
+      params.parserCode !== 'autooutlet'
+    ) {
       throw new BadRequestException('errors.parsingRegistrySyncUnavailable');
     }
     const file = await this.getPlpFileContentByKey(params.parserCode, params.plpFileKey);
@@ -990,6 +1013,20 @@ export class ParsingOrchestratorService {
       }
       const delayMs = Number(cfg.delayMs ?? defaults.delayMs ?? 3000);
       const removeClosed = Boolean(cfg.removeClosed ?? defaults.removeClosed ?? false);
+      const cfgSnap = cfg as Record<string, unknown>;
+      const legacyAuto = Boolean(cfgSnap.autoCreateBrandsModels);
+      const autoCreateBrands = Boolean(
+        cfgSnap.autoCreateBrands ??
+        legacyAuto ??
+        (defaults as { autoCreateBrands?: boolean }).autoCreateBrands ??
+        false,
+      );
+      const autoCreateModels = Boolean(
+        cfgSnap.autoCreateModels ??
+        legacyAuto ??
+        (defaults as { autoCreateModels?: boolean }).autoCreateModels ??
+        false,
+      );
       const plpFileKey = String(cfg.plpFileKey ?? '').trim();
       await this.ensurePlpFileLocal(claimedRun.parser_code, plpFileKey);
       const plpFilePath = this.resolvePdpPlpFilePath(claimedRun.parser_code, plpFileKey);
@@ -998,7 +1035,7 @@ export class ParsingOrchestratorService {
         throw new Error('PDP run requires assigned_user_id');
       }
       this.logger.log(
-        `[PDP][start] runId=${runId} parser=${claimedRun.parser_code} assignedUserId=${userId} targetEnv=${targetEnv} status=${listingStatus} limit=${limit ?? '-'} resume=${resume} dryRun=${dryRun} removeClosed=${removeClosed} onlyFailed=${onlyFailed} updateExisting=${updateExisting} registrationType=${registrationType} defaultHp=${defaultHp} city=${city} delayMs=${delayMs}`,
+        `[PDP][start] runId=${runId} parser=${claimedRun.parser_code} assignedUserId=${userId} targetEnv=${targetEnv} status=${listingStatus} limit=${limit ?? '-'} resume=${resume} dryRun=${dryRun} removeClosed=${removeClosed} onlyFailed=${onlyFailed} updateExisting=${updateExisting} autoCreateBrands=${autoCreateBrands} autoCreateModels=${autoCreateModels} registrationType=${registrationType} defaultHp=${defaultHp} city=${city} delayMs=${delayMs}`,
       );
       const handle = this.cliRunner.runImport({
         parserCode: claimedRun.parser_code,
@@ -1017,6 +1054,8 @@ export class ParsingOrchestratorService {
         delayMs,
         plpFilePath,
         checkUserDuplicatesBeforeCreate: Boolean(cfg.checkUserDuplicatesBeforeCreate),
+        autoCreateBrands,
+        autoCreateModels,
         extraEnv,
         onStdoutLine: (line) => {
           void this.appendLogLine(runId, 'info', line, line);
@@ -1106,7 +1145,11 @@ export class ParsingOrchestratorService {
         return;
       }
       const claimedRun = await this.getRun(runId);
-      if (claimedRun.parser_code !== 'cipauto' && claimedRun.parser_code !== '999md') {
+      if (
+        claimedRun.parser_code !== 'cipauto' &&
+        claimedRun.parser_code !== '999md' &&
+        claimedRun.parser_code !== 'autooutlet'
+      ) {
         throw new Error(`Unsupported parser for registry sync: ${claimedRun.parser_code}`);
       }
       const cfg = claimedRun.config_snapshot;

@@ -47,6 +47,8 @@ The framework is parser-agnostic. Parser implementations are platform-specific.
 
 PDP runs may set `config_snapshot.checkUserDuplicatesBeforeCreate` (admin **Parsing** manual PDP modal, PDP **schedules**, or CLI `--check-user-duplicates-before-create`). When true, the import CLI opens the same PostgreSQL connection as `seed-registry` and, before each `createListing`, applies parser-specific duplicate rules for the assigned partner user; matches skip create, set registry state `duplicate_skipped`, and appear in the JSON report (`summary.duplicateSkipped`, `duplicateSkippedItems`). When false, behavior is unchanged.
 
+PDP runs may also set `config_snapshot.autoCreateBrands` / `autoCreateModels` (admin **Parsing** manual PDP modal, PDP **schedules**, or CLI `--auto-create-brands` / `--auto-create-models`). When true, `BrandModelResolver` calls the admin API (`POST /api/admin/brands`, `POST /api/admin/vehicle-models`) to create the missing brand or model and continues importing the listing in the same run; HTTP 409 is treated as a race and resolved by re-fetching once. The import account must have admin rights. The orchestrator and CLI accept the legacy combined flag `autoCreateBrandsModels` for backward compatibility with old run snapshots.
+
 The `scheduled` value exists on the `ParserRunStatus` union for forward compatibility but is not written by the current orchestrator; runs created from cron use `trigger_mode: 'scheduled'` with status `queued` until execution.
 
 Parser artifacts on disk live under `PARSING_RUNTIME_DIR` (default `<backend cwd>/runtime/parsing/<parser>/`: registry JSON, PLP paths from the catalog, `reports/`). The backend and import CLIs use the same root resolver (`src/common/parsing-runtime-path.ts`). PLP files are written and read primarily on disk; when AWS S3 credentials are configured, objects are mirrored under the `parsing-plp/` prefix for backup and cross-host reads.
@@ -81,7 +83,7 @@ Important variables:
 - `ADMIN_PARSING_IMPORT_SECRET`
 - `ADMIN_PARSING_SCHEDULER_ENABLED`
 - `ADMIN_PARSING_CANCEL_GRACE_MS`
-- `PARSING_RUNTIME_DIR` (and optional `CIPAUTO_*` / `SITE999MD_*` path overrides) — same semantics as partner import CLIs; forwarded into parser child processes when set
+- `PARSING_RUNTIME_DIR` (and optional `CIPAUTO_*` / `AUTOOUTLET_*` / `SITE999MD_*` path overrides) — same semantics as partner import CLIs; forwarded into parser child processes when set
 
 Optional parser-specific CLI overrides:
 
@@ -90,10 +92,10 @@ Optional parser-specific CLI overrides:
 
 ## Adding a parser on a platform
 
-1. Implement parser CLI in platform repository under `parsers/<parser-code>-import/`.
+1. Implement parser CLI in core under `core/backend/src/scripts/tools/<parser-code>-import/`.
 2. Ensure CLI supports `scan` (PLP) and `import` (PDP) command contracts used by the admin runtime.
 3. Register parser in platform `config/parsers.ts`.
-4. Run `npm run prepare:build` to copy platform parsers and catalog into core runtime paths.
+4. Run `npm run prepare:build` to copy the platform catalog into core frontend/backend config.
 5. Verify catalog API (`/api/admin/parsing/catalog`), manual runs, and schedule flows.
 
 ## Documentation boundaries
@@ -105,4 +107,5 @@ For `kupito.club` parser-specific docs, see:
 
 - `docs/parsing/cipauto-import.md`
 - `docs/parsing/999md-import.md`
+- `docs/parsing/autooutlet-import.md`
 - `core/docs/features/parser-import-contracts.md`

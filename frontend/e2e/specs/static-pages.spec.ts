@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/base';
+import { gotoWithDomContentLoadedRetry } from '../utils/session';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 const STATIC_ROUTES = [
@@ -19,7 +20,7 @@ test.describe('Static pages smoke', () => {
         {
           name: `Navigate to ${route}`,
           action: async () => {
-            await page.goto(route, { waitUntil: 'load' });
+            await gotoWithDomContentLoadedRetry(page, route);
             await expect(page.locator('body')).toBeVisible();
           },
         },

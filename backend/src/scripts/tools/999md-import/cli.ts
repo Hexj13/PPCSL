@@ -127,6 +127,8 @@ program
   )
   .option('--dedupe-999-price-tolerance-pct <number>', 'fingerprint price tolerance percent', '0')
   .option('--dedupe-999-photo-count-tolerance <number>', 'fingerprint photo count tolerance', '1')
+  .option('--auto-create-brands', 'create missing brand via admin API before listing')
+  .option('--auto-create-models', 'create missing model via admin API before listing')
   .action(async (rawOptions) => {
     if (!rawOptions.userId) {
       throw new Error('Missing required argument --userId');
@@ -153,6 +155,8 @@ program
         0,
         Math.floor(Number(rawOptions.dedupe999PhotoCountTolerance)),
       ),
+      autoCreateBrands: Boolean(rawOptions.autoCreateBrands),
+      autoCreateModels: Boolean(rawOptions.autoCreateModels),
     };
     await runImport(options);
   });
@@ -306,7 +310,13 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const reportStore = new ReportStore999(config.reportsDir);
   const authClient = options.dryRun ? undefined : new AuthClient(config);
   const kupitoApi = authClient ? new KupitoApiClient(config, authClient) : undefined;
-  const resolver = kupitoApi ? new BrandModelResolver(kupitoApi) : undefined;
+  const resolver = kupitoApi
+    ? new BrandModelResolver(kupitoApi, {
+        autoCreateBrands: Boolean(options.autoCreateBrands),
+        autoCreateModels: Boolean(options.autoCreateModels),
+        log: (payload) => logger.info('IMPORT', JSON.stringify(payload)),
+      })
+    : undefined;
   const pdpParser = new PdpParser999(config);
   const uploadClient = authClient ? new UploadClient(config, authClient) : undefined;
   const startedAt = new Date().toISOString();
@@ -335,7 +345,7 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const candidates = getImportCandidates(registry.getAll(), options);
   logger.info(
     'IMPORT',
-    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)} checkUserDuplicatesBeforeCreate=${Boolean(options.checkUserDuplicatesBeforeCreate)}`,
+    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)} checkUserDuplicatesBeforeCreate=${Boolean(options.checkUserDuplicatesBeforeCreate)} autoCreateBrands=${Boolean(options.autoCreateBrands)} autoCreateModels=${Boolean(options.autoCreateModels)}`,
   );
 
   let processed = 0;
@@ -382,6 +392,8 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
       removeClosed: options.removeClosed,
       processed,
       checkUserDuplicatesBeforeCreate: Boolean(options.checkUserDuplicatesBeforeCreate),
+      autoCreateBrands: Boolean(options.autoCreateBrands),
+      autoCreateModels: Boolean(options.autoCreateModels),
     },
     items: selectRunReportItems(registry.getAll(), startedAt),
   });
@@ -565,7 +577,9 @@ async function processSingleItem(params: {
     let resolvedBrandId = '';
     let resolvedModelId = '';
     try {
-      const resolved = await resolver.resolve(parsed.brand, parsed.model, vehicleType);
+      const resolved = await resolver.resolve(parsed.brand, parsed.model, vehicleType, {
+        sourceListingId: sourceId,
+      });
       resolvedBrandId = resolved.brandId;
       resolvedModelId = resolved.modelId;
     } catch (error) {

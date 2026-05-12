@@ -93,6 +93,11 @@ export const ListingCardImageCarousel = React.forwardRef<
     onIndexChangeRef.current?.(index);
   }, [index]);
 
+  const markLoaded = useCallback((idx: number) => {
+    loadedRef.current.add(idx);
+    preloadingRef.current.delete(idx);
+  }, []);
+
   useEffect(() => {
     loadedRef.current.clear();
     preloadingRef.current.clear();
@@ -102,12 +107,8 @@ export const ListingCardImageCarousel = React.forwardRef<
     }
     imagesCacheRef.current = [];
     setIndex(0);
-  }, [imagesSignature]);
-
-  const markLoaded = useCallback((idx: number) => {
-    loadedRef.current.add(idx);
-    preloadingRef.current.delete(idx);
-  }, []);
+    markLoaded(0);
+  }, [imagesSignature, markLoaded]);
 
   const len = images.length;
   const goNext = useCallback(() => {
@@ -181,13 +182,10 @@ export const ListingCardImageCarousel = React.forwardRef<
           })}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          className="object-cover transition-opacity duration-200 ease-out"
+          className="object-cover"
           loading={isFirst ? undefined : 'lazy'}
           priority={isFirst}
           draggable={false}
-          onLoad={() => {
-            markLoaded(idx);
-          }}
           onError={() => {
             onImageError(idx);
           }}
@@ -197,17 +195,7 @@ export const ListingCardImageCarousel = React.forwardRef<
         />
       );
     },
-    [
-      images,
-      imageErrors,
-      imageAltTitle,
-      priority,
-      t,
-      markLoaded,
-      onImageError,
-      errorPlaceholder,
-      slideBlur,
-    ],
+    [images, imageErrors, imageAltTitle, priority, t, onImageError, errorPlaceholder, slideBlur],
   );
 
   return (

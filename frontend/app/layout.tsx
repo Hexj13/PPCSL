@@ -2,29 +2,24 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { Suspense } from 'react';
 
-import { PageScrollTracker } from '@/components/PageScrollTracker';
+import { DeferredTelemetry } from '@/components/DeferredTelemetry';
 import { ProfileSaveSuccessToast } from '@/components/ProfileSaveSuccessToast';
-import { TawkTo } from '@/components/TawkTo';
-import { ExternalLinkTracker } from '@/components/analytics/ExternalLinkTracker';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { GoogleAnalyticsConsent } from '@/components/analytics/GoogleAnalyticsConsent';
 import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
 import { GoogleTagManagerNoscript } from '@/components/analytics/GoogleTagManagerNoscript';
 import { OrganizationSchema } from '@/components/analytics/OrganizationSchema';
 import { WebsiteSearchSchema } from '@/components/analytics/WebsiteSearchSchema';
-import { BusinessOnboardingGuard } from '@/components/auth/BusinessOnboardingGuard';
-import { PhoneRequiredGuard } from '@/components/auth/PhoneRequiredGuard';
+import { AuthGuardsShell } from '@/components/auth/AuthGuardsShell';
 import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
 import { Header } from '@/components/layout/Header';
 import { MainContentShell } from '@/components/layout/MainContentShell';
-import { NavigationTelemetry } from '@/components/layout/NavigationTelemetry';
 import { ScrollReset } from '@/components/layout/ScrollReset';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { CookieConsent } from '@/components/providers/CookieConsent';
 import { I18nProvider } from '@/components/providers/I18nProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { OfflineBanner } from '@/components/pwa/OfflineBanner';
-import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 import { getVersionedAssetPath } from '@/lib/assets';
 import { getServerTranslations, getMetadataLocale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
@@ -155,15 +150,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://embed.tawk.to" />
-        <link rel="preconnect" href="https://embed.tawk.to" crossOrigin="anonymous" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <Suspense fallback={null}>
           <QueryProvider>
             <GoogleTagManager />
             <GoogleTagManagerNoscript title={siteConfig.name} />
-            <TawkTo />
             <GoogleAnalyticsConsent />
             <GoogleAnalytics />
             <OrganizationSchema />
@@ -174,22 +166,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             >
               <CookieConsent />
               <AuthProvider>
-                <PhoneRequiredGuard>
-                  <BusinessOnboardingGuard>
-                    <ProfileSaveSuccessToast />
-                    <ServiceWorkerRegistration />
-                    <ScrollReset />
-                    <PageScrollTracker />
-                    <NavigationTelemetry />
-                    <ExternalLinkTracker />
+                <AuthGuardsShell>
+                  <ProfileSaveSuccessToast />
+                  <DeferredTelemetry />
+                  <ScrollReset />
+                  <Suspense fallback={null}>
                     <div className="min-h-screen flex flex-col">
-                      <Header />
+                      <Suspense fallback={null}>
+                        <Header />
+                      </Suspense>
                       <OfflineBanner />
                       <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">
                         <MainContentShell>{children}</MainContentShell>
                       </main>
                       <ConditionalFooter />
                     </div>
+                  </Suspense>
+                  <Suspense fallback={null}>
                     <Toaster
                       position="top-right"
                       containerStyle={{
@@ -233,8 +226,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                         },
                       }}
                     />
-                  </BusinessOnboardingGuard>
-                </PhoneRequiredGuard>
+                  </Suspense>
+                </AuthGuardsShell>
               </AuthProvider>
             </I18nProvider>
           </QueryProvider>

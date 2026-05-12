@@ -4,10 +4,17 @@
 
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, startTransition, useCallback, useRef, useMemo } from 'react';
+import {
+  useState,
+  useEffect,
+  startTransition,
+  useCallback,
+  useRef,
+  useMemo,
+  useDeferredValue,
+} from 'react';
 
 import { RESET_SEARCH_EVENT } from '@/components/layout/Header/HeaderLogo';
-import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
 import { useAvailableListingsCount } from '@/hooks/useAvailableListingsCount';
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
@@ -24,7 +31,7 @@ import { useTireBrandsCatalog } from '@/hooks/useTireBrandsCatalog';
 import { useTireModelsForBrands } from '@/hooks/useTireModelsForBrands';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useVehicleType } from '@/hooks/useVehicleType';
-import type { User } from '@/lib/api';
+import type { User, Brand } from '@/lib/api';
 import { localStorageSetItem } from '@/lib/browser-local-storage';
 import { getPopularBrands, getPopularModelsByBrand } from '@/lib/content/popular-brands';
 import { buildSignInHref } from '@/lib/return-url';
@@ -37,28 +44,58 @@ import { useAuthStore } from '@/lib/store';
 import { buildCategorizedTireBrandOptions } from '@/lib/tire-catalog-sort';
 import { isBrowser } from '@/lib/utils/utils';
 
-import { AdvancedFilters } from './search-filters/AdvancedFilters';
 import { BasicFilters } from './search-filters/BasicFilters';
-import { EquipmentFilters } from './search-filters/EquipmentFilters';
 import { PopularFilters } from './search-filters/PopularFilters';
 import { SearchFormActions } from './search-filters/SearchFormActions';
 import { SearchTabs } from './search-filters/SearchTabs';
-import { TireSearchFilters } from './search-filters/TireSearchFilters';
 import { VehicleTypeSelector } from './search-filters/VehicleTypeSelector';
-import { MobileSearchFilters } from './search-filters/mobile/MobileSearchFilters';
 
 const PopularBodyTypesFilter = dynamic(() => import('./search-filters/PopularBodyTypesFilter'), {
   ssr: false,
 });
+
+const AdvancedFilters = dynamic(
+  () => import('./search-filters/AdvancedFilters').then((m) => ({ default: m.AdvancedFilters })),
+  { ssr: false },
+);
+
+const EquipmentFilters = dynamic(
+  () => import('./search-filters/EquipmentFilters').then((m) => ({ default: m.EquipmentFilters })),
+  { ssr: false },
+);
+
+const MobileSearchFilters = dynamic(
+  () =>
+    import('./search-filters/mobile/MobileSearchFilters').then((m) => ({
+      default: m.MobileSearchFilters,
+    })),
+  { ssr: false },
+);
+
+const TireSearchFilters = dynamic(
+  () =>
+    import('./search-filters/TireSearchFilters').then((m) => ({ default: m.TireSearchFilters })),
+  { ssr: false },
+);
+
+const SaveFilterModal = dynamic(
+  () => import('@/components/modals/SaveFilterModal').then((m) => ({ default: m.SaveFilterModal })),
+  { ssr: false },
+);
 
 const NO_BRAND_IDS_FOR_MODELS: string[] = [];
 
 interface SearchFiltersProps {
   landingBrandSlug?: string;
   landingModelSlug?: string;
+  initialBrands?: Brand[] | null;
 }
 
-export function SearchFilters({ landingBrandSlug, landingModelSlug }: SearchFiltersProps = {}) {
+export function SearchFilters({
+  landingBrandSlug,
+  landingModelSlug,
+  initialBrands,
+}: SearchFiltersProps = {}) {
   const router = useRouter();
   const { replace: localizedReplace } = useLocalizedNavigation();
   const rawSearchParams = useSearchParams();
@@ -97,6 +134,8 @@ export function SearchFilters({ landingBrandSlug, landingModelSlug }: SearchFilt
     hasActiveFilters,
     setFilters,
   } = useSearchFilters();
+
+  const deferredFilters = useDeferredValue(filters);
 
   const tireBrands = useTireBrandsCatalog();
 
@@ -167,42 +206,56 @@ export function SearchFilters({ landingBrandSlug, landingModelSlug }: SearchFilt
     brands,
     models,
     setModels: setModelsFromHook,
-  } = useBrandsAndModels({ autoLoadModels: false, vehicleType });
+  } = useBrandsAndModels({ autoLoadModels: false, vehicleType, initialBrands });
+
+  const popularBrandsSet = useMemo(() => new Set(getPopularBrands(vehicleType)), [vehicleType]);
+
+  const brandNameById = useMemo(() => new Map(brands.map((b) => [b.id, b.name])), [brands]);
+
+  const deferredBrandIdSet = useMemo(
+    () => new Set(deferredFilters.brand_ids),
+    [deferredFilters.brand_ids],
+  );
+
+  const deferredModelIdSet = useMemo(
+    () => new Set(deferredFilters.model_ids),
+    [deferredFilters.model_ids],
+  );
 
   const hasPopularFiltersActive = useMemo(() => {
     if (filters.listing_category === 'tire') {
       return hasTirePopularFilters;
     }
-    if (filters.brand_ids.length === 0 && filters.model_ids.length === 0) {
+    if (deferredFilters.brand_ids.length === 0 && deferredFilters.model_ids.length === 0) {
       return false;
     }
 
-    const popularBrands = new Set(getPopularBrands(vehicleType));
-    const selectedBrands = brands.filter((brand) => filters.brand_ids.includes(brand.id));
-
-    if (selectedBrands.some((brand) => popularBrands.has(brand.name))) {
-      return true;
+    for (const brand of brands) {
+      if (deferredBrandIdSet.has(brand.id) && popularBrandsSet.has(brand.name)) {
+        return true;
+      }
     }
 
     const popularModelsByBrand = getPopularModelsByBrand(vehicleType);
-    const selectedModels = models.filter((model) => filters.model_ids.includes(model.id));
-    const brandNameById = new Map(brands.map((brand) => [brand.id, brand.name]));
-
-    return selectedModels.some((model) => {
+    for (const model of models) {
+      if (!deferredModelIdSet.has(model.id)) continue;
       const brandName = brandNameById.get(model.brand_id);
-      if (!brandName) {
-        return false;
-      }
+      if (!brandName) continue;
       const popularModels = popularModelsByBrand[brandName] ?? [];
-      return popularModels.includes(model.name);
-    });
+      if (popularModels.includes(model.name)) return true;
+    }
+    return false;
   }, [
     brands,
-    filters.brand_ids,
+    brandNameById,
+    deferredBrandIdSet,
+    deferredFilters.brand_ids,
+    deferredFilters.model_ids,
+    deferredModelIdSet,
     filters.listing_category,
-    filters.model_ids,
     hasTirePopularFilters,
     models,
+    popularBrandsSet,
     vehicleType,
   ]);
   const { cities } = useCities();
@@ -555,8 +608,10 @@ export function SearchFilters({ landingBrandSlug, landingModelSlug }: SearchFilt
             <EquipmentFilters
               equipment={filters.equipment}
               equipmentMatchMode={filters.equipment_match_mode}
-              onEquipmentMatchModeChange={(mode) => updateFilter('equipment_match_mode', mode)}
-              onChange={(keys) => updateFilter('equipment', keys)}
+              onEquipmentMatchModeChange={(mode) =>
+                startTransition(() => updateFilter('equipment_match_mode', mode))
+              }
+              onChange={(keys) => startTransition(() => updateFilter('equipment', keys))}
               vehicleType={vehicleType}
             />
           </div>

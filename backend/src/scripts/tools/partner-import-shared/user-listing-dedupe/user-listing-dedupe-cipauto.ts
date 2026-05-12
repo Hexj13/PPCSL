@@ -1,5 +1,6 @@
 import type { Listing } from '../../../../listings/entities/listing.entity';
 import { PARTNER_SOURCE_CODE_CIPAUTO } from '../partner-source-codes';
+import { extractVehiculListingPathId } from '../vehicul-listing-path-id';
 
 export const COD_PRODUS_RE = /Cod\s+[Pp]rodus\s*:(?:\s|&nbsp;)*\s*([A-Za-z0-9]+)/;
 
@@ -13,9 +14,19 @@ export function extractCodProdus(listing: Listing): string | null {
 }
 
 export type FindCipautoDuplicateBeforeCreateResult =
-  | { kind: 'duplicate'; listing: Listing; layer: 'partner_key' | 'cod_produs' }
+  | {
+      kind: 'duplicate';
+      listing: Listing;
+      layer: 'partner_key' | 'cod_produs' | 'canonical_url';
+    }
   | { kind: 'ambiguous'; detail: string }
   | { kind: 'none' };
+
+export function extractCipautoListingPathFromCanonicalUrl(listing: Listing): string | null {
+  const raw = listing.partner_listing_canonical_url?.trim();
+  if (!raw) return null;
+  return extractVehiculListingPathId(raw);
+}
 
 export function findCipautoDuplicateBeforeCreate(
   listings: Listing[],
@@ -38,13 +49,26 @@ export function findCipautoDuplicateBeforeCreate(
 
   const codHits = listings.filter((l) => {
     const raw = extractCodProdus(l);
-    return raw != null && raw.toLowerCase() === keyNorm;
+    if (raw == null) return false;
+    const r = raw.toLowerCase();
+    return r === keyNorm || (r.length > 0 && keyNorm.startsWith(`${r}-`));
   });
   if (codHits.length === 1) {
     return { kind: 'duplicate', listing: codHits[0], layer: 'cod_produs' };
   }
   if (codHits.length > 1) {
     return { kind: 'ambiguous', detail: `cod_produs_candidates=${codHits.length}` };
+  }
+
+  const urlHits = listings.filter((l) => {
+    const raw = extractCipautoListingPathFromCanonicalUrl(l);
+    return raw != null && raw.toLowerCase() === keyNorm;
+  });
+  if (urlHits.length === 1) {
+    return { kind: 'duplicate', listing: urlHits[0], layer: 'canonical_url' };
+  }
+  if (urlHits.length > 1) {
+    return { kind: 'ambiguous', detail: `canonical_url_candidates=${urlHits.length}` };
   }
   return { kind: 'none' };
 }

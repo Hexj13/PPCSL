@@ -15,6 +15,9 @@ export interface ParserPdpDefaultsConfig {
   removeClosed?: boolean;
   onlyFailed?: boolean;
   updateExisting?: boolean;
+  autoCreateBrands?: boolean;
+  autoCreateModels?: boolean;
+  autoCreateBrandsModels?: boolean;
 }
 
 export interface ParserAvailabilityProbeConfig {

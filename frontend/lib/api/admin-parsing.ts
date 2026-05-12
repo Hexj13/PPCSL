@@ -137,6 +137,9 @@ export interface CreatePdpRunPayload {
   delayMs?: number;
   removeClosed?: boolean;
   checkUserDuplicatesBeforeCreate?: boolean;
+  autoCreateBrands?: boolean;
+  autoCreateModels?: boolean;
+  autoCreateBrandsModels?: boolean;
 }
 
 export interface CreateParserSchedulePayload {

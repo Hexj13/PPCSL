@@ -266,6 +266,9 @@ export class AdminParsingController {
       delayMs: dto.delayMs ?? 3000,
       removeClosed: dto.removeClosed,
       checkUserDuplicatesBeforeCreate: dto.checkUserDuplicatesBeforeCreate,
+      autoCreateBrands: dto.autoCreateBrands,
+      autoCreateModels: dto.autoCreateModels,
+      autoCreateBrandsModels: dto.autoCreateBrandsModels,
     });
   }
 

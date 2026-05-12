@@ -81,6 +81,8 @@ import {
   parsePresetTimeFromCron,
   parsePresetWeekdayFromCron,
   renderHighlightedText,
+  resolveSnapshotAutoCreateBrands,
+  resolveSnapshotAutoCreateModels,
 } from './parsing-tab/parsing-tab-utils';
 
 /* eslint-disable max-lines-per-function, max-lines, complexity -- admin parsing tab orchestration */
@@ -239,6 +241,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     onlyFailed: initialPdpDefaults.onlyFailed,
     updateExisting: initialPdpDefaults.updateExisting,
     checkUserDuplicatesBeforeCreate: false,
+    autoCreateBrands: initialPdpDefaults.autoCreateBrands,
+    autoCreateModels: initialPdpDefaults.autoCreateModels,
   });
   const selectedPlpParserLabel = useMemo(
     () => getSelectedOptionLabel(manualRunParserOptions, plpForm.parserCode),
@@ -275,6 +279,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     pdpOnlyFailed: initialPdpDefaults.onlyFailed,
     pdpUpdateExisting: initialPdpDefaults.updateExisting,
     pdpCheckUserDuplicatesBeforeCreate: false,
+    pdpAutoCreateBrands: initialPdpDefaults.autoCreateBrands,
+    pdpAutoCreateModels: initialPdpDefaults.autoCreateModels,
   });
   const selectedPdpParserLabel = useMemo(
     () => getSelectedOptionLabel(manualRunParserOptions, pdpForm.parserCode),
@@ -524,6 +530,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           next.onlyFailed = pdpDefaults.onlyFailed;
           next.updateExisting = pdpDefaults.updateExisting;
           next.checkUserDuplicatesBeforeCreate = false;
+          next.autoCreateBrands = pdpDefaults.autoCreateBrands;
+          next.autoCreateModels = pdpDefaults.autoCreateModels;
           if (cityList.length > 0) {
             next.city = getDefaultPdpCity(firstManual, cityList);
           }
@@ -542,6 +550,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           next.pdpOnlyFailed = pdpDefaults.onlyFailed;
           next.pdpUpdateExisting = pdpDefaults.updateExisting;
           next.pdpCheckUserDuplicatesBeforeCreate = false;
+          next.pdpAutoCreateBrands = pdpDefaults.autoCreateBrands;
+          next.pdpAutoCreateModels = pdpDefaults.autoCreateModels;
           if (cityList.length > 0) {
             next.pdpCity = getDefaultPdpCity(firstScheduler, cityList);
           }
@@ -1160,6 +1170,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         pdpOnlyFailed: pdpDefaults.onlyFailed,
         pdpUpdateExisting: pdpDefaults.updateExisting,
         pdpCheckUserDuplicatesBeforeCreate: false,
+        pdpAutoCreateBrands: pdpDefaults.autoCreateBrands,
+        pdpAutoCreateModels: pdpDefaults.autoCreateModels,
       };
     });
   }, [cities, schedulerParserOptions]);
@@ -1233,6 +1245,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         pdpOnlyFailed: Boolean(cfg.onlyFailed),
         pdpUpdateExisting: Boolean(cfg.updateExisting),
         pdpCheckUserDuplicatesBeforeCreate: Boolean(cfg.checkUserDuplicatesBeforeCreate),
+        pdpAutoCreateBrands: resolveSnapshotAutoCreateBrands(cfg, pdpDefaults),
+        pdpAutoCreateModels: resolveSnapshotAutoCreateModels(cfg, pdpDefaults),
       });
       setScheduleModalOpen(true);
     },
@@ -1386,6 +1400,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         delayMs: pdpForm.delayMs,
         removeClosed: pdpForm.removeClosed,
         checkUserDuplicatesBeforeCreate: pdpForm.checkUserDuplicatesBeforeCreate,
+        autoCreateBrands: pdpForm.autoCreateBrands,
+        autoCreateModels: pdpForm.autoCreateModels,
       });
       toast.success(t('admin.parsing.runStarted'));
       setPdpModalOpen(false);
@@ -1447,6 +1463,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
       delayMs: scheduleForm.pdpDelayMs,
       removeClosed: scheduleForm.pdpRemoveClosed,
       checkUserDuplicatesBeforeCreate: scheduleForm.pdpCheckUserDuplicatesBeforeCreate,
+      autoCreateBrands: scheduleForm.pdpAutoCreateBrands,
+      autoCreateModels: scheduleForm.pdpAutoCreateModels,
       dataSource: 'plp_registry',
       resume: false,
       dryRun: false,
@@ -2315,6 +2333,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                       onlyFailed: pdpDefaults.onlyFailed,
                       updateExisting: pdpDefaults.updateExisting,
                       checkUserDuplicatesBeforeCreate: false,
+                      autoCreateBrands: pdpDefaults.autoCreateBrands,
+                      autoCreateModels: pdpDefaults.autoCreateModels,
                     };
                   })
                 }
@@ -2492,6 +2512,26 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
               )}
               size="sm"
             />
+            <Checkbox
+              checked={pdpForm.autoCreateBrands}
+              onChange={(checked) => setPdpForm((s) => ({ ...s, autoCreateBrands: checked }))}
+              label={renderCheckboxLabelWithHint(
+                'admin.parsing.pdp.autoCreateBrands',
+                'admin.parsing.pdp.autoCreateBrandsHint',
+                'admin.parsing.pdp.autoCreateBrandsHintButton',
+              )}
+              size="sm"
+            />
+            <Checkbox
+              checked={pdpForm.autoCreateModels}
+              onChange={(checked) => setPdpForm((s) => ({ ...s, autoCreateModels: checked }))}
+              label={renderCheckboxLabelWithHint(
+                'admin.parsing.pdp.autoCreateModels',
+                'admin.parsing.pdp.autoCreateModelsHint',
+                'admin.parsing.pdp.autoCreateModelsHintButton',
+              )}
+              size="sm"
+            />
           </div>
           <div className="flex flex-col sm:flex-row gap-3 pt-2 shrink-0">
             <AdminActionButton
@@ -2584,6 +2624,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                       pdpOnlyFailed: pdpDefaults.onlyFailed,
                       pdpUpdateExisting: pdpDefaults.updateExisting,
                       pdpCheckUserDuplicatesBeforeCreate: false,
+                      pdpAutoCreateBrands: pdpDefaults.autoCreateBrands,
+                      pdpAutoCreateModels: pdpDefaults.autoCreateModels,
                     };
                   })
                 }
@@ -3021,6 +3063,30 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                     'admin.parsing.fieldCheckUserDuplicatesBeforeCreate',
                     'admin.parsing.fieldCheckUserDuplicatesBeforeCreateHint',
                     'admin.parsing.fieldCheckUserDuplicatesBeforeCreateHintButton',
+                  )}
+                  size="sm"
+                />
+                <Checkbox
+                  checked={scheduleForm.pdpAutoCreateBrands}
+                  onChange={(checked) =>
+                    setScheduleForm((s) => ({ ...s, pdpAutoCreateBrands: checked }))
+                  }
+                  label={renderCheckboxLabelWithHint(
+                    'admin.parsing.pdp.autoCreateBrands',
+                    'admin.parsing.pdp.autoCreateBrandsHint',
+                    'admin.parsing.pdp.autoCreateBrandsHintButton',
+                  )}
+                  size="sm"
+                />
+                <Checkbox
+                  checked={scheduleForm.pdpAutoCreateModels}
+                  onChange={(checked) =>
+                    setScheduleForm((s) => ({ ...s, pdpAutoCreateModels: checked }))
+                  }
+                  label={renderCheckboxLabelWithHint(
+                    'admin.parsing.pdp.autoCreateModels',
+                    'admin.parsing.pdp.autoCreateModelsHint',
+                    'admin.parsing.pdp.autoCreateModelsHintButton',
                   )}
                   size="sm"
                 />

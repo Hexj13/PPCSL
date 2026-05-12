@@ -250,7 +250,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
         {images.length >= 5 && (
           <div
             ref={thumbStripRef}
-            className="hidden sm:block w-full max-w-full shrink-0 mt-2 px-2 pb-0.5 overflow-x-auto overscroll-x-contain z-10"
+            className="hidden sm:block w-full max-w-full shrink-0 mt-2 px-2 pb-0.5 overflow-x-auto overscroll-x-contain z-10 scrollbar-primary-700"
           >
             <div className="flex gap-2 justify-center items-center w-max max-w-none mx-auto">
               {images.map((src, index) => {

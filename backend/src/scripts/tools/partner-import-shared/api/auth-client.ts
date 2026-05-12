@@ -1,6 +1,7 @@
 import type { KupitoImportClientConfig } from '../kupito-import-types';
 import type { LoginResponse } from '../listing-types';
-import { requestJson } from '../utils/http';
+import { requestJsonWithResponse } from '../utils/http';
+import { mergeKupitoAuthTokensFromBodyAndCookies } from '../utils/kupito-auth-token-extract';
 
 export class AuthClient {
   private accessToken = '';
@@ -11,7 +12,7 @@ export class AuthClient {
 
   async login(): Promise<void> {
     const url = `${this.config.kupitoApiUrl}/api/auth/login`;
-    const { data } = await requestJson<LoginResponse>({
+    const { data, response } = await requestJsonWithResponse<LoginResponse>({
       url,
       method: 'POST',
       timeoutMs: this.config.requestTimeoutMs,
@@ -22,11 +23,17 @@ export class AuthClient {
         password: this.config.adminPassword,
       }),
     });
-    this.accessToken = data.access_token;
-    this.refreshToken = data.refresh_token;
+    const tokens = mergeKupitoAuthTokensFromBodyAndCookies(data, response);
+    this.accessToken = tokens.access_token;
+    this.refreshToken = tokens.refresh_token;
     this.userType = data.user?.type ?? '';
     if (this.userType !== 'Admin') {
       throw new Error(`Import user must be Admin. Received type: ${this.userType || 'unknown'}`);
+    }
+    if (!this.accessToken || !this.refreshToken) {
+      throw new Error(
+        'Login did not return access and refresh tokens (expected JSON body or Set-Cookie headers).',
+      );
     }
   }
 
@@ -42,7 +49,7 @@ export class AuthClient {
       throw new Error('Refresh token is empty. Call login() first.');
     }
     const url = `${this.config.kupitoApiUrl}/api/auth/refresh`;
-    const { data } = await requestJson<LoginResponse>({
+    const { data, response } = await requestJsonWithResponse<LoginResponse>({
       url,
       method: 'POST',
       timeoutMs: this.config.requestTimeoutMs,
@@ -53,8 +60,14 @@ export class AuthClient {
       }),
     });
 
-    this.accessToken = data.access_token;
-    this.refreshToken = data.refresh_token;
+    const tokens = mergeKupitoAuthTokensFromBodyAndCookies(data, response);
+    this.accessToken = tokens.access_token;
+    this.refreshToken = tokens.refresh_token;
     this.userType = data.user?.type ?? this.userType;
+    if (!this.accessToken || !this.refreshToken) {
+      throw new Error(
+        'Refresh did not return access and refresh tokens (expected JSON body or Set-Cookie headers).',
+      );
+    }
   }
 }

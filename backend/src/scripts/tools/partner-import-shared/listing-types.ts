@@ -18,6 +18,7 @@ export interface ParsedPlpItem {
   year?: number;
   price?: number;
   currency?: string;
+  plpSoldBadge?: boolean;
 }
 
 export interface ParsedPdpData {

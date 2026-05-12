@@ -1,5 +1,6 @@
 import { expect, test } from '../fixtures/base';
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+import { gotoWithDomContentLoadedRetry } from '../utils/session';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Guest marketplace guards', () => {
@@ -8,7 +9,7 @@ test.describe('Guest marketplace guards', () => {
       {
         name: 'Open my-listings as guest',
         action: async () => {
-          await page.goto('/my-listings', { waitUntil: 'load' });
+          await gotoWithDomContentLoadedRetry(page, '/my-listings');
           await expect(page).toHaveURL(/\/sign/);
         },
       },
@@ -28,7 +29,7 @@ test.describe('Guest marketplace guards', () => {
       {
         name: 'Open invalid board slug',
         action: async () => {
-          await page.goto('/board/invalid-board-slug-e2e-404', { waitUntil: 'load' });
+          await gotoWithDomContentLoadedRetry(page, '/board/invalid-board-slug-e2e-404');
         },
       },
       {

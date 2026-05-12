@@ -1139,7 +1139,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - Favorite toggle button disabled during operation with visual feedback
   - Ref-based guards to prevent concurrent requests
 - Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
-- **INP (Interaction to Next Paint) optimizations for mobile:** Deferred analytics (search/select_content) via requestIdleCallback; single rAF for scroll restore after router.replace; rAF-throttled scroll handlers with state guards (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll); GTM/Tawk loaded after idle or first interaction; parse cache for ListingGrid search params; chunked dropdown render and precomputed lowerLabel for filter options. See [inp-validation.md](../engineering/inp-validation.md) for post-deploy validation.
+- **INP (Interaction to Next Paint) optimizations for mobile:** Deferred analytics (search/select_content) via requestIdleCallback; single rAF for scroll restore after router.replace; rAF-throttled scroll handlers with state guards (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll); GTM loaded after idle; parse cache for ListingGrid search params; chunked dropdown render and precomputed lowerLabel for filter options; listing card blur placeholders decoded off the main thread via a dedicated Web Worker (`lib/blurhash-worker.ts`) with sync fallback. See [inp-validation.md](../engineering/inp-validation.md) for post-deploy validation.
 - **Resource hints optimization:**
   - Static preconnect to API domain in `layout.tsx` for faster image loading (server-rendered, no JS required)
   - DNS-prefetch and preconnect for Google Tag Manager (server-rendered in `layout.tsx`)
@@ -1568,7 +1568,7 @@ cd core/backend && npm run test -- listings.service.spec.ts
   - Deferred analytics (searchDeferred, selectContentDeferred, pageScrollDeferred) and memoized consent/currency in analytics.ts
   - Single requestAnimationFrame for scroll restore after filter/sort navigation (useFilterHandlers, SearchFilters, SortDropdown)
   - rAF-throttled scroll handlers with early-exit on unchanged state (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll)
-  - GTM load after requestIdleCallback (2.5s), Tawk after first interaction or 4s; lower Sentry replay sampling on mobile viewport
+  - GTM load after requestIdleCallback (2.5s); lower Sentry replay sampling on mobile viewport
   - ListingGrid: parsed search params cache (keyed by searchParamsString + vehicleType), deferred viewItemList; ListingCard prefetch
   - MultiSelectDropdown/Dropdown: precomputed lowerLabel for options, chunked render (first 50 then rAF to full list)
   - KPI and validation: lib/performance/inp-kpi.ts (targets, observer), [inp-validation.md](../engineering/inp-validation.md) for GSC validation steps

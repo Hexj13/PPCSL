@@ -117,6 +117,8 @@ program
     '--check-user-duplicates-before-create',
     'query DB for same-user duplicates before create',
   )
+  .option('--auto-create-brands', 'create missing brand via admin API before listing')
+  .option('--auto-create-models', 'create missing model via admin API before listing')
   .action(async (rawOptions) => {
     if (!rawOptions.userId) {
       throw new Error('Missing required argument --userId');
@@ -138,6 +140,8 @@ program
       city: String(rawOptions.city),
       delay: Number(rawOptions.delay),
       checkUserDuplicatesBeforeCreate: Boolean(rawOptions.checkUserDuplicatesBeforeCreate),
+      autoCreateBrands: Boolean(rawOptions.autoCreateBrands),
+      autoCreateModels: Boolean(rawOptions.autoCreateModels),
     };
     await runImport(options);
   });
@@ -213,16 +217,18 @@ async function runScan(options: ScanCommandOptions): Promise<void> {
       }
 
       seenSourceIds.add(item.sourceListingId);
-      const existing = registry.getBySourceId(item.sourceListingId);
+      const existing = registry.findExistingPlpItem(item);
+      const knownSourceId = existing?.sourceListingId ?? item.sourceListingId;
 
-      if (knownBefore.has(item.sourceListingId)) {
+      if (knownBefore.has(knownSourceId) || knownBefore.has(item.sourceListingId)) {
         pageDuplicates += 1;
         duplicates += 1;
       } else {
-        knownBefore.add(item.sourceListingId);
+        knownBefore.add(knownSourceId);
         pageNew += 1;
         newItems += 1;
       }
+      knownBefore.add(item.sourceListingId);
 
       if (existing?.kupitoListingId) {
         existingListings += 1;
@@ -283,7 +289,13 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const reportStore = new ReportStore(config.reportsDir);
   const authClient = options.dryRun ? undefined : new AuthClient(config);
   const kupitoApi = authClient ? new KupitoApiClient(config, authClient) : undefined;
-  const resolver = kupitoApi ? new BrandModelResolver(kupitoApi) : undefined;
+  const resolver = kupitoApi
+    ? new BrandModelResolver(kupitoApi, {
+        autoCreateBrands: Boolean(options.autoCreateBrands),
+        autoCreateModels: Boolean(options.autoCreateModels),
+        log: (payload) => logger.info('IMPORT', JSON.stringify(payload)),
+      })
+    : undefined;
   const pdpParser = new PdpParser(config);
   const uploadClient = authClient ? new UploadClient(config, authClient) : undefined;
   const startedAt = new Date().toISOString();
@@ -312,7 +324,7 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const candidates = getImportCandidates(registry.getAll(), options);
   logger.info(
     'IMPORT',
-    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)} checkUserDuplicatesBeforeCreate=${Boolean(options.checkUserDuplicatesBeforeCreate)}`,
+    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)} checkUserDuplicatesBeforeCreate=${Boolean(options.checkUserDuplicatesBeforeCreate)} autoCreateBrands=${Boolean(options.autoCreateBrands)} autoCreateModels=${Boolean(options.autoCreateModels)}`,
   );
 
   let processed = 0;
@@ -362,6 +374,8 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
       removeClosed: options.removeClosed,
       processed,
       checkUserDuplicatesBeforeCreate: Boolean(options.checkUserDuplicatesBeforeCreate),
+      autoCreateBrands: Boolean(options.autoCreateBrands),
+      autoCreateModels: Boolean(options.autoCreateModels),
     },
     items: selectRunReportItems(registry.getAll(), startedAt),
   });
@@ -509,7 +523,9 @@ async function processSingleItem(params: {
     let resolvedBrandId = '';
     let resolvedModelId = '';
     try {
-      const resolved = await resolver.resolve(parsed.brand, parsed.model);
+      const resolved = await resolver.resolve(parsed.brand, parsed.model, 'car', {
+        sourceListingId: sourceId,
+      });
       resolvedBrandId = resolved.brandId;
       resolvedModelId = resolved.modelId;
     } catch (error) {

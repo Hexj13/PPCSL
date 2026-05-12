@@ -44,7 +44,7 @@ export class CliParserRunnerService {
   }
 
   runSeedRegistry(params: {
-    parserCode: 'cipauto' | '999md';
+    parserCode: 'cipauto' | '999md' | 'autooutlet';
     env: ParserTargetEnv;
     userId: string;
     login?: string;
@@ -90,6 +90,8 @@ export class CliParserRunnerService {
     delayMs: number;
     plpFilePath?: string;
     checkUserDuplicatesBeforeCreate?: boolean;
+    autoCreateBrands?: boolean;
+    autoCreateModels?: boolean;
     extraEnv: NodeJS.ProcessEnv;
     onStdoutLine: (line: string) => void;
     onStderrLine: (line: string) => void;
@@ -168,6 +170,8 @@ export class CliParserRunnerService {
     delayMs: number;
     plpFilePath?: string;
     checkUserDuplicatesBeforeCreate?: boolean;
+    autoCreateBrands?: boolean;
+    autoCreateModels?: boolean;
   }): string[] {
     const parts = [
       'import',
@@ -209,6 +213,12 @@ export class CliParserRunnerService {
     }
     if (params.checkUserDuplicatesBeforeCreate) {
       parts.push('--check-user-duplicates-before-create');
+    }
+    if (params.autoCreateBrands) {
+      parts.push('--auto-create-brands');
+    }
+    if (params.autoCreateModels) {
+      parts.push('--auto-create-models');
     }
     return parts;
   }
@@ -276,12 +286,14 @@ export class CliParserRunnerService {
 
   private resolveSeedRegistryEntrypoint(
     backendRoot: string,
-    parserCode: 'cipauto' | '999md',
+    parserCode: 'cipauto' | '999md' | 'autooutlet',
   ): { kind: 'js' | 'ts'; path: string } {
     const relative =
       parserCode === 'cipauto'
         ? 'cipauto-import/commands/seed-registry.ts'
-        : '999md-import/commands/seed-registry.ts';
+        : parserCode === '999md'
+          ? '999md-import/commands/seed-registry.ts'
+          : 'autooutlet-import/commands/seed-registry.ts';
     const compiled = relative.replace(/\.ts$/, '.js');
     const distPath = path.join(backendRoot, 'dist', 'scripts', 'tools', compiled);
     if (fs.existsSync(distPath)) {
@@ -295,12 +307,12 @@ export class CliParserRunnerService {
   }
 
   private buildSeedRegistryArgs(params: {
-    parserCode: 'cipauto' | '999md';
+    parserCode: 'cipauto' | '999md' | 'autooutlet';
     env: ParserTargetEnv;
     userId: string;
     login?: string;
   }): string[] {
-    if (params.parserCode === 'cipauto') {
+    if (params.parserCode === 'cipauto' || params.parserCode === 'autooutlet') {
       return ['--env', params.env, params.userId];
     }
     const login = params.login?.trim() ?? '';

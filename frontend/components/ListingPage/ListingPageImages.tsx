@@ -25,6 +25,8 @@ import {
   type ListingPageHeroVideoSlide,
 } from './ListingPageImagesPreview';
 import { galleryImageIndexForBlurHash } from './listing-gallery-blur';
+import { clearImageNavGuard, tryRunWithSyncImageNavLock } from './listing-image-nav-guard';
+import { useListingPageImagesTouchHandlers } from './useListingPageImagesTouch';
 
 interface ListingPageImagesProps {
   images: string[];
@@ -53,9 +55,6 @@ export interface ListingPageImagesHandle {
   isBusy: () => boolean;
   getIndex: () => number;
 }
-
-const MIN_SWIPE_DISTANCE = 50;
-const SWIPE_INTENT_THRESHOLD = 18;
 
 export function createPreviewState(index: number): PreviewState {
   return {
@@ -117,16 +116,6 @@ export function promotePendingPreviewState(
   };
 }
 
-function getPredictedSwipeIndex(currentIndex: number, total: number, deltaX: number) {
-  if (deltaX < 0) {
-    return (currentIndex + 1) % total;
-  }
-  if (deltaX > 0) {
-    return currentIndex === 0 ? total - 1 : currentIndex - 1;
-  }
-  return null;
-}
-
 export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPageImagesProps>(
   function ListingPageImages(
     {
@@ -148,11 +137,6 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     const imagesSignature = useMemo(() => images.join('\u0001'), [images]);
     const [heroPreviewBlurConsumed, setHeroPreviewBlurConsumed] = useState(false);
     const [state, setState] = useState<PreviewState>(() => createPreviewState(currentImageIndex));
-    const touchStartX = useRef<number | null>(null);
-    const touchStartY = useRef<number | null>(null);
-    const touchEndX = useRef<number | null>(null);
-    const touchEndY = useRef<number | null>(null);
-    const horizontalSwipeRef = useRef(false);
     const suppressPreviewClickRef = useRef(false);
     const resetToFirstTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const rewindIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -161,14 +145,28 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     const preloadCleanupRef = useRef<(() => void) | null>(null);
     const swipePreloadIndexRef = useRef<number | null>(null);
     const previewStateRef = useRef<PreviewState>(state);
+    const previewNavSyncLockRef = useRef(false);
+    const previewNavUnlockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const goPrevInternalRef = useRef<(options?: { clearTimer?: boolean }) => void>(() => {});
     const visibleIndex = getConfirmedIndex(state);
 
     useEffect(() => {
       setHeroPreviewBlurConsumed(false);
       setState(createPreviewState(currentImageIndex));
+      clearImageNavGuard(previewNavSyncLockRef, previewNavUnlockTimeoutRef);
       // eslint-disable-next-line react-hooks/exhaustive-deps -- reset carousel only when image set changes; index is parent value at that commit
     }, [imagesSignature]);
+
+    useEffect(() => {
+      if (!state.pendingSlot) {
+        previewNavSyncLockRef.current = false;
+      }
+    }, [state.pendingSlot]);
+
+    useEffect(
+      () => () => clearImageNavGuard(previewNavSyncLockRef, previewNavUnlockTimeoutRef),
+      [],
+    );
 
     useEffect(() => {
       if (state.pendingSlot || visibleIndex === currentImageIndex) {
@@ -363,10 +361,20 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         if (images.length <= 1) {
           return;
         }
-        const snap = previewStateRef.current;
-        const baseIdx = getNavigationBaseIndex(snap);
-        const toIndex = baseIdx === 0 ? images.length - 1 : baseIdx - 1;
-        navigateTo(toIndex, options);
+        if (previewStateRef.current.pendingSlot !== null) {
+          return;
+        }
+        tryRunWithSyncImageNavLock({
+          isActive: true,
+          syncClickLockRef: previewNavSyncLockRef,
+          syncUnlockTimeoutRef: previewNavUnlockTimeoutRef,
+          run: () => {
+            const snap = previewStateRef.current;
+            const baseIdx = getNavigationBaseIndex(snap);
+            const toIndex = baseIdx === 0 ? images.length - 1 : baseIdx - 1;
+            navigateTo(toIndex, options);
+          },
+        });
       },
       [images.length, navigateTo],
     );
@@ -379,13 +387,34 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         if (images.length <= 1) {
           return;
         }
-        const snap = previewStateRef.current;
-        const baseIdx = getNavigationBaseIndex(snap);
-        const toIndex = (baseIdx + 1) % images.length;
-        navigateTo(toIndex, options);
+        if (previewStateRef.current.pendingSlot !== null) {
+          return;
+        }
+        tryRunWithSyncImageNavLock({
+          isActive: true,
+          syncClickLockRef: previewNavSyncLockRef,
+          syncUnlockTimeoutRef: previewNavUnlockTimeoutRef,
+          run: () => {
+            const snap = previewStateRef.current;
+            const baseIdx = getNavigationBaseIndex(snap);
+            const toIndex = (baseIdx + 1) % images.length;
+            navigateTo(toIndex, options);
+          },
+        });
       },
       [images.length, navigateTo],
     );
+
+    const { onTouchStart, onTouchMove, onTouchEnd } = useListingPageImagesTouchHandlers({
+      imagesLength: images.length,
+      visibleIndex,
+      preloadTarget,
+      goNextInternal,
+      goPrevInternal,
+      clearSwipePreload,
+      suppressPreviewClickRef,
+      swipePreloadIndexRef,
+    });
 
     useImperativeHandle(
       ref,
@@ -450,83 +479,6 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       },
       [goNextInternal],
     );
-
-    const onTouchStart = useCallback(
-      (e: React.TouchEvent) => {
-        clearSwipePreload();
-        touchEndX.current = null;
-        touchEndY.current = null;
-        horizontalSwipeRef.current = false;
-        touchStartX.current = e.targetTouches[0].clientX;
-        touchStartY.current = e.targetTouches[0].clientY;
-      },
-      [clearSwipePreload],
-    );
-
-    const onTouchMove = useCallback(
-      (e: React.TouchEvent) => {
-        const nextX = e.targetTouches[0].clientX;
-        const nextY = e.targetTouches[0].clientY;
-        touchEndX.current = nextX;
-        touchEndY.current = nextY;
-
-        if (touchStartX.current === null || touchStartY.current === null) return;
-
-        const deltaX = nextX - touchStartX.current;
-        const deltaY = nextY - touchStartY.current;
-        const isHorizontalIntent =
-          Math.abs(deltaX) > SWIPE_INTENT_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * 1.1;
-
-        if (isHorizontalIntent) {
-          horizontalSwipeRef.current = true;
-          if (images.length > 1) {
-            const predictedIndex = getPredictedSwipeIndex(visibleIndex, images.length, deltaX);
-
-            if (predictedIndex !== null && swipePreloadIndexRef.current !== predictedIndex) {
-              swipePreloadIndexRef.current = predictedIndex;
-              preloadTarget(predictedIndex);
-            }
-          }
-          e.preventDefault();
-        }
-      },
-      [images.length, preloadTarget, visibleIndex],
-    );
-
-    const onTouchEnd = useCallback(() => {
-      const resetTouchState = () => {
-        clearSwipePreload();
-        horizontalSwipeRef.current = false;
-        touchStartX.current = null;
-        touchStartY.current = null;
-        touchEndX.current = null;
-        touchEndY.current = null;
-      };
-
-      if (
-        touchStartX.current === null ||
-        touchEndX.current === null ||
-        !horizontalSwipeRef.current
-      ) {
-        resetTouchState();
-        return;
-      }
-
-      const distance = touchStartX.current - touchEndX.current;
-      const isLeftSwipe = distance > MIN_SWIPE_DISTANCE;
-      const isRightSwipe = distance < -MIN_SWIPE_DISTANCE;
-
-      if (isLeftSwipe && images.length > 1) {
-        suppressPreviewClickRef.current = true;
-        goNextInternal();
-      }
-      if (isRightSwipe && images.length > 1) {
-        suppressPreviewClickRef.current = true;
-        goPrevInternal();
-      }
-
-      resetTouchState();
-    }, [clearSwipePreload, goNextInternal, goPrevInternal, images.length]);
 
     return (
       <ListingPageImagesLayout

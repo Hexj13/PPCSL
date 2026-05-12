@@ -8,22 +8,10 @@ import { getOptimizedImageUrl } from '@/lib/utils';
 import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
 import { galleryImageIndexForBlurHash } from './listing-gallery-blur';
+import { clearImageNavGuard, tryRunWithSyncImageNavLock } from './listing-image-nav-guard';
+import type { ListingPageImageModalProps } from './useListingPageImageModal.types';
 
-export interface ListingPageImageModalProps {
-  isOpen: boolean;
-  images: string[];
-  listingVideoSlide?: { posterUrl: string | null; webmUrl?: string | null; mp4Url: string } | null;
-  currentIndex: number;
-  imageAltTitle: string;
-  imageErrors: Set<number>;
-  coverBlurHash?: string | null;
-  imageBlurHashes?: (string | null)[] | null;
-  onClose: () => void;
-  onNext: () => void;
-  onPrev: () => void;
-  onIndexChange: (_index: number) => void;
-  onImageError: (_index: number) => void;
-}
+export type { ListingPageImageModalProps } from './useListingPageImageModal.types';
 
 const getPinchDistance = (t1: Touch, t2: Touch) =>
   Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
@@ -58,6 +46,14 @@ export function useListingPageImageModal({
   const prevIsOpenRef = useRef(false);
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
 
+  const syncClickLockRef = useRef(false);
+  const syncUnlockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modalPendingFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const MODAL_PENDING_FALLBACK_MS = 1800;
+  const visibleIndexRef = useRef(visibleIndex);
+  const currentIndexRef = useRef(currentIndex);
+  visibleIndexRef.current = visibleIndex;
+  currentIndexRef.current = currentIndex;
   const [zoom, setZoom] = useState({ scale: 1, x: 0, y: 0 });
   const zoomRef = useRef({ scale: 1, x: 0, y: 0 });
   zoomRef.current = zoom;
@@ -76,8 +72,8 @@ export function useListingPageImageModal({
   const minSwipeDistance = 50;
   const onNextRef = useRef(onNext);
   const onPrevRef = useRef(onPrev);
-  onNextRef.current = onNext;
-  onPrevRef.current = onPrev;
+  const isOpenRef = useRef(isOpen);
+  isOpenRef.current = isOpen;
   const imagesLengthRef = useRef(images.length);
   imagesLengthRef.current = images.length;
 
@@ -101,6 +97,80 @@ export function useListingPageImageModal({
     },
     [coverBlurHash, imageBlurHashes, listingVideoSlide],
   );
+
+  useEffect(() => {
+    if (!isOpen) {
+      clearImageNavGuard(syncClickLockRef, syncUnlockTimeoutRef);
+      if (modalPendingFallbackRef.current) clearTimeout(modalPendingFallbackRef.current);
+      modalPendingFallbackRef.current = null;
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      if (modalPendingFallbackRef.current) clearTimeout(modalPendingFallbackRef.current);
+      modalPendingFallbackRef.current = null;
+      return;
+    }
+    if (visibleIndex === currentIndex) {
+      if (modalPendingFallbackRef.current) clearTimeout(modalPendingFallbackRef.current);
+      modalPendingFallbackRef.current = null;
+      return;
+    }
+    if (modalPendingFallbackRef.current) {
+      clearTimeout(modalPendingFallbackRef.current);
+    }
+    modalPendingFallbackRef.current = setTimeout(() => {
+      modalPendingFallbackRef.current = null;
+      const fallbackIndex = currentIndexRef.current;
+      visibleIndexRef.current = fallbackIndex;
+      clearImageNavGuard(syncClickLockRef, syncUnlockTimeoutRef);
+      setVisibleIndex(fallbackIndex);
+    }, MODAL_PENDING_FALLBACK_MS);
+  }, [isOpen, visibleIndex, currentIndex]);
+
+  useEffect(
+    () => () => {
+      if (modalPendingFallbackRef.current) clearTimeout(modalPendingFallbackRef.current);
+      modalPendingFallbackRef.current = null;
+    },
+    [],
+  );
+
+  const guardedNext = useCallback(() => {
+    if (!isOpen) {
+      onNext();
+      return;
+    }
+    if (visibleIndexRef.current !== currentIndexRef.current) {
+      return;
+    }
+    tryRunWithSyncImageNavLock({
+      isActive: true,
+      syncClickLockRef,
+      syncUnlockTimeoutRef,
+      run: () => onNext(),
+    });
+  }, [isOpen, onNext]);
+
+  const guardedPrev = useCallback(() => {
+    if (!isOpen) {
+      onPrev();
+      return;
+    }
+    if (visibleIndexRef.current !== currentIndexRef.current) {
+      return;
+    }
+    tryRunWithSyncImageNavLock({
+      isActive: true,
+      syncClickLockRef,
+      syncUnlockTimeoutRef,
+      run: () => onPrev(),
+    });
+  }, [isOpen, onPrev]);
+
+  onNextRef.current = guardedNext;
+  onPrevRef.current = guardedPrev;
 
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
@@ -253,6 +323,12 @@ export function useListingPageImageModal({
       const isRightSwipe = distance < -minSwipeDistance;
 
       if (isLeftSwipe && imagesLengthRef.current > 1) {
+        if (
+          isOpenRef.current &&
+          (syncClickLockRef.current || visibleIndexRef.current !== currentIndexRef.current)
+        ) {
+          return;
+        }
         swipeHandledRef.current = true;
         onNextRef.current();
         if (swipeTimeoutRef.current) clearTimeout(swipeTimeoutRef.current);
@@ -261,6 +337,12 @@ export function useListingPageImageModal({
         }, 400);
       }
       if (isRightSwipe && imagesLengthRef.current > 1) {
+        if (
+          isOpenRef.current &&
+          (syncClickLockRef.current || visibleIndexRef.current !== currentIndexRef.current)
+        ) {
+          return;
+        }
         swipeHandledRef.current = true;
         onPrevRef.current();
         if (swipeTimeoutRef.current) clearTimeout(swipeTimeoutRef.current);
@@ -303,10 +385,10 @@ export function useListingPageImageModal({
         onClose();
       }
       if (e.key === 'ArrowLeft') {
-        onPrev();
+        onPrevRef.current();
       }
       if (e.key === 'ArrowRight') {
-        onNext();
+        onNextRef.current();
       }
     };
 
@@ -331,13 +413,14 @@ export function useListingPageImageModal({
       window.scrollTo(0, savedScrollYRef.current);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('touchmove', preventScroll);
+      clearImageNavGuard(syncClickLockRef, syncUnlockTimeoutRef);
       if (swipeTimeoutRef.current) {
         clearTimeout(swipeTimeoutRef.current);
         swipeTimeoutRef.current = null;
       }
       swipeHandledRef.current = false;
     };
-  }, [isOpen, onClose, onNext, onPrev]);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -501,8 +584,8 @@ export function useListingPageImageModal({
       setVisibleIndex,
       swipeHandledRef,
       onClose,
-      onNext,
-      onPrev,
+      onNext: guardedNext,
+      onPrev: guardedPrev,
       onImageError,
       images,
       imagesList: [] as string[],
@@ -556,8 +639,8 @@ export function useListingPageImageModal({
     setVisibleIndex,
     swipeHandledRef,
     onClose,
-    onNext,
-    onPrev,
+    onNext: guardedNext,
+    onPrev: guardedPrev,
     onImageError,
     images,
     imagesList,

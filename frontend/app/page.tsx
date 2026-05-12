@@ -18,6 +18,7 @@ import {
   getListings,
   withListingGridDefaultLimit,
 } from '@/lib/api';
+import type { Brand } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
 import { getMetadataLocale, getServerTranslations, type Translations } from '@/lib/i18n';
 import { getHomeHeroTitle } from '@/lib/search/home-hero-title';
@@ -398,10 +399,10 @@ export async function generateMetadata({
   );
 }
 
-function SearchFiltersWrapper() {
+function SearchFiltersWrapper({ initialBrands }: { initialBrands: Brand[] }) {
   return (
     <Suspense fallback={<div className="card p-4 md:p-5 mb-6 animate-pulse h-64" />}>
-      <SearchFilters />
+      <SearchFilters initialBrands={initialBrands} />
     </Suspense>
   );
 }
@@ -434,6 +435,12 @@ async function HomeContent({
 
   const heroTitle = await getHomeHeroTitle(params, t);
 
+  const vehicleTypeParam = params.vehicleType;
+  const vehicleTypeForBrands = (
+    isIndexableVehicleTypeParam(vehicleTypeParam) ? vehicleTypeParam : 'car'
+  ) as 'car' | 'truck' | 'moto';
+  const initialBrands = await fetchBrands(vehicleTypeForBrands);
+
   return (
     <div>
       <BackgroundDecorations />
@@ -447,7 +454,7 @@ async function HomeContent({
         subtitle2={t.home.subtitle2}
         subtitle3={t.home.subtitle3}
       />
-      <SearchFiltersWrapper />
+      <SearchFiltersWrapper initialBrands={initialBrands} />
       <ListingGrid initialData={initialData} />
       <Suspense fallback={null}>
         <ScrollToFiltersButton />

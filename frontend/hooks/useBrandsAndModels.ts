@@ -26,6 +26,17 @@ function getModelsKey(brandId: string, vehicleType: VehicleTypeOption): string {
   return `${brandId}_${vehicleType ?? 'all'}`;
 }
 
+function getInitialBrandsForKey(brandsKey: string, initialBrands?: Brand[] | null): Brand[] {
+  const cached = brandsCache.get(brandsKey);
+  if (cached) return cached;
+  if (initialBrands?.length) {
+    const sorted = sortByName(initialBrands);
+    brandsCache.set(brandsKey, sorted);
+    return sorted;
+  }
+  return [];
+}
+
 function fetchBrands(vehicleType: VehicleTypeOption): Promise<Brand[]> {
   const key = getBrandsKey(vehicleType);
   const cached = brandsCache.get(key);
@@ -72,17 +83,21 @@ interface UseBrandsAndModelsOptions {
   brandId?: string;
   autoLoadModels?: boolean;
   vehicleType?: 'car' | 'truck' | 'moto';
+  initialBrands?: Brand[] | null;
 }
 
 export function useBrandsAndModels({
   brandId,
   autoLoadModels = true,
   vehicleType,
+  initialBrands,
 }: UseBrandsAndModelsOptions = {}) {
   const brandsKey = getBrandsKey(vehicleType);
-  const [brands, setBrands] = useState<Brand[]>(() => brandsCache.get(brandsKey) ?? []);
+  const [brands, setBrands] = useState<Brand[]>(() =>
+    getInitialBrandsForKey(brandsKey, initialBrands),
+  );
   const [models, setModels] = useState<VehicleModel[]>([]);
-  const [loadingBrands, setLoadingBrands] = useState(!brandsCache.has(brandsKey));
+  const [loadingBrands, setLoadingBrands] = useState(() => !brandsCache.has(brandsKey));
   const [loadingModels, setLoadingModels] = useState(false);
   const [, startTransition] = useTransition();
   const mountedRef = useRef(true);

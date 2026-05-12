@@ -26,9 +26,15 @@ jest.mock('next/image', () => ({
   default: ({
     fill: _fill,
     priority: _priority,
+    blurDataURL: _blurDataURL,
+    placeholder: _placeholder,
     ...props
-  }: React.ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean; priority?: boolean }) =>
-    React.createElement('img', props),
+  }: React.ImgHTMLAttributes<HTMLImageElement> & {
+    fill?: boolean;
+    priority?: boolean;
+    blurDataURL?: string;
+    placeholder?: string;
+  }) => React.createElement('img', props),
 }));
 
 jest.mock('@/lib/store', () => {
@@ -68,7 +74,13 @@ jest.mock('./ListingCard', () => ({
 }));
 
 jest.mock('./ListingCardSkeleton', () => ({
-  ListingCardSkeleton: () => <div data-testid="listing-skeleton">Loading...</div>,
+  ListingCardSkeleton: React.forwardRef<HTMLDivElement>(function ListingCardSkeleton(_props, ref) {
+    return (
+      <div ref={ref} data-testid="listing-skeleton">
+        Loading...
+      </div>
+    );
+  }),
 }));
 
 jest.mock('@/hooks/useTranslation', () => ({
@@ -102,13 +114,32 @@ jest.mock('@/hooks/useLoadingState', () => ({
   useLoadingState: () => ({ visible: false }),
 }));
 
-global.IntersectionObserver = jest.fn().mockImplementation((_callback) => {
-  return {
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-    disconnect: jest.fn(),
-  };
-});
+global.IntersectionObserver = jest
+  .fn()
+  .mockImplementation((callback: IntersectionObserverCallback) => {
+    return {
+      observe: jest.fn((element: Element) => {
+        queueMicrotask(() => {
+          callback(
+            [
+              {
+                isIntersecting: true,
+                target: element,
+                intersectionRatio: 1,
+                boundingClientRect: {} as DOMRectReadOnly,
+                intersectionRect: {} as DOMRectReadOnly,
+                rootBounds: null,
+                time: Date.now(),
+              },
+            ],
+            {} as IntersectionObserver,
+          );
+        });
+      }),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    };
+  });
 
 const mockListing1: Listing = {
   id: 'listing-1',
@@ -362,7 +393,7 @@ describe('ListingGrid', () => {
     });
 
     it('should render partner promo banner with link to partners page when enough listings are shown', async () => {
-      const listings = Array.from({ length: 16 }, (_, index) => ({
+      const listings = Array.from({ length: 12 }, (_, index) => ({
         ...mockListing1,
         id: `listing-${index + 1}`,
         title: `Test Car ${index + 1}`,
@@ -374,7 +405,7 @@ describe('ListingGrid', () => {
 
       render(<ListingGrid initialData={initialData} />);
 
-      expect(await screen.findByTestId('listing-listing-16')).toBeInTheDocument();
+      expect(await screen.findByTestId('listing-listing-12')).toBeInTheDocument();
       await waitFor(() => {
         expect(screen.getAllByTestId('partner-promo-banner')).toHaveLength(3);
       });
@@ -389,7 +420,7 @@ describe('ListingGrid', () => {
         key === 'kupito_hide_partner_promo' ? '1' : null,
       );
 
-      const listings = Array.from({ length: 16 }, (_, index) => ({
+      const listings = Array.from({ length: 12 }, (_, index) => ({
         ...mockListing1,
         id: `listing-${index + 1}`,
         title: `Test Car ${index + 1}`,
@@ -401,7 +432,7 @@ describe('ListingGrid', () => {
 
       render(<ListingGrid initialData={initialData} />);
 
-      expect(await screen.findByTestId('listing-listing-16')).toBeInTheDocument();
+      expect(await screen.findByTestId('listing-listing-12')).toBeInTheDocument();
       await waitFor(() => {
         expect(screen.queryByTestId('partner-promo-banner')).not.toBeInTheDocument();
       });
@@ -410,7 +441,7 @@ describe('ListingGrid', () => {
     it('should not render partner promo banner when user is platform partner', async () => {
       authStoreMockState.user = { id: 'user-1', isPlatformPartner: true };
 
-      const listings = Array.from({ length: 16 }, (_, index) => ({
+      const listings = Array.from({ length: 12 }, (_, index) => ({
         ...mockListing1,
         id: `listing-${index + 1}`,
         title: `Test Car ${index + 1}`,
@@ -422,7 +453,7 @@ describe('ListingGrid', () => {
 
       render(<ListingGrid initialData={initialData} />);
 
-      expect(await screen.findByTestId('listing-listing-16')).toBeInTheDocument();
+      expect(await screen.findByTestId('listing-listing-12')).toBeInTheDocument();
       await waitFor(() => {
         expect(screen.queryByTestId('partner-promo-banner')).not.toBeInTheDocument();
       });
@@ -431,7 +462,7 @@ describe('ListingGrid', () => {
     it('should not render partner promo banner when user dismissed it in profile', async () => {
       authStoreMockState.user = { id: 'user-1', hidePartnerPromoBanner: true };
 
-      const listings = Array.from({ length: 16 }, (_, index) => ({
+      const listings = Array.from({ length: 12 }, (_, index) => ({
         ...mockListing1,
         id: `listing-${index + 1}`,
         title: `Test Car ${index + 1}`,
@@ -443,7 +474,7 @@ describe('ListingGrid', () => {
 
       render(<ListingGrid initialData={initialData} />);
 
-      expect(await screen.findByTestId('listing-listing-16')).toBeInTheDocument();
+      expect(await screen.findByTestId('listing-listing-12')).toBeInTheDocument();
       await waitFor(() => {
         expect(screen.queryByTestId('partner-promo-banner')).not.toBeInTheDocument();
       });
@@ -461,6 +492,62 @@ describe('ListingGrid', () => {
 
       await screen.findByText('No listings found');
       expect(favoritesApi.checkBatch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('lazy listing card slots', () => {
+    let originalIntersectionObserver: typeof globalThis.IntersectionObserver;
+
+    beforeEach(() => {
+      originalIntersectionObserver = global.IntersectionObserver;
+      const emptyRect = {} as DOMRectReadOnly;
+      global.IntersectionObserver = jest
+        .fn()
+        .mockImplementation((_callback: IntersectionObserverCallback) => {
+          let observed: Element | null = null;
+          return {
+            observe: jest.fn((el: Element) => {
+              observed = el;
+            }),
+            unobserve: jest.fn(),
+            disconnect: jest.fn(),
+            takeRecords: jest.fn(() => {
+              if (!observed) return [];
+              return [
+                {
+                  isIntersecting: true,
+                  intersectionRatio: 1,
+                  target: observed,
+                  boundingClientRect: emptyRect,
+                  intersectionRect: emptyRect,
+                  rootBounds: null,
+                  time: Date.now(),
+                },
+              ];
+            }),
+          };
+        }) as unknown as typeof globalThis.IntersectionObserver;
+    });
+
+    afterEach(() => {
+      global.IntersectionObserver = originalIntersectionObserver;
+    });
+
+    it('mounts listings from index 8 using takeRecords without async IO callback', async () => {
+      const listings = Array.from({ length: 10 }, (_, index) => ({
+        ...mockListing1,
+        id: `listing-${index + 1}`,
+        title: `Test Car ${index + 1}`,
+      }));
+      const initialData = {
+        data: listings,
+        meta: { ...mockMeta, total: listings.length },
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      expect(await screen.findByTestId('listing-listing-9')).toBeInTheDocument();
+      expect(screen.getByText('Test Car 9')).toBeInTheDocument();
     });
   });
 

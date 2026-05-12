@@ -121,6 +121,7 @@
       "<rootDir>/config/jest/jest.setup.js"
     ],
     "moduleNameMapper": {
+      "^@/lib/blurhash-worker-client$": "<rootDir>/lib/__mocks__/blurhash-worker-client.ts",
       "^@/(.*)$": "<rootDir>/$1",
       "\\./config/site$": "<rootDir>/lib/__mocks__/site.ts"
     },

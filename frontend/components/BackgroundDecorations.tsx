@@ -3,11 +3,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
+import { subscribeWindowScrollFrame } from '@/lib/window-scroll-bus';
+
 export function BackgroundDecorations() {
   const [mounted, setMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const lastVisibleRef = useRef(true);
-  const rafIdRef = useRef(0);
 
   useEffect(() => {
     setMounted(true);
@@ -19,22 +20,10 @@ export function BackgroundDecorations() {
         lastVisibleRef.current = visible;
         setIsVisible(visible);
       }
-      rafIdRef.current = 0;
     };
 
-    const handleScroll = () => {
-      if (rafIdRef.current === 0) {
-        rafIdRef.current = requestAnimationFrame(tick);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
     tick();
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafIdRef.current !== 0) cancelAnimationFrame(rafIdRef.current);
-    };
+    return subscribeWindowScrollFrame(tick);
   }, []);
 
   if (!mounted) return null;
@@ -45,6 +34,9 @@ export function BackgroundDecorations() {
       style={{
         opacity: isVisible ? 1 : 0,
         transition: 'opacity 0.3s ease-out',
+        contain: 'layout paint size',
+        willChange: 'opacity',
+        transform: 'translateZ(0)',
         backgroundImage: `
           repeating-linear-gradient(45deg, transparent, transparent 19px, rgba(0, 0, 0, 0.072) 20px, rgba(0, 0, 0, 0.018) 21px, transparent 22px),
           repeating-linear-gradient(-45deg, transparent, transparent 19px, rgba(0, 0, 0, 0.072) 20px, rgba(0, 0, 0, 0.018) 21px, transparent 22px)

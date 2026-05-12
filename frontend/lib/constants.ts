@@ -4,7 +4,7 @@ export const listingStatuses = ['Active', 'Paused', 'Closed'] as const;
 
 export const currencies = ['EUR', 'MDL'] as const;
 
-export const LISTING_GRID_PAGE_SIZE = 32;
+export const LISTING_GRID_PAGE_SIZE = 20;
 
 export const MAIN_VIEWPORT_MIN_HEIGHT_CLASS = 'min-h-[calc(100vh-200px)]';
 

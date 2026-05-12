@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useCallback, useMemo, startTransition } from 'react';
+import React, { useCallback, useEffect, useMemo, startTransition } from 'react';
 
 import {
   ListingCardBadges,
@@ -26,7 +26,9 @@ import { useListingCardImageError } from '@/hooks/useListingCardImageError';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { setBlurForListing, setIndexForListing } from '@/lib/blur-navigation-cache';
+import { decodeBlurhashOffMain, getDecodedBlurhashFromCache } from '@/lib/blurhash-worker-client';
 import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
+import { observeElementVisibility } from '@/lib/intersection-observer-registry';
 import { preserveHomeScrollPosition } from '@/lib/preserve-home-scroll';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 import {
@@ -40,7 +42,6 @@ import {
   getVehicleType,
   isTireListing,
 } from '@/lib/utils';
-import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
 interface ListingCardProps {
   listing: Listing;
@@ -231,19 +232,12 @@ function useCardCarouselRewind(
   React.useEffect(() => {
     if (!isMobileOrTablet) return;
     const node = cardRef.current;
-    if (!node || typeof IntersectionObserver === 'undefined') return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) {
-          startRewindTimer(false);
-        }
-      },
-      { threshold: 0.01 },
-    );
-    observer.observe(node);
-    return () => {
-      observer.disconnect();
-    };
+    if (!node) return;
+    return observeElementVisibility(node, (isIntersecting) => {
+      if (!isIntersecting) {
+        startRewindTimer(false);
+      }
+    });
   }, [isMobileOrTablet, cardRef, startRewindTimer]);
 
   return { onMouseLeave, onMouseEnter, clearRewind, isAutoRewinding };
@@ -414,33 +408,85 @@ function ListingCardComponent({
     images.length <= 1 &&
     Boolean(singleImageUrl && singleImageUrl !== '/placeholder-car.jpg' && !imageErrors.has(0));
 
-  const blurDataURL = useMemo(
-    () => (listing.cover_blur_hash ? blurhashToDataURL(listing.cover_blur_hash) : undefined),
-    [listing.cover_blur_hash],
-  );
+  const [resolvedBlurDataURL, setResolvedBlurDataURL] = React.useState<string | undefined>(() => {
+    const ch = listing.cover_blur_hash;
+    return typeof ch === 'string' && ch.length >= 6 ? getDecodedBlurhashFromCache(ch) : undefined;
+  });
+  const [resolvedImageBlurDataURLs, setResolvedImageBlurDataURLs] = React.useState<
+    (string | undefined)[]
+  >(() => {
+    const ch = listing.cover_blur_hash;
+    const hs = listing.image_blur_hashes ?? [];
+    const coverCached =
+      typeof ch === 'string' && ch.length >= 6 ? getDecodedBlurhashFromCache(ch) : undefined;
+    return images.map((_, i) => {
+      const h = hs[i];
+      if (typeof h === 'string' && h.length >= 6) {
+        return getDecodedBlurhashFromCache(h) ?? coverCached;
+      }
+      return coverCached;
+    });
+  });
 
-  const imageBlurDataURLs = useMemo(() => {
+  useEffect(() => {
+    let cancelled = false;
+    const coverHash = listing.cover_blur_hash;
     const hashes = listing.image_blur_hashes ?? [];
-    let coverDataUrl: string | undefined;
-    if (listing.cover_blur_hash) {
-      try {
-        coverDataUrl = blurhashToDataURL(listing.cover_blur_hash);
-      } catch {
-        coverDataUrl = undefined;
+    const seedCover =
+      typeof coverHash === 'string' && coverHash.length >= 6
+        ? getDecodedBlurhashFromCache(coverHash)
+        : undefined;
+    setResolvedBlurDataURL(seedCover);
+    setResolvedImageBlurDataURLs(
+      images.map((_, i) => {
+        const h = hashes[i];
+        if (typeof h === 'string' && h.length >= 6) {
+          return getDecodedBlurhashFromCache(h) ?? seedCover;
+        }
+        return seedCover;
+      }),
+    );
+
+    const needed = new Set<string>();
+    if (typeof coverHash === 'string' && coverHash.length >= 6) {
+      needed.add(coverHash);
+    }
+    for (const h of hashes) {
+      if (typeof h === 'string' && h.length >= 6) {
+        needed.add(h);
       }
     }
-    return images.map((_, i) => {
-      const h = hashes[i];
-      if (typeof h === 'string' && h.length > 0) {
-        try {
-          return blurhashToDataURL(h);
-        } catch {
+
+    const run = async () => {
+      const decoded = new Map<string, string | undefined>();
+      await Promise.all(
+        [...needed].map(async (h) => {
+          const url = await decodeBlurhashOffMain(h);
+          if (!cancelled) {
+            decoded.set(h, url);
+          }
+        }),
+      );
+      if (cancelled) return;
+      const coverDataUrl =
+        typeof coverHash === 'string' && coverHash.length >= 6 ? decoded.get(coverHash) : undefined;
+      setResolvedBlurDataURL(coverDataUrl);
+      setResolvedImageBlurDataURLs(
+        images.map((_, i) => {
+          const h = hashes[i];
+          if (typeof h === 'string' && h.length >= 6) {
+            return decoded.get(h) ?? coverDataUrl;
+          }
           return coverDataUrl;
-        }
-      }
-      return coverDataUrl;
-    });
-  }, [listing.image_blur_hashes, listing.cover_blur_hash, images]);
+        }),
+      );
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [listing.cover_blur_hash, listing.image_blur_hashes, images]);
 
   const handleImageError = useListingCardImageError(
     listing.id,
@@ -491,7 +537,7 @@ function ListingCardComponent({
               onIndexChange={handleCarouselIndexChange}
               imageAltTitle={imageAltTitle}
               priority={priority}
-              blurDataURLs={imageBlurDataURLs}
+              blurDataURLs={resolvedImageBlurDataURLs}
               t={t}
             />
           ) : (
@@ -500,7 +546,7 @@ function ListingCardComponent({
               imageUrl={singleImageUrl}
               imageAltTitle={imageAltTitle}
               priority={priority}
-              blurDataURL={blurDataURL}
+              blurDataURL={resolvedBlurDataURL}
               onError={() => handleImageError(0)}
               t={t}
             />

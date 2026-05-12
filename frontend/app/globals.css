@@ -1182,6 +1182,27 @@
   scrollbar-color: var(--color-dark-500) var(--color-bg-secondary);
 }
 
+@utility scrollbar-primary-700 {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    @apply rounded-sm bg-primary-900/40;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    @apply rounded-sm bg-primary-700;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-600;
+  }
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary-700) var(--color-primary-900);
+}
+
 @utility text-hint {
   color: var(--color-dark-400) !important;
 }

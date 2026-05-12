@@ -78,7 +78,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - Admin edit listings — on the admin listings tab, admin can open `/listings/[id]/edit` and edit any listing (including `Closed`), regardless of ownership. Backend bypasses ownership and `Closed` restrictions only for JWT users with role `Admin`. In edit form, `vehicleType` switcher is available only for admins. For editing VIN, admin requests full VIN via `GET /api/listings/:id?includeFullVin=1`.
 - [admin-parsing-ru.md](./features/admin-parsing-ru.md) — Russian feature spec for the admin Parsing tab (PLP/PDP history, manual runs, scheduler, parser rollout). English operator notes for `ADMIN_PARSING_*` env: [SCRIPTS.md](../backend/docs/SCRIPTS.md) (section **Admin parsing (Nest runtime)**).
 - [parsing-framework.md](./features/parsing-framework.md) — Generic parsing runtime in core (catalog contract, admin orchestration, schedules, parser CLI runner)
-- Platform parser docs (kupito.club): [docs/parsing/cipauto-import.md](../../docs/parsing/cipauto-import.md), [docs/parsing/999md-import.md](../../docs/parsing/999md-import.md)
+- Platform parser docs (kupito.club): [docs/parsing/cipauto-import.md](../../docs/parsing/cipauto-import.md), [docs/parsing/999md-import.md](../../docs/parsing/999md-import.md), [docs/parsing/autooutlet-import.md](../../docs/parsing/autooutlet-import.md)
 - [search-filters.md](./features/search-filters.md) — Search and filters form (tabs, fields, layout)
 - [tires-category.md](./features/tires-category.md) — Dev-ready spec for tire listings, taxonomy, create form, and search
 - [seller-listings-board.md](./features/seller-listings-board.md) — Seller listings board

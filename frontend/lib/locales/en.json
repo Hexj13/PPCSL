@@ -1598,6 +1598,14 @@
       "fieldCheckUserDuplicatesBeforeCreate": "Check duplicates before create",
       "fieldCheckUserDuplicatesBeforeCreateHint": "Before creating a new listing, load the partner user's vehicle rows from the database and skip create when a duplicate is found (parser-specific rules). Requires DB access from the import process.",
       "fieldCheckUserDuplicatesBeforeCreateHintButton": "Duplicate check hint",
+      "pdp": {
+        "autoCreateBrands": "Auto-create missing brands",
+        "autoCreateBrandsHint": "If the parsed brand is missing in our catalog, create it via the admin API (import user must be Admin), then continue importing the listing in the same run.",
+        "autoCreateBrandsHintButton": "Auto-create brands hint",
+        "autoCreateModels": "Auto-create missing models",
+        "autoCreateModelsHint": "If the parsed model is missing in our catalog, create it via the admin API (import user must be Admin), then continue importing the listing in the same run.",
+        "autoCreateModelsHintButton": "Auto-create models hint"
+      },
       "fieldRemoveClosed": "Close listings when source is unavailable",
       "fieldRemoveClosedHint": "When the source marks a listing as closed or unavailable (404, 410, closed template), it will also be closed on our platform. When disabled, the listing is marked in the registry but stays active on the platform.",
       "fieldRemoveClosedHintButton": "Close unavailable listings hint",

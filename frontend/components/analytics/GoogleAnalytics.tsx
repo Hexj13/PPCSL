@@ -5,6 +5,7 @@ import Script from 'next/script';
 import { useEffect, useState } from 'react';
 
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { useDeferredLoadAfterIdle } from '@/hooks/useDeferredThirdParty';
 import { invokeGtag } from '@/lib/analytics';
 
 const isProduction = () => {
@@ -23,6 +24,7 @@ export function GoogleAnalytics() {
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
   const pathname = usePathname();
   const { consent, isLoading } = useCookieConsent();
+  const deferredReady = useDeferredLoadAfterIdle(2500);
   const [isProd, setIsProd] = useState(false);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
@@ -69,10 +71,10 @@ export function GoogleAnalytics() {
 
   return (
     <div suppressHydrationWarning>
-      {isProd && (
+      {isProd && deferredReady && (
         <Script
           id="google-analytics-gtag"
-          strategy="lazyOnload"
+          strategy="afterInteractive"
           src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
           onLoad={() => {
             if (typeof window !== 'undefined' && window.gtag) {

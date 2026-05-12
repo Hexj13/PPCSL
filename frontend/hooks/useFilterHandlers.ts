@@ -70,37 +70,39 @@ export function useFilterHandlers({
 
   const handleChange = useCallback(
     (key: keyof typeof filters, value: string) => {
-      if (
-        key === 'brand_ids' ||
-        key === 'model_ids' ||
-        key === 'cities' ||
-        key === 'fuels' ||
-        key === 'transmissions' ||
-        key === 'body_types' ||
-        key === 'colors' ||
-        key === 'doors' ||
-        key === 'conditions' ||
-        key === 'registration_types' ||
-        key === 'drive_types' ||
-        key === 'equipment' ||
-        key === 'tire_brand_ids' ||
-        key === 'tire_model_ids' ||
-        key === 'tire_widths' ||
-        key === 'tire_profiles' ||
-        key === 'tire_diameters' ||
-        key === 'tire_seasons' ||
-        key === 'tire_conditions' ||
-        key === 'tire_quantities'
-      ) {
-        updateFilter(
-          key,
-          value.split(',').filter((v) => v.trim() !== ''),
-        );
-      } else if (key === 'sortOrder') {
-        updateFilter(key, value as 'ASC' | 'DESC');
-      } else {
-        updateFilter(key, value);
-      }
+      startTransition(() => {
+        if (
+          key === 'brand_ids' ||
+          key === 'model_ids' ||
+          key === 'cities' ||
+          key === 'fuels' ||
+          key === 'transmissions' ||
+          key === 'body_types' ||
+          key === 'colors' ||
+          key === 'doors' ||
+          key === 'conditions' ||
+          key === 'registration_types' ||
+          key === 'drive_types' ||
+          key === 'equipment' ||
+          key === 'tire_brand_ids' ||
+          key === 'tire_model_ids' ||
+          key === 'tire_widths' ||
+          key === 'tire_profiles' ||
+          key === 'tire_diameters' ||
+          key === 'tire_seasons' ||
+          key === 'tire_conditions' ||
+          key === 'tire_quantities'
+        ) {
+          updateFilter(
+            key,
+            value.split(',').filter((v) => v.trim() !== ''),
+          );
+        } else if (key === 'sortOrder') {
+          updateFilter(key, value as 'ASC' | 'DESC');
+        } else {
+          updateFilter(key, value);
+        }
+      });
     },
     [updateFilter],
   );
@@ -164,14 +166,18 @@ export function useFilterHandlers({
         analytics.selectContentDeferred(contentType, value, option?.category);
       });
 
-      updateFilter(key, filteredValues);
+      startTransition(() => {
+        updateFilter(key, filteredValues);
+      });
     },
     [updateFilter, filters, getBrandOptions, getModelOptions, getCityOptions, t],
   );
 
   const handleCheckboxChange = useCallback(
     (key: keyof typeof filters, checked: boolean) => {
-      updateFilter(key, checked);
+      startTransition(() => {
+        updateFilter(key, checked);
+      });
     },
     [updateFilter],
   );

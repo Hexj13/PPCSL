@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 
 import { analytics } from '@/lib/analytics';
+import { subscribeWindowScrollFrame } from '@/lib/window-scroll-bus';
 
 const SCROLL_THRESHOLDS = [25, 50, 75, 90] as const;
 
@@ -10,8 +11,6 @@ export function usePageScroll() {
   const trackedThresholdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
-    let ticking = false;
-
     const handleScroll = () => {
       if (typeof window === 'undefined') return;
 
@@ -32,20 +31,6 @@ export function usePageScroll() {
       });
     };
 
-    const scrollHandler = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          handleScroll();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', scrollHandler, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', scrollHandler);
-    };
+    return subscribeWindowScrollFrame(handleScroll);
   }, []);
 }

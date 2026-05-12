@@ -1,10 +1,10 @@
 import type { Page } from '@playwright/test';
 
-async function gotoRoot(page: Page): Promise<void> {
+export async function gotoWithDomContentLoadedRetry(page: Page, url: string): Promise<void> {
   let lastError: unknown;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
-      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
       return;
     } catch (error) {
       lastError = error;
@@ -15,6 +15,10 @@ async function gotoRoot(page: Page): Promise<void> {
     }
   }
   throw lastError;
+}
+
+async function gotoRoot(page: Page): Promise<void> {
+  await gotoWithDomContentLoadedRetry(page, '/');
 }
 
 export async function clearBrowserState(page: Page): Promise<void> {
