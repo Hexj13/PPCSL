@@ -261,7 +261,7 @@ jest.mock('./search-filters/PopularBodyTypesFilter', () => {
       </div>
     );
   };
-  return { __esModule: true, default: PopularBodyTypesFilter };
+  return { __esModule: true, PopularBodyTypesFilter };
 });
 
 jest.mock('./search-filters/SearchTabs', () => {

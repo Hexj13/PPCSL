@@ -132,6 +132,24 @@ export const viewport: Viewport = {
   userScalable: true,
 };
 
+function HeaderFallback() {
+  return (
+    <header className="sticky top-0 z-50 flex flex-col bg-bg-base shadow-lg" aria-hidden>
+      <div className="relative z-20 h-[72px] shrink-0 bg-bg-base">
+        <div className="container relative mx-auto h-full border-b border-primary-700 px-3 sm:px-4">
+          <div className="flex h-full w-full min-w-0 items-center justify-between gap-2">
+            <div className="h-6 w-16 rounded-sm bg-primary-700/20" />
+            <div className="flex items-center justify-end gap-2 xl:gap-4">
+              <div className="h-10 w-28 shrink-0 rounded-lg bg-primary-700/20" />
+              <div className="hidden h-10 w-44 rounded-lg bg-primary-700/20 lg:block" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const siteConfig = await loadSiteConfig(getCountry());
 
@@ -172,7 +190,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <ScrollReset />
                   <Suspense fallback={null}>
                     <div className="min-h-screen flex flex-col">
-                      <Suspense fallback={null}>
+                      <Suspense fallback={<HeaderFallback />}>
                         <Header />
                       </Suspense>
                       <OfflineBanner />

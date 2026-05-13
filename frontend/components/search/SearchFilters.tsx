@@ -45,14 +45,11 @@ import { buildCategorizedTireBrandOptions } from '@/lib/tire-catalog-sort';
 import { isBrowser } from '@/lib/utils/utils';
 
 import { BasicFilters } from './search-filters/BasicFilters';
+import { PopularBodyTypesFilter } from './search-filters/PopularBodyTypesFilter';
 import { PopularFilters } from './search-filters/PopularFilters';
 import { SearchFormActions } from './search-filters/SearchFormActions';
 import { SearchTabs } from './search-filters/SearchTabs';
 import { VehicleTypeSelector } from './search-filters/VehicleTypeSelector';
-
-const PopularBodyTypesFilter = dynamic(() => import('./search-filters/PopularBodyTypesFilter'), {
-  ssr: false,
-});
 
 const AdvancedFilters = dynamic(
   () => import('./search-filters/AdvancedFilters').then((m) => ({ default: m.AdvancedFilters })),

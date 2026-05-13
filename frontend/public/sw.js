@@ -302,7 +302,6 @@ const fetchHandler = async (event) => {
 
 self.addEventListener('install', (event) => {
   event.waitUntil(installHandler());
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {

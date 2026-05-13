@@ -29,83 +29,10 @@ import { buildMinimalCategorySearchUrl, getParsedListingSearchParams } from '@/l
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import { silentCatch } from '@/lib/utils';
 
-import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
-import { LoadMoreButton } from './LoadMoreButton';
+import { ListingGridCardSlot } from './ListingGridCardSlot';
+import { ListingGridPaginationFooter } from './ListingGridPaginationFooter';
 import { PartnerPromoBanner } from './PartnerPromoBanner';
-import {
-  LISTING_GRID_CARD_LAZY_ROOT_MARGIN_PX,
-  listingGridCardSlotEntryIsIntersecting,
-  listingGridCardSlotHasVisibleIntersection,
-} from './listing-grid-lazy-card-slot';
-
-const LISTING_GRID_LINK_PREFETCH_COUNT = 4;
-
-function ListingGridCardSlot({ listing, index }: { listing: Listing; index: number }) {
-  const [mounted, setMounted] = useState(index < 8);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (mounted) return;
-    if (index < 8) {
-      setMounted(true);
-      return;
-    }
-    const el = wrapRef.current;
-    if (!el || typeof IntersectionObserver === 'undefined') {
-      setMounted(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some(listingGridCardSlotEntryIsIntersecting)) {
-          setMounted(true);
-        }
-      },
-      { rootMargin: `${LISTING_GRID_CARD_LAZY_ROOT_MARGIN_PX}px`, threshold: 0.01 },
-    );
-    const tryMountFromSync = (): boolean => {
-      const node = wrapRef.current;
-      if (!node) return false;
-      if (listingGridCardSlotHasVisibleIntersection(node, io)) {
-        setMounted(true);
-        return true;
-      }
-      return false;
-    };
-    io.observe(el);
-    if (tryMountFromSync()) {
-      return () => io.disconnect();
-    }
-    let raf2Id = 0;
-    const raf1Id = requestAnimationFrame(() => {
-      if (tryMountFromSync()) return;
-      raf2Id = requestAnimationFrame(() => {
-        raf2Id = 0;
-        tryMountFromSync();
-      });
-    });
-    return () => {
-      cancelAnimationFrame(raf1Id);
-      if (raf2Id !== 0) {
-        cancelAnimationFrame(raf2Id);
-      }
-      io.disconnect();
-    };
-  }, [mounted, index]);
-
-  if (!mounted) {
-    return <ListingCardSkeleton ref={wrapRef} />;
-  }
-
-  return (
-    <ListingCard
-      listing={listing}
-      priority={index < 6}
-      linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
-    />
-  );
-}
 
 interface ListingGridProps {
   initialData?: { data: Listing[]; meta: PaginationMeta };
@@ -152,6 +79,15 @@ function getVehicleTypeFromParams(searchParamsString: string): 'car' | 'truck' |
   return vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
     ? vehicleTypeParam
     : 'car';
+}
+
+function listingGridHasMore(meta: PaginationMeta | null, currentPage: number): boolean {
+  return Boolean(meta?.totalPages && currentPage < meta.totalPages);
+}
+
+function getAppendSkeletonCount(meta: PaginationMeta | null, visibleListingsCount: number): number {
+  const remaining = Math.max(0, (meta?.total ?? 0) - visibleListingsCount);
+  return remaining > 0 ? Math.min(remaining, LISTING_GRID_PAGE_SIZE) : LISTING_GRID_PAGE_SIZE;
 }
 
 async function fetchListingsPage(
@@ -227,6 +163,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const [listings, setListings] = useState<Listing[]>(initialData?.data || []);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [appendSkeletonCount, setAppendSkeletonCount] = useState(0);
   const [meta, setMeta] = useState<PaginationMeta | null>(initialData?.meta || null);
   const [currentPage, setCurrentPage] = useState(initialData?.meta?.page || 1);
   const [error, setError] = useState<string | null>(null);
@@ -307,6 +244,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
             listingsRef.current = allNewListings;
             setCurrentPage(1);
             setLoadingMore(false);
+            setAppendSkeletonCount(0);
             setMeta(finalMeta);
             setError(null);
             setHasLoadedWithFilters(true);
@@ -335,12 +273,16 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                 return updated;
               });
               setLoadingMore(false);
+              setAppendSkeletonCount(0);
             });
           }, remaining);
         }
       } catch (error) {
         if (controller.signal.aborted) return;
         if (handleSearchLimitOverflowError(error, searchParamsString, replace)) return;
+        if (append) {
+          setAppendSkeletonCount(0);
+        }
         if (!append) {
           setListings([]);
           setError(t('listings.loadError'));
@@ -350,6 +292,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         if (!controller.signal.aborted) {
           if (!appendDeferred) {
             setLoadingMore(false);
+            if (append) {
+              setAppendSkeletonCount(0);
+            }
           }
           if (!append) {
             setLoading(false);
@@ -362,7 +307,6 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     },
     [searchParamsString, t, checkFavorites, replace],
   );
-
   const fetchListingsRef = useRef(fetchListings);
   fetchListingsRef.current = fetchListings;
 
@@ -400,6 +344,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       setCurrentPage(1);
       setHasLoadedWithFilters(false);
       setLoading(true);
+      setAppendSkeletonCount(0);
       setError(null);
       sessionStorageRemoveItem(GRID_STATE_KEY);
       sessionStorageRemoveItem('homeScrollTimestamp');
@@ -496,8 +441,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     if (loadingMore || !meta || !meta.totalPages || currentPage >= meta.totalPages) {
       return;
     }
+    setAppendSkeletonCount(getAppendSkeletonCount(meta, uniqueListings.length));
     await fetchListings(currentPage + 1, true);
-  }, [loadingMore, meta, currentPage, fetchListings]);
+  }, [loadingMore, meta, currentPage, uniqueListings.length, fetchListings]);
 
   const { visible: showSkeleton } = useLoadingState({
     isLoading: loading,
@@ -507,6 +453,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   });
 
   const showContent = !showSkeleton;
+  const hasMore = listingGridHasMore(meta, currentPage);
 
   useEffect(() => {
     if (typeof window === 'undefined' || listings.length === 0 || !showContent) return;
@@ -609,33 +556,20 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                     </Fragment>
                   );
                 })}
+                {loadingMore &&
+                  appendSkeletonCount > 0 &&
+                  Array.from({ length: appendSkeletonCount }).map((_, index) => (
+                    <ListingCardSkeleton key={`append-skeleton-${currentPage + 1}-${index}`} />
+                  ))}
               </div>
-
-              {(() => {
-                const hasMore = meta && meta.totalPages && currentPage < meta.totalPages;
-
-                return (
-                  <>
-                    {(hasMore || loadingMore) && (
-                      <LoadMoreButton
-                        onClick={handleLoadMore}
-                        loading={loadingMore}
-                        disabled={loadingMore}
-                      >
-                        {t('listings.showMore')}
-                      </LoadMoreButton>
-                    )}
-
-                    {!hasMore && uniqueListings.length > 0 && !loadingMore && (
-                      <div className="text-center pt-8 pb-0">
-                        <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-                          {t('listings.noMoreListings')}
-                        </p>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
+              <ListingGridPaginationFooter
+                hasMore={hasMore}
+                loadingMore={loadingMore}
+                onLoadMore={handleLoadMore}
+                loadMoreLabel={t('listings.showMore')}
+                noMoreLabel={t('listings.noMoreListings')}
+                showNoMore={!hasMore && uniqueListings.length > 0 && !loadingMore}
+              />
             </>
           )}
         </>

@@ -15,14 +15,24 @@ export function ServiceWorkerRegistration() {
     }
 
     let refreshing = false;
+    const isProduction = process.env.NODE_ENV === 'production';
 
     const registerServiceWorker = async () => {
       try {
+        if (!isProduction) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((reg) => reg.unregister()));
+          return;
+        }
+
         const reg = await navigator.serviceWorker.register('/sw.js', {
           scope: '/',
         });
 
         setRegistration(reg);
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          setUpdateAvailable(true);
+        }
 
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
