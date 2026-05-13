@@ -147,7 +147,7 @@ export const parsersConfig: ParserConfigItem[] = [
     releaseStage: 'prepared',
     isVisibleInAdmin: true,
     manualRunEnabled: true,
-    schedulerEnabled: false,
+    schedulerEnabled: true,
     cliScript: 'autooutlet-import/cli.ts',
     plpMode: 'mono',
     plpDataPath: 'runtime/parsing/autooutlet/autooutlet-current-plp.json',

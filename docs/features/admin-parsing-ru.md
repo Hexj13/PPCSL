@@ -76,7 +76,7 @@ tags:
   - `scanInputMode: pages`
   - `plpMode: mono`
   - `manualRunEnabled: true`
-  - `schedulerEnabled: false`
+  - `schedulerEnabled: true`
   - `adminAvailability: enabled`
   - `releaseStage: prepared`
 
