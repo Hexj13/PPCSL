@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 
 import { useI18n } from '@/components/providers/I18nProvider';
 import type { useTranslation } from '@/hooks/useTranslation';
-import type { Brand, VehicleModel } from '@/lib/api';
-import type { City } from '@/lib/api';
+import type { Brand, City, VehicleModel } from '@/lib/api';
+import { vehicleBrandLogoUrl } from '@/lib/brand-logo-urls';
 import { ConditionType, RegistrationType } from '@/lib/constants';
 import { getPopularBrands } from '@/lib/content/popular-brands';
 import { getColorOptions } from '@/lib/options';
@@ -78,13 +78,23 @@ export function useFilterOptions({
       brands.filter((brand) => !popularBrandsList.includes(brand.name)),
     );
 
-    const options: Array<{ value: string; label: string; category?: string }> = [];
+    const options: Array<{
+      value: string;
+      label: string;
+      category?: string;
+      logoSrc?: string;
+    }> = [];
 
     if (popularBrands.length > 0) {
       const popularLabel = t('searchFilters.popular');
       options.push({ value: '__category__popular', label: popularLabel, category: popularLabel });
       popularBrands.forEach((brand) => {
-        options.push({ value: brand.id, label: brand.name, category: popularLabel });
+        options.push({
+          value: brand.id,
+          label: brand.name,
+          category: popularLabel,
+          logoSrc: vehicleBrandLogoUrl(brand.name),
+        });
       });
     }
 

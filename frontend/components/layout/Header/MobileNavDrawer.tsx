@@ -46,9 +46,10 @@ export function MobileNavDrawer({
   return (
     <nav
       id={id}
-      className={`${motionClass} absolute left-0 right-0 top-0 z-[15] pb-4 pt-4 bg-bg-base shadow-lg border-b border-primary-700 max-h-[calc(100dvh-4.5rem)] w-full overflow-y-auto scrollbar-custom ${presenceClosing ? 'pointer-events-none' : ''}`}
+      dir="ltr"
+      className={`${motionClass} fixed left-0 top-[4.5rem] bottom-0 z-[45] w-[80vw] max-w-md pb-4 pt-4 bg-bg-base shadow-lg border-r border-primary-700 overflow-y-auto scrollbar-custom lg:hidden ${presenceClosing ? 'pointer-events-none' : ''}`}
     >
-      <div className="container mx-auto px-3 sm:px-4">
+      <div className="px-3 sm:px-4">
         {showSkeleton ? (
           <NavSkeleton variant="mobile" />
         ) : user ? (

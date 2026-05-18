@@ -94,6 +94,7 @@ export interface BuildSearchQueryFilters {
   is_new: boolean;
   available_in_credit: boolean;
   down_payment_amount_gte: string;
+  seller_type: string;
   conditions: string[];
   registration_types: string[];
   horsepower_gte: string;
@@ -292,6 +293,9 @@ function buildTireSearchQuery(
   if (filters.price_lte) params.set('price_lte', filters.price_lte);
   if (filters.currency) params.set('currency', filters.currency);
   if (filters.urgent) params.set('urgent', 'true');
+  if (filters.seller_type === 'Individual' || filters.seller_type === 'Business') {
+    params.set('seller_type', filters.seller_type);
+  }
 
   if (
     (filters.sortBy && filters.sortBy !== 'created_at') ||

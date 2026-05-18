@@ -9,6 +9,7 @@ import { ComparisonItem } from './comparison/entities/comparison-item.entity';
 import { PushDevice } from './devices/entities/push-device.entity';
 import { ExchangeRate } from './exchange-rates/entities/exchange-rate.entity';
 import { Favorite } from './favorites/entities/favorite.entity';
+import { ListingAiReport } from './listings/entities/listing-ai-report.entity';
 import { ListingView } from './listings/entities/listing-view.entity';
 import { Listing } from './listings/entities/listing.entity';
 import { PromotionHistory } from './listings/entities/promotion-history.entity';
@@ -46,6 +47,7 @@ export const dataSourceOptions: DataSourceOptions = {
   entities: [
     User,
     Listing,
+    ListingAiReport,
     ListingView,
     Vehicle,
     PromotionHistory,

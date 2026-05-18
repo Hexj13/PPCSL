@@ -14,6 +14,33 @@ import type {
 
 export type ListingCategory = 'vehicle' | 'tire';
 
+export interface ListingAiReportListingAnalysis {
+  priceComment: string;
+  mileageComment: string;
+  descriptionComment: string;
+  registrationComment?: string;
+  optionsComment?: string;
+}
+
+export interface ListingAiReportPayload {
+  modelContext: string[];
+  summary: string;
+  listingAnalysis: ListingAiReportListingAnalysis;
+  strengths: string[];
+  weaknesses: string[];
+  buyingChecks: string[];
+  questionsForSeller: string[];
+  redFlags: string[];
+  confidence: number;
+  disclaimer: string;
+}
+
+export type ListingAiReportPostResponse =
+  | { status: 'ready'; report: ListingAiReportPayload }
+  | { status: 'pending' }
+  | { status: 'unavailable'; message: string }
+  | { status: 'rate_limited'; message: string };
+
 export interface TireOnListing {
   id: string;
   brand_id: string;
@@ -52,6 +79,7 @@ export interface TireOnListing {
 
 export interface Listing {
   id: string;
+  slug?: string | null;
   title: string;
   category?: ListingCategory;
   price?: number;
@@ -96,6 +124,48 @@ export interface Listing {
     freePromotionBalance: number;
     partnerListingProgress: number;
   };
+  has_video?: boolean;
+  video?: ListingVideoPayload | null;
+}
+
+export interface ListingVideoPayload {
+  status: string;
+  webmUrl?: string | null;
+  mp4Url?: string | null;
+  thumbUrl?: string | null;
+  durationSec?: number | null;
+  error?: string | null;
+  jobId?: string | null;
+  uploadedAt?: string | null;
+}
+
+export interface ListingVideoConstraints {
+  maxFileSizeBytes: number;
+  maxDurationSec: number;
+  partSizeBytes: number;
+  allowedContentTypes: string[];
+}
+
+export interface ListingVideoUploadInitResponse {
+  uploadId: string;
+  key: string;
+  partCount: number;
+  parts: { partNumber: number; url: string }[];
+  maxFileSizeBytes: number;
+  maxDurationSec: number;
+  partSizeBytes: number;
+  allowedContentTypes: string[];
+}
+
+export interface StagedListingVideoUploadInitResponse extends ListingVideoUploadInitResponse {
+  stagedVideoToken: string;
+}
+
+export interface StagedListingVideoStatusResponse {
+  status: 'pending' | 'processing' | 'published' | 'failed';
+  progress: number | null;
+  stagedVideoToken: string;
+  video?: ListingVideoPayload | null;
 }
 
 export interface Brand {
@@ -162,6 +232,7 @@ export interface User {
   isPlatformPartner?: boolean;
   freePromotionBalance?: number;
   partnerListingProgress?: number;
+  hidePartnerPromoBanner?: boolean;
 }
 
 export interface RegisterResponse extends User {
@@ -228,6 +299,7 @@ export interface SearchParams {
   horsepower_gte?: number;
   horsepower_lte?: number;
   drive_types?: string[];
+  seller_type?: 'Individual' | 'Business';
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -293,6 +365,7 @@ export interface CreateListingDto {
   };
   tire?: CreateTireDtoPayload;
   assignedUserId?: string;
+  stagedVideoToken?: string;
 }
 
 export type UpdateListingDto = Omit<
@@ -336,6 +409,7 @@ export interface RegisterDto {
   password: string;
   type: Extract<UserType, 'Individual' | 'Business'>;
   phone: string;
+  smsVerificationCode?: string;
   firstName?: string;
   lastName?: string;
   companyName?: string;
@@ -453,6 +527,7 @@ export interface UpdateProfileDto {
   lastName?: string;
   companyName?: string;
   companyWebsiteUrl?: string;
+  phone?: string;
   additionalPhone?: string | null;
   emailNotifications?: boolean;
   emailNotificationListingRefreshReminders?: boolean;
@@ -462,6 +537,7 @@ export interface UpdateProfileDto {
   whatsapp?: boolean;
   telegram?: boolean;
   preferredLocale?: Locale;
+  type?: 'Individual' | 'Business';
 }
 
 export interface ChangePhoneRequestDto {
@@ -482,7 +558,26 @@ export interface ChangePhoneVerifyDto {
 }
 
 export interface RefreshTokenDto {
-  refresh_token: string;
+  refresh_token?: string;
+}
+
+export interface LoginResponse {
+  user: User;
+}
+
+export interface GoogleSignInDto {
+  idToken: string;
+  type?: 'Individual' | 'Business';
+  termsAccepted?: boolean;
+}
+
+export interface GoogleSignInResponse extends LoginResponse {
+  requiresPhoneVerification: boolean;
+  isNewUser: boolean;
+}
+
+export interface VerifyPhoneDto {
+  code: string;
 }
 
 export interface FavoriteItem {

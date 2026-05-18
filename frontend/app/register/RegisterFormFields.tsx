@@ -16,7 +16,7 @@ type RegisterFormFieldsProps = {
   setShowPassword: (v: boolean) => void;
   getPasswordValidationRules: (password: string) => { text: string; isValid: boolean }[];
   onPhoneChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onPhoneBlur: () => void;
+  onPhoneBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
   onPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFormFieldFocus: () => void;
 };
@@ -45,7 +45,16 @@ export function RegisterFormFields({
       onFocus={onFormFieldFocus}
     />
   );
-  const messengers = <RegisterFormMessengers formData={formData} setFormData={setFormData} />;
+  const messengers = (
+    <RegisterFormMessengers
+      messengers={{
+        viber: formData.viber,
+        whatsapp: formData.whatsapp,
+        telegram: formData.telegram,
+      }}
+      onMessengersChange={(next) => setFormData((p) => ({ ...p, ...next }))}
+    />
+  );
   const password = (
     <RegisterFormPassword
       value={formData.password}

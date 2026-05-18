@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { ChevronDownIcon, designTokens } from '@/ui';
 
 import { DetailsMoreIcon, LogoutIcon, ScaleIcon, ShieldIcon, UserIcon } from './icons';
@@ -22,6 +23,7 @@ export function HeaderMoreDropdown({
   onLogout,
   t,
 }: HeaderMoreDropdownProps) {
+  const { href } = useLocalizedNavigation();
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -79,7 +81,7 @@ export function HeaderMoreDropdown({
             )}
           </Link>
           <Link
-            href="/profile"
+            href={href('/profile')}
             role="menuitem"
             onClick={close}
             className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-text-primary transition-colors hover-only:hover:bg-primary-500/10"
@@ -89,7 +91,7 @@ export function HeaderMoreDropdown({
           </Link>
           {user.type === 'Admin' && (
             <Link
-              href="/admin"
+              href={href('/admin')}
               role="menuitem"
               onClick={close}
               className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-text-primary transition-colors hover-only:hover:bg-primary-500/10"

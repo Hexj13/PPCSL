@@ -4,9 +4,11 @@ import * as path from 'path';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { Test, TestingModule } from '@nestjs/testing';
+import cookieParser from 'cookie-parser';
 import request from 'supertest';
 
 import { AppModule } from '../app.module';
+import { PhoneVerifiedGuard } from '../auth/infrastructure/guards/phone-verified.guard';
 import { EmailService } from '../auth/infrastructure/services/email.service';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 import { I18nService } from '../common/i18n/i18n.service';
@@ -18,6 +20,8 @@ export async function createTestApp(): Promise<INestApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
   })
+    .overrideGuard(PhoneVerifiedGuard)
+    .useValue({ canActivate: () => true })
     .overrideProvider(EmailService)
     .useValue({
       sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
@@ -27,6 +31,7 @@ export async function createTestApp(): Promise<INestApplication> {
     .compile();
 
   app = moduleFixture.createNestApplication();
+  app.use(cookieParser());
 
   const i18nService = moduleFixture.get<I18nService>(I18nService);
   app.useGlobalFilters(new HttpExceptionFilter(i18nService));

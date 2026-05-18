@@ -1,0 +1,114 @@
+import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+import { useScrollLock } from '@/hooks/useScrollLock';
+import { designTokens } from '@/ui';
+
+interface BottomSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  children: React.ReactNode;
+  className?: string;
+  dataTestId?: string;
+}
+
+const TRANSITION_MS = 300;
+
+export function BottomSheet({
+  isOpen,
+  onClose,
+  title,
+  children,
+  className = '',
+  dataTestId,
+}: BottomSheetProps) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  const titleId = useId();
+  const pointerStartedOnBackdropRef = useRef(false);
+  const [isRendered, setIsRendered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useScrollLock(isRendered);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsRendered(true);
+      const frame = requestAnimationFrame(() => setIsVisible(true));
+      return () => cancelAnimationFrame(frame);
+    }
+
+    setIsVisible(false);
+    const timer = setTimeout(() => setIsRendered(false), TRANSITION_MS);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isRendered) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCloseRef.current();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isRendered]);
+
+  if (!isRendered || typeof window === 'undefined') {
+    return null;
+  }
+
+  const sheetContent = (
+    <div
+      className={`fixed inset-0 flex items-end justify-center px-4 transition-colors duration-300 ${
+        isVisible ? 'bg-black/70' : 'bg-black/0'
+      }`}
+      style={{
+        zIndex: designTokens.zIndex.modal,
+        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+      }}
+      role="presentation"
+      onPointerDown={(e) => {
+        pointerStartedOnBackdropRef.current = e.target === e.currentTarget;
+      }}
+      onPointerUp={(e) => {
+        if (e.target === e.currentTarget && pointerStartedOnBackdropRef.current) {
+          onCloseRef.current();
+        }
+        pointerStartedOnBackdropRef.current = false;
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        data-testid={dataTestId}
+        className={`w-full max-w-lg bg-bg-base rounded-t-2xl border border-primary-700/30 border-b-0 shadow-xl transition-transform duration-300 ease-out ${
+          isVisible ? 'translate-y-0' : 'translate-y-full'
+        } ${className}`}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-center pt-3 pb-1" aria-hidden="true">
+          <span className="block h-1 w-10 rounded-full bg-primary-700/40" />
+        </div>
+        {title && (
+          <div className="px-5 pb-3 pt-1 border-b border-primary-700/30">
+            <h2 id={titleId} className="text-lg font-bold text-primary-900 sm:text-xl">
+              {title}
+            </h2>
+          </div>
+        )}
+        <div className="p-5">{children}</div>
+      </div>
+    </div>
+  );
+
+  return createPortal(sheetContent, document.body);
+}

@@ -1,15 +1,23 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import type { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 import { UserType } from '../../../common/types';
 import { UsersService } from '../../../users/application/users.service';
+import { ACCESS_TOKEN_COOKIE } from '../../application/services/auth-token-issuer.service';
 
 interface JwtPayload {
   sub: string;
   email?: string;
   type?: UserType;
+  phoneVerified?: boolean;
+}
+
+function cookieExtractor(req: Request): string | null {
+  const raw = req?.cookies?.[ACCESS_TOKEN_COOKIE];
+  return typeof raw === 'string' && raw.length > 0 ? raw : null;
 }
 
 @Injectable()
@@ -28,7 +36,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        cookieExtractor,
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: secret || 'your-secret-key-change-in-production-DEV-ONLY',
     });
@@ -39,6 +50,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user.active) {
       throw new UnauthorizedException('errors.userDeactivated');
     }
-    return { id: payload.sub, email: user.email, type: user.type };
+    const phoneVerified = !!(user.phone && user.phoneVerified);
+    return {
+      id: payload.sub,
+      email: user.email,
+      type: user.type,
+      phoneVerified,
+    };
   }
 }

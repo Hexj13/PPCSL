@@ -22,10 +22,15 @@ import {
   type HeroPreviewSlots,
   REWIND_STEP_MS,
   RESET_TO_FIRST_DELAY_MS,
+  type ListingPageHeroVideoSlide,
 } from './ListingPageImagesPreview';
+import { galleryImageIndexForBlurHash } from './listing-gallery-blur';
+import { clearImageNavGuard, tryRunWithSyncImageNavLock } from './listing-image-nav-guard';
+import { useListingPageImagesTouchHandlers } from './useListingPageImagesTouch';
 
 interface ListingPageImagesProps {
   images: string[];
+  videoSlide?: ListingPageHeroVideoSlide | null;
   imageAltTitle: string;
   currentImageIndex: number;
   setCurrentImageIndex: Dispatch<SetStateAction<number>>;
@@ -34,6 +39,7 @@ interface ListingPageImagesProps {
   onImageClick: (_index: number) => void;
   coverBlurHash?: string | null;
   imageBlurHashes?: (string | null)[] | null;
+  navigationBlurDataUrl?: string;
 }
 
 export type PreviewState = {
@@ -50,9 +56,6 @@ export interface ListingPageImagesHandle {
   getIndex: () => number;
 }
 
-const MIN_SWIPE_DISTANCE = 50;
-const SWIPE_INTENT_THRESHOLD = 18;
-
 export function createPreviewState(index: number): PreviewState {
   return {
     confirmedSlot: 'primary',
@@ -66,6 +69,12 @@ export function createPreviewState(index: number): PreviewState {
 
 export function getConfirmedIndex(state: PreviewState) {
   return state.slotIndices[state.confirmedSlot] ?? 0;
+}
+
+export function getNavigationBaseIndex(snap: PreviewState): number {
+  const confirmedIdx = getConfirmedIndex(snap);
+  const pendingIdx = snap.pendingSlot ? snap.slotIndices[snap.pendingSlot] : null;
+  return pendingIdx !== null && pendingIdx !== undefined ? pendingIdx : confirmedIdx;
 }
 
 export function getPendingSlotId(slotId: HeroPreviewSlotId): HeroPreviewSlotId {
@@ -107,20 +116,11 @@ export function promotePendingPreviewState(
   };
 }
 
-function getPredictedSwipeIndex(currentIndex: number, total: number, deltaX: number) {
-  if (deltaX < 0) {
-    return (currentIndex + 1) % total;
-  }
-  if (deltaX > 0) {
-    return currentIndex === 0 ? total - 1 : currentIndex - 1;
-  }
-  return null;
-}
-
 export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPageImagesProps>(
   function ListingPageImages(
     {
       images,
+      videoSlide = null,
       imageAltTitle,
       currentImageIndex,
       setCurrentImageIndex,
@@ -129,6 +129,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       onImageClick,
       coverBlurHash,
       imageBlurHashes,
+      navigationBlurDataUrl,
     },
     ref,
   ) {
@@ -136,11 +137,6 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     const imagesSignature = useMemo(() => images.join('\u0001'), [images]);
     const [heroPreviewBlurConsumed, setHeroPreviewBlurConsumed] = useState(false);
     const [state, setState] = useState<PreviewState>(() => createPreviewState(currentImageIndex));
-    const touchStartX = useRef<number | null>(null);
-    const touchStartY = useRef<number | null>(null);
-    const touchEndX = useRef<number | null>(null);
-    const touchEndY = useRef<number | null>(null);
-    const horizontalSwipeRef = useRef(false);
     const suppressPreviewClickRef = useRef(false);
     const resetToFirstTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const rewindIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -149,14 +145,28 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     const preloadCleanupRef = useRef<(() => void) | null>(null);
     const swipePreloadIndexRef = useRef<number | null>(null);
     const previewStateRef = useRef<PreviewState>(state);
+    const previewNavSyncLockRef = useRef(false);
+    const previewNavUnlockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const goPrevInternalRef = useRef<(options?: { clearTimer?: boolean }) => void>(() => {});
     const visibleIndex = getConfirmedIndex(state);
 
     useEffect(() => {
       setHeroPreviewBlurConsumed(false);
       setState(createPreviewState(currentImageIndex));
+      clearImageNavGuard(previewNavSyncLockRef, previewNavUnlockTimeoutRef);
       // eslint-disable-next-line react-hooks/exhaustive-deps -- reset carousel only when image set changes; index is parent value at that commit
     }, [imagesSignature]);
+
+    useEffect(() => {
+      if (!state.pendingSlot) {
+        previewNavSyncLockRef.current = false;
+      }
+    }, [state.pendingSlot]);
+
+    useEffect(
+      () => () => clearImageNavGuard(previewNavSyncLockRef, previewNavUnlockTimeoutRef),
+      [],
+    );
 
     useEffect(() => {
       if (state.pendingSlot || visibleIndex === currentImageIndex) {
@@ -172,22 +182,35 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     }, [currentImageIndex, state.pendingSlot, visibleIndex]);
 
     const blurDataURLForIndex = useMemo(() => {
+      const firstGalleryImageIndex = videoSlide ? 1 : 0;
       return (index: number): string | undefined => {
-        const fromArr = imageBlurHashes?.[index];
+        const imageIdx = galleryImageIndexForBlurHash(index, videoSlide);
+        if (imageIdx === null) {
+          if (navigationBlurDataUrl && index === firstGalleryImageIndex) {
+            return navigationBlurDataUrl;
+          }
+          return undefined;
+        }
+        const fromArr = imageBlurHashes?.[imageIdx];
         const hash =
           typeof fromArr === 'string' && fromArr.length > 0
             ? fromArr
-            : index === 0 && coverBlurHash && coverBlurHash.length > 0
+            : imageIdx === 0 && coverBlurHash && coverBlurHash.length > 0
               ? coverBlurHash
               : undefined;
-        if (!hash) return undefined;
-        try {
-          return blurhashToDataURL(hash);
-        } catch {
-          return undefined;
+        if (hash) {
+          try {
+            return blurhashToDataURL(hash);
+          } catch {
+            return undefined;
+          }
         }
+        if (navigationBlurDataUrl && index === firstGalleryImageIndex) {
+          return navigationBlurDataUrl;
+        }
+        return undefined;
       };
-    }, [imageBlurHashes, coverBlurHash]);
+    }, [imageBlurHashes, coverBlurHash, videoSlide, navigationBlurDataUrl]);
 
     const clearResetToFirstTimer = useCallback(() => {
       if (resetToFirstTimerRef.current) {
@@ -201,8 +224,6 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     }, []);
 
     const {
-      showMainImageLoader,
-      setMainImageLoading,
       isTargetReady,
       isHeroReady,
       preloadTarget,
@@ -254,10 +275,9 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
           preloadCleanupRef.current();
           preloadCleanupRef.current = null;
         }
-        setMainImageLoading(false);
         schedulePendingPromotion(slotId, idx, navigationSeqRef.current);
       },
-      [handleHeroImageLoad, schedulePendingPromotion, setMainImageLoading],
+      [handleHeroImageLoad, schedulePendingPromotion],
     );
 
     const clearSwipePreload = useCallback(() => {
@@ -274,8 +294,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         preloadCleanupRef.current = null;
       }
       clearSwipePreload();
-      setMainImageLoading(false);
-    }, [clearSwipePreload, setMainImageLoading]);
+    }, [clearSwipePreload]);
 
     useEffect(() => () => clearResetToFirstTimer(), [clearResetToFirstTimer]);
     useEffect(() => () => clearNavigationWork(), [clearNavigationWork]);
@@ -289,9 +308,12 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
 
     const navigateTo = useCallback(
       (toIndex: number, options?: { clearTimer?: boolean }) => {
-        if (state.pendingSlot || images.length <= 1 || visibleIndex === toIndex) {
-          return;
-        }
+        if (images.length <= 1) return;
+        const snap = previewStateRef.current;
+        const confirmedIdx = getConfirmedIndex(snap);
+        const pendingIdx = snap.pendingSlot ? snap.slotIndices[snap.pendingSlot] : null;
+        if (!snap.pendingSlot && confirmedIdx === toIndex) return;
+        if (snap.pendingSlot !== null && pendingIdx === toIndex) return;
         if (options?.clearTimer !== false) {
           clearResetToFirstTimer();
         }
@@ -306,17 +328,14 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         setState(nextState);
 
         if (isHeroReady(toIndex)) {
-          setMainImageLoading(false);
           schedulePendingPromotion(pendingSlot, toIndex, sequence);
           return;
         }
 
         if (isTargetReady(toIndex)) {
-          setMainImageLoading(false);
           return;
         }
 
-        setMainImageLoading(true);
         preloadCleanupRef.current = preloadTarget(toIndex, {
           onReady: () => {
             preloadCleanupRef.current = null;
@@ -334,21 +353,30 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         isTargetReady,
         preloadTarget,
         schedulePendingPromotion,
-        setMainImageLoading,
-        state,
-        visibleIndex,
       ],
     );
 
     const goPrevInternal = useCallback(
       (options?: { clearTimer?: boolean }) => {
-        if (state.pendingSlot || images.length <= 1) {
+        if (images.length <= 1) {
           return;
         }
-        const toIndex = visibleIndex === 0 ? images.length - 1 : visibleIndex - 1;
-        navigateTo(toIndex, options);
+        if (previewStateRef.current.pendingSlot !== null) {
+          return;
+        }
+        tryRunWithSyncImageNavLock({
+          isActive: true,
+          syncClickLockRef: previewNavSyncLockRef,
+          syncUnlockTimeoutRef: previewNavUnlockTimeoutRef,
+          run: () => {
+            const snap = previewStateRef.current;
+            const baseIdx = getNavigationBaseIndex(snap);
+            const toIndex = baseIdx === 0 ? images.length - 1 : baseIdx - 1;
+            navigateTo(toIndex, options);
+          },
+        });
       },
-      [images.length, navigateTo, state.pendingSlot, visibleIndex],
+      [images.length, navigateTo],
     );
 
     previewStateRef.current = state;
@@ -356,14 +384,37 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
 
     const goNextInternal = useCallback(
       (options?: { clearTimer?: boolean }) => {
-        if (state.pendingSlot || images.length <= 1) {
+        if (images.length <= 1) {
           return;
         }
-        const toIndex = (visibleIndex + 1) % images.length;
-        navigateTo(toIndex, options);
+        if (previewStateRef.current.pendingSlot !== null) {
+          return;
+        }
+        tryRunWithSyncImageNavLock({
+          isActive: true,
+          syncClickLockRef: previewNavSyncLockRef,
+          syncUnlockTimeoutRef: previewNavUnlockTimeoutRef,
+          run: () => {
+            const snap = previewStateRef.current;
+            const baseIdx = getNavigationBaseIndex(snap);
+            const toIndex = (baseIdx + 1) % images.length;
+            navigateTo(toIndex, options);
+          },
+        });
       },
-      [images.length, navigateTo, state.pendingSlot, visibleIndex],
+      [images.length, navigateTo],
     );
+
+    const { onTouchStart, onTouchMove, onTouchEnd } = useListingPageImagesTouchHandlers({
+      imagesLength: images.length,
+      visibleIndex,
+      preloadTarget,
+      goNextInternal,
+      goPrevInternal,
+      clearSwipePreload,
+      suppressPreviewClickRef,
+      swipePreloadIndexRef,
+    });
 
     useImperativeHandle(
       ref,
@@ -411,104 +462,23 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       clearResetToFirstTimer();
     }, [clearResetToFirstTimer]);
 
-    const navBusy = state.pendingSlot !== null;
-
     const handlePrev = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (navBusy) return;
         goPrevInternal();
       },
-      [goPrevInternal, navBusy],
+      [goPrevInternal],
     );
 
     const handleNext = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (navBusy) return;
         goNextInternal();
       },
-      [goNextInternal, navBusy],
+      [goNextInternal],
     );
-
-    const onTouchStart = useCallback(
-      (e: React.TouchEvent) => {
-        clearSwipePreload();
-        touchEndX.current = null;
-        touchEndY.current = null;
-        horizontalSwipeRef.current = false;
-        touchStartX.current = e.targetTouches[0].clientX;
-        touchStartY.current = e.targetTouches[0].clientY;
-      },
-      [clearSwipePreload],
-    );
-
-    const onTouchMove = useCallback(
-      (e: React.TouchEvent) => {
-        const nextX = e.targetTouches[0].clientX;
-        const nextY = e.targetTouches[0].clientY;
-        touchEndX.current = nextX;
-        touchEndY.current = nextY;
-
-        if (touchStartX.current === null || touchStartY.current === null) return;
-
-        const deltaX = nextX - touchStartX.current;
-        const deltaY = nextY - touchStartY.current;
-        const isHorizontalIntent =
-          Math.abs(deltaX) > SWIPE_INTENT_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * 1.1;
-
-        if (isHorizontalIntent) {
-          horizontalSwipeRef.current = true;
-          if (!state.pendingSlot && images.length > 1) {
-            const predictedIndex = getPredictedSwipeIndex(visibleIndex, images.length, deltaX);
-
-            if (predictedIndex !== null && swipePreloadIndexRef.current !== predictedIndex) {
-              swipePreloadIndexRef.current = predictedIndex;
-              preloadTarget(predictedIndex);
-            }
-          }
-          e.preventDefault();
-        }
-      },
-      [images.length, preloadTarget, state.pendingSlot, visibleIndex],
-    );
-
-    const onTouchEnd = useCallback(() => {
-      const resetTouchState = () => {
-        clearSwipePreload();
-        horizontalSwipeRef.current = false;
-        touchStartX.current = null;
-        touchStartY.current = null;
-        touchEndX.current = null;
-        touchEndY.current = null;
-      };
-
-      if (
-        touchStartX.current === null ||
-        touchEndX.current === null ||
-        !horizontalSwipeRef.current
-      ) {
-        resetTouchState();
-        return;
-      }
-
-      const distance = touchStartX.current - touchEndX.current;
-      const isLeftSwipe = distance > MIN_SWIPE_DISTANCE;
-      const isRightSwipe = distance < -MIN_SWIPE_DISTANCE;
-
-      if (isLeftSwipe && images.length > 1) {
-        suppressPreviewClickRef.current = true;
-        goNextInternal();
-      }
-      if (isRightSwipe && images.length > 1) {
-        suppressPreviewClickRef.current = true;
-        goPrevInternal();
-      }
-
-      resetTouchState();
-    }, [clearSwipePreload, goNextInternal, goPrevInternal, images.length]);
 
     return (
       <ListingPageImagesLayout
@@ -522,11 +492,9 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         onTouchEnd={onTouchEnd}
         handlePreviewMouseLeave={handlePreviewMouseLeave}
         handlePreviewMouseEnter={handlePreviewMouseEnter}
-        navBusy={navBusy}
         handlePrev={handlePrev}
         handleNext={handleNext}
         t={t}
-        showMainImageLoader={showMainImageLoader && state.pendingSlot !== null}
         confirmedSlot={state.confirmedSlot}
         pendingSlot={state.pendingSlot}
         slotIndices={state.slotIndices}
@@ -535,6 +503,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         onImageError={onImageError}
         blurDataURLForIndex={blurDataURLForIndex}
         heroPreviewBlurConsumed={heroPreviewBlurConsumed}
+        videoSlide={videoSlide}
         navigateTo={navigateTo}
         setCurrentImageIndex={setCurrentImageIndex}
         handleThumbnailImageLoad={handleThumbnailImageLoad}

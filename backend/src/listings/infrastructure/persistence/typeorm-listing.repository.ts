@@ -355,6 +355,8 @@ export class TypeOrmListingRepository implements IListingRepository {
         'listing.category',
         'listing.created_at',
         'listing.last_updated_at',
+        'listing.slug',
+        'listing.video',
       ])
       .leftJoin('listing.vehicle', 'vehicle')
       .addSelect([
@@ -453,6 +455,9 @@ export class TypeOrmListingRepository implements IListingRepository {
     applyBooleanFilter(qb, 'listing', 'urgent', searchDto.urgent);
     applyBooleanFilter(qb, 'listing', 'is_new', searchDto.is_new);
     applyBooleanFilter(qb, 'listing', 'available_in_credit', searchDto.available_in_credit);
+    if (searchDto.seller_type) {
+      qb.andWhere('user.type = :sellerType', { sellerType: searchDto.seller_type });
+    }
     if (searchDto.down_payment_amount_gte != null && searchDto.down_payment_amount_gte >= 0) {
       qb.andWhere(
         'listing.available_in_credit = true AND listing.down_payment_amount IS NOT NULL AND listing.down_payment_amount >= :down_payment_amount_gte',
@@ -525,6 +530,8 @@ export class TypeOrmListingRepository implements IListingRepository {
         'listing.category',
         'listing.created_at',
         'listing.last_updated_at',
+        'listing.slug',
+        'listing.video',
       ])
       .leftJoin('listing.tire', 'tire')
       .addSelect([
@@ -602,6 +609,9 @@ export class TypeOrmListingRepository implements IListingRepository {
     applyTextSearchFilter(qb, 'listing', 'title', searchDto.title);
     applyBooleanFilter(qb, 'listing', 'urgent', searchDto.urgent);
     applyBooleanFilter(qb, 'listing', 'is_new', searchDto.is_new);
+    if (searchDto.seller_type) {
+      qb.andWhere('user.type = :sellerType', { sellerType: searchDto.seller_type });
+    }
 
     qb.andWhere(
       '(listing.is_promoted = false OR listing.promoted_until IS NULL OR listing.promoted_until > NOW())',

@@ -1,12 +1,17 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { startTransition, useMemo } from 'react';
 
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
 import { setStoredLocale, type Locale } from '@/lib/i18n';
+import { resolveLocaleRouting, shouldShowLanguageSwitcher } from '@/lib/locale-routing';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import { useAuthStore } from '@/lib/store';
+import { localePrefixPath, stripLocalePrefixFromPathname } from '@/lib/url-locale';
+import { getCountry } from '@/lib/utils';
 
 import { Dropdown } from './Dropdown';
 
@@ -15,14 +20,6 @@ const headerStyle =
 
 const footerStyle =
   'header-language-switcher bg-transparent! text-white! font-medium text-sm hover-only:hover:text-primary-100! active:text-primary-300! transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:text-white! hover-only:hover:[&_span]:text-primary-100! [&_svg]:text-white! hover-only:hover:[&_svg]:text-primary-100!';
-
-const getLanguageName = (locale: Locale, t: (key: string) => string): string => {
-  const keys: Record<Locale, string> = {
-    ro: 'common.languageRo',
-    ru: 'common.languageRu',
-  };
-  return t(keys[locale] || 'common.languageRo');
-};
 
 export function LanguageSwitcher({
   variant = 'desktop',
@@ -33,14 +30,22 @@ export function LanguageSwitcher({
 }) {
   const { locale } = useI18n();
   const { t } = useTranslation();
+  const router = useRouter();
   const user = useAuthStore((state) => state.user);
 
+  const site = useMemo(() => loadSiteConfigSync(getCountry()), []);
+  const routing = useMemo(() => resolveLocaleRouting(site), [site]);
+
   const languages = useMemo(
-    () => [
-      { value: 'ro' as Locale, label: t('common.languageRo') },
-      { value: 'ru' as Locale, label: t('common.languageRu') },
-    ],
-    [t],
+    () =>
+      routing.supportedLocales.map((value) => {
+        const low = value.toLowerCase();
+        const key = routing.languageSwitcherTranslationKeys[low] ?? 'common.languageLocaleCode';
+        const label =
+          key === 'common.languageLocaleCode' ? t(key, { code: value.toUpperCase() }) : t(key);
+        return { value: value as Locale, label };
+      }),
+    [routing, t],
   );
 
   const handleLanguageChange = (newLocale: string) => {
@@ -48,15 +53,21 @@ export function LanguageSwitcher({
     if (localeValue === locale) {
       return;
     }
-    void (async () => {
-      if (user) {
-        try {
-          await authApi.updateProfile({ preferredLocale: localeValue });
-        } catch {}
-      }
-      setStoredLocale(localeValue);
-      window.location.reload();
-    })();
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const path = window.location.pathname;
+    const search = window.location.search;
+    const { restPath } = stripLocalePrefixFromPathname(path);
+    const nextPath = localePrefixPath(restPath, localeValue);
+    setStoredLocale(localeValue);
+    startTransition(() => {
+      router.push(`${nextPath}${search}`);
+      router.refresh();
+    });
+    if (user) {
+      void authApi.updateProfile({ preferredLocale: localeValue }).catch(() => {});
+    }
   };
 
   const desktopButtonClassName = context === 'footer' ? footerStyle : headerStyle;
@@ -66,7 +77,14 @@ export function LanguageSwitcher({
       ? 'header-language-switcher-mobile bg-transparent! text-primary-900! font-medium text-[14px] hover-only:hover:text-primary-700! active:text-primary-700! transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 py-3.5 rounded-lg select-none [&_span]:text-primary-900! hover-only:hover:[&_span]:text-primary-700! [&_svg]:text-primary-900! hover-only:hover:[&_svg]:text-primary-700!'
       : desktopButtonClassName;
 
-  const currentLanguageName = getLanguageName(locale, t);
+  const currentLanguageName = useMemo(() => {
+    const entry = languages.find((l) => l.value === locale);
+    return entry?.label ?? t('common.languageLocaleCode', { code: locale.toUpperCase() });
+  }, [languages, locale, t]);
+
+  if (!shouldShowLanguageSwitcher(site)) {
+    return null;
+  }
 
   const iconColorClass = context === 'footer' ? 'text-white' : 'text-primary-900';
 
@@ -96,10 +114,12 @@ export function LanguageSwitcher({
           placeholder={currentLanguageName}
           buttonClassName={mobileButtonClassName}
           autoPosition={true}
+          renderMenuInPortal
           searchable={false}
           rightIcon={languageIcon}
           menuSelectedStyle="checkmark"
           menuExpandToContent
+          dataTestId="language-switcher"
         />
       </div>
     </div>

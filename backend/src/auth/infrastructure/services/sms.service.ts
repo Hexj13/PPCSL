@@ -55,6 +55,10 @@ export class SmsService {
       return;
     }
 
+    if (this.isSmsOutboundDisabled()) {
+      return;
+    }
+
     try {
       const messageOptions: {
         to: string;
@@ -106,6 +110,10 @@ export class SmsService {
     }
 
     if (!this.twilioClient) {
+      return;
+    }
+
+    if (this.isSmsOutboundDisabled()) {
       return;
     }
 
@@ -244,7 +252,30 @@ export class SmsService {
     return `sms:reset-fail:${normalizedPhone}`;
   }
 
+  private isSmsOutboundDisabled(): boolean {
+    const nodeEnv =
+      this.configService.get<string>('NODE_ENV') ?? process.env.NODE_ENV ?? 'development';
+    if (nodeEnv === 'production') {
+      return false;
+    }
+    const flag = this.configService.get<string>('SMS_OUTBOUND_DISABLED');
+    return flag === 'true' || flag === '1';
+  }
+
+  private isSmsHourlyRateLimitBypassed(): boolean {
+    const nodeEnv =
+      this.configService.get<string>('NODE_ENV') ?? process.env.NODE_ENV ?? 'development';
+    if (nodeEnv !== 'development') {
+      return false;
+    }
+    const flag = this.configService.get<string>('DISABLE_SMS_SEND_RATE_LIMIT');
+    return flag === 'true' || flag === '1';
+  }
+
   private async consumeSmsSendQuota(normalizedPhone: string): Promise<void> {
+    if (this.isSmsHourlyRateLimitBypassed()) {
+      return;
+    }
     const key = this.sendHourKey(normalizedPhone);
     const n = await this.redisService.incr(key);
     if (n === 1) {

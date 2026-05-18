@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -15,10 +14,12 @@ import {
 } from '@/app/profile/utils';
 import { validatePhone } from '@/app/register/utils';
 import { isPasswordValid, validatePassword } from '@/app/reset-password/utils';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
-import { localStorageGetItem } from '@/lib/browser-local-storage';
+import { compactE164Phone, formatPhoneForDisplay } from '@/lib/phone';
+import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
@@ -101,6 +102,28 @@ export function getProfileSubmitState(
   };
 }
 
+export function getAdditionalPhoneFieldError(
+  user: NonNullable<ReturnType<typeof useAuthStore.getState>['user']>,
+  additionalPhone: string | null | undefined,
+  t: (key: string) => string,
+): string | null {
+  if (user.type !== 'Business') {
+    return null;
+  }
+  const trimmed = additionalPhone?.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const phoneErr = validatePhone(trimmed, t);
+  if (phoneErr) {
+    return phoneErr;
+  }
+  if (compactE164Phone(trimmed) === compactE164Phone(user.phone || '')) {
+    return t('errors.additionalPhoneSameAsPrimary');
+  }
+  return null;
+}
+
 function getProfileValidationError(
   user: NonNullable<ReturnType<typeof useAuthStore.getState>['user']>,
   formData: UpdateProfileDto,
@@ -115,15 +138,9 @@ function getProfileValidationError(
   if (formData.companyWebsiteUrl && !validateCompanyWebsiteUrl(formData.companyWebsiteUrl)) {
     return t('profile.invalidCompanyWebsiteUrl');
   }
-  if (user.type === 'Business' && formData.additionalPhone?.trim()) {
-    const trimmedAdditionalPhone = formData.additionalPhone.trim();
-    const phoneErr = validatePhone(trimmedAdditionalPhone, t);
-    if (phoneErr) {
-      return phoneErr;
-    }
-    if (trimmedAdditionalPhone === (user.phone || '').trim()) {
-      return t('errors.additionalPhoneSameAsPrimary');
-    }
+  const additionalPhoneErr = getAdditionalPhoneFieldError(user, formData.additionalPhone, t);
+  if (additionalPhoneErr) {
+    return additionalPhoneErr;
   }
   return getProfilePasswordChangeError(curPw, neuPw, t);
 }
@@ -160,8 +177,8 @@ function handleProfileSubmitError(err: unknown, t: (key: string) => string): voi
 }
 
 export function useProfilePage() {
-  const router = useRouter();
-  const { user, isInitialized, setAuth, token, logout } = useAuthStore();
+  const { push, replace } = useLocalizedNavigation();
+  const { user, isInitialized, setAuth, logout } = useAuthStore();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
@@ -186,11 +203,7 @@ export function useProfilePage() {
     ) {
       return false;
     }
-    if (
-      user.type === 'Business' &&
-      formData.additionalPhone?.trim() &&
-      validatePhone(formData.additionalPhone.trim(), t)
-    ) {
+    if (getAdditionalPhoneFieldError(user, formData.additionalPhone, t)) {
       return false;
     }
     const initialData = initializeFormData(user);
@@ -204,10 +217,15 @@ export function useProfilePage() {
     return hasProfileChanges || hasEmailChange || passwordComplete;
   }, [user, formData, emailForChange, currentPassword, newPassword, t]);
 
+  const additionalPhoneError = useMemo(
+    () => (user ? getAdditionalPhoneFieldError(user, formData.additionalPhone, t) : null),
+    [user, formData.additionalPhone, t],
+  );
+
   useEffect(() => {
     if (!isInitialized) return;
-    if (!token) {
-      router.push('/sign');
+    if (!user) {
+      push(buildSignInHref());
       return;
     }
     if (hasLoadedRef.current) return;
@@ -217,16 +235,13 @@ export function useProfilePage() {
         if (!user) setLoadingProfile(true);
         const response = await authApi.me();
         const profileUser = response.data;
-        const currentToken = localStorageGetItem('token') || useAuthStore.getState().token;
-        const currentRefreshToken =
-          localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken;
-        setAuth(profileUser, currentToken, currentRefreshToken);
+        setAuth(profileUser);
         const formDataToSet = {
           firstName: profileUser.firstName || '',
           lastName: profileUser.lastName || '',
           companyName: profileUser.companyName || '',
           companyWebsiteUrl: profileUser.companyWebsiteUrl || '',
-          additionalPhone: profileUser.additionalPhone || '',
+          additionalPhone: formatPhoneForDisplay(profileUser.additionalPhone || ''),
           emailNotifications: convertToBoolean(profileUser.emailNotifications),
           emailNotificationListingRefreshReminders: convertToBoolean(
             profileUser.emailNotificationListingRefreshReminders,
@@ -250,14 +265,14 @@ export function useProfilePage() {
       } catch {
         hasLoadedRef.current = true;
         logoutRef.current();
-        router.push('/sign');
+        push(buildSignInHref());
       } finally {
         setLoadingProfile(false);
       }
     };
 
     void loadProfile();
-  }, [isInitialized, router, setAuth, token, user]);
+  }, [isInitialized, push, setAuth, user]);
 
   useEffect(() => {
     if (!user || !hasLoadedRef.current) return;
@@ -341,22 +356,20 @@ export function useProfilePage() {
       setLoading(true);
       try {
         if (submitState.hasProfileChanges) {
-          const response = await authApi.updateProfile(formData);
-          setAuth(
-            response.data,
-            localStorageGetItem('token') || useAuthStore.getState().token,
-            localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
-          );
+          const profilePayload: UpdateProfileDto = {
+            ...formData,
+            additionalPhone: formData.additionalPhone?.trim()
+              ? compactE164Phone(formData.additionalPhone)
+              : formData.additionalPhone || '',
+          };
+          const response = await authApi.updateProfile(profilePayload);
+          setAuth(response.data);
           toast.success(t('profile.updateSuccess'));
         }
         if (submitState.hasEmailChange) {
           await authApi.changeEmailRequest({ newEmail: submitState.normalizedNextEmail });
           const profileResponse = await authApi.me();
-          setAuth(
-            profileResponse.data,
-            localStorageGetItem('token') || useAuthStore.getState().token,
-            localStorageGetItem('refresh_token') || useAuthStore.getState().refreshToken,
-          );
+          setAuth(profileResponse.data);
           toast.success(t('profile.emailChangeLinkSent'));
         }
         if (submitState.passwordComplete) {
@@ -384,18 +397,17 @@ export function useProfilePage() {
       await authApi.deleteAccount();
       toast.success(t('profile.deleteSuccess'));
       logout();
-      router.replace('/');
+      replace('/');
     } catch {
     } finally {
       setDeleting(false);
       setShowDeleteModal(false);
     }
-  }, [user, router, logout, t]);
+  }, [user, replace, logout, t]);
 
   return {
     user,
     isInitialized,
-    token,
     loading,
     loadingProfile,
     formData,
@@ -407,6 +419,7 @@ export function useProfilePage() {
     handleChange,
     handleSubmit,
     canSave,
+    additionalPhoneError,
     currentPassword,
     setCurrentPassword,
     newPassword,

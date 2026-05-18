@@ -7,8 +7,12 @@ import { ProfileEmailSection } from '@/app/profile/ProfileEmailSection';
 import { ProfilePartnerSection } from '@/app/profile/ProfilePartnerSection';
 import { ProfilePasswordSection } from '@/app/profile/ProfilePasswordSection';
 import { useProfilePage } from '@/app/profile/useProfilePage';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto, User } from '@/lib/api';
+import type { Locale } from '@/lib/i18n-types';
+import { localizedHref } from '@/lib/localized-href';
+import { formatPhoneForDisplay, formatPhoneOnBlur, sanitizePhoneInput } from '@/lib/phone';
 import { HintTooltip, LoadingButton } from '@/ui';
 
 type TranslationFn = ReturnType<typeof useTranslation>['t'];
@@ -18,12 +22,16 @@ const PROFILE_EDIT_FORM_ID = 'profile-edit';
 function ProfileContactSection({
   user,
   formData,
+  additionalPhoneError,
   t,
+  locale,
   onChange,
 }: {
   user: User;
   formData: UpdateProfileDto;
+  additionalPhoneError: string | null;
   t: TranslationFn;
+  locale: Locale;
   onChange: (field: keyof UpdateProfileDto, value: string | boolean) => void;
 }) {
   const Checkbox = ({
@@ -37,8 +45,8 @@ function ProfileContactSection({
   }) => {
     const checked = formData[field] === true;
     return (
-      <div className="flex items-center gap-3 group">
-        <div className="relative">
+      <div className="flex items-start gap-3 group">
+        <div className="relative shrink-0 mt-0.5">
           <input
             type="checkbox"
             checked={checked}
@@ -81,7 +89,7 @@ function ProfileContactSection({
           id={labelId}
           type="button"
           onClick={() => onChange(field, !formData[field])}
-          className="text-sm text-text-primary cursor-pointer"
+          className="text-sm text-left text-text-primary cursor-pointer"
         >
           {label}
         </button>
@@ -103,7 +111,7 @@ function ProfileContactSection({
               {t('profile.phoneChangeBoardUrlNoticeBefore')}
               {user?.boardSlug ? (
                 <Link
-                  href={`/board/${user.boardSlug}`}
+                  href={localizedHref(`/board/${user.boardSlug}`, locale)}
                   className="text-primary-700 underline hover-only:hover:text-primary-900"
                 >
                   {t('myListings.myBoard')}
@@ -120,7 +128,7 @@ function ProfileContactSection({
             id="profile-phone-input"
             name="profilePhoneDisplay"
             type="tel"
-            value={user.phone || ''}
+            value={formatPhoneForDisplay(user.phone || '')}
             disabled
             autoComplete="off"
             data-1p-ignore
@@ -128,7 +136,7 @@ function ProfileContactSection({
             className="input-field w-full bg-bg-secondary/50 cursor-not-allowed opacity-70 pr-12"
           />
           <Link
-            href="/profile/change-phone"
+            href={localizedHref('/profile/change-phone', locale)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-700 hover-only:hover:text-primary-900 transition-colors duration-200 p-1"
             title={t('common.changePhone')}
           >
@@ -162,11 +170,32 @@ function ProfileContactSection({
                 name="profileAdditionalPhone"
                 type="tel"
                 value={formData.additionalPhone || ''}
-                onChange={(e) => onChange('additionalPhone', e.target.value)}
-                className="input-field w-full"
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === '') {
+                    onChange('additionalPhone', '');
+                    return;
+                  }
+                  onChange('additionalPhone', sanitizePhoneInput(raw));
+                }}
+                onBlur={() => {
+                  const v = (formData.additionalPhone || '').trim();
+                  if (!v) {
+                    return;
+                  }
+                  const formatted = formatPhoneOnBlur(formData.additionalPhone || '');
+                  if (formatted !== (formData.additionalPhone || '')) {
+                    onChange('additionalPhone', formatted);
+                  }
+                }}
+                aria-invalid={additionalPhoneError ? true : undefined}
+                className={`input-field w-full ${additionalPhoneError ? 'border-red-500' : ''}`}
                 placeholder={t('profile.additionalPhonePlaceholder')}
                 autoComplete="tel"
               />
+              {additionalPhoneError && (
+                <p className="mt-1 text-sm text-red-400">{additionalPhoneError}</p>
+              )}
             </div>
           </div>
         )}
@@ -322,6 +351,7 @@ function ProfileActions({
           disabled={saveDisabled}
           loadingText={t('profile.saving')}
           className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          data-testid="profile-save"
         >
           {t('profile.saveChanges')}
         </LoadingButton>
@@ -345,6 +375,7 @@ function ProfileActions({
 
 export default function ProfilePage() {
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const {
     user,
     isInitialized,
@@ -359,6 +390,7 @@ export default function ProfilePage() {
     handleChange,
     handleSubmit,
     canSave,
+    additionalPhoneError,
     currentPassword,
     setCurrentPassword,
     newPassword,
@@ -378,7 +410,7 @@ export default function ProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="max-w-4xl mx-auto mt-6 md:mt-12">
+    <div className="max-w-4xl mx-auto mt-6 md:mt-12" data-testid="profile-page">
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 text-primary-900">
         {t('profile.title')}
       </h1>
@@ -388,6 +420,7 @@ export default function ProfilePage() {
           onSubmit={handleSubmit}
           className="space-y-6"
           autoComplete="off"
+          data-testid="profile-edit-form"
         >
           <input
             type="text"
@@ -405,7 +438,14 @@ export default function ProfilePage() {
             aria-hidden="true"
             className="hidden"
           />
-          <ProfileContactSection user={user} formData={formData} t={t} onChange={handleChange} />
+          <ProfileContactSection
+            user={user}
+            formData={formData}
+            additionalPhoneError={additionalPhoneError}
+            t={t}
+            locale={locale}
+            onChange={handleChange}
+          />
           <ProfileEmailSection
             user={user}
             formData={formData}

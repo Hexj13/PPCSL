@@ -62,6 +62,7 @@ export interface SearchCriteria {
   is_new?: boolean;
   available_in_credit?: boolean;
   down_payment_amount_gte?: number;
+  seller_type?: 'Individual' | 'Business';
   conditions?: string[];
   registration_types?: string[];
   horsepower_gte?: number;

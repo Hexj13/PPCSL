@@ -20,6 +20,7 @@ import {
 } from '../../common/types';
 import { Tire } from '../../tires/entities/tire.entity';
 import { User } from '../../users/entities/user.entity';
+import type { ListingVideoJson } from '../domain/types/listing-video.types';
 
 import { Vehicle } from './vehicle.entity';
 
@@ -46,6 +47,9 @@ export class Listing {
 
   @Column()
   title: string;
+
+  @Column({ type: 'varchar', length: 160, nullable: true })
+  slug: string | null;
 
   @Column({
     type: 'enum',
@@ -122,6 +126,9 @@ export class Listing {
 
   @Column({ type: 'jsonb', nullable: true })
   image_blur_hashes: (string | null)[] | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  video: ListingVideoJson | null;
 
   @Column({ type: 'boolean', default: false })
   urgent: boolean;

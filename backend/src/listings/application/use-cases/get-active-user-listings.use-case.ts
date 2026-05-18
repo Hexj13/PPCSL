@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { Listing } from '../../entities/listing.entity';
+import { stripListingVideosForListResponse } from '../utils/listing-video-public.util';
 
 export const MAX_ACTIVE_LISTINGS_LIMIT = 50;
 
@@ -30,6 +31,7 @@ export class GetActiveUserListingsUseCase {
       skip: (safePage - 1) * safeLimit,
       take: safeLimit,
     });
+    stripListingVideosForListResponse(listings);
     return this.exchangeRatesService.enrichListingsWithApproxPrice(listings);
   }
 }

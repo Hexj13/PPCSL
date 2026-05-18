@@ -2,14 +2,22 @@
 
 import { type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
-import { Spinner } from '@/ui';
+import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
+import { ImageCounter } from '@/components/listing/ImageCounter';
+import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhotoCarouselNavButtons';
 
 import {
   type HeroPreviewSlotId,
   type HeroPreviewSlots,
   ListingThumbnailTile,
+  ListingPageVideoPreviewFrame,
   renderPreviewSlides,
+  type ListingPageHeroVideoSlide,
+  VIDEO_POSTER_BLUR_DATA_URL,
 } from './ListingPageImagesPreview';
+
+const listingPageVideoPlayOverlayClassName =
+  'pointer-events-none absolute inset-0 z-[4] [background-image:radial-gradient(ellipse_100%_100%_at_50%_50%,color-mix(in_srgb,theme(colors.dark.600)_50%,transparent)_0%,color-mix(in_srgb,theme(colors.dark.600)_40%,transparent)_28%,color-mix(in_srgb,theme(colors.dark.600)_22%,transparent)_55%,transparent_88%,transparent_100%)]';
 
 export type ListingPageImagesLayoutProps = {
   visibleIndex: number;
@@ -22,11 +30,9 @@ export type ListingPageImagesLayoutProps = {
   onTouchEnd: () => void;
   handlePreviewMouseLeave: () => void;
   handlePreviewMouseEnter: () => void;
-  navBusy: boolean;
   handlePrev: (e: React.MouseEvent) => void;
   handleNext: (e: React.MouseEvent) => void;
   t: (_key: string, _params?: Record<string, string>) => string;
-  showMainImageLoader: boolean;
   confirmedSlot: HeroPreviewSlotId;
   pendingSlot: HeroPreviewSlotId | null;
   slotIndices: HeroPreviewSlots;
@@ -35,6 +41,7 @@ export type ListingPageImagesLayoutProps = {
   onImageError: (_idx: number) => void;
   blurDataURLForIndex: (_index: number) => string | undefined;
   heroPreviewBlurConsumed: boolean;
+  videoSlide?: ListingPageHeroVideoSlide | null;
   navigateTo: (_index: number, _options?: { clearTimer?: boolean }) => void;
   setCurrentImageIndex: Dispatch<SetStateAction<number>>;
   handleThumbnailImageLoad: (_idx: number) => void;
@@ -51,11 +58,9 @@ export function ListingPageImagesLayout({
   onTouchEnd,
   handlePreviewMouseLeave,
   handlePreviewMouseEnter,
-  navBusy,
   handlePrev,
   handleNext,
   t,
-  showMainImageLoader,
   confirmedSlot,
   pendingSlot,
   slotIndices,
@@ -64,6 +69,7 @@ export function ListingPageImagesLayout({
   onImageError,
   blurDataURLForIndex,
   heroPreviewBlurConsumed,
+  videoSlide = null,
   navigateTo,
   setCurrentImageIndex,
   handleThumbnailImageLoad,
@@ -80,25 +86,49 @@ export function ListingPageImagesLayout({
           navigateTo(index, { clearTimer: true });
         }
       }}
-      className={`relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
+      className={`group relative h-28 sm:h-32 bg-bg-darker rounded-lg overflow-hidden transition-all cursor-pointer ${
         visibleIndex === index
           ? 'ring-2 ring-primary-500 shadow-md'
           : 'hover-only:hover:ring-2 hover-only:hover:ring-primary-300'
       } ${className ?? ''}`}
     >
       {img !== '/placeholder-car.jpg' && !imageErrors.has(index) ? (
-        <ListingThumbnailTile
-          img={img}
-          index={index}
-          totalImages={images.length}
-          imageAltTitle={imageAltTitle}
-          blurDataURLForIndex={blurDataURLForIndex}
-          t={t}
-          handleThumbnailImageLoad={handleThumbnailImageLoad}
-          onImageError={onImageError}
-          setCurrentImageIndex={setCurrentImageIndex}
-          onImageClick={onImageClick}
-        />
+        index === 0 && videoSlide && isListingPageVideoHeroSlideUrl(img) ? (
+          <>
+            <ListingPageVideoPreviewFrame
+              videoSlide={videoSlide}
+              blurDataURL={blurDataURLForIndex(index) ?? VIDEO_POSTER_BLUR_DATA_URL}
+              className="absolute inset-0 z-0 h-full w-full"
+              videoClassName="h-full w-full object-cover"
+              aria-hidden
+              onLoaded={() => handleThumbnailImageLoad(index)}
+              onError={() => onImageError(index)}
+            />
+            <div className={listingPageVideoPlayOverlayClassName} aria-hidden />
+            <div
+              className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center"
+              role="img"
+              aria-label={t('listingDetail.video.playButton')}
+            >
+              <span className="inline-block text-2xl leading-none text-white drop-shadow-md transition-colors duration-200 group-hover:text-primary-100 sm:text-3xl">
+                {t('listingDetail.video.playIcon')}
+              </span>
+            </div>
+          </>
+        ) : (
+          <ListingThumbnailTile
+            img={img}
+            index={index}
+            totalImages={images.length}
+            imageAltTitle={imageAltTitle}
+            blurDataURLForIndex={blurDataURLForIndex}
+            t={t}
+            handleThumbnailImageLoad={handleThumbnailImageLoad}
+            onImageError={onImageError}
+            setCurrentImageIndex={setCurrentImageIndex}
+            onImageClick={onImageClick}
+          />
+        )
       ) : (
         <div
           className="w-full h-full flex items-center justify-center"
@@ -143,51 +173,15 @@ export function ListingPageImagesLayout({
         onMouseEnter={handlePreviewMouseEnter}
       >
         {images.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={handlePrev}
-              aria-disabled={navBusy}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-14 h-14 flex justify-start items-center z-10 touch-manipulation lg:w-10 lg:h-10 lg:justify-center"
-              aria-label={t('listings.previousPhoto')}
-            >
-              <span className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              aria-disabled={navBusy}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-14 h-14 flex justify-end items-center z-10 touch-manipulation lg:w-10 lg:h-10 lg:justify-center"
-              aria-label={t('listings.nextPhoto')}
-            >
-              <span className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center transition-all shadow-lg text-white opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </span>
-            </button>
-          </>
+          <ListingPhotoCarouselNavButtons
+            variant="preview"
+            onPrev={handlePrev}
+            onNext={handleNext}
+            prevLabel={t('listings.previousPhoto')}
+            nextLabel={t('listings.nextPhoto')}
+          />
         )}
-        {showMainImageLoader && (
-          <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-            <Spinner size="lg" />
-          </div>
-        )}
-
+        {images.length > 1 && <ImageCounter current={visibleIndex + 1} total={images.length} />}
         {renderPreviewSlides({
           confirmedSlot,
           pendingSlot,
@@ -200,7 +194,22 @@ export function ListingPageImagesLayout({
           blurDataURLForIndex,
           heroPreviewBlurConsumed,
           t,
+          videoSlide,
         })}
+        {videoSlide && visibleIndex === 0 ? (
+          <>
+            <div className={listingPageVideoPlayOverlayClassName} aria-hidden />
+            <div
+              className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center"
+              role="img"
+              aria-label={t('listingDetail.video.playButton')}
+            >
+              <span className="inline-block text-3xl leading-none text-white drop-shadow-md transition-colors duration-200 group-hover:text-primary-100 sm:text-4xl">
+                {t('listingDetail.video.playIcon')}
+              </span>
+            </div>
+          </>
+        ) : null}
       </div>
 
       {images.length > 1 && (

@@ -45,6 +45,7 @@ export interface ParsedSearchParams {
   is_new?: boolean;
   available_in_credit?: boolean;
   down_payment_amount_gte?: number;
+  seller_type?: 'Individual' | 'Business';
   currency?: string;
   sortBy?: string;
   sortOrder?: string;

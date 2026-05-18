@@ -156,7 +156,7 @@ export function SearchFormActions({
                   e.preventDefault();
                   e.currentTarget.blur();
                 }}
-                className={`relative w-full overflow-hidden rounded-lg h-[52px] min-h-[52px] max-h-[52px] px-6 font-semibold text-base outline-hidden select-none border-2 transition-colors duration-200 text-primary-900! ${
+                className={`relative h-12 max-h-12 min-h-12 w-full overflow-hidden rounded-lg px-6 font-semibold text-base outline-hidden select-none border-2 transition-colors duration-200 text-primary-900! ${
                   isSearchReady
                     ? 'border-primary-700 bg-primary-500/12'
                     : 'border-primary-700/30 bg-bg-secondary hover-only:hover:border-primary-700'

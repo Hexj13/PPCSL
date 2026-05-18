@@ -29,11 +29,13 @@ import { Listing } from '../../entities/listing.entity';
 import { Vehicle } from '../../entities/vehicle.entity';
 import { UpdateListingDto } from '../../presentation/dto/update-listing.dto';
 import { UpdateTireDto } from '../../presentation/dto/update-tire.dto';
+import { ListingAiReportService } from '../listing-ai-report.service';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 import {
   coverBlurHashFromImageBlurHashes,
   validateImageBlurHashesMatchImages,
 } from '../utils/image-blur-hashes.utils';
+import { buildListingSlugPart } from '../utils/listing-url-slug.utils';
 import { assertPartnerListingCanonicalUrlShape } from '../utils/partner-listing-canonical-url.utils';
 
 function sanitizeListingDescriptionInput(value: string | null | undefined): string | null {
@@ -97,6 +99,7 @@ export class UpdateListingUseCase {
     private readonly listingCache: IListingCache,
     @Inject(BRANDS_CACHE)
     private readonly brandsCache: IBrandsCache,
+    private readonly listingAiReportService: ListingAiReportService,
   ) {}
 
   private assertTireMergedRules(tire: Tire): void {
@@ -340,6 +343,12 @@ export class UpdateListingUseCase {
       is_new: false,
     };
 
+    const mergedCityTire =
+      listingUpdateData.city !== undefined && listingUpdateData.city !== null
+        ? String(listingUpdateData.city)
+        : listing.city;
+    listingUpdateData.slug = buildListingSlugPart(title, mergedCityTire);
+
     if (updateListingDto.image_blur_hashes !== undefined) {
       listingUpdateData.cover_blur_hash = coverBlurHashFromImageBlurHashes(
         updateListingDto.image_blur_hashes,
@@ -347,6 +356,7 @@ export class UpdateListingUseCase {
     }
 
     await this.listingsRepository.update(id, listingUpdateData);
+    await this.listingAiReportService.deleteByListingId(id);
     await this.listingsRepository.manager.connection.queryResultCache?.remove([`listing_${id}`]);
 
     const freshListing = await this.listingsRepository.findOne({
@@ -538,13 +548,20 @@ export class UpdateListingUseCase {
 
     const localizedPatch = buildLocalizedDescriptionUpdate(listing, updateListingDto);
 
+    const newTitle = await this.generateTitle(updatedVehicle);
+
     const listingUpdateData: Partial<Listing> = {
       ...(listingFields as Partial<Listing>),
       ...localizedPatch,
       ...partnerFieldsPatch,
       last_edited_at: new Date(),
-      title: await this.generateTitle(updatedVehicle),
+      title: newTitle,
     };
+    const mergedCityVehicle =
+      listingUpdateData.city !== undefined && listingUpdateData.city !== null
+        ? String(listingUpdateData.city)
+        : listing.city;
+    listingUpdateData.slug = buildListingSlugPart(newTitle, mergedCityVehicle);
     if (listingUpdateData.available_in_credit === false) {
       listingUpdateData.down_payment_amount = null;
     }
@@ -555,6 +572,7 @@ export class UpdateListingUseCase {
     }
 
     await this.listingsRepository.update(id, listingUpdateData);
+    await this.listingAiReportService.deleteByListingId(id);
     await this.listingsRepository.manager.connection.queryResultCache?.remove([`listing_${id}`]);
 
     const freshListing = await this.listingsRepository.findOne({

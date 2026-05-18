@@ -1,22 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getOptimizedImageUrl } from '@/lib/utils';
+import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
-export interface ListingPageImageModalProps {
-  isOpen: boolean;
-  images: string[];
-  currentIndex: number;
-  imageAltTitle: string;
-  imageErrors: Set<number>;
-  onClose: () => void;
-  onNext: () => void;
-  onPrev: () => void;
-  onIndexChange: (_index: number) => void;
-  onImageError: (_index: number) => void;
-}
+import { galleryImageIndexForBlurHash } from './listing-gallery-blur';
+import { clearImageNavGuard, tryRunWithSyncImageNavLock } from './listing-image-nav-guard';
+import type { ListingPageImageModalProps } from './useListingPageImageModal.types';
+
+export type { ListingPageImageModalProps } from './useListingPageImageModal.types';
 
 const getPinchDistance = (t1: Touch, t2: Touch) =>
   Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
@@ -25,16 +20,18 @@ const getPinchDistance = (t1: Touch, t2: Touch) =>
 export function useListingPageImageModal({
   isOpen,
   images,
+  listingVideoSlide = null,
   currentIndex,
   imageAltTitle,
   imageErrors,
+  coverBlurHash,
+  imageBlurHashes,
   onClose,
   onNext,
   onPrev,
   onImageError,
 }: ListingPageImageModalProps) {
   const { t } = useTranslation();
-  const [modalImageLoading, setModalImageLoading] = useState(false);
   const [visibleIndex, setVisibleIndex] = useState(currentIndex);
   const [targetImageWidth, setTargetImageWidth] = useState(1920);
   const [imageQuality, setImageQuality] = useState(85);
@@ -47,14 +44,16 @@ export function useListingPageImageModal({
   const swipeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedScrollYRef = useRef(0);
   const prevIsOpenRef = useRef(false);
-  const wasOpenRef = useRef(false);
-  const lastNavigatedIndexRef = useRef(currentIndex);
-  const navigationCountRef = useRef(0);
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
 
-  const [showSpinner, setShowSpinner] = useState(false);
-  const spinnerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  const syncClickLockRef = useRef(false);
+  const syncUnlockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modalPendingFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const MODAL_PENDING_FALLBACK_MS = 1800;
+  const visibleIndexRef = useRef(visibleIndex);
+  const currentIndexRef = useRef(currentIndex);
+  visibleIndexRef.current = visibleIndex;
+  currentIndexRef.current = currentIndex;
   const [zoom, setZoom] = useState({ scale: 1, x: 0, y: 0 });
   const zoomRef = useRef({ scale: 1, x: 0, y: 0 });
   zoomRef.current = zoom;
@@ -73,27 +72,105 @@ export function useListingPageImageModal({
   const minSwipeDistance = 50;
   const onNextRef = useRef(onNext);
   const onPrevRef = useRef(onPrev);
-  onNextRef.current = onNext;
-  onPrevRef.current = onPrev;
+  const isOpenRef = useRef(isOpen);
+  isOpenRef.current = isOpen;
   const imagesLengthRef = useRef(images.length);
   imagesLengthRef.current = images.length;
 
+  const getBlurDataURL = useCallback(
+    (galleryIndex: number) => {
+      const imageIdx = galleryImageIndexForBlurHash(galleryIndex, listingVideoSlide);
+      if (imageIdx === null) return undefined;
+      const fromArr = imageBlurHashes?.[imageIdx];
+      const hash =
+        typeof fromArr === 'string' && fromArr.length > 0
+          ? fromArr
+          : imageIdx === 0 && coverBlurHash && coverBlurHash.length > 0
+            ? coverBlurHash
+            : undefined;
+      if (!hash) return undefined;
+      try {
+        return blurhashToDataURL(hash);
+      } catch {
+        return undefined;
+      }
+    },
+    [coverBlurHash, imageBlurHashes, listingVideoSlide],
+  );
+
   useEffect(() => {
-    if (modalImageLoading) {
-      spinnerTimeoutRef.current = setTimeout(() => setShowSpinner(true), 300);
-    } else {
-      if (spinnerTimeoutRef.current) {
-        clearTimeout(spinnerTimeoutRef.current);
-        spinnerTimeoutRef.current = null;
-      }
-      setShowSpinner(false);
+    if (!isOpen) {
+      clearImageNavGuard(syncClickLockRef, syncUnlockTimeoutRef);
+      if (modalPendingFallbackRef.current) clearTimeout(modalPendingFallbackRef.current);
+      modalPendingFallbackRef.current = null;
     }
-    return () => {
-      if (spinnerTimeoutRef.current) {
-        clearTimeout(spinnerTimeoutRef.current);
-      }
-    };
-  }, [modalImageLoading]);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      if (modalPendingFallbackRef.current) clearTimeout(modalPendingFallbackRef.current);
+      modalPendingFallbackRef.current = null;
+      return;
+    }
+    if (visibleIndex === currentIndex) {
+      if (modalPendingFallbackRef.current) clearTimeout(modalPendingFallbackRef.current);
+      modalPendingFallbackRef.current = null;
+      return;
+    }
+    if (modalPendingFallbackRef.current) {
+      clearTimeout(modalPendingFallbackRef.current);
+    }
+    modalPendingFallbackRef.current = setTimeout(() => {
+      modalPendingFallbackRef.current = null;
+      const fallbackIndex = currentIndexRef.current;
+      visibleIndexRef.current = fallbackIndex;
+      clearImageNavGuard(syncClickLockRef, syncUnlockTimeoutRef);
+      setVisibleIndex(fallbackIndex);
+    }, MODAL_PENDING_FALLBACK_MS);
+  }, [isOpen, visibleIndex, currentIndex]);
+
+  useEffect(
+    () => () => {
+      if (modalPendingFallbackRef.current) clearTimeout(modalPendingFallbackRef.current);
+      modalPendingFallbackRef.current = null;
+    },
+    [],
+  );
+
+  const guardedNext = useCallback(() => {
+    if (!isOpen) {
+      onNext();
+      return;
+    }
+    if (visibleIndexRef.current !== currentIndexRef.current) {
+      return;
+    }
+    tryRunWithSyncImageNavLock({
+      isActive: true,
+      syncClickLockRef,
+      syncUnlockTimeoutRef,
+      run: () => onNext(),
+    });
+  }, [isOpen, onNext]);
+
+  const guardedPrev = useCallback(() => {
+    if (!isOpen) {
+      onPrev();
+      return;
+    }
+    if (visibleIndexRef.current !== currentIndexRef.current) {
+      return;
+    }
+    tryRunWithSyncImageNavLock({
+      isActive: true,
+      syncClickLockRef,
+      syncUnlockTimeoutRef,
+      run: () => onPrev(),
+    });
+  }, [isOpen, onPrev]);
+
+  onNextRef.current = guardedNext;
+  onPrevRef.current = guardedPrev;
 
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
@@ -109,25 +186,6 @@ export function useListingPageImageModal({
   useEffect(() => {
     setZoom({ scale: 1, x: 0, y: 0 });
   }, [currentIndex]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      wasOpenRef.current = false;
-      return;
-    }
-
-    if (!wasOpenRef.current) {
-      navigationCountRef.current = 0;
-      lastNavigatedIndexRef.current = currentIndex;
-      wasOpenRef.current = true;
-      return;
-    }
-
-    if (lastNavigatedIndexRef.current !== currentIndex) {
-      navigationCountRef.current += 1;
-      lastNavigatedIndexRef.current = currentIndex;
-    }
-  }, [isOpen, currentIndex]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -265,6 +323,12 @@ export function useListingPageImageModal({
       const isRightSwipe = distance < -minSwipeDistance;
 
       if (isLeftSwipe && imagesLengthRef.current > 1) {
+        if (
+          isOpenRef.current &&
+          (syncClickLockRef.current || visibleIndexRef.current !== currentIndexRef.current)
+        ) {
+          return;
+        }
         swipeHandledRef.current = true;
         onNextRef.current();
         if (swipeTimeoutRef.current) clearTimeout(swipeTimeoutRef.current);
@@ -273,6 +337,12 @@ export function useListingPageImageModal({
         }, 400);
       }
       if (isRightSwipe && imagesLengthRef.current > 1) {
+        if (
+          isOpenRef.current &&
+          (syncClickLockRef.current || visibleIndexRef.current !== currentIndexRef.current)
+        ) {
+          return;
+        }
         swipeHandledRef.current = true;
         onPrevRef.current();
         if (swipeTimeoutRef.current) clearTimeout(swipeTimeoutRef.current);
@@ -315,10 +385,10 @@ export function useListingPageImageModal({
         onClose();
       }
       if (e.key === 'ArrowLeft') {
-        onPrev();
+        onPrevRef.current();
       }
       if (e.key === 'ArrowRight') {
-        onNext();
+        onNextRef.current();
       }
     };
 
@@ -343,17 +413,17 @@ export function useListingPageImageModal({
       window.scrollTo(0, savedScrollYRef.current);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('touchmove', preventScroll);
+      clearImageNavGuard(syncClickLockRef, syncUnlockTimeoutRef);
       if (swipeTimeoutRef.current) {
         clearTimeout(swipeTimeoutRef.current);
         swipeTimeoutRef.current = null;
       }
       swipeHandledRef.current = false;
     };
-  }, [isOpen, onClose, onNext, onPrev]);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (!isOpen) {
-      setModalImageLoading(false);
       return;
     }
 
@@ -361,7 +431,11 @@ export function useListingPageImageModal({
     const currentImage = imagesList[currentIndex];
 
     if (!currentImage || currentImage === '/placeholder-car.jpg' || imageErrors.has(currentIndex)) {
-      setModalImageLoading(false);
+      setVisibleIndex(currentIndex);
+      return;
+    }
+
+    if (isListingPageVideoHeroSlideUrl(currentImage)) {
       setVisibleIndex(currentIndex);
       return;
     }
@@ -369,7 +443,6 @@ export function useListingPageImageModal({
     const optimizedUrl = getOptimizedImageUrl(currentImage, imageQuality, targetImageWidth);
 
     if (modalImageLoadedRef.current.has(optimizedUrl)) {
-      setModalImageLoading(false);
       setVisibleIndex(currentIndex);
       return;
     }
@@ -383,12 +456,9 @@ export function useListingPageImageModal({
 
     if (testImg.complete && testImg.naturalWidth > 0) {
       modalImageLoadedRef.current.add(optimizedUrl);
-      setModalImageLoading(false);
       setVisibleIndex(imgIndex);
       return;
     }
-
-    setModalImageLoading(true);
 
     testImg.onload = () => {
       const loadTime = performance.now() - loadStartTime;
@@ -400,14 +470,12 @@ export function useListingPageImageModal({
       }
       modalImageLoadedRef.current.add(optimizedUrl);
       if (imgIndex === currentIndex) {
-        setModalImageLoading(false);
         setVisibleIndex(currentIndex);
       }
     };
 
     testImg.onerror = () => {
       if (imgIndex === currentIndex) {
-        setModalImageLoading(false);
         setVisibleIndex(currentIndex);
       }
     };
@@ -432,16 +500,29 @@ export function useListingPageImageModal({
   useEffect(() => {
     if (!isOpen || images.length <= 1) return;
 
-    const nextIndex = (currentIndex + 1) % images.length;
-    const prevIndex = (currentIndex - 1 + images.length) % images.length;
+    type NetworkConnection = {
+      effectiveType?: string;
+      saveData?: boolean;
+    };
+
+    const connection = (navigator as Navigator & { connection?: NetworkConnection }).connection;
+    const saveData = connection?.saveData === true;
+    const slowNetwork = saveData || ['slow-2g', '2g'].includes(connection?.effectiveType ?? '');
+    const wide = typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches;
+
+    const n = images.length;
+    const nextIndex = (currentIndex + 1) % n;
+    const prevIndex = (currentIndex - 1 + n) % n;
+    const plus2 = (currentIndex + 2) % n;
+    const minus2 = (currentIndex - 2 + n) % n;
+
     const preloadImages: HTMLImageElement[] = [];
     const preloadTimeouts: Array<ReturnType<typeof setTimeout>> = [];
-    const shouldWarmSecondNext = isMobileViewport && navigationCountRef.current < 2;
-    const secondNextIndex = (currentIndex + 2) % images.length;
 
     const preloadByIndex = (index: number, delay = 0) => {
       const url = images[index];
       if (!url || url === '/placeholder-car.jpg' || imageErrors.has(index)) return;
+      if (isListingPageVideoHeroSlideUrl(url)) return;
       const optimizedUrl = getOptimizedImageUrl(url, imageQuality, targetImageWidth);
       if (modalImageLoadedRef.current.has(optimizedUrl)) {
         if (process.env.NODE_ENV === 'development') {
@@ -472,13 +553,13 @@ export function useListingPageImageModal({
     preloadByIndex(nextIndex);
     preloadByIndex(prevIndex, 120);
 
-    if (
-      shouldWarmSecondNext &&
-      images.length > 2 &&
-      secondNextIndex !== nextIndex &&
-      secondNextIndex !== prevIndex
-    ) {
-      preloadByIndex(secondNextIndex, 40);
+    if (wide && !slowNetwork && n > 2) {
+      if (plus2 !== nextIndex && plus2 !== prevIndex) {
+        preloadByIndex(plus2, 40);
+      }
+      if (minus2 !== nextIndex && minus2 !== prevIndex) {
+        preloadByIndex(minus2, 180);
+      }
     }
 
     return () => {
@@ -489,7 +570,7 @@ export function useListingPageImageModal({
         img.onload = null;
       }
     };
-  }, [currentIndex, isOpen, images, imageErrors, isMobileViewport, targetImageWidth, imageQuality]);
+  }, [currentIndex, isOpen, images, imageErrors, targetImageWidth, imageQuality]);
 
   if (!isOpen) {
     return {
@@ -497,17 +578,14 @@ export function useListingPageImageModal({
       swipeContainerRef,
       zoom,
       isMobileViewport,
-      showSpinner: false,
-      modalImageLoading: false,
       visibleIndex,
       currentIndex,
       modalImageLoadedRef,
-      setModalImageLoading,
       setVisibleIndex,
       swipeHandledRef,
       onClose,
-      onNext,
-      onPrev,
+      onNext: guardedNext,
+      onPrev: guardedPrev,
       onImageError,
       images,
       imagesList: [] as string[],
@@ -515,25 +593,34 @@ export function useListingPageImageModal({
       confirmedUrl: '',
       pendingUrl: '',
       hasValidImage: false,
-      shouldShowLoader: false,
+      isVideoSlideActive: false,
       imageAltText: '',
       isExternalUrl: (_url: string) => false,
+      getBlurDataURL,
     };
   }
 
   const imagesList = images.length > 0 ? images : ['/placeholder-car.jpg'];
   const hasValidImageAt = (index: number) => {
+    if (listingVideoSlide && index === 0) return true;
     const img = imagesList[index];
-    return img && img !== '/placeholder-car.jpg' && !imageErrors.has(index);
+    return !!(img && img !== '/placeholder-car.jpg' && !imageErrors.has(index));
   };
   const confirmedUrl = hasValidImageAt(visibleIndex)
-    ? getOptimizedImageUrl(imagesList[visibleIndex], imageQuality, targetImageWidth)
+    ? listingVideoSlide && visibleIndex === 0
+      ? listingVideoSlide.posterUrl || ''
+      : getOptimizedImageUrl(imagesList[visibleIndex], imageQuality, targetImageWidth)
     : '';
   const pendingUrl = hasValidImageAt(currentIndex)
-    ? getOptimizedImageUrl(imagesList[currentIndex], imageQuality, targetImageWidth)
+    ? listingVideoSlide && currentIndex === 0
+      ? listingVideoSlide.posterUrl || ''
+      : getOptimizedImageUrl(imagesList[currentIndex], imageQuality, targetImageWidth)
     : '';
-  const hasValidImage = !!confirmedUrl || !!pendingUrl;
-  const shouldShowLoader = showSpinner && modalImageLoading && visibleIndex === currentIndex;
+  const hasValidImage =
+    !!(listingVideoSlide && visibleIndex === 0 && hasValidImageAt(visibleIndex)) ||
+    !!confirmedUrl ||
+    !!pendingUrl;
+  const isVideoSlideActive = !!(listingVideoSlide && visibleIndex === 0 && currentIndex === 0);
   const imageAltText = t('listings.imageAltWithTotal', {
     title: imageAltTitle,
     index: (currentIndex + 1).toString(),
@@ -546,17 +633,14 @@ export function useListingPageImageModal({
     swipeContainerRef,
     zoom,
     isMobileViewport,
-    showSpinner,
-    modalImageLoading,
     visibleIndex,
     currentIndex,
     modalImageLoadedRef,
-    setModalImageLoading,
     setVisibleIndex,
     swipeHandledRef,
     onClose,
-    onNext,
-    onPrev,
+    onNext: guardedNext,
+    onPrev: guardedPrev,
     onImageError,
     images,
     imagesList,
@@ -564,8 +648,9 @@ export function useListingPageImageModal({
     confirmedUrl,
     pendingUrl,
     hasValidImage,
-    shouldShowLoader,
+    isVideoSlideActive,
     imageAltText,
     isExternalUrl,
+    getBlurDataURL,
   };
 }

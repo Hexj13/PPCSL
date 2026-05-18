@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { FilterState } from '@/hooks/useSearchFilters';
 import type { Brand, City, VehicleModel } from '@/lib/api';
@@ -29,7 +29,7 @@ interface UseAvailableListingsCountResult {
   isLoading: boolean;
 }
 
-const DEFAULT_DEBOUNCE_MS = 350;
+const DEFAULT_DEBOUNCE_MS = 250;
 
 export function useAvailableListingsCount({
   filters,
@@ -55,14 +55,24 @@ export function useAvailableListingsCount({
     [filters, vehicleType, listingCategory],
   );
 
+  const brandsRef = useRef(brands);
+  const modelsRef = useRef(models);
+  const citiesRef = useRef(cities);
+  const filtersRef = useRef(filters);
+  brandsRef.current = brands;
+  modelsRef.current = models;
+  citiesRef.current = cities;
+  filtersRef.current = filters;
+
   useEffect(() => {
     if (isSyncingFromUrl) {
       setIsLoading(false);
       return;
     }
 
+    const filtersNow = filtersRef.current;
     const hasRangeError = Boolean(
-      getFilterRangesValidationError(filters as unknown as Record<string, string | undefined>),
+      getFilterRangesValidationError(filtersNow as unknown as Record<string, string | undefined>),
     );
     if (hasRangeError) {
       setIsLoading(false);
@@ -73,14 +83,20 @@ export function useAvailableListingsCount({
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const result = buildSearchQuery(filters, brands, models, cities, {
-          currentYear,
-          vehicleType,
-          searchParams: new URLSearchParams(),
-        });
+        const result = buildSearchQuery(
+          filtersNow,
+          brandsRef.current,
+          modelsRef.current,
+          citiesRef.current,
+          {
+            currentYear,
+            vehicleType,
+            searchParams: new URLSearchParams(),
+          },
+        );
         let parsedParams = await getParsedListingSearchParams(result.urlString, vehicleType);
         if (isGetParsedListingSearchParamsFailure(parsedParams)) {
-          parsedParams = buildFallbackListingSearchParamsFromFilters(filters, vehicleType);
+          parsedParams = buildFallbackListingSearchParamsFromFilters(filtersNow, vehicleType);
         }
         const isTire = listingCategory === 'tire' || parsedParams.category === 'tire';
         const response = await listingsApi.getAll(
@@ -108,18 +124,7 @@ export function useAvailableListingsCount({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [
-    filtersSnapshot,
-    filters,
-    isSyncingFromUrl,
-    debounceMs,
-    brands,
-    models,
-    cities,
-    currentYear,
-    vehicleType,
-    listingCategory,
-  ]);
+  }, [filtersSnapshot, isSyncingFromUrl, debounceMs, currentYear, vehicleType, listingCategory]);
 
   return { total, isLoading };
 }

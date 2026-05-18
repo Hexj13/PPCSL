@@ -1,21 +1,69 @@
-const AUTH_PATH_PREFIXES = ['/sign', '/login', '/register', '/verify-phone'];
+import { getClientLocale, getDefaultLocale } from './i18n';
+import type { Locale } from './i18n-types';
+import { localePrefixPath, stripLocalePrefixFromPathname } from './url-locale';
+
+const AUTH_PATH_PREFIXES = [
+  '/sign',
+  '/login',
+  '/register',
+  '/reset-password',
+  '/verify-email',
+  '/verify-phone',
+];
 
 function isAuthPath(path: string): boolean {
   return AUTH_PATH_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}?`));
+}
+
+function resolveLocaleForAuthNavigation(locale?: Locale): Locale {
+  if (locale !== undefined) {
+    return locale;
+  }
+  if (typeof window !== 'undefined') {
+    return getClientLocale();
+  }
+  return getDefaultLocale();
+}
+
+function withAuthPathLocale(href: string, locale?: Locale): string {
+  return localePrefixPath(href, resolveLocaleForAuthNavigation(locale));
+}
+
+function containsControlChar(input: string): boolean {
+  for (let i = 0; i < input.length; i += 1) {
+    const code = input.charCodeAt(i);
+    if (code <= 31 || code === 127) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function sanitizeReturnUrl(value: string | null | undefined): string | null {
   if (!value) return null;
   if (!value.startsWith('/')) return null;
   if (value.startsWith('//')) return null;
-  if (isAuthPath(value)) return null;
+  if (value.startsWith('/\\') || value.startsWith('\\')) return null;
+  if (containsControlChar(value)) return null;
+  let decoded = value;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    return null;
+  }
+  if (decoded.startsWith('//') || decoded.startsWith('/\\') || decoded.startsWith('\\')) {
+    return null;
+  }
+  if (containsControlChar(decoded)) return null;
+  const { restPath } = stripLocalePrefixFromPathname(value);
+  if (isAuthPath(restPath)) return null;
   return value;
 }
 
-export function buildSignInHref(returnUrl?: string | null): string {
+export function buildSignInHref(returnUrl?: string | null, locale?: Locale): string {
   const safe = sanitizeReturnUrl(returnUrl);
-  if (!safe) return '/sign';
-  return `/sign?returnUrl=${encodeURIComponent(safe)}`;
+  const base = !safe ? '/sign' : `/sign?returnUrl=${encodeURIComponent(safe)}`;
+  return withAuthPathLocale(base, locale);
 }
 
 export function appendReturnUrl(path: string, returnUrl?: string | null): string {
@@ -30,4 +78,22 @@ export function getReturnUrlFromSearchParams(
   searchParams: Pick<URLSearchParams, 'get'>,
 ): string | null {
   return sanitizeReturnUrl(searchParams.get('returnUrl'));
+}
+
+export function buildSignPageHref(options: {
+  tab: 'login' | 'register';
+  returnUrl?: string | null;
+  locale?: Locale;
+}): string {
+  const params = new URLSearchParams();
+  if (options.tab === 'register') {
+    params.set('tab', 'register');
+  }
+  const safe = sanitizeReturnUrl(options.returnUrl ?? null);
+  if (safe) {
+    params.set('returnUrl', safe);
+  }
+  const query = params.toString();
+  const base = query ? `/sign?${query}` : '/sign';
+  return withAuthPathLocale(base, options.locale);
 }

@@ -1,7 +1,11 @@
 {
   "validation": {
     "name": "Field can only contain letters, spaces, hyphens and dashes",
-    "phone": "Phone number must be in format +country code (1-4 digits) + number (6-15 digits)",
+    "phone": "Enter a valid phone number in international format",
+    "phoneMustStartWithPlus": "Use international format with the + prefix (e.g. +373...)",
+    "phoneInvalidCountry": "Unknown country calling code",
+    "phoneInvalidLength": "Incorrect number length for this country",
+    "phoneNotMobile": "Enter a mobile number suitable for SMS (fixed-line numbers are not accepted)",
     "password": "Password must contain at least one uppercase letter and one lowercase letter",
     "registrationType": "Registration type must be Local, Foreign, Cleared, or NotCleared",
     "string": "Value must be a string",
@@ -86,9 +90,14 @@
     "invalidLoginCredentials": "Invalid login credentials",
     "invalidPreferredLocale": "Invalid language. Allowed values: ro, ru.",
     "emailNotVerifiedForLogin": "To log in with email, confirm this email address first. You can log in by phone now.",
+    "googleEmailNotVerified": "Google account email is not verified.",
+    "googleSignInFailed": "Google sign-in failed. Please try again.",
+    "phoneVerificationRequired": "Verify your phone number before using this feature.",
+    "useGoogleSignIn": "This account uses Google sign-in. Use \"Continue with Google\" instead of a password.",
     "userNotActive": "User is not active",
     "termsNotAccepted": "You must accept the terms of use",
     "phoneAlreadyExists": "User with this phone number already exists",
+    "primaryPhoneMustUseChangeFlow": "To change your account phone number, use the \"Change phone\" option in your profile.",
     "emailAlreadyExists": "User with this email already exists",
     "invalidOrExpiredToken": "Invalid or expired verification token",
     "emailMismatch": "Email address does not match",
@@ -121,7 +130,7 @@
     "registrationDateInvalid": "Registration date cannot be earlier than user creation date",
     "phoneSameAsCurrent": "New phone number is the same as current",
     "additionalPhoneSameAsPrimary": "Additional number must differ from your account phone number",
-    "partnerSettingsBusinessOnly": "Platform partnership is available only for legal entity (business) accounts.",
+    "partnerSettingsBusinessOnly": "Platform partnership is available only for accounts registered as a legal entity.",
     "favoriteNotFound": "Favorite listing not found",
     "comparisonNotFound": "Comparison entry not found",
     "comparisonLimitVehicleReached": "You can compare at most three vehicle listings",
@@ -145,7 +154,8 @@
     "onlyImagesSupported": "Only images are supported",
     "vehicleNotFound": "Vehicle not found",
     "vehicleNotFoundForListing": "Vehicle not found for listing",
-    "vinRateLimitExceeded": "You can request VIN no more than 5 times per hour. Please try again later.",
+    "vinRateLimitExceeded": "You can reveal the VIN for up to 50 different listings per hour. Please try again later.",
+    "phoneRateLimitExceeded": "You have reached the limit for revealing phone numbers. Please try again later.",
     "vehicleIdNotFound": "Vehicle ID not found",
     "brandNotFoundById": "Brand not found",
     "tireBrandNotFound": "Tire brand not found",
@@ -197,7 +207,20 @@
     "parsingPlpFileNameAlreadyUsed": "A PLP file with this name is already used by another active schedule.",
     "parsingRunCannotCancel": "This run cannot be cancelled.",
     "parsingRegistrySyncUnavailable": "Registry sync is not available for this parser.",
-    "parsingSyncAssignedUserRequired": "Kupito partner user id is required for registry sync (enter UUID or run PDP/PLP with assigned user first)."
+    "parsingSyncAssignedUserRequired": "Kupito partner user id is required for registry sync (enter UUID or run PDP/PLP with assigned user first).",
+    "video": {
+      "tooLarge": "Video exceeds the maximum allowed size.",
+      "invalidFormat": "Unsupported video format.",
+      "notOwner": "You can upload video only for your own listing.",
+      "tooLong": "Video exceeds the maximum allowed duration.",
+      "transcodingFailed": "Video transcoding failed.",
+      "transcodingUnavailable": "Video transcoding is temporarily unavailable.",
+      "replaceRequiresDelete": "Remove the existing video before uploading a new one.",
+      "processingInProgress": "Video is already being processed.",
+      "uploadNotInitialized": "Video upload was not started correctly.",
+      "uploadIdMismatch": "Video upload session does not match.",
+      "importDownloadFailed": "Could not download video from the provided URL."
+    }
   },
   "vehicleOptions": {
     "transmission": {

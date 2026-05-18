@@ -33,6 +33,7 @@ const ADVANCED_PARAM_KEYS = [
   'is_new',
   'available_in_credit',
   'down_payment_amount_gte',
+  'seller_type',
 ] as const;
 
 interface UseSearchTabsParams {
@@ -63,6 +64,7 @@ const TIRE_BASIC_PARAM_KEYS = [
   'price_gte',
   'price_lte',
   'cities',
+  'seller_type',
 ] as const;
 
 const TIRE_POPULAR_HINT_KEYS: readonly string[] = [];

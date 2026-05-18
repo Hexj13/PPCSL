@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import type { Request as ExpressRequest, Response } from 'express';
 
 import { User } from '../../users/entities/user.entity';
 import { UsersService } from '../../users/application/users.service';
@@ -7,32 +8,42 @@ import { UsersService } from '../../users/application/users.service';
 import type { AuthenticatedRequest } from '../../common/express-augmentation';
 import { I18nService } from '../../common/i18n/i18n.service';
 
-import { AuthController } from './auth.controller';
+import type { LoginResponse } from '../application/auth.types';
 import { AuthService } from '../application/auth.service';
+import { AuthTokenIssuerService } from '../application/services/auth-token-issuer.service';
+import { IpBlockService } from '../infrastructure/services/ip-block.service';
+import { SmsService } from '../infrastructure/services/sms.service';
+
+import { AuthController } from './auth.controller';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { VerifyPhoneDto } from './dto/verify-phone.dto';
 import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
 import { VerifySmsDto } from './dto/verify-sms.dto';
-import { IpBlockService } from '../infrastructure/services/ip-block.service';
-import { SmsService } from '../infrastructure/services/sms.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
   let authService: jest.Mocked<AuthService>;
+  let authTokenIssuer: jest.Mocked<
+    Pick<AuthTokenIssuerService, 'attachLoginCookies' | 'cookieAuthJsonBody'>
+  >;
   let ipBlockService: jest.Mocked<IpBlockService>;
   let smsService: jest.Mocked<SmsService>;
   let usersService: jest.Mocked<UsersService>;
   let i18nService: jest.Mocked<I18nService>;
+  let mockPassthroughRes: Response;
 
   const mockUser = {
     id: 'user-1',
     email: 'test@example.com',
     phone: '+37370123456',
     additionalPhone: null,
+    googleId: null,
+    authProvider: 'local' as const,
     firstName: 'Test',
     lastName: 'User',
     type: 'Individual' as const,
@@ -41,6 +52,7 @@ describe('AuthController', () => {
     active: true,
     board_slug: 'test-slug',
     isPlatformPartner: false,
+    hidePartnerPromoBanner: false,
     freePromotionBalance: 0,
     partnerListingProgress: 0,
     emailNotifications: false,
@@ -110,6 +122,16 @@ describe('AuthController', () => {
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
+        {
+          provide: AuthTokenIssuerService,
+          useValue: {
+            attachLoginCookies: jest.fn(),
+            cookieAuthJsonBody: jest.fn((x: LoginResponse) => {
+              const { access_token, refresh_token, ...rest } = x;
+              return rest;
+            }),
+          },
+        },
         { provide: IpBlockService, useValue: mockIpBlockService },
         { provide: SmsService, useValue: mockSmsService },
         { provide: UsersService, useValue: mockUsersService },
@@ -119,10 +141,12 @@ describe('AuthController', () => {
 
     controller = module.get<AuthController>(AuthController);
     authService = module.get(AuthService);
+    authTokenIssuer = module.get(AuthTokenIssuerService);
     ipBlockService = module.get(IpBlockService);
     smsService = module.get(SmsService);
     usersService = module.get(UsersService);
     i18nService = module.get(I18nService);
+    mockPassthroughRes = {} as unknown as Response;
   });
 
   it('should be defined', () => {
@@ -139,6 +163,7 @@ describe('AuthController', () => {
         firstName: 'Test',
         lastName: 'User',
         termsAccepted: true,
+        smsVerificationCode: '123456',
       };
 
       const mockRequest = { headers: {}, ip: '127.0.0.1' };
@@ -185,24 +210,76 @@ describe('AuthController', () => {
           phone: mockUser.phone,
           boardSlug: mockUser.board_slug,
           preferredLocale: mockUser.preferredLocale,
+          hidePartnerPromoBanner: mockUser.hidePartnerPromoBanner,
+          isPlatformPartner: mockUser.isPlatformPartner,
+          phoneVerified: mockUser.phoneVerified,
         },
       };
 
       const req = { ip: '127.0.0.1' };
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
+      i18nService.getLocaleFromHeader.mockReturnValue(undefined as unknown as string);
       authService.login.mockResolvedValue(mockResponse);
       ipBlockService.resetAttempts.mockReturnValue(undefined);
 
-      const result = await controller.login(req as unknown as AuthenticatedRequest, loginDto);
+      const result = await controller.login(
+        req as unknown as AuthenticatedRequest,
+        mockPassthroughRes,
+        loginDto,
+      );
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
-      expect(authService.login).toHaveBeenCalledWith(loginDto, '127.0.0.1');
+      expect(authService.login).toHaveBeenCalledWith(loginDto, '127.0.0.1', undefined);
       expect(ipBlockService.resetAttempts).toHaveBeenCalledWith('127.0.0.1');
-      expect(result).toEqual(mockResponse);
+      expect(authTokenIssuer.attachLoginCookies).toHaveBeenCalledWith(
+        mockPassthroughRes,
+        mockResponse,
+      );
+      expect(result).toEqual({ user: mockResponse.user });
     });
 
-    it('should record failed attempt when login fails', async () => {
+    it('passes request locale from Accept-Language to authService.login', async () => {
+      const loginDto: LoginDto = {
+        login: 'test@example.com',
+        password: 'Test123!@#',
+      };
+      const mockResponse = {
+        access_token: 'jwt-token',
+        refresh_token: 'refresh-token',
+        user: {
+          id: mockUser.id,
+          email: mockUser.email,
+          type: mockUser.type,
+          firstName: mockUser.firstName,
+          lastName: mockUser.lastName,
+          companyName: mockUser.companyName,
+          companyWebsiteUrl: mockUser.companyWebsiteUrl,
+          phone: mockUser.phone,
+          boardSlug: mockUser.board_slug,
+          preferredLocale: mockUser.preferredLocale,
+          hidePartnerPromoBanner: mockUser.hidePartnerPromoBanner,
+          isPlatformPartner: mockUser.isPlatformPartner,
+          phoneVerified: mockUser.phoneVerified,
+        },
+      };
+      const req = {
+        ip: '127.0.0.1',
+        headers: { 'accept-language': 'ru-RU,ru;q=0.9' },
+      };
+
+      ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
+      i18nService.getLocaleFromHeader.mockReturnValue('ru');
+      authService.login.mockResolvedValue(mockResponse);
+      ipBlockService.resetAttempts.mockReturnValue(undefined);
+
+      await controller.login(req as unknown as AuthenticatedRequest, mockPassthroughRes, loginDto);
+
+      expect(i18nService.getLocaleFromHeader).toHaveBeenCalledWith('ru-RU,ru;q=0.9');
+      expect(authService.login).toHaveBeenCalledWith(loginDto, '127.0.0.1', 'ru');
+    });
+
+    it('should record failed attempt when login rejects', async () => {
       const req = { ip: '127.0.0.1' };
       const loginDto: LoginDto = { login: 'test@example.com', password: 'wrong-password' };
 
@@ -211,7 +288,7 @@ describe('AuthController', () => {
       ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
 
       await expect(
-        controller.login(req as unknown as AuthenticatedRequest, loginDto),
+        controller.login(req as unknown as AuthenticatedRequest, mockPassthroughRes, loginDto),
       ).rejects.toThrow(BadRequestException);
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(ipBlockService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
@@ -239,49 +316,41 @@ describe('AuthController', () => {
   describe('verifyPhone', () => {
     it('should verify phone number', async () => {
       const req = { user: { id: 'user-1' } };
-      const verifiedUser = {
-        id: mockUser.id,
-        email: mockUser.email,
-        phone: mockUser.phone,
-        additionalPhone: mockUser.additionalPhone,
-        firstName: mockUser.firstName,
-        lastName: mockUser.lastName,
-        type: mockUser.type,
-        companyName: mockUser.companyName,
-        companyWebsiteUrl: mockUser.companyWebsiteUrl,
-        active: mockUser.active,
-        boardSlug: mockUser.board_slug,
-        isPlatformPartner: mockUser.isPlatformPartner,
-        freePromotionBalance: mockUser.freePromotionBalance,
-        partnerListingProgress: mockUser.partnerListingProgress,
-        emailNotifications: mockUser.emailNotifications,
-
-        emailNotificationListingRefreshReminders: mockUser.emailNotifications,
-
-        emailNotificationWeeklyViewsDigest: mockUser.emailNotifications,
-        emailNotificationSecurityAlerts: mockUser.emailNotifications,
-        viber: mockUser.viber,
-        whatsapp: mockUser.whatsapp,
-        telegram: mockUser.telegram,
-        phoneVerified: true,
-        emailVerified: mockUser.emailVerified,
-        preferredLocale: mockUser.preferredLocale,
-        registration_ip: mockUser.registration_ip,
-        last_login_ip: mockUser.last_login_ip,
-        last_login_at: mockUser.last_login_at,
-        last_listing_refresh_at: null,
-        last_listing_refresh_reminder_sent_at: null,
-        created_at: mockUser.created_at,
-        listings: [],
-        favorites: [],
+      const verifyPhoneDto: VerifyPhoneDto = { code: '123456' };
+      const loginResponse: LoginResponse = {
+        access_token: 'jwt-token',
+        refresh_token: 'refresh-token',
+        user: {
+          id: mockUser.id,
+          email: mockUser.email,
+          type: mockUser.type,
+          firstName: mockUser.firstName,
+          lastName: mockUser.lastName,
+          companyName: mockUser.companyName,
+          companyWebsiteUrl: mockUser.companyWebsiteUrl,
+          phone: mockUser.phone,
+          boardSlug: mockUser.board_slug,
+          preferredLocale: mockUser.preferredLocale,
+          hidePartnerPromoBanner: mockUser.hidePartnerPromoBanner,
+          isPlatformPartner: mockUser.isPlatformPartner,
+          phoneVerified: true,
+        },
       };
 
-      authService.verifyPhone.mockResolvedValue(verifiedUser);
+      authService.verifyPhone.mockResolvedValue(loginResponse);
 
-      const result = await controller.verifyPhone(req as unknown as AuthenticatedRequest);
+      const result = await controller.verifyPhone(
+        req as unknown as AuthenticatedRequest,
+        mockPassthroughRes,
+        verifyPhoneDto,
+      );
 
-      expect(authService.verifyPhone).toHaveBeenCalledWith('user-1');
-      expect(result).toEqual(verifiedUser);
+      expect(authService.verifyPhone).toHaveBeenCalledWith('user-1', '123456');
+      expect(authTokenIssuer.attachLoginCookies).toHaveBeenCalledWith(
+        mockPassthroughRes,
+        loginResponse,
+      );
+      expect(result).toEqual({ user: loginResponse.user });
     });
   });
 
@@ -316,10 +385,22 @@ describe('AuthController', () => {
         success: true,
       });
 
-      const result = await controller.sendSms(sendSmsDto);
+      const result = await controller.sendSms({} as ExpressRequest, sendSmsDto);
 
-      expect(authService.sendVerificationSms).toHaveBeenCalledWith('+37370123456');
+      expect(authService.sendVerificationSms).toHaveBeenCalledWith('+37370123456', undefined);
       expect(result).toEqual({ success: true });
+    });
+
+    it('should pass authenticated user id to auth service', async () => {
+      const sendSmsDto: SendSmsDto = { phone: '+37370123456' };
+
+      authService.sendVerificationSms.mockResolvedValue({
+        success: true,
+      });
+
+      await controller.sendSms({ user: { id: 'user-1' } } as ExpressRequest, sendSmsDto);
+
+      expect(authService.sendVerificationSms).toHaveBeenCalledWith('+37370123456', 'user-1');
     });
 
     it('should throw BadRequestException when phone already exists', async () => {
@@ -329,7 +410,9 @@ describe('AuthController', () => {
         new BadRequestException('errors.phoneAlreadyExists'),
       );
 
-      await expect(controller.sendSms(sendSmsDto)).rejects.toThrow(BadRequestException);
+      await expect(controller.sendSms({} as ExpressRequest, sendSmsDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -397,6 +480,7 @@ describe('AuthController', () => {
         active: mockUser.active,
         board_slug: mockUser.board_slug,
         isPlatformPartner: mockUser.isPlatformPartner,
+        hidePartnerPromoBanner: mockUser.hidePartnerPromoBanner,
         freePromotionBalance: mockUser.freePromotionBalance,
         partnerListingProgress: mockUser.partnerListingProgress,
         emailNotifications: mockUser.emailNotifications,
@@ -410,6 +494,8 @@ describe('AuthController', () => {
         telegram: mockUser.telegram,
         phoneVerified: mockUser.phoneVerified,
         emailVerified: true,
+        googleId: mockUser.googleId,
+        authProvider: mockUser.authProvider,
         preferredLocale: mockUser.preferredLocale,
         registration_ip: mockUser.registration_ip,
         last_login_ip: mockUser.last_login_ip,
@@ -546,6 +632,7 @@ describe('AuthController', () => {
         active: mockUser.active,
         board_slug: mockUser.board_slug,
         isPlatformPartner: mockUser.isPlatformPartner,
+        hidePartnerPromoBanner: mockUser.hidePartnerPromoBanner,
         freePromotionBalance: mockUser.freePromotionBalance,
         partnerListingProgress: mockUser.partnerListingProgress,
         emailNotifications: mockUser.emailNotifications,
@@ -559,6 +646,8 @@ describe('AuthController', () => {
         telegram: mockUser.telegram,
         phoneVerified: mockUser.phoneVerified,
         emailVerified: mockUser.emailVerified,
+        googleId: mockUser.googleId,
+        authProvider: mockUser.authProvider,
         preferredLocale: mockUser.preferredLocale,
         registration_ip: mockUser.registration_ip,
         last_login_ip: mockUser.last_login_ip,
@@ -636,6 +725,7 @@ describe('AuthController', () => {
         preferredLocale: mockUser.preferredLocale,
         boardSlug: mockUser.board_slug,
         isPlatformPartner: mockUser.isPlatformPartner,
+        hidePartnerPromoBanner: mockUser.hidePartnerPromoBanner,
         freePromotionBalance: mockUser.freePromotionBalance,
         partnerListingProgress: mockUser.partnerListingProgress,
         emailNotifications: mockUser.emailNotifications,
@@ -649,6 +739,8 @@ describe('AuthController', () => {
         telegram: mockUser.telegram,
         phoneVerified: mockUser.phoneVerified,
         emailVerified: mockUser.emailVerified,
+        googleId: mockUser.googleId,
+        authProvider: mockUser.authProvider,
         registration_ip: mockUser.registration_ip,
         last_login_ip: mockUser.last_login_ip,
         last_login_at: mockUser.last_login_at,
@@ -775,6 +867,7 @@ describe('AuthController', () => {
         active: mockUser.active,
         board_slug: mockUser.board_slug,
         isPlatformPartner: mockUser.isPlatformPartner,
+        hidePartnerPromoBanner: mockUser.hidePartnerPromoBanner,
         freePromotionBalance: mockUser.freePromotionBalance,
         partnerListingProgress: mockUser.partnerListingProgress,
         emailNotifications: mockUser.emailNotifications,
@@ -788,6 +881,8 @@ describe('AuthController', () => {
         telegram: mockUser.telegram,
         phoneVerified: true,
         emailVerified: mockUser.emailVerified,
+        googleId: mockUser.googleId,
+        authProvider: mockUser.authProvider,
         preferredLocale: mockUser.preferredLocale,
         registration_ip: mockUser.registration_ip,
         last_login_ip: mockUser.last_login_ip,

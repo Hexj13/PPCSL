@@ -1,6 +1,6 @@
 'use client';
 
-import { Dropdown } from '@/components/common/Dropdown';
+import { MobileSelectField } from '@/components/ListingForm/MobileSelectField';
 import { useAuthStore } from '@/lib/store';
 import { CheckIcon, HintTooltip } from '@/ui';
 
@@ -48,14 +48,15 @@ export function TireListingSettingsSection({
         {t('listings.listingSettings')}
       </h2>
       <div className="sm:max-w-[50%]">
-        <label className="block text-sm font-semibold mb-2 text-primary-700">
+        <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
           {t('listings.statusLabel')}
         </label>
-        <Dropdown
+        <MobileSelectField
           value={formData.status}
           onChange={(value) =>
             setFormData((prev) => ({ ...prev, status: value as 'Active' | 'Paused' }))
           }
+          sheetTitle={t('listings.statusLabel')}
           placeholder={t('listings.statusLabel')}
           autoPosition={true}
           menuMaxHeight={300}
@@ -69,7 +70,7 @@ export function TireListingSettingsSection({
       {isAdmin && (
         <div className="mt-5">
           <div className="flex items-center gap-1.5 mb-2">
-            <label className="block text-sm font-semibold text-primary-700">
+            <label className="block text-sm font-semibold text-primary-900">
               {t('listings.assignToUser')}
             </label>
             <HintTooltip ariaLabel={t('listings.assignToUserHintButton')}>

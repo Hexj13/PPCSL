@@ -16,7 +16,7 @@ After deploying INP optimizations, use this checklist to validate results.
 
 - **Trace KPI:** No click/submit handler windows longer than 16ms on target interactions (filter submit, quick filter, sort change, listing card click).
 - **Trace KPI:** Fewer long tasks in the 0–250ms window after filter submit and card click.
-- **Trace KPI:** Third-party (GTM/Tawk) activity starts after first interaction or idle, not during initial critical path.
+- **Trace KPI:** Third-party (GTM, GA) activity starts after idle, not during the initial critical path.
 - **Field (GSC):** INP p75 &lt; 200ms for mobile (PHONE) for the affected URL group (e.g. `/`, `/?brand=...&model=...`).
 
 ## Validation Steps
@@ -32,7 +32,7 @@ After deploying INP optimizations, use this checklist to validate results.
    - In the trace, check:
      - `EventDispatch` for `click` / `submit`: duration should stay under ~16ms where we optimized.
      - Long tasks (e.g. &gt;16ms) should not sit in the same window as the main tap/click.
-     - GTM/Tawk script execution should appear after idle or first interaction, not at initial load.
+     - GTM and GA script execution should appear after idle (`requestIdleCallback` / 2.5s timeout), not at initial load. Telemetry components (`PageScrollTracker`, `NavigationTelemetry`, `ExternalLinkTracker`, `ServiceWorkerRegistration`) load via `DeferredTelemetry` after idle.
 
 2. **Optional: INP attribution in dev**
    - Use `startInpAttributionObserver()` from `@/lib/performance/inp-kpi` in development to log event timing entries (click/keydown/pointerdown) and their durations. Compare before/after changes.

@@ -1,27 +1,35 @@
 import { getVersionedAssetPath } from '@/lib/assets';
 import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
+import { resolveLocaleRouting } from '@/lib/locale-routing';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
 import { getCountry, toSafeJsonLdHtml } from '@/lib/utils';
+
+const SCHEMA_ORG_LANGUAGE_NAMES: Readonly<Record<string, string>> = {
+  ro: 'Romanian',
+  ru: 'Russian',
+  en: 'English',
+};
 
 export async function OrganizationSchema() {
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
+  const routing = resolveLocaleRouting(siteConfig);
   const locale = await getMetadataLocale();
   const t = getServerTranslations(locale);
 
-  const localeTag = siteConfig.locale;
-  const languageNames: Record<string, string> = {
-    'ro-MD': 'Romanian',
-    'ru-MD': 'Russian',
-  };
-  const availableLanguage = languageNames[localeTag] || 'Romanian';
+  const sitePageUrl = absoluteUrlWithLocalePrefix(siteConfig.siteUrl, '/', locale);
   const logoUrl = `${siteConfig.siteUrl}${getVersionedAssetPath('/logo.png', siteConfig.assetVersion)}`;
+  const availableLanguage = routing.supportedLocales.map(
+    (code) => SCHEMA_ORG_LANGUAGE_NAMES[code.toLowerCase()] ?? code,
+  );
 
   const schemaData = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: siteConfig.name,
-    url: siteConfig.siteUrl,
+    url: sitePageUrl,
+    inLanguage: locale,
     logo: logoUrl,
     description: t.metadata.site.organizationDescription,
     address: {

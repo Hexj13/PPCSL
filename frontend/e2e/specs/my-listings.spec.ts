@@ -1,40 +1,32 @@
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../fixtures/base';
-import { hasAuthCredentials, requireAuthCredentials } from '../fixtures/env';
+import { requireAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
 import { loginByUi } from '../utils/auth';
-import { useClearedBrowserState } from '../utils/spec-hooks';
-import { runSteps, type E2EStep } from '../utils/steps';
+import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
+import { LISTING_PHOTO_FILES } from '../utils/listing-flow';
+import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
-const LISTING_PHOTO_FILES = [
-  'e2e/fixtures/photos/2.jpg',
-  'e2e/fixtures/photos/3.jpg',
-  'e2e/fixtures/photos/4.jpg',
-  'e2e/fixtures/photos/5.jpg',
-] as const;
+async function loginAndOpenMyListings(page: Page): Promise<void> {
+  await loginByUi(page, requireAuthCredentials());
+  await forceDefaultCanonicalLocaleCookies(page);
+  await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
+}
+
+async function createListingForEditFlow(
+  page: Page,
+  listingCreatePage: ListingCreatePage,
+): Promise<void> {
+  await listingCreatePage.openAndExpectPageView();
+  await listingCreatePage.fillRequiredFields();
+  await listingCreatePage.uploadPhotos(LISTING_PHOTO_FILES);
+  await listingCreatePage.submitCreateForm();
+  await expect(page).toHaveURL(/\/listings\/[^/]+$/, { timeout: 30_000 });
+}
 
 test.describe('My listings @p0', () => {
-  useClearedBrowserState(test);
-
-  async function loginAndOpenMyListings(page: Page): Promise<void> {
-    await loginByUi(page, requireAuthCredentials());
-    await page.goto('/my-listings');
-  }
-
-  async function createListingForEditFlow(
-    page: Page,
-    listingCreatePage: ListingCreatePage,
-  ): Promise<void> {
-    await listingCreatePage.openAndExpectPageView();
-    await listingCreatePage.fillRequiredFields();
-    await listingCreatePage.uploadPhotos(LISTING_PHOTO_FILES);
-    await listingCreatePage.submitCreateForm();
-    await expect(page).toHaveURL(/\/listings\/[^/]+$/, { timeout: 30_000 });
-  }
-
   test('opens my listings page for authenticated user', async ({ page, myListingsPage }) => {
-    test.skip(!hasAuthCredentials(), 'E2E credentials are required for authenticated scenarios');
     const steps: E2EStep[] = [
       {
         name: 'Login as user with valid credentials',
@@ -56,14 +48,13 @@ test.describe('My listings @p0', () => {
       },
     ];
 
-    await runSteps(steps);
+    await runSteps(prependClearBrowserState(page, steps));
   });
 
   test('logs out and redirects guest user away from my listings', async ({
     page,
     myListingsPage,
   }) => {
-    test.skip(!hasAuthCredentials(), 'E2E credentials are required for authenticated scenarios');
     const steps: E2EStep[] = [
       {
         name: 'Login and open my listings page',
@@ -95,7 +86,7 @@ test.describe('My listings @p0', () => {
       },
     ];
 
-    await runSteps(steps);
+    await runSteps(prependClearBrowserState(page, steps));
   });
 
   test('opens listing edit form from my listings card', async ({
@@ -103,7 +94,6 @@ test.describe('My listings @p0', () => {
     myListingsPage,
     listingCreatePage,
   }) => {
-    test.skip(!hasAuthCredentials(), 'E2E credentials are required for authenticated scenarios');
     const steps: E2EStep[] = [
       {
         name: 'Login and open my listings page',
@@ -134,6 +124,6 @@ test.describe('My listings @p0', () => {
       },
     ];
 
-    await runSteps(steps);
+    await runSteps(prependClearBrowserState(page, steps));
   });
 });

@@ -1,4 +1,8 @@
-import type { ParserAvailabilityProbeConfig, ParserConfigItem } from '../../common/config/parsers';
+import type {
+  ParserAvailabilityProbeConfig,
+  ParserConfigItem,
+  ParserPdpDefaultsConfig,
+} from '../../common/config/parsers';
 import { parsersConfig } from '../../common/config/parsers';
 import type { ParserAdminAvailability, ParserReleaseStage, ParserRunType } from '../domain/types';
 
@@ -16,6 +20,7 @@ export interface ParserCatalogItem {
   cliScript: string;
   plpMode: 'mono' | 'multi';
   plpDataPath?: string;
+  pdpDefaults?: ParserPdpDefaultsConfig;
   defaultPdpCity?: string;
   defaultPdpCityNames?: string[];
   availabilityProbe?: ParserAvailabilityProbeConfig;
@@ -36,6 +41,7 @@ const parserCatalog: ParserCatalogItem[] = parsersConfig.map((item: ParserConfig
   cliScript: item.cliScript,
   plpMode: item.plpMode,
   plpDataPath: item.plpDataPath,
+  pdpDefaults: item.pdpDefaults,
   defaultPdpCity: item.defaultPdpCity,
   defaultPdpCityNames: item.defaultPdpCityNames,
   availabilityProbe: item.availabilityProbe,

@@ -1,7 +1,11 @@
 {
   "validation": {
     "name": "Câmpul poate conține doar litere, spații, cratime și liniuțe",
-    "phone": "Numărul de telefon trebuie să fie în format +cod țară (1-4 cifre) + număr (6-15 cifre)",
+    "phone": "Introduceți un număr de telefon valid în format internațional",
+    "phoneMustStartWithPlus": "Folosiți format internațional cu prefixul + (ex. +373...)",
+    "phoneInvalidCountry": "Prefix de țară necunoscut",
+    "phoneInvalidLength": "Lungimea numărului nu corespunde țării",
+    "phoneNotMobile": "Indicați un număr mobil pentru SMS (liniile fixe nu sunt acceptate)",
     "password": "Parola trebuie să conțină cel puțin o literă mare și o literă mică",
     "registrationType": "Tipul de înmatriculare trebuie să fie Local, Foreign, Cleared sau NotCleared",
     "string": "Valoarea trebuie să fie un șir de caractere",
@@ -86,9 +90,14 @@
     "invalidLoginCredentials": "Date de autentificare invalide",
     "invalidPreferredLocale": "Limbă invalidă. Valori permise: ro, ru.",
     "emailNotVerifiedForLogin": "Pentru autentificare cu email, confirmă mai întâi această adresă. Acum te poți autentifica prin numărul de telefon.",
+    "googleEmailNotVerified": "Emailul din contul Google nu este verificat.",
+    "googleSignInFailed": "Autentificarea Google a eșuat. Încearcă din nou.",
+    "phoneVerificationRequired": "Verifică numărul de telefon înainte de a folosi această funcție.",
+    "useGoogleSignIn": "Acest cont folosește autentificarea Google. Folosește „Continuă cu Google” în loc de parolă.",
     "userNotActive": "Utilizatorul nu este activ",
     "termsNotAccepted": "Trebuie să acceptați termenii de utilizare",
     "phoneAlreadyExists": "Utilizator cu acest număr de telefon există deja",
+    "primaryPhoneMustUseChangeFlow": "Pentru a schimba numărul de telefon al contului, folosește opțiunea „Schimbă telefonul” din profil.",
     "emailAlreadyExists": "Utilizator cu această adresă de email există deja",
     "invalidOrExpiredToken": "Token invalid sau expirat",
     "emailMismatch": "Adresa de email nu corespunde",
@@ -119,7 +128,7 @@
     "invalidCurrentPassword": "Parola actuală este incorectă",
     "newPasswordMustDiffer": "Parola nouă trebuie să fie diferită de cea actuală",
     "additionalPhoneSameAsPrimary": "Numărul suplimentar trebuie să fie diferit de numărul de cont",
-    "partnerSettingsBusinessOnly": "Parteneriatul platformei este disponibil doar pentru conturi de persoană juridică.",
+    "partnerSettingsBusinessOnly": "Parteneriatul platformei este disponibil doar pentru conturile înregistrate ca persoană juridică.",
     "listingUpdateForbidden": "Nu aveți permisiune să actualizați acest anunț",
     "listingDeleteForbidden": "Nu aveți permisiune să ștergeți acest anunț",
     "favoriteNotFound": "Favorite nu a fost găsit",
@@ -139,7 +148,8 @@
     "invalidModel": "Model invalid",
     "vehicleNotFound": "Vehiculul nu a fost găsit",
     "vehicleNotFoundForListing": "Vehiculul nu a fost găsit pentru anunț",
-    "vinRateLimitExceeded": "Puteți solicita VIN de maximum 5 ori pe oră. Încercați mai târziu.",
+    "vinRateLimitExceeded": "Puteți afișa VIN-ul pentru maximum 50 anunțuri diferite pe oră. Încercați mai târziu.",
+    "phoneRateLimitExceeded": "Ați atins limita pentru afișarea numerelor de telefon. Încercați mai târziu.",
     "vehicleIdNotFound": "ID vehicul negăsit",
     "brandNotFoundById": "Marca nu a fost găsită",
     "tireBrandNotFound": "Marca de anvelope nu a fost găsită",
@@ -192,7 +202,20 @@
     "parsingPlpFileNameAlreadyUsed": "Un fișier PLP cu acest nume este deja folosit de o altă programare activă.",
     "parsingRunCannotCancel": "Această rulare nu poate fi anulată.",
     "parsingRegistrySyncUnavailable": "Sincronizarea registrului nu este disponibilă pentru acest parser.",
-    "parsingSyncAssignedUserRequired": "Pentru sincronizarea registrului este necesar UUID-ul utilizatorului-partener Kupito (introduceți manual sau rulați mai întâi PDP/PLP cu utilizator atribuit)."
+    "parsingSyncAssignedUserRequired": "Pentru sincronizarea registrului este necesar UUID-ul utilizatorului-partener Kupito (introduceți manual sau rulați mai întâi PDP/PLP cu utilizator atribuit).",
+    "video": {
+      "tooLarge": "Videoclipul depășește dimensiunea maximă permisă.",
+      "invalidFormat": "Format video neacceptat.",
+      "notOwner": "Puteți încărca video doar pentru propriul anunț.",
+      "tooLong": "Videoclipul depășește durata maximă permisă.",
+      "transcodingFailed": "Procesarea video a eșuat.",
+      "transcodingUnavailable": "Procesarea video nu este disponibilă momentan.",
+      "replaceRequiresDelete": "Eliminați videoclipul existent înainte de a încărca unul nou.",
+      "processingInProgress": "Videoclipul este deja în procesare.",
+      "uploadNotInitialized": "Încărcarea video nu a fost pornită corect.",
+      "uploadIdMismatch": "Sesiunea de încărcare video nu se potrivește.",
+      "importDownloadFailed": "Nu s-a putut descărca videoclipul de la URL-ul furnizat."
+    }
   },
   "vehicleOptions": {
     "transmission": {

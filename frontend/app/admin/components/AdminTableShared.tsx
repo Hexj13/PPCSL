@@ -178,11 +178,19 @@ export function AdminConfirmModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="small">
       <p className="text-text-secondary mb-4">{message}</p>
-      <div className="flex gap-2 justify-end">
-        <AdminActionButton variant="secondary" onClick={onClose}>
+      <div className="flex flex-col sm:flex-row gap-3 sm:justify-end shrink-0">
+        <AdminActionButton
+          variant="secondary"
+          className="w-full shrink-0 sm:w-auto"
+          onClick={onClose}
+        >
           {cancelLabel}
         </AdminActionButton>
-        <AdminActionButton variant={confirmVariant} onClick={onConfirm}>
+        <AdminActionButton
+          variant={confirmVariant}
+          className="w-full shrink-0 sm:w-auto"
+          onClick={onConfirm}
+        >
           {confirmLabel}
         </AdminActionButton>
       </div>

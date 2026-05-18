@@ -6,6 +6,7 @@ import { REFRESH_COOLDOWN_MS } from '../../../common/constants';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { UsersService } from '../../../users/application/users.service';
 import { Listing } from '../../entities/listing.entity';
+import { stripListingVideosForListResponse } from '../utils/listing-video-public.util';
 
 @Injectable()
 export class GetUserListingsUseCase {
@@ -103,6 +104,7 @@ export class GetUserListingsUseCase {
 
     const totalPages = Math.ceil(total / limit);
     const lastRefresh = await this.usersService.getLastListingRefreshAt(userId);
+    stripListingVideosForListResponse(listings);
     const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(listings);
 
     return {

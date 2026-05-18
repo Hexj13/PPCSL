@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=20.9.0",
+    "node": ">=22.0.0",
     "npm": ">=10.0.0"
   },
   "scripts": {
     "dev": "rm -rf .next && next dev",
     "dev:clean": "rm -rf .next node_modules/.cache && next dev",
-    "prebuild": "[ -d ../../assets/frontend/public ] && cp -r ../../assets/frontend/public/* public/ || true",
+    "prebuild": "node ../../scripts/sync-platform-to-core.cjs && node --experimental-strip-types scripts/write-theme-json.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . -c config/eslint.config.mjs && npm run lint:translations",
@@ -48,6 +48,8 @@
     "axios": "^1.7.9",
     "blurhash": "^2.0.5",
     "dompurify": "^3.4.0",
+    "jose": "^6.0.10",
+    "libphonenumber-js": "^1.12.42",
     "next": "^16.0.1",
     "postcss": "^8.5.10",
     "react": "^19.2.5",
@@ -76,6 +78,7 @@
     "@vitest/coverage-v8": "^4.0.7",
     "allure-commandline": "^2.38.1",
     "allure-playwright": "^3.7.1",
+    "allure-js-commons": "3.7.1",
     "baseline-browser-mapping": "^2.10.19",
     "browserslist": "^4.28.2",
     "critters": "^0.0.25",
@@ -118,6 +121,7 @@
       "<rootDir>/config/jest/jest.setup.js"
     ],
     "moduleNameMapper": {
+      "^@/lib/blurhash-worker-client$": "<rootDir>/lib/__mocks__/blurhash-worker-client.ts",
       "^@/(.*)$": "<rootDir>/$1",
       "\\./config/site$": "<rootDir>/lib/__mocks__/site.ts"
     },

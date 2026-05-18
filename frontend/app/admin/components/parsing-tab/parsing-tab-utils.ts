@@ -145,7 +145,39 @@ export function getParserPdpDefaults(parserCode: string): ParserPdpDefaults {
     removeClosed: Boolean(configured.removeClosed),
     onlyFailed: Boolean(configured.onlyFailed),
     updateExisting: Boolean(configured.updateExisting),
+    autoCreateBrands: Boolean(configured.autoCreateBrands ?? configured.autoCreateBrandsModels),
+    autoCreateModels: Boolean(configured.autoCreateModels ?? configured.autoCreateBrandsModels),
   };
+}
+
+export function resolveSnapshotAutoCreateBrands(
+  cfg: Record<string, unknown>,
+  defaults: ParserPdpDefaults,
+): boolean {
+  const direct = cfg.autoCreateBrands;
+  if (typeof direct === 'boolean') {
+    return direct;
+  }
+  const legacy = cfg.autoCreateBrandsModels;
+  if (typeof legacy === 'boolean') {
+    return legacy;
+  }
+  return defaults.autoCreateBrands;
+}
+
+export function resolveSnapshotAutoCreateModels(
+  cfg: Record<string, unknown>,
+  defaults: ParserPdpDefaults,
+): boolean {
+  const direct = cfg.autoCreateModels;
+  if (typeof direct === 'boolean') {
+    return direct;
+  }
+  const legacy = cfg.autoCreateBrandsModels;
+  if (typeof legacy === 'boolean') {
+    return legacy;
+  }
+  return defaults.autoCreateModels;
 }
 
 export function toLoginFileSlug(login: string): string {

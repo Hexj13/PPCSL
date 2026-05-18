@@ -168,7 +168,7 @@ export function PWAInstallButtonGray({ fullWidth = false, mobileApp }: PWAInstal
           <button
             type="button"
             onClick={handlePrimaryClick}
-            className={`text-white font-medium text-sm md:text-base hover-only:hover:text-primary-100 active:text-primary-500 transition-all duration-200 whitespace-nowrap flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none ${fullWidth ? 'w-full justify-center' : ''}`}
+            className={`h-12 md:h-auto text-white font-medium text-sm md:text-base hover-only:hover:text-primary-100 active:text-primary-500 transition-all duration-200 whitespace-nowrap flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none ${fullWidth ? 'w-full justify-center' : ''}`}
             aria-label={t('pwa.mobileApp')}
           >
             <svg

@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 
+import { Dropdown } from '@/components/common/Dropdown';
 import { MultiSelectDropdown } from '@/components/common/MultiSelectDropdown';
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -10,6 +11,7 @@ import { toast } from '@/lib/toast';
 import { clampToRange, ENGINE_RANGE, isInRange, POWER_RANGE } from '@/lib/validation';
 import { Checkbox } from '@/ui';
 
+import { SearchFilterCityIcon } from './search-filter-field-icons';
 import { FIRE_EMOJI, renderSearchFilterLabelBadge, SPARKLES_EMOJI } from './searchFilterLabelBadge';
 
 const sanitizeEngineInput = (raw: string): string | null => {
@@ -66,6 +68,14 @@ export function AdvancedFilters({
 
   const doorOptions = useMemo(() => getDoorOptions(t), [t]);
 
+  const sellerTypeOptions = useMemo(
+    () => [
+      { value: 'Individual', label: t('searchFilters.sellerTypeIndividual') },
+      { value: 'Business', label: t('searchFilters.sellerTypeBusiness') },
+    ],
+    [t],
+  );
+
   const handleEngineBlur = (key: string, value: string) => {
     if (value && value.trim() !== '') {
       const numValue = parseFloat(value.replace(',', '.'));
@@ -98,22 +108,7 @@ export function AdvancedFilters({
             className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2 overflow-hidden"
             title={t('searchFilters.city')}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="shrink-0"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M5.7 15C4.03377 15.6353 3 16.5205 3 17.4997C3 19.4329 7.02944 21 12 21C16.9706 21 21 19.4329 21 17.4997C21 16.5205 19.9662 15.6353 18.3 15M12 9H12.01M18 9C18 13.0637 13.5 15 12 18C10.5 15 6 13.0637 6 9C6 5.68629 8.68629 3 12 3C15.3137 3 18 5.68629 18 9ZM13 9C13 9.55228 12.5523 10 12 10C11.4477 10 11 9.55228 11 9C11 8.44772 11.4477 8 12 8C12.5523 8 13 8.44772 13 9Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <SearchFilterCityIcon />
             <span className="truncate">{t('searchFilters.city')}</span>
           </label>
           <MultiSelectDropdown
@@ -290,6 +285,21 @@ export function AdvancedFilters({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="min-w-0">
+          <label
+            className="block text-sm font-semibold mb-2 text-primary-900 truncate"
+            title={t('searchFilters.sellerTypeLabel')}
+          >
+            {t('searchFilters.sellerTypeLabel')}
+          </label>
+          <Dropdown
+            value={filters.seller_type}
+            onChange={(value) => onFilterChange('seller_type', value)}
+            options={sellerTypeOptions}
+            placeholder={t('searchFilters.sellerTypePlaceholder')}
+            searchable={false}
+          />
+        </div>
         <div>
           <h3
             className="text-sm font-semibold mb-2 text-primary-900 truncate"
@@ -341,7 +351,6 @@ export function AdvancedFilters({
             label={t('listings.availableInCredit')}
           />
         </div>
-        <div />
       </div>
     </div>
   );

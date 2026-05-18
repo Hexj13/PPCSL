@@ -2,10 +2,10 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Logger,
   NotFoundException,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -26,15 +26,20 @@ import type { Request as ExpressRequest, Response } from 'express';
 
 import { JwtAuthGuard } from '../../auth/infrastructure/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import { PhoneVerifiedGuard } from '../../auth/infrastructure/guards/phone-verified.guard';
 import type { AuthenticatedRequest } from '../../common/express-augmentation';
 import { CronSecretGuard } from '../../common/guards/cron-secret.guard';
+import { buildVisitorHash } from '../../common/utils/visitor-identity.util';
+import { ListingAiReportService } from '../application/listing-ai-report.service';
 import { ListingsService } from '../listings.service';
 
 import { CreateListingDto } from './dto/create-listing.dto';
+import { PostListingAiReportDto } from './dto/post-listing-ai-report.dto';
 import { SearchListingsDto } from './dto/search-listings.dto';
 import { SimilarListingsQueryDto } from './dto/similar-listings.dto';
 import { TogglePromotionDto } from './dto/toggle-promotion.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
+import { ParseListingIdPipe } from './pipes/parse-listing-id.pipe';
 
 function normalizeReportLocale(locale?: string): 'ro' | 'ru' {
   return locale?.trim().toLowerCase() === 'ru' ? 'ru' : 'ro';
@@ -45,7 +50,10 @@ function normalizeReportLocale(locale?: string): 'ro' | 'ru' {
 export class ListingsController {
   private readonly logger = new Logger(ListingsController.name);
 
-  constructor(private readonly listingsService: ListingsService) {}
+  constructor(
+    private readonly listingsService: ListingsService,
+    private readonly listingAiReportService: ListingAiReportService,
+  ) {}
 
   @ApiOperation({ summary: 'Search listings' })
   @ApiResponse({
@@ -310,7 +318,7 @@ export class ListingsController {
   @ApiResponse({ status: 404, description: 'Listing not found' })
   @Get(':id/similar')
   async findSimilar(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseListingIdPipe) id: string,
     @Query() query: SimilarListingsQueryDto,
   ) {
     return this.listingsService.findSimilar(id, query.limit, query.offset);
@@ -323,15 +331,42 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Full VIN' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Listing not found or no VIN' })
-  @ApiResponse({ status: 429, description: 'Too many VIN requests. Max 5 per hour.' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many VIN reveal requests (max 50 unique listings per hour).',
+  })
   @UseGuards(JwtAuthGuard)
   @Get(':id/vin')
   async getListingVin(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseListingIdPipe) id: string,
     @Request() req: AuthenticatedRequest,
     @Query('action') action?: string,
   ) {
     return this.listingsService.getListingVin(id, req.user.id, action || 'unknown');
+  }
+
+  @ApiOperation({ summary: 'Get full seller phone numbers for listing' })
+  @ApiParam({ name: 'id', description: 'Listing UUID' })
+  @ApiResponse({ status: 200, description: 'Phone numbers' })
+  @ApiResponse({ status: 404, description: 'Listing not found or no phones' })
+  @ApiResponse({
+    status: 429,
+    description:
+      'Too many phone reveal requests: max 20 unique listings/hour (anonymous), max 50/hour (authenticated). Listing owner and Admin bypass.',
+  })
+  @UseGuards(OptionalJwtAuthGuard)
+  @Get(':id/phones')
+  async getListingPhones(
+    @Param('id', ParseListingIdPipe) id: string,
+    @Request() req: ExpressRequest,
+  ) {
+    const userId = req.user?.id ?? null;
+    const visitorHash = userId ? null : buildVisitorHash(req);
+    return this.listingsService.getListingPhones(id, {
+      userId,
+      visitorHash,
+      isAdmin: req.user?.type === 'Admin',
+    });
   }
 
   @ApiOperation({ summary: 'Get listing history by VIN' })
@@ -339,7 +374,7 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Previous listings with same VIN' })
   @ApiResponse({ status: 404, description: 'Listing not found' })
   @Get(':id/history')
-  async getListingHistory(@Param('id', ParseUUIDPipe) id: string) {
+  async getListingHistory(@Param('id', ParseListingIdPipe) id: string) {
     return this.listingsService.getListingHistory(id);
   }
 
@@ -353,7 +388,10 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Report URL' })
   @ApiResponse({ status: 404, description: 'Listing not found or no VIN' })
   @Get(':id/report-url')
-  async getReportUrl(@Param('id', ParseUUIDPipe) id: string, @Query('locale') locale?: string) {
+  async getReportUrl(
+    @Param('id', ParseListingIdPipe) id: string,
+    @Query('locale') locale?: string,
+  ) {
     return this.listingsService.getReportUrl(id, normalizeReportLocale(locale));
   }
 
@@ -367,7 +405,7 @@ export class ListingsController {
   @ApiResponse({ status: 302, description: 'Redirect to report provider' })
   @Get(':id/report-redirect')
   async getReportRedirect(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseListingIdPipe) id: string,
     @Res() res: Response,
     @Query('locale') locale?: string,
   ) {
@@ -379,6 +417,31 @@ export class ListingsController {
     } catch {
       res.redirect(302, fallbackUrl);
     }
+  }
+
+  @ApiOperation({ summary: 'Request AI listing report (cached, async generation)' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'id', description: 'Listing UUID' })
+  @ApiResponse({ status: 200, description: 'ready | pending | unavailable' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Listing not found' })
+  @ApiResponse({ status: 429, description: 'User hourly generation limit' })
+  @Post(':id/ai-report')
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
+  postListingAiReport(
+    @Param('id', ParseListingIdPipe) id: string,
+    @Request() req: AuthenticatedRequest,
+    @Body() body: PostListingAiReportDto,
+    @Headers('accept-language') acceptLanguage?: string,
+    @Headers('x-report-language') xReportLanguage?: string,
+  ) {
+    return this.listingAiReportService.requestReport({
+      listingId: id,
+      userId: req.user.id,
+      headerReportLanguage: xReportLanguage,
+      acceptLanguage,
+      bodyLanguage: body.language,
+    });
   }
 
   @ApiOperation({ summary: 'Get listing details' })
@@ -398,7 +461,7 @@ export class ListingsController {
   @UseGuards(OptionalJwtAuthGuard)
   @Get(':id')
   async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseListingIdPipe) id: string,
     @Request() req: ExpressRequest,
     @Query('includeFullVin') includeFullVin?: string,
   ) {
@@ -418,9 +481,17 @@ export class ListingsController {
     } catch (error) {
       if (!(error instanceof NotFoundException)) {
         if (error instanceof Error) {
-          this.logger.error('Error in findOne controller:', error.message, error.stack);
+          this.logger.error(
+            `Error in findOne controller: ${error.message} | id=${id}`,
+            error.stack,
+            ListingsController.name,
+          );
         } else {
-          this.logger.error('Error in findOne controller:', error);
+          this.logger.error(
+            `Error in findOne controller: ${String(error)} | id=${id}`,
+            undefined,
+            ListingsController.name,
+          );
         }
       }
       throw error;
@@ -479,7 +550,7 @@ export class ListingsController {
     },
   })
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   create(@Body() createListingDto: CreateListingDto, @Request() req: AuthenticatedRequest) {
     return this.listingsService.create(createListingDto, req.user.id, req.user.type);
   }
@@ -496,9 +567,9 @@ export class ListingsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   update(
-    @Param('id') id: string,
+    @Param('id', ParseListingIdPipe) id: string,
     @Body() updateListingDto: UpdateListingDto,
     @Request() req: AuthenticatedRequest,
   ) {
@@ -516,8 +587,8 @@ export class ListingsController {
   @ApiResponse({ status: 400, description: 'Active listings limit reached' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post(':id/publish')
-  @UseGuards(JwtAuthGuard)
-  publish(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
+  publish(@Param('id', ParseListingIdPipe) id: string, @Request() req: AuthenticatedRequest) {
     return this.listingsService.publish(id, req.user.id);
   }
 
@@ -531,8 +602,8 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Listing paused successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post(':id/pause')
-  @UseGuards(JwtAuthGuard)
-  pause(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
+  pause(@Param('id', ParseListingIdPipe) id: string, @Request() req: AuthenticatedRequest) {
     return this.listingsService.pause(id, req.user.id);
   }
 
@@ -546,8 +617,8 @@ export class ListingsController {
   @ApiResponse({ status: 200, description: 'Listing closed successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post(':id/close')
-  @UseGuards(JwtAuthGuard)
-  close(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
+  close(@Param('id', ParseListingIdPipe) id: string, @Request() req: AuthenticatedRequest) {
     return this.listingsService.close(id, req.user.id);
   }
 
@@ -557,7 +628,7 @@ export class ListingsController {
   @ApiResponse({ status: 400, description: 'Must wait 48 hours' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post('refresh-dates')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   refreshDates(@Request() req: AuthenticatedRequest) {
     return this.listingsService.refreshAllDates(req.user.id);
@@ -584,7 +655,7 @@ export class ListingsController {
   }
 
   @Patch(':id/promote')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Toggle listing promotion (user)' })
@@ -597,7 +668,7 @@ export class ListingsController {
   @ApiResponse({ status: 401, description: 'Unauthorized - authentication required' })
   @ApiResponse({ status: 403, description: 'Forbidden - promotion feature is disabled' })
   async togglePromotion(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseListingIdPipe) id: string,
     @Body() dto: TogglePromotionDto,
     @Request() req: AuthenticatedRequest,
   ) {

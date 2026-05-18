@@ -58,6 +58,7 @@ export const VehicleListingForm = forwardRef<VehicleListingFormHandle, VehicleLi
       isChangingType,
       vehicleType,
       loading,
+      videoBlocksCreate,
       uploading,
       hidePlates,
       setHidePlates,
@@ -137,6 +138,7 @@ export const VehicleListingForm = forwardRef<VehicleListingFormHandle, VehicleLi
           <LoadingButton
             type="submit"
             loading={loading}
+            disabled={mode === 'create' && videoBlocksCreate}
             loadingText={mode === 'create' ? t('listings.creating') : t('listings.saving')}
             className="w-full min-h-12 text-primary-700 font-medium text-base hover:text-primary-900 hover:border-primary-900 transition-colors duration-200 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             data-testid={mode === 'create' ? 'listing-create-submit' : 'listing-edit-submit'}

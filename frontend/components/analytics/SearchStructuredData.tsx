@@ -4,97 +4,82 @@ import type { ReactNode } from 'react';
 import type { Listing } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
 import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n-types';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { createSlug, getCountry, toSafeJsonLdHtml } from '@/lib/utils';
+import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
+import { createSlug, getCountry, getListingHref, toSafeJsonLdHtml } from '@/lib/utils';
 
 type BreadcrumbItem = { '@type': string; position: number; name: string; item: string };
-type SearchActionItem = {
-  '@type': string;
-  target: { '@type': string; urlTemplate: string; inLanguage: string };
-  result: { '@type': string; name: string };
-};
 
-function buildBreadcrumbItemList(
+export function buildBreadcrumbItemList(
   brandParam: string | null,
   modelParam: string | null,
+  brandDisplayName: string | null,
+  modelDisplayName: string | null,
   siteUrl: string,
+  locale: Locale,
   t: ReturnType<typeof getServerTranslations>,
 ): BreadcrumbItem[] {
-  const items: BreadcrumbItem[] = [
-    { '@type': 'ListItem', position: 1, name: t.breadcrumbs.home, item: siteUrl },
-    { '@type': 'ListItem', position: 2, name: t.home.title, item: `${siteUrl}/` },
-  ];
-  if (brandParam) {
-    const brandName =
-      POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase()) || brandParam;
-    items.push({
-      '@type': 'ListItem',
-      position: items.length + 1,
-      name: brandName,
-      item: `${siteUrl}/?brand=${brandParam}`,
-    });
-  }
-  if (modelParam && brandParam) {
-    const brandName =
-      POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase()) || brandParam;
-    const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
-    const modelName = models.find((m) => createSlug(m) === modelParam.toLowerCase()) || modelParam;
-    items.push({
-      '@type': 'ListItem',
-      position: items.length + 1,
-      name: modelName,
-      item: `${siteUrl}/?brand=${brandParam}&model=${modelParam}`,
-    });
-  }
-  return items;
-}
+  const homeItem: BreadcrumbItem = {
+    '@type': 'ListItem',
+    position: 1,
+    name: t.breadcrumbs.home,
+    item: absoluteUrlWithLocalePrefix(siteUrl, '/', locale),
+  };
 
-function buildPotentialActions(
-  brandParam: string | null,
-  modelParam: string | null,
-  siteUrl: string,
-  localeTag: `${string}-${string}`,
-  t: ReturnType<typeof getServerTranslations>,
-): SearchActionItem[] {
-  const actions: SearchActionItem[] = [];
   if (!brandParam) {
-    POPULAR_BRANDS.forEach((brand) => {
-      actions.push({
-        '@type': 'SearchAction',
-        target: {
-          '@type': 'EntryPoint',
-          urlTemplate: `${siteUrl}/?brand=${createSlug(brand)}`,
-          inLanguage: localeTag,
-        },
-        result: { '@type': 'ItemList', name: `${brand} ${t.home.title}` },
-      });
-    });
-    return actions;
+    return [homeItem];
   }
+
+  const brandName =
+    brandDisplayName ||
+    POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase()) ||
+    brandParam;
+
   if (!modelParam) {
-    const brandName = POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase());
-    if (brandName) {
-      const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
-      models.forEach((model) => {
-        actions.push({
-          '@type': 'SearchAction',
-          target: {
-            '@type': 'EntryPoint',
-            urlTemplate: `${siteUrl}/?brand=${brandParam}&model=${createSlug(model)}`,
-            inLanguage: localeTag,
-          },
-          result: { '@type': 'ItemList', name: `${brandName} ${model}` },
-        });
-      });
-    }
+    return [
+      homeItem,
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: brandName,
+        item: absoluteUrlWithLocalePrefix(siteUrl, `/${encodeURIComponent(brandParam)}`, locale),
+      },
+    ];
   }
-  return actions;
+
+  const models = POPULAR_MODELS_BY_BRAND[brandName] || [];
+  const modelName =
+    modelDisplayName ||
+    models.find((m) => createSlug(m) === modelParam.toLowerCase()) ||
+    modelParam;
+
+  return [
+    homeItem,
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: brandName,
+      item: absoluteUrlWithLocalePrefix(siteUrl, `/${encodeURIComponent(brandParam)}`, locale),
+    },
+    {
+      '@type': 'ListItem',
+      position: 3,
+      name: modelName,
+      item: absoluteUrlWithLocalePrefix(
+        siteUrl,
+        `/${encodeURIComponent(brandParam)}/${encodeURIComponent(modelParam)}`,
+        locale,
+      ),
+    },
+  ];
 }
 
 function buildItemListSchema(
   listings: Listing[] | undefined,
   maxItems: number,
   siteUrl: string,
+  locale: Locale,
 ): {
   '@context': string;
   '@type': string;
@@ -109,8 +94,8 @@ function buildItemListSchema(
     itemListElement: listings.slice(0, maxItems).map((listing, idx) => ({
       '@type': 'ListItem',
       position: idx + 1,
-      url: `${siteUrl}/listings/${listing.id}`,
-      name: listing.title || `${siteUrl}/listings/${listing.id}`,
+      url: `${siteUrl}${getListingHref(listing, locale)}`,
+      name: listing.title || `${siteUrl}${getListingHref(listing, locale)}`,
     })),
   };
 }
@@ -118,22 +103,29 @@ function buildItemListSchema(
 function buildCollectionPageSchema(
   brandParam: string | null,
   modelParam: string | null,
+  brandDisplayName: string | null,
+  modelDisplayName: string | null,
   breadcrumbSchema: { '@context': string; '@type': string; itemListElement: BreadcrumbItem[] },
   itemListSchema: {
     itemListElement: Array<{ '@type': string; position: number; url: string; name: string }>;
   } | null,
   siteUrl: string,
+  locale: Locale,
   t: ReturnType<typeof getServerTranslations>,
 ): Record<string, unknown> | null {
   if (!brandParam && !modelParam) return null;
   const brandName = brandParam
-    ? POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase()) || brandParam
+    ? brandDisplayName ||
+      POPULAR_BRANDS.find((b) => createSlug(b) === brandParam.toLowerCase()) ||
+      brandParam
     : null;
   const modelName =
     modelParam && brandName
-      ? POPULAR_MODELS_BY_BRAND[brandName]?.find(
+      ? modelDisplayName ||
+        POPULAR_MODELS_BY_BRAND[brandName]?.find(
           (m) => createSlug(m) === modelParam.toLowerCase(),
-        ) || modelParam
+        ) ||
+        modelParam
       : null;
 
   let pageTitle = t.metadata.site.defaultTitle;
@@ -150,10 +142,14 @@ function buildCollectionPageSchema(
 
   const url =
     brandParam && modelParam
-      ? `${siteUrl}/?brand=${brandParam}&model=${modelParam}`
+      ? absoluteUrlWithLocalePrefix(
+          siteUrl,
+          `/${encodeURIComponent(brandParam)}/${encodeURIComponent(modelParam)}`,
+          locale,
+        )
       : brandParam
-        ? `${siteUrl}/?brand=${brandParam}`
-        : siteUrl;
+        ? absoluteUrlWithLocalePrefix(siteUrl, `/${encodeURIComponent(brandParam)}`, locale)
+        : absoluteUrlWithLocalePrefix(siteUrl, '/', locale);
 
   return {
     '@context': 'https://schema.org',
@@ -176,12 +172,16 @@ export async function getSearchStructuredData({
   model,
   category,
   listings,
+  brandName,
+  modelName,
   maxItems = 12,
 }: {
   brand?: string | null;
   model?: string | null;
   category?: string | null;
   listings?: Listing[];
+  brandName?: string | null;
+  modelName?: string | null;
   maxItems?: number;
 }): Promise<ReactNode> {
   const country = getCountry();
@@ -191,19 +191,31 @@ export async function getSearchStructuredData({
   const siteUrl = siteConfig.siteUrl;
   const brandParam = brand || null;
   const modelParam = model || null;
-  const localeTag = `${locale}-${siteConfig.locale.split('-')[1] || 'MD'}` as `${string}-${string}`;
+  const brandDisplayName = brandName || null;
+  const modelDisplayName = modelName || null;
 
   if (category === 'tire') {
+    const tireSearchUrl = absoluteUrlWithLocalePrefix(siteUrl, '/?category=tire', locale);
     const tireBreadcrumbItems = [
-      { '@type': 'ListItem', position: 1, name: t.breadcrumbs.home, item: siteUrl },
-      { '@type': 'ListItem', position: 2, name: t.home.title, item: `${siteUrl}/` },
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: t.breadcrumbs.home,
+        item: absoluteUrlWithLocalePrefix(siteUrl, '/', locale),
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: t.searchFilters.tiresCategory,
+        item: tireSearchUrl,
+      },
     ] as BreadcrumbItem[];
     const breadcrumbSchema = {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: tireBreadcrumbItems,
     };
-    const itemListSchema = buildItemListSchema(listings, maxItems, siteUrl);
+    const itemListSchema = buildItemListSchema(listings, maxItems, siteUrl, locale);
     return (
       <>
         <Script
@@ -222,29 +234,31 @@ export async function getSearchStructuredData({
     );
   }
 
-  const itemListElements = buildBreadcrumbItemList(brandParam, modelParam, siteUrl, t);
+  const itemListElements = buildBreadcrumbItemList(
+    brandParam,
+    modelParam,
+    brandDisplayName,
+    modelDisplayName,
+    siteUrl,
+    locale,
+    t,
+  );
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: itemListElements,
   };
 
-  const potentialActions = buildPotentialActions(brandParam, modelParam, siteUrl, localeTag, t);
-  const websiteSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: siteConfig.name,
-    url: siteUrl,
-    potentialAction: potentialActions.length > 0 ? potentialActions : undefined,
-  };
-
-  const itemListSchema = buildItemListSchema(listings, maxItems, siteUrl);
+  const itemListSchema = buildItemListSchema(listings, maxItems, siteUrl, locale);
   const collectionPageSchema = buildCollectionPageSchema(
     brandParam,
     modelParam,
+    brandDisplayName,
+    modelDisplayName,
     breadcrumbSchema,
     itemListSchema,
     siteUrl,
+    locale,
     t,
   );
 
@@ -255,13 +269,6 @@ export async function getSearchStructuredData({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(breadcrumbSchema) }}
       />
-      {potentialActions.length > 0 && (
-        <Script
-          id="structured-data-search-website"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: toSafeJsonLdHtml(websiteSchema) }}
-        />
-      )}
       {itemListSchema && (
         <Script
           id="structured-data-search-itemlist"

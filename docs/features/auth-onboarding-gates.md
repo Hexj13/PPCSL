@@ -1,0 +1,49 @@
+---
+title: Auth onboarding gates (phone and business profile)
+owner: platform
+tags:
+  - type/feature
+  - domain/auth
+  - scope/core
+  - status/active
+---
+
+# Auth onboarding gates
+
+Short reference for **mandatory steps** before a signed-in user can use the marketplace UI.
+
+## Phone not verified
+
+- **Middleware** (Next.js): reads access JWT; if `phoneVerified` is not `true`, redirects to `/complete-profile?mode=phone_required` with optional `returnUrl`.
+- **Client:** `PhoneRequiredGuard` in root layout aligns with the same rule for client navigations.
+- **Exempt paths:** `lib/phone-verification-paths.ts` (`/sign`, `/verify-phone`, `/complete-profile`, legal pages, etc.).
+
+## Business account without company name
+
+Applies when `user.type === 'Business'`, phone is verified, and `companyName` is empty (after trim).
+
+- **Client:** `BusinessOnboardingGuard` in root layout redirects to `/complete-profile?mode=business_onboarding` (with `returnUrl`) until `companyName` is saved via profile update.
+- **Exempt paths:** `lib/business-onboarding-gate.ts` (sign, login, register, verify-phone, legal pages, etc.). `/complete-profile` is not blanket-exempt: only `mode=business_onboarding` avoids redirect while the gate is active.
+- **Middleware** does not encode company completion; the gate is client-side only (JWT does not carry `companyName`).
+
+## `complete-profile` modes
+
+| Query `mode` | When shown |
+| --- | --- |
+| `phone_required` | User must confirm phone (SMS flow). |
+| `business_onboarding` | Business user must submit required company fields (at least company name). |
+| (default / standard) | Optional name/contact completion for users who already passed the gates above. |
+
+## Verify-phone → next URL
+
+After successful SMS verification in the “complete profile” flow, the client may send the user to `business_onboarding` when the selected account type is Business (query `selectedType` is carried through verify-phone). Password registration with business type already stores company name at signup, so this path mainly affects OAuth / flows without company name in DB.
+
+## API: profile `type` while phone unverified
+
+`PATCH` profile (see `UserProfilePatchService`) allows changing `type` (`Individual` | `Business`) only while `phoneVerified` is false, so the account kind can be corrected before SMS confirmation.
+
+## Related docs
+
+- Google GIS and env: [GOOGLE_OAUTH_SETUP_RU.md](../guides/GOOGLE_OAUTH_SETUP_RU.md)
+- Cookies and JWT alignment: [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md)
+- E2E login helper: [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md) (`loginByUi` throws if mandatory profile URL is hit)

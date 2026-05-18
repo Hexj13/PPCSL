@@ -1,5 +1,7 @@
 /// <reference path="./jest-openapi.d.ts" />
 import * as supertest from 'supertest';
+
+import { cookieHeaderFromAuthResponse } from './auth-cookie-integration';
 import { getTestRequest } from './setup-integration';
 import { createTestCredentials } from './test-data-cleanup';
 
@@ -27,6 +29,7 @@ describe('Listings API Integration Tests', () => {
       firstName: credentials.firstName,
       lastName: credentials.lastName,
       termsAccepted: true,
+      smsVerificationCode: '000000',
     });
     if (registerRes.status !== 201) {
       throw new Error(`Registration failed: ${JSON.stringify(registerRes.body)}`);
@@ -37,11 +40,11 @@ describe('Listings API Integration Tests', () => {
       password: testPassword,
     });
 
-    if (!loginResponse.body.access_token) {
-      throw new Error('Failed to get auth token');
+    if (!loginResponse.body?.user?.id) {
+      throw new Error('Failed to get auth session');
     }
 
-    authToken = loginResponse.body.access_token;
+    authToken = cookieHeaderFromAuthResponse(loginResponse);
 
     const brandsResponse = await request.get('/api/brands').expect(200);
     const brands = brandsResponse.body;
@@ -101,7 +104,7 @@ describe('Listings API Integration Tests', () => {
 
       const response = await request
         .post('/api/listings')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .send(listingData)
         .expect(201);
 
@@ -161,7 +164,7 @@ describe('Listings API Integration Tests', () => {
 
       const response = await request
         .patch(`/api/listings/${listingId}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .send(updateData)
         .expect(200);
 
@@ -187,7 +190,7 @@ describe('Listings API Integration Tests', () => {
 
       const response = await request
         .post(`/api/listings/${listingId}/close`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authToken)
         .expect(201);
 
       expect(response.body).toHaveProperty('id', listingId);

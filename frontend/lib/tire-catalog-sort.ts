@@ -1,3 +1,5 @@
+import { tireBrandLogoUrl } from '@/lib/brand-logo-urls';
+
 import { normalizeTireNameKey, POPULAR_TIRE_BRAND_NAMES } from './content/popular-tires';
 import { loadSiteConfigSync } from './site-config';
 
@@ -31,7 +33,7 @@ export function buildCategorizedTireBrandOptions<
 >(
   brands: T[],
   t: (_key: string) => string,
-): Array<{ value: string; label: string; category?: string }> {
+): Array<{ value: string; label: string; category?: string; logoSrc?: string }> {
   const sorted = sortTireBrandsForDisplay(brands);
   const popularSet = new Set(POPULAR_TIRE_BRAND_NAMES.map((n) => normalizeTireNameKey(n)));
   const popular = sorted.filter((b) => popularSet.has(normalizeTireNameKey(b.name)));
@@ -39,12 +41,17 @@ export function buildCategorizedTireBrandOptions<
 
   const popularLabel = t('searchFilters.popular');
   const otherLabel = t('searchFilters.other');
-  const out: Array<{ value: string; label: string; category?: string }> = [];
+  const out: Array<{ value: string; label: string; category?: string; logoSrc?: string }> = [];
 
   if (popular.length > 0) {
     out.push({ value: '__category__popular', label: popularLabel, category: popularLabel });
     for (const b of popular) {
-      out.push({ value: b.id, label: b.name, category: popularLabel });
+      out.push({
+        value: b.id,
+        label: b.name,
+        category: popularLabel,
+        logoSrc: tireBrandLogoUrl(b.name),
+      });
     }
   }
   if (other.length > 0) {

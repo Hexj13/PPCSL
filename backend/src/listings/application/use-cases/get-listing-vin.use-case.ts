@@ -11,8 +11,8 @@ import { RedisService } from '../../../common/redis.service';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
 
 const VIN_RATE_LIMIT_TTL_SEC = 3600;
-const VIN_RATE_LIMIT_MAX = 5;
-const VIN_RATE_LIMIT_KEY_PREFIX = 'vin:rate:';
+const VIN_RATE_LIMIT_MAX = 50;
+const VIN_RATE_LIMIT_KEY_PREFIX = 'vin:seen:u:';
 
 @Injectable()
 export class GetListingVinUseCase {
@@ -40,14 +40,23 @@ export class GetListingVinUseCase {
     }
 
     const key = `${VIN_RATE_LIMIT_KEY_PREFIX}${userId}`;
-    let count: number;
+    let added = 0;
+    let unique = 0;
     try {
-      count = await this.redisService.rateLimitIncr(key, VIN_RATE_LIMIT_TTL_SEC);
+      const result = await this.redisService.rateLimitUnique(
+        key,
+        listingId,
+        VIN_RATE_LIMIT_TTL_SEC,
+      );
+      added = result.added;
+      unique = result.unique;
     } catch {
       this.logger.warn('VIN rate limit Redis error, allowing request');
-      count = 0;
+      added = 0;
+      unique = 0;
     }
-    if (count > VIN_RATE_LIMIT_MAX) {
+    if (added === 1 && unique > VIN_RATE_LIMIT_MAX) {
+      await this.redisService.rollbackRateLimitUniqueMember(key, listingId);
       this.logger.log(
         `VIN request listingId=${listingId} userId=${userId} action=${action} status=rate_limited`,
       );

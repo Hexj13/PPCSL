@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
 
+import { IsPhone } from '../../../common/decorators/is-phone.decorator';
+
 export class VerifySmsDto {
   @ApiProperty({
     example: '123456',
@@ -18,5 +20,6 @@ export class VerifySmsDto {
   })
   @IsNotEmpty({ message: 'errors.phoneRequired' })
   @IsString({ message: 'validation.string' })
+  @IsPhone()
   phone: string;
 }

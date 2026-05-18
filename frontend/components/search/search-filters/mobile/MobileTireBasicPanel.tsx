@@ -1,0 +1,196 @@
+'use client';
+
+import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils/utils';
+import { Checkbox, CarIcon, MotoIcon, TruckIcon } from '@/ui';
+
+import {
+  SearchFilterCityIcon,
+  SearchFilterCloudIcon,
+  SearchFilterHashtagIcon,
+  SearchFilterPriceIcon,
+  SearchFilterShieldIcon,
+  SearchFilterSlidersIcon,
+  SearchFilterTireSizeIcon,
+  SearchFilterUserIcon,
+} from '../search-filter-field-icons';
+import { FIRE_EMOJI, renderSearchFilterLabelBadge } from '../searchFilterLabelBadge';
+
+import { FilterRow } from './FilterRow';
+import type { MobileSearchFiltersSharedHandlers } from './mobile-search-filters-types';
+import type { MobileTranslateFn } from './mobile-search-filters-utils';
+
+export type MobileTireBasicPanelProps = {
+  t: MobileTranslateFn;
+  filters: {
+    tire_vehicle_type: string;
+    tire_brand_ids: string[];
+    urgent: boolean;
+  };
+  loadingTireModels: boolean;
+  sizeSummary: string;
+  priceSummary: string;
+  tireBrandSummary: string;
+  tireModelSummary: string;
+  treadSummary: string;
+  tireFeatureSummary: string;
+  tireCitySummary: string;
+  tireConditionSummary: string;
+  quantitySummary: string;
+  sellerSummary: string;
+  openSheetForEdit: (_id: string) => void;
+  onFilterChange: MobileSearchFiltersSharedHandlers['onFilterChange'];
+  onCheckboxChange: MobileSearchFiltersSharedHandlers['onCheckboxChange'];
+};
+
+export function MobileTireBasicPanel({
+  t,
+  filters,
+  loadingTireModels,
+  sizeSummary,
+  priceSummary,
+  tireBrandSummary,
+  tireModelSummary,
+  treadSummary,
+  tireFeatureSummary,
+  tireCitySummary,
+  tireConditionSummary,
+  quantitySummary,
+  sellerSummary,
+  openSheetForEdit,
+  onFilterChange,
+  onCheckboxChange,
+}: MobileTireBasicPanelProps) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-semibold mb-2 text-primary-900">
+          {t('searchFilters.tireVehicleTypeFilter')}
+        </label>
+        <div className="flex flex-wrap gap-1 items-center">
+          <button
+            type="button"
+            onClick={() => onFilterChange('tire_vehicle_type', '')}
+            className={`h-12 px-3 inline-flex items-center justify-center shrink-0 rounded-lg text-sm font-semibold border-2 transition-colors ${
+              filters.tire_vehicle_type === ''
+                ? 'border-primary-900 bg-primary-500/10 text-primary-900'
+                : 'border-primary-500/40 text-primary-900 hover-only:hover:border-primary-700'
+            }`}
+          >
+            {t('searchFilters.tireVehicleTypeAny')}
+          </button>
+          {(
+            [
+              { v: 'car' as const, Icon: CarIcon },
+              { v: 'truck' as const, Icon: TruckIcon },
+              { v: 'moto' as const, Icon: MotoIcon },
+            ] as const
+          ).map(({ v, Icon }) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() =>
+                onFilterChange('tire_vehicle_type', filters.tire_vehicle_type === v ? '' : v)
+              }
+              className={`h-12 w-14 inline-flex items-center justify-center shrink-0 rounded-lg border-2 transition-colors ${
+                filters.tire_vehicle_type === v
+                  ? 'border-primary-900 bg-primary-500/10'
+                  : 'border-primary-500/40 hover-only:hover:border-primary-700'
+              }`}
+              aria-label={t(`searchFilters.tireVehicleType.${v}`)}
+            >
+              <Icon className="w-9 h-9 text-primary-900 scale-x-[-1]" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <FilterRow
+        leadingIcon={<SearchFilterTireSizeIcon />}
+        label={t('searchFilters.tireSizeCriteria')}
+        valueSummary={sizeSummary}
+        onClick={() => openSheetForEdit('tire_size')}
+      />
+
+      <FilterRow
+        leadingIcon={<SearchFilterPriceIcon />}
+        label={t('searchFilters.priceWithSearchCurrency', {
+          currency: loadSiteConfigSync(getCountry()).currency,
+        })}
+        valueSummary={priceSummary}
+        onClick={() => openSheetForEdit('tire_price')}
+      />
+
+      <FilterRow
+        label={t('searchFilters.tireBrand')}
+        valueSummary={tireBrandSummary}
+        onClick={() => openSheetForEdit('tire_brand')}
+      />
+      <FilterRow
+        label={t('searchFilters.tireModel')}
+        valueSummary={tireModelSummary}
+        disabled={filters.tire_brand_ids.length === 0 || loadingTireModels}
+        onClick={() => openSheetForEdit('tire_model')}
+      />
+
+      <FilterRow
+        leadingIcon={<SearchFilterCloudIcon />}
+        label={t('searchFilters.tireTreadLabel')}
+        valueSummary={treadSummary}
+        onClick={() => openSheetForEdit('tire_tread')}
+      />
+
+      <FilterRow
+        leadingIcon={<SearchFilterSlidersIcon />}
+        label={t('searchFilters.tireOptionsLabel')}
+        valueSummary={tireFeatureSummary}
+        onClick={() => openSheetForEdit('tire_features')}
+      />
+
+      <FilterRow
+        leadingIcon={<SearchFilterCityIcon />}
+        label={t('searchFilters.city')}
+        valueSummary={tireCitySummary}
+        onClick={() => openSheetForEdit('tire_city')}
+      />
+
+      <FilterRow
+        leadingIcon={<SearchFilterShieldIcon />}
+        label={t('searchFilters.tireConditionLabel')}
+        valueSummary={tireConditionSummary}
+        onClick={() => openSheetForEdit('tire_condition')}
+      />
+
+      <FilterRow
+        leadingIcon={<SearchFilterHashtagIcon />}
+        label={t('searchFilters.tireQuantityLabel')}
+        valueSummary={quantitySummary}
+        onClick={() => openSheetForEdit('tire_quantity')}
+      />
+
+      <FilterRow
+        leadingIcon={<SearchFilterUserIcon />}
+        label={t('searchFilters.sellerTypeLabel')}
+        valueSummary={sellerSummary}
+        onClick={() => openSheetForEdit('tire_seller')}
+      />
+
+      <div className="rounded-lg border-2 border-primary-500/25 p-4">
+        <h3 className="text-sm font-semibold mb-2 text-primary-900">{t('searchFilters.labels')}</h3>
+        <Checkbox
+          size="md"
+          id="mobile-tire-urgent"
+          checked={filters.urgent}
+          onChange={(checked) => onCheckboxChange('urgent', checked)}
+          label={renderSearchFilterLabelBadge(
+            t('searchFilters.urgent'),
+            FIRE_EMOJI,
+            'border-accentSecondary',
+            'before:bg-accentSecondary/10',
+          )}
+          labelClassName="font-semibold"
+        />
+      </div>
+    </>
+  );
+}

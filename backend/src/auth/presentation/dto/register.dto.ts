@@ -6,6 +6,8 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Length,
+  Matches,
   MaxLength,
   MinLength,
   NotEquals,
@@ -53,6 +55,16 @@ export class RegisterDto {
   @IsString({ message: 'validation.phoneRequiredField' })
   @IsPhone()
   phone: string;
+
+  @ApiProperty({
+    example: '123456',
+    description: 'SMS verification code sent to the phone number',
+  })
+  @IsNotEmpty({ message: 'errors.codeRequired' })
+  @IsString({ message: 'validation.string' })
+  @Length(6, 6, { message: 'validation.codeLength' })
+  @Matches(/^\d{6}$/, { message: 'validation.codeDigits' })
+  smsVerificationCode: string;
 
   @ApiPropertyOptional({
     example: 'John',

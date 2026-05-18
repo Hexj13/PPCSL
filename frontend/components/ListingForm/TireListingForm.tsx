@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 
 import { ListingFormSkeleton } from '@/components/ListingForm/ListingFormSkeleton';
+import { MobileSelectField } from '@/components/ListingForm/MobileSelectField';
 import { PhotosSection } from '@/components/ListingForm/PhotosSection';
 import { RequiredAsterisk } from '@/components/ListingForm/RequiredAsterisk';
 import { TireAdditionalInfoSection } from '@/components/ListingForm/TireAdditionalInfoSection';
@@ -12,7 +13,7 @@ import { TireListingSettingsSection } from '@/components/ListingForm/TireListing
 import { TirePriceAndLocationSection } from '@/components/ListingForm/TirePriceAndLocationSection';
 import type { ListingFormData } from '@/components/ListingForm/listingFormTypes';
 import { useTireListingForm } from '@/components/ListingForm/useTireListingForm';
-import { Dropdown, ScrollDropdownIntoViewContext } from '@/components/common/Dropdown';
+import { ScrollDropdownIntoViewContext } from '@/components/common/Dropdown';
 import type { Listing } from '@/lib/api';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { buildCategorizedTireBrandOptions } from '@/lib/tire-catalog-sort';
@@ -46,6 +47,7 @@ export function TireListingForm({
     showSkeleton,
     isMounted,
     loading,
+    videoBlocksCreate,
     uploading,
     handleFileUpload,
     handleImageDelete,
@@ -68,6 +70,15 @@ export function TireListingForm({
     onFormFieldFocus,
     uploadSlots,
     onUploadedImageLoaded,
+    initialListingVideo,
+    videoPhase,
+    videoProgress,
+    onVideoFileSelected,
+    onVideoRemove,
+    listingVideoResolved,
+    videoMaxSizeMb,
+    videoMaxDurationMin,
+    selectedVideoFileName,
   } = sectionProps;
 
   const country = getCountry();
@@ -94,6 +105,15 @@ export function TireListingForm({
     onFormFieldFocus,
     uploadSlots,
     onUploadedImageLoaded,
+    initialListingVideo,
+    videoPhase,
+    videoProgress,
+    onVideoFileSelected,
+    onVideoRemove,
+    listingVideoResolved,
+    videoMaxSizeMb,
+    videoMaxDurationMin,
+    selectedVideoFileName,
   } satisfies ListingFormSectionProps;
 
   const treadOpts = TIRE_TREAD_VALUES.map((v) => ({
@@ -132,7 +152,7 @@ export function TireListingForm({
               </h2>
               <div className="mb-4 min-w-0">
                 <label
-                  className="block text-sm font-semibold mb-2 text-primary-700 truncate"
+                  className="mb-2 truncate text-sm font-semibold text-primary-900"
                   title={t('listings.tireForm.compatibleVehicleTypeTitle')}
                 >
                   {t('listings.tireForm.compatibleVehicleType')}
@@ -170,11 +190,11 @@ export function TireListingForm({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-700">
+                  <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
                     {t('listings.brandLabel')}
                     <RequiredAsterisk filled={!!formData.brand_id} />
                   </label>
-                  <Dropdown
+                  <MobileSelectField
                     value={formData.brand_id}
                     onChange={(value) => {
                       clearError('brand_id');
@@ -184,6 +204,8 @@ export function TireListingForm({
                         model_id: '',
                       }));
                     }}
+                    sheetTitle={t('listings.brandLabel')}
+                    requiredAsteriskFilled={!!formData.brand_id}
                     searchable={true}
                     placeholder={t('searchFilters.selectTireBrands')}
                     error={!!errors['brand_id']}
@@ -193,10 +215,10 @@ export function TireListingForm({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-700">
+                  <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
                     {t('listings.modelLabel')}
                   </label>
-                  <Dropdown
+                  <MobileSelectField
                     value={formData.model_id}
                     onChange={(value) => {
                       clearError('model_id');
@@ -205,6 +227,7 @@ export function TireListingForm({
                         model_id: value,
                       }));
                     }}
+                    sheetTitle={t('listings.modelLabel')}
                     disabled={!formData.brand_id || loadingModels}
                     searchable={true}
                     placeholder={
@@ -223,11 +246,11 @@ export function TireListingForm({
               <BrandModelCatalogInfoBlock />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-700">
+                  <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
                     {t('searchFilters.tireTreadLabel')}
                     <RequiredAsterisk filled={!!formData.season} />
                   </label>
-                  <Dropdown
+                  <MobileSelectField
                     value={formData.season}
                     onChange={(value) => {
                       const s = value as (typeof treadOpts)[number]['value'];
@@ -237,17 +260,19 @@ export function TireListingForm({
                         studded: s === 'winter' ? prev.studded : false,
                       }));
                     }}
+                    sheetTitle={t('searchFilters.tireTreadLabel')}
+                    requiredAsteriskFilled={!!formData.season}
                     autoPosition={true}
                     menuMaxHeight={300}
                     options={treadOpts}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-primary-700">
+                  <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
                     {t('searchFilters.tireConditionLabel')}
                     <RequiredAsterisk filled={!!formData.condition} />
                   </label>
-                  <Dropdown
+                  <MobileSelectField
                     value={formData.condition}
                     onChange={(value) =>
                       setFormData((prev) => ({
@@ -255,6 +280,8 @@ export function TireListingForm({
                         condition: value as (typeof conditionOpts)[number]['value'],
                       }))
                     }
+                    sheetTitle={t('searchFilters.tireConditionLabel')}
+                    requiredAsteriskFilled={!!formData.condition}
                     autoPosition={true}
                     menuMaxHeight={300}
                     options={conditionOpts}
@@ -304,6 +331,7 @@ export function TireListingForm({
             <LoadingButton
               type="submit"
               loading={loading}
+              disabled={mode === 'create' && videoBlocksCreate}
               loadingText={mode === 'create' ? t('listings.creating') : t('listings.saving')}
               className="w-full min-h-12 text-primary-700 font-medium text-base hover:text-primary-900 hover:border-primary-900 transition-colors duration-200 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >

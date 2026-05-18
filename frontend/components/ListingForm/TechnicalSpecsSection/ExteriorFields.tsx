@@ -1,8 +1,8 @@
 'use client';
 
-import { Dropdown } from '@/components/common/Dropdown';
 import { getColorOptions, getDoorOptions } from '@/lib/options';
 
+import { MobileSelectField } from '../MobileSelectField';
 import type { ListingFormSectionProps } from '../types';
 
 export function ExteriorFields({
@@ -20,10 +20,10 @@ export function ExteriorFields({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-700">
+          <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
             {t('listings.colorLabel')}
           </label>
-          <Dropdown
+          <MobileSelectField
             value={formData.vehicle.color}
             onChange={(value) =>
               setFormData((prev) => ({
@@ -31,6 +31,7 @@ export function ExteriorFields({
                 vehicle: { ...prev.vehicle, color: value },
               }))
             }
+            sheetTitle={t('listings.colorLabel')}
             placeholder={t('searchFilters.selectColor')}
             searchable={true}
             autoPosition={true}
@@ -41,10 +42,10 @@ export function ExteriorFields({
 
         {vehicleType !== 'moto' && (
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-700">
+            <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
               {t('vehicleOptions.doorsLabel')}
             </label>
-            <Dropdown
+            <MobileSelectField
               value={formData.vehicle.doors}
               onChange={(value) =>
                 setFormData((prev) => ({
@@ -52,6 +53,7 @@ export function ExteriorFields({
                   vehicle: { ...prev.vehicle, doors: value },
                 }))
               }
+              sheetTitle={t('vehicleOptions.doorsLabel')}
               placeholder={t('searchFilters.selectDoors')}
               autoPosition={true}
               menuMaxHeight={300}

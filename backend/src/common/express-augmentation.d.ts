@@ -12,6 +12,7 @@ declare global {
       id: string;
       email?: string;
       type?: UserType;
+      phoneVerified?: boolean;
     }
   }
 }

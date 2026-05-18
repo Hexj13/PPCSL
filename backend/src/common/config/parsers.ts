@@ -15,6 +15,8 @@ export interface ParserPdpDefaultsConfig {
   removeClosed?: boolean;
   onlyFailed?: boolean;
   updateExisting?: boolean;
+  autoCreateBrands?: boolean;
+  autoCreateModels?: boolean;
 }
 
 export interface ParserAvailabilityProbeConfig {
@@ -83,6 +85,8 @@ export const parsersConfig: ParserConfigItem[] = [
       removeClosed: false,
       onlyFailed: false,
       updateExisting: false,
+      autoCreateBrands: false,
+      autoCreateModels: false,
     },
     defaultPdpCity: 'Chișinău',
     defaultPdpCityNames: chisinauAliases,
@@ -119,9 +123,57 @@ export const parsersConfig: ParserConfigItem[] = [
       removeClosed: false,
       onlyFailed: false,
       updateExisting: false,
+      autoCreateBrands: false,
+      autoCreateModels: false,
     },
     defaultPdpCity: 'Chișinău',
     defaultPdpCityNames: chisinauAliases,
+    availabilityProbe: {
+      sourceUrl: 'https://999.md',
+      plpFirstPagePath: '/ro/',
+      plpPagePathTemplate: '/ro/?probe={page}',
+      defaultPageProbeCount: 3,
+      timeoutMs: 15000,
+    },
+    registrySyncEnabled: true,
+  },
+  {
+    code: 'autooutlet',
+    label: 'AutoOutlet.md',
+    domain: 'autooutlet.md',
+    supportedRunTypes: ['plp', 'pdp'],
+    scanInputMode: 'pages',
+    adminAvailability: 'enabled',
+    releaseStage: 'prepared',
+    isVisibleInAdmin: true,
+    manualRunEnabled: true,
+    schedulerEnabled: true,
+    cliScript: 'autooutlet-import/cli.ts',
+    plpMode: 'mono',
+    plpDataPath: 'runtime/parsing/autooutlet/autooutlet-current-plp.json',
+    pdpDefaults: {
+      listingStatus: 'paused',
+      registrationType: 'Local',
+      defaultHp: 100,
+      delayMs: 3000,
+      resume: false,
+      dryRun: false,
+      removeClosed: false,
+      onlyFailed: false,
+      updateExisting: false,
+      autoCreateBrands: false,
+      autoCreateModels: false,
+    },
+    defaultPdpCity: 'Chișinău',
+    defaultPdpCityNames: chisinauAliases,
+    availabilityProbe: {
+      sourceUrl: 'https://autooutlet.md',
+      sourceUrlEnvVar: 'AUTOOUTLET_BASE_URL',
+      plpFirstPagePath: '/catalog-auto/?sort=newest',
+      plpPagePathTemplate: '/catalog-auto/page/{page}/?sort=newest',
+      defaultPageProbeCount: 2,
+      timeoutMs: 15000,
+    },
     registrySyncEnabled: true,
   },
 ];

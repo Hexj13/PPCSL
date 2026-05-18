@@ -115,7 +115,7 @@ describe('AuthProvider', () => {
     await waitFor(() => expect(mockInitAuth).toHaveBeenCalledTimes(2));
   });
 
-  it('should rehydrate auth and call initAuth when token changes from another tab', async () => {
+  it('should not rehydrate auth when legacy token storage key changes from another tab', async () => {
     render(
       <AuthProvider>
         <div>Test</div>
@@ -132,7 +132,7 @@ describe('AuthProvider', () => {
       }),
     );
 
-    await waitFor(() => expect(rehydrateMocks.auth).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(mockInitAuth).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(rehydrateMocks.auth).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockInitAuth).toHaveBeenCalledTimes(1));
   });
 });

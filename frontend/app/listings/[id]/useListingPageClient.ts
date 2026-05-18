@@ -16,8 +16,6 @@ import {
   publishListingDetailComparisonCrossTab,
   publishListingDetailFavoriteCrossTab,
 } from '@/lib/cross-tab-listing-detail-publish';
-import { prepareListingDescriptionHtml } from '@/lib/listingDescriptionHtml';
-import { getListingDescriptionForLocale } from '@/lib/listingDescriptionLocale';
 import { buildSignInHref } from '@/lib/return-url';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
@@ -31,6 +29,9 @@ import {
   sortOptionsByLabel,
 } from '@/lib/utils';
 
+import { applyListingPromotionSelection } from './applyListingPromotionSelection';
+import { listingPageInitialGalleryImageIndex } from './listing-page-helpers';
+import { useListingAiReport } from './useListingAiReport';
 import { useListingPageCreatedToast } from './useListingPageCreatedToast';
 
 const LISTING_LIFETIME_DAYS = 90;
@@ -49,7 +50,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const { add: addFavorite, remove: removeFavorite } = useFavoritesStore();
   const { t } = useTranslation();
   const { locale } = useI18n();
-  const descriptionLocale = locale === 'ru' ? 'ru' : 'ro';
   const { cities } = useCities();
   const addVehicle = useComparisonStore((s) => s.addVehicle);
   const removeVehicle = useComparisonStore((s) => s.removeVehicle);
@@ -58,7 +58,9 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const vehicleCompareCount = useComparisonStore((s) => s.vehicleComparisons.length);
   const tireCompareCount = useComparisonStore((s) => s.tireComparisons.length);
 
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(() =>
+    listingPageInitialGalleryImageIndex(initialListing),
+  );
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [modalImageIndex, setModalImageIndex] = useState(0);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
@@ -68,7 +70,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const [isHydrated, setIsHydrated] = useState(false);
 
   const {
-    listing,
+    listing: listingFromApi,
     setListing,
     isFavorite,
     setIsFavorite,
@@ -78,20 +80,25 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     loadingPrevious,
     activeListingsCount,
     listingRef,
+    fetchListingData,
   } = useListingData({
     listingId: id,
     initialListing,
-    onListingUpdate: () => {
-      setCurrentImageIndex(0);
-      setImageErrors(new Set());
+    onListingUpdate: (next, prev) => {
+      const sig = (l: Listing | null) => (l?.images ?? []).join('\u0001');
+      if (!prev || sig(next) !== sig(prev)) {
+        setCurrentImageIndex(listingPageInitialGalleryImageIndex(next));
+        setImageErrors(new Set());
+      }
     },
   });
 
+  const listing = listingFromApi ?? initialListing;
+
   const isOwnListing = useMemo(() => {
-    const currentListing = listing || initialListing;
-    if (!currentListing?.user || !user) return false;
-    return user.id === currentListing.user.id;
-  }, [user, listing, initialListing]);
+    if (!listing?.user || !user) return false;
+    return user.id === listing.user.id;
+  }, [user, listing]);
 
   const equipmentColumns = useMemo(() => {
     const eq = listing?.equipment;
@@ -106,7 +113,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     return { left: sorted.slice(0, mid), right: sorted.slice(mid) };
   }, [listing?.equipment, t]);
 
-  const isLoadingListing = listing === null && !initialListing;
+  const isLoadingListing = listingFromApi === null && !initialListing;
   const { visible: showSkeleton } = useLoadingState({
     isLoading: isLoadingListing,
     immediate: true,
@@ -144,26 +151,26 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     return [listing.title, details, city].filter((v) => v && v.trim() !== '').join(' - ');
   }, [listing, locale, cities]);
 
-  const descriptionHtml = useMemo(() => {
-    const html = listing ? getListingDescriptionForLocale(listing, descriptionLocale) : undefined;
-    if (!html || !isHydrated || typeof window === 'undefined') return null;
-    return prepareListingDescriptionHtml(html, window);
-  }, [isHydrated, listing, descriptionLocale]);
+  useEffect(() => {
+    void listingsApi
+      .getPromotionAccess()
+      .then((res) => setPromotionAccess(res.data))
+      .catch(() => setPromotionAccess(null));
+  }, []);
 
   useEffect(() => {
-    const checkPromotionAccess = async () => {
-      try {
-        const res = await listingsApi.getPromotionAccess();
-        setPromotionAccess(res.data);
-      } catch {
-        setPromotionAccess(null);
-      }
-    };
-    void checkPromotionAccess();
-  }, []);
+    const status = listing?.video?.status;
+    if (!isOwnListing || (status !== 'processing' && status !== 'pending')) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      fetchListingData(true);
+    }, 10_000);
+    return () => window.clearInterval(timer);
+  }, [fetchListingData, isOwnListing, listing?.video?.status]);
+
   const canPromote =
     (promotionAccess?.canPromote ?? false) || (promotionAccess?.isPartner ?? false);
-
   const displayTitle = listing ? getListingDisplayTitle(listing, t) : '';
   useEffect(() => {
     if (!displayTitle) return;
@@ -212,8 +219,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
       }
       toast.success(t('listings.addToFavorites'));
     } catch {
-      addFavorite(id);
-      setIsFavorite(true);
+      toast.error(t('common.error'));
     }
   }, [user, id, isFavorite, listing, router, t, addFavorite, removeFavorite, setIsFavorite]);
 
@@ -337,8 +343,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     t,
   ]);
 
-  const showCompare = listing ? listing.status !== 'Closed' : false;
-
   const handlePromoteClick = useCallback(() => setPromotionModalOpen(true), []);
 
   const handleCopyLink = useCallback(async () => {
@@ -372,33 +376,15 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
 
   const handlePromotionSelect = useCallback(
     async (days: number | null) => {
-      if (!listing) {
-        return;
-      }
-      try {
-        await listingsApi.togglePromotion(
-          listing.id,
-          true,
-          days,
-          days === null ? 'partner_balance' : 'default',
-        );
-        toast.success(t('listings.promotionEnabled'));
-        const updatedListing = await listingsApi.getOne(listing.id);
-        setListing(updatedListing.data);
-        listingRef.current = updatedListing.data;
-      } catch (error: unknown) {
-        const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
-        const backendMessage = axiosError.response?.data?.message;
-        if (axiosError.response?.status === 403) {
-          toast.error(backendMessage || t('listings.promotionNotAvailable'));
-        } else if (axiosError.response?.status === 400) {
-          toast.error(backendMessage || t('listings.promotionOnlyActive'));
-        } else {
-          toast.error(backendMessage || t('listings.promotionError'));
-        }
-      } finally {
-        setPromotionModalOpen(false);
-      }
+      if (!listing) return;
+      await applyListingPromotionSelection({
+        listing,
+        days,
+        setListing,
+        listingRef,
+        t,
+        setPromotionModalOpen,
+      });
     },
     [listing, t, setListing, listingRef],
   );
@@ -409,6 +395,23 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   }, []);
 
   const closeImageModal = useCallback(() => setIsImageModalOpen(false), []);
+
+  const {
+    aiReportModalOpen,
+    aiReportPhase,
+    aiReportPayload,
+    aiReportMessage,
+    handleAiReportClick,
+    closeAiReportModal,
+  } = useListingAiReport({
+    listingId: id,
+    listing,
+    user,
+    isInitialized,
+    locale,
+    isHydrated,
+    router,
+  });
 
   return {
     router,
@@ -423,7 +426,6 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     equipmentColumns,
     displayTitle,
     imageAltTitle,
-    descriptionHtml,
     getClosingDate,
     currentImageIndex,
     setCurrentImageIndex,
@@ -443,13 +445,19 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     listingRef,
     handleToggleFavorite,
     handleToggleComparison,
-    showCompare,
+    showCompare: listing ? listing.status !== 'Closed' : false,
     handlePromoteClick,
     handleCopyLink,
     handleShare,
     handlePromotionSelect,
     openImageModal,
     closeImageModal,
+    aiReportModalOpen,
+    aiReportPhase,
+    aiReportPayload,
+    aiReportMessage,
+    handleAiReportClick,
+    closeAiReportModal,
   };
 }
 

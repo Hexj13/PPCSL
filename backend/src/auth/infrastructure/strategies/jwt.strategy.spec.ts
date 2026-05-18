@@ -68,6 +68,7 @@ describe('JwtStrategy', () => {
         id: 'user-1',
         email: 'test@example.com',
         type: UserType.Admin,
+        phoneVerified: false,
       });
       expect(usersService.findOneById).toHaveBeenCalledWith('user-1');
     });
@@ -113,6 +114,7 @@ describe('JwtStrategy', () => {
         id: 'user-1',
         email: null,
         type: UserType.Individual,
+        phoneVerified: false,
       });
     });
 
@@ -137,6 +139,7 @@ describe('JwtStrategy', () => {
         id: 'user-1',
         email: 'test@example.com',
         type: UserType.Business,
+        phoneVerified: false,
       });
     });
   });

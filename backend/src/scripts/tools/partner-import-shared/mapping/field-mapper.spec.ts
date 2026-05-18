@@ -85,4 +85,28 @@ describe('buildCreateListingPayload', () => {
     const payload = buildCreateListingPayload(buildInput({}));
     expect(payload.image_blur_hashes).toBeUndefined();
   });
+
+  it('sends description_ro and description_ru when both are present', () => {
+    const payload = buildCreateListingPayload(
+      buildInput({
+        description_ro: '<p>RO text</p>',
+        description_ru: '<p>RU text</p>',
+        description: '<p>RO text</p>',
+      }),
+    );
+    expect(payload.description_ro).toBe('<p>RO text</p>');
+    expect(payload.description_ru).toBe('<p>RU text</p>');
+    expect(payload.description).toBeUndefined();
+  });
+
+  it('maps legacy-only description to description_ro for API compatibility', () => {
+    const payload = buildCreateListingPayload(
+      buildInput({
+        description: 'Legacy description text',
+      }),
+    );
+    expect(payload.description_ro).toBe('Legacy description text');
+    expect(payload.description_ru).toBeUndefined();
+    expect(payload.description).toBeUndefined();
+  });
 });

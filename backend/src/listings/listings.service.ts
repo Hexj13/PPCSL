@@ -23,6 +23,7 @@ import { GetActiveUserListingsCountUseCase } from './application/use-cases/get-a
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
 import { GetBoardListingsUseCase } from './application/use-cases/get-board-listings.use-case';
 import { GetListingHistoryUseCase } from './application/use-cases/get-listing-history.use-case';
+import { GetListingPhonesUseCase } from './application/use-cases/get-listing-phones.use-case';
 import { GetListingVinUseCase } from './application/use-cases/get-listing-vin.use-case';
 import { GetListingUseCase } from './application/use-cases/get-listing.use-case';
 import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion-access.use-case';
@@ -87,6 +88,7 @@ export class ListingsService {
     private readonly getBoardListingsUseCase: GetBoardListingsUseCase,
     private readonly findByVinUseCase: FindByVinUseCase,
     private readonly getListingVinUseCase: GetListingVinUseCase,
+    private readonly getListingPhonesUseCase: GetListingPhonesUseCase,
     private readonly getListingHistoryUseCase: GetListingHistoryUseCase,
     private readonly getReportUrlUseCase: GetReportUrlUseCase,
     private readonly refreshAllDatesUseCase: RefreshAllDatesUseCase,
@@ -201,7 +203,12 @@ export class ListingsService {
       return await this.getListingUseCase.execute(id, context);
     } catch (error) {
       if (!(error instanceof NotFoundException)) {
-        this.logger.error('Error in findOne for listing ' + id, error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        this.logger.error(
+          `Error in findOne for listing ${id}: ${err.message}`,
+          err.stack,
+          ListingsService.name,
+        );
       }
       throw error;
     }
@@ -278,6 +285,13 @@ export class ListingsService {
 
   async getListingVin(listingId: string, userId: string, action: string): Promise<{ vin: string }> {
     return this.getListingVinUseCase.execute(listingId, userId, action);
+  }
+
+  async getListingPhones(
+    listingId: string,
+    viewer: { userId: string | null; visitorHash: string | null; isAdmin?: boolean },
+  ): Promise<{ phone: string | null; additionalPhone: string | null }> {
+    return this.getListingPhonesUseCase.execute(listingId, viewer);
   }
 
   async getListingHistory(listingId: string): Promise<Listing[]> {

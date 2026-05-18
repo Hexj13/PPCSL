@@ -63,7 +63,7 @@ Core application framework for creating car marketplace platforms for different 
 - **Database:** PostgreSQL 15 with comprehensive indexing and triggers
 - **Search:** PostgreSQL Full-Text Search
 - **Image Processing:** Sharp library for optimization and WebP conversion
-- **File Storage:** AWS S3 for image storage (using AWS SDK v3), AWS CloudFront CDN for delivery
+- **File Storage:** AWS S3 for images and optional listing video (using AWS SDK v3), AWS CloudFront CDN for delivery when configured
 - **Authentication:** JWT tokens (1 hour expiration), Refresh tokens (7 days)
 - **Task Scheduling:** NestJS Schedule module (cron jobs)
 
@@ -85,7 +85,7 @@ cd core
 npm run install:all
 
 # Start database
-docker-compose up -d
+docker compose up -d
 
 # Start backend (Terminal 1)
 cd backend && npm run start:dev
@@ -104,7 +104,7 @@ If you see `Cannot connect to the Docker daemon`:
 
 1. Open Docker Desktop application
 2. Wait for full startup
-3. Run `cd core && docker-compose up -d`
+3. Run `cd core && docker compose up -d`
 
 **Option 2: Install PostgreSQL and Redis locally**
 
@@ -193,6 +193,8 @@ REDIS_PORT=6379
 TWILIO_ACCOUNT_SID=your-twilio-account-sid
 TWILIO_AUTH_TOKEN=your-twilio-auth-token
 TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
+# Optional: skip real Twilio sends outside production (codes still stored in Redis); see SMS Verification in this doc
+# SMS_OUTBOUND_DISABLED=true
 
 # SMTP Email Configuration
 SMTP_HOST=smtp.gmail.com
@@ -215,6 +217,14 @@ CRON_SECRET=your-secret-key-here
 INFOCAR_SECRET_KEY=<secret-from-infocar>
 # Required for report URL with encrypted VIN (GET /api/listings/:id/report-url). If unset, endpoint returns 404.
 # Optional: INFOCAR_BASE_URL (default https://infocar.md for RO), INFOCAR_BASE_URL_RU (default https://ru.infocar.md for RU).
+
+# Google Gemini (optional) — listing AI analysis (POST /api/listings/:id/ai-report). If GEMINI_API_KEY is unset, the endpoint returns status unavailable.
+GEMINI_API_KEY=<google-ai-studio-api-key>
+# Optional: GEMINI_MODEL (default gemini-3.1-flash-lite-preview). GEMINI_MODEL_FALLBACK (default gemini-3-flash-preview) is used when the primary model returns transient errors (e.g. 503 / overload).
+# Production only: max new AI report generations per user per rolling hour (Redis). Unset = 5. Non-production (e.g. development): quota disabled.
+# AI_REPORT_MAX_GENERATIONS_PER_HOUR=5
+
+# Listing video (optional) — same AWS S3 credentials as images; add MediaConvert endpoint/queue/role and SNS → /api/webhooks/mediaconvert for transcoding. Full checklist: ../guides/listing-video-production-setup-ru.md (operators, Russian); API behavior: ../features/listings.md
 ```
 
 ### Frontend (`frontend/.env.local`)
@@ -325,9 +335,9 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 
 - **Image Processing:** Automatic compression, resizing (max 1920px width), conversion to WebP format (75% quality by default)
 - **Adaptive Quality:** Different quality levels for different contexts (70% for thumbnails, 75-80% for cards and detail pages, 85% for full-size modal views)
-- **File Storage:** AWS S3 for persistent image storage (using AWS SDK v3, required for production on Render.com), AWS CloudFront CDN for fast global delivery
+- **File Storage:** AWS S3 for persistent images and optional listing video (using AWS SDK v3, required for production on Render.com), AWS CloudFront CDN for fast global delivery when configured
 - **Search:** PostgreSQL Full-Text Search with extensive filtering options
-- **Caching:** Redis for SMS codes, cache optimization (SCAN instead of KEYS)
+- **Caching:** Redis for SMS codes, cache optimization (SCAN instead of KEYS), listing AI analysis generation locks and per-user hourly quotas (production; see `POST /api/listings/:id/ai-report` and `AI_REPORT_MAX_GENERATIONS_PER_HOUR`)
 - **Monitoring:** Health check endpoint (`/health`) with database and Redis connectivity checks
 - **Code Quality:** TypeScript strict mode, CI/CD automation, bundle optimization
 
@@ -365,8 +375,8 @@ Refresh tokens rotate on each successful refresh (the previous refresh token is 
 ### Listings
 
 ```http
-GET    /api/listings                  # List listings (with filters)
-GET    /api/listings/:id              # Get listing details (supports includeFullVin=1 for Admin)
+GET    /api/listings                  # List listings (with filters); embedded `user.phone` / `user.additionalPhone` are last-three-digits masked for public payloads (same rules as single listing when contact fields are present)
+GET    /api/listings/:id              # Get listing details (supports includeFullVin=1 for Admin). Non-owner/non-admin: masked 17-char VIN; seller phones last-three-digits masked
 POST   /api/listings                  # Create listing
 PATCH  /api/listings/:id              # Update listing (owner: non-closed only; Admin can edit any status)
 POST   /api/listings/:id/publish      # Activate listing
@@ -374,10 +384,12 @@ POST   /api/listings/:id/pause        # Pause listing
 POST   /api/listings/:id/close        # Close listing
 GET    /api/listings/my               # Get user's listings; query: page, limit, status (Active|Paused|Closed), promoted (true|false), search (brand/model text); meta: last_listing_refresh_at, refreshCooldownMs for 48h timer
 GET    /api/listings/vin/:vin         # Find listings by VIN
-GET    /api/listings/:id/vin          # Get full VIN (JWT required; rate limit 5/hour; query action=reveal|copy)
+GET    /api/listings/:id/vin          # Get full VIN (JWT required; up to 20 different listings per rolling hour per user in Redis; repeat same listing in the hour does not consume quota; query action=reveal|copy)
+GET    /api/listings/:id/phones       # Full seller phone numbers (optional JWT). Anonymous: visitor id sha256(ip|user-agent); up to 5 different listings/hour. Authenticated: up to 20 different listings/hour. Listing owner and Admin skip rate limits. One call returns both numbers; repeat same listing in the hour does not consume quota
 GET    /api/listings/:id/history      # Previous listings with same VIN
 GET    /api/listings/:id/report-url        # Infocar report URL (AES-256-CBC encrypted VIN, param vin); optional query locale=ro|ru
 GET    /api/listings/:id/report-redirect   # 302 redirect to Infocar (direct link for iOS); optional query locale=ro|ru
+POST   /api/listings/:id/ai-report         # Optional structured AI analysis for vehicle listings (JWT). Body optional { language?: ru|ro } (lower priority than Accept-Language / X-Report-Language). Returns { status: ready|pending|unavailable } or 429 rate_limited. Cached by listing + language + input hash; Redis lock dedupes parallel generation. User hourly quota: disabled when NODE_ENV is not production; in production see AI_REPORT_MAX_GENERATIONS_PER_HOUR (default 5).
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon, throttle: 5 req/min/user)
 POST   /api/listings/cron/close-old            # Close old listings (cron job, requires x-cron-secret header)
 POST   /api/listings/cron/expire-promotions   # Expire promotions (cron job, requires x-cron-secret header)
@@ -386,6 +398,10 @@ GET    /api/listings/promotion-history # Get user's promotion history (JWT requi
 GET    /api/listings/promotion-history/check # Check if user has promotion history (JWT required)
 GET    /api/listings/promotion-access  # Get promotion access status (no auth required)
 ```
+
+**Listing video (optional, JWT):** `GET /api/listings/video/constraints`. Staged flow (no listing id yet): `POST /api/listings/video/staged-upload-init`, `POST /api/listings/video/staged-upload-complete`, `POST /api/listings/video/staged-status`. Bound to an existing id: `POST /api/listings/:id/video/upload-init`, `POST /api/listings/:id/video/upload-complete`, `DELETE /api/listings/:id/video`. Create payload may include `stagedVideoToken` when a staged upload has finished processing. Partner CLI imports call `POST /api/upload/video/from-url` with the import JWT and optional `x-import-secret` (`KUPITO_IMPORT_SECRET` / legacy `CIPAUTO_IMPORT_SECRET`). Job completion: `POST /api/webhooks/mediaconvert` (SNS). Env, S3 prefixes, MediaConvert, and Render steps: [listings.md](../features/listings.md), [listing-video-production-setup-ru.md](../guides/listing-video-production-setup-ru.md) (operators, Russian).
+
+**Listing detail — seller phones (frontend):** For guests and non-owner viewers, masked numbers from `GET /api/listings/:id` are shown with a reveal control; `GET /api/listings/:id/phones` runs on reveal. Copy is available after reveal for that flow. Listing owner and Admin see full numbers from `GET /api/listings/:id` with copy and no reveal control (no `GET .../phones` needed for display).
 
 **Listing images / blurhash:** Listings store `cover_blur_hash` (first photo, for cards) and optional `image_blur_hashes` (JSON array aligned with `images`, entries may be `null`). `POST /api/listings` and `PATCH /api/listings/:id` accept `image_blur_hashes` when its length matches `images`. For existing rows without the array, run `npm run backfill:blurhash:all` (see `core/backend/docs/SCRIPTS.md`). The listing UI shows blur placeholders only when these fields are populated; a local DB without blurhash data will not show them compared to production—see `core/docs/features/image-preview.md` (Local development vs production).
 
@@ -400,6 +416,7 @@ GET    /api/listings/promotion-access  # Get promotion access status (no auth re
 - When both `brand_ids` and `model_ids` are sent, the backend uses **OR** logic so that “brand-only” selections still return results: a listing matches if its `model_id` is in the list **or** its `brand_id` is in the list and that brand has no selected models (e.g. “all Škoda” + specific models for other brands returns all Škoda listings plus the chosen models). Implementation: `TypeOrmListingRepository.applyBrandModelFilter`.
 - `?equipment=air_conditioning,navigation` - Filter by equipment keys (comma-separated). Options depend on `vehicleType` (car/truck/moto). See `vehicle-equipment.ts` for keys and categories.
 - `?equipmentMatch=full|partial` - Equipment match mode (optional; default `full`). **Full:** listing must contain all selected equipment (AND). **Partial:** listing must contain at least one selected option (OR).
+- `?seller_type=Individual|Business` - Restrict results to listings whose owner has that account type (`user.type`). Applied to both vehicle and tire searches. Omit for no filter. Legacy `?seller_types=…` in the URL is still read by the frontend (first valid value is used).
 - Example URLs:
   - `/?brand=toyota` - All Toyota listings
   - `/?brand=toyota&model=yaris` - Toyota Yaris listings
@@ -453,13 +470,15 @@ DELETE /api/saved-filters/:id          # Delete saved filter
 
 **Saved filters payload sanitization:** Client-side create requests keep only allowed filter keys before calling `POST /api/saved-filters`. This prevents accidental UI-only/transient fields from being persisted.
 
+**E2E:** Reusing the same authenticated user across runs can hit the per-user cap (`400` from `POST`). Specs that create filters should clear existing rows first (see [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md)).
+
 ### Seller Listings Board
 
 Public seller board page: all active listings of a seller by slug (no auth required). Pages `/board/*` are noindex. See [seller-listings-board.md](../features/seller-listings-board.md) for full specification.
 
 ```http
 GET    /api/board/:slug                 # Get board info (displayName, boardSlug)
-GET    /api/board/:slug/listings        # Get active listings (page, limit, sortBy, sortOrder)
+GET    /api/board/:slug/listings        # Get active listings (page, limit, sortBy, sortOrder); embedded seller phones last-three-digits masked on `user`
 ```
 
 ### Upload
@@ -471,6 +490,7 @@ POST /api/upload/image                # Upload and optimize image
 GET  /api/upload/image/:filename      # Get optimized image version
                                      # Query params: ?quality=X&width=Y
                                      # Response: Cache-Control: public, max-age=31536000, immutable, stale-while-revalidate=604800; ETag for 304 Not Modified
+POST /api/upload/video/from-url       # Ingest listing video from HTTPS URL (import JWT + optional x-import-secret); SSRF-hardened download; used by partner import CLIs
 ```
 
 **Watermark Details:**
@@ -700,6 +720,8 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 
 - IP-based brute force protection (40 failed attempts per IP on guarded auth endpoints, 1-hour block)
 - Per phone number: at most 3 SMS sends per rolling hour (Redis); at most 3 incorrect code submissions per active code (Redis), separate counters for registration/phone-change codes vs password-reset codes
+- **Development only:** when `NODE_ENV=development`, `DISABLE_SMS_SEND_RATE_LIMIT=true` on the API skips the per-phone hourly send counter (`SmsService`). Do not use outside local development.
+- **Non-production:** when `SMS_OUTBOUND_DISABLED=true` or `SMS_OUTBOUND_DISABLED=1` and `NODE_ENV` is not `production`, the API stores SMS codes in Redis but does not call Twilio `messages.create`. The flag has no effect in production. Use for local development and Playwright runs so Twilio credentials can stay in `.env` without sending real SMS.
 - Frontend: 3 attempts per code before prompting for a new SMS; up to 2 resends after the initial send (3 SMS total per hour aligned with backend)
 - Frontend: when a resend fails with API error key `errors.smsHourlyLimit`, the client sets the resend cooldown to one hour (instead of clearing it) on registration verify, password reset, and profile phone-change verify, so the UI does not allow immediate repeated resend clicks against an exhausted per-phone quota
 - Automatic cleanup of expired IP blocks (hourly cron job)
@@ -735,9 +757,9 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 - ValidationPipe with whitelist and transform
 - Custom validation decorators:
   - `@IsName()` - Validates name fields (letters, spaces, hyphens, dashes only)
-  - `@IsPhone()` - Validates phone number format (+country code 1-4 digits + number 6-15 digits)
+  - `@IsPhone()` - Validates SMS-capable phone via `libphonenumber-js` (E.164, real country code, correct length, mobile/fixed-line-or-mobile only)
   - `@IsPassword()` - Validates password strength (uppercase, lowercase required)
-- Phone number format validation
+- **Frontend** (`frontend/lib/phone/`): same `libphonenumber-js` rules (default country `MD` for parsing), plus input sanitization, blur formatting (`finalizePhoneFromRawInput` reads the live input value on blur so validation matches the last keystroke before focus leaves), E.164 for API payloads, and backend validation-key mapping; used on register, profile change-phone, and reset-password
 - Email validation
 - VIN length validation (17 characters)
 - SMS code validation (6 digits, numeric only)
@@ -788,12 +810,11 @@ cd core/frontend && npm test
 **Frontend API:** ✅ Client-side API functions tested (`lib/api/api.test.ts`; modules: api-types, api-listings, api-auth, etc.)
 **Frontend Utilities:** ✅ Utility functions tested (`lib/utils/utils.test.ts`)
 
-**Test Statistics:**
+**Test Statistics (indicative; run `npm test` for current counts):**
 
-- **Total Tests:** 324 tests across 27 test suites
-- **Backend Unit:** 195 tests across 14 test suites
-- **Backend Integration:** 44 tests across 5 test suites
-- **Frontend:** 85 tests across 8 test suites (component tests, utility tests, API tests, server API tests)
+- **Backend unit:** on the order of 650+ tests across 85+ suites
+- **Backend integration:** 50 tests across 6 suites
+- **Frontend:** on the order of 280+ tests across 40+ suites (components, utilities, API, server API)
 
 ### CI/CD
 
@@ -935,8 +956,8 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
   - Static pages (homepage, listings, terms, privacy, FAQ, contacts, cookie-settings)
   - Brand and brand+model landing pages in `brands-car.xml`, `brands-truck.xml`, `brands-moto.xml` (listed directly in the root index; no nested sitemap index)
   - Seller board pages (`/board/{slug}`) for active sellers with active listings
-  - Active listings by month (`/listings/{id}`) in `listings-YYYY-MM.xml`
-  - Cached in Redis (1 hour); proper XML escaping and Cache-Control headers
+  - Active listings by month in `listings-YYYY-MM.xml` — one `<url>` per listing; default-locale canonical in `<loc>`, Russian locale via `xhtml:link` alternates (`hreflang` ro / ru / x-default); `/sitemap.txt` lists both locale URL forms derived from each `<loc>`
+  - Cached in Redis under prefix `sitemap:v3:` (1 hour TTL; prefix bumped when XML shape changes); proper XML escaping and Cache-Control headers. Detail: [SITEMAP.md](../features/SITEMAP.md).
 - **Image optimization** - WebP format, lazy loading, proper alt text
 - **Performance** - Compression, security headers, optimized image sizes
 
@@ -1118,7 +1139,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - Favorite toggle button disabled during operation with visual feedback
   - Ref-based guards to prevent concurrent requests
 - Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
-- **INP (Interaction to Next Paint) optimizations for mobile:** Deferred analytics (search/select_content) via requestIdleCallback; single rAF for scroll restore after router.replace; rAF-throttled scroll handlers with state guards (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll); GTM/Tawk loaded after idle or first interaction; parse cache for ListingGrid search params; chunked dropdown render and precomputed lowerLabel for filter options. See [inp-validation.md](../engineering/inp-validation.md) for post-deploy validation.
+- **INP (Interaction to Next Paint) optimizations for mobile:** Deferred analytics (search/select_content) via requestIdleCallback; single rAF for scroll restore after router.replace; rAF-throttled scroll handlers with state guards (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll); GTM loaded after idle; parse cache for ListingGrid search params; chunked dropdown render and precomputed lowerLabel for filter options; listing card blur placeholders decoded off the main thread via a dedicated Web Worker (`lib/blurhash-worker.ts`) with sync fallback. See [inp-validation.md](../engineering/inp-validation.md) for post-deploy validation.
 - **Resource hints optimization:**
   - Static preconnect to API domain in `layout.tsx` for faster image loading (server-rendered, no JS required)
   - DNS-prefetch and preconnect for Google Tag Manager (server-rendered in `layout.tsx`)
@@ -1128,11 +1149,13 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 - URL parameter synchronization for search filters and sorting
 - Lazy loading for images with priority for above-the-fold content
 - Skeleton loaders for improved UX
-- **PWA Support:** Service Worker with intelligent caching strategy
-  - Static assets cached permanently (CSS, JS, images, fonts)
-  - API responses cached with 1 hour TTL (stale-while-revalidate strategy)
-  - Page caching for specific routes (favorites, profile, my-listings, listing detail) with 1 hour TTL
-  - Automatic cache cleanup for expired entries
+- **PWA Support:** Service Worker (`frontend/public/sw.js`) with selective caching
+  - Static assets (CSS, JS, images, fonts) cached in a dedicated static cache
+  - Small catalog API responses (`/api/brands`, `/api/cities`, brand models) cached with 1 hour TTL (stale-while-revalidate)
+  - Navigate caching with 1 hour TTL only for favorites, profile, my-listings, and listing detail; other navigations are not stored as documents
+  - Precache on install: `/offline` only (not the home route)
+  - Automatic cache cleanup for expired entries and old cache names on activate
+  - Full-page reload after a waiting worker activates only when the user confirms an update (`ServiceWorkerRegistration`)
   - Offline page support
   - PWA installation support for iOS and Android with tabbed modal interface
   - Installation instructions with keyword highlighting and browser compatibility notes
@@ -1178,7 +1201,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 npm run install:all
 
 # Ensure database is running
-docker-compose up -d
+docker compose up -d
 
 # Create uploads folder (if needed)
 mkdir -p backend/uploads
@@ -1358,6 +1381,7 @@ For deploying kupito.club backend on Render.com, configure the following:
 - `AWS_SECRET_ACCESS_KEY` - AWS S3 secret key (required for file storage)
 - `AWS_S3_BUCKET_NAME` - S3 bucket name
 - `AWS_REGION` - AWS region (e.g., `eu-north-1`)
+- Optional listing video: MediaConvert account endpoint, queue ARN, role ARN, webhook SNS → `POST /api/webhooks/mediaconvert`, plus optional `AWS_CLOUDFRONT_URL`, `LISTING_VIDEO_WATERMARK_S3_URI`, `VIDEO_MAX_SIZE_BYTES`, `VIDEO_MAX_DURATION_SEC` — see [listing-video-production-setup-ru.md](../guides/listing-video-production-setup-ru.md) (operators, Russian) and [listings.md](../features/listings.md)
 - `REDIS_HOST` - Redis host (if using external Redis)
 - `REDIS_PORT` - Redis port (if using external Redis)
 - `ONNXRUNTIME_NODE_INSTALL` - Optional. Set to `skip` if `npm ci` fails on `onnxruntime-node` postinstall (NuGet download for optional GPU binaries). Plate masking uses CPU only.
@@ -1521,11 +1545,12 @@ cd core/backend && npm run test -- listings.service.spec.ts
 
 ---
 
-**Last Updated:** 2026-03-26
-**Version:** 1.12
+**Last Updated:** 2026-04-23
+**Version:** 1.13
 
 ### Recent Updates
 
+- **Listing seller phones and VIN (2026-04):** Search and listing payloads mask seller phone fields; full numbers via `GET /api/listings/:id/phones` (guest hash or JWT user, hourly distinct-listing caps). Full VIN via `GET /api/listings/:id/vin` (JWT, hourly distinct-listing cap). Phone validation uses `libphonenumber-js` on backend and in `frontend/lib/phone/`.
 - **Slug-based URLs & SEO Improvements (2025-12-17):**
   - Implemented slug-based URLs for brand and model filters (`?brand=toyota&model=yaris`) for better SEO and user-friendly URLs
   - Added utility functions `createSlug()` and `slugToName()` in `lib/utils/utils.ts` for URL-friendly text conversion
@@ -1545,7 +1570,7 @@ cd core/backend && npm run test -- listings.service.spec.ts
   - Deferred analytics (searchDeferred, selectContentDeferred, pageScrollDeferred) and memoized consent/currency in analytics.ts
   - Single requestAnimationFrame for scroll restore after filter/sort navigation (useFilterHandlers, SearchFilters, SortDropdown)
   - rAF-throttled scroll handlers with early-exit on unchanged state (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll)
-  - GTM load after requestIdleCallback (2.5s), Tawk after first interaction or 4s; lower Sentry replay sampling on mobile viewport
+  - GTM load after requestIdleCallback (2.5s); lower Sentry replay sampling on mobile viewport
   - ListingGrid: parsed search params cache (keyed by searchParamsString + vehicleType), deferred viewItemList; ListingCard prefetch
   - MultiSelectDropdown/Dropdown: precomputed lowerLabel for options, chunked render (first 50 then rAF to full list)
   - KPI and validation: lib/performance/inp-kpi.ts (targets, observer), [inp-validation.md](../engineering/inp-validation.md) for GSC validation steps
@@ -1559,4 +1584,4 @@ cd core/backend && npm run test -- listings.service.spec.ts
 - Added tab counters on Favorites page
 - Added breadcrumbs navigation on key pages
 - Optimized filter loading to prevent skeleton flickering
-- Comprehensive test coverage: 52 frontend tests across 4 test suites, 195 backend tests across 14 test suites
+- Comprehensive test coverage across frontend and backend (see Test Statistics above)

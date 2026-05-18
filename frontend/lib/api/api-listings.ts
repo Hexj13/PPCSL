@@ -2,6 +2,11 @@ import { api } from './api-client';
 import type {
   CreateListingDto,
   Listing,
+  ListingAiReportPostResponse,
+  ListingVideoConstraints,
+  StagedListingVideoStatusResponse,
+  StagedListingVideoUploadInitResponse,
+  ListingVideoUploadInitResponse,
   PaginationMeta,
   PromotionAccessStatus,
   PromotionHistory,
@@ -40,6 +45,13 @@ export const listingsApi = {
       params: { action },
       headers: { 'X-Skip-Error-Handling': 'true' },
     }),
+  getPhones: (id: string) =>
+    api.get<{ phone: string | null; additionalPhone: string | null }>(
+      `/api/listings/${id}/phones`,
+      {
+        headers: { 'X-Skip-Error-Handling': 'true' },
+      },
+    ),
   getHistoryByListingId: (id: string) => api.get<Listing[]>(`/api/listings/${id}/history`),
   getReportUrl: (id: string) =>
     api.get<{ url: string }>(`/api/listings/${id}/report-url`, {
@@ -101,4 +113,44 @@ export const listingsApi = {
       },
     });
   },
+  postAiReport: (id: string, options?: { signal?: AbortSignal; reportLanguage?: 'ru' | 'ro' }) =>
+    api.post<ListingAiReportPostResponse>(
+      `/api/listings/${id}/ai-report`,
+      {},
+      {
+        headers: {
+          'X-Skip-Error-Handling': 'true',
+          ...(options?.reportLanguage ? { 'X-Report-Language': options.reportLanguage } : {}),
+        },
+        signal: options?.signal,
+      },
+    ),
+  getListingVideoConstraints: () =>
+    api.get<ListingVideoConstraints>(`/api/listings/video/constraints`),
+  stagedVideoUploadInit: (body: { fileSize: number; fileName: string; contentType: string }) =>
+    api.post<StagedListingVideoUploadInitResponse>(`/api/listings/video/staged-upload-init`, body),
+  stagedVideoUploadComplete: (body: {
+    stagedVideoToken: string;
+    uploadId: string;
+    parts: { PartNumber: number; ETag: string }[];
+  }) =>
+    api.post<{ jobId: string | null; stagedVideoToken: string }>(
+      `/api/listings/video/staged-upload-complete`,
+      body,
+    ),
+  getStagedVideoStatus: (stagedVideoToken: string) =>
+    api.post<StagedListingVideoStatusResponse>(`/api/listings/video/staged-status`, {
+      stagedVideoToken,
+    }),
+  videoUploadInit: (
+    listingId: string,
+    body: { fileSize: number; fileName: string; contentType: string },
+  ) =>
+    api.post<ListingVideoUploadInitResponse>(`/api/listings/${listingId}/video/upload-init`, body),
+  videoUploadComplete: (
+    listingId: string,
+    body: { uploadId: string; parts: { PartNumber: number; ETag: string }[] },
+  ) => api.post<{ jobId: string | null }>(`/api/listings/${listingId}/video/upload-complete`, body),
+  deleteListingVideo: (listingId: string) =>
+    api.delete<{ success: boolean }>(`/api/listings/${listingId}/video`),
 };

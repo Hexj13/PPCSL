@@ -16,10 +16,7 @@ jest.mock('@/components/ListingPage/ListingPageImageModal', () => ({
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ src, alt }: { src: string; alt: string }) => (
-    // eslint-disable-next-line @next/next/no-img-element -- mock for test
-    <img src={src} alt={alt} />
-  ),
+  default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }));
 
 jest.mock('@/lib/utils', () => ({

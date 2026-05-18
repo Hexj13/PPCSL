@@ -3,6 +3,7 @@ import type { AnyNode } from 'domhandler';
 
 import { Currency } from '../../../../common/types';
 import { requestText } from '../../partner-import-shared/utils/http';
+import { isProbablyVideoUrl } from '../../partner-import-shared/utils/video-url';
 import type { CipautoConfig, ParsedPdpData, ParsedPdpEquipmentOption } from '../types';
 
 import { extractSourceListingId } from './plp-parser';
@@ -10,14 +11,54 @@ import { extractSourceListingId } from './plp-parser';
 export class PdpParser {
   constructor(private readonly config: CipautoConfig) {}
 
-  async parse(url: string): Promise<ParsedPdpData> {
-    const { data: html } = await requestText({
-      url,
-      method: 'GET',
-      timeoutMs: this.config.requestTimeoutMs,
-      retries: this.config.maxRetries,
-    });
-    return parsePdpHtml(html, url);
+  async parse(originalUrl: string): Promise<ParsedPdpData> {
+    const { roUrl, ruUrl } = buildCipautoBilingualPdpUrls(originalUrl);
+    let htmlRo: string;
+    try {
+      const { data } = await requestText({
+        url: roUrl,
+        method: 'GET',
+        timeoutMs: this.config.requestTimeoutMs,
+        retries: this.config.maxRetries,
+      });
+      htmlRo = data;
+    } catch {
+      const { data } = await requestText({
+        url: originalUrl,
+        method: 'GET',
+        timeoutMs: this.config.requestTimeoutMs,
+        retries: this.config.maxRetries,
+      });
+      htmlRo = data;
+    }
+
+    const parsed = parsePdpHtml(htmlRo, originalUrl);
+    parsed.sourceUrl = originalUrl;
+    parsed.canonicalUrl = canonicalizeUrl(originalUrl);
+
+    const $ro = cheerio.load(htmlRo);
+    const descRo = readDescription($ro) ?? parsed.description;
+    parsed.description_ro = descRo;
+    parsed.description = descRo ?? parsed.description;
+
+    try {
+      const { data: htmlRu } = await requestText({
+        url: ruUrl,
+        method: 'GET',
+        timeoutMs: this.config.requestTimeoutMs,
+        retries: this.config.maxRetries,
+      });
+      const descRu = readDescription(cheerio.load(htmlRu));
+      if (descRu) {
+        parsed.description_ru = descRu;
+      }
+    } catch {
+      parsed.warnings.push('BILINGUAL_DESCRIPTION_RU_FETCH_FAILED');
+    }
+
+    parsed.description = parsed.description_ro ?? parsed.description_ru ?? parsed.description;
+
+    return parsed;
   }
 }
 
@@ -32,6 +73,7 @@ export function parsePdpHtml(html: string, url: string): ParsedPdpData {
 
   const jsonLd = extractProductJsonLd($);
 
+  const desc = readDescription($);
   const parsed: ParsedPdpData = {
     sourceListingId,
     sourceUrl: url,
@@ -45,12 +87,15 @@ export function parsePdpHtml(html: string, url: string): ParsedPdpData {
     year: readYear($, jsonLd),
     price: readPrice($, jsonLd),
     currency: readCurrency($, jsonLd),
-    description: readDescription($),
+    description: desc,
+    description_ro: desc,
+    description_ru: undefined,
     creditAvailable: readCreditAvailable($, html),
     downPaymentAmount: readDownPayment($, html),
     monthlyPayment: readMonthlyPayment($, html),
     creditPeriodMonths: readCreditPeriod($, html),
     images: readImages($, html),
+    videoUrl: readVideoUrl($, url),
     trimRaw: readTrim($),
     equipmentOptions: readEquipmentOptions($),
     equipmentKeys: [],
@@ -77,6 +122,40 @@ export function parsePdpHtml(html: string, url: string): ParsedPdpData {
   }
 
   return parsed;
+}
+
+function readVideoUrl($: cheerio.CheerioAPI, pageUrl: string): string | undefined {
+  const toAbsolute = (href: string) => {
+    try {
+      return new URL(href, pageUrl).href;
+    } catch {
+      return undefined;
+    }
+  };
+  const tryMeta = (selector: string) => {
+    const raw = $(selector).attr('content')?.trim();
+    if (!raw) return undefined;
+    const abs = toAbsolute(raw) ?? raw;
+    return isProbablyVideoUrl(abs) ? abs : undefined;
+  };
+  const og = tryMeta('meta[property="og:video"]');
+  if (og) return og;
+  const ogUrl = tryMeta('meta[property="og:video:url"]');
+  if (ogUrl) return ogUrl;
+  const sourceSrc = $('video source').first().attr('src')?.trim();
+  if (sourceSrc) {
+    const abs = toAbsolute(sourceSrc) ?? sourceSrc;
+    if (isProbablyVideoUrl(abs)) return abs;
+  }
+  const linkHref = $('a[href*=".mp4"],a[href*=".webm"],a[href*=".mov"]')
+    .first()
+    .attr('href')
+    ?.trim();
+  if (linkHref) {
+    const abs = toAbsolute(linkHref) ?? linkHref;
+    if (isProbablyVideoUrl(abs)) return abs;
+  }
+  return undefined;
 }
 
 function detectSourceStatus(
@@ -213,7 +292,25 @@ function readCurrency(
   return undefined;
 }
 
-function readDescription($: cheerio.CheerioAPI): string | undefined {
+export function buildCipautoBilingualPdpUrls(originalUrl: string): {
+  roUrl: string;
+  ruUrl: string;
+} {
+  const u = new URL(originalUrl);
+  const path = u.pathname.endsWith('/') ? u.pathname : `${u.pathname}/`;
+  const lower = path.toLowerCase();
+  const vehIdx = lower.indexOf('/vehicul/');
+  if (vehIdx === -1) {
+    throw new Error(`Cannot build bilingual PDP URLs (missing /vehicul/): ${originalUrl}`);
+  }
+  const vehiculPath = path.slice(vehIdx);
+  const origin = `${u.protocol}//${u.host}`;
+  const roUrl = `${origin}${vehiculPath}`;
+  const ruUrl = `${origin}/ru${vehiculPath}`;
+  return { roUrl, ruUrl };
+}
+
+export function readDescription($: cheerio.CheerioAPI): string | undefined {
   const node = $('.cipauto-description-content').first();
   if (!node.length) return undefined;
   const html = node.html()?.trim();

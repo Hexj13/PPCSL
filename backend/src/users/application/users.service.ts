@@ -80,6 +80,12 @@ export class UsersService {
     });
   }
 
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { googleId, active: true },
+    });
+  }
+
   async findByPhone(phone: string): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { phone, active: true },

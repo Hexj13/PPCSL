@@ -1,7 +1,12 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
+import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
 import { TrackedNextImage } from '@/components/common/TrackedNextImage';
-import { Spinner } from '@/ui';
+import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhotoCarouselNavButtons';
+import { useTranslation } from '@/hooks/useTranslation';
+import { getOptimizedImageUrl } from '@/lib/utils';
 
 import {
   useListingPageImageModal,
@@ -10,8 +15,41 @@ import {
 
 export type { ListingPageImageModalProps };
 
+const THUMB_QUALITY = 68;
+const THUMB_WIDTH = 160;
+
+const EMPTY_WEBVTT_DATA_URL = 'data:text/vtt;charset=utf-8,' + encodeURIComponent('WEBVTT\n\n');
+
 export function ListingPageImageModal(props: ListingPageImageModalProps) {
+  const { t } = useTranslation();
+  const thumbStripRef = useRef<HTMLDivElement>(null);
+  const modalVideoRef = useRef<HTMLVideoElement>(null);
   const state = useListingPageImageModal(props);
+
+  useEffect(() => {
+    if (!state.isOpen || props.images.length < 5) return;
+    const strip = thumbStripRef.current;
+    if (!strip) return;
+    const active = strip.querySelector<HTMLElement>(`[data-thumb-index="${state.visibleIndex}"]`);
+    active?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [props.images.length, state.isOpen, state.visibleIndex]);
+
+  useEffect(() => {
+    if (!state.isOpen || !state.isVideoSlideActive || !props.listingVideoSlide) {
+      return;
+    }
+    const el = modalVideoRef.current;
+    if (!el) {
+      return;
+    }
+    const id = window.requestAnimationFrame(() => {
+      void el.play().catch(() => {});
+    });
+    return () => {
+      window.cancelAnimationFrame(id);
+      el.pause();
+    };
+  }, [state.isOpen, state.isVideoSlideActive, props.listingVideoSlide]);
 
   if (!state.isOpen) return null;
 
@@ -19,9 +57,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
     swipeContainerRef,
     zoom,
     isMobileViewport,
-    swipeHandledRef,
     modalImageLoadedRef,
-    setModalImageLoading,
     setVisibleIndex,
     onClose,
     onNext,
@@ -31,16 +67,21 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
     confirmedUrl,
     pendingUrl,
     hasValidImage,
-    shouldShowLoader,
+    isVideoSlideActive,
     imageAltText,
     isExternalUrl,
     visibleIndex,
     currentIndex,
+    getBlurDataURL,
   } = state;
+
+  const confirmedBlur = getBlurDataURL(visibleIndex);
+  const pendingBlur =
+    pendingUrl && pendingUrl !== confirmedUrl ? getBlurDataURL(currentIndex) : undefined;
 
   return (
     <div
-      className="fixed inset-0 bg-black z-50 flex items-center justify-center p-4"
+      className="group fixed inset-0 bg-black z-50 flex items-center justify-center p-4"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -51,9 +92,9 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
       }}
       onClick={(e) => {
         const target = e.target as HTMLElement;
-        if (target.closest('button, img')) return;
-        if (swipeHandledRef.current) {
-          swipeHandledRef.current = false;
+        if (target.closest('button, img, video')) return;
+        if (state.swipeHandledRef.current) {
+          state.swipeHandledRef.current = false;
           return;
         }
         onClose();
@@ -83,63 +124,29 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
       </button>
 
       {images.length > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrev();
-            }}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all duration-200 z-10 bg-primary-500/85 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block hover-only:hover:scale-110"
-          >
-            <svg
-              className="w-8 h-8 sm:w-10 sm:h-10"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNext();
-            }}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-primary-900 transition-all duration-200 z-10 bg-primary-500/85 rounded-full p-3 sm:p-4 border-2 border-primary-900 shadow-lg hidden sm:block hover-only:hover:scale-110"
-          >
-            <svg
-              className="w-8 h-8 sm:w-10 sm:h-10"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
-        </>
+        <ListingPhotoCarouselNavButtons
+          variant="modal"
+          onPrev={(e) => {
+            e.stopPropagation();
+            onPrev();
+          }}
+          onNext={(e) => {
+            e.stopPropagation();
+            onNext();
+          }}
+          prevLabel={t('listings.previousPhoto')}
+          nextLabel={t('listings.nextPhoto')}
+        />
       )}
 
       <div
         ref={swipeContainerRef}
-        className="relative max-w-7xl w-full h-full flex items-center justify-center p-4"
+        className="relative max-w-7xl w-full h-full flex flex-col items-center justify-center p-4 min-h-0"
       >
         <div
-          className="relative w-full h-full flex items-center justify-center"
+          className="relative w-full flex-1 min-h-0 flex items-center justify-center"
           style={
-            isMobileViewport
+            isMobileViewport && !isVideoSlideActive
               ? {
                   transform: `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.scale})`,
                   transformOrigin: '0 0',
@@ -147,61 +154,80 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
               : undefined
           }
         >
-          {shouldShowLoader && (
-            <div className="absolute inset-0 flex items-center justify-center z-20">
-              <Spinner size="lg" />
-            </div>
-          )}
-
           {hasValidImage ? (
             <>
-              {confirmedUrl && (
-                <TrackedNextImage
-                  key={`confirmed-${visibleIndex}`}
-                  src={confirmedUrl}
-                  alt={imageAltText}
-                  width={1200}
-                  height={900}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
-                  className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-100"
-                  loading="eager"
-                  draggable={false}
-                  unoptimized={isExternalUrl(confirmedUrl)}
-                  onLoad={() => {
-                    modalImageLoadedRef.current.add(confirmedUrl);
-                    setModalImageLoading(false);
-                  }}
-                  onError={() => {
-                    onImageError(visibleIndex);
-                    setModalImageLoading(false);
-                  }}
-                  data-layer="confirmed"
-                />
-              )}
-              {pendingUrl && pendingUrl !== confirmedUrl && (
-                <TrackedNextImage
-                  key={`pending-${currentIndex}`}
-                  src={pendingUrl}
-                  alt={imageAltText}
-                  width={1200}
-                  height={900}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
-                  className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-0"
-                  loading="eager"
-                  draggable={false}
-                  unoptimized={isExternalUrl(pendingUrl)}
-                  onLoad={() => {
-                    modalImageLoadedRef.current.add(pendingUrl);
-                    setModalImageLoading(false);
-                    setVisibleIndex(currentIndex);
-                  }}
-                  onError={() => {
-                    onImageError(currentIndex);
-                    setModalImageLoading(false);
-                    setVisibleIndex(currentIndex);
-                  }}
-                  data-layer="pending"
-                />
+              {isVideoSlideActive && props.listingVideoSlide ? (
+                <video
+                  ref={modalVideoRef}
+                  key="listing-slide-video"
+                  controls
+                  playsInline
+                  className="relative z-[1] m-auto max-h-[90vh] max-w-full rounded-lg"
+                  poster={props.listingVideoSlide.posterUrl ?? undefined}
+                >
+                  {props.listingVideoSlide.webmUrl ? (
+                    <source src={props.listingVideoSlide.webmUrl} type="video/webm" />
+                  ) : null}
+                  <source src={props.listingVideoSlide.mp4Url} type="video/mp4" />
+                  <track
+                    kind="captions"
+                    src={EMPTY_WEBVTT_DATA_URL}
+                    srcLang="und"
+                    label={t('listingDetail.video.captionsTrackLabel')}
+                    default
+                  />
+                </video>
+              ) : (
+                <>
+                  {confirmedUrl && (
+                    <TrackedNextImage
+                      key={`confirmed-${visibleIndex}`}
+                      src={confirmedUrl}
+                      alt={imageAltText}
+                      width={1200}
+                      height={900}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
+                      className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-100 transition-opacity duration-200"
+                      loading="eager"
+                      draggable={false}
+                      unoptimized={isExternalUrl(confirmedUrl)}
+                      placeholder={confirmedBlur ? 'blur' : undefined}
+                      blurDataURL={confirmedBlur}
+                      onLoad={() => {
+                        modalImageLoadedRef.current.add(confirmedUrl);
+                      }}
+                      onError={() => {
+                        onImageError(visibleIndex);
+                      }}
+                      data-layer="confirmed"
+                    />
+                  )}
+                  {pendingUrl && pendingUrl !== confirmedUrl && (
+                    <TrackedNextImage
+                      key={`pending-${currentIndex}`}
+                      src={pendingUrl}
+                      alt={imageAltText}
+                      width={1200}
+                      height={900}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
+                      className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-0 transition-opacity duration-200 pointer-events-none"
+                      loading="eager"
+                      draggable={false}
+                      unoptimized={isExternalUrl(pendingUrl)}
+                      placeholder={pendingBlur ? 'blur' : undefined}
+                      blurDataURL={pendingBlur}
+                      onLoad={() => {
+                        modalImageLoadedRef.current.add(pendingUrl);
+                        setVisibleIndex(currentIndex);
+                      }}
+                      onError={() => {
+                        onImageError(currentIndex);
+                        setVisibleIndex(currentIndex);
+                      }}
+                      data-layer="pending"
+                    />
+                  )}
+                </>
               )}
             </>
           ) : (
@@ -221,8 +247,75 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
           )}
         </div>
 
+        {images.length >= 5 && (
+          <div
+            ref={thumbStripRef}
+            className="hidden sm:block w-full max-w-full shrink-0 mt-2 px-2 pb-0.5 overflow-x-auto overscroll-x-contain z-10 scrollbar-primary-700"
+          >
+            <div className="flex gap-2 justify-center items-center w-max max-w-none mx-auto">
+              {images.map((src, index) => {
+                if (!src || src === '/placeholder-car.jpg' || props.imageErrors.has(index)) {
+                  return null;
+                }
+                const active = index === visibleIndex;
+                const isVideoHeroThumb =
+                  index === 0 && props.listingVideoSlide && isListingPageVideoHeroSlideUrl(src);
+                const thumbBlur = getBlurDataURL(index);
+                const thumbUrl = isVideoHeroThumb
+                  ? ''
+                  : getOptimizedImageUrl(src, THUMB_QUALITY, THUMB_WIDTH);
+                return (
+                  <button
+                    key={`modal-thumb-${index}`}
+                    type="button"
+                    data-thumb-index={index}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      props.onIndexChange(index);
+                    }}
+                    className={`relative shrink-0 w-16 h-12 rounded-md overflow-hidden border-2 transition-colors ${
+                      active
+                        ? 'border-primary-500 ring-2 ring-primary-500/40'
+                        : 'border-primary-900/50 hover-only:border-primary-500/70'
+                    }`}
+                  >
+                    {isVideoHeroThumb && props.listingVideoSlide ? (
+                      <video
+                        className="absolute inset-0 h-full w-full object-cover"
+                        src={props.listingVideoSlide.mp4Url}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        poster={props.listingVideoSlide.posterUrl ?? undefined}
+                        aria-hidden
+                      />
+                    ) : (
+                      <TrackedNextImage
+                        src={thumbUrl}
+                        alt={t('listings.modalThumbnailAlt', {
+                          index: String(index + 1),
+                          total: String(images.length),
+                        })}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                        draggable={false}
+                        unoptimized={
+                          thumbUrl.startsWith('http://') || thumbUrl.startsWith('https://')
+                        }
+                        placeholder={thumbBlur ? 'blur' : undefined}
+                        blurDataURL={thumbBlur}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary-500 text-lg sm:text-xl font-semibold bg-black/85 px-4 py-2 rounded-full border-2 border-primary-500">
+          <div className="mt-1.5 sm:mt-2 text-primary-500 text-sm sm:text-base font-semibold bg-primary-900/85 px-2.5 py-1 rounded-full border border-primary-500 shrink-0 leading-tight">
             {visibleIndex + 1} / {images.length}
           </div>
         )}

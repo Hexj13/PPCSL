@@ -1,4 +1,27 @@
-import { parsePdpHtml } from './pdp-parser';
+import { describe, expect, it } from '@jest/globals';
+
+import { BodyType, FuelType } from '../../../../common/types';
+import { mapBodyType } from '../../partner-import-shared/mapping/body-type-mapper';
+import { mapFuel } from '../../partner-import-shared/mapping/enum-mapper';
+import { buildCipautoBilingualPdpUrls, parsePdpHtml } from './pdp-parser';
+
+describe('buildCipautoBilingualPdpUrls', () => {
+  it('builds ro and ru PDP URLs from a plain vehicul path', () => {
+    const { roUrl, ruUrl } = buildCipautoBilingualPdpUrls(
+      'https://cipauto.md/vehicul/850827-volvo-xc90/',
+    );
+    expect(roUrl).toBe('https://cipauto.md/vehicul/850827-volvo-xc90/');
+    expect(ruUrl).toBe('https://cipauto.md/ru/vehicul/850827-volvo-xc90/');
+  });
+
+  it('builds ro and ru PDP URLs when the source URL already has a locale prefix', () => {
+    const { roUrl, ruUrl } = buildCipautoBilingualPdpUrls(
+      'https://cipauto.md/ru/vehicul/850827-volvo-xc90/',
+    );
+    expect(roUrl).toBe('https://cipauto.md/vehicul/850827-volvo-xc90/');
+    expect(ruUrl).toBe('https://cipauto.md/ru/vehicul/850827-volvo-xc90/');
+  });
+});
 
 describe('parsePdpHtml', () => {
   it('marks active listing pages as active source status', () => {
@@ -27,7 +50,7 @@ describe('parsePdpHtml', () => {
       'https://cipauto.md/vehicul/j12345-volkswagen-golf/',
     );
 
-    expect(parsed.sourceListingId).toBe('j12345');
+    expect(parsed.sourceListingId).toBe('j12345-volkswagen-golf');
     expect(parsed.sourceStatus).toBe('active');
     expect(parsed.sourceStatusReason).toBeUndefined();
   });
@@ -50,18 +73,12 @@ describe('parsePdpHtml', () => {
       'https://cipauto.md/vehicul/j54321-dacia-logan/',
     );
 
-    expect(parsed.sourceListingId).toBe('j54321');
+    expect(parsed.sourceListingId).toBe('j54321-dacia-logan');
     expect(parsed.sourceStatus).toBe('closed');
     expect(parsed.sourceStatusReason).toBe('pdp_template');
     expect(parsed.warnings).toContain('SOURCE_CLOSED:pdp_template');
   });
 });
-
-import { describe, expect, it } from '@jest/globals';
-
-import { BodyType, FuelType } from '../../../../common/types';
-import { mapBodyType } from '../../partner-import-shared/mapping/body-type-mapper';
-import { mapFuel } from '../../partner-import-shared/mapping/enum-mapper';
 
 describe('pdp-parser', () => {
   it('extracts equipment options (slug + label) from DOM attributes', () => {
@@ -224,5 +241,27 @@ describe('pdp-parser', () => {
 
     expect(parsed.bodyRaw).toBe('Furgon');
     expect(mapBodyType(parsed.bodyRaw, 'car').value).toBe(BodyType.Minivan);
+  });
+
+  it('extracts video URL from og:video meta', () => {
+    const parsed = parsePdpHtml(
+      `
+        <html>
+          <head>
+            <title>Test car | CipAuto.md</title>
+            <meta property="og:video" content="https://cdn.example.com/listings/promo.mp4" />
+            <script type="application/ld+json">
+              {"@type":"Product","name":"Test","brand":{"name":"X"},"model":"Y","modelDate":2020,"offers":{"price":"1","priceCurrency":"EUR"}}
+            </script>
+          </head>
+          <body>
+            <h1 class="cipauto-vehicle-title">Test</h1>
+            <div id="gallery-data">{"images":["https://img/1.jpg","https://img/2.jpg"]}</div>
+          </body>
+        </html>
+      `,
+      'https://cipauto.md/vehicul/j99999-test-car/',
+    );
+    expect(parsed.videoUrl).toBe('https://cdn.example.com/listings/promo.mp4');
   });
 });

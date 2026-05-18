@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/nextjs';
 import Link from 'next/link';
 import { useEffect } from 'react';
 
-import { I18nProvider } from '@/components/providers/I18nProvider';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const actionButtonClassName =
@@ -18,6 +18,7 @@ function ErrorContent({
   reset: () => void;
 }) {
   const { t } = useTranslation();
+  const { href } = useLocalizedNavigation();
 
   return (
     <div
@@ -53,7 +54,7 @@ function ErrorContent({
           <button onClick={reset} className={actionButtonClassName}>
             {t('error.tryAgain')}
           </button>
-          <Link href="/" className={actionButtonClassName}>
+          <Link href={href('/')} className={actionButtonClassName}>
             {t('error.backToHome')}
           </Link>
         </div>
@@ -80,9 +81,5 @@ export default function Error({
     });
   }, [error]);
 
-  return (
-    <I18nProvider>
-      <ErrorContent error={error} reset={reset} />
-    </I18nProvider>
-  );
+  return <ErrorContent error={error} reset={reset} />;
 }

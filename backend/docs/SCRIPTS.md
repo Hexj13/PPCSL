@@ -84,6 +84,7 @@ These scripts are **blocked from running in production** and can only be execute
 - `clear-cache.ts` - Clear all Redis cache
 - `clear-listing-cache.ts` - Clear listings cache (with optional listing ID)
 - `clear-brands-cache.ts` - Clear brands and models cache
+- `clear-listing-ai-reports.ts` - Delete all rows in `listing_ai_reports` and clear listing AI analysis Redis locks/quotas (stage/dev/test only; run `npm run clear-listing-ai-reports`)
 
 ## Production Scripts
 
@@ -99,6 +100,7 @@ These scripts can be run in production, but should still be used with caution:
 - `check-brands-count.ts` - Check total brands count (production-safe)
 - `check-models-stats.ts` - Check models statistics (production-safe)
 - `remove-body-code-models.ts` - Remove BMW/Mercedes body code models (E30, W124, etc.); skips models in use (production-safe)
+- `clear-listing-ai-reports.ts` - Delete all cached listing AI analyses and related Redis keys (`npm run clear-listing-ai-reports:prod` on prod)
 - `backup-database.ts` - Create database backup (uses pg_dump)
 
 ## Security
@@ -173,6 +175,7 @@ npm run backup
 
 # Database maintenance
 npm run fix-price-nulls:prod
+npm run clear-listing-ai-reports:prod
 
 # Brand and model management
 npm run seed:all-brands:prod
@@ -355,7 +358,7 @@ Batches of 50, 1s pause between batches. Idempotent for the chosen criterion (`N
 
 The admin **Parsing** UI triggers parser CLI pipelines via a managed child process and parser catalog entries. Configure these **backend** variables (see also `core/docs/features/admin-parsing-ru.md` and `core/docs/features/parsing-framework.md`):
 
-**Registry sync (UI):** For parsers whose catalog entry sets `registrySyncEnabled`, the **PLP files** table includes **Sync registry**. It creates a `parser_runs` row with `run_type: sync`, calls the same `seed-registry` TypeScript entrypoint as `npm run cipauto:seed-registry` / `npm run 999md:seed-registry` (stdout/stderr → `parser_log_chunks`, optional cancel, `reportJson=` path captured like PDP reports). Endpoints: `GET /api/admin/parsing/parsers/:parserCode/plp-files/:fileKey/sync-hint`, `POST .../sync-runs` (body optional `assignedUserId`). The same **GET sync-hint** is also used when choosing a PLP file in **Admin → Parsing → manual PDP** and in the **scheduler** form for **PDP** runs (to prefill the partner UUID); only **POST sync-runs** is restricted to `registrySyncEnabled` parsers.
+**Registry sync (UI):** For parsers whose catalog entry sets `registrySyncEnabled`, the **PLP files** table includes **Sync registry**. It creates a `parser_runs` row with `run_type: sync`, calls the same `seed-registry` TypeScript entrypoint as `npm run cipauto:seed-registry` / `npm run 999md:seed-registry` / `npm run autooutlet:seed-registry` (stdout/stderr → `parser_log_chunks`, optional cancel, `reportJson=` path captured like PDP reports). Endpoints: `GET /api/admin/parsing/parsers/:parserCode/plp-files/:fileKey/sync-hint`, `POST .../sync-runs` (body optional `assignedUserId`). The same **GET sync-hint** is also used when choosing a PLP file in **Admin → Parsing → manual PDP** and in the **scheduler** form for **PDP** runs (to prefill the partner UUID); only **POST sync-runs** is restricted to `registrySyncEnabled` parsers.
 
 | Variable                                                                   | Purpose                                                                                                                                                                                                                                                                                   |
 | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -370,6 +373,7 @@ The admin **Parsing** UI triggers parser CLI pipelines via a managed child proce
 | `ADMIN_PARSING_CLI_OVERRIDE_<PARSER_CODE>`                                 | Optional custom command prefix for a parser CLI process (for example `ADMIN_PARSING_CLI_OVERRIDE_CIPAUTO`). Use only trusted values from deployment config or secrets management.                                                                                                         |
 | `PARSING_RUNTIME_DIR`                                                      | Root directory for parser registry, PLP JSON, and `reports/` on the backend host. Default when unset: `runtime/parsing` under the backend process `cwd` (typically `core/backend`). On persistent-disk deployments, set to the mount path so admin runs, scheduler, and manual CLI agree. |
 | `CIPAUTO_REGISTRY_PATH`, `CIPAUTO_CURRENT_PLP_PATH`, `CIPAUTO_REPORTS_DIR` | Optional absolute or `cwd`-relative overrides for CipAuto file paths.                                                                                                                                                                                                                     |
+| `AUTOOUTLET_REGISTRY_PATH`, `AUTOOUTLET_CURRENT_PLP_PATH`, `AUTOOUTLET_REPORTS_DIR` | Optional overrides for AutoOutlet paths (defaults under `<runtime>/autooutlet/`).                                                                                                                                                                                        |
 | `SITE999MD_REGISTRY_PATH`, `SITE999MD_REPORTS_DIR`                         | Optional overrides for 999.md registry and reports (PLP dir stays `<runtime>/999md/current-plp/`).                                                                                                                                                                                        |
 
 When any of the path variables above are set to a non-empty value, the admin parser runner forwards them into the parser CLI child environment together with `PARSING_RUNTIME_DIR`, so scheduled and manual admin runs use the same layout as shell commands.
@@ -381,32 +385,34 @@ Legacy compatibility:
 Schedules and run history are stored in PostgreSQL (`parser_runs`, `parser_schedules`, `parser_log_chunks`). Parser raw artifacts remain file-based in parser-owned folders:
 
 - PLP snapshot file (`plpDataPath` in parser catalog, if configured)
-- parser registry and reports under `PARSING_RUNTIME_DIR` (default `runtime/parsing/<parser>/`: `cipauto-registry.json`, `999md-registry.json`, `reports/`)
+- parser registry and reports under `PARSING_RUNTIME_DIR` (default `runtime/parsing/<parser>/`: `cipauto-registry.json`, `999md-registry.json`, `autooutlet-registry.json`, `reports/`)
 
 The API exposes normalized summaries on runs while the CLI files remain the raw source of truth.
 
-### Partner listing imports (`cipauto-import`, `999md-import`)
+### Partner listing imports (`cipauto-import`, `999md-import`, `autooutlet-import`)
 
 Shared code lives in `src/scripts/tools/partner-import-shared/` (Kupito API client, upload, mappers, registry/report helpers).
 
-Parser source of truth is platform-specific:
-
-- `parsers/cipauto-import/` in platform root
-- `parsers/999md-import/` in platform root
-
-Runtime copies are created in core by `npm run prepare:build` under `src/scripts/tools/`.
+Parser implementation lives in the core submodule (`src/scripts/tools/cipauto-import/`, `src/scripts/tools/999md-import/`, `src/scripts/tools/autooutlet-import/`). Admin visibility and defaults come from the platform root `config/parsers.ts` (copied into core by `npm run prepare:build`).
 
 | npm script                                                   | Effect                                                      |
 | ------------------------------------------------------------ | ----------------------------------------------------------- |
 | `npm run cipauto:scan` / `cipauto:import` / `cipauto:report` | CipAuto HTML catalog → Kupito API                           |
+| `npm run autooutlet:scan` / `autooutlet:import` / `autooutlet:report` | AutoOutlet.md catalog + PDP → same pipeline |
 | `npm run 999md:scan` / `999md:import` / `999md:report`       | 999.md GraphQL → same downstream pipeline                   |
 | `npm run cipauto:seed-registry`                              | Seed registry from existing Kupito listings (deduplication) |
+| `npm run autooutlet:seed-registry`                           | Seed AutoOutlet registry + partner keys from DB (Cod Produs / URL / partner key) |
 | `npm run 999md:seed-registry`                                | Seed 999.md registry + partner keys from Kupito DB + 999 PLP/PDP (dedup after lost registry) |
 | `npm run partner:check-urls`                                 | PDP check for listings with saved `partner_listing_canonical_url` (JSON+CSV report)          |
 | `npm run cipauto:audit-stale`                                | Find and close listings removed from CipAuto                |
+| `npm run autooutlet:audit-stale`                             | Find and close listings not in AutoOutlet PLP snapshot / verify PDP |
 | `npm run 999md:dealer-audit`                                 | Brand/model audit report vs live Kupito API                 |
 
-**PDP import — optional DB dedup:** `cipauto:import` and `999md:import` accept `--check-user-duplicates-before-create` (opens the same Postgres connection pattern as `seed-registry`, skips `createListing` when a same-user duplicate is detected). `999md:import` also accepts `--dedupe-999-price-tolerance-pct` and `--dedupe-999-photo-count-tolerance` for fingerprint tolerances (defaults `0` and `1`). The admin **Parsing → PDP** modal and PDP schedules persist the same flag in run/schedule `config_snapshot`. See `docs/parsing/cipauto-import.md`, `docs/parsing/999md-import.md`, and `core/docs/features/parsing-framework.md`.
+**PDP import — optional listing video:** when PDP yields a `videoUrl`, imports call `POST /api/upload/video/from-url` after the listing exists; failures are non-fatal (see `core/docs/features/listings.md`).
+
+**PDP import — optional DB dedup:** `cipauto:import`, `999md:import`, and `autooutlet:import` accept `--check-user-duplicates-before-create` (opens the same Postgres connection pattern as `seed-registry`, skips `createListing` when a same-user duplicate is detected). `999md:import` also accepts `--dedupe-999-price-tolerance-pct` and `--dedupe-999-photo-count-tolerance` for fingerprint tolerances (defaults `0` and `1`). The admin **Parsing → PDP** modal and PDP schedules persist the same flag in run/schedule `config_snapshot`. See `docs/parsing/cipauto-import.md`, `docs/parsing/999md-import.md`, `docs/parsing/autooutlet-import.md`, and `core/docs/features/parsing-framework.md`.
+
+**PDP import — optional brand/model auto-create:** the same three import CLIs accept `--auto-create-brands` and `--auto-create-models`. When enabled, `BrandModelResolver` calls `POST /api/admin/brands` or `POST /api/admin/vehicle-models` to create the missing entry and continues importing in the same run; HTTP 409 is treated as a race and resolved by re-fetching once. The import account must be **Admin**. The admin **Parsing → PDP** modal and PDP schedules persist these as `config_snapshot.autoCreateBrands` / `autoCreateModels` (legacy combined `autoCreateBrandsModels` is still accepted for older snapshots).
 
 #### CipAuto registry seeding (`seed-registry`)
 
@@ -442,10 +448,10 @@ The same logic is available from the admin **Parsing → PLP files → Sync regi
 
 #### Partner listing URL check (`partner:check-urls`)
 
-Reads vehicle listings for a user that already have `partner_source_code` and a non-null `partner_listing_canonical_url`, runs the same PDP parser as imports (`cipauto` or `999md`), and writes `reports/partner-url-check-*.{json,csv}` with `outcome` (`active` / `closed` / `error`) plus `sourceStatus` / `sourceStatusReason` when available.
+Reads vehicle listings for a user that already have `partner_source_code` and a non-null `partner_listing_canonical_url`, runs the same PDP parser as imports (`cipauto`, `999md`, or `autooutlet`), and writes `reports/partner-url-check-*.{json,csv}` with `outcome` (`active` / `closed` / `error`) plus `sourceStatus` / `sourceStatusReason` when available.
 
 ```bash
-npm run partner:check-urls -- --partner cipauto --userId=<UUID> [--env local|prod] [--dry-run] [--limit N] [--delay ms]
+npm run partner:check-urls -- --partner cipauto|999md|autooutlet --userId=<UUID> [--env local|prod] [--dry-run] [--limit N] [--delay ms]
 ```
 
 #### CipAuto stale listings audit (`audit-stale-listings`)
@@ -510,6 +516,7 @@ From the **platform repo root**, the same flows are exposed as `npm run 999md:*`
 
 - `../../../docs/parsing/cipauto-import.md`
 - `../../../docs/parsing/999md-import.md`
+- `../../../docs/parsing/autooutlet-import.md`
 
 ## Migration Scripts
 

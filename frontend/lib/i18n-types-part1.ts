@@ -3,6 +3,8 @@ export interface TranslationsPart1 {
     copyright: string;
     tagline: string;
     faq: string;
+    partners: string;
+    investors: string;
     terms: string;
     privacy: string;
     cookieSettings: string;
@@ -27,6 +29,8 @@ export interface TranslationsPart1 {
   };
   home: {
     title: string;
+    titleWithBrand: string;
+    titleWithBrandModel: string;
     subtitle: string;
     subtitleBold: string;
     subtitle2: string;
@@ -119,6 +123,12 @@ export interface TranslationsPart1 {
     filterSaveError: string;
     filterLimitError: string;
   };
+  phone: {
+    mustStartWithPlus: string;
+    invalidCountry: string;
+    invalidLength: string;
+    notMobile: string;
+  };
   register: {
     title: string;
     userType: string;
@@ -129,12 +139,6 @@ export interface TranslationsPart1 {
     emailHint: string;
     phoneRequired: string;
     phoneInvalid: string;
-    phoneMustStartWithPlus: string;
-    phoneLength: string;
-    phoneDigitsOnly: string;
-    phoneFormat: string;
-    countryCodeLength: string;
-    numberLength: string;
     messengers: string;
     optional: string;
     email: string;
@@ -170,6 +174,7 @@ export interface TranslationsPart1 {
     registering: string;
     registerButton: string;
     phoneExists: string;
+    primaryPhoneMustUseChangeFlow: string;
     serviceUnavailable: string;
     invalidPhoneFormat: string;
     serverError: string;
@@ -193,6 +198,12 @@ export interface TranslationsPart1 {
     fillAtLeastOne: string;
     registrationSuccess: string;
     registrationEmailVerificationSent: string;
+    phoneRequiredTitle: string;
+    phoneRequiredDescription: string;
+    phoneRequiredCurrent: string;
+    phoneRequiredContinue: string;
+    businessOnboardingTitle: string;
+    businessOnboardingInfo: string;
   };
   resetPassword: {
     title: string;
@@ -419,7 +430,6 @@ export interface TranslationsPart1 {
     addToFavorites: string;
     removeFromFavorites: string;
     yourListing: string;
-    cannotAddOwnListing: string;
     cannotFavoriteOwnListingToast: string;
     compare: string;
     alreadyInComparison: string;

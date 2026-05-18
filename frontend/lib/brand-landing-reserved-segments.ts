@@ -1,0 +1,35 @@
+export const BRAND_LANDING_RESERVED_SEGMENTS = new Set([
+  'admin',
+  'api',
+  'board',
+  'color-palette',
+  'compare',
+  'complete-profile',
+  'contacts',
+  'cookie-settings',
+  'design-system',
+  'favorites',
+  'faq',
+  'investors',
+  'listings',
+  'manifest.json',
+  'my-listings',
+  'offline',
+  'partners',
+  'privacy',
+  'profile',
+  'reset-password',
+  'ro',
+  'robots.txt',
+  'ru',
+  'sitemap.xml',
+  'sitemaps',
+  'terms',
+  'verify-email',
+  'verify-phone',
+  'verify-phone-change',
+]);
+
+export function isReservedBrandLandingSegment(segment: string): boolean {
+  return BRAND_LANDING_RESERVED_SEGMENTS.has(segment.toLowerCase());
+}

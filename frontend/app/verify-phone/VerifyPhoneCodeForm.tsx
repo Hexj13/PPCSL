@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { formatPhoneForDisplay } from '@/lib/phone';
 import { smsResendCooldownButtonLabel } from '@/lib/utils';
 import { LoadingButton } from '@/ui';
 
@@ -45,7 +46,11 @@ export function VerifyPhoneCodeForm({
         <div className="text-center text-primary-900">
           <p className="mb-2">
             {t('verifyPhone.codeSentTo')}{' '}
-            {phoneNumber && <span className="font-semibold text-primary-700">{phoneNumber}</span>}
+            {phoneNumber && (
+              <span className="font-semibold text-primary-700">
+                {formatPhoneForDisplay(phoneNumber)}
+              </span>
+            )}
           </p>
           <p className="text-sm">{t('verifyPhone.enterCode')}</p>
         </div>

@@ -19,6 +19,7 @@ export class ChangePhoneVerifyDto {
     description: 'New phone number',
   })
   @IsString({ message: 'errors.phoneRequired' })
+  @IsPhone()
   phone: string;
 
   @ApiProperty({

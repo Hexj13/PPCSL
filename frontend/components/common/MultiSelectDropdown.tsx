@@ -2,13 +2,17 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
 
+import { MultiSelectOptionLeadingLogo } from '@/components/common/MultiSelectOptionLeadingLogo';
 import { useTranslation } from '@/hooks/useTranslation';
 import { designTokens } from '@/ui';
+
+const EMPTY_VALUES: string[] = [];
 
 interface MultiSelectOption {
   value: string;
   label: string;
   category?: string;
+  logoSrc?: string;
 }
 
 interface MultiSelectDropdownProps {
@@ -37,16 +41,19 @@ function MultiSelectDropdownComponent({
   onSelectionLimitReached,
 }: MultiSelectDropdownProps) {
   const { t } = useTranslation();
+  const safeValues = Array.isArray(values) ? values : EMPTY_VALUES;
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearchQuery = useDeferredValue(searchQuery);
-  const [tempValues, setTempValues] = useState<string[]>(values);
+  const [tempValues, setTempValues] = useState<string[]>(() =>
+    Array.isArray(values) ? [...values] : [],
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen && showActionButtons) {
-      setTempValues(values);
+      setTempValues(Array.isArray(values) ? [...values] : []);
     }
   }, [isOpen, values, showActionButtons]);
 
@@ -88,7 +95,7 @@ function MultiSelectDropdownComponent({
     [options],
   );
 
-  const valuesSet = useMemo(() => new Set(values), [values]);
+  const valuesSet = useMemo(() => new Set(safeValues), [safeValues]);
   const tempValuesSet = useMemo(() => new Set(tempValues), [tempValues]);
   const selectedOptions = useMemo(
     () => options.filter((opt) => valuesSet.has(opt.value)),
@@ -149,7 +156,7 @@ function MultiSelectDropdownComponent({
           onChange(allOptionValues);
         }
       } else {
-        const currentValues = showActionButtons ? tempValues : values;
+        const currentValues = showActionButtons ? tempValues : safeValues;
         if (currentValues.includes(optionValue)) {
           const newValues = currentValues.filter((v) => v !== optionValue);
           if (showActionButtons) {
@@ -173,7 +180,7 @@ function MultiSelectDropdownComponent({
     },
     [
       tempValues,
-      values,
+      safeValues,
       options,
       showActionButtons,
       onChange,
@@ -205,7 +212,7 @@ function MultiSelectDropdownComponent({
           <input
             ref={inputRef}
             type="text"
-            value={isOpen ? searchQuery : values.length > 0 ? displayText : ''}
+            value={isOpen ? searchQuery : safeValues.length > 0 ? displayText : ''}
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             disabled={disabled}
@@ -256,7 +263,7 @@ function MultiSelectDropdownComponent({
           style={{ paddingRight: '52px' }}
         >
           <span
-            className={`flex-1 truncate ${values.length > 0 ? 'text-text-primary' : 'text-hint'}`}
+            className={`flex-1 truncate ${safeValues.length > 0 ? 'text-text-primary' : 'text-hint'}`}
           >
             {displayText}
           </span>
@@ -319,11 +326,14 @@ function MultiSelectDropdownComponent({
                     <button
                       type="button"
                       onClick={() => handleToggle(option.value)}
-                      className={`w-full px-4 py-3 text-left text-text-primary hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between ${
+                      className={`w-full px-4 py-3 text-left text-text-primary hover:bg-primary-500/10 transition-colors duration-150 flex items-center justify-between gap-2 ${
                         isSelected ? 'bg-primary-500/20' : ''
                       } ${isSelected ? 'font-semibold' : ''} ${option.category ? 'pl-8' : ''}`}
                     >
-                      <span>{option.label}</span>
+                      <span className="flex items-center gap-2 min-w-0 flex-1">
+                        <MultiSelectOptionLeadingLogo src={option.logoSrc} />
+                        <span className="truncate">{option.label}</span>
+                      </span>
                       {isSelected && (
                         <svg
                           className="w-5 h-5 text-primary-900"

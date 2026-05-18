@@ -15,8 +15,33 @@ export class RegistryStore extends JsonRegistryStore<RegistryItem> {
     super(registryPath, 'cipauto');
   }
 
+  findExistingPlpItem(item: ParsedPlpItem): RegistryItem | undefined {
+    const bySourceId = this.getBySourceId(item.sourceListingId);
+    if (bySourceId) {
+      return bySourceId;
+    }
+
+    const items = this.getAll();
+    const byCanonicalUrl = items.find(
+      (candidate) =>
+        candidate.sourceListingId !== item.sourceListingId &&
+        candidate.canonicalUrl === item.canonicalUrl,
+    );
+    if (byCanonicalUrl) {
+      return byCanonicalUrl;
+    }
+
+    return items
+      .filter(
+        (candidate) =>
+          !candidate.sourceListingId.includes('-') &&
+          item.sourceListingId.startsWith(`${candidate.sourceListingId}-`),
+      )
+      .sort((a, b) => b.sourceListingId.length - a.sourceListingId.length)[0];
+  }
+
   upsertPlpItem(item: ParsedPlpItem, seenAt: string): RegistryItem {
-    const existing = this.getBySourceId(item.sourceListingId);
+    const existing = this.resolveExistingPlpItem(item);
     const nextState =
       existing && normalizeSourceStatus(existing) === 'closed'
         ? 'discovered'
@@ -25,6 +50,7 @@ export class RegistryStore extends JsonRegistryStore<RegistryItem> {
     return this.upsert({
       source: 'cipauto',
       sourceListingId: item.sourceListingId,
+      discoveredAt: existing?.discoveredAt,
       sourcePostId: existing?.sourcePostId,
       url: item.url,
       canonicalUrl: item.canonicalUrl,
@@ -53,6 +79,20 @@ export class RegistryStore extends JsonRegistryStore<RegistryItem> {
       closeReason: undefined,
       closeOutcome: undefined,
     });
+  }
+
+  private resolveExistingPlpItem(item: ParsedPlpItem): RegistryItem | undefined {
+    const existing = this.findExistingPlpItem(item);
+    if (!existing) {
+      return undefined;
+    }
+    if (existing.sourceListingId !== item.sourceListingId) {
+      this.removeBySourceId(existing.sourceListingId);
+    }
+    return {
+      ...existing,
+      sourceListingId: item.sourceListingId,
+    };
   }
 
   replaceAllItems(items: RegistryItem[]): void {

@@ -11,8 +11,15 @@ import {
 } from '@/lib/browser-local-storage';
 import { clearClientAuthLocalStorage } from '@/lib/client-auth-storage';
 import { applyPreferredLocaleFromProfile } from '@/lib/i18n';
+import { PARTNER_PROMO_DISMISS_STORAGE_KEY } from '@/lib/partner-promo-dismiss-storage';
+import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 
 const MAX_COMPARE = 3;
+let initAuthPromise: Promise<void> | null = null;
+
+export function resetInitAuthPromiseForTests(): void {
+  initAuthPromise = null;
+}
 
 function normalizeCompareIds(ids: unknown): string[] {
   if (!Array.isArray(ids)) return [];
@@ -35,10 +42,8 @@ function stripComparisonBackup() {
 
 interface AuthState {
   user: User | null;
-  token: string | null;
-  refreshToken: string | null;
   isInitialized: boolean;
-  setAuth: (_user: User | null, _token: string | null, _refreshToken?: string | null) => void;
+  setAuth: (_user: User | null) => void;
   logout: () => void;
   initAuth: () => Promise<void>;
 }
@@ -47,24 +52,23 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
-      refreshToken: null,
       isInitialized: false,
-      setAuth: (_user, _token, _refreshToken = null) => {
+      setAuth: (_user) => {
         applyPreferredLocaleFromProfile(_user?.preferredLocale);
-        set({ user: _user, token: _token, refreshToken: _refreshToken, isInitialized: true });
+        set({ user: _user, isInitialized: true });
         if (typeof window !== 'undefined') {
-          if (_token) {
-            localStorageSetItem('token', _token);
-          }
-          if (_refreshToken) {
-            localStorageSetItem('refresh_token', _refreshToken);
-          }
+          localStorageRemoveItem('token');
+          localStorageRemoveItem('refresh_token');
         }
       },
       logout: () => {
-        set({ user: null, token: null, refreshToken: null, isInitialized: true });
+        const prevUser = get().user;
+        void authApi.logout().catch(() => {});
+        set({ user: null, isInitialized: true });
         if (typeof window !== 'undefined') {
+          if (prevUser?.hidePartnerPromoBanner) {
+            localStorageSetItem(PARTNER_PROMO_DISMISS_STORAGE_KEY, '1');
+          }
           clearClientAuthLocalStorage({
             clearReturnUrl: true,
             clearAuthPersistKey: true,
@@ -74,73 +78,51 @@ export const useAuthStore = create<AuthState>()(
           useComparisonStore.getState().clear();
         }
       },
-      initAuth: async () => {
-        if (typeof window === 'undefined') {
-          set({ isInitialized: true });
-          return;
-        }
-
-        const storedToken = localStorageGetItem('token');
-
-        if (!storedToken) {
-          const authRaw = localStorageGetItem('auth-storage');
-          let persistedToken: string | null = null;
-          if (authRaw) {
-            try {
-              persistedToken =
-                (JSON.parse(authRaw) as { state?: { token?: string } })?.state?.token ?? null;
-            } catch {
-              /* corrupted – treat as empty */
-            }
-          }
-          if (!persistedToken) {
-            set({ user: null, token: null, refreshToken: null, isInitialized: true });
+      initAuth: () => {
+        if (initAuthPromise) return initAuthPromise;
+        initAuthPromise = (async () => {
+          if (typeof window === 'undefined') {
+            set({ isInitialized: true });
             return;
           }
-        }
 
-        const { token, refreshToken } = get();
-        const actualToken = storedToken || token;
+          localStorageRemoveItem('token');
+          localStorageRemoveItem('refresh_token');
 
-        if (actualToken) {
           try {
-            const response = await authApi.me();
-            const currentToken = localStorageGetItem('token') || actualToken;
-            const currentRefreshToken = localStorageGetItem('refresh_token') || refreshToken;
-            get().setAuth(response.data, currentToken, currentRefreshToken);
+            const response = await authApi.meQuiet();
+            const syncedUser = await syncPartnerPromoDismissAfterAuth(response.data);
+            set({ user: syncedUser, isInitialized: true });
           } catch {
-            const storedRefreshToken = localStorageGetItem('refresh_token');
-            if (storedRefreshToken) {
-              try {
-                const refreshResponse = await authApi.refresh({
-                  refresh_token: storedRefreshToken,
-                });
-                get().setAuth(
-                  refreshResponse.data.user,
-                  refreshResponse.data.access_token,
-                  refreshResponse.data.refresh_token,
-                );
-              } catch {
-                get().logout();
-                set({ isInitialized: true });
-              }
-            } else {
-              get().logout();
-              set({ isInitialized: true });
+            try {
+              const refreshResponse = await authApi.refreshQuiet();
+              const syncedUser = await syncPartnerPromoDismissAfterAuth(refreshResponse.data.user);
+              set({ user: syncedUser, isInitialized: true });
+            } catch {
+              clearClientAuthLocalStorage({
+                clearReturnUrl: false,
+                clearAuthPersistKey: true,
+                clearPendingMigrationAndFilters: false,
+              });
+              set({ user: null, isInitialized: true });
             }
           }
-        } else {
-          set({ isInitialized: true });
-        }
+        })().finally(() => {
+          initAuthPromise = null;
+        });
+        return initAuthPromise;
       },
     }),
     {
       name: 'auth-storage',
+      version: 2,
+      migrate: (persisted) => {
+        const p = persisted as { user?: User | null } | null | undefined;
+        return { user: p?.user ?? null };
+      },
       storage: createPersistJSONStorage(),
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
-        refreshToken: state.refreshToken,
       }),
       skipHydration: true,
     },

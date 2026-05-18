@@ -3,14 +3,17 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
-import { runAfterRegistration } from '@/app/verify-phone/afterRegistration';
+import { completeRegistrationAndGoToProfile } from '@/app/verify-phone/afterRegistration';
+import { submitVerifyPhoneWithAuthCode } from '@/app/verify-phone/verifyPhoneAuthCodeSubmit';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { RegisterDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
-import { getReturnUrlFromSearchParams } from '@/lib/return-url';
+import { getClientLocale } from '@/lib/i18n';
+import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
+import { buildSignInHref, buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
@@ -38,9 +41,7 @@ export function useVerifyPhonePage() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const returnUrl = getReturnUrlFromSearchParams(searchParams);
-  const signTabUrl = returnUrl
-    ? `/sign?tab=register&returnUrl=${encodeURIComponent(returnUrl)}`
-    : '/sign?tab=register';
+  const signTabUrl = buildSignPageHref({ tab: 'register', returnUrl });
 
   const sendSmsCode = async (phone: string): Promise<'success' | 'hourly_limit' | 'error'> => {
     try {
@@ -62,7 +63,45 @@ export function useVerifyPhonePage() {
   };
 
   useEffect(() => {
+    const mode = searchParams.get('mode');
     const phone = searchParams.get('phone');
+    if (mode === 'complete-profile' || mode === 'post-register') {
+      if (!phone) {
+        toast.error(t('verifyPhone.phoneNotAvailable'));
+        if (mode === 'complete-profile') {
+          const back = new URLSearchParams();
+          back.set('mode', 'phone_required');
+          const ru = searchParams.get('returnUrl');
+          if (ru) {
+            back.set('returnUrl', ru);
+          }
+          const src = searchParams.get('source');
+          if (src) {
+            back.set('source', src);
+          }
+          const st = searchParams.get('selectedType');
+          if (st) {
+            back.set('selectedType', st);
+          }
+          router.push(
+            buildPostAuthRedirect(`/complete-profile?${back.toString()}`, getClientLocale()),
+          );
+        } else {
+          router.push(signTabUrl);
+        }
+        return;
+      }
+      setPhoneNumber(phone);
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
+      return () => {
+        if (cooldownTimerRef.current) {
+          clearInterval(cooldownTimerRef.current);
+        }
+      };
+    }
+
     const storedData = localStorageGetItem('pendingRegistration');
 
     let parsedData: RegisterDto | null = null;
@@ -179,48 +218,47 @@ export function useVerifyPhonePage() {
     }
   };
 
-  const performRegistration = async () => {
+  const performRegistration = async (smsCode: string) => {
     if (!formData) {
       toast.error(t('verifyPhone.loadDataError'));
       router.push(signTabUrl);
       return;
     }
 
+    const quietRegistration = { headers: { 'X-Skip-Error-Handling': 'true' } };
+
+    const registerResponse = await authApi.register(
+      { ...formData, smsVerificationCode: smsCode },
+      quietRegistration,
+    );
+
+    const signUpMethod = formData.email?.trim() ? 'email' : 'phone';
+    analytics.signUp(signUpMethod);
+
+    const loginValue = getLoginValue(formData);
+    if (!loginValue) {
+      toast.error(t('verifyPhone.missingLoginValue'));
+      return;
+    }
+
     try {
-      const registerResponse = await authApi.register(formData);
-
-      const signUpMethod = formData.email?.trim() ? 'email' : 'phone';
-      analytics.signUp(signUpMethod);
-
-      const loginValue = getLoginValue(formData);
-      if (!loginValue) {
-        toast.error(t('verifyPhone.missingLoginValue'));
-        setIsSubmitting(false);
-        return;
-      }
-
-      try {
-        const loginRes = await authApi.login({
+      await authApi.login(
+        {
           login: loginValue,
           password: formData.password,
-        });
-        await runAfterRegistration(
-          formData,
-          loginRes,
-          registerResponse.data.emailVerificationSent,
-          setAuth,
-          t,
-          returnUrl,
-        );
-      } catch {
-        toast.error(t('verifyPhone.registrationSuccessButLoginFailed'));
-        router.push(returnUrl ? `/sign?returnUrl=${encodeURIComponent(returnUrl)}` : '/sign');
-      }
+        },
+        quietRegistration,
+      );
     } catch {
-      // Error is already handled by API interceptor
-    } finally {
-      setIsSubmitting(false);
+      toast.error(t('verifyPhone.registrationSuccessButLoginFailed'));
+      router.push(returnUrl ? buildSignInHref(returnUrl) : buildSignInHref());
+      return;
     }
+
+    await completeRegistrationAndGoToProfile(
+      !!registerResponse.data.emailVerificationSent,
+      returnUrl,
+    );
   };
 
   const validateAndSubmit = async (codeToValidate: string) => {
@@ -251,17 +289,30 @@ export function useVerifyPhonePage() {
     setIsSubmitting(true);
     setError('');
 
-    try {
-      const response = await authApi.verifySms({
+    const mode = searchParams.get('mode');
+    if (mode === 'complete-profile' || mode === 'post-register') {
+      await submitVerifyPhoneWithAuthCode({
         code: codeToValidate,
-        phone: phoneNumber,
+        mode,
+        returnUrl,
+        source: searchParams.get('source'),
+        selectedType: searchParams.get('selectedType'),
+        setAuth,
+        setError,
+        setCode,
+        setIsSubmitting,
+        setIsVerificationBlocked,
+        setVerificationAttempts,
+        verificationAttempts,
+        inputRefs,
+        t,
+        toastError: (msg) => toast.error(msg),
       });
+      return;
+    }
 
-      if (response.data.success) {
-        setTimeout(() => {
-          void performRegistration();
-        }, 500);
-      }
+    try {
+      await performRegistration(codeToValidate);
     } catch (err: unknown) {
       const axiosError = err as {
         response?: {
@@ -283,7 +334,6 @@ export function useVerifyPhonePage() {
           );
           setIsVerificationBlocked(true);
           setCode(['', '', '', '', '', '']);
-          setIsSubmitting(false);
           toast.error(
             t('smsVerification.ipBlocked', { remainingMinutes: remainingMinutes.toString() }),
           );
@@ -295,7 +345,6 @@ export function useVerifyPhonePage() {
         setIsVerificationBlocked(true);
         setError(t('errors.maxSmsCodeAttempts'));
         setCode(['', '', '', '', '', '']);
-        setIsSubmitting(false);
         setTimeout(() => {
           inputRefs.current[0]?.focus();
         }, 100);
@@ -315,10 +364,11 @@ export function useVerifyPhonePage() {
       }
 
       setCode(['', '', '', '', '', '']);
-      setIsSubmitting(false);
       setTimeout(() => {
         inputRefs.current[0]?.focus();
       }, 100);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -333,7 +383,30 @@ export function useVerifyPhonePage() {
   };
 
   const handleBack = () => {
+    const mode = searchParams.get('mode');
     localStorageRemoveItem('pendingRegistration');
+    if (mode === 'complete-profile') {
+      const back = new URLSearchParams();
+      back.set('mode', 'phone_required');
+      const ru = searchParams.get('returnUrl');
+      if (ru) {
+        back.set('returnUrl', ru);
+      }
+      const src = searchParams.get('source');
+      if (src) {
+        back.set('source', src);
+      }
+      const st = searchParams.get('selectedType');
+      if (st) {
+        back.set('selectedType', st);
+      }
+      router.push(buildPostAuthRedirect(`/complete-profile?${back.toString()}`, getClientLocale()));
+      return;
+    }
+    if (mode === 'post-register') {
+      router.push(buildSignPageHref({ tab: 'register', returnUrl }));
+      return;
+    }
     router.push(signTabUrl);
   };
 

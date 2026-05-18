@@ -166,6 +166,22 @@ describe('ExchangeRatesService', () => {
       expect(result[0].approxPriceDefaultCurrency).toBeNull();
       expect(result[0].defaultCurrencyCode).toBe('EUR');
     });
+
+    it('should preserve has_video on enriched listings', async () => {
+      redisService.getJson.mockResolvedValue(null);
+      exchangeRateRepo.findOne.mockResolvedValue(null);
+      const listings = [{ id: '1', price: 1000, currency: 'EUR', has_video: true }] as any[];
+      const result = await service.enrichListingsWithApproxPrice(listings);
+      expect((result[0] as { has_video?: boolean }).has_video).toBe(true);
+    });
+
+    it('should preserve has_video false on enriched listings', async () => {
+      redisService.getJson.mockResolvedValue(null);
+      exchangeRateRepo.findOne.mockResolvedValue(null);
+      const listings = [{ id: '1', price: 1000, currency: 'EUR', has_video: false }] as any[];
+      const result = await service.enrichListingsWithApproxPrice(listings);
+      expect((result[0] as { has_video?: boolean }).has_video).toBe(false);
+    });
   });
 
   describe('getAllRatesMap', () => {

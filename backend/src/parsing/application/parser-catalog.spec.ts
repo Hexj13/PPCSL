@@ -51,4 +51,17 @@ describe('parser-catalog', () => {
       }
     });
   });
+
+  describe('availability probes', () => {
+    it('each parser defines a probe so schedule availability refresh never uses probe not configured', () => {
+      for (const p of parsersConfig) {
+        expect(p.availabilityProbe).toBeDefined();
+        expect(p.availabilityProbe?.sourceUrl).toMatch(/^https?:\/\//);
+        expect(p.availabilityProbe?.plpFirstPagePath).toBeTruthy();
+        if (p.supportedRunTypes.includes('plp')) {
+          expect(p.availabilityProbe?.plpPagePathTemplate).toContain('{page}');
+        }
+      }
+    });
+  });
 });

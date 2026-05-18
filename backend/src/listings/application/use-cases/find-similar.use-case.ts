@@ -7,6 +7,10 @@ import { SimilarListingsRankingService } from '../../domain/services/similar-ran
 import { Listing } from '../../entities/listing.entity';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
+import {
+  stripListingVideoForListResponse,
+  stripListingVideosForListResponse,
+} from '../utils/listing-video-public.util';
 
 type ListingData = Omit<
   Listing,
@@ -45,7 +49,12 @@ export class FindSimilarUseCase {
 
     const cached = await this.listingCache.getSimilarResults(listingId);
     if (cached) {
-      const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(cached);
+      const stripped = cached.map((l) => {
+        const row = { ...l } as Listing;
+        stripListingVideoForListResponse(row);
+        return row;
+      });
+      const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(stripped);
       return enriched.slice(normalizedOffset, normalizedOffset + normalizedLimit) as ListingData[];
     }
 
@@ -105,6 +114,7 @@ export class FindSimilarUseCase {
     const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(
       result as Listing[],
     );
+    stripListingVideosForListResponse(enriched);
     return enriched.slice(normalizedOffset, normalizedOffset + normalizedLimit) as ListingData[];
   }
 }

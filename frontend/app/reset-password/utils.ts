@@ -1,7 +1,3 @@
-export const isValidPhone = (value: string): boolean => {
-  return /^\+\d{1,4}\d{6,15}$/.test(value);
-};
-
 export type PasswordValidationRule = { text: string; isValid: boolean };
 
 export function validatePassword(passwordValue: string, t: (key: string) => string): string {

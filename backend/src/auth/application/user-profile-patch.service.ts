@@ -20,6 +20,8 @@ export type UserProfilePatchFields = {
   telegram?: boolean;
   preferredLocale?: 'ro' | 'ru' | null;
   phone?: string | null;
+  phoneVerified?: boolean;
+  type?: 'Individual' | 'Business';
 };
 
 @Injectable()
@@ -138,8 +140,53 @@ export class UserProfilePatchService {
     if (cleanedData.preferredLocale === undefined) {
       delete cleanedData.preferredLocale;
     }
-    if (cleanedData.phone === undefined) {
+    if (cleanedData.phone !== undefined) {
+      const raw = cleanedData.phone;
+      if (raw === '' || raw === null) {
+        delete cleanedData.phone;
+      } else if (typeof raw === 'string') {
+        const normalized = this.smsService.normalizePhoneNumber(raw.trim());
+        const current = currentUser.phone?.trim()
+          ? this.smsService.normalizePhoneNumber(currentUser.phone)
+          : null;
+        if (current) {
+          if (normalized === current) {
+            delete cleanedData.phone;
+          } else if (currentUser.phoneVerified === true) {
+            throw new BadRequestException('errors.primaryPhoneMustUseChangeFlow');
+          } else {
+            const existing = await this.usersService.findByPhone(normalized);
+            if (existing && existing.id !== targetUserId) {
+              throw new BadRequestException('errors.phoneAlreadyExists');
+            }
+            cleanedData.phone = normalized;
+            cleanedData.phoneVerified = false;
+          }
+        } else {
+          const existing = await this.usersService.findByPhone(normalized);
+          if (existing && existing.id !== targetUserId) {
+            throw new BadRequestException('errors.phoneAlreadyExists');
+          }
+          cleanedData.phone = normalized;
+          cleanedData.phoneVerified = false;
+        }
+      }
+    } else {
       delete cleanedData.phone;
+    }
+
+    if (cleanedData.type !== undefined) {
+      if (currentUser.phoneVerified === true) {
+        delete cleanedData.type;
+      } else if (cleanedData.type === 'Individual' || cleanedData.type === 'Business') {
+        if (cleanedData.type === currentUser.type) {
+          delete cleanedData.type;
+        }
+      } else {
+        delete cleanedData.type;
+      }
+    } else {
+      delete cleanedData.type;
     }
 
     for (const key of Object.keys(cleanedData) as (keyof Partial<User>)[]) {

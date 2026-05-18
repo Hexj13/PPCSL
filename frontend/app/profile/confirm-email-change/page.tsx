@@ -43,18 +43,12 @@ function ConfirmEmailChangeContent() {
       setIsResent(false);
       try {
         const response = await authApi.changeEmailConfirm({ token });
-        const { token: authToken, refreshToken, user } = useAuthStore.getState();
-        if (authToken) {
-          try {
-            const profileResponse = await authApi.me();
-            setAuth(profileResponse.data, authToken, refreshToken);
-          } catch {
-            setAuth(
-              user ? { ...user, ...response.data.user } : response.data.user,
-              authToken,
-              refreshToken,
-            );
-          }
+        try {
+          const profileResponse = await authApi.me();
+          setAuth(profileResponse.data);
+        } catch {
+          const prev = useAuthStore.getState().user;
+          setAuth(prev ? { ...prev, ...response.data.user } : response.data.user);
         }
         router.push('/profile/confirm-email-change/success');
       } catch (err: unknown) {

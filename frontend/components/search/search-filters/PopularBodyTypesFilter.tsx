@@ -44,12 +44,6 @@ export function PopularBodyTypesFilter({
   vehicleType = 'car',
 }: PopularBodyTypesFilterProps) {
   const { t } = useTranslation();
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
   const POPULAR_BODY_TYPES = useMemo(
     () =>
       vehicleType === 'truck'
@@ -203,7 +197,6 @@ export function PopularBodyTypesFilter({
         )}
         <div
           ref={scrollContainerRef}
-          {...(!isHydrated ? { inert: true } : {})}
           className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:flex lg:gap-4 lg:overflow-x-auto lg:scrollbar-hide lg:justify-between"
         >
           {POPULAR_BODY_TYPES.map(({ value, image }) => {
@@ -327,22 +320,6 @@ export function PopularBodyTypesFilter({
               </div>
             );
           })}
-        </div>
-        <div
-          className={`absolute inset-0 z-20 grid grid-cols-2 md:grid-cols-3 gap-3 lg:flex lg:gap-4 lg:justify-between bg-bg-base/80 transition-opacity duration-200 ease-out ${
-            isHydrated ? 'opacity-0 pointer-events-none' : 'opacity-100'
-          }`}
-          aria-hidden={isHydrated}
-        >
-          {POPULAR_BODY_TYPES.map(({ value }) => (
-            <div
-              key={`sk-${vehicleType}-${value}`}
-              className="flex flex-col items-center gap-1 w-full min-w-0 min-h-[135px] lg:min-h-[152px] lg:shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
-            >
-              <div className="w-full h-[95px] lg:h-[110px] rounded-lg border-2 border-primary-700/20 bg-bg-secondary/50 animate-pulse" />
-              <div className="w-2/3 h-4 rounded bg-bg-secondary/50 animate-pulse shrink-0" />
-            </div>
-          ))}
         </div>
       </div>
     </div>

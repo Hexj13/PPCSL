@@ -6,10 +6,12 @@ import { Repository } from 'typeorm';
 
 import * as constants from '../../../common/constants';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
+import { maskPhoneLastDigits } from '../../../common/utils/phone-mask.util';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { UsersService } from '../../../users/application/users.service';
 import { ListingView } from '../../entities/listing-view.entity';
 import { Listing } from '../../entities/listing.entity';
+import { buildListingVideoForGetListing } from '../../video/listing-video-response.util';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
 import { maskClosedListingForPublicView } from '../utils/mask-closed-listing-for-public-view';
 
@@ -94,6 +96,16 @@ export class GetListingUseCase {
         listing.vin.slice(0, 4) + '*'.repeat(9) + listing.vin.slice(-4);
     }
 
+    const shouldIncludeFullPhones = isOwner || !!context?.isAdmin;
+    if (listing.user && !shouldIncludeFullPhones) {
+      if (listing.user.phone) {
+        listing.user.phone = maskPhoneLastDigits(listing.user.phone);
+      }
+      if (listing.user.additionalPhone) {
+        listing.user.additionalPhone = maskPhoneLastDigits(listing.user.additionalPhone);
+      }
+    }
+
     const defaultCurrency = constants.getDefaultCurrency();
     let approxPriceDefaultCurrency: number | null = null;
     if (listing.price !== undefined && listing.currency && listing.currency !== defaultCurrency) {
@@ -102,6 +114,7 @@ export class GetListingUseCase {
         listing.currency,
       );
     }
+    buildListingVideoForGetListing(listing, context?.userId ?? null, context?.isAdmin);
     return {
       ...listing,
       approxPriceDefaultCurrency,

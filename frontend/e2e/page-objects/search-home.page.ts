@@ -1,5 +1,10 @@
 import { expect, type Page } from '@playwright/test';
 
+import { getE2eBackendApiOrigin } from '../utils/api-origin';
+import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
+
+const VEHICLE_CATEGORY_POLL = { timeout: 45_000, intervals: [400, 600, 1000, 1600] };
+
 export class SearchHomePage {
   private readonly testIds = {
     form: 'search-filters-form',
@@ -14,12 +19,29 @@ export class SearchHomePage {
 
   constructor(private readonly page: Page) {}
 
-  async open(): Promise<void> {
-    await this.page.goto('/');
+  async open(path = '/'): Promise<void> {
+    await forceDefaultCanonicalLocaleCookies(this.page);
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        await this.page.goto(path, { waitUntil: 'domcontentloaded' });
+        return;
+      } catch (error) {
+        lastError = error;
+        const message = error instanceof Error ? error.message : String(error);
+        if (
+          !message.includes('net::ERR_ABORTED') &&
+          !message.includes('interrupted by another navigation')
+        ) {
+          throw error;
+        }
+      }
+    }
+    throw lastError;
   }
 
-  async openAndExpectPageView(): Promise<void> {
-    await this.open();
+  async openAndExpectPageView(path = '/'): Promise<void> {
+    await this.open(path);
     await this.expectPageView();
   }
 
@@ -44,26 +66,90 @@ export class SearchHomePage {
   }
 
   async selectVehicleTypeCar(): Promise<void> {
-    await this.page.getByTestId(this.testIds.vehicleTypeCar).click();
+    const target = this.page.getByTestId(this.testIds.vehicleTypeCar);
+    await expect(target).toBeEnabled({ timeout: 20_000 });
+    await target.scrollIntoViewIfNeeded();
+    await expect
+      .poll(async () => {
+        if ((await target.getAttribute('aria-pressed')) === 'true') {
+          return true;
+        }
+        if (this.page.url().includes('vehicleType=car')) {
+          return true;
+        }
+        await target.click();
+        return false;
+      }, VEHICLE_CATEGORY_POLL)
+      .toBe(true);
   }
 
   async selectVehicleTypeTruck(): Promise<void> {
-    await this.page.getByTestId(this.testIds.vehicleTypeTruck).click();
+    const target = this.page.getByTestId(this.testIds.vehicleTypeTruck);
+    await expect(target).toBeEnabled({ timeout: 20_000 });
+    await target.scrollIntoViewIfNeeded();
+    await expect
+      .poll(async () => {
+        if ((await target.getAttribute('aria-pressed')) === 'true') {
+          return true;
+        }
+        if (this.page.url().includes('vehicleType=truck')) {
+          return true;
+        }
+        await target.click();
+        return false;
+      }, VEHICLE_CATEGORY_POLL)
+      .toBe(true);
   }
 
   async selectVehicleTypeMoto(): Promise<void> {
-    await this.page.getByTestId(this.testIds.vehicleTypeMoto).click();
+    const target = this.page.getByTestId(this.testIds.vehicleTypeMoto);
+    await expect(target).toBeEnabled({ timeout: 20_000 });
+    await target.scrollIntoViewIfNeeded();
+    await expect
+      .poll(async () => {
+        if ((await target.getAttribute('aria-pressed')) === 'true') {
+          return true;
+        }
+        if (this.page.url().includes('vehicleType=moto')) {
+          return true;
+        }
+        await target.click();
+        return false;
+      }, VEHICLE_CATEGORY_POLL)
+      .toBe(true);
   }
 
   async selectListingCategoryTire(): Promise<void> {
-    await this.page.getByTestId(this.testIds.listingCategoryTire).click();
+    const target = this.page.getByTestId(this.testIds.listingCategoryTire);
+    await expect(target).toBeEnabled({ timeout: 20_000 });
+    await target.scrollIntoViewIfNeeded();
+    await expect
+      .poll(async () => {
+        if ((await target.getAttribute('aria-pressed')) === 'true') {
+          return true;
+        }
+        if (this.page.url().includes('category=tire')) {
+          return true;
+        }
+        await target.click();
+        return false;
+      }, VEHICLE_CATEGORY_POLL)
+      .toBe(true);
+  }
+
+  async submitSearch(): Promise<void> {
+    const submit = this.page.getByTestId('search-submit');
+    await expect(submit).toBeEnabled({ timeout: 20_000 });
+    await submit.click();
+    await this.expectResultsOrEmptyVisible();
   }
 
   async expectResultsOrEmptyVisible(): Promise<void> {
-    await expect(this.resultsGrid.or(this.emptyState)).toBeVisible();
+    await expect(this.resultsGrid.or(this.emptyState)).toBeVisible({ timeout: 20_000 });
   }
 
   async hasListingResults(): Promise<boolean> {
+    await this.expectResultsOrEmptyVisible();
     if (await this.emptyState.isVisible()) {
       return false;
     }
@@ -82,5 +168,83 @@ export class SearchHomePage {
     await firstCardLink.click();
     await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
     return true;
+  }
+
+  async openNonOwnListingFromResults(): Promise<boolean> {
+    if (!(await this.hasListingResults())) {
+      return false;
+    }
+    const count = await this.listingCardLinks.count();
+    const ids: string[] = [];
+    for (let i = 0; i < count; i += 1) {
+      const testId = await this.listingCardLinks.nth(i).getAttribute('data-testid');
+      const m = testId?.match(/^listing-card-link-(.+)$/);
+      if (m?.[1]) {
+        ids.push(m[1]);
+      }
+    }
+    if (ids.length === 0) {
+      return false;
+    }
+    const apiOrigin = getE2eBackendApiOrigin();
+    const targetId = await this.page.evaluate(
+      async ({ listingIds, origin }: { listingIds: string[]; origin: string }) => {
+        const meRes = await fetch(`${origin}/api/auth/me`, { credentials: 'include' });
+        if (!meRes.ok) {
+          throw new Error(`GET /api/auth/me failed: HTTP ${meRes.status}`);
+        }
+        const me = (await meRes.json()) as { id?: string };
+        const myId = me.id;
+        if (!myId) return null;
+        for (const id of listingIds) {
+          const lr = await fetch(`${origin}/api/listings/${id}`, { credentials: 'include' });
+          if (!lr.ok) continue;
+          const listing = (await lr.json()) as {
+            user?: { id?: string };
+            user_id?: string;
+            userId?: string;
+          };
+          const ownerId = listing.user?.id ?? listing.user_id ?? listing.userId;
+          if (ownerId && ownerId !== myId) {
+            return id;
+          }
+        }
+        return null;
+      },
+      { listingIds: ids, origin: apiOrigin },
+    );
+    if (!targetId) {
+      return false;
+    }
+    await this.page.getByTestId(`listing-card-link-${targetId}`).click();
+    await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
+    return true;
+  }
+
+  async openSaveFilterModal(): Promise<void> {
+    const btn = this.page.getByTestId('search-save-filter');
+    await expect(btn).toBeEnabled({ timeout: 20_000 });
+    await btn.click();
+  }
+
+  async expectSaveFilterModalVisible(): Promise<void> {
+    await expect(this.page.getByTestId('save-filter-modal')).toBeVisible();
+  }
+
+  async submitSaveFilterWithName(name: string): Promise<void> {
+    await this.page.getByTestId('save-filter-name-input').fill(name);
+    const submit = this.page.getByTestId('save-filter-submit');
+    await expect(submit).toBeEnabled({ timeout: 10_000 });
+    const [saveResponse] = await Promise.all([
+      this.page.waitForResponse(
+        (r) => r.url().includes('/api/saved-filters') && r.request().method() === 'POST',
+        { timeout: 45_000 },
+      ),
+      submit.click(),
+    ]);
+    expect(saveResponse.ok(), `POST /api/saved-filters failed: HTTP ${saveResponse.status()}`).toBe(
+      true,
+    );
+    await expect(this.page.getByTestId('save-filter-modal')).toBeHidden({ timeout: 20_000 });
   }
 }

@@ -118,9 +118,7 @@ export interface CreatePlpRunPayload {
   pageSize?: number;
   maxItems?: number;
   delayMs?: number;
-  resume?: boolean;
   dryRun?: boolean;
-  removeClosed?: boolean;
 }
 
 export interface CreatePdpRunPayload {
@@ -139,6 +137,9 @@ export interface CreatePdpRunPayload {
   delayMs?: number;
   removeClosed?: boolean;
   checkUserDuplicatesBeforeCreate?: boolean;
+  autoCreateBrands?: boolean;
+  autoCreateModels?: boolean;
+  autoCreateBrandsModels?: boolean;
 }
 
 export interface CreateParserSchedulePayload {

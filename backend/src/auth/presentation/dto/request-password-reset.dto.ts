@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches } from 'class-validator';
+import { IsString } from 'class-validator';
+
+import { IsPhone } from '../../../common/decorators/is-phone.decorator';
 
 export class RequestPasswordResetDto {
   @ApiProperty({
@@ -7,8 +9,6 @@ export class RequestPasswordResetDto {
     description: 'Phone number in international format',
   })
   @IsString({ message: 'validation.string' })
-  @Matches(/^[+]?[0-9\s()-]{8,}$/, {
-    message: 'validation.phone',
-  })
+  @IsPhone()
   phone: string;
 }

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AuthModule } from '../auth/auth.module';
 import { BrandsModule } from '../brands/brands.module';
 import { CommonModule } from '../common/common.module';
 import { CronSecretGuard } from '../common/guards/cron-secret.guard';
@@ -13,6 +14,7 @@ import { UploadModule } from '../upload/upload.module';
 import { UsersModule } from '../users/users.module';
 
 import { UserAccountDeletedListener } from './application/listeners/user-account-deleted.listener';
+import { ListingAiReportService } from './application/listing-ai-report.service';
 import { LISTING_CACHE } from './application/ports/listing-cache.port';
 import { LISTING_REPOSITORY } from './application/ports/listing.repository.port';
 import { PROMOTION_HISTORY_WRITER } from './application/ports/promotion-history.port';
@@ -29,6 +31,7 @@ import { GetActiveUserListingsCountUseCase } from './application/use-cases/get-a
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
 import { GetBoardListingsUseCase } from './application/use-cases/get-board-listings.use-case';
 import { GetListingHistoryUseCase } from './application/use-cases/get-listing-history.use-case';
+import { GetListingPhonesUseCase } from './application/use-cases/get-listing-phones.use-case';
 import { GetListingVinUseCase } from './application/use-cases/get-listing-vin.use-case';
 import { GetListingUseCase } from './application/use-cases/get-listing.use-case';
 import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion-access.use-case';
@@ -46,21 +49,31 @@ import { UpdatePromotionHistoryEndDateUseCase } from './application/use-cases/up
 import { ListingTitleService } from './domain/services/listing-title.service';
 import { PromotionRulesService } from './domain/services/promotion-rules.service';
 import { SimilarListingsRankingService } from './domain/services/similar-ranking.service';
+import { ListingAiReport } from './entities/listing-ai-report.entity';
 import { ListingView } from './entities/listing-view.entity';
 import { Listing } from './entities/listing.entity';
 import { PromotionHistory } from './entities/promotion-history.entity';
 import { Vehicle } from './entities/vehicle.entity';
 import { RedisListingCache } from './infrastructure/cache/redis-listing-cache';
+import { GeminiListingAiReportClient } from './infrastructure/gemini-listing-ai-report.client';
 import { InfocarReportUrlProvider } from './infrastructure/infocar-report-url.provider';
 import { TypeOrmPromotionHistoryWriter } from './infrastructure/persistence/promotion-history-writer';
 import { TypeOrmListingRepository } from './infrastructure/persistence/typeorm-listing.repository';
 import { ListingsService } from './listings.service';
 import { ListingsController } from './presentation/listings.controller';
+import { ParseListingIdPipe } from './presentation/pipes/parse-listing-id.pipe';
+import { ListingVideoImportController } from './video/listing-video-import.controller';
+import { ListingVideoReconcileCronService } from './video/listing-video-reconcile.cron';
+import { ListingVideoController } from './video/listing-video.controller';
+import { ListingVideoService } from './video/listing-video.service';
+import { MediaConvertWebhookController } from './video/mediaconvert-webhook.controller';
+import { MediaConvertService } from './video/mediaconvert.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Listing,
+      ListingAiReport,
       Vehicle,
       ListingView,
       PromotionHistory,
@@ -69,13 +82,20 @@ import { ListingsController } from './presentation/listings.controller';
       TireBrand,
     ]),
     CommonModule,
+    AuthModule,
     ExchangeRatesModule,
     UploadModule,
     UsersModule,
     BrandsModule,
   ],
-  controllers: [ListingsController],
+  controllers: [
+    ListingsController,
+    ListingVideoController,
+    ListingVideoImportController,
+    MediaConvertWebhookController,
+  ],
   providers: [
+    ParseListingIdPipe,
     ListingsService,
     ListingTitleService,
     {
@@ -112,6 +132,7 @@ import { ListingsController } from './presentation/listings.controller';
     GetBoardListingsUseCase,
     FindByVinUseCase,
     GetListingVinUseCase,
+    GetListingPhonesUseCase,
     GetListingHistoryUseCase,
     GetReportUrlUseCase,
     RefreshAllDatesUseCase,
@@ -125,7 +146,12 @@ import { ListingsController } from './presentation/listings.controller';
     ExpirePromotionsUseCase,
     CronSecretGuard,
     UserAccountDeletedListener,
+    GeminiListingAiReportClient,
+    ListingAiReportService,
+    ListingVideoService,
+    MediaConvertService,
+    ListingVideoReconcileCronService,
   ],
-  exports: [ListingsService, LISTING_CACHE, TypeOrmModule],
+  exports: [ListingsService, LISTING_CACHE, TypeOrmModule, ListingVideoService],
 })
 export class ListingsModule {}

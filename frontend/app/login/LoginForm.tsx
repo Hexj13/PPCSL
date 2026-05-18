@@ -1,5 +1,10 @@
 'use client';
 
+import Link from 'next/link';
+
+import { useI18n } from '@/components/providers/I18nProvider';
+import { buildSignPageHref } from '@/lib/return-url';
+import { localePrefixPath } from '@/lib/url-locale';
 import { LoadingButton } from '@/ui';
 
 type LoginFormProps = {
@@ -12,9 +17,12 @@ type LoginFormProps = {
   showPassword: boolean;
   setShowPassword: (v: boolean | ((p: boolean) => boolean)) => void;
   handleFormFieldFocus: () => void;
+  handleLoginChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleLoginBlur: () => void;
   handleSubmit: (e: React.FormEvent) => void | Promise<void>;
   showTitle?: boolean;
   showRegisterLink?: boolean;
+  registerHref?: string;
   formClassName?: string;
 };
 
@@ -28,11 +36,16 @@ export function LoginForm({
   showPassword,
   setShowPassword,
   handleFormFieldFocus,
+  handleLoginChange,
+  handleLoginBlur,
   handleSubmit,
   showTitle = true,
   showRegisterLink = true,
+  registerHref,
   formClassName = 'card p-6 md:p-8',
 }: LoginFormProps) {
+  const { locale } = useI18n();
+  const registerLink = registerHref ?? buildSignPageHref({ tab: 'register' });
   return (
     <>
       {showTitle && (
@@ -48,12 +61,8 @@ export function LoginForm({
           <input
             type="text"
             value={formData.login}
-            onChange={(e) => {
-              setFormData({ ...formData, login: e.target.value });
-              if (errors.login) {
-                setErrors({ ...errors, login: undefined });
-              }
-            }}
+            onChange={handleLoginChange}
+            onBlur={handleLoginBlur}
             onFocus={handleFormFieldFocus}
             className={`input-field ${errors.login ? 'border-red-500' : ''}`}
             placeholder={t('login.emailOrPhone')}
@@ -68,13 +77,13 @@ export function LoginForm({
             <label className="block text-sm font-semibold text-primary-900">
               {t('login.password')}
             </label>
-            <a
-              href="/reset-password"
+            <Link
+              href={localePrefixPath('/reset-password', locale)}
               data-testid="auth-login-forgot-password-link"
               className="text-sm text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
             >
               {t('login.forgotPassword')}
-            </a>
+            </Link>
           </div>
           <div className="relative">
             <input
@@ -154,7 +163,7 @@ export function LoginForm({
           <p className="mt-6 text-center text-sm text-hint">
             {t('login.noAccount')}{' '}
             <a
-              href="/sign?tab=register"
+              href={registerLink}
               data-testid="auth-login-register-link"
               className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
             >

@@ -85,6 +85,12 @@ Use this approach when:
    TWILIO_AUTH_TOKEN=your-twilio-auth-token
    TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
 
+   # Optional: skip real Twilio HTTP sends while keeping codes in Redis (ignored when NODE_ENV=production)
+   # SMS_OUTBOUND_DISABLED=true
+
+   # Optional: bypass per-phone hourly SMS send limit locally only (requires NODE_ENV=development)
+   # DISABLE_SMS_SEND_RATE_LIMIT=true
+
    # Redis Configuration
    REDIS_HOST=localhost
    REDIS_PORT=6379
@@ -225,6 +231,12 @@ Use this approach when:
    TWILIO_ACCOUNT_SID=your-twilio-account-sid
    TWILIO_AUTH_TOKEN=your-twilio-auth-token
    TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
+
+   # Optional: skip real Twilio HTTP sends while keeping codes in Redis (ignored when NODE_ENV=production)
+   # SMS_OUTBOUND_DISABLED=true
+
+   # Optional: bypass per-phone hourly SMS send limit locally only (requires NODE_ENV=development)
+   # DISABLE_SMS_SEND_RATE_LIMIT=true
 
    # Redis Configuration
    REDIS_HOST=localhost

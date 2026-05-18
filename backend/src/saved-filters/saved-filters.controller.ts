@@ -12,6 +12,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
+import { PhoneVerifiedGuard } from '../auth/infrastructure/guards/phone-verified.guard';
 import type { AuthenticatedRequest } from '../common/express-augmentation';
 
 import { CreateSavedFilterDto } from './dto/create-saved-filter.dto';
@@ -124,7 +125,7 @@ export class SavedFiltersController {
     },
   })
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   create(@Body() createDto: CreateSavedFilterDto, @Request() req: AuthenticatedRequest) {
     return this.savedFiltersService.create(req.user.id, createDto.name, createDto.filters);
   }
@@ -189,7 +190,7 @@ export class SavedFiltersController {
     },
   })
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   update(
     @Param('id') id: string,
     @Body() updateDto: UpdateSavedFilterDto,
@@ -244,7 +245,7 @@ export class SavedFiltersController {
     },
   })
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.savedFiltersService.remove(req.user.id, id);
   }

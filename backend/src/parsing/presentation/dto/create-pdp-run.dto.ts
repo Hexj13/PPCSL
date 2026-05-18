@@ -63,4 +63,16 @@ export class CreatePdpRunDto {
   @IsOptional()
   @IsBoolean()
   checkUserDuplicatesBeforeCreate?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  autoCreateBrands?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  autoCreateModels?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  autoCreateBrandsModels?: boolean;
 }

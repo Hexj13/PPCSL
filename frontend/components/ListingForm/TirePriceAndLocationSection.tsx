@@ -1,7 +1,11 @@
 'use client';
 
-import { Dropdown } from '@/components/common/Dropdown';
+import { MobileSelectField } from '@/components/ListingForm/MobileSelectField';
 import { useI18n } from '@/components/providers/I18nProvider';
+import {
+  SearchFilterCityIcon,
+  SearchFilterPriceIcon,
+} from '@/components/search/search-filters/search-filter-field-icons';
 import type { Currency } from '@/lib/types';
 import { CurrencyEnum } from '@/lib/types';
 import { sortOptionsByLabel } from '@/lib/utils';
@@ -42,7 +46,8 @@ export function TirePriceAndLocationSection({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:auto-rows-min">
         <div className="sm:row-start-1 sm:col-span-1">
-          <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
+          <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary-900">
+            <SearchFilterPriceIcon />
             {t('listings.priceLabel')}
             <RequiredAsterisk filled={!!formData.price.trim()} />
           </label>
@@ -73,13 +78,15 @@ export function TirePriceAndLocationSection({
               placeholder={t('listings.pricePlaceholder')}
               title={t('listings.tireForm.priceTitle')}
             />
-            <Dropdown
+            <MobileSelectField
               value={formData.currency}
               onChange={(value) =>
                 setFormData((prev) => ({ ...prev, currency: value as Currency }))
               }
+              sheetTitle={t('listings.currency')}
+              leadingIcon={<SearchFilterPriceIcon />}
               className="w-32 shrink-0"
-              placeholder={t('searchFilters.allCurrencies')}
+              mobileValueOnlyTrigger={true}
               autoPosition={true}
               menuMaxHeight={300}
               options={CURRENCY_OPTIONS}
@@ -104,16 +111,20 @@ export function TirePriceAndLocationSection({
         </div>
 
         <div className="sm:row-start-3 sm:col-span-1">
-          <label className="block text-sm font-semibold mb-2 text-primary-700 flex items-center gap-2">
+          <label className="mb-2 hidden items-center gap-2 text-sm font-semibold text-primary-900 md:flex">
+            <SearchFilterCityIcon />
             {t('listings.cityLabel')}
             <RequiredAsterisk filled={!!formData.city} />
           </label>
-          <Dropdown
+          <MobileSelectField
             value={formData.city}
             onChange={(value) => {
               clearError('city');
               setFormData((prev) => ({ ...prev, city: value }));
             }}
+            sheetTitle={t('listings.cityLabel')}
+            leadingIcon={<SearchFilterCityIcon />}
+            requiredAsteriskFilled={!!formData.city}
             searchable={true}
             placeholder={t('listings.selectCity')}
             error={!!errors['city']}

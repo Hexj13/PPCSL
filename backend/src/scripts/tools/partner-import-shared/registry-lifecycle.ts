@@ -64,6 +64,7 @@ export function finalizeRegistryAfterPlpScan<TItem extends BaseRegistryItem<stri
   seenSourceIds: Set<string>;
   closeValid: boolean;
   now: string;
+  shouldMarkMissing?: (item: TItem) => boolean;
 }): FinalizePlpScanResult<TItem> {
   const nextItems = params.items.map((item) => {
     const sourceStatus = normalizeSourceStatus(item);
@@ -73,6 +74,10 @@ export function finalizeRegistryAfterPlpScan<TItem extends BaseRegistryItem<stri
       params.seenSourceIds.has(item.sourceListingId) ||
       sourceStatus === 'closed'
     ) {
+      return item;
+    }
+
+    if (params.shouldMarkMissing && !params.shouldMarkMissing(item)) {
       return item;
     }
 

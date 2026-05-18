@@ -26,12 +26,10 @@ function CarouselHarness({
   images,
   carouselRef,
   onIndexChange,
-  onBusyChange,
 }: {
   images: string[];
   carouselRef: React.RefObject<ListingCardImageCarouselHandle | null>;
   onIndexChange?: (index: number) => void;
-  onBusyChange?: (busy: boolean) => void;
 }) {
   return (
     <div>
@@ -40,7 +38,6 @@ function CarouselHarness({
         images={images}
         imageErrors={new Set()}
         onImageError={() => {}}
-        onBusyChange={onBusyChange}
         onIndexChange={onIndexChange}
         imageAltTitle="Test"
         priority={false}
@@ -56,13 +53,11 @@ describe('ListingCardImageCarousel', () => {
   it('should commit new index immediately when target is ready (placeholder)', async () => {
     const ref = React.createRef<ListingCardImageCarouselHandle>();
     const onIndexChange = jest.fn();
-    const onBusyChange = jest.fn();
     render(
       <CarouselHarness
         images={twoPlaceholderImages}
         carouselRef={ref}
         onIndexChange={onIndexChange}
-        onBusyChange={onBusyChange}
       />,
     );
 
@@ -75,10 +70,9 @@ describe('ListingCardImageCarousel', () => {
       expect(ref.current?.getIndex()).toBe(1);
     });
     expect(onIndexChange).toHaveBeenCalledWith(1);
-    expect(onBusyChange).toHaveBeenLastCalledWith(false);
   });
 
-  it('should not skip ahead when multiple goNext fire in one tick (only advances one step)', async () => {
+  it('should advance on each rapid goNext without skipping intermediate indices', async () => {
     const ref = React.createRef<ListingCardImageCarouselHandle>();
     const onIndexChange = jest.fn();
     render(
@@ -98,9 +92,8 @@ describe('ListingCardImageCarousel', () => {
     await waitFor(() => {
       expect(ref.current?.getIndex()).toBe(1);
     });
-    expect(onIndexChange).toHaveBeenCalledWith(1);
-    expect(onIndexChange).not.toHaveBeenCalledWith(2);
     expect(onIndexChange).toHaveBeenLastCalledWith(1);
+    expect(onIndexChange).not.toHaveBeenCalledWith(2);
   });
 
   it('should go prev and next for 2 photos', async () => {

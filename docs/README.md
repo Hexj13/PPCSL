@@ -36,6 +36,9 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 - **[platform-checklist.md](./guides/platform-checklist.md)** — **Checklist for new platforms**
 - [platform-guide.md](./guides/platform-guide.md) — Setup and development (GA, GTM, Sentry)
+- [GOOGLE_OAUTH_SETUP_RU.md](./guides/GOOGLE_OAUTH_SETUP_RU.md) — Google Sign-In (GIS), cookies, env (Russian operators)
+- [AUTH_COOKIE_SESSION.md](./guides/AUTH_COOKIE_SESSION.md) — Cookie-only auth JSON, env alignment, one-time re-login note
+- [listing-video-production-setup-ru.md](./guides/listing-video-production-setup-ru.md) — Listing video on production (AWS, Render; Russian operators)
 - [SENTRY.md](./guides/SENTRY.md) — Sentry setup and monitoring
 - [logging.md](./guides/logging.md) — Structured Sentry payloads, request correlation, sanitization
 - [DEPLOYMENT.md](./guides/DEPLOYMENT.md) — Deploy (optional Telegram support bot)
@@ -61,17 +64,21 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [search-title-url.md](./features/search-title-url.md) — Search page URL and title (slugs, diacritics)
 - Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see [TECHNICAL.md](./architecture/TECHNICAL.md) §6 Exchange Rates)
 - [image-preview.md](./features/image-preview.md) — Image preview system (card carousel vs listing hero layers, modal; blurhash; `image_blur_hashes` + backfill scripts)
+- [listings.md](./features/listings.md) — Optional listing video (seller upload, transcoding) and partner-import video-from-URL
 - [infocar-history-section.md](./features/infocar-history-section.md) — Infocar report card + on-site VIN history (two cards, RO/RU links)
+- [ai-listing-report-ru.md](./features/ai-listing-report-ru.md) — Listing AI analysis (Gemini, PDP modal, RU spec: API, cache, prompts). Clear persisted rows: `npm run clear-listing-ai-reports(:prod)` from `core/backend` ([SCRIPTS.md](../backend/docs/SCRIPTS.md)); Render steps: platform repo [`docs/deployment/production-deployment.md`](../../docs/deployment/production-deployment.md) §2.3.
+- Listing seller phones and full VIN — masked in public listing payloads; optional reveal on the listing page with per-viewer Redis rate limits (`GET /api/listings/:id/phones`, `GET /api/listings/:id/vin`); see [TECHNICAL.md](./architecture/TECHNICAL.md) § API Reference → Listings
 - [loading-states.md](./features/loading-states.md) — Loading states
 - [cross-tab-sync.md](./features/cross-tab-sync.md) — Favorites, comparison, listing status, auth session, and refresh-token rotation across tabs (UI: `BroadcastChannel` + storage; auth: `storage` on auth keys — see doc)
+- [auth-onboarding-gates.md](./features/auth-onboarding-gates.md) — Mandatory phone verification and business company onboarding (middleware, client guards, verify-phone branching)
 - [paid-promotion.md](./features/paid-promotion.md) — Paid promotion
-- [partner-program.md](./features/partner-program.md) — Platform partners, bonus balance, partner promotion flow, footer partners
+- [partner-program.md](./features/partner-program.md) — Platform partners, bonus balance, partner promotion flow, footer partner logos, public `/partners` and `/investors` pages (sitemap / noindex)
 - [my-listings-page.md](./features/my-listings-page.md) — My listings filters, badge counts, loading behavior
 - Assign listing to user (admin) — on `/listings/new` admin can set listing owner UUID; real-time validation (GET `/api/admin/validate-assign-user/:userId`), backend checks (existence, active, listing limit)
 - Admin edit listings — on the admin listings tab, admin can open `/listings/[id]/edit` and edit any listing (including `Closed`), regardless of ownership. Backend bypasses ownership and `Closed` restrictions only for JWT users with role `Admin`. In edit form, `vehicleType` switcher is available only for admins. For editing VIN, admin requests full VIN via `GET /api/listings/:id?includeFullVin=1`.
 - [admin-parsing-ru.md](./features/admin-parsing-ru.md) — Russian feature spec for the admin Parsing tab (PLP/PDP history, manual runs, scheduler, parser rollout). English operator notes for `ADMIN_PARSING_*` env: [SCRIPTS.md](../backend/docs/SCRIPTS.md) (section **Admin parsing (Nest runtime)**).
 - [parsing-framework.md](./features/parsing-framework.md) — Generic parsing runtime in core (catalog contract, admin orchestration, schedules, parser CLI runner)
-- Platform parser docs (kupito.club): [docs/parsing/cipauto-import.md](../../docs/parsing/cipauto-import.md), [docs/parsing/999md-import.md](../../docs/parsing/999md-import.md)
+- Platform parser docs (kupito.club): [docs/parsing/cipauto-import.md](../../docs/parsing/cipauto-import.md), [docs/parsing/999md-import.md](../../docs/parsing/999md-import.md), [docs/parsing/autooutlet-import.md](../../docs/parsing/autooutlet-import.md)
 - [search-filters.md](./features/search-filters.md) — Search and filters form (tabs, fields, layout)
 - [tires-category.md](./features/tires-category.md) — Dev-ready spec for tire listings, taxonomy, create form, and search
 - [seller-listings-board.md](./features/seller-listings-board.md) — Seller listings board
@@ -153,4 +160,4 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 When adding a new feature: create a doc in `features/`, describe architecture/API/UI, update the list in the features section above.
 
-**Last updated:** 2026-04
+**Last updated:** 2026-05

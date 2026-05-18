@@ -1,19 +1,19 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { EmailFlowPageShell, EmailFlowSuccessState } from '@/components/email-flow';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export default function VerifyEmailSuccessPage() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const { push, href } = useLocalizedNavigation();
   const [countdown, setCountdown] = useState(10);
 
   useEffect(() => {
     if (countdown <= 0) {
-      router.push('/');
+      push('/');
       return;
     }
 
@@ -22,13 +22,13 @@ export default function VerifyEmailSuccessPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [countdown, router]);
+  }, [countdown, push]);
 
   return (
     <EmailFlowPageShell title={t('verifyEmail.success.title')}>
       <EmailFlowSuccessState
         description={t('verifyEmail.success.description')}
-        ctaHref="/"
+        ctaHref={href('/')}
         ctaLabel={t('common.goToHome')}
         footer={
           <>

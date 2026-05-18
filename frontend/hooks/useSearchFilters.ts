@@ -82,6 +82,7 @@ export interface FilterState {
   equipment_match_mode: 'full' | 'partial';
   available_in_credit: boolean;
   down_payment_amount_gte: string;
+  seller_type: string;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
   tire_vehicle_type: '' | 'car' | 'truck' | 'moto';
@@ -228,6 +229,17 @@ export function useSearchFilters() {
         equipment_match_mode: searchParams.get('equipmentMatch') === 'partial' ? 'partial' : 'full',
         available_in_credit: searchParams.get('available_in_credit') === 'true',
         down_payment_amount_gte: searchParams.get('down_payment_amount_gte') || '',
+        seller_type: (() => {
+          const raw = searchParams.get('seller_type');
+          if (raw === 'Individual' || raw === 'Business') return raw;
+          const legacy = searchParams.get('seller_types');
+          if (!legacy) return '';
+          const first = legacy
+            .split(',')
+            .map((s) => s.trim())
+            .find((v) => v === 'Individual' || v === 'Business');
+          return first ?? '';
+        })(),
         sortBy: searchParams.get('sortBy') || 'created_at',
         sortOrder: (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
       };

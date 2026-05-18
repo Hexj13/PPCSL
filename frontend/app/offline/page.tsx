@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export default function OfflinePage() {
   const { t } = useTranslation();
+  const { href } = useLocalizedNavigation();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg-base">
@@ -20,7 +22,7 @@ export default function OfflinePage() {
         </button>
         <div className="mt-6">
           <Link
-            href="/"
+            href={href('/')}
             className="text-primary-600 hover-only:hover:text-primary-700 underline font-medium"
           >
             {t('common.goToHome')}

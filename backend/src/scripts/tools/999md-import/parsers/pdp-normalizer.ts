@@ -5,6 +5,7 @@ import type {
   ParsedPdpData,
   ParsedPdpEquipmentOption,
 } from '../../partner-import-shared/listing-types';
+import { isProbablyVideoUrl } from '../../partner-import-shared/utils/video-url';
 import { map999mdColorToCipautoRaw } from '../mapping/999md-color-mapper';
 import { map999mdCheckboxToEquipmentOption } from '../mapping/999md-equipment-mapper';
 import { map999mdStareOptionIdToCondition } from '../mapping/999md-stare-to-condition';
@@ -44,7 +45,8 @@ export function normalize999mdAdvert(params: {
   let year: number | undefined;
   let price: number | undefined;
   let currency: Currency | undefined;
-  let description: string | undefined;
+  let description_ro: string | undefined;
+  let description_ru: string | undefined;
   let mileageKm: number | undefined;
   let engineVolumeL: number | undefined;
   let fuelRaw: string | undefined;
@@ -213,7 +215,13 @@ export function normalize999mdAdvert(params: {
         continue;
       }
       if (featId === FEAT_BODY && featType === 'FEATURE_BODY') {
-        description = pickBodyText(value) ?? description;
+        const loc = pickBodyLocales(value);
+        if (loc.ro) {
+          description_ro = loc.ro;
+        }
+        if (loc.ru) {
+          description_ru = loc.ru;
+        }
         continue;
       }
       if (featId === FEAT_IMAGES && featType === 'FEATURE_IMAGES' && Array.isArray(value)) {
@@ -230,9 +238,11 @@ export function normalize999mdAdvert(params: {
     }
   }
 
-  if (!description && advert.title) {
-    description = advert.title;
+  if (!description_ro && !description_ru && advert.title) {
+    description_ro = advert.title;
   }
+  const description = description_ro ?? description_ru;
+  const videoUrl = extract999mdAdvertVideoUrl(advert);
 
   return {
     sourceListingId: advert.id,
@@ -246,6 +256,8 @@ export function normalize999mdAdvert(params: {
     price,
     currency,
     description,
+    description_ro,
+    description_ru,
     creditAvailable,
     downPaymentAmount,
     monthlyPayment: undefined,
@@ -265,7 +277,29 @@ export function normalize999mdAdvert(params: {
     vin,
     condition,
     warnings,
+    videoUrl,
   };
+}
+
+function extract999mdAdvertVideoUrl(advert: AdvertRaw): string | undefined {
+  for (const group of advert.groups ?? []) {
+    for (const control of group.controls ?? []) {
+      const val = control.feature?.value;
+      if (typeof val === 'string' && isProbablyVideoUrl(val)) {
+        return val.trim();
+      }
+      if (val && typeof val === 'object') {
+        const o = val as Record<string, unknown>;
+        for (const k of ['url', 'href', 'src', 'videoUrl', 'link'] as const) {
+          const s = o[k];
+          if (typeof s === 'string' && isProbablyVideoUrl(s)) {
+            return s.trim();
+          }
+        }
+      }
+    }
+  }
+  return undefined;
 }
 
 function pickFeatureOptionId(value: unknown): number | undefined {
@@ -292,21 +326,29 @@ function pickTranslated(value: unknown): string | undefined {
   return undefined;
 }
 
-function pickBodyText(value: unknown): string | undefined {
+function pickBodyLocales(value: unknown): { ro?: string; ru?: string } {
   if (value === null || value === undefined) {
-    return undefined;
+    return {};
   }
   if (typeof value === 'string') {
-    return value.trim() || undefined;
+    const t = value.trim();
+    return t ? { ro: t } : {};
   }
   if (typeof value === 'object') {
     const o = value as Record<string, string>;
-    const ro = o.ro?.trim();
-    const ru = o.ru?.trim();
-    const tr = o.translated?.trim();
-    return tr || ro || ru || undefined;
+    const ro = o.ro?.trim() || o.translated?.trim() || undefined;
+    const ru = o.ru?.trim() || undefined;
+    return {
+      ...(ro ? { ro } : {}),
+      ...(ru ? { ru } : {}),
+    };
   }
-  return undefined;
+  return {};
+}
+
+function pickBodyText(value: unknown): string | undefined {
+  const loc = pickBodyLocales(value);
+  return loc.ro ?? loc.ru;
 }
 
 function normalizeVin(raw: string): string | undefined {

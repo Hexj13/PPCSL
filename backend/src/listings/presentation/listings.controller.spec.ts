@@ -3,11 +3,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import type { Request as ExpressRequest } from 'express';
 
+import { PhoneVerifiedGuard } from '../../auth/infrastructure/guards/phone-verified.guard';
 import { Currency, DriveType, ListingStatus } from '../../common/types';
 import type { AuthenticatedRequest } from '../../common/express-augmentation';
 
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
+import { ListingAiReportService } from '../application/listing-ai-report.service';
 import { Listing } from '../entities/listing.entity';
 import { ListingsController } from './listings.controller';
 import { ListingsService } from '../listings.service';
@@ -47,6 +49,10 @@ describe('ListingsController', () => {
   };
 
   beforeEach(async () => {
+    const mockListingAiReportService = {
+      requestReport: jest.fn(),
+    };
+
     const mockListingsService = {
       findAll: jest.fn(),
       getUserListings: jest.fn(),
@@ -55,6 +61,7 @@ describe('ListingsController', () => {
       findByVin: jest.fn(),
       findOne: jest.fn(),
       getListingVin: jest.fn(),
+      getListingPhones: jest.fn(),
       getListingHistory: jest.fn(),
       getReportUrl: jest.fn(),
       create: jest.fn(),
@@ -74,8 +81,15 @@ describe('ListingsController', () => {
           provide: ListingsService,
           useValue: mockListingsService,
         },
+        {
+          provide: ListingAiReportService,
+          useValue: mockListingAiReportService,
+        },
       ],
-    }).compile();
+    })
+      .overrideGuard(PhoneVerifiedGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<ListingsController>(ListingsController);
     service = module.get(ListingsService);

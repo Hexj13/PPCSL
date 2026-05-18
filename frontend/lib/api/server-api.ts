@@ -85,17 +85,20 @@ export const fetchTireSearchMetadata = cache(
   },
 );
 
-export const fetchBrands = cache(async (): Promise<Brand[]> => {
-  try {
-    const response = await fetch(`${API_URL}/api/brands`, {
-      next: { revalidate: 3600 },
-    });
-    if (!response.ok) return [];
-    return response.json();
-  } catch {
-    return [];
-  }
-});
+export const fetchBrands = cache(
+  async (vehicleType?: 'car' | 'truck' | 'moto'): Promise<Brand[]> => {
+    try {
+      const qs = vehicleType ? `?vehicleType=${encodeURIComponent(vehicleType)}` : '';
+      const response = await fetch(`${API_URL}/api/brands${qs}`, {
+        next: { revalidate: 3600 },
+      });
+      if (!response.ok) return [];
+      return response.json();
+    } catch {
+      return [];
+    }
+  },
+);
 
 export const fetchModelsByBrands = cache(
   async (brandIds: string[]): Promise<Record<string, VehicleModel[]>> => {

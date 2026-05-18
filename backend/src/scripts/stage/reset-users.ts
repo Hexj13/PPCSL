@@ -94,6 +94,8 @@ async function resetUsers() {
       firstName: 'Admin',
       lastName: 'User',
       phone: '+38970111111',
+      phoneVerified: true,
+      preferredLocale: 'ro',
       type: UserTypeEnum.Admin,
     });
     await userRepo.save(admin);

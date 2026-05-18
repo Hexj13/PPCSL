@@ -1182,6 +1182,27 @@
   scrollbar-color: var(--color-dark-500) var(--color-bg-secondary);
 }
 
+@utility scrollbar-primary-700 {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    @apply rounded-sm bg-primary-900/40;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    @apply rounded-sm bg-primary-700;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-600;
+  }
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary-700) var(--color-primary-900);
+}
+
 @utility text-hint {
   color: var(--color-dark-400) !important;
 }
@@ -1412,18 +1433,16 @@
 
 @keyframes mobile-nav-drawer-enter {
   from {
-    opacity: 0;
-    transform: translate3d(0, -100%, 0);
+    transform: translate3d(-100%, 0, 0);
   }
 
   to {
-    opacity: 1;
     transform: translate3d(0, 0, 0);
   }
 }
 
 .mobile-nav-drawer-enter {
-  will-change: transform, opacity;
+  will-change: transform;
   animation: mobile-nav-drawer-enter 0.24s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
@@ -1443,18 +1462,16 @@
 
 @keyframes mobile-nav-drawer-leave {
   from {
-    opacity: 1;
     transform: translate3d(0, 0, 0);
   }
 
   to {
-    opacity: 0;
-    transform: translate3d(0, -100%, 0);
+    transform: translate3d(-100%, 0, 0);
   }
 }
 
 .mobile-nav-drawer-leave {
-  will-change: transform, opacity;
+  will-change: transform;
   animation: mobile-nav-drawer-leave 0.24s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
@@ -1487,7 +1504,7 @@
 
   .mobile-nav-drawer-leave {
     opacity: 0;
-    transform: translate3d(0, -100%, 0);
+    transform: none;
   }
 
   .mobile-menu-backdrop-enter,
@@ -1497,5 +1514,28 @@
 
   .mobile-menu-backdrop-leave {
     opacity: 0;
+  }
+
+  .listing-ai-report-content {
+    animation: none;
+    filter: none;
+  }
+}
+
+@keyframes listing-ai-report-content-fade {
+  0% {
+    opacity: 0;
+    filter: brightness(1.65) saturate(0.45);
+  }
+
+  100% {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .listing-ai-report-content {
+    animation: listing-ai-report-content-fade 0.72s ease-out both;
   }
 }

@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { MultiSelectOptionLeadingLogo } from '@/components/common/MultiSelectOptionLeadingLogo';
 import { Button, designTokens } from '@/ui';
 
 import type { DropdownOption } from './dropdown-types';
@@ -197,9 +198,16 @@ export function DropdownMenu({
                   data-testid={dataTestId ? `${dataTestId}-option-${index}` : undefined}
                 >
                   <span
-                    className={menuExpandToContent ? 'whitespace-nowrap pr-1' : 'min-w-0 truncate'}
+                    className={`flex min-w-0 items-center gap-2 ${menuExpandToContent ? 'flex-1 whitespace-nowrap pr-1' : 'flex-1'}`}
                   >
-                    {option.label}
+                    <MultiSelectOptionLeadingLogo src={option.logoSrc} />
+                    <span
+                      className={
+                        menuExpandToContent ? 'whitespace-nowrap pr-1' : 'min-w-0 truncate'
+                      }
+                    >
+                      {option.label}
+                    </span>
                   </span>
                   {menuSelectedStyle === 'checkmark' && isSelected ? (
                     <svg

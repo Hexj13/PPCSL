@@ -17,4 +17,6 @@ export interface ParserPdpDefaults {
   removeClosed: boolean;
   onlyFailed: boolean;
   updateExisting: boolean;
+  autoCreateBrands: boolean;
+  autoCreateModels: boolean;
 }

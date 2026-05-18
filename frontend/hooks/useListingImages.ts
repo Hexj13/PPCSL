@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
+import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
 import { bindImageReadiness } from '@/components/listing/useListingCardCarouselPreload';
-import { useLoadingState } from '@/hooks/useLoadingState';
 import { getOptimizedImageUrl } from '@/lib/utils';
 
 interface UseListingImagesProps {
@@ -15,7 +15,6 @@ const PREVIEW_IMAGE_WIDTH = 1200;
 const PRELOAD_SECOND_AHEAD_DELAY_MS = 40;
 const PRELOAD_THIRD_AHEAD_DELAY_MS = 120;
 const PRELOAD_PREV_DELAY_MS = 180;
-const LOADING_INDICATOR_DELAY_MS = 120;
 const EXISTING_PRELOAD_MAX_FRAMES = 900;
 
 export function useListingImages({
@@ -23,18 +22,11 @@ export function useListingImages({
   currentImageIndex,
   imageErrors,
 }: UseListingImagesProps) {
-  const [mainImageLoading, setMainImageLoading] = useState(false);
   const mainImageLoadedRef = useRef<Set<number>>(new Set());
   const heroImageLoadedRef = useRef<Set<number>>(new Set());
   const mainImagePreloadingRef = useRef<Set<number>>(new Set());
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
   const imagesSignature = images.join('\u0001');
-
-  const { visible: showMainImageLoader } = useLoadingState({
-    isLoading: mainImageLoading,
-    showDelay: LOADING_INDICATOR_DELAY_MS,
-    minDisplayTime: 120,
-  });
 
   const getPreviewUrl = useCallback(
     (imageUrl: string) =>
@@ -56,7 +48,6 @@ export function useListingImages({
       img.onerror = null;
     }
     imagesCacheRef.current = [];
-    setMainImageLoading(false);
   }, [imagesSignature]);
 
   useEffect(() => {
@@ -67,6 +58,9 @@ export function useListingImages({
     const preloadByIndex = (index: number, delay = 0) => {
       const imageUrl = images[index];
       if (!imageUrl || imageUrl === '/placeholder-car.jpg' || imageErrors.has(index)) {
+        return;
+      }
+      if (isListingPageVideoHeroSlideUrl(imageUrl)) {
         return;
       }
       if (mainImageLoadedRef.current.has(index) || mainImagePreloadingRef.current.has(index)) {
@@ -128,7 +122,12 @@ export function useListingImages({
     const preloadJobs: PreloadJob[] = [];
     const addPreloadJob = (idx: number, delay: number) => {
       const url = images[idx];
-      if (!url || url === '/placeholder-car.jpg' || imageErrors.has(idx)) {
+      if (
+        !url ||
+        url === '/placeholder-car.jpg' ||
+        imageErrors.has(idx) ||
+        isListingPageVideoHeroSlideUrl(url)
+      ) {
         return;
       }
       const existing = preloadJobs.find((j) => j.index === idx);
@@ -165,6 +164,9 @@ export function useListingImages({
       if (!imageUrl || imageUrl === '/placeholder-car.jpg' || imageErrors.has(index)) {
         return true;
       }
+      if (isListingPageVideoHeroSlideUrl(imageUrl)) {
+        return true;
+      }
       return mainImageLoadedRef.current.has(index);
     },
     [images, imageErrors],
@@ -174,6 +176,9 @@ export function useListingImages({
     (index: number) => {
       const imageUrl = images[index];
       if (!imageUrl || imageUrl === '/placeholder-car.jpg' || imageErrors.has(index)) {
+        return true;
+      }
+      if (isListingPageVideoHeroSlideUrl(imageUrl)) {
         return true;
       }
       return heroImageLoadedRef.current.has(index);
@@ -191,6 +196,10 @@ export function useListingImages({
     ) => {
       const imageUrl = images[index];
       if (!imageUrl || imageUrl === '/placeholder-car.jpg' || imageErrors.has(index)) {
+        callbacks?.onReady?.();
+        return () => {};
+      }
+      if (isListingPageVideoHeroSlideUrl(imageUrl)) {
         callbacks?.onReady?.();
         return () => {};
       }
@@ -275,7 +284,6 @@ export function useListingImages({
     if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
     markLoaded(index);
     heroImageLoadedRef.current.add(index);
-    if (index === currentImageIndex) setMainImageLoading(false);
   };
 
   const handleThumbnailImageLoad = (index: number) => {
@@ -285,11 +293,8 @@ export function useListingImages({
   };
 
   return {
-    showMainImageLoader,
-    mainImageLoading,
     mainImageLoadedRef,
     heroImageLoadedRef,
-    setMainImageLoading,
     isTargetReady,
     isHeroReady,
     preloadTarget,

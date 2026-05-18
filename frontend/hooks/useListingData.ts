@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { useCrossTabListingStatusRefetch } from '@/hooks/useCrossTabListingStatusRefetch';
 import { analytics, buildListingViewItemParams } from '@/lib/analytics';
@@ -11,7 +11,7 @@ import { isTireListing } from '@/lib/utils';
 interface UseListingDataProps {
   listingId: string;
   initialListing: Listing | null;
-  onListingUpdate?: () => void;
+  onListingUpdate?: (next: Listing, previous: Listing | null) => void;
 }
 
 export function useListingData({
@@ -26,19 +26,38 @@ export function useListingData({
   const checkTire = useComparisonStore((s) => s.checkTire);
 
   const [listing, setListing] = useState<Listing | null>(initialListing);
-  const [isFavorite, setIsFavorite] = useState(() => check(id));
-  const [isInComparison, setIsInComparison] = useState(() => {
-    if (!initialListing) return false;
-    return isTireListing(initialListing) ? checkTire(id) : checkVehicle(id);
-  });
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isInComparison, setIsInComparison] = useState(false);
   const [previousListings, setPreviousListings] = useState<Listing[]>([]);
   const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [activeListingsCount, setActiveListingsCount] = useState<number>(0);
 
   const hasLoadedRef = useRef(false);
-  const hasInitialListingRef = useRef<boolean>(!!initialListing);
   const listingRef = useRef<Listing | null>(initialListing);
   const onListingUpdateRef = useRef(onListingUpdate);
+
+  useLayoutEffect(() => {
+    if (!listing) {
+      return;
+    }
+    const applyFavoritesAndComparisonFromClientStores = () => {
+      setIsFavorite(check(id));
+      setIsInComparison(isTireListing(listing) ? checkTire(id) : checkVehicle(id));
+    };
+    if (useFavoritesStore.persist.hasHydrated() && useComparisonStore.persist.hasHydrated()) {
+      applyFavoritesAndComparisonFromClientStores();
+    }
+    const unfav = useFavoritesStore.persist.onFinishHydration(
+      applyFavoritesAndComparisonFromClientStores,
+    );
+    const uncomp = useComparisonStore.persist.onFinishHydration(
+      applyFavoritesAndComparisonFromClientStores,
+    );
+    return () => {
+      unfav();
+      uncomp();
+    };
+  }, [listing, id, check, checkTire, checkVehicle]);
 
   useEffect(() => {
     onListingUpdateRef.current = onListingUpdate;
@@ -51,15 +70,7 @@ export function useListingData({
       const shouldRefresh = sessionStorageGetItem(`refreshListing_${currentId}`) === 'true';
       const needsRefresh = forceRefresh || shouldRefresh;
 
-      const preserveExisting =
-        !needsRefresh && hasInitialListingRef.current && listingRef.current !== null;
-
-      if (!preserveExisting) {
-        listingRef.current = null;
-        setListing(null);
-        setPreviousListings([]);
-        setLoadingPrevious(false);
-      }
+      const previousListing = listingRef.current;
 
       const listingPromise = needsRefresh
         ? api.get<Listing>(`/api/listings/${currentId}`, {
@@ -87,18 +98,18 @@ export function useListingData({
           }
 
           const hasVin = listingRes.data.vin;
-          listingRef.current = listingRes.data;
-          setListing(listingRes.data);
+          const nextListing = listingRes.data;
+          listingRef.current = nextListing;
+          setListing(nextListing);
           setIsFavorite(favoriteValue);
           setIsInComparison(
-            isTireListing(listingRes.data) ? checkTire(currentId) : checkVehicle(currentId),
+            isTireListing(nextListing) ? checkTire(currentId) : checkVehicle(currentId),
           );
-          hasInitialListingRef.current = false;
-          onListingUpdateRef.current?.();
+          onListingUpdateRef.current?.(nextListing, previousListing);
 
-          if (listingRes.data.user?.id) {
+          if (nextListing.user?.id) {
             listingsApi
-              .getUserActiveListingsCount(listingRes.data.user.id)
+              .getUserActiveListingsCount(nextListing.user.id)
               .then((res) => {
                 if (currentId === id) {
                   setActiveListingsCount(res.data.count);
@@ -113,9 +124,9 @@ export function useListingData({
             setActiveListingsCount(0);
           }
 
-          analytics.viewItem(currentId, buildListingViewItemParams(listingRes.data));
+          analytics.viewItem(currentId, buildListingViewItemParams(nextListing));
 
-          if (hasVin && !isTireListing(listingRes.data)) {
+          if (hasVin && !isTireListing(nextListing)) {
             setLoadingPrevious(true);
             listingsApi
               .getHistoryByListingId(currentId)
@@ -159,15 +170,16 @@ export function useListingData({
             return;
           }
 
+          if (needsRefresh) {
+            sessionStorageRemoveItem(`refreshListing_${currentId}`);
+            return;
+          }
+
           const favoriteValue = check(currentId);
           listingRef.current = null;
           setListing(null);
           setIsFavorite(favoriteValue);
           setIsInComparison(checkVehicle(currentId) || checkTire(currentId));
-
-          if (needsRefresh) {
-            sessionStorageRemoveItem(`refreshListing_${currentId}`);
-          }
         });
     },
     [id, user, check, checkVehicle, checkTire],
@@ -210,19 +222,6 @@ export function useListingData({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [id, fetchListingData]);
-
-  useEffect(() => {
-    if (initialListing?.user?.id) {
-      listingsApi
-        .getUserActiveListingsCount(initialListing.user.id)
-        .then((res) => {
-          setActiveListingsCount(res.data.count);
-        })
-        .catch(() => {
-          setActiveListingsCount(0);
-        });
-    }
-  }, [initialListing?.user?.id]);
 
   return {
     listing,

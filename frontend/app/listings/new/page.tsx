@@ -1,9 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense, useMemo } from 'react';
 
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -57,7 +58,7 @@ const ListingForm = dynamic(
 );
 
 function NewListingFormSection() {
-  const router = useRouter();
+  const { push } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const initialCreateCategory = useMemo((): 'vehicle' | 'tire' | undefined => {
     const c = searchParams.get('category');
@@ -70,7 +71,7 @@ function NewListingFormSection() {
     <ListingForm
       mode="create"
       initialCreateCategory={initialCreateCategory}
-      onSuccess={() => router.push('/my-listings')}
+      onSuccess={() => push('/my-listings')}
     />
   );
 }

@@ -1,3 +1,11 @@
+type MetadataPage = {
+  title: string;
+  description: string;
+  ogTitle: string;
+  ogDescription: string;
+  ogAlt: string;
+};
+
 export interface TranslationsPart2 {
   searchFilters: {
     popular: string;
@@ -55,6 +63,8 @@ export interface TranslationsPart2 {
     city: string;
     yearFrom: string;
     yearTo: string;
+    yearRangeSummary: string;
+    priceRangeSummary: string;
     currency: string;
     priceFrom: string;
     priceTo: string;
@@ -347,6 +357,61 @@ export interface TranslationsPart2 {
     };
     privacyPolicy: string;
     preferencesSavedMessage: string;
+    cookieTable: {
+      title: string;
+      intro: string;
+      headers: {
+        name: string;
+        type: string;
+        purpose: string;
+        duration: string;
+        provider: string;
+      };
+      rows: {
+        ga: {
+          name: string;
+          type: string;
+          purpose: string;
+          duration: string;
+          provider: string;
+        };
+        gid: {
+          name: string;
+          type: string;
+          purpose: string;
+          duration: string;
+          provider: string;
+        };
+        consentCookie: {
+          name: string;
+          type: string;
+          purpose: string;
+          duration: string;
+          provider: string;
+        };
+        localeCookie: {
+          name: string;
+          type: string;
+          purpose: string;
+          duration: string;
+          provider: string;
+        };
+        gtm: {
+          name: string;
+          type: string;
+          purpose: string;
+          duration: string;
+          provider: string;
+        };
+        authLocalStorage: {
+          name: string;
+          type: string;
+          purpose: string;
+          duration: string;
+          provider: string;
+        };
+      };
+    };
   };
   faq: {
     title: string;
@@ -358,6 +423,45 @@ export interface TranslationsPart2 {
       description: string;
       email: string;
     };
+  };
+  partners: {
+    title: string;
+    intro: string;
+    howToBecome: {
+      title: string;
+      items: string[];
+    };
+    benefits: {
+      title: string;
+      items: string[];
+    };
+    whoCan: {
+      title: string;
+      items: string[];
+    };
+    howToLeave: {
+      title: string;
+      items: string[];
+    };
+    obligations: {
+      title: string;
+      items: string[];
+    };
+    contactCta: string;
+  };
+  investors: {
+    title: string;
+    intro: string;
+    about: { title: string; paragraphs: string[] };
+    done: { title: string; items: string[] };
+    product: { title: string; lead: string; items: string[] };
+    businessModel: { title: string; lead: string; items: string[] };
+    vision: { title: string; paragraphs: string[] };
+    strategy: { title: string; items: string[] };
+    scaling: { title: string; lead: string; items: string[] };
+    whyNow: { title: string; items: string[] };
+    offer: { title: string; lead: string; items: string[]; footer: string };
+    contactCta: string;
   };
   contacts: {
     title: string;
@@ -410,72 +514,50 @@ export interface TranslationsPart2 {
       ogDescription: string;
       ogAlt: string;
     };
-    contacts: {
+    partners: {
       title: string;
       description: string;
       ogTitle: string;
       ogDescription: string;
       ogAlt: string;
     };
-    terms: {
+    investors: {
       title: string;
       description: string;
       ogTitle: string;
       ogDescription: string;
       ogAlt: string;
     };
-    privacy: {
+    contacts: MetadataPage;
+    terms: MetadataPage;
+    privacy: MetadataPage;
+    cookieSettings: MetadataPage;
+    login: MetadataPage;
+    register: MetadataPage;
+    sign: MetadataPage;
+    resetPassword: MetadataPage;
+    brandLanding: {
       title: string;
+      titleWithPrice: string;
       description: string;
-      ogTitle: string;
-      ogDescription: string;
+      h1: string;
+      intro: string;
       ogAlt: string;
     };
-    cookieSettings: {
+    brandModelLanding: {
       title: string;
+      titleWithPrice: string;
       description: string;
-      ogTitle: string;
-      ogDescription: string;
-      ogAlt: string;
-    };
-    login: {
-      title: string;
-      description: string;
-      ogTitle: string;
-      ogDescription: string;
-      ogAlt: string;
-    };
-    register: {
-      title: string;
-      description: string;
-      ogTitle: string;
-      ogDescription: string;
-      ogAlt: string;
-    };
-    sign: {
-      title: string;
-      description: string;
-      ogTitle: string;
-      ogDescription: string;
-      ogAlt: string;
-    };
-    resetPassword: {
-      title: string;
-      description: string;
-      ogTitle: string;
-      ogDescription: string;
+      h1: string;
       ogAlt: string;
     };
     listing: {
       notFoundTitle: string;
       notFoundDescription: string;
       defaultDescription: string;
-      keywords: {
-        cars: string;
-        buyCar: string;
-        carsForSale: string;
-        moldova: string;
-      };
+      ogAltVehicle: string;
+      ogAltTire: string;
+      keywords: { cars: string; buyCar: string; carsForSale: string; moldova: string };
     };
   };
 }

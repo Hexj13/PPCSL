@@ -1,11 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 
 import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
 import { useI18n } from '@/components/providers/I18nProvider';
+import { useLoadingState } from '@/hooks/useLoadingState';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { SavedFilter } from '@/lib/api';
 import { brandsApi, savedFiltersApi } from '@/lib/api';
@@ -31,7 +32,7 @@ export function clearSavedFiltersCache() {
 }
 
 export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}) {
-  const router = useRouter();
+  const { push: localizedPush } = useLocalizedNavigation();
   const { t } = useTranslation();
   const { locale } = useI18n();
   const hasLoadedRef = useRef(moduleHasLoaded);
@@ -83,6 +84,12 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
 
   const [loading, setLoading] = useState(() => {
     return !(hasLoadedRef.current && cachedFiltersRef.current !== null);
+  });
+
+  const { visible: showSavedFiltersSkeleton } = useLoadingState({
+    isLoading: loading,
+    showDelay: 200,
+    minDisplayTime: 450,
   });
 
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
@@ -302,12 +309,12 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
     });
 
     const queryString = params.toString();
-    router.push(`/?${queryString}`);
+    localizedPush(`/?${queryString}`);
   };
 
-  if (loading) {
+  if (showSavedFiltersSkeleton) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4" data-testid="saved-filters-list">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="card p-4 animate-pulse">
             <div className="h-6 bg-gray-700 rounded-sm w-1/3 mb-2"></div>
@@ -320,17 +327,18 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
 
   if (filters.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12" data-testid="saved-filters-empty">
         <p className="text-text-secondary text-lg">{t('savedFiltersList.empty')}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="saved-filters-list">
       {filters.map((filter, index) => (
         <div
           key={filter.id}
+          data-testid={`saved-filter-card-${filter.id}`}
           onClick={() => {
             handleApply(filter).catch((error) => {
               console.error('Failed to apply filter:', error);
@@ -372,6 +380,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                 }}
                 className="shrink-0 p-2 text-primary-700 hover-only:hover:text-primary-900 transition-colors duration-200"
                 title={t('common.edit')}
+                data-testid={`saved-filter-edit-${filter.id}`}
               >
                 <svg
                   className="w-6 h-6"
@@ -396,6 +405,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                 disabled={deletingIds.has(filter.id)}
                 className="shrink-0 p-2 text-text-secondary hover-only:hover:text-red-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 title={t('common.delete')}
+                data-testid={`saved-filter-delete-${filter.id}`}
               >
                 {deletingIds.has(filter.id) ? (
                   <svg

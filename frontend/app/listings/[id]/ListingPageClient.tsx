@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useMemo, type RefObject } from 'react';
 
 import { ListingPageActions } from '@/components/ListingPage/ListingPageActions';
 import { ListingPageBreadcrumbs } from '@/components/ListingPage/ListingPageBreadcrumbs';
@@ -13,51 +13,33 @@ import {
   type ListingPageImagesHandle,
 } from '@/components/ListingPage/ListingPageImages';
 import { ListingPageSeller } from '@/components/ListingPage/ListingPageSeller';
-import {
-  BreadcrumbsSkeleton,
-  MainImageSkeleton,
-  ThumbnailsSkeleton,
-  PriceSkeleton,
-  FavoriteButtonSkeleton,
-  TitleSkeleton,
-  BadgesSkeleton,
-} from '@/components/listing/ListingPageSkeleton';
+import { ListingDetailPageSkeleton } from '@/components/listing/ListingDetailSkeleton';
+import { BreadcrumbsSkeleton } from '@/components/listing/ListingPageSkeleton';
 import { SimilarListings } from '@/components/listing/SimilarListings';
+import { LISTING_DETAIL_PAGE_ROOT_CLASS } from '@/components/listing/listing-detail-layout';
 import { PromotionModal } from '@/components/modals/PromotionModal';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { LISTING_IMAGE_SCHEDULED_RETRY_COUNT, useImageRetry } from '@/hooks/useImageRetry';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
+import { getBlurForListing } from '@/lib/blur-navigation-cache';
 import { reportImageLoadFailure } from '@/lib/image-failure-monitor';
-import { listingHasAnyDescription } from '@/lib/listingDescriptionLocale';
 import {
-  formatDate,
-  formatMileage,
-  formatRegistrationType,
-  getTireModelDisplayLabel,
-  isTireListing,
-} from '@/lib/utils';
-import { Spinner } from '@/ui';
+  getListingDescriptionForLocale,
+  listingHasAnyDescription,
+} from '@/lib/listingDescriptionLocale';
+import { formatDate, formatMileage, formatRegistrationType, isTireListing } from '@/lib/utils';
+import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
 import { ListingPageHistorySection } from './ListingPageHistorySection';
 import { listingPageShowsHeaderDivider } from './listing-page-header-divider';
+import {
+  getBoardSlug,
+  getListingPageVideoSlide,
+  listingPageGalleryImages,
+  listingPagePrimaryHeadingTitle,
+} from './listing-page-helpers';
 import { useListingPageClient, type UseListingPageClientReturn } from './useListingPageClient';
-
-function getShowPromoteButton(listing: Listing, userId: string | undefined): boolean {
-  return !!(
-    userId &&
-    listing.user &&
-    userId === listing.user.id &&
-    listing.status === 'Active' &&
-    !listing.is_promoted
-  );
-}
-
-function getBoardSlug(listing: Listing): string | null {
-  if (!listing.user) return null;
-  const u = listing.user as { board_slug?: string; boardSlug?: string };
-  return u.board_slug ?? u.boardSlug ?? null;
-}
 
 function ListingPageListingInfoSection({
   listing,
@@ -184,7 +166,7 @@ function ListingPageListingInfoSection({
           </svg>
           <span>{t('listingDetail.copyLink')}</span>
         </button>
-        {canShare && (
+        {canShare ? (
           <button
             onClick={onShare}
             className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10! select-none"
@@ -204,6 +186,8 @@ function ListingPageListingInfoSection({
             </svg>
             <span>{t('listingDetail.share')}</span>
           </button>
+        ) : (
+          <div className="w-full min-h-12" aria-hidden />
         )}
       </div>
     </div>
@@ -289,36 +273,8 @@ function ListingPageConditionRegistrationSection({
   );
 }
 
-function ListingPageSkeleton({ t }: { t: (k: string) => string }) {
-  return (
-    <>
-      <div className="max-w-6xl mx-auto" data-testid="listing-detail-page">
-        <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-8 lg:gap-6">
-          <div className="space-y-6 order-1">
-            <div>
-              <MainImageSkeleton />
-              <ThumbnailsSkeleton />
-            </div>
-          </div>
-          <div className="order-2 lg:order-3 lg:col-span-2">
-            <BreadcrumbsSkeleton />
-          </div>
-          <div className="space-y-6 order-3 lg:order-2">
-            <div>
-              <TitleSkeleton />
-              <PriceSkeleton />
-              <BadgesSkeleton />
-              <div className="mt-8">
-                <FavoriteButtonSkeleton />
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="my-6 border-t-0 lg:border-t border-primary-500/20"></div>
-        <Spinner size="md" text={t('common.loading')} />
-      </div>
-    </>
-  );
+function ListingPageSkeleton() {
+  return <ListingDetailPageSkeleton breadcrumb={<BreadcrumbsSkeleton />} />;
 }
 
 function useListingPageGalleryKeyboard(
@@ -350,24 +306,6 @@ function useListingPageGalleryKeyboard(
   }, [imagesLength, isImageModalOpen, previewRef]);
 }
 
-function listingPagePrimaryHeadingTitle(listing: Listing, t: (k: string) => string): string {
-  if (isTireListing(listing)) {
-    const tire = listing.tire;
-    const tireTitleParts =
-      tire && [tire.brand?.name, getTireModelDisplayLabel(tire)].filter(Boolean);
-    return (
-      (tireTitleParts?.length ? tireTitleParts.join(' ') : listing.title) ||
-      t('listings.defaultTitle')
-    );
-  }
-  const vehicle = listing.vehicle;
-  const brand = vehicle?.brand?.name || '';
-  const model = vehicle?.model?.name || '';
-  const year = vehicle?.year || '';
-  const vehicleInfo = [brand, model, year].filter(Boolean).join(' ');
-  return vehicleInfo || listing.title || t('listings.defaultTitle');
-}
-
 function ListingPageMainContent(props: UseListingPageClientReturn) {
   const { t } = useTranslation();
   const { locale } = useI18n();
@@ -376,7 +314,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     router,
     listing,
     id,
-    user,
+    user: _user,
     isInitialized,
     isInComparison,
     isFavorite,
@@ -384,7 +322,6 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     equipmentColumns,
     displayTitle: _displayTitle,
     imageAltTitle,
-    descriptionHtml,
     getClosingDate,
     currentImageIndex,
     setCurrentImageIndex,
@@ -396,7 +333,6 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     promotionModalOpen,
     setPromotionModalOpen,
     promotionAccess,
-    canPromote,
     canShare,
     previousListings,
     loadingPrevious,
@@ -410,16 +346,49 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     handlePromotionSelect,
     openImageModal,
     closeImageModal,
+    aiReportModalOpen,
+    aiReportPhase,
+    aiReportPayload,
+    aiReportMessage,
+    handleAiReportClick,
+    closeAiReportModal,
   } = props;
   const previewRef = useRef<ListingPageImagesHandle>(null);
   const listingRef = useRef(listing);
   listingRef.current = listing;
   const failureScopeRef = useRef<'listing_page' | 'listing_modal'>('listing_page');
 
-  const images =
-    listing?.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'];
-  const imagesRef = useRef(images);
-  imagesRef.current = images;
+  const descriptionLocale = locale === 'ru' ? 'ru' : 'ro';
+  const descriptionRaw = useMemo(() => {
+    if (!listing || !listingHasAnyDescription(listing)) return '';
+    return getListingDescriptionForLocale(listing, descriptionLocale) ?? '';
+  }, [listing, descriptionLocale]);
+
+  const baseImages = useMemo(
+    () =>
+      listing?.images && listing.images.length > 0 ? listing.images : ['/placeholder-car.jpg'],
+    [listing?.images],
+  );
+
+  const listingVideoSlide = useMemo(() => getListingPageVideoSlide(listing), [listing]);
+
+  const galleryImages = useMemo(
+    () => listingPageGalleryImages(listingVideoSlide, baseImages),
+    [listingVideoSlide, baseImages],
+  );
+
+  const navigationBlurDataUrl = useMemo(() => {
+    if (typeof window === 'undefined' || !listing?.id) return undefined;
+    const nav = getBlurForListing(listing.id);
+    if (!nav?.blurHash) return undefined;
+    try {
+      return blurhashToDataURL(nav.blurHash);
+    } catch {
+      return undefined;
+    }
+  }, [listing?.id]);
+  const imagesRef = useRef(galleryImages);
+  imagesRef.current = galleryImages;
 
   const onFinalImageFailure = useCallback((index: number, imageUrl: string) => {
     const l = listingRef.current;
@@ -435,7 +404,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
   }, []);
 
   const { onImageError: retryImageError } = useImageRetry(
-    images,
+    galleryImages,
     imageErrors,
     setImageErrors,
     75,
@@ -458,23 +427,25 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     [retryImageError],
   );
 
-  useListingPageGalleryKeyboard(previewRef, images.length, isImageModalOpen);
+  useListingPageGalleryKeyboard(previewRef, galleryImages.length, isImageModalOpen);
   if (!listing) return null;
 
   const closingDate = getClosingDate(listing.last_updated_at);
   const h1Title = listingPagePrimaryHeadingTitle(listing, t);
 
-  const nextImage = () => setModalImageIndex((prev) => (prev + 1) % images.length);
-  const prevImage = () => setModalImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  const nextImage = () => setModalImageIndex((prev) => (prev + 1) % galleryImages.length);
+  const prevImage = () =>
+    setModalImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
 
   return (
     <>
-      <div className="max-w-6xl mx-auto" data-testid="listing-detail-page">
+      <div className={LISTING_DETAIL_PAGE_ROOT_CLASS} data-testid="listing-detail-page">
         <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-8 lg:gap-6">
           <div className="space-y-6 min-w-0 order-1" data-testid="listing-detail-gallery">
             <ListingPageImages
               ref={previewRef}
-              images={images}
+              images={galleryImages}
+              videoSlide={listingVideoSlide}
               imageAltTitle={imageAltTitle}
               currentImageIndex={currentImageIndex}
               setCurrentImageIndex={setCurrentImageIndex}
@@ -483,6 +454,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
               onImageClick={openImageModal}
               coverBlurHash={listing.cover_blur_hash}
               imageBlurHashes={listing.image_blur_hashes}
+              navigationBlurDataUrl={navigationBlurDataUrl}
             />
           </div>
 
@@ -505,12 +477,12 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
                 isInComparison={isInComparison}
                 isFavorite={isFavorite}
                 isOwnListing={isOwnListing}
-                canPromote={canPromote}
-                showPromoteButton={getShowPromoteButton(listing, user?.id)}
                 showCompare={showCompare}
+                onAiReportClick={!isTireListing(listing) ? handleAiReportClick : undefined}
                 onToggleComparison={handleToggleComparison}
                 onToggleFavorite={handleToggleFavorite}
                 onPromoteClick={handlePromoteClick}
+                promotionAccess={promotionAccess}
               />
             </div>
           </div>
@@ -542,11 +514,11 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
               </div>
             )}
 
-            {listingHasAnyDescription(listing) && (
+            {descriptionRaw ? (
               <div data-testid="listing-detail-description">
-                <ListingPageDescription descriptionHtml={descriptionHtml} />
+                <ListingPageDescription rawHtml={descriptionRaw} />
               </div>
-            )}
+            ) : null}
 
             {!isTireListing(listing) && (
               <ListingPageHistorySection
@@ -557,6 +529,11 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
                 t={t}
                 formatDate={formatDateWithLocale}
                 formatMileage={formatMileage}
+                aiReportModalOpen={aiReportModalOpen}
+                aiReportPhase={aiReportPhase}
+                aiReportPayload={aiReportPayload}
+                aiReportMessage={aiReportMessage}
+                onCloseAiReportModal={closeAiReportModal}
               />
             )}
           </div>
@@ -590,10 +567,13 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
 
       <ListingPageImageModal
         isOpen={isImageModalOpen}
-        images={images}
+        images={galleryImages}
+        listingVideoSlide={listingVideoSlide}
         currentIndex={modalImageIndex}
         imageAltTitle={imageAltTitle}
         imageErrors={imageErrors}
+        coverBlurHash={listing.cover_blur_hash}
+        imageBlurHashes={listing.image_blur_hashes ?? undefined}
         onClose={closeImageModal}
         onNext={nextImage}
         onPrev={prevImage}
@@ -621,9 +601,9 @@ export default function ListingPageClient({
   listingId: string;
   initialListing: Listing | null;
 }) {
-  const { t } = useTranslation();
   const state = useListingPageClient(listingId, initialListing);
-  if (!state.listing && !state.showSkeleton) return null;
-  if (!state.listing || state.showSkeleton) return <ListingPageSkeleton t={t} />;
+  if (state.showSkeleton || !state.listing) {
+    return <ListingPageSkeleton />;
+  }
   return <ListingPageMainContent {...state} />;
 }

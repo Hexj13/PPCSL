@@ -3,6 +3,7 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -50,6 +51,8 @@ export interface AuditContext {
 
 @Injectable()
 export class AdminBrandsModelsService {
+  private readonly logger = new Logger(AdminBrandsModelsService.name);
+
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(Brand)
@@ -199,6 +202,15 @@ export class AdminBrandsModelsService {
       return this.toAdminBrandDto(saved, []);
     });
     await this.invalidateCaches();
+    this.logger.log(
+      JSON.stringify({
+        event: 'admin_brand_created',
+        brandId: result.id,
+        name: result.name,
+        vehicleTypes: result.vehicleTypes,
+        actorUserId: ctx.actorUserId,
+      }),
+    );
     return result;
   }
 
@@ -330,6 +342,16 @@ export class AdminBrandsModelsService {
       return this.toAdminModelDto(saved, 0);
     });
     await this.invalidateCaches();
+    this.logger.log(
+      JSON.stringify({
+        event: 'admin_model_created',
+        modelId: result.id,
+        brandId: result.brandId,
+        name: result.name,
+        vehicleTypes: result.vehicleTypes,
+        actorUserId: ctx.actorUserId,
+      }),
+    );
     return result;
   }
 

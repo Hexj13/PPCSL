@@ -30,6 +30,15 @@ export class RegisterFormComponent {
     await expect(termsInput).toBeChecked();
   }
 
+  private async submitForm(): Promise<void> {
+    await this.page.getByTestId(this.testIds.registerForm).evaluate((form) => {
+      if (!(form instanceof HTMLFormElement)) {
+        throw new Error('Expected register form element');
+      }
+      form.requestSubmit();
+    });
+  }
+
   async expectVisible(): Promise<void> {
     await expect(this.page.getByTestId(this.testIds.registerForm)).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.registerPhoneInput)).toBeVisible();
@@ -42,10 +51,9 @@ export class RegisterFormComponent {
     await this.page.getByTestId(this.testIds.registerPhoneInput).fill(phone);
     await this.page.getByTestId(this.testIds.registerPasswordInput).fill(password);
     await this.acceptTerms();
-    const submit = this.page.getByTestId(this.testIds.registerSubmit);
     await Promise.all([
       this.page.waitForURL(/\/verify-phone\?phone=/, { timeout: 30_000 }),
-      submit.click(),
+      this.submitForm(),
     ]);
   }
 
@@ -56,10 +64,9 @@ export class RegisterFormComponent {
     await this.ensureBusinessMode(companyName);
     await this.acceptTerms();
     await this.ensureBusinessMode(companyName);
-    const submit = this.page.getByTestId(this.testIds.registerSubmit);
     await Promise.all([
       this.page.waitForURL(/\/verify-phone\?phone=/, { timeout: 30_000 }),
-      submit.click(),
+      this.submitForm(),
     ]);
   }
 }

@@ -6,6 +6,7 @@ import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
 import { RedisService } from '../common/redis.service';
 import { createSlug } from '../common/utils/slug.utils';
+import { listingPublicPathSegment } from '../listings/application/utils/listing-url-slug.utils';
 import { Listing } from '../listings/entities/listing.entity';
 import { TireBrand } from '../tires/entities/tire-brand.entity';
 import { TireModel } from '../tires/entities/tire-model.entity';
@@ -13,7 +14,7 @@ import { User } from '../users/entities/user.entity';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club').replace(/\/$/, '');
 const CACHE_TTL = 3600;
-const CACHE_PREFIX = 'sitemap:';
+const CACHE_PREFIX = 'sitemap:v3:';
 
 const BRAND_SITEMAP_VEHICLE_TYPES = ['car', 'truck', 'moto'] as const;
 type BrandSitemapVehicleType = (typeof BRAND_SITEMAP_VEHICLE_TYPES)[number];
@@ -44,6 +45,49 @@ export class SitemapService {
     private readonly tireModelRepo: Repository<TireModel>,
     private readonly redis: RedisService,
   ) {}
+
+  private ruAlternateLoc(roLoc: string): string {
+    const u = new URL(roLoc);
+    const pq = `${u.pathname}${u.search}`;
+    if (pq === '/ru' || pq.startsWith('/ru/')) {
+      return roLoc;
+    }
+    if (pq === '/' || pq === '') {
+      return `${u.origin}/ru`;
+    }
+    return `${u.origin}/ru${pq}`;
+  }
+
+  private buildHreflangAlternateXml(roLoc: string): string | null {
+    const ruLoc = this.ruAlternateLoc(roLoc);
+    if (ruLoc === roLoc) {
+      return null;
+    }
+    const escapedRo = this.escapeXml(roLoc);
+    const escapedRu = this.escapeXml(ruLoc);
+    return [
+      `    <xhtml:link rel="alternate" hreflang="ro" href="${escapedRo}"/>`,
+      `    <xhtml:link rel="alternate" hreflang="ru" href="${escapedRu}"/>`,
+      `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapedRo}"/>`,
+    ].join('\n');
+  }
+
+  private buildUrlXmlEntry(u: SitemapUrl): string {
+    const alternates = this.buildHreflangAlternateXml(u.loc);
+    let xml = `  <url>\n    <loc>${this.escapeXml(u.loc)}</loc>`;
+    if (alternates) {
+      xml += `\n${alternates}`;
+    }
+    xml += `\n    <lastmod>${u.lastmod}</lastmod>`;
+    if (u.changefreq) {
+      xml += `\n    <changefreq>${u.changefreq}</changefreq>`;
+    }
+    if (u.priority !== undefined) {
+      xml += `\n    <priority>${u.priority}</priority>`;
+    }
+    xml += '\n  </url>';
+    return xml;
+  }
 
   async getSitemapIndex(): Promise<string> {
     const cached = await this.getFromCache('index');
@@ -93,8 +137,17 @@ export class SitemapService {
       }
     }
 
-    const urls = xmlSitemaps.flatMap((xml) => this.extractLocValues(xml));
-    const txt = `${Array.from(new Set(urls)).join('\n')}\n`;
+    const ordered = new Set<string>();
+    for (const xml of xmlSitemaps) {
+      for (const u of this.extractLocValues(xml)) {
+        ordered.add(u);
+        const ru = this.ruAlternateLoc(u);
+        if (ru !== u) {
+          ordered.add(ru);
+        }
+      }
+    }
+    const txt = `${Array.from(ordered).join('\n')}\n`;
 
     await this.saveToCache('txt', txt);
     return txt;
@@ -111,6 +164,7 @@ export class SitemapService {
       { loc: `${SITE_URL}/terms`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
       { loc: `${SITE_URL}/privacy`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
       { loc: `${SITE_URL}/faq`, lastmod: now, changefreq: 'monthly', priority: 0.4 },
+      { loc: `${SITE_URL}/partners`, lastmod: now, changefreq: 'monthly', priority: 0.4 },
       { loc: `${SITE_URL}/contacts`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
       { loc: `${SITE_URL}/cookie-settings`, lastmod: now, changefreq: 'monthly', priority: 0.2 },
     ];
@@ -192,10 +246,16 @@ export class SitemapService {
     return (BRAND_SITEMAP_VEHICLE_TYPES as readonly string[]).includes(v);
   }
 
-  private modelBrandSitemapVehicleType(model: VehicleModel): BrandSitemapVehicleType {
-    const vt = model.vehicle_types?.[0];
-    if (vt && this.isBrandSitemapVehicleType(vt)) return vt;
-    return 'car';
+  private modelBrandSitemapVehicleTypes(model: VehicleModel): BrandSitemapVehicleType[] {
+    const raw = model.vehicle_types || [];
+    const filtered = raw.filter((t): t is BrandSitemapVehicleType =>
+      this.isBrandSitemapVehicleType(t),
+    );
+    const unique = [...new Set(filtered)];
+    if (unique.length === 0) {
+      return ['car'];
+    }
+    return unique;
   }
 
   private groupBrandModelUrlsByVehicleType(
@@ -225,9 +285,9 @@ export class SitemapService {
       }
 
       for (const vt of types) {
-        const param = vt !== 'car' ? `&vehicleType=${vt}` : '';
+        const param = vt !== 'car' ? `?vehicleType=${vt}` : '';
         grouped[vt].push({
-          loc: `${SITE_URL}/?brand=${slug}${param}`,
+          loc: `${SITE_URL}/${slug}${param}`,
           lastmod: now,
           changefreq: 'daily',
           priority: 0.8,
@@ -241,14 +301,15 @@ export class SitemapService {
       const modelSlug = createSlug(model.name);
       if (!brandSlug || !modelSlug) continue;
 
-      const vt = this.modelBrandSitemapVehicleType(model);
-      const param = vt !== 'car' ? `&vehicleType=${vt}` : '';
-      grouped[vt].push({
-        loc: `${SITE_URL}/?brand=${brandSlug}&model=${modelSlug}${param}`,
-        lastmod: now,
-        changefreq: 'daily',
-        priority: 0.7,
-      });
+      for (const vt of this.modelBrandSitemapVehicleTypes(model)) {
+        const param = vt !== 'car' ? `?vehicleType=${vt}` : '';
+        grouped[vt].push({
+          loc: `${SITE_URL}/${brandSlug}/${modelSlug}${param}`,
+          lastmod: now,
+          changefreq: 'daily',
+          priority: 0.7,
+        });
+      }
     }
 
     return grouped;
@@ -356,9 +417,9 @@ export class SitemapService {
     let hasMore = true;
 
     while (hasMore) {
-      const batch: { id: string; updated_at: Date }[] = await this.listingRepo
+      const batch: { id: string; updated_at: Date; slug: string | null }[] = await this.listingRepo
         .createQueryBuilder('l')
-        .select(['l.id', 'l.updated_at'])
+        .select(['l.id', 'l.updated_at', 'l.slug'])
         .where('l.status = :status', { status: 'Active' })
         .andWhere('l.created_at >= :start', { start: startDate })
         .andWhere('l.created_at < :end', { end: endDate })
@@ -369,8 +430,16 @@ export class SitemapService {
         .getMany();
 
       for (const l of batch) {
+        const pathSeg = listingPublicPathSegment(l.slug, l.id);
+        const roLoc = `${SITE_URL}/listings/${pathSeg}`;
+        const lastmod = l.updated_at.toISOString().split('T')[0];
         urlEntries.push(
-          `  <url>\n    <loc>${this.escapeXml(`${SITE_URL}/listings/${l.id}`)}</loc>\n    <lastmod>${l.updated_at.toISOString().split('T')[0]}</lastmod>\n    <changefreq>hourly</changefreq>\n    <priority>0.9</priority>\n  </url>`,
+          this.buildUrlXmlEntry({
+            loc: roLoc,
+            lastmod,
+            changefreq: 'hourly',
+            priority: 0.9,
+          }),
         );
       }
 
@@ -380,7 +449,7 @@ export class SitemapService {
 
     if (urlEntries.length === 0) return null;
 
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries.join('\n')}\n</urlset>\n`;
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urlEntries.join('\n')}\n</urlset>\n`;
     await this.saveToCache(cacheKey, xml);
     return xml;
   }
@@ -430,17 +499,8 @@ export class SitemapService {
   }
 
   private buildUrlset(urls: SitemapUrl[]): string {
-    const entries = urls
-      .map((u) => {
-        let xml = `  <url>\n    <loc>${this.escapeXml(u.loc)}</loc>\n    <lastmod>${u.lastmod}</lastmod>`;
-        if (u.changefreq) xml += `\n    <changefreq>${u.changefreq}</changefreq>`;
-        if (u.priority !== undefined) xml += `\n    <priority>${u.priority}</priority>`;
-        xml += '\n  </url>';
-        return xml;
-      })
-      .join('\n');
-
-    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
+    const entries = urls.map((u) => this.buildUrlXmlEntry(u)).join('\n');
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries}\n</urlset>\n`;
   }
 
   private today(): string {

@@ -3,20 +3,15 @@
 import Image from 'next/image';
 import { useCallback, useState, type CSSProperties } from 'react';
 
-import { createSlug } from '@/lib/utils';
+import { tireBrandLogoUrl, vehicleBrandLogoUrl } from '@/lib/brand-logo-urls';
 
 function popularBrandTileLetter(label: string): string {
   const first = label.trim().slice(0, 1);
   return first ? first.toLocaleUpperCase() : '';
 }
 
-export function popularVehicleBrandLogoUrl(brandName: string): string {
-  return `/brands_logo/${createSlug(brandName)}-logo.webp`;
-}
-
-export function popularTireBrandLogoUrl(brandName: string): string {
-  return `/tires_logo/${createSlug(brandName)}-logo.webp`;
-}
+export const popularVehicleBrandLogoUrl = vehicleBrandLogoUrl;
+export const popularTireBrandLogoUrl = tireBrandLogoUrl;
 
 export function PopularFilterChip({
   label,

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useCallback, useMemo, startTransition } from 'react';
+import React, { useCallback, useEffect, useMemo, startTransition } from 'react';
 
 import {
   ListingCardBadges,
@@ -12,6 +12,7 @@ import {
   ListingCardVehicleSpecs,
 } from '@/components/listing/ListingCardParts';
 import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStatusBadge';
+import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhotoCarouselNavButtons';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import { useI18n } from '@/components/providers/I18nProvider';
@@ -24,9 +25,12 @@ import { getFavoriteButtonClassName, useListingCardFavorite } from '@/hooks/useL
 import { useListingCardImageError } from '@/hooks/useListingCardImageError';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
-import { setBlurForListing } from '@/lib/blur-navigation-cache';
-import { sessionStorageSetItem } from '@/lib/browser-session-storage';
+import { setBlurForListing, setIndexForListing } from '@/lib/blur-navigation-cache';
+import { decodeBlurhashOffMain, getDecodedBlurhashFromCache } from '@/lib/blurhash-worker-client';
 import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
+import { observeElementVisibility } from '@/lib/intersection-observer-registry';
+import { preserveHomeScrollPosition } from '@/lib/preserve-home-scroll';
+import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 import {
   formatDateShort,
   formatDateRelative,
@@ -34,10 +38,10 @@ import {
   getOptimizedImageUrl,
   getCityName,
   getListingDisplayTitle,
+  getListingHref,
   getVehicleType,
   isTireListing,
 } from '@/lib/utils';
-import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
 interface ListingCardProps {
   listing: Listing;
@@ -144,63 +148,6 @@ function ListingCardBody({
   );
 }
 
-function CarouselNavButtons({
-  disabled,
-  onPrev,
-  onNext,
-  prevLabel,
-  nextLabel,
-}: {
-  disabled: boolean;
-  onPrev: (e: React.MouseEvent) => void;
-  onNext: (e: React.MouseEvent) => void;
-  prevLabel: string;
-  nextLabel: string;
-}) {
-  const btnClass = disabled
-    ? 'opacity-40 cursor-wait'
-    : 'opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover-only:hover:opacity-100';
-  const hitAreaClass =
-    'absolute w-14 h-14 flex z-10 touch-manipulation touch-pan-y pointer-events-auto lg:w-10 lg:h-10';
-  const iconWrapClass =
-    'w-10 h-10 shrink-0 rounded-full bg-primary-500 flex items-center justify-center transition-all duration-300 ease-out shadow-lg text-white';
-  return (
-    <>
-      <button
-        type="button"
-        onClick={onPrev}
-        aria-disabled={disabled || undefined}
-        className={`bottom-3 left-3 ${hitAreaClass} justify-start items-end lg:justify-center lg:items-center`}
-        aria-label={prevLabel}
-      >
-        <span className={`${iconWrapClass} ${btnClass}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2.5}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </span>
-      </button>
-      <button
-        type="button"
-        onClick={onNext}
-        aria-disabled={disabled || undefined}
-        className={`bottom-3 right-3 ${hitAreaClass} justify-end items-end lg:justify-center lg:items-center`}
-        aria-label={nextLabel}
-      >
-        <span className={`${iconWrapClass} ${btnClass}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-          </svg>
-        </span>
-      </button>
-    </>
-  );
-}
-
 function useCardCarouselRewind(
   images: string[],
   carouselIndex: number,
@@ -256,7 +203,6 @@ function useCardCarouselRewind(
         resetToFirstTimerRef.current = null;
         setIsAutoRewinding(true);
         rewindIntervalRef.current = setInterval(() => {
-          if (carouselRef.current?.isBusy()) return;
           carouselRef.current?.goPrev();
         }, REWIND_STEP_MS);
       }, RESET_TO_FIRST_DELAY_MS);
@@ -286,19 +232,12 @@ function useCardCarouselRewind(
   React.useEffect(() => {
     if (!isMobileOrTablet) return;
     const node = cardRef.current;
-    if (!node || typeof IntersectionObserver === 'undefined') return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) {
-          startRewindTimer(false);
-        }
-      },
-      { threshold: 0.01 },
-    );
-    observer.observe(node);
-    return () => {
-      observer.disconnect();
-    };
+    if (!node) return;
+    return observeElementVisibility(node, (isIntersecting) => {
+      if (!isIntersecting) {
+        startRewindTimer(false);
+      }
+    });
   }, [isMobileOrTablet, cardRef, startRewindTimer]);
 
   return { onMouseLeave, onMouseEnter, clearRewind, isAutoRewinding };
@@ -377,8 +316,8 @@ function ListingCardComponent({
 
   const [imageErrors, setImageErrors] = React.useState<Set<number>>(() => new Set());
   const [isHydrated, setIsHydrated] = React.useState(false);
-  const [isCarouselBusy, setIsCarouselBusy] = React.useState(false);
   const [carouselIndex, setCarouselIndex] = React.useState(0);
+  const [suppressBadgeHoverExpand, setSuppressBadgeHoverExpand] = React.useState(false);
   const carouselRef = React.useRef<ListingCardImageCarouselHandle>(null);
   const cardRef = React.useRef<HTMLDivElement>(null);
 
@@ -395,25 +334,35 @@ function ListingCardComponent({
     (index: number) => {
       setCarouselIndex(index);
       if (index === 0) clearRewind();
+      if (images.length > 1 && index !== 0) {
+        setSuppressBadgeHoverExpand(true);
+      }
     },
-    [clearRewind],
+    [clearRewind, images.length],
   );
 
-  const handleCarouselBusyChange = useCallback((busy: boolean) => {
-    setIsCarouselBusy(busy);
-  }, []);
+  const handleCardMouseLeaveCombined = useCallback(() => {
+    setSuppressBadgeHoverExpand(false);
+    handleCardMouseLeave();
+  }, [handleCardMouseLeave]);
 
   const handleClick = useCallback(() => {
     if (listing.cover_blur_hash) {
       setBlurForListing(listing.id, listing.cover_blur_hash, images[0]);
     }
-    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+    const fromHome =
+      typeof window !== 'undefined' &&
+      stripLocalePrefixFromPathname(window.location.pathname).restPath === '/';
+    setIndexForListing(
+      listing.id,
+      fromHome ? 0 : (carouselRef.current?.getIndex() ?? carouselIndex),
+    );
+    if (fromHome) {
       startTransition(() => {
-        sessionStorageSetItem('homeScrollPosition', window.scrollY.toString());
-        sessionStorageSetItem('homeScrollTimestamp', Date.now().toString());
+        preserveHomeScrollPosition();
       });
     }
-  }, [listing.id, listing.cover_blur_hash, images]);
+  }, [listing.id, listing.cover_blur_hash, images, carouselIndex]);
 
   const favoriteDisabled = isToggling;
   const favoriteButtonClass = getFavoriteButtonClassName(isToggling, isFavorite);
@@ -449,7 +398,7 @@ function ListingCardComponent({
     [goCarouselNext],
   );
 
-  const cardUrl = `/listings/${listing.id}`;
+  const cardUrl = getListingHref(listing, locale);
 
   const singleImageUrl =
     images[0] && images[0] !== '/placeholder-car.jpg'
@@ -459,10 +408,85 @@ function ListingCardComponent({
     images.length <= 1 &&
     Boolean(singleImageUrl && singleImageUrl !== '/placeholder-car.jpg' && !imageErrors.has(0));
 
-  const blurDataURL = useMemo(
-    () => (listing.cover_blur_hash ? blurhashToDataURL(listing.cover_blur_hash) : undefined),
-    [listing.cover_blur_hash],
-  );
+  const [resolvedBlurDataURL, setResolvedBlurDataURL] = React.useState<string | undefined>(() => {
+    const ch = listing.cover_blur_hash;
+    return typeof ch === 'string' && ch.length >= 6 ? getDecodedBlurhashFromCache(ch) : undefined;
+  });
+  const [resolvedImageBlurDataURLs, setResolvedImageBlurDataURLs] = React.useState<
+    (string | undefined)[]
+  >(() => {
+    const ch = listing.cover_blur_hash;
+    const hs = listing.image_blur_hashes ?? [];
+    const coverCached =
+      typeof ch === 'string' && ch.length >= 6 ? getDecodedBlurhashFromCache(ch) : undefined;
+    return images.map((_, i) => {
+      const h = hs[i];
+      if (typeof h === 'string' && h.length >= 6) {
+        return getDecodedBlurhashFromCache(h) ?? coverCached;
+      }
+      return coverCached;
+    });
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    const coverHash = listing.cover_blur_hash;
+    const hashes = listing.image_blur_hashes ?? [];
+    const seedCover =
+      typeof coverHash === 'string' && coverHash.length >= 6
+        ? getDecodedBlurhashFromCache(coverHash)
+        : undefined;
+    setResolvedBlurDataURL(seedCover);
+    setResolvedImageBlurDataURLs(
+      images.map((_, i) => {
+        const h = hashes[i];
+        if (typeof h === 'string' && h.length >= 6) {
+          return getDecodedBlurhashFromCache(h) ?? seedCover;
+        }
+        return seedCover;
+      }),
+    );
+
+    const needed = new Set<string>();
+    if (typeof coverHash === 'string' && coverHash.length >= 6) {
+      needed.add(coverHash);
+    }
+    for (const h of hashes) {
+      if (typeof h === 'string' && h.length >= 6) {
+        needed.add(h);
+      }
+    }
+
+    const run = async () => {
+      const decoded = new Map<string, string | undefined>();
+      await Promise.all(
+        [...needed].map(async (h) => {
+          const url = await decodeBlurhashOffMain(h);
+          if (!cancelled) {
+            decoded.set(h, url);
+          }
+        }),
+      );
+      if (cancelled) return;
+      const coverDataUrl =
+        typeof coverHash === 'string' && coverHash.length >= 6 ? decoded.get(coverHash) : undefined;
+      setResolvedBlurDataURL(coverDataUrl);
+      setResolvedImageBlurDataURLs(
+        images.map((_, i) => {
+          const h = hashes[i];
+          if (typeof h === 'string' && h.length >= 6) {
+            return decoded.get(h) ?? coverDataUrl;
+          }
+          return coverDataUrl;
+        }),
+      );
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [listing.cover_blur_hash, listing.image_blur_hashes, images]);
 
   const handleImageError = useListingCardImageError(
     listing.id,
@@ -488,7 +512,7 @@ function ListingCardComponent({
         .filter(Boolean)
         .join(' ')}
       style={cardFavoriteExitMotionStyle(isHydrated, isRemovingFromFavorites)}
-      onMouseLeave={handleCardMouseLeave}
+      onMouseLeave={handleCardMouseLeaveCombined}
       onMouseEnter={handleCardMouseEnter}
     >
       <Link
@@ -510,11 +534,10 @@ function ListingCardComponent({
               images={images}
               imageErrors={imageErrors}
               onImageError={handleImageError}
-              onBusyChange={handleCarouselBusyChange}
               onIndexChange={handleCarouselIndexChange}
               imageAltTitle={imageAltTitle}
               priority={priority}
-              blurDataURL={blurDataURL}
+              blurDataURLs={resolvedImageBlurDataURLs}
               t={t}
             />
           ) : (
@@ -523,15 +546,22 @@ function ListingCardComponent({
               imageUrl={singleImageUrl}
               imageAltTitle={imageAltTitle}
               priority={priority}
-              blurDataURL={blurDataURL}
+              blurDataURL={resolvedBlurDataURL}
               onError={() => handleImageError(0)}
               t={t}
             />
           )}
-          <ListingCardBadges listing={listing} newLabel={newLabel} t={t} />
+          <ListingCardBadges
+            listing={listing}
+            newLabel={newLabel}
+            t={t}
+            carouselBrowsingCompact={images.length > 1 && carouselIndex !== 0}
+            allowCollapsedBadgesHoverExpand={!suppressBadgeHoverExpand}
+          />
           {images.length > 1 && (
-            <CarouselNavButtons
-              disabled={isCarouselBusy || isAutoRewinding}
+            <ListingPhotoCarouselNavButtons
+              variant="card"
+              disabled={isAutoRewinding}
               onPrev={handlePrevPhoto}
               onNext={handleNextPhoto}
               prevLabel={t('listings.previousPhoto')}

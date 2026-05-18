@@ -7,7 +7,7 @@ type RegisterFormPhoneFieldProps = {
   error: string;
   touched: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onBlur: () => void;
+  onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
   onFocus: () => void;
 };
 
@@ -27,14 +27,16 @@ export function RegisterFormPhoneField({
       </label>
       <input
         type="tel"
+        inputMode="tel"
         required
         value={value}
         onChange={onChange}
         onBlur={onBlur}
         onFocus={onFocus}
+        aria-invalid={touched && error ? true : undefined}
         className={`input-field ${touched && error ? 'border-red-500' : ''}`}
         placeholder={t('register.phonePlaceholder')}
-        autoComplete="off"
+        autoComplete="tel"
         data-testid="auth-register-phone-input"
       />
       {touched && error && <p className="mt-1 text-sm text-red-400">{error}</p>}

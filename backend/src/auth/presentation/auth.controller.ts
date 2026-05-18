@@ -8,17 +8,24 @@ import {
   Patch,
   Post,
   Request,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import type { Request as ExpressRequest, Response } from 'express';
 
 import type { AuthenticatedRequest } from '../../common/express-augmentation';
 import { I18nService } from '../../common/i18n/i18n.service';
 import { UsersService } from '../../users/application/users.service';
 import { AuthService } from '../application/auth.service';
+import {
+  AuthTokenIssuerService,
+  REFRESH_TOKEN_COOKIE,
+} from '../application/services/auth-token-issuer.service';
 import { IpBlockGuard } from '../infrastructure/guards/ip-block.guard';
 import { JwtAuthGuard } from '../infrastructure/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../infrastructure/guards/optional-jwt-auth.guard';
 import { IpBlockService } from '../infrastructure/services/ip-block.service';
 import { SmsService } from '../infrastructure/services/sms.service';
 
@@ -34,6 +41,7 @@ const getSmsIpThrottle = (prodLimit: number, devLimit: number = prodLimit * 50) 
 import { ChangeEmailConfirmDto, ChangeEmailRequestDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from './dto/change-phone.dto';
+import { GoogleSignInDto } from './dto/google-sign-in.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -43,6 +51,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { VerifyPhoneDto } from './dto/verify-phone.dto';
 import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
 import { VerifySmsDto } from './dto/verify-sms.dto';
 
@@ -51,6 +60,7 @@ import { VerifySmsDto } from './dto/verify-sms.dto';
 export class AuthController {
   constructor(
     private authService: AuthService,
+    private authTokenIssuer: AuthTokenIssuerService,
     private ipBlockService: IpBlockService,
     private smsService: SmsService,
     private usersService: UsersService,
@@ -156,12 +166,17 @@ export class AuthController {
   @UseGuards(IpBlockGuard)
   @HttpCode(200)
   @Post('login')
-  async login(@Request() req: AuthenticatedRequest, @Body() loginDto: LoginDto) {
+  async login(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+    @Body() loginDto: LoginDto,
+  ) {
     const ip = this.ipBlockService.getClientIp(req);
     try {
-      const result = await this.authService.login(loginDto, ip);
+      const result = await this.authService.login(loginDto, ip, this.getRequestLocale(req));
+      this.authTokenIssuer.attachLoginCookies(res, result);
       this.ipBlockService.resetAttempts(ip);
-      return result;
+      return this.authTokenIssuer.cookieAuthJsonBody(result);
     } catch (error) {
       this.ipBlockService.recordFailedAttempt(ip);
       throw error;
@@ -204,8 +219,42 @@ export class AuthController {
   @Throttle(getThrottleLimit(10, 500))
   @HttpCode(200)
   @Post('refresh')
-  async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshTokens(refreshTokenDto);
+  async refresh(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ) {
+    const fromCookie = req.cookies?.[REFRESH_TOKEN_COOKIE] as string | undefined;
+    const result = await this.authService.refreshTokens(
+      fromCookie ?? refreshTokenDto?.refresh_token,
+    );
+    this.authTokenIssuer.attachLoginCookies(res, result);
+    return this.authTokenIssuer.cookieAuthJsonBody(result);
+  }
+
+  @ApiOperation({ summary: 'Sign in or register with Google' })
+  @Throttle(getThrottleLimit(5, 200))
+  @HttpCode(200)
+  @Post('google')
+  async googleSignIn(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+    @Body() dto: GoogleSignInDto,
+  ) {
+    const ip = this.ipBlockService.getClientIp(req);
+    const result = await this.authService.googleSignIn(dto, ip, this.getRequestLocale(req));
+    this.authTokenIssuer.attachLoginCookies(res, result);
+    return this.authTokenIssuer.cookieAuthJsonBody(result);
+  }
+
+  @ApiOperation({ summary: 'Log out (revoke refresh token and clear auth cookies)' })
+  @HttpCode(200)
+  @Post('logout')
+  async logout(@Request() req: AuthenticatedRequest, @Res({ passthrough: true }) res: Response) {
+    const fromCookie = req.cookies?.[REFRESH_TOKEN_COOKIE] as string | undefined;
+    await this.authService.logout(fromCookie);
+    this.authTokenIssuer.clearAuthCookies(res);
+    return { success: true };
   }
 
   @ApiOperation({ summary: 'Get current user profile' })
@@ -243,6 +292,28 @@ export class AuthController {
   async getProfile(@Request() req: AuthenticatedRequest) {
     const user = await this.authService.getUserProfile(req.user.id);
     return user;
+  }
+
+  @ApiOperation({ summary: 'Hide partner promo banner in catalog search for current user' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({
+    status: 200,
+    description: 'User profile with hidePartnerPromoBanner set to true',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @Throttle(getThrottleLimit(30, 3000))
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(200)
+  @Post('partner-promo/dismiss')
+  async dismissPartnerPromoBanner(@Request() req: AuthenticatedRequest) {
+    return this.authService.dismissPartnerPromoBanner(req.user.id);
   }
 
   @ApiOperation({ summary: 'Update user profile' })
@@ -461,8 +532,15 @@ export class AuthController {
   })
   @UseGuards(JwtAuthGuard)
   @Delete('profile')
-  async deleteAccount(@Request() req: AuthenticatedRequest) {
-    return this.authService.deleteAccount(req.user.id);
+  async deleteAccount(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.deleteAccount(req.user.id);
+    const fromCookie = req.cookies?.[REFRESH_TOKEN_COOKIE] as string | undefined;
+    await this.authService.logout(fromCookie);
+    this.authTokenIssuer.clearAuthCookies(res);
+    return result;
   }
 
   @ApiOperation({ summary: 'Request phone number change' })
@@ -562,9 +640,14 @@ export class AuthController {
   })
   @UseGuards(JwtAuthGuard)
   @Post('verify-phone')
-  async verifyPhone(@Request() req: AuthenticatedRequest) {
-    const user = await this.authService.verifyPhone(req.user.id);
-    return user;
+  async verifyPhone(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+    @Body() verifyPhoneDto: VerifyPhoneDto,
+  ) {
+    const result = await this.authService.verifyPhone(req.user.id, verifyPhoneDto.code);
+    this.authTokenIssuer.attachLoginCookies(res, result);
+    return this.authTokenIssuer.cookieAuthJsonBody(result);
   }
 
   @ApiOperation({ summary: 'Check if phone number is available' })
@@ -638,9 +721,10 @@ export class AuthController {
     },
   })
   @Throttle(getSmsIpThrottle(30, 500))
+  @UseGuards(OptionalJwtAuthGuard)
   @Post('send-sms')
-  async sendSms(@Body() sendSmsDto: SendSmsDto) {
-    return this.authService.sendVerificationSms(sendSmsDto.phone);
+  async sendSms(@Request() req: ExpressRequest, @Body() sendSmsDto: SendSmsDto) {
+    return this.authService.sendVerificationSms(sendSmsDto.phone, req.user?.id);
   }
 
   @ApiOperation({ summary: 'Verify SMS code' })

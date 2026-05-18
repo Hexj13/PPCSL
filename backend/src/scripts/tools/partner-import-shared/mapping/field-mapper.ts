@@ -15,7 +15,21 @@ export function buildCreateListingPayload(
     throw new Error('At least 2 uploaded images are required to create a listing.');
   }
 
-  const description = trimText(input.parsed.description, 5000);
+  const description_ro = trimText(input.parsed.description_ro ?? input.parsed.description, 5000);
+  const description_ru = trimText(input.parsed.description_ru, 5000);
+  const legacyDescription = trimText(input.parsed.description, 5000);
+  const descriptionFields: Pick<
+    KupitoCreateListingPayload,
+    'description' | 'description_ro' | 'description_ru'
+  > =
+    description_ro || description_ru
+      ? {
+          ...(description_ro ? { description_ro } : {}),
+          ...(description_ru ? { description_ru } : {}),
+        }
+      : legacyDescription
+        ? { description: legacyDescription }
+        : {};
 
   const payload: KupitoCreateListingPayload = {
     price,
@@ -26,7 +40,7 @@ export function buildCreateListingPayload(
       input.parsed.creditAvailable && Number.isFinite(input.parsed.downPaymentAmount)
         ? Math.round(Number(input.parsed.downPaymentAmount))
         : null,
-    description,
+    ...descriptionFields,
     images,
     status: input.status,
     condition: input.parsed.condition ?? ConditionType.Undamaged,

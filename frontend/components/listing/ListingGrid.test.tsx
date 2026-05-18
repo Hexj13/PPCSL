@@ -21,6 +21,22 @@ jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
 }));
 
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: ({
+    fill: _fill,
+    priority: _priority,
+    blurDataURL: _blurDataURL,
+    placeholder: _placeholder,
+    ...props
+  }: React.ImgHTMLAttributes<HTMLImageElement> & {
+    fill?: boolean;
+    priority?: boolean;
+    blurDataURL?: string;
+    placeholder?: string;
+  }) => React.createElement('img', props),
+}));
+
 jest.mock('@/lib/store', () => {
   const mockGetState = jest.fn().mockReturnValue({ favorites: [] });
   const mockSetFavorites = jest.fn();
@@ -58,7 +74,13 @@ jest.mock('./ListingCard', () => ({
 }));
 
 jest.mock('./ListingCardSkeleton', () => ({
-  ListingCardSkeleton: () => <div data-testid="listing-skeleton">Loading...</div>,
+  ListingCardSkeleton: React.forwardRef<HTMLDivElement>(function ListingCardSkeleton(_props, ref) {
+    return (
+      <div ref={ref} data-testid="listing-skeleton">
+        Loading...
+      </div>
+    );
+  }),
 }));
 
 jest.mock('@/hooks/useTranslation', () => ({
@@ -69,6 +91,19 @@ jest.mock('@/hooks/useTranslation', () => ({
         'listings.viewAllListings': 'View all listings',
         'listings.loadError': 'Error loading',
         'listings.noMoreListings': 'No more listings',
+        'listings.partnerPromo.titleQuestion': 'Do you sell many cars?',
+        'listings.partnerPromo.titlePartnerLead': 'Become a Kupito.club ',
+        'listings.partnerPromo.titlePartnerEmphasis': 'partner',
+        'listings.partnerPromo.titlePartnerTail': '',
+        'listings.partnerPromo.description': 'Special partnership terms for professional sellers.',
+        'listings.partnerPromo.features.sync': 'Automatic listing sync',
+        'listings.partnerPromo.features.promotion': 'Free promotions',
+        'listings.partnerPromo.features.visibility': 'Extra visibility on the platform',
+        'listings.partnerPromo.sideTitle': 'Together — stronger',
+        'listings.partnerPromo.sideDescription': 'Grow your business with Kupito.club.',
+        'listings.partnerPromo.cta': 'Details',
+        'listings.partnerPromo.dismiss': "Don't show again",
+        'listings.partnerPromo.imageAlt': 'Cars for the Kupito partner program',
         'common.error': 'Error',
         'common.loading': 'Loading...',
       })[key] ?? key,
@@ -79,13 +114,32 @@ jest.mock('@/hooks/useLoadingState', () => ({
   useLoadingState: () => ({ visible: false }),
 }));
 
-global.IntersectionObserver = jest.fn().mockImplementation((_callback) => {
-  return {
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-    disconnect: jest.fn(),
-  };
-});
+global.IntersectionObserver = jest
+  .fn()
+  .mockImplementation((callback: IntersectionObserverCallback) => {
+    return {
+      observe: jest.fn((element: Element) => {
+        queueMicrotask(() => {
+          callback(
+            [
+              {
+                isIntersecting: true,
+                target: element,
+                intersectionRatio: 1,
+                boundingClientRect: {} as DOMRectReadOnly,
+                intersectionRect: {} as DOMRectReadOnly,
+                rootBounds: null,
+                time: Date.now(),
+              },
+            ],
+            {} as IntersectionObserver,
+          );
+        });
+      }),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    };
+  });
 
 const mockListing1: Listing = {
   id: 'listing-1',
@@ -150,6 +204,15 @@ const mockMeta: PaginationMeta = {
   totalPages: 1,
 };
 
+const authStoreMockState = {
+  user: null as {
+    id: string;
+    isPlatformPartner?: boolean;
+    hidePartnerPromoBanner?: boolean;
+  } | null,
+  setAuth: jest.fn(),
+};
+
 describe('ListingGrid', () => {
   const mockSearchParams = {
     get: jest.fn(),
@@ -174,9 +237,16 @@ describe('ListingGrid', () => {
     });
     (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
     (usePathname as jest.Mock).mockReturnValue('/');
-    (useAuthStore as unknown as jest.Mock).mockReturnValue({
-      user: null,
-    });
+    authStoreMockState.user = null;
+    authStoreMockState.setAuth = jest.fn();
+    (useAuthStore as unknown as jest.Mock).mockImplementation(
+      (selector?: (s: typeof authStoreMockState) => unknown) => {
+        if (typeof selector === 'function') {
+          return selector(authStoreMockState);
+        }
+        return authStoreMockState;
+      },
+    );
     (useFavoritesStore as unknown as jest.Mock).mockReturnValue({
       favorites: [],
       setFavorites: (useFavoritesStore as unknown as { _setFavorites: jest.Mock })._setFavorites,
@@ -265,9 +335,7 @@ describe('ListingGrid', () => {
     });
 
     it('should load favorites for initialData when user is logged in', async () => {
-      (useAuthStore as unknown as jest.Mock).mockReturnValue({
-        user: { id: 'user-1' },
-      });
+      authStoreMockState.user = { id: 'user-1' };
 
       (favoritesApi.checkBatch as jest.Mock).mockResolvedValue({
         data: { 'listing-1': true, 'listing-2': false },
@@ -295,9 +363,7 @@ describe('ListingGrid', () => {
     });
 
     it('should not load favorites when user is not logged in', async () => {
-      (useAuthStore as unknown as jest.Mock).mockReturnValue({
-        user: null,
-      });
+      authStoreMockState.user = null;
 
       const initialData = {
         data: [mockListing1],
@@ -326,10 +392,96 @@ describe('ListingGrid', () => {
       expect(listingsApi.getAll).not.toHaveBeenCalled();
     });
 
-    it('should not load favorites when initialData is empty', async () => {
-      (useAuthStore as unknown as jest.Mock).mockReturnValue({
-        user: { id: 'user-1' },
+    it('should render partner promo banner with link to partners page when enough listings are shown', async () => {
+      const listings = Array.from({ length: 12 }, (_, index) => ({
+        ...mockListing1,
+        id: `listing-${index + 1}`,
+        title: `Test Car ${index + 1}`,
+      }));
+      const initialData = {
+        data: listings,
+        meta: { ...mockMeta, total: listings.length },
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      expect(await screen.findByTestId('listing-listing-12')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getAllByTestId('partner-promo-banner')).toHaveLength(3);
       });
+      expect(screen.getAllByRole('link', { name: /details/i })[0]).toHaveAttribute(
+        'href',
+        '/partners',
+      );
+    });
+
+    it('should not render partner promo banner when guest dismissed it in localStorage', async () => {
+      (window.localStorage.getItem as jest.Mock).mockImplementation((key: string) =>
+        key === 'kupito_hide_partner_promo' ? '1' : null,
+      );
+
+      const listings = Array.from({ length: 12 }, (_, index) => ({
+        ...mockListing1,
+        id: `listing-${index + 1}`,
+        title: `Test Car ${index + 1}`,
+      }));
+      const initialData = {
+        data: listings,
+        meta: { ...mockMeta, total: listings.length },
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      expect(await screen.findByTestId('listing-listing-12')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId('partner-promo-banner')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should not render partner promo banner when user is platform partner', async () => {
+      authStoreMockState.user = { id: 'user-1', isPlatformPartner: true };
+
+      const listings = Array.from({ length: 12 }, (_, index) => ({
+        ...mockListing1,
+        id: `listing-${index + 1}`,
+        title: `Test Car ${index + 1}`,
+      }));
+      const initialData = {
+        data: listings,
+        meta: { ...mockMeta, total: listings.length },
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      expect(await screen.findByTestId('listing-listing-12')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId('partner-promo-banner')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should not render partner promo banner when user dismissed it in profile', async () => {
+      authStoreMockState.user = { id: 'user-1', hidePartnerPromoBanner: true };
+
+      const listings = Array.from({ length: 12 }, (_, index) => ({
+        ...mockListing1,
+        id: `listing-${index + 1}`,
+        title: `Test Car ${index + 1}`,
+      }));
+      const initialData = {
+        data: listings,
+        meta: { ...mockMeta, total: listings.length },
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      expect(await screen.findByTestId('listing-listing-12')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId('partner-promo-banner')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should not load favorites when initialData is empty', async () => {
+      authStoreMockState.user = { id: 'user-1' };
 
       const initialData = {
         data: [],
@@ -340,6 +492,62 @@ describe('ListingGrid', () => {
 
       await screen.findByText('No listings found');
       expect(favoritesApi.checkBatch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('lazy listing card slots', () => {
+    let originalIntersectionObserver: typeof globalThis.IntersectionObserver;
+
+    beforeEach(() => {
+      originalIntersectionObserver = global.IntersectionObserver;
+      const emptyRect = {} as DOMRectReadOnly;
+      global.IntersectionObserver = jest
+        .fn()
+        .mockImplementation((_callback: IntersectionObserverCallback) => {
+          let observed: Element | null = null;
+          return {
+            observe: jest.fn((el: Element) => {
+              observed = el;
+            }),
+            unobserve: jest.fn(),
+            disconnect: jest.fn(),
+            takeRecords: jest.fn(() => {
+              if (!observed) return [];
+              return [
+                {
+                  isIntersecting: true,
+                  intersectionRatio: 1,
+                  target: observed,
+                  boundingClientRect: emptyRect,
+                  intersectionRect: emptyRect,
+                  rootBounds: null,
+                  time: Date.now(),
+                },
+              ];
+            }),
+          };
+        }) as unknown as typeof globalThis.IntersectionObserver;
+    });
+
+    afterEach(() => {
+      global.IntersectionObserver = originalIntersectionObserver;
+    });
+
+    it('mounts listings from index 8 using takeRecords without async IO callback', async () => {
+      const listings = Array.from({ length: 10 }, (_, index) => ({
+        ...mockListing1,
+        id: `listing-${index + 1}`,
+        title: `Test Car ${index + 1}`,
+      }));
+      const initialData = {
+        data: listings,
+        meta: { ...mockMeta, total: listings.length },
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      expect(await screen.findByTestId('listing-listing-9')).toBeInTheDocument();
+      expect(screen.getByText('Test Car 9')).toBeInTheDocument();
     });
   });
 

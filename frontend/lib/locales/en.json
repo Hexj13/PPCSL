@@ -4,13 +4,14 @@
     "tagline": "Platform for posting car sale listings in Moldova",
     "partnersTitle": "Our Partners",
     "faq": "Frequently Asked Questions",
+    "partners": "For partners",
+    "investors": "For investors",
     "terms": "Terms of Use",
     "privacy": "Privacy Policy",
     "cookieSettings": "Cookie Settings",
     "contacts": "Contacts",
-    "partnerCipautoDescription": "Car import and sales",
-    "partnerInfocarDescription": "Vehicle history reports",
-    "partnerFactumDescription": "Car import and sales"
+    "partnerImportSalesDescription": "Car import and sales",
+    "partnerInfocarDescription": "Vehicle history reports"
   },
   "header": {
     "addListing": "Add Listing",
@@ -35,6 +36,8 @@
   },
   "home": {
     "title": "Cars in Moldova",
+    "titleWithBrand": "{brand} in Moldova",
+    "titleWithBrandModel": "{brand} {model} in Moldova",
     "subtitle": "Buy or sell a car on",
     "subtitleBold": "Kupito!",
     "subtitle2": "Post an ad",
@@ -68,6 +71,7 @@
     "no": "No",
     "search": "Search",
     "choose": "Choose...",
+    "rangeDash": "—",
     "selectedCount": "Selected {count}",
     "requiredAsterisk": "*",
     "apiErrors": {
@@ -130,7 +134,8 @@
     "daysAgo": "{days} days ago",
     "languageEn": "English",
     "languageRo": "Română",
-    "languageRu": "Русский"
+    "languageRu": "Русский",
+    "languageLocaleCode": "{code}"
   },
   "errors": {
     "smsHourlyLimit": "SMS limit reached for this number. You can request a new code in one hour.",
@@ -142,7 +147,10 @@
     "emailChangeTooManyAttempts": "You can change email only 2 times per 24 hours. Try again later.",
     "invalidCurrentPassword": "Current password is incorrect",
     "newPasswordMustDiffer": "New password must be different from the current password",
-    "emailVerificationResendOnCooldown": "A confirmation email was already sent. You can request another one after the link in that message expires."
+    "emailVerificationResendOnCooldown": "A confirmation email was already sent. You can request another one after the link in that message expires.",
+    "googleSignInFailed": "Google sign-in failed. Please try again.",
+    "googleEmailNotVerified": "Your Google email is not verified. Verify it in Google and try again.",
+    "useGoogleSignIn": "This account uses Google sign-in. Password login is not available."
   },
   "cookieSettings": {
     "loading": "Loading...",
@@ -178,7 +186,62 @@
       "description": "For more information about how we use cookies and how we protect your data, please read our"
     },
     "privacyPolicy": "Privacy Policy",
-    "preferencesSavedMessage": "Your preferences are saved in your browser and will remain active for 365 days. You can change them at any time from this page."
+    "preferencesSavedMessage": "Your preferences are saved in your browser and will remain active for 365 days. You can change them at any time from this page.",
+    "cookieTable": {
+      "title": "Cookie and storage inventory",
+      "intro": "Below are the main HTTP cookies and similar browser storage keys we use. Sign-in uses httpOnly session cookies (access and refresh tokens). Optional Google Sign-In loads the Google Identity Services script on the sign-in page when enabled. When you allow analytical cookies, Google Analytics runs with Consent Mode defaults and updates.",
+      "headers": {
+        "name": "Name",
+        "type": "Type",
+        "purpose": "Purpose",
+        "duration": "Retention",
+        "provider": "Provider"
+      },
+      "rows": {
+        "ga": {
+          "name": "_ga",
+          "type": "Analytical",
+          "purpose": "Google Analytics client ID; used only after you grant analytical cookies.",
+          "duration": "Up to 2 years (Google default)",
+          "provider": "Google Ireland Limited / Google LLC"
+        },
+        "gid": {
+          "name": "_gid",
+          "type": "Analytical",
+          "purpose": "Google Analytics session grouping; used only after you grant analytical cookies.",
+          "duration": "24 hours (Google default)",
+          "provider": "Google Ireland Limited / Google LLC"
+        },
+        "consentCookie": {
+          "name": "cookie_consent",
+          "type": "Essential",
+          "purpose": "Stores your cookie choice (JSON with timestamp) so the site and Consent Mode stay in sync.",
+          "duration": "365 days",
+          "provider": "Kupito"
+        },
+        "localeCookie": {
+          "name": "kupito-locale",
+          "type": "Functional",
+          "purpose": "Remembers interface language (ro or ru) when the language switcher is enabled.",
+          "duration": "365 days",
+          "provider": "Kupito"
+        },
+        "gtm": {
+          "name": "gtag.js (Google Tag)",
+          "type": "Analytical",
+          "purpose": "Loads Google Analytics after consent and sends Consent Mode updates (analytics_storage).",
+          "duration": "Session / per Google policy",
+          "provider": "Google Ireland Limited / Google LLC"
+        },
+        "authLocalStorage": {
+          "name": "auth-storage (localStorage)",
+          "type": "Essential (local storage)",
+          "purpose": "Persists authentication session state (tokens) for signed-in users; not an HTTP cookie.",
+          "duration": "Until logout or expiry handled by the app",
+          "provider": "Kupito"
+        }
+      }
+    }
   },
   "login": {
     "title": "Login",
@@ -198,6 +261,12 @@
     "filterSaveError": "Error saving filter",
     "filterLimitError": "You can save a maximum of 20 filters. Please delete one of the existing filters."
   },
+  "phone": {
+    "mustStartWithPlus": "Use international format with the + prefix (e.g. +373...)",
+    "invalidCountry": "Unknown country calling code",
+    "invalidLength": "Incorrect number length for this country",
+    "notMobile": "Enter a mobile number suitable for SMS (fixed-line numbers are not accepted)"
+  },
   "register": {
     "title": "Register",
     "userType": "User Type",
@@ -211,12 +280,6 @@
     "emailHint": "You can log in with this email or with your phone number",
     "phoneRequired": "Phone is required",
     "phoneInvalid": "Enter a valid phone (format: +country code number)",
-    "phoneMustStartWithPlus": "Phone must start with +",
-    "phoneLength": "Phone must contain 7-19 digits (including country code)",
-    "phoneDigitsOnly": "Phone must contain only digits after +",
-    "phoneFormat": "Phone must be in format +country code (1-4 digits) + number (6-15 digits)",
-    "countryCodeLength": "Country code must be 1-4 digits",
-    "numberLength": "Number must be 6-15 digits",
     "messengers": "Available messengers",
     "optional": "(optional)",
     "optionalShort": "(opt.)",
@@ -253,6 +316,7 @@
     "registering": "Registering...",
     "registerButton": "Sign up",
     "phoneExists": "User with this phone already exists",
+    "primaryPhoneMustUseChangeFlow": "To change your account phone number, use the \"Change phone\" option in your profile.",
     "serviceUnavailable": "Service is unavailable. Check if the server is running and restarted.",
     "invalidPhoneFormat": "Invalid phone format",
     "serverError": "Server error. Please try again later.",
@@ -264,7 +328,12 @@
   },
   "sign": {
     "pageTitle": "Login and registration",
-    "greeting": "Hello!"
+    "greeting": "Hello!",
+    "dividerOr": "or",
+    "continueWithGoogle": "Continue with Google",
+    "googleConsentPrefix": "By continuing with Google, you accept our ",
+    "googleConsentConjunction": " and ",
+    "googleConsentSuffix": "."
   },
   "resetPassword": {
     "title": "Reset Password",
@@ -355,6 +424,30 @@
     "closed": "Closed",
     "loadingTimeout": "Timeout loading listings"
   },
+  "listingForm": {
+    "video": {
+      "title": "Video",
+      "posterAlt": "Video preview image",
+      "addButton": "Add video",
+      "remove": "Remove video",
+      "fileLabel": "File:",
+      "constraints": "Maximum file size {maxSizeMb} MB, maximum length {maxDurationMin} minutes. Supported formats: MP4, MOV, AVI, WebM, MKV.",
+      "stagedHintTooltip": "This video will upload automatically right after the listing is created.",
+      "status": {
+        "uploading": "Uploading…",
+        "processing": "Processing video…",
+        "ready": "Video is ready",
+        "failed": "Video processing failed"
+      },
+      "errors": {
+        "invalidType": "Unsupported video format",
+        "tooLarge": "File is too large",
+        "uploadFailed": "Video upload failed",
+        "uploadAfterCreateFailed": "Listing created, but the video could not be uploaded. You can add it when editing the listing.",
+        "deleteFailed": "Could not remove video"
+      }
+    }
+  },
   "listings": {
     "defaultTitle": "Car for sale",
     "imageAlt": "{title} - Image {index}",
@@ -362,6 +455,8 @@
     "closeImageModal": "Close photo view",
     "previousPhoto": "Previous photo",
     "nextPhoto": "Next photo",
+    "cardImageCounter": "{current} / {total}",
+    "modalThumbnailAlt": "Image {index} of {total}",
     "negotiable": "Price negotiable",
     "notFoundTitle": "Listing not found",
     "notFoundDescription": "The listing does not exist or is not available.",
@@ -417,6 +512,23 @@
     "loadMore": "Load more",
     "showMore": "Show more",
     "noMoreListings": "No more listings",
+    "partnerPromo": {
+      "titleQuestion": "Do you sell many cars?",
+      "titlePartnerLead": "Become a Kupito.club ",
+      "titlePartnerEmphasis": "partner",
+      "titlePartnerTail": "",
+      "description": "If you post listings regularly or you are a car dealer, we are ready to offer special partnership terms.",
+      "features": {
+        "sync": "Automatic listing sync",
+        "promotion": "Free promotions",
+        "visibility": "Extra visibility on the platform"
+      },
+      "sideTitle": "Together — stronger",
+      "sideDescription": "Grow your business with Kupito.club.",
+      "cta": "Details",
+      "dismiss": "Don't show again",
+      "imageAlt": "Cars for the Kupito partner program"
+    },
     "selectBrand": "Select brand",
     "selectCity": "Select city",
     "descriptionPlaceholder": "Add car description...",
@@ -524,6 +636,7 @@
     "liters": "L",
     "km": "km",
     "priceLabel": "Price",
+    "currency": "Currency",
     "availableInCredit": "Available in credit/installment",
     "downPaymentFrom": "Down payment from",
     "downPaymentFromOptional": "Down payment from (opt.)",
@@ -562,6 +675,7 @@
     "tireCardPriceScopePerUnit": "(per tire)",
     "tireCardPriceScopePerSet": "(per set)",
     "promoted": "Promoted",
+    "videoBadge": "Video",
     "promote": "Promote",
     "unpromote": "Cancel promotion",
     "promotionEnabled": "Promotion activated",
@@ -675,12 +789,16 @@
     "ownerNoticeText": "Here are all your active listings. You can use the link to this page to share it in messengers or social networks and show all your listings on one page."
   },
   "listingDetail": {
+    "video": {
+      "playButton": "Play listing video",
+      "playIcon": "▶",
+      "captionsTrackLabel": "No dialogue captions"
+    },
     "home": "Home",
     "addToFavorites": "To favorites",
     "removeFromFavorites": "Remove from favorites",
     "yourListing": "Your listing",
-    "cannotAddOwnListing": "You cannot add your own listing to favorites",
-    "cannotFavoriteOwnListingToast": "You cannot add your own listings to favorites.\nThey are in the «My listings» section.",
+    "cannotFavoriteOwnListingToast": "You cannot add your own listings to favorites.",
     "compare": "Compare",
     "alreadyInComparison": "Already in comparison",
     "cannotCompareMore": "You can compare a maximum of 3 vehicles",
@@ -709,7 +827,12 @@
     "revealVin": "Show VIN",
     "hideVin": "Hide VIN",
     "vinLoadError": "Could not load VIN. Please try again.",
-    "vinRateLimitExceeded": "You can request VIN no more than 5 times per hour. Please try again later.",
+    "vinRateLimitExceeded": "You can reveal the VIN for up to 50 different listings per hour. Please try again later.",
+    "revealPhone": "Show number",
+    "hidePhone": "Hide number",
+    "phoneLoadError": "Could not load phone number. Please try again.",
+    "phoneRateLimitExceededGuest": "You can show phone numbers for up to 20 listings per hour. Please try again later.",
+    "phoneRateLimitExceededAuth": "You can show phone numbers for up to 50 different listings per hour. Please try again later.",
     "copied": "{label} copied",
     "copyError": "Error copying",
     "engine": "Engine",
@@ -739,6 +862,41 @@
     "externalReports": "Report for this vehicle",
     "externalReportsHint": "We redirect you to partners who compile the vehicle report from various sources. Details and terms are on the partner's site.",
     "orderReport": "Order report",
+    "actionCardFavoriteDescription": "Save this listing",
+    "actionCardFavoriteTitleWhenSaved": "In favorites",
+    "actionCardFavoriteDescriptionWhenSaved": "Remove from saved",
+    "actionCardCompareDescription": "Compare with other vehicles",
+    "actionCardCompareTitleWhenInComparison": "In comparison",
+    "actionCardCompareDescriptionWhenInComparison": "Remove from comparison",
+    "actionCardPromoteDescription": "Improve your position in search",
+    "actionCardPromoteTitleWhenPromoted": "Being promoted",
+    "actionCardPromoteDescriptionWhenPromoted": "This increases how often it is shown",
+    "actionCardAiDescription": "Analysis of this listing",
+    "aiReportNewBadge": "New",
+    "aiReportActionCardGenerating": "Generating listing analysis…",
+    "aiReportActionCardAlreadyCreating": "Listing analysis is already being created",
+    "aiReport": "AI Analysis",
+    "aiReportModalTitle": "AI analysis of this listing",
+    "aiReportLoading": "Preparing listing analysis…",
+    "aiReportPending": "Analyzing this listing…",
+    "aiReportUnavailableTitle": "Temporarily unavailable",
+    "aiReportUnavailableBody": "The AI analysis could not be loaded. Please try again later.",
+    "aiReportSectionSummary": "Summary of the listing",
+    "aiReportSectionModelContext": "About this car model",
+    "aiReportSectionAnalysis": "Listing analysis",
+    "aiReportAnalysisPrice": "Price",
+    "aiReportAnalysisMileage": "Mileage",
+    "aiReportAnalysisDescription": "Description",
+    "aiReportAnalysisRegistration": "Registration",
+    "aiReportAnalysisOptions": "Equipment and options",
+    "aiReportSectionStrengths": "Strengths",
+    "aiReportSectionWeaknesses": "Weak points",
+    "aiReportSectionChecks": "What to check before buying",
+    "aiReportSectionQuestions": "Questions to ask before buying",
+    "aiReportSectionRisks": "Possible risks",
+    "aiReportCopy": "Copy full analysis",
+    "aiReportCopied": "Copied",
+    "aiReportProductDisclaimer": "Formulated by a neural network based on Google Gemini. The information is for reference only, may be inaccurate, and does not replace a professional inspection or diagnostics. You are advised to independently verify key details.",
     "sampleReport": "Sample report",
     "historyHint": "We show previous listings for this vehicle with the same VIN. For privacy protection, price and personal data of authors are hidden for closed listings.",
     "vinNotProvided": "VIN code was not provided by the seller",
@@ -929,6 +1087,8 @@
     "city": "City",
     "yearFrom": "Year from",
     "yearTo": "Year to",
+    "yearRangeSummary": "from {from} to {to}",
+    "priceRangeSummary": "from {from} to {to}",
     "selectYear": "Select year",
     "currency": "Currency",
     "priceFrom": "Price from",
@@ -955,6 +1115,10 @@
     "creditSection": "Credit/installment",
     "downPaymentFromTitle": "Minimum down payment amount (integer)",
     "labels": "Labels",
+    "sellerTypeLabel": "Seller type",
+    "sellerTypePlaceholder": "Not selected",
+    "sellerTypeIndividual": "Private individual",
+    "sellerTypeBusiness": "Legal entity (car dealer)",
     "urgent": "Urgent",
     "new": "New car",
     "newMoto": "New",
@@ -1006,6 +1170,7 @@
     "companyWebsiteUrlPlaceholder": "https://example.com",
     "invalidCompanyWebsiteUrl": "Enter a valid URL starting with http:// or https://",
     "partnerProgramTitle": "Partnership",
+    "partnerProgramSync": "Partners can enable automatic syncing with their website or any platform where their listings are already published.",
     "partnerProgramHint": "Platform partners receive free unlimited promotions.",
     "partnerProgramDescription": "Every 20 new listings adds 1 free promotion to the balance.",
     "partnerStatus": "Status:",
@@ -1014,7 +1179,8 @@
     "partnerNextRewardCounter": "Until the next free promotion:",
     "partnerNextRewardCounterValue": "{count} new listings",
     "partnerUsageHint": "You can use the balance on a specific listing page or in My Listings by choosing the unlimited promotion from the partner balance.",
-    "partnerContactCta": "Contact us about partnership",
+    "partnerLearnMore": "Learn more",
+    "partnerContactCta": "Contact us",
     "personalData": "Personal Data",
     "firstName": "First Name",
     "firstNamePlaceholder": "Enter your first name",
@@ -1274,8 +1440,6 @@
       "archiveDisabledHasListings": "There are active listings with this brand/model"
     },
     "parsing": {
-      "envTitle": "Parser environment",
-      "envBody": "Runs are executed against target environment: {env}. This value is configured on the server and cannot be changed from the UI.",
       "subtabPlp": "Catalog (PLP)",
       "subtabPdp": "Listing pages (PDP)",
       "subtabScheduler": "Schedules",
@@ -1434,6 +1598,14 @@
       "fieldCheckUserDuplicatesBeforeCreate": "Check duplicates before create",
       "fieldCheckUserDuplicatesBeforeCreateHint": "Before creating a new listing, load the partner user's vehicle rows from the database and skip create when a duplicate is found (parser-specific rules). Requires DB access from the import process.",
       "fieldCheckUserDuplicatesBeforeCreateHintButton": "Duplicate check hint",
+      "pdp": {
+        "autoCreateBrands": "Auto-create missing brands",
+        "autoCreateBrandsHint": "If the parsed brand is missing in our catalog, create it via the admin API (import user must be Admin), then continue importing the listing in the same run.",
+        "autoCreateBrandsHintButton": "Auto-create brands hint",
+        "autoCreateModels": "Auto-create missing models",
+        "autoCreateModelsHint": "If the parsed model is missing in our catalog, create it via the admin API (import user must be Admin), then continue importing the listing in the same run.",
+        "autoCreateModelsHintButton": "Auto-create models hint"
+      },
       "fieldRemoveClosed": "Close listings when source is unavailable",
       "fieldRemoveClosedHint": "When the source marks a listing as closed or unavailable (404, 410, closed template), it will also be closed on our platform. When disabled, the listing is marked in the registry but stays active on the platform.",
       "fieldRemoveClosedHintButton": "Close unavailable listings hint",
@@ -1479,7 +1651,6 @@
       "plpFileDeleted": "PLP file deleted",
       "searchPlaceholder": "Search in text",
       "searchMatches": "Matches: {count}",
-      "searchNoMatches": "No matches found",
       "copy": "Copy",
       "copySuccess": "{label} copied",
       "copyError": "Error copying",
@@ -1844,6 +2015,131 @@
       "email": "support@kupito.club"
     }
   },
+  "partners": {
+    "title": "For partners",
+    "intro": "We invite companies to partner with Kupito. Below is a short summary of the program: how to join, what you get and how to leave.",
+    "howToBecome": {
+      "title": "How to become a partner",
+      "items": [
+        "Write to us via the Contacts page and briefly describe your business.",
+        "Only accounts registered on the platform as legal entities can take part.",
+        "We will reply and, if needed, help set up automatic listing sync with your website or other platforms."
+      ]
+    },
+    "benefits": {
+      "title": "What partnership gives you",
+      "items": [
+        "Automatic listing synchronization with your website or other platforms, with no manual duplication.",
+        "Free promotion bonuses: one credit for every 20 of your new listings. Status and balance are shown in your profile.",
+        "On My Listings you spend the balance yourself by turning on free promotion for any listing you choose.",
+        "A partner badge on your listing pages and on your public listings board.",
+        "Your logo and link in the Kupito footer."
+      ]
+    },
+    "whoCan": {
+      "title": "Who can become a partner",
+      "items": [
+        "Only users registered on the platform as a legal entity (when you sign up, choose registration on behalf of a company, not as an individual).",
+        "Private sellers do not take part in the program."
+      ]
+    },
+    "howToLeave": {
+      "title": "How to end the partnership",
+      "items": [
+        "Contact us via the Contacts page and say you want to end the partnership.",
+        "We remove partner status, take you out of the footer and clear the accumulated free promotions.",
+        "Full conditions on status and bonuses are in the Terms of Service."
+      ]
+    },
+    "obligations": {
+      "title": "Expectations and recommendations",
+      "items": [
+        "Partnership does not add financial or legal duties beyond what is described in the service and the Terms.",
+        "We appreciate mentions of Kupito on your websites and social media, and referrals from you when a customer wants to sell a car but you are not buying it."
+      ]
+    },
+    "contactCta": "Contact us"
+  },
+  "investors": {
+    "title": "For investors",
+    "intro": "Kupito.club is a platform for car sale listings, focused on simplicity, automation, and scale.",
+    "about": {
+      "title": "About the project",
+      "paragraphs": [
+        "The project is built on the idea that the maturity of a car-classifieds market tracks the level of a country’s economy and IT market. Mature countries tend to have convenient, product-led platforms, while in less developed markets the experience is often dated and clunky.",
+        "Kupito.club addresses this by building a universal core that lets a modern listing platform be launched in any country in a matter of days."
+      ]
+    },
+    "done": {
+      "title": "What we have so far",
+      "items": [
+        "A live platform in Moldova as a test market",
+        "A listing system with a modern user interface",
+        "Initial partners, including car dealers",
+        "Automatic listing synchronization",
+        "Early traffic and first users"
+      ]
+    },
+    "product": {
+      "title": "Product",
+      "lead": "Kupito.club offers:",
+      "items": [
+        "Free listing publication",
+        "Easy search and comparison of listings",
+        "Saving listings to favorites",
+        "Saving search filters",
+        "The option to get short AI-generated informational summaries for eligible vehicle listings (signed-in users; subject to availability and limits)",
+        "A seller listing board with all of one seller’s listings on a single page",
+        "Automatic synchronization with external sites",
+        "A mobile-first interface and ongoing mobile app development"
+      ]
+    },
+    "businessModel": {
+      "title": "Business model",
+      "lead": "Main revenue sources:",
+      "items": [
+        "Paid listing promotion",
+        "On-platform advertising",
+        "Premium subscriptions with more features",
+        "B2B tools for dealers"
+      ]
+    },
+    "vision": {
+      "title": "Vision",
+      "paragraphs": [
+        "Build universal infrastructure for car listings that can be rolled out and adapted to any market quickly."
+      ]
+    },
+    "strategy": {
+      "title": "Growth strategy",
+      "items": [
+        "Validating the model in Moldova",
+        "Scaling marketing",
+        "Growing the partner network of dealers",
+        "Expanding to new markets"
+      ]
+    },
+    "scaling": {
+      "title": "Scaling",
+      "lead": "After the model is validated, we plan launches in other countries with similar market conditions:",
+      "items": ["Eastern Europe", "Balkans", "Latin America", "Africa", "Asia"]
+    },
+    "whyNow": {
+      "title": "Why now",
+      "items": [
+        "The car-listings market remains fragmented",
+        "Many countries still lack a modern product",
+        "We can move fast on niche leadership through launch speed and product quality"
+      ]
+    },
+    "offer": {
+      "title": "Investment offer",
+      "lead": "We are raising funds to:",
+      "items": ["Scale marketing", "Accelerate product development", "Enter new markets"],
+      "footer": "We are open to discuss partnership terms and can share more details on request."
+    },
+    "contactCta": "Contact us"
+  },
   "contacts": {
     "title": "Contacts",
     "intro": "We are the kupito.club development team and we are always ready to help. Contact us through any of the channels below.",
@@ -1891,7 +2187,13 @@
     "fixErrors": "Please fix errors in the form",
     "fillAtLeastOne": "Fill in at least one field to save",
     "registrationSuccess": "You have successfully registered",
-    "registrationEmailVerificationSent": "We sent you an email to the address you provided to confirm your email."
+    "registrationEmailVerificationSent": "We sent you an email to the address you provided to confirm your email.",
+    "phoneRequiredTitle": "Verify your phone number",
+    "phoneRequiredDescription": "To continue using Kupito, confirm your phone number via SMS. This helps protect your account.",
+    "phoneRequiredCurrent": "Number to verify",
+    "phoneRequiredContinue": "Send SMS code",
+    "businessOnboardingTitle": "Company details",
+    "businessOnboardingInfo": "Optional fields can be filled in later in \"Profile\"."
   },
   "pwa": {
     "install": "Install App",
@@ -1919,6 +2221,7 @@
     "offlineMessage": "You are not connected to the internet. Check your connection.",
     "retry": "Try Again",
     "updateAvailable": "New version available",
+    "updateDescription": "A new version of the app is ready. Update now to get the latest improvements.",
     "updateNow": "Update Now",
     "updateLater": "Later",
     "openPlayStore": "Open in Google Play",
@@ -1985,6 +2288,20 @@
       "ogDescription": "Find answers to the most common questions about Kupito. Learn how to post a listing, manage your listings, search and compare cars, and more.",
       "ogAlt": "Kupito - FAQ"
     },
+    "partners": {
+      "title": "For partners - Kupito",
+      "description": "Learn about the Kupito platform partner program: automatic listing sync, free promotion balance, a public partner label and footer exposure. For legal entities.",
+      "ogTitle": "For partners - Kupito",
+      "ogDescription": "Information for partners: how to apply, what you get, who is eligible, and how to end cooperation.",
+      "ogAlt": "Kupito - For partners"
+    },
+    "investors": {
+      "title": "For investors - Kupito",
+      "description": "Kupito.club: car-listings platform, core for fast rollouts, business model, strategy. This page is not intended to be indexed by search engines.",
+      "ogTitle": "For investors - Kupito",
+      "ogDescription": "Overview of the Kupito product, business model, and strategy. Contact us to discuss partnership.",
+      "ogAlt": "Kupito - For investors"
+    },
     "contacts": {
       "title": "Contacts - kupito.club",
       "description": "Contact the kupito.club team. Email, Telegram bot and WhatsApp Business.",
@@ -2013,10 +2330,27 @@
       "ogDescription": "Learn how Kupito collects, uses and protects your personal data. Read our Privacy Policy to understand how we process your data.",
       "ogAlt": "Kupito - Privacy Policy"
     },
+    "brandLanding": {
+      "title": "Buy {brand} in Moldova: used and new cars for sale",
+      "titleWithPrice": "Buy {brand} in Moldova: used and new cars for sale from {price}",
+      "description": "Browse {brand} listings on Kupito. Current offers in Moldova.",
+      "h1": "{brand} — for sale",
+      "intro": "Find {brand} cars from private sellers and dealers.",
+      "ogAlt": "{brand} — Kupito car listings"
+    },
+    "brandModelLanding": {
+      "title": "Buy {brand} {model} in Moldova: used and new cars for sale",
+      "titleWithPrice": "Buy {brand} {model} in Moldova: used and new cars for sale from {price}",
+      "description": "Browse {brand} {model} on Kupito. Current prices in Moldova.",
+      "h1": "{brand} {model} — for sale",
+      "ogAlt": "{brand} {model} — Kupito"
+    },
     "listing": {
       "notFoundTitle": "Listing not found",
       "notFoundDescription": "The listing does not exist or is not available.",
       "defaultDescription": "Buy or sell a car on Kupito! Post a listing for free.",
+      "ogAltVehicle": "{brand} {model} {year} — for sale in {city}",
+      "ogAltTire": "{title} — for sale in {city}",
       "keywords": {
         "cars": "cars",
         "buyCar": "buy car",

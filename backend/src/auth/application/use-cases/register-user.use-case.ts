@@ -34,12 +34,10 @@ export class RegisterUserUseCase {
       throw new BadRequestException('errors.termsNotAccepted');
     }
 
-    if (registerDto.phone) {
-      const normalizedPhone = this.smsService.normalizePhoneNumber(registerDto.phone);
-      const existingUserByPhone = await this.usersService.findByPhone(normalizedPhone);
-      if (existingUserByPhone) {
-        throw new BadRequestException('errors.phoneAlreadyExists');
-      }
+    const normalizedPhone = this.smsService.normalizePhoneNumber(registerDto.phone);
+    const existingUserByPhone = await this.usersService.findByPhone(normalizedPhone);
+    if (existingUserByPhone) {
+      throw new BadRequestException('errors.phoneAlreadyExists');
     }
 
     if (registerDto.email && registerDto.email.trim()) {
@@ -49,24 +47,31 @@ export class RegisterUserUseCase {
       }
     }
 
+    const smsOk = await this.smsService.verifyCode(
+      normalizedPhone,
+      registerDto.smsVerificationCode,
+    );
+    if (!smsOk) {
+      throw new BadRequestException('errors.invalidCode');
+    }
+
     const hashedPassword = await this.passwordService.hash(registerDto.password);
-    const { termsAccepted: _terms, ...userData } = registerDto;
+    const { termsAccepted: _terms, smsVerificationCode: _smsCode, ...userData } = registerDto;
     void _terms;
+    void _smsCode;
 
     const cleanedUserData: Partial<User> = {
       ...userData,
       password: hashedPassword,
       registration_ip: ip || null,
+      phone: normalizedPhone,
+      phoneVerified: true,
     };
 
     const hasEmailNotifications = cleanedUserData.emailNotifications === true;
     cleanedUserData.emailNotificationListingRefreshReminders = hasEmailNotifications;
     cleanedUserData.emailNotificationWeeklyViewsDigest = hasEmailNotifications;
     cleanedUserData.emailNotificationSecurityAlerts = hasEmailNotifications;
-
-    if (cleanedUserData.phone) {
-      cleanedUserData.phone = this.smsService.normalizePhoneNumber(cleanedUserData.phone);
-    }
 
     const finalUserData = cleanUserData(cleanedUserData) as Partial<User>;
     const normalizedRequestLocale = requestLocale?.trim().toLowerCase();

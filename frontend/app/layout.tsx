@@ -1,30 +1,30 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import { cookies } from 'next/headers';
+import { Suspense } from 'react';
 
-import { PageScrollTracker } from '@/components/PageScrollTracker';
+import { DeferredTelemetry } from '@/components/DeferredTelemetry';
 import { ProfileSaveSuccessToast } from '@/components/ProfileSaveSuccessToast';
-import { TawkTo } from '@/components/TawkTo';
-import { ExternalLinkTracker } from '@/components/analytics/ExternalLinkTracker';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { GoogleAnalyticsConsent } from '@/components/analytics/GoogleAnalyticsConsent';
 import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
 import { GoogleTagManagerNoscript } from '@/components/analytics/GoogleTagManagerNoscript';
 import { OrganizationSchema } from '@/components/analytics/OrganizationSchema';
+import { WebsiteSearchSchema } from '@/components/analytics/WebsiteSearchSchema';
+import { AuthGuardsShell } from '@/components/auth/AuthGuardsShell';
 import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
 import { Header } from '@/components/layout/Header';
-import { NavigationTelemetry } from '@/components/layout/NavigationTelemetry';
+import { MainContentShell } from '@/components/layout/MainContentShell';
 import { ScrollReset } from '@/components/layout/ScrollReset';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { CookieConsent } from '@/components/providers/CookieConsent';
 import { I18nProvider } from '@/components/providers/I18nProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { OfflineBanner } from '@/components/pwa/OfflineBanner';
-import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 import { getVersionedAssetPath } from '@/lib/assets';
-import { getServerTranslations, type Locale } from '@/lib/i18n';
+import { getServerTranslations, getMetadataLocale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
 import { Toaster } from '@/lib/toast';
+import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
 import { getCountry } from '@/lib/utils';
 import { designTokens } from '@/ui';
 import './globals.css';
@@ -34,15 +34,7 @@ const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' });
 export async function generateMetadata(): Promise<Metadata> {
   const siteConfig = await loadSiteConfig(getCountry());
 
-  const cookieStore = await cookies();
-  const localeCookie = cookieStore.get('kupito-locale')?.value;
-  const defaultLocale = siteConfig.locale.split('-')[0] as Locale;
-  const enableLanguageSwitcher = process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER === 'true';
-
-  let metadataLocale: Locale = defaultLocale;
-  if (enableLanguageSwitcher && localeCookie && (localeCookie === 'ro' || localeCookie === 'ru')) {
-    metadataLocale = localeCookie as Locale;
-  }
+  const metadataLocale = await getMetadataLocale();
 
   const t = getServerTranslations(metadataLocale);
 
@@ -74,8 +66,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     openGraph: {
       type: 'website',
-      locale: siteConfig.locale,
-      url: siteConfig.siteUrl,
+      locale: metadataLocale === 'ru' ? 'ru_RU' : siteConfig.locale,
+      url: absoluteUrlWithLocalePrefix(siteConfig.siteUrl, '/', metadataLocale),
       siteName: siteConfig.name,
       title: defaultTitle,
       description: defaultDescription,
@@ -92,7 +84,12 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title: defaultTitle,
       description: defaultDescription,
-      images: [`${siteConfig.siteUrl}/opengraph-image`],
+      images: [
+        {
+          url: `${siteConfig.siteUrl}/opengraph-image`,
+          alt: siteConfig.name,
+        },
+      ],
     },
     robots: {
       index: true,
@@ -135,18 +132,28 @@ export const viewport: Viewport = {
   userScalable: true,
 };
 
+function HeaderFallback() {
+  return (
+    <header className="sticky top-0 z-50 flex flex-col bg-bg-base shadow-lg" aria-hidden>
+      <div className="relative z-20 h-[72px] shrink-0 bg-bg-base">
+        <div className="container relative mx-auto h-full border-b border-primary-700 px-3 sm:px-4">
+          <div className="flex h-full w-full min-w-0 items-center justify-between gap-2">
+            <div className="h-6 w-16 rounded-sm bg-primary-700/20" />
+            <div className="flex items-center justify-end gap-2 xl:gap-4">
+              <div className="h-10 w-28 shrink-0 rounded-lg bg-primary-700/20" />
+              <div className="hidden h-10 w-44 rounded-lg bg-primary-700/20 lg:block" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const siteConfig = await loadSiteConfig(getCountry());
 
-  const cookieStore = await cookies();
-  const localeCookie = cookieStore.get('kupito-locale')?.value;
-  const defaultLocale = siteConfig.locale.split('-')[0] as Locale;
-  const enableLanguageSwitcher = process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER === 'true';
-
-  let initialLocale: Locale = defaultLocale;
-  if (enableLanguageSwitcher && localeCookie && (localeCookie === 'ro' || localeCookie === 'ru')) {
-    initialLocale = localeCookie as Locale;
-  }
+  const initialLocale = await getMetadataLocale();
 
   return (
     <html lang={initialLocale} suppressHydrationWarning>
@@ -161,81 +168,88 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://embed.tawk.to" />
-        <link rel="preconnect" href="https://embed.tawk.to" crossOrigin="anonymous" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
-        <QueryProvider>
-          <GoogleTagManager />
-          <GoogleTagManagerNoscript title={siteConfig.name} />
-          <TawkTo />
-          <GoogleAnalyticsConsent />
-          <GoogleAnalytics />
-          <OrganizationSchema />
-          <I18nProvider
-            initialLocale={initialLocale}
-            initialTranslations={getServerTranslations(initialLocale)}
-          >
-            <CookieConsent />
-            <AuthProvider>
-              <ProfileSaveSuccessToast />
-              <ServiceWorkerRegistration />
-              <ScrollReset />
-              <PageScrollTracker />
-              <NavigationTelemetry />
-              <ExternalLinkTracker />
-              <div className="min-h-screen flex flex-col">
-                <Header />
-                <OfflineBanner />
-                <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">{children}</main>
-                <ConditionalFooter />
-              </div>
-              <Toaster
-                position="top-right"
-                containerStyle={{
-                  top: '80px',
-                  zIndex: designTokens.zIndex.toast,
-                }}
-                toastOptions={{
-                  style: {
-                    zIndex: designTokens.zIndex.toast,
-                    minWidth: '320px',
-                    maxWidth: '400px',
-                    width: '100%',
-                    background: '#FFFFFF',
-                    color: '#1B1B1B',
-                    border: '2px solid rgba(74, 154, 126, 0.4)',
-                    borderRadius: '0.75rem',
-                    padding: '16px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                  },
-                  success: {
-                    style: {
-                      background: '#FFFFFF',
-                      color: '#1B1B1B',
-                      border: '2px solid rgba(40, 167, 69, 0.6)',
-                      borderRadius: '0.75rem',
-                      padding: '16px',
-                      boxShadow:
-                        '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
-                    },
-                  },
-                  error: {
-                    style: {
-                      background: '#FFFFFF',
-                      color: '#1B1B1B',
-                      border: '2px solid rgba(220, 53, 69, 0.6)',
-                      borderRadius: '0.75rem',
-                      padding: '16px',
-                      boxShadow:
-                        '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
-                    },
-                  },
-                }}
-              />
-            </AuthProvider>
-          </I18nProvider>
-        </QueryProvider>
+        <Suspense fallback={null}>
+          <QueryProvider>
+            <GoogleTagManager />
+            <GoogleTagManagerNoscript title={siteConfig.name} />
+            <GoogleAnalyticsConsent />
+            <GoogleAnalytics />
+            <OrganizationSchema />
+            <WebsiteSearchSchema />
+            <I18nProvider
+              initialLocale={initialLocale}
+              initialTranslations={getServerTranslations(initialLocale)}
+            >
+              <CookieConsent />
+              <AuthProvider>
+                <AuthGuardsShell>
+                  <ProfileSaveSuccessToast />
+                  <DeferredTelemetry />
+                  <ScrollReset />
+                  <Suspense fallback={null}>
+                    <div className="min-h-screen flex flex-col">
+                      <Suspense fallback={<HeaderFallback />}>
+                        <Header />
+                      </Suspense>
+                      <OfflineBanner />
+                      <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">
+                        <MainContentShell>{children}</MainContentShell>
+                      </main>
+                      <ConditionalFooter />
+                    </div>
+                  </Suspense>
+                  <Suspense fallback={null}>
+                    <Toaster
+                      position="top-right"
+                      containerStyle={{
+                        top: '80px',
+                        zIndex: designTokens.zIndex.toast,
+                      }}
+                      toastOptions={{
+                        style: {
+                          zIndex: designTokens.zIndex.toast,
+                          minWidth: '320px',
+                          maxWidth: '400px',
+                          width: '100%',
+                          background: '#FFFFFF',
+                          color: '#1B1B1B',
+                          border: '2px solid rgba(74, 154, 126, 0.4)',
+                          borderRadius: '0.75rem',
+                          padding: '16px',
+                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                        },
+                        success: {
+                          style: {
+                            background: '#FFFFFF',
+                            color: '#1B1B1B',
+                            border: '2px solid rgba(40, 167, 69, 0.6)',
+                            borderRadius: '0.75rem',
+                            padding: '16px',
+                            boxShadow:
+                              '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                          },
+                        },
+                        error: {
+                          style: {
+                            background: '#FFFFFF',
+                            color: '#1B1B1B',
+                            border: '2px solid rgba(220, 53, 69, 0.6)',
+                            borderRadius: '0.75rem',
+                            padding: '16px',
+                            boxShadow:
+                              '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                          },
+                        },
+                      }}
+                    />
+                  </Suspense>
+                </AuthGuardsShell>
+              </AuthProvider>
+            </I18nProvider>
+          </QueryProvider>
+        </Suspense>
       </body>
     </html>
   );

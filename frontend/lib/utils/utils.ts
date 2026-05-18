@@ -1,7 +1,9 @@
 import type { Listing } from '@/lib/api';
+import type { Locale } from '@/lib/i18n-types';
 
 import { VEHICLE_TYPE_BY_BODY_TYPE } from '../constants';
 import { loadSiteConfigSync } from '../site-config';
+import { localePrefixPath } from '../url-locale';
 
 export const isBrowser = typeof window !== 'undefined';
 
@@ -437,6 +439,39 @@ export function slugToName(slug: string): string {
     .split('-')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+const LISTING_UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function extractListingIdFromRouteParam(param: string): string | null {
+  const trimmed = param.trim();
+  if (!trimmed) {
+    return null;
+  }
+  if (LISTING_UUID_REGEX.test(trimmed)) {
+    return trimmed;
+  }
+  const m = trimmed.match(/^(.+)-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+  if (!m || !m[1] || !m[2]) {
+    return null;
+  }
+  return m[2];
+}
+
+export function getListingPublicPathSegment(listing: Pick<Listing, 'id' | 'slug'>): string {
+  const part = listing.slug?.trim();
+  if (!part) {
+    return listing.id;
+  }
+  return `${part}-${listing.id}`;
+}
+
+export function getListingHref(listing: Pick<Listing, 'id' | 'slug'>, locale?: Locale): string {
+  const base = `/listings/${getListingPublicPathSegment(listing)}`;
+  if (!locale) {
+    return base;
+  }
+  return localePrefixPath(base, locale);
 }
 
 export function horsepowerToKw(hp: number): number {

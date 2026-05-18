@@ -1,7 +1,7 @@
 import type { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, startTransition } from 'react';
 
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import type { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Brand, VehicleModel, City } from '@/lib/api';
@@ -66,41 +66,43 @@ export function useFilterHandlers({
   getCityOptions,
   t,
 }: UseFilterHandlersParams) {
-  const router = useRouter();
+  const { replace } = useLocalizedNavigation();
 
   const handleChange = useCallback(
     (key: keyof typeof filters, value: string) => {
-      if (
-        key === 'brand_ids' ||
-        key === 'model_ids' ||
-        key === 'cities' ||
-        key === 'fuels' ||
-        key === 'transmissions' ||
-        key === 'body_types' ||
-        key === 'colors' ||
-        key === 'doors' ||
-        key === 'conditions' ||
-        key === 'registration_types' ||
-        key === 'drive_types' ||
-        key === 'equipment' ||
-        key === 'tire_brand_ids' ||
-        key === 'tire_model_ids' ||
-        key === 'tire_widths' ||
-        key === 'tire_profiles' ||
-        key === 'tire_diameters' ||
-        key === 'tire_seasons' ||
-        key === 'tire_conditions' ||
-        key === 'tire_quantities'
-      ) {
-        updateFilter(
-          key,
-          value.split(',').filter((v) => v.trim() !== ''),
-        );
-      } else if (key === 'sortOrder') {
-        updateFilter(key, value as 'ASC' | 'DESC');
-      } else {
-        updateFilter(key, value);
-      }
+      startTransition(() => {
+        if (
+          key === 'brand_ids' ||
+          key === 'model_ids' ||
+          key === 'cities' ||
+          key === 'fuels' ||
+          key === 'transmissions' ||
+          key === 'body_types' ||
+          key === 'colors' ||
+          key === 'doors' ||
+          key === 'conditions' ||
+          key === 'registration_types' ||
+          key === 'drive_types' ||
+          key === 'equipment' ||
+          key === 'tire_brand_ids' ||
+          key === 'tire_model_ids' ||
+          key === 'tire_widths' ||
+          key === 'tire_profiles' ||
+          key === 'tire_diameters' ||
+          key === 'tire_seasons' ||
+          key === 'tire_conditions' ||
+          key === 'tire_quantities'
+        ) {
+          updateFilter(
+            key,
+            value.split(',').filter((v) => v.trim() !== ''),
+          );
+        } else if (key === 'sortOrder') {
+          updateFilter(key, value as 'ASC' | 'DESC');
+        } else {
+          updateFilter(key, value);
+        }
+      });
     },
     [updateFilter],
   );
@@ -164,14 +166,18 @@ export function useFilterHandlers({
         analytics.selectContentDeferred(contentType, value, option?.category);
       });
 
-      updateFilter(key, filteredValues);
+      startTransition(() => {
+        updateFilter(key, filteredValues);
+      });
     },
     [updateFilter, filters, getBrandOptions, getModelOptions, getCityOptions, t],
   );
 
   const handleCheckboxChange = useCallback(
     (key: keyof typeof filters, checked: boolean) => {
-      updateFilter(key, checked);
+      startTransition(() => {
+        updateFilter(key, checked);
+      });
     },
     [updateFilter],
   );
@@ -267,7 +273,7 @@ export function useFilterHandlers({
       sessionStorageSetItem('scrollPreserved', 'true');
       sessionStorageSetItem('scrollToResultsAfterLoad', 'true');
       startTransition(() => {
-        router.replace(newUrl, { scroll: false });
+        replace(newUrl, { scroll: false });
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
             window.scrollTo({ top: scrollY, behavior: 'instant' });
@@ -286,7 +292,7 @@ export function useFilterHandlers({
       cities,
       currentYear,
       searchParams,
-      router,
+      replace,
       validateRanges,
       setFilters,
       isSearching,
@@ -321,7 +327,7 @@ export function useFilterHandlers({
         } else if (vehicleType !== 'car') {
           params.set('vehicleType', vehicleType);
         }
-        router.replace(`/?${params.toString()}`, { scroll: false });
+        replace(`/?${params.toString()}`, { scroll: false });
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
             if (scrollToTop) {
@@ -334,7 +340,7 @@ export function useFilterHandlers({
         }
       });
     },
-    [resetFilters, setLastAppliedFilters, vehicleType, router, filters.listing_category],
+    [resetFilters, setLastAppliedFilters, vehicleType, replace, filters.listing_category],
   );
 
   const hasFiltersChanged = useMemo(() => {

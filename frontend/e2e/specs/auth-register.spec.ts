@@ -1,44 +1,17 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 
 import { expect, test } from '../fixtures/base';
-import { buildUniqueMdPhone } from '../fixtures/env';
 import type { CompleteProfilePage } from '../page-objects/complete-profile.page';
 import type { SearchHomePage } from '../page-objects/search-home.page';
 import type { SignPage } from '../page-objects/sign.page';
 import type { VerifyPhonePage } from '../page-objects/verify-phone.page';
 import { createRegisterProfileData, type RegisterUserType } from '../test-data/auth';
-import { useClearedBrowserState } from '../utils/spec-hooks';
-import { runSteps, type E2EStep } from '../utils/steps';
+import { buildAvailableMdPhone } from '../utils/api/auth';
+import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 const VALID_PASSWORD = 'StrongPass1!';
 const LOCAL_SMS_CODE = '000000';
-const API_BASE_URL = process.env.API_URL ?? 'http://localhost:4000';
-const AUTH_CHECK_PHONE_URL = `${API_BASE_URL.replace(/\/$/, '')}/api/auth/check-phone`;
-
-async function buildAvailableMdPhone(request: APIRequestContext): Promise<string> {
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    const candidatePhone = buildUniqueMdPhone();
-    const response = await request.post(AUTH_CHECK_PHONE_URL, {
-      data: { phone: candidatePhone },
-    });
-
-    if (response.ok()) {
-      const payload = (await response.json()) as { available?: boolean };
-      if (payload.available !== false) {
-        return candidatePhone;
-      }
-      continue;
-    }
-
-    if (response.status() === 400) {
-      continue;
-    }
-
-    throw new Error(`Phone availability check failed with status ${response.status()}`);
-  }
-
-  throw new Error('Unable to allocate an available phone number for e2e registration');
-}
 
 async function registerVerifyAndCompleteProfile(
   page: Page,
@@ -93,6 +66,18 @@ async function registerVerifyAndCompleteProfile(
     {
       name: 'Verify redirect to complete-profile page',
       action: async () => {
+        await page.waitForURL(
+          (url) => {
+            const path = pathnameWithoutLocalePrefix(url.pathname);
+            return path.startsWith('/complete-profile') || path.startsWith('/sign');
+          },
+          { timeout: 30_000 },
+        );
+        if (pathnameWithoutLocalePrefix(new URL(page.url()).pathname).startsWith('/sign')) {
+          throw new Error(
+            'Phone verification did not establish a session (check API SMS bypass 000000 in development and auth cookies).',
+          );
+        }
         await expect(page).toHaveURL(/\/complete-profile(\?|$)/, { timeout: 30_000 });
       },
     },
@@ -138,16 +123,21 @@ async function registerVerifyAndCompleteProfile(
     },
   ];
 
-  await runSteps(steps);
+  await runSteps(prependClearBrowserState(page, steps));
 }
 
 test.describe('Auth: register @p0', () => {
-  useClearedBrowserState(test);
-
-  test('switches to register tab and shows register form', async ({ signPage }) => {
-    await test.step('Open register tab and validate page view', async () => {
-      await signPage.openRegisterAndExpectPageView();
-    });
+  test('switches to register tab and shows register form', async ({ page, signPage }) => {
+    await runSteps(
+      prependClearBrowserState(page, [
+        {
+          name: 'Open register tab and validate page view',
+          action: async () => {
+            await signPage.openRegisterAndExpectPageView();
+          },
+        },
+      ]),
+    );
   });
 
   test('registers individual user and reaches home after complete-profile', async ({

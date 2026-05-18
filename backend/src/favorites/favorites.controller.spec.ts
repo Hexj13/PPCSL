@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { PhoneVerifiedGuard } from '../auth/infrastructure/guards/phone-verified.guard';
+
 import { Favorite } from './entities/favorite.entity';
 import { CheckBatchDto } from './dto/check-batch.dto';
 import type { AuthenticatedRequest } from '../common/express-augmentation';
@@ -100,7 +102,10 @@ describe('FavoritesController', () => {
           useValue: mockFavoritesService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(PhoneVerifiedGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<FavoritesController>(FavoritesController);
     service = module.get(FavoritesService);

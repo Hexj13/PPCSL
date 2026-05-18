@@ -1,71 +1,78 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
+import {
+  compactE164Phone,
+  finalizePhoneFromRawInput,
+  formatPhoneForDisplay,
+  getPhoneSubmitErrorMessage,
+  sanitizePhoneInput,
+  validatePhone,
+} from '@/lib/phone';
+import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
-
-const isValidPhone = (value: string): boolean => {
-  return /^\+\d{1,4}\d{6,15}$/.test(value);
-};
-
-const handlePhoneInput = (value: string): string => {
-  let processed = value.replace(/[^\d+]/g, '');
-
-  const plusCount = (processed.match(/\+/g) || []).length;
-  if (plusCount > 1) {
-    processed = '+' + processed.replace(/\+/g, '');
-  }
-
-  if (processed.length > 0 && processed[0] !== '+') {
-    if (processed.startsWith('0')) {
-      processed = '+389' + processed.substring(1);
-    } else {
-      processed = '+' + processed.replace(/\+/g, '');
-    }
-  } else if (processed.startsWith('+0')) {
-    processed = '+389' + processed.substring(2);
-  }
-
-  if (processed.length > 20) {
-    processed = processed.slice(0, 20);
-  }
-
-  return processed;
-};
 
 export default function ChangePhonePage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { push } = useLocalizedNavigation();
   const { user, isInitialized } = useAuthStore();
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [phoneTouched, setPhoneTouched] = useState(false);
 
   useEffect(() => {
     if (isInitialized && !user) {
-      router.push('/sign');
-      return;
+      router.push(buildSignInHref());
     }
   }, [user, isInitialized, router]);
 
-  if (!isInitialized || !user) {
-    return null;
-  }
+  const handlePhoneChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value;
+      if (raw === '') {
+        setPhone('');
+        setError('');
+        return;
+      }
+      setPhone(sanitizePhoneInput(raw));
+      if (error) {
+        setError('');
+      }
+    },
+    [error],
+  );
+
+  const handlePhoneBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      setPhoneTouched(true);
+      const { phone: next, error } = finalizePhoneFromRawInput(e.target.value, t);
+      setPhone(next);
+      setError(error);
+    },
+    [t],
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!phone.trim()) {
+      setPhoneTouched(true);
       setError(t('profile.changePhone.phoneRequired'));
       return;
     }
 
-    if (!isValidPhone(phone)) {
-      setError(t('profile.changePhone.phoneInvalid'));
+    setPhoneTouched(true);
+    const phoneErr = validatePhone(phone, t);
+    if (phoneErr) {
+      setError(phoneErr);
       return;
     }
 
@@ -73,16 +80,26 @@ export default function ChangePhonePage() {
     setError('');
 
     try {
-      await authApi.changePhoneRequest({ phone });
+      const phoneE164 = compactE164Phone(phone);
+      await authApi.changePhoneRequest({ phone: phoneE164 });
       toast.success(t('profile.changePhone.codeSent'));
-      router.push(`/profile/verify-phone-change?phone=${encodeURIComponent(phone)}`);
+      push(`/profile/verify-phone-change?phone=${encodeURIComponent(phoneE164)}`);
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string } } };
-      setError(axiosError.response?.data?.message || t('profile.changePhone.sendCodeError'));
+      const axiosError = err as Parameters<typeof getPhoneSubmitErrorMessage>[0];
+      const data = axiosError.response?.data;
+      if (data?.errorKey === 'errors.smsHourlyLimit') {
+        setError(t('errors.smsHourlyLimit'));
+      } else {
+        setError(getPhoneSubmitErrorMessage(axiosError, t));
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  if (!isInitialized || !user) {
+    return null;
+  }
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12">
@@ -97,7 +114,7 @@ export default function ChangePhonePage() {
           </label>
           <input
             type="tel"
-            value={user?.phone || ''}
+            value={formatPhoneForDisplay(user?.phone || '')}
             disabled
             className="input-field bg-bg-secondary/50 cursor-not-allowed opacity-70"
           />
@@ -108,17 +125,14 @@ export default function ChangePhonePage() {
             {t('profile.changePhone.newPhone')}
           </label>
           <input
-            type="text"
+            type="tel"
+            inputMode="tel"
             value={phone}
-            onChange={(e) => {
-              const processed = handlePhoneInput(e.target.value);
-              setPhone(processed);
-              if (error) {
-                setError('');
-              }
-            }}
+            onChange={handlePhoneChange}
+            onBlur={handlePhoneBlur}
+            aria-invalid={phoneTouched && error ? true : undefined}
             className={`input-field ${error ? 'border-red-500' : ''}`}
-            placeholder="+38970123456"
+            placeholder={t('register.phonePlaceholder')}
             autoComplete="tel"
           />
           {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
@@ -135,7 +149,7 @@ export default function ChangePhonePage() {
         <p className="mt-6 text-center text-sm text-gray-300">
           <button
             type="button"
-            onClick={() => router.push('/profile')}
+            onClick={() => push('/profile')}
             className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
           >
             {t('profile.changePhone.backToProfile')}

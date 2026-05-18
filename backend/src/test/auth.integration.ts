@@ -1,6 +1,7 @@
 /// <reference path="./jest-openapi.d.ts" />
 import * as supertest from 'supertest';
 
+import { cookieHeaderFromAuthResponse } from './auth-cookie-integration';
 import { getTestRequest } from './setup-integration';
 import { createTestCredentials } from './test-data-cleanup';
 
@@ -19,6 +20,7 @@ async function registerTestUser(
       firstName: credentials.firstName,
       lastName: credentials.lastName,
       termsAccepted: true,
+      smsVerificationCode: '000000',
     };
   };
   let payload = makePayload();
@@ -60,6 +62,7 @@ describe('Auth API Integration Tests', () => {
         firstName: credentials.firstName,
         lastName: credentials.lastName,
         termsAccepted: true,
+        smsVerificationCode: '000000',
       };
       let response = await request.post('/api/auth/register').send(registerData);
       let retries = 0;
@@ -100,8 +103,8 @@ describe('Auth API Integration Tests', () => {
         })
         .expect(200);
 
-      expect(response.body).toHaveProperty('access_token');
       expect(response.body).toHaveProperty('user');
+      expect(response.body).not.toHaveProperty('access_token');
       expect(response).toSatisfyApiSpec();
     });
 
@@ -119,7 +122,7 @@ describe('Auth API Integration Tests', () => {
   });
 
   describe('GET /api/auth/me', () => {
-    let authToken: string;
+    let authCookies: string;
     let testEmail: string;
     let testPhone: string;
 
@@ -131,18 +134,15 @@ describe('Auth API Integration Tests', () => {
         login: testPhone,
         password: user.password,
       });
-      authToken = loginResponse.body.access_token ?? '';
+      authCookies = cookieHeaderFromAuthResponse(loginResponse);
     });
 
     it('should return current user profile and match OpenAPI schema', async () => {
-      if (!authToken) {
+      if (!authCookies) {
         return;
       }
 
-      const response = await request
-        .get('/api/auth/me')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
+      const response = await request.get('/api/auth/me').set('Cookie', authCookies).expect(200);
 
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('email', testEmail);
@@ -158,7 +158,7 @@ describe('Auth API Integration Tests', () => {
   });
 
   describe('DELETE /api/auth/profile', () => {
-    let authToken: string;
+    let authCookies: string;
     let testPhone: string;
 
     beforeAll(async () => {
@@ -168,17 +168,17 @@ describe('Auth API Integration Tests', () => {
         login: testPhone,
         password: user.password,
       });
-      authToken = loginResponse.body.access_token ?? '';
+      authCookies = cookieHeaderFromAuthResponse(loginResponse);
     });
 
     it('should delete account successfully and match OpenAPI schema', async () => {
-      if (!authToken) {
+      if (!authCookies) {
         return;
       }
 
       const response = await request
         .delete('/api/auth/profile')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Cookie', authCookies)
         .expect(200);
 
       expect(response.body).toEqual({ success: true });

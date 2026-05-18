@@ -1,5 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
+import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+
 export class ListingDetailPage {
   private readonly testIds = {
     detailPage: 'listing-detail-page',
@@ -32,7 +34,7 @@ export class ListingDetailPage {
 
   async expectPageView(): Promise<void> {
     await expect(this.page).toHaveURL((url) => {
-      const path = url.pathname;
+      const path = pathnameWithoutLocalePrefix(url.pathname);
       return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
     });
     await expect(this.copyLinkButton).toBeVisible();
@@ -40,6 +42,34 @@ export class ListingDetailPage {
 
   async clickCopyLinkButton(): Promise<void> {
     await this.copyLinkButton.click();
+  }
+
+  get compareActionButton() {
+    return this.page.getByTestId('listing-detail-action-compare');
+  }
+
+  get favoriteActionButton() {
+    return this.page.getByTestId('listing-detail-action-favorite');
+  }
+
+  async clickCompareAction(): Promise<void> {
+    await this.compareActionButton.click();
+  }
+
+  async clickFavoriteAction(): Promise<void> {
+    await this.favoriteActionButton.click();
+  }
+
+  async expectCompareActionVisible(): Promise<void> {
+    await expect(this.compareActionButton).toBeVisible();
+  }
+
+  async expectFavoriteActionVisible(): Promise<void> {
+    await expect(this.favoriteActionButton).toBeVisible();
+  }
+
+  async expectFavoriteActionReady(): Promise<void> {
+    await expect(this.favoriteActionButton).toBeEnabled({ timeout: 30_000 });
   }
 
   async expectFullPageView(

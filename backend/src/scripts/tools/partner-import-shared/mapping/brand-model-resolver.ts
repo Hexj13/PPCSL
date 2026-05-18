@@ -3,25 +3,104 @@ import type { BrandInfo, ModelInfo } from '../listing-types';
 
 export type BrandModelVehicleType = 'car' | 'truck' | 'moto';
 
+export type BrandModelResolverContext = {
+  sourceListingId?: string;
+};
+
+export type BrandModelAutoCreateLog = (payload: Record<string, unknown>) => void;
+
+export type BrandModelAutoCreateOptions = {
+  autoCreateBrands: boolean;
+  autoCreateModels: boolean;
+  log?: BrandModelAutoCreateLog;
+};
+
+function isHttp409Conflict(error: unknown): boolean {
+  return String(error).includes('HTTP 409');
+}
+
 export class BrandModelResolver {
   private readonly brandsByVehicleType = new Map<BrandModelVehicleType, BrandInfo[] | null>();
   private readonly modelsByBrandCache = new Map<string, ModelInfo[]>();
 
-  constructor(private readonly kupitoApi: KupitoApiClient) {}
+  constructor(
+    private readonly kupitoApi: KupitoApiClient,
+    private readonly autoCreate: BrandModelAutoCreateOptions = {
+      autoCreateBrands: false,
+      autoCreateModels: false,
+    },
+  ) {}
 
   async resolve(
     brandName?: string,
     modelName?: string,
     vehicleType: BrandModelVehicleType = 'car',
+    context?: BrandModelResolverContext,
   ): Promise<{ brandId: string; modelId: string }> {
     if (!brandName || !modelName) {
       throw new Error(`Brand/model missing. brand="${brandName}" model="${modelName}"`);
     }
 
+    return this.resolveWithAutoCreate(brandName, modelName, vehicleType, {
+      retriedAfterBrandCreate: false,
+      retriedAfterModelCreate: false,
+      sourceListingId: context?.sourceListingId,
+    });
+  }
+
+  private emitPartnerImportCatalog(payload: Record<string, unknown>): void {
+    this.autoCreate.log?.(payload);
+  }
+
+  private async resolveWithAutoCreate(
+    brandName: string,
+    modelName: string,
+    vehicleType: BrandModelVehicleType,
+    state: {
+      retriedAfterBrandCreate: boolean;
+      retriedAfterModelCreate: boolean;
+      sourceListingId?: string;
+    },
+  ): Promise<{ brandId: string; modelId: string }> {
     const brands = await this.getBrands(vehicleType);
     const brandCandidates = findBrandCandidates(brands, brandName, modelName);
     if (brandCandidates.length === 0) {
-      throw new Error(`Brand not found in Kupito: ${brandName}`);
+      if (!this.autoCreate.autoCreateBrands || state.retriedAfterBrandCreate) {
+        throw new Error(`Brand not found in Kupito: ${brandName}`);
+      }
+      try {
+        const created = await this.kupitoApi.createBrand({
+          name: brandName.trim(),
+          vehicleTypes: [vehicleType],
+        });
+        this.emitPartnerImportCatalog({
+          event: 'partner_import_catalog_auto_create_brand_created',
+          sourceListingId: state.sourceListingId,
+          brandId: created.id,
+          name: created.name,
+          vehicleType,
+        });
+      } catch (error) {
+        if (isHttp409Conflict(error)) {
+          this.emitPartnerImportCatalog({
+            event: 'partner_import_catalog_auto_create_brand_conflict',
+            sourceListingId: state.sourceListingId,
+            name: brandName.trim(),
+            vehicleType,
+          });
+          this.invalidateBrandsCache(vehicleType);
+          return this.resolveWithAutoCreate(brandName, modelName, vehicleType, {
+            ...state,
+            retriedAfterBrandCreate: true,
+          });
+        }
+        throw error;
+      }
+      this.invalidateBrandsCache(vehicleType);
+      return this.resolveWithAutoCreate(brandName, modelName, vehicleType, {
+        ...state,
+        retriedAfterBrandCreate: true,
+      });
     }
 
     for (const brand of brandCandidates) {
@@ -36,7 +115,56 @@ export class BrandModelResolver {
       }
     }
 
-    throw new Error(`Model not found in Kupito: ${brandName} ${modelName}`);
+    if (!this.autoCreate.autoCreateModels || state.retriedAfterModelCreate) {
+      throw new Error(`Model not found in Kupito: ${brandName} ${modelName}`);
+    }
+    const primaryBrand = brandCandidates[0];
+    const modelToCreate =
+      adaptSourceModelForBrand(modelName, primaryBrand.name).trim() || modelName.trim();
+    try {
+      const created = await this.kupitoApi.createModel({
+        brandId: primaryBrand.id,
+        name: modelToCreate,
+        vehicleTypes: [vehicleType],
+      });
+      this.emitPartnerImportCatalog({
+        event: 'partner_import_catalog_auto_create_model_created',
+        sourceListingId: state.sourceListingId,
+        brandId: primaryBrand.id,
+        modelId: created.id,
+        name: created.name,
+        vehicleType,
+      });
+    } catch (error) {
+      if (isHttp409Conflict(error)) {
+        this.emitPartnerImportCatalog({
+          event: 'partner_import_catalog_auto_create_model_conflict',
+          sourceListingId: state.sourceListingId,
+          brandId: primaryBrand.id,
+          name: modelToCreate,
+          vehicleType,
+        });
+        this.invalidateModelsCache(primaryBrand.id, vehicleType);
+        return this.resolveWithAutoCreate(brandName, modelName, vehicleType, {
+          ...state,
+          retriedAfterModelCreate: true,
+        });
+      }
+      throw error;
+    }
+    this.invalidateModelsCache(primaryBrand.id, vehicleType);
+    return this.resolveWithAutoCreate(brandName, modelName, vehicleType, {
+      ...state,
+      retriedAfterModelCreate: true,
+    });
+  }
+
+  private invalidateBrandsCache(vehicleType: BrandModelVehicleType): void {
+    this.brandsByVehicleType.delete(vehicleType);
+  }
+
+  private invalidateModelsCache(brandId: string, vehicleType: BrandModelVehicleType): void {
+    this.modelsByBrandCache.delete(this.modelsCacheKey(brandId, vehicleType));
   }
 
   private async getBrands(vehicleType: BrandModelVehicleType): Promise<BrandInfo[]> {

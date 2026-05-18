@@ -43,6 +43,7 @@ function createUseCase(mocks: {
   usersService?: Partial<UsersService>;
   brandsService?: Partial<BrandsService>;
   i18nService?: Partial<I18nService>;
+  listingVideoService?: { consumePublishedStagedVideo?: jest.Mock };
   tireModelRepository?: Partial<Repository<TireModel>>;
   tireBrandRepository?: Partial<Repository<TireBrand>>;
 }) {
@@ -88,6 +89,10 @@ function createUseCase(mocks: {
     translate: jest.fn((key: string) => key),
     ...mocks.i18nService,
   };
+  const listingVideoService = {
+    consumePublishedStagedVideo: jest.fn().mockReturnValue(null),
+    ...mocks.listingVideoService,
+  };
 
   const tireModelRepository = {
     findOne: jest.fn(),
@@ -106,6 +111,7 @@ function createUseCase(mocks: {
     usersService as UsersService,
     brandsService as BrandsService,
     i18nService as I18nService,
+    listingVideoService as never,
     tireModelRepository as Repository<TireModel>,
     tireBrandRepository as Repository<TireBrand>,
   );

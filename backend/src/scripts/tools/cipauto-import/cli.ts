@@ -1,7 +1,5 @@
 import 'reflect-metadata';
 
-import * as fs from 'fs';
-
 import { Command } from 'commander';
 
 import type { ListingStatus } from '../../../common/types';
@@ -11,6 +9,7 @@ import { AuthClient } from '../partner-import-shared/api/auth-client';
 import { KupitoApiClient } from '../partner-import-shared/api/kupito-api';
 import { UploadClient } from '../partner-import-shared/api/upload-client';
 import { uploadImportImagesSequentially } from '../partner-import-shared/api/upload-import-images';
+import { maybeImportPartnerListingVideo } from '../partner-import-shared/import/maybe-import-listing-video';
 import { mapBodyType } from '../partner-import-shared/mapping/body-type-mapper';
 import { BrandModelResolver } from '../partner-import-shared/mapping/brand-model-resolver';
 import { mapColor } from '../partner-import-shared/mapping/color-mapper';
@@ -34,6 +33,7 @@ import {
   selectImportCandidates,
   selectRunReportItems,
 } from '../partner-import-shared/registry-lifecycle';
+import { loadSourceIdsFromPlpFile } from '../partner-import-shared/storage/load-plp-source-ids';
 import { findCipautoDuplicateBeforeCreate } from '../partner-import-shared/user-listing-dedupe/user-listing-dedupe-cipauto';
 import { loadUserVehicleListingsForDedupe } from '../partner-import-shared/user-listing-dedupe/user-listing-dedupe-load';
 import { Logger } from '../partner-import-shared/utils/logger';
@@ -81,7 +81,6 @@ program
   .requiredOption('--pages <number>')
   .option('--page-from <number>')
   .option('--page-to <number>')
-  .option('--resume')
   .option('--dry-run')
   .option('--env <value>', 'local|prod', 'local')
   .option('--delay <number>', 'delay between page requests in ms')
@@ -90,7 +89,6 @@ program
       pages: Number(rawOptions.pages),
       pageFrom: rawOptions.pageFrom ? Number(rawOptions.pageFrom) : undefined,
       pageTo: rawOptions.pageTo ? Number(rawOptions.pageTo) : undefined,
-      resume: Boolean(rawOptions.resume),
       dryRun: Boolean(rawOptions.dryRun),
       env: normalizeRuntimeEnv(rawOptions.env),
       delay: rawOptions.delay ? Number(rawOptions.delay) : 3000,
@@ -112,13 +110,15 @@ program
   .option('--source-id <value>')
   .option('--plp-file <path>', 'path to PLP snapshot file')
   .option('--registration-type <value>', 'Local|Foreign|Cleared')
-  .option('--default-hp <number>', 'fallback horsepower', '150')
+  .option('--default-hp <number>', 'fallback horsepower', '100')
   .option('--city <value>', 'city value', 'Chișinău')
   .option('--delay <number>', 'delay between requests in ms', '3000')
   .option(
     '--check-user-duplicates-before-create',
     'query DB for same-user duplicates before create',
   )
+  .option('--auto-create-brands', 'create missing brand via admin API before listing')
+  .option('--auto-create-models', 'create missing model via admin API before listing')
   .action(async (rawOptions) => {
     if (!rawOptions.userId) {
       throw new Error('Missing required argument --userId');
@@ -140,6 +140,8 @@ program
       city: String(rawOptions.city),
       delay: Number(rawOptions.delay),
       checkUserDuplicatesBeforeCreate: Boolean(rawOptions.checkUserDuplicatesBeforeCreate),
+      autoCreateBrands: Boolean(rawOptions.autoCreateBrands),
+      autoCreateModels: Boolean(rawOptions.autoCreateModels),
     };
     await runImport(options);
   });
@@ -215,16 +217,18 @@ async function runScan(options: ScanCommandOptions): Promise<void> {
       }
 
       seenSourceIds.add(item.sourceListingId);
-      const existing = registry.getBySourceId(item.sourceListingId);
+      const existing = registry.findExistingPlpItem(item);
+      const knownSourceId = existing?.sourceListingId ?? item.sourceListingId;
 
-      if (knownBefore.has(item.sourceListingId)) {
+      if (knownBefore.has(knownSourceId) || knownBefore.has(item.sourceListingId)) {
         pageDuplicates += 1;
         duplicates += 1;
       } else {
-        knownBefore.add(item.sourceListingId);
+        knownBefore.add(knownSourceId);
         pageNew += 1;
         newItems += 1;
       }
+      knownBefore.add(item.sourceListingId);
 
       if (existing?.kupitoListingId) {
         existingListings += 1;
@@ -285,7 +289,13 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const reportStore = new ReportStore(config.reportsDir);
   const authClient = options.dryRun ? undefined : new AuthClient(config);
   const kupitoApi = authClient ? new KupitoApiClient(config, authClient) : undefined;
-  const resolver = kupitoApi ? new BrandModelResolver(kupitoApi) : undefined;
+  const resolver = kupitoApi
+    ? new BrandModelResolver(kupitoApi, {
+        autoCreateBrands: Boolean(options.autoCreateBrands),
+        autoCreateModels: Boolean(options.autoCreateModels),
+        log: (payload) => logger.info('IMPORT', JSON.stringify(payload)),
+      })
+    : undefined;
   const pdpParser = new PdpParser(config);
   const uploadClient = authClient ? new UploadClient(config, authClient) : undefined;
   const startedAt = new Date().toISOString();
@@ -314,7 +324,7 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const candidates = getImportCandidates(registry.getAll(), options);
   logger.info(
     'IMPORT',
-    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)} checkUserDuplicatesBeforeCreate=${Boolean(options.checkUserDuplicatesBeforeCreate)}`,
+    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)} checkUserDuplicatesBeforeCreate=${Boolean(options.checkUserDuplicatesBeforeCreate)} autoCreateBrands=${Boolean(options.autoCreateBrands)} autoCreateModels=${Boolean(options.autoCreateModels)}`,
   );
 
   let processed = 0;
@@ -361,8 +371,11 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
       updateExisting: options.updateExisting,
       sourceId: options.sourceId,
       dryRun: options.dryRun,
+      removeClosed: options.removeClosed,
       processed,
       checkUserDuplicatesBeforeCreate: Boolean(options.checkUserDuplicatesBeforeCreate),
+      autoCreateBrands: Boolean(options.autoCreateBrands),
+      autoCreateModels: Boolean(options.autoCreateModels),
     },
     items: selectRunReportItems(registry.getAll(), startedAt),
   });
@@ -510,7 +523,9 @@ async function processSingleItem(params: {
     let resolvedBrandId = '';
     let resolvedModelId = '';
     try {
-      const resolved = await resolver.resolve(parsed.brand, parsed.model);
+      const resolved = await resolver.resolve(parsed.brand, parsed.model, 'car', {
+        sourceListingId: sourceId,
+      });
       resolvedBrandId = resolved.brandId;
       resolvedModelId = resolved.modelId;
     } catch (error) {
@@ -552,7 +567,10 @@ async function processSingleItem(params: {
     };
 
     const hp = estimateHorsepower({
-      description: finalizedParsed.description,
+      description:
+        finalizedParsed.description_ro ??
+        finalizedParsed.description_ru ??
+        finalizedParsed.description,
       engineVolumeL: finalizedParsed.engineVolumeL,
       fuel: fuelMap.value,
       defaultHorsepower: options.defaultHp,
@@ -600,6 +618,13 @@ async function processSingleItem(params: {
         lastImportedAt: new Date().toISOString(),
       });
       logger.info('IMPORT', `[OK][${sourceId}] updated kupitoId=${updated.id}`);
+      await maybeImportPartnerListingVideo({
+        videoUrl: finalizedParsed.videoUrl,
+        listingId: updated.id,
+        uploadClient,
+        sourceId,
+        logger,
+      });
       return;
     }
 
@@ -653,6 +678,13 @@ async function processSingleItem(params: {
       lastImportedAt: new Date().toISOString(),
     });
     logger.info('IMPORT', `[OK][${sourceId}] created kupitoId=${created.id}`);
+    await maybeImportPartnerListingVideo({
+      videoUrl: finalizedParsed.videoUrl,
+      listingId: created.id,
+      uploadClient,
+      sourceId,
+      logger,
+    });
   } catch (error) {
     const closeReason =
       !parseSucceeded && normalizeSourceStatus(item) === 'missing_candidate'
@@ -691,16 +723,6 @@ function getImportCandidates(items: RegistryItem[], options: ImportCommandOption
 
   const sourceIds = loadSourceIdsFromPlpFile(options.plpFilePath);
   return selected.filter((item: RegistryItem) => sourceIds.has(item.sourceListingId));
-}
-
-function loadSourceIdsFromPlpFile(plpFilePath: string): Set<string> {
-  if (!fs.existsSync(plpFilePath)) {
-    throw new Error(`PLP file not found: ${plpFilePath}`);
-  }
-  const raw = fs.readFileSync(plpFilePath, 'utf-8');
-  const parsed = JSON.parse(raw) as { items?: Record<string, unknown> };
-  const entries = parsed.items ?? {};
-  return new Set(Object.keys(entries));
 }
 
 async function runReport(options: ReportCommandOptions, env: 'local' | 'prod'): Promise<void> {

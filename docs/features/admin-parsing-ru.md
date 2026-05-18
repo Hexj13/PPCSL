@@ -25,7 +25,7 @@ tags:
 ## Текущее состояние
 
 - в UI доступны parser entries, которые backend возвращает через `GET /api/admin/parsing/catalog`
-- сейчас доступны `cipauto` и `999md`
+- сейчас доступны `cipauto`, `999md` и `autooutlet`
 - `targetEnv` выбирается только на backend по runtime-конфигурации (`local` или `prod`)
 - ручной `PDP` запуск работает только по данным из PLP-файла (`plpFileKey`)
 - scheduler включён по умолчанию и отключается только через env
@@ -72,6 +72,13 @@ tags:
   - `schedulerEnabled: true`
   - `adminAvailability: enabled`
   - `releaseStage: released`
+- `autooutlet`
+  - `scanInputMode: pages`
+  - `plpMode: mono`
+  - `manualRunEnabled: true`
+  - `schedulerEnabled: true`
+  - `adminAvailability: enabled`
+  - `releaseStage: prepared`
 
 ## PLP
 
@@ -153,6 +160,8 @@ tags:
 - `city` (обязательно)
 - `delayMs`
 - `removeClosed` — тот же смысл, что в PLP (закрытие на платформе при недоступности на источнике vs только регистр)
+- `checkUserDuplicatesBeforeCreate` — перед `createListing` проверять дубликаты по правилам парсера (см. `parsing-framework.md` и парсерные доки в `docs/parsing/`)
+- `autoCreateBrands`, `autoCreateModels` — при отсутствии марки/модели в каталоге создавать их через admin API (`POST /api/admin/brands`, `POST /api/admin/vehicle-models`) и продолжать импорт в этом же запуске; учётка импорта должна быть Admin
 
 `assignedUserId` проходит preflight-валидацию через admin API.
 
@@ -202,6 +211,8 @@ tags:
 - `city`
 - `delayMs`
 - `removeClosed`
+- `checkUserDuplicatesBeforeCreate`
+- `autoCreateBrands`, `autoCreateModels` (для совместимости со старыми снапшотами также читается legacy `autoCreateBrandsModels`)
 - `dataSource: plp_registry`
 
 Частота:
@@ -449,4 +460,5 @@ Backend дергает каталоговые URL парсера методом 
 - [Parsing Framework (Core)](./parsing-framework.md)
 - [CipAuto parser (kupito.club)](../../../docs/parsing/cipauto-import.md)
 - [999.md parser (kupito.club)](../../../docs/parsing/999md-import.md)
+- [AutoOutlet parser (kupito.club)](../../../docs/parsing/autooutlet-import.md)
 - [PPCSL Core Documentation](../README.md)

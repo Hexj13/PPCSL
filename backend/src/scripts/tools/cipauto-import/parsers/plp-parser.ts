@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 
 import { requestText } from '../../partner-import-shared/utils/http';
+import { extractVehiculListingPathId } from '../../partner-import-shared/vehicul-listing-path-id';
 import type { CipautoConfig, ParsedPlpItem } from '../types';
 
 interface ParsePlpPageResult {
@@ -178,9 +179,7 @@ function escapeRegExp(value: string): string {
 }
 
 export function extractSourceListingId(url: string): string | null {
-  const match = url.match(/\/vehicul\/([^/]+?)-[^/]*\/?$/i);
-  if (!match) return null;
-  return match[1];
+  return extractVehiculListingPathId(url);
 }
 
 function canonicalizeUrl(url: string): string {

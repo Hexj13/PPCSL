@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
 
+import { IsPhone } from '../../../common/decorators/is-phone.decorator';
+
 export class ResetPasswordDto {
   @ApiProperty({
     example: '+37370123456',
@@ -8,9 +10,7 @@ export class ResetPasswordDto {
   })
   @IsNotEmpty({ message: 'errors.phoneRequired' })
   @IsString({ message: 'validation.string' })
-  @Matches(/^[+]?[0-9\s()-]{8,}$/, {
-    message: 'validation.phone',
-  })
+  @IsPhone()
   phone: string;
 
   @ApiProperty({

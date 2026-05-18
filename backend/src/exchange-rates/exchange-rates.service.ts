@@ -148,10 +148,14 @@ export class ExchangeRatesService {
           approxPrice = Math.round(listing.price / rate);
         }
       }
+      const hasVideoFlag = Object.prototype.hasOwnProperty.call(listing, 'has_video')
+        ? (listing as unknown as { has_video: boolean }).has_video
+        : undefined;
       return {
-        ...listing,
+        ...(listing as Record<string, unknown>),
         approxPriceDefaultCurrency: approxPrice,
         defaultCurrencyCode: defaultCurrency,
+        ...(hasVideoFlag !== undefined ? { has_video: hasVideoFlag } : {}),
       } as T;
     });
   }

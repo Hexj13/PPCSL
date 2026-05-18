@@ -67,8 +67,8 @@ export function ProfileEmailSection({
       ? true
       : formData.emailNotifications === true && formData[field] === true;
     return (
-      <div className="flex items-center gap-3 group">
-        <div className="relative">
+      <div className="flex items-start gap-3 group">
+        <div className="relative shrink-0 mt-0.5">
           <input
             type="checkbox"
             checked={checked}
@@ -114,7 +114,7 @@ export function ProfileEmailSection({
           id={labelId}
           type="button"
           onClick={() => toggleNotificationField(field, !checked)}
-          className={`text-sm ${
+          className={`text-sm text-left ${
             detailsDisabled
               ? 'text-text-secondary cursor-not-allowed'
               : 'text-text-primary cursor-pointer'
@@ -161,8 +161,8 @@ export function ProfileEmailSection({
           )}
         </div>
         <div className="mt-4 space-y-3">
-          <div className="flex items-center gap-3 group">
-            <div className="relative">
+          <div className="flex items-start gap-3 group">
+            <div className="relative shrink-0 mt-0.5">
               <input
                 type="checkbox"
                 checked={masterChecked}
@@ -208,7 +208,7 @@ export function ProfileEmailSection({
               id="email-notifications-master-label"
               type="button"
               onClick={() => toggleMasterNotifications(formData.emailNotifications !== true)}
-              className={`text-sm ${
+              className={`text-sm text-left ${
                 masterDisabled
                   ? 'text-text-secondary cursor-not-allowed'
                   : 'text-text-primary cursor-pointer'

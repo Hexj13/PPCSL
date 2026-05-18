@@ -21,8 +21,8 @@ Project-specific standard for E2E tests in PPCSL frontend.
   - `core/frontend/e2e/utils`
   - `core/frontend/e2e/fixtures`
   - `core/frontend/e2e/test-data`
-  - `core/frontend/e2e/constants`
-- Playwright config: `core/frontend/playwright.config.ts`.
+  - `core/frontend/e2e/types`
+- Playwright config: `core/frontend/playwright.config.ts` (`testDir: ./e2e/specs`).
 
 ## Runtime and commands
 
@@ -35,6 +35,7 @@ npm run test:e2e
 Optional modes:
 
 ```bash
+npm run test:e2e:p0
 npm run test:e2e:headed
 npm run test:e2e:ui
 ```
@@ -57,19 +58,39 @@ npx playwright install chromium
 
 ## Environment contract
 
-- `E2E_BASE_URL` (optional, default `http://localhost:3000`)
+- `E2E_BASE_URL` or `PLAYWRIGHT_BASE_URL` (optional; Playwright default `http://localhost:3000`)
+- `PLAYWRIGHT_SKIP_WEBSERVER=1` to skip `webServer` when the dev server is already running
 - `E2E_USER_LOGIN` (optional; default `admin@admin.com` when unset)
 - `E2E_USER_PASSWORD` (optional; default `GGGgggTEST777` when unset — matches stage `seed.ts` admin)
+- `API_URL` or `E2E_API_URL` (optional; default `http://localhost:4000` for API helpers such as `buildAvailableMdPhone`)
+- For browser-side API helpers (`e2e/utils/api-origin.ts`), only **absolute** `http(s)` URLs are used from env. Priority: `E2E_API_URL`, then `API_URL`, then `NEXT_PUBLIC_API_URL` (relative values such as `/api` are ignored so helpers do not call the wrong host).
+- Run the backend API with `SMS_OUTBOUND_DISABLED=true` (and `NODE_ENV` not `production`) when Twilio credentials are present in `.env` so Playwright flows do not trigger real outbound SMS; codes in Redis are still written; UI verification can use `000000` locally (see below).
 
 If you set `E2E_USER_*` explicitly, values must match a user in your database (password must match the hashed password from seed or your own reset).
 
-Authenticated tests must use `test.skip(...)` when credentials are missing.
+`e2e/utils/auth.ts` `loginByUi` throws if post-login navigation lands on `/complete-profile` with `mode=phone_required` or `mode=business_onboarding` (seeded E2E admin must have `phoneVerified: true`; Business users need `companyName`).
+
+Use `testInfo.skip(condition, reason)` only for rare environment constraints documented in the spec. Prefer fixing data or config so tests **run** (pass or fail) rather than staying skipped.
 
 Local registration flow expectation:
 
 - On local environment SMS verification code is `000000`.
 - Registration E2E should cover both user types: individual and business.
 - Registration flow is complete only after `verify-phone` -> `complete-profile` (with additional data) -> home page.
+
+## Playwright projects
+
+`playwright.config.ts` defines two Chromium projects:
+
+- **`chromium-serial-account`**: specs that share the seeded E2E admin account and mutate backend or UI state (favorites, comparison, saved filters, listing create/view, my listings, **`sync-favorites-cross-tab.spec.ts`**), plus **`search-filters.spec.ts`** (URL-driven search UI is sensitive to parallel load on the dev server). Runs with **one worker** to reduce cross-file races. Match list is the `statefulAccountSpecs` regex in `playwright.config.ts`.
+- **`chromium`**: remaining specs; in CI uses two workers where safe.
+
+Run a single project explicitly:
+
+```bash
+npx playwright test --project=chromium
+npx playwright test --project=chromium-serial-account
+```
 
 ## Required architecture for specs
 
@@ -83,16 +104,17 @@ Each spec must follow these rules:
    - Page objects must compose component objects instead of duplicating region-level logic.
 3. **Fixture-based dependency injection**
    - Specs must import `test`/`expect` from `e2e/fixtures/base.ts`.
-   - Page objects should be injected through fixtures instead of `new` in every spec.
+   - Page objects should be injected through fixtures instead of `new` in every spec (except rare multi-page-context cases such as cross-tab scenarios).
 4. **Visibility gate before interaction**
    - The test must call page `expectPageView()` before any interaction on that page.
-5. **No duplicated setup**
-   - Use shared hooks/utilities for repeated setup (`useClearedBrowserState`).
+5. **Browser reset is a step, not a hook**
+   - Do not perform navigation, storage clearing, or cookie consent dismissal inside `beforeEach` hooks.
+   - Use `prependClearBrowserState` from `e2e/utils/steps.ts` as the first steps in a scenario, executed inside `test(...)`.
 6. **No locator literals inside test bodies**
    - Locator values must come from page object/component APIs.
    - Keep locator definitions in the related page object/component file, not in separate shared constants files.
 7. **Reusable flow utilities**
-   - Repeated cross-spec flows (auth, listing navigation, common checks) must be extracted to `e2e/utils` or page objects.
+   - Repeated cross-spec flows (auth, listing navigation, common checks) must live in `e2e/utils` or page objects.
 8. **Step-based execution style**
    - Use explicit `test.step(...)` for meaningful user actions and validations.
    - For multi-step flows, group steps in arrays and execute via shared helper (`e2e/utils/steps.ts`).
@@ -103,6 +125,10 @@ Each spec must follow these rules:
 
 - Reusable runtime scenario data should live in `e2e/test-data`.
 - Specs should consume factory helpers instead of duplicating generation logic.
+
+## Step typing
+
+- Shared step shape: `E2EStep` in `e2e/types/e2e-step.ts` (re-exported from `e2e/utils/steps.ts`).
 
 ## Selector policy
 
@@ -193,6 +219,10 @@ await page.locator(`[data-testid^="${testId}-option-"]`).first().click();
 - Keep assertions deterministic and language-independent.
 - Use Allure as the source of truth for E2E run reports.
 
+## Allure defaults
+
+- `e2e/fixtures/base.ts` applies an automatic Allure `layer` label (`e2e-ui`) for every test via an auto fixture.
+
 ## P0 smoke scope
 
 P0 is the minimum E2E subset that protects release readiness for the primary marketplace flow.
@@ -203,6 +233,9 @@ P0 is the minimum E2E subset that protects release readiness for the primary mar
 - Registration flow reaches home through `verify-phone` and `complete-profile`.
 - Listing creation flow covers guest guard and successful authenticated publish.
 - My listings page is accessible for authenticated users and route guard works after logout.
+- Mobile viewport smoke for search filters (`@p0` in `mobile-search.spec.ts`).
+
+Tag P0 scenarios with `@p0` in the `test.describe` title. Run `npm run test:e2e:p0` to execute only tagged tests.
 
 All other end-to-end checks are considered non-P0 coverage and can run in the full suite.
 
@@ -210,10 +243,14 @@ All other end-to-end checks are considered non-P0 coverage and can run in the fu
 
 Current suite is aligned with this standard:
 
-- Shared fixtures: `e2e/fixtures/base.ts`
-- Shared setup hook: `e2e/utils/spec-hooks.ts`
-- Shared auth/listing helpers: `e2e/utils/auth.ts`, `e2e/utils/listings.ts`
-- Shared step runner: `e2e/utils/steps.ts`
+- Shared fixtures: `e2e/fixtures/base.ts` (page objects + Allure auto layer)
+- Browser reset helper: `e2e/utils/session.ts` (no `beforeEach` UI hooks)
+- Shared step runner: `e2e/utils/steps.ts` (`prependClearBrowserState`, `runSteps`)
+- API helpers: `e2e/utils/api/auth.ts`, `e2e/utils/api/check-phone.ts`, `e2e/utils/api/listing-actions.ts`, `e2e/utils/api/saved-filters.ts`, `e2e/utils/api/wait-favorite-api.ts`
+- Shared auth/listing helpers: `e2e/utils/auth.ts`, `e2e/utils/listings.ts`, `e2e/utils/listing-flow.ts`
+- API origin + locale cookies: `e2e/utils/api-origin.ts`, `e2e/utils/e2e-locale.ts`
+- URL assertions: `e2e/utils/app-path.ts` `pathnameWithoutLocalePrefix()` strips only configured URL locale prefixes (e.g. `ru`), not arbitrary two-letter path segments (so `/listings/...` is not mangled).
+- Saved filters quota: `e2e/utils/api/saved-filters.ts` `deleteAllSavedFiltersForSession` (used by `saved-filters.spec.ts` so `POST /api/saved-filters` does not hit the per-user cap during repeated local runs)
 - Shared test-data factories: `e2e/test-data/auth.ts`
 - Shared component objects:
   - `components/auth/register-form.component.ts`
@@ -227,3 +264,7 @@ Current suite is aligned with this standard:
   - `ListingDetailPage`
   - `ListingCreatePage`
   - `MyListingsPage`
+  - `FavoritesPage`
+  - `ComparePage`
+  - `ProfilePage`
+  - `AdminPage`

@@ -26,6 +26,8 @@ export interface ImportCommandOptions {
   city: string;
   delay: number;
   checkUserDuplicatesBeforeCreate?: boolean;
+  autoCreateBrands?: boolean;
+  autoCreateModels?: boolean;
   dedupe999PriceTolerancePct?: number;
   dedupe999PhotoCountTolerance?: number;
 }

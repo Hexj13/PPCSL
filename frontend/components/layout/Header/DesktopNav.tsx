@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 
+import { isSignRoutePathname } from '@/components/layout/header-flow-paths';
 import type { User } from '@/lib/api';
 
 import { GuestDesktopNav } from './GuestDesktopNav';
@@ -82,7 +83,7 @@ export function DesktopNavActions({
   if (!showNav) return null;
 
   const actionsSkeletonVariant =
-    !user && pathname === '/sign' ? 'desktopSignGuest' : 'desktopActions';
+    !user && isSignRoutePathname(pathname) ? 'desktopSignGuest' : 'desktopActions';
 
   return (
     <nav className="hidden lg:flex gap-2 xl:gap-4 items-center shrink-0">

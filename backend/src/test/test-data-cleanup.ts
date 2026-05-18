@@ -28,8 +28,8 @@ export type TestCredentials = {
 
 function nextPhone(): string {
   phoneSequence += 1;
-  const suffix = `${Date.now()}${phoneSequence}${Math.floor(Math.random() * 1000)}`.slice(-7);
-  return `+38979${suffix}`;
+  const suffix = `${Date.now()}${phoneSequence}${Math.floor(Math.random() * 1000)}`.slice(-6);
+  return `+37379${suffix}`;
 }
 
 export function createTestCredentials(scope: string): TestCredentials {

@@ -81,6 +81,8 @@ import {
   parsePresetTimeFromCron,
   parsePresetWeekdayFromCron,
   renderHighlightedText,
+  resolveSnapshotAutoCreateBrands,
+  resolveSnapshotAutoCreateModels,
 } from './parsing-tab/parsing-tab-utils';
 
 /* eslint-disable max-lines-per-function, max-lines, complexity -- admin parsing tab orchestration */
@@ -220,9 +222,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     pageSize: 50,
     maxItems: '' as string,
     delayMs: 3000,
-    resume: false,
     dryRun: false,
-    removeClosed: false,
   });
 
   const [pdpForm, setPdpForm] = useState({
@@ -241,6 +241,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     onlyFailed: initialPdpDefaults.onlyFailed,
     updateExisting: initialPdpDefaults.updateExisting,
     checkUserDuplicatesBeforeCreate: false,
+    autoCreateBrands: initialPdpDefaults.autoCreateBrands,
+    autoCreateModels: initialPdpDefaults.autoCreateModels,
   });
   const selectedPlpParserLabel = useMemo(
     () => getSelectedOptionLabel(manualRunParserOptions, plpForm.parserCode),
@@ -266,7 +268,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     plpPageSize: 50,
     plpMaxItems: '' as string,
     plpDelayMs: 3000,
-    plpRemoveClosed: false,
     pdpListingStatus: initialPdpDefaults.listingStatus,
     pdpPlpFileKey: '',
     pdpLimit: '',
@@ -278,6 +279,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
     pdpOnlyFailed: initialPdpDefaults.onlyFailed,
     pdpUpdateExisting: initialPdpDefaults.updateExisting,
     pdpCheckUserDuplicatesBeforeCreate: false,
+    pdpAutoCreateBrands: initialPdpDefaults.autoCreateBrands,
+    pdpAutoCreateModels: initialPdpDefaults.autoCreateModels,
   });
   const selectedPdpParserLabel = useMemo(
     () => getSelectedOptionLabel(manualRunParserOptions, pdpForm.parserCode),
@@ -499,7 +502,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         setCatalog(res.data.data);
         const firstManualParser = res.data.data.find((item) => item.manualRunEnabled);
         const firstManual = firstManualParser?.code ?? parserCatalogDefaultCode;
-        const firstManualScanInputMode = firstManualParser?.scanInputMode ?? 'pages';
         const firstScheduler =
           res.data.data.find((item) => item.schedulerEnabled)?.code ?? firstManual;
         const cityList = citiesRef.current;
@@ -513,7 +515,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           login: '',
           pageSize: 50,
           maxItems: '',
-          removeClosed: firstManualScanInputMode === 'pages' ? s.removeClosed : false,
         }));
         setPdpForm((s) => {
           const pdpDefaults = getParserPdpDefaults(firstManual);
@@ -529,6 +530,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           next.onlyFailed = pdpDefaults.onlyFailed;
           next.updateExisting = pdpDefaults.updateExisting;
           next.checkUserDuplicatesBeforeCreate = false;
+          next.autoCreateBrands = pdpDefaults.autoCreateBrands;
+          next.autoCreateModels = pdpDefaults.autoCreateModels;
           if (cityList.length > 0) {
             next.city = getDefaultPdpCity(firstManual, cityList);
           }
@@ -547,6 +550,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           next.pdpOnlyFailed = pdpDefaults.onlyFailed;
           next.pdpUpdateExisting = pdpDefaults.updateExisting;
           next.pdpCheckUserDuplicatesBeforeCreate = false;
+          next.pdpAutoCreateBrands = pdpDefaults.autoCreateBrands;
+          next.pdpAutoCreateModels = pdpDefaults.autoCreateModels;
           if (cityList.length > 0) {
             next.pdpCity = getDefaultPdpCity(firstScheduler, cityList);
           }
@@ -1154,7 +1159,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         plpPageSize: 50,
         plpMaxItems: '',
         plpDelayMs: 3000,
-        plpRemoveClosed: false,
         pdpListingStatus: pdpDefaults.listingStatus,
         pdpPlpFileKey: '',
         pdpLimit: '',
@@ -1166,6 +1170,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         pdpOnlyFailed: pdpDefaults.onlyFailed,
         pdpUpdateExisting: pdpDefaults.updateExisting,
         pdpCheckUserDuplicatesBeforeCreate: false,
+        pdpAutoCreateBrands: pdpDefaults.autoCreateBrands,
+        pdpAutoCreateModels: pdpDefaults.autoCreateModels,
       };
     });
   }, [cities, schedulerParserOptions]);
@@ -1222,7 +1228,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         plpPageSize: Number(cfg.pageSize ?? 50),
         plpMaxItems: cfg.maxItems == null ? '' : String(cfg.maxItems),
         plpDelayMs: Number(cfg.delayMs ?? 3000),
-        plpRemoveClosed: Boolean(cfg.removeClosed),
         pdpListingStatus:
           cfg.listingStatus === 'paused'
             ? 'paused'
@@ -1235,10 +1240,13 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         pdpDefaultHp: Number(cfg.defaultHp ?? pdpDefaults.defaultHp),
         pdpCity: String(cfg.city ?? getDefaultPdpCity(schedule.parser_code, cities)),
         pdpDelayMs: Number(cfg.delayMs ?? pdpDefaults.delayMs),
-        pdpRemoveClosed: Boolean(cfg.removeClosed),
+        pdpRemoveClosed:
+          schedule.run_type === 'pdp' ? Boolean(cfg.removeClosed) : pdpDefaults.removeClosed,
         pdpOnlyFailed: Boolean(cfg.onlyFailed),
         pdpUpdateExisting: Boolean(cfg.updateExisting),
         pdpCheckUserDuplicatesBeforeCreate: Boolean(cfg.checkUserDuplicatesBeforeCreate),
+        pdpAutoCreateBrands: resolveSnapshotAutoCreateBrands(cfg, pdpDefaults),
+        pdpAutoCreateModels: resolveSnapshotAutoCreateModels(cfg, pdpDefaults),
       });
       setScheduleModalOpen(true);
     },
@@ -1346,9 +1354,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
             ? Number(plpForm.maxItems)
             : undefined,
         delayMs: plpForm.delayMs,
-        resume: plpForm.resume,
         dryRun: plpForm.dryRun,
-        removeClosed: plpScanInputMode === 'pages' ? plpForm.removeClosed : undefined,
       });
       toast.success(t('admin.parsing.runStarted'));
       setPlpModalOpen(false);
@@ -1394,6 +1400,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         delayMs: pdpForm.delayMs,
         removeClosed: pdpForm.removeClosed,
         checkUserDuplicatesBeforeCreate: pdpForm.checkUserDuplicatesBeforeCreate,
+        autoCreateBrands: pdpForm.autoCreateBrands,
+        autoCreateModels: pdpForm.autoCreateModels,
       });
       toast.success(t('admin.parsing.runStarted'));
       setPdpModalOpen(false);
@@ -1417,16 +1425,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           delayMs,
         };
       }
-      if (scheduleForm.plpScanMode === 'first_n') {
-        return {
-          scanMode: 'first_n',
-          pages: scheduleForm.plpPagesFirst,
-          pageFrom: undefined,
-          pageTo: undefined,
-          delayMs,
-          removeClosed: scheduleForm.plpRemoveClosed,
-        };
-      }
       if (scheduleForm.plpScanMode === 'all') {
         return {
           scanMode: 'all',
@@ -1434,7 +1432,15 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           pageFrom: undefined,
           pageTo: undefined,
           delayMs,
-          removeClosed: scheduleForm.plpRemoveClosed,
+        };
+      }
+      if (scheduleForm.plpScanMode === 'first_n') {
+        return {
+          scanMode: 'first_n',
+          pages: scheduleForm.plpPagesFirst,
+          pageFrom: undefined,
+          pageTo: undefined,
+          delayMs,
         };
       }
       return {
@@ -1443,7 +1449,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         pageFrom: scheduleForm.plpPageFrom,
         pageTo: scheduleForm.plpPageTo,
         delayMs,
-        removeClosed: scheduleForm.plpRemoveClosed,
       };
     }
     return {
@@ -1458,7 +1463,11 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
       delayMs: scheduleForm.pdpDelayMs,
       removeClosed: scheduleForm.pdpRemoveClosed,
       checkUserDuplicatesBeforeCreate: scheduleForm.pdpCheckUserDuplicatesBeforeCreate,
+      autoCreateBrands: scheduleForm.pdpAutoCreateBrands,
+      autoCreateModels: scheduleForm.pdpAutoCreateModels,
       dataSource: 'plp_registry',
+      resume: false,
+      dryRun: false,
     };
   };
 
@@ -2116,7 +2125,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         title={t('admin.parsing.plpModalTitle')}
         size="large"
       >
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        <div className="space-y-4">
           <div>
             <label className={modalFieldLabelClassName}>{t('admin.parsing.fieldParser')}</label>
             {manualRunParserOptions.length <= 1 ? (
@@ -2137,11 +2146,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                     login: '',
                     pageSize: 50,
                     maxItems: '',
-                    removeClosed:
-                      (catalog.find((item) => item.code === value)?.scanInputMode ?? 'pages') ===
-                      'pages'
-                        ? s.removeClosed
-                        : false,
                   }))
                 }
                 options={manualRunParserOptions}
@@ -2264,16 +2268,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
           </div>
           <div className="space-y-3">
             <Checkbox
-              checked={plpForm.resume}
-              onChange={(checked) => setPlpForm((s) => ({ ...s, resume: checked }))}
-              label={renderCheckboxLabelWithHint(
-                'admin.parsing.fieldResume',
-                'admin.parsing.fieldResumeHint',
-                'admin.parsing.fieldResumeHintButton',
-              )}
-              size="sm"
-            />
-            <Checkbox
               checked={plpForm.dryRun}
               onChange={(checked) => setPlpForm((s) => ({ ...s, dryRun: checked }))}
               label={renderCheckboxLabelWithHint(
@@ -2283,29 +2277,17 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
               )}
               size="sm"
             />
-            {plpScanInputMode === 'pages' && (
-              <Checkbox
-                checked={plpForm.removeClosed}
-                onChange={(checked) => setPlpForm((s) => ({ ...s, removeClosed: checked }))}
-                label={renderCheckboxLabelWithHint(
-                  'admin.parsing.fieldRemoveClosed',
-                  'admin.parsing.fieldRemoveClosedHint',
-                  'admin.parsing.fieldRemoveClosedHintButton',
-                )}
-                size="sm"
-              />
-            )}
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2 shrink-0">
             <AdminActionButton
               variant="secondary"
-              className="flex-1"
+              className="w-full shrink-0 sm:flex-1"
               onClick={() => setPlpModalOpen(false)}
             >
               {t('common.cancel')}
             </AdminActionButton>
             <AdminActionButton
-              className="flex-1"
+              className="w-full shrink-0 sm:flex-1"
               disabled={plpSubmitDisabled}
               aria-busy={plpSubmitting}
               onClick={() => void submitPlp()}
@@ -2323,7 +2305,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         title={t('admin.parsing.pdpModalTitle')}
         size="large"
       >
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        <div className="space-y-4">
           <div>
             <label className={modalFieldLabelClassName}>{t('admin.parsing.fieldParser')}</label>
             {manualRunParserOptions.length <= 1 ? (
@@ -2351,6 +2333,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                       onlyFailed: pdpDefaults.onlyFailed,
                       updateExisting: pdpDefaults.updateExisting,
                       checkUserDuplicatesBeforeCreate: false,
+                      autoCreateBrands: pdpDefaults.autoCreateBrands,
+                      autoCreateModels: pdpDefaults.autoCreateModels,
                     };
                   })
                 }
@@ -2528,17 +2512,37 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
               )}
               size="sm"
             />
+            <Checkbox
+              checked={pdpForm.autoCreateBrands}
+              onChange={(checked) => setPdpForm((s) => ({ ...s, autoCreateBrands: checked }))}
+              label={renderCheckboxLabelWithHint(
+                'admin.parsing.pdp.autoCreateBrands',
+                'admin.parsing.pdp.autoCreateBrandsHint',
+                'admin.parsing.pdp.autoCreateBrandsHintButton',
+              )}
+              size="sm"
+            />
+            <Checkbox
+              checked={pdpForm.autoCreateModels}
+              onChange={(checked) => setPdpForm((s) => ({ ...s, autoCreateModels: checked }))}
+              label={renderCheckboxLabelWithHint(
+                'admin.parsing.pdp.autoCreateModels',
+                'admin.parsing.pdp.autoCreateModelsHint',
+                'admin.parsing.pdp.autoCreateModelsHintButton',
+              )}
+              size="sm"
+            />
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2 shrink-0">
             <AdminActionButton
               variant="secondary"
-              className="flex-1"
+              className="w-full shrink-0 sm:flex-1"
               onClick={() => setPdpModalOpen(false)}
             >
               {t('common.cancel')}
             </AdminActionButton>
             <AdminActionButton
-              className="flex-1"
+              className="w-full shrink-0 sm:flex-1"
               disabled={pdpSubmitDisabled}
               aria-busy={pdpSubmitting}
               onClick={() => void submitPdp()}
@@ -2560,7 +2564,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         }
         size="large"
       >
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        <div className="space-y-4">
           <div>
             <label className={modalFieldLabelClassName}>{t('admin.parsing.fieldRunType')}</label>
             <Dropdown
@@ -2611,11 +2615,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                       plpPageSize: 50,
                       plpMaxItems: '',
                       pdpPlpFileKey: '',
-                      plpRemoveClosed:
-                        (catalog.find((item) => item.code === value)?.scanInputMode ?? 'pages') ===
-                        'pages'
-                          ? s.plpRemoveClosed
-                          : false,
                       pdpListingStatus: pdpDefaults.listingStatus,
                       pdpRegistrationType: pdpDefaults.registrationType,
                       pdpDefaultHp: pdpDefaults.defaultHp,
@@ -2625,6 +2624,8 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                       pdpOnlyFailed: pdpDefaults.onlyFailed,
                       pdpUpdateExisting: pdpDefaults.updateExisting,
                       pdpCheckUserDuplicatesBeforeCreate: false,
+                      pdpAutoCreateBrands: pdpDefaults.autoCreateBrands,
+                      pdpAutoCreateModels: pdpDefaults.autoCreateModels,
                     };
                   })
                 }
@@ -2930,20 +2931,6 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                   }
                 />
               </div>
-              {schedulePlpScanInputMode === 'pages' && (
-                <Checkbox
-                  checked={scheduleForm.plpRemoveClosed}
-                  onChange={(checked) =>
-                    setScheduleForm((s) => ({ ...s, plpRemoveClosed: checked }))
-                  }
-                  label={renderCheckboxLabelWithHint(
-                    'admin.parsing.fieldRemoveClosed',
-                    'admin.parsing.fieldRemoveClosedHint',
-                    'admin.parsing.fieldRemoveClosedHintButton',
-                  )}
-                  size="sm"
-                />
-              )}
             </div>
           ) : (
             <div className="space-y-3 border-t border-primary-500/15 pt-3">
@@ -3079,21 +3066,45 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
                   )}
                   size="sm"
                 />
+                <Checkbox
+                  checked={scheduleForm.pdpAutoCreateBrands}
+                  onChange={(checked) =>
+                    setScheduleForm((s) => ({ ...s, pdpAutoCreateBrands: checked }))
+                  }
+                  label={renderCheckboxLabelWithHint(
+                    'admin.parsing.pdp.autoCreateBrands',
+                    'admin.parsing.pdp.autoCreateBrandsHint',
+                    'admin.parsing.pdp.autoCreateBrandsHintButton',
+                  )}
+                  size="sm"
+                />
+                <Checkbox
+                  checked={scheduleForm.pdpAutoCreateModels}
+                  onChange={(checked) =>
+                    setScheduleForm((s) => ({ ...s, pdpAutoCreateModels: checked }))
+                  }
+                  label={renderCheckboxLabelWithHint(
+                    'admin.parsing.pdp.autoCreateModels',
+                    'admin.parsing.pdp.autoCreateModelsHint',
+                    'admin.parsing.pdp.autoCreateModelsHintButton',
+                  )}
+                  size="sm"
+                />
               </div>
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2 shrink-0">
             <AdminActionButton
               variant="secondary"
-              className="flex-1"
+              className="w-full shrink-0 sm:flex-1"
               disabled={scheduleCreating}
               onClick={closeScheduleModal}
             >
               {t('common.cancel')}
             </AdminActionButton>
             <AdminActionButton
-              className="flex-1"
+              className="w-full shrink-0 sm:flex-1"
               disabled={scheduleSubmitDisabled}
               aria-busy={scheduleCreating}
               onClick={() => void submitSchedule()}
@@ -3116,7 +3127,7 @@ export function ParsingTab({ isActive }: ParsingTabProps) {
         }
         size="large"
       >
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        <div className="space-y-4">
           {registrySyncHintLoading ? (
             <div className="py-6 text-center text-text-secondary">{t('admin.parsing.loading')}</div>
           ) : (

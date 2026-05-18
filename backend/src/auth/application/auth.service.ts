@@ -7,20 +7,28 @@ import { SmsService } from '../infrastructure/services/sms.service';
 import { ChangeEmailConfirmDto, ChangeEmailRequestDto } from '../presentation/dto/change-email.dto';
 import { ChangePasswordDto } from '../presentation/dto/change-password.dto';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from '../presentation/dto/change-phone.dto';
+import { GoogleSignInDto } from '../presentation/dto/google-sign-in.dto';
 import { LoginDto } from '../presentation/dto/login.dto';
-import { RefreshTokenDto } from '../presentation/dto/refresh-token.dto';
 import { RegisterDto } from '../presentation/dto/register.dto';
 import { RequestPasswordResetDto } from '../presentation/dto/request-password-reset.dto';
 import { ResetPasswordDto } from '../presentation/dto/reset-password.dto';
 import { UpdateProfileDto } from '../presentation/dto/update-profile.dto';
 import { VerifyResetCodeDto } from '../presentation/dto/verify-reset-code.dto';
 
-import { RegisterResponse, UserProfileResponse, UserWithoutPassword } from './auth.types';
+import {
+  RegisterResponse,
+  UserProfileResponse,
+  UserWithoutPassword,
+  LoginResponse,
+  GoogleSignInResponse,
+} from './auth.types';
 import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './use-cases/check-phone-availability.use-case';
 import { ConfirmEmailChangeUseCase } from './use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './use-cases/delete-account.use-case';
+import { DismissPartnerPromoBannerUseCase } from './use-cases/dismiss-partner-promo-banner.use-case';
 import { GetUserProfileUseCase } from './use-cases/get-user-profile.use-case';
+import { GoogleSignInUseCase } from './use-cases/google-sign-in.use-case';
 import { LoginUserUseCase } from './use-cases/login-user.use-case';
 import { RefreshTokensUseCase } from './use-cases/refresh-tokens.use-case';
 import { RegisterUserUseCase } from './use-cases/register-user.use-case';
@@ -36,7 +44,13 @@ import { VerifyPhoneChangeUseCase } from './use-cases/verify-phone-change.use-ca
 import { VerifyPhoneUseCase } from './use-cases/verify-phone.use-case';
 import { VerifyResetCodeUseCase } from './use-cases/verify-reset-code.use-case';
 
-export type { RegisterResponse, UserProfileResponse, UserWithoutPassword } from './auth.types';
+export type {
+  RegisterResponse,
+  UserProfileResponse,
+  UserWithoutPassword,
+  LoginResponse,
+  GoogleSignInResponse,
+} from './auth.types';
 
 @Injectable()
 export class AuthService {
@@ -64,18 +78,28 @@ export class AuthService {
     private checkPhoneAvailabilityUseCase: CheckPhoneAvailabilityUseCase,
     private sendVerificationSmsUseCase: SendVerificationSmsUseCase,
     private changePasswordUseCase: ChangePasswordUseCase,
+    private dismissPartnerPromoBannerUseCase: DismissPartnerPromoBannerUseCase,
+    private googleSignInUseCase: GoogleSignInUseCase,
   ) {}
 
   async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
     return this.loginUserUseCase.validateUser(login, password);
   }
 
-  async login(loginDto: LoginDto, ip?: string) {
-    return this.loginUserUseCase.execute(loginDto, ip);
+  async login(loginDto: LoginDto, ip?: string, requestLocale?: string) {
+    return this.loginUserUseCase.execute(loginDto, ip, requestLocale);
   }
 
-  async refreshTokens(refreshTokenDto: RefreshTokenDto) {
-    return this.refreshTokensUseCase.execute(refreshTokenDto);
+  async refreshTokens(refreshToken: string | undefined | null): Promise<LoginResponse> {
+    return this.refreshTokensUseCase.execute(refreshToken);
+  }
+
+  async googleSignIn(
+    dto: GoogleSignInDto,
+    ip?: string,
+    requestLocale?: string,
+  ): Promise<GoogleSignInResponse> {
+    return this.googleSignInUseCase.execute(dto, ip, requestLocale);
   }
 
   async register(
@@ -106,8 +130,8 @@ export class AuthService {
     return this.changePasswordUseCase.execute(userId, dto, requestLocale);
   }
 
-  async verifyPhone(userId: string): Promise<UserProfileResponse> {
-    return this.verifyPhoneUseCase.execute(userId);
+  async verifyPhone(userId: string, code: string): Promise<LoginResponse> {
+    return this.verifyPhoneUseCase.execute(userId, code);
   }
 
   async verifyEmail(token: string): Promise<UserWithoutPassword> {
@@ -160,11 +184,27 @@ export class AuthService {
     return this.checkPhoneAvailabilityUseCase.execute(phone);
   }
 
-  async sendVerificationSms(phone: string): Promise<{ success: true }> {
-    return this.sendVerificationSmsUseCase.execute(phone);
+  async sendVerificationSms(phone: string, requesterUserId?: string): Promise<{ success: true }> {
+    return this.sendVerificationSmsUseCase.execute(phone, requesterUserId);
   }
 
   async deleteAccount(userId: string): Promise<{ success: true }> {
     return this.deleteAccountUseCase.execute(userId);
+  }
+
+  async dismissPartnerPromoBanner(userId: string) {
+    return this.dismissPartnerPromoBannerUseCase.execute(userId);
+  }
+
+  async logout(refreshToken: string | undefined | null): Promise<{ success: true }> {
+    const token = refreshToken?.trim();
+    if (token) {
+      try {
+        await this.refreshTokenService.revokeToken(token);
+      } catch {
+        //
+      }
+    }
+    return { success: true };
   }
 }

@@ -33,6 +33,29 @@ export class KupitoApiClient {
     );
   }
 
+  async createBrand(payload: {
+    name: string;
+    vehicleTypes: Array<'car' | 'truck' | 'moto' | 'tire'>;
+  }): Promise<{ id: string; name: string }> {
+    return this.authorizedRequest<{ id: string; name: string }>(
+      `${this.config.kupitoApiUrl}/api/admin/brands`,
+      'POST',
+      payload,
+    );
+  }
+
+  async createModel(payload: {
+    brandId: string;
+    name: string;
+    vehicleTypes: Array<'car' | 'truck' | 'moto' | 'tire'>;
+  }): Promise<{ id: string; name: string }> {
+    return this.authorizedRequest<{ id: string; name: string }>(
+      `${this.config.kupitoApiUrl}/api/admin/models`,
+      'POST',
+      payload,
+    );
+  }
+
   async createListing(payload: KupitoCreateListingPayload): Promise<KupitoListingResponse> {
     return this.authorizedRequest<KupitoListingResponse>(
       `${this.config.kupitoApiUrl}/api/listings`,

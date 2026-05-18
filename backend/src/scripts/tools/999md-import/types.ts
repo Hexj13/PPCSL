@@ -1,4 +1,3 @@
-import type { ListingStatus } from '../../../common/types';
 import type {
   ImportCommandOptions,
   ImportReport,
@@ -9,7 +8,11 @@ import type {
   KupitoImportClientConfig,
   RuntimeEnv,
 } from '../partner-import-shared/kupito-import-types';
-import type { ParsedPdpData, ParsedPlpItem } from '../partner-import-shared/listing-types';
+import type {
+  BaseRegistryItem,
+  ParsedPdpData,
+  ParsedPlpItem,
+} from '../partner-import-shared/listing-types';
 
 export type {
   ImportCommandOptions,
@@ -29,39 +32,17 @@ export interface ParsedPlpItem999 extends ParsedPlpItem {
 export interface Scan999CommandOptions {
   login: string;
   env: RuntimeEnv;
-  resume?: boolean;
   dryRun?: boolean;
   delay: number;
   pageSize: number;
   maxItems?: number;
 }
 
-export interface RegistryItem999 {
-  source: '999md';
-  sourceListingId: string;
-  url: string;
-  canonicalUrl: string;
-  title?: string;
-  brand?: string;
-  model?: string;
-  year?: number;
-  price?: number;
-  currency?: string;
+export interface RegistryItem999 extends BaseRegistryItem<'999md'> {
+  profileLogin?: string;
   vehicleType?: 'car' | 'truck' | 'moto';
   subCategoryId?: number;
   subCategoryUrl?: string;
-  parsedData?: ParsedPdpData;
-  state: ImportState;
-  kupitoListingId?: string;
-  ownerUserId?: string;
-  createdStatus?: ListingStatus;
-  imageCount?: number;
-  imageFailures?: number;
-  error?: string;
-  warnings?: string[];
-  retryCount?: number;
-  discoveredAt: string;
-  updatedAt: string;
 }
 
 export interface RegistryData999 {

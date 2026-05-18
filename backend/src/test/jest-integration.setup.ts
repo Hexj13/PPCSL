@@ -18,6 +18,6 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await cleanupIntegrationTestData();
   await closeTestApp();
+  await cleanupIntegrationTestData();
 });

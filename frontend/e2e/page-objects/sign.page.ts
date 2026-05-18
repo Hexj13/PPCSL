@@ -58,6 +58,10 @@ export class SignPage {
     }
   }
 
+  async openWithPath(path: string): Promise<void> {
+    await this.gotoWithRetry(path);
+  }
+
   async openLogin(): Promise<void> {
     await this.gotoWithRetry('/sign');
   }
@@ -100,6 +104,15 @@ export class SignPage {
 
   async submitLogin(): Promise<void> {
     await this.page.getByTestId(this.testIds.loginSubmit).click();
+  }
+
+  async submitLoginForm(): Promise<void> {
+    await this.page.getByTestId(this.testIds.loginForm).evaluate((form) => {
+      if (!(form instanceof HTMLFormElement)) {
+        throw new Error('Expected login form element');
+      }
+      form.requestSubmit();
+    });
   }
 
   async registerIndividual(phone: string, password: string): Promise<void> {

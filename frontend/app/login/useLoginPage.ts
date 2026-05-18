@@ -1,21 +1,32 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { isAuthRoutePathname } from '@/components/layout/header-flow-paths';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
-import { authApi, favoritesApi, listingsApi, savedFiltersApi } from '@/lib/api';
+import { authApi, savedFiltersApi } from '@/lib/api';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
+import { getClientLocale } from '@/lib/i18n';
+import { localizedHref } from '@/lib/localized-href';
+import {
+  compactE164Phone,
+  formatPhoneOnBlur,
+  normalizeLoginFieldInput,
+  sanitizePhoneInput,
+} from '@/lib/phone';
+import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
+import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
+import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
-import { silentCatch } from '@/lib/utils';
-
 const isValidEmail = (value: string): boolean => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 };
@@ -23,36 +34,6 @@ const isValidEmail = (value: string): boolean => {
 const isValidPhone = (value: string): boolean => {
   return /^\+\d{1,4}\d{6,15}$/.test(value);
 };
-
-async function processPendingFavorites(userId: string): Promise<void> {
-  let pending: unknown[] = [];
-  try {
-    pending = JSON.parse(localStorageGetItem('pendingFavorites') || '[]') as unknown[];
-  } catch {
-    localStorageRemoveItem('pendingFavorites');
-    return;
-  }
-  if (!Array.isArray(pending) || pending.length === 0) return;
-  const validFavorites: string[] = [];
-  for (const listingId of pending) {
-    if (typeof listingId !== 'string') continue;
-    try {
-      const listingRes = await listingsApi.getOne(listingId);
-      const listing = listingRes.data;
-      if (listing.user && listing.user.id !== userId) validFavorites.push(listingId);
-    } catch {
-      // skip
-    }
-  }
-  if (validFavorites.length > 0) {
-    await Promise.all(
-      validFavorites.map((id: string) =>
-        favoritesApi.add(id).catch(silentCatch('login.syncFavorites')),
-      ),
-    );
-  }
-  localStorageRemoveItem('pendingFavorites');
-}
 
 async function processPendingSavedFilter(
   pendingSavedFilter: string | null,
@@ -77,7 +58,7 @@ async function processPendingSavedFilter(
     analytics.formSubmit('login', true, filledFields);
     toast.success(t('login.filterSavedSuccess'));
     if (typeof window !== 'undefined' && window.location) {
-      window.location.href = '/favorites?tab=filters';
+      window.location.href = localizedHref('/favorites?tab=filters', getClientLocale());
     }
     return true;
   } catch (error: unknown) {
@@ -89,7 +70,9 @@ async function processPendingSavedFilter(
     const url = isLimitError ? '/favorites?tab=filters' : (returnUrl ?? '/');
     analytics.login(loginMethod as 'email' | 'phone');
     analytics.formSubmit('login', true, filledFields);
-    if (typeof window !== 'undefined' && window.location) window.location.href = url;
+    if (typeof window !== 'undefined' && window.location) {
+      window.location.href = localizedHref(url, getClientLocale());
+    }
     return true;
   }
 }
@@ -102,18 +85,13 @@ function applyLoginSuccessRedirect(
   analytics.login(loginMethod as 'email' | 'phone');
   analytics.formSubmit('login', true, filledFields);
   if (typeof window !== 'undefined' && (window as Window).location) {
-    (window as Window).location.href = returnUrl;
+    (window as Window).location.href = localizedHref(returnUrl, getClientLocale());
   }
 }
 
-const AUTH_PATH_PREFIXES = ['/sign', '/login', '/register'];
-
-function isAuthPath(path: string): boolean {
-  return AUTH_PATH_PREFIXES.some((p) => path === p || path.startsWith(`${p}?`));
-}
-
-export function useLoginPage() {
-  const router = useRouter();
+export function useLoginPage(options?: { suppressSignedInReturnNavigation?: boolean }) {
+  const suppressExternalSignedInNav = options?.suppressSignedInReturnNavigation ?? false;
+  const { push } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { setAuth, user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
@@ -121,12 +99,19 @@ export function useLoginPage() {
   const queryReturnUrl = getReturnUrlFromSearchParams(searchParams);
   const resolvedReturnUrl = queryReturnUrl ?? referrerReturnUrl;
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const suppressSignedInReturnNavigationRef = useRef(false);
 
   useEffect(() => {
-    if (isInitialized && user && !isRedirecting) {
-      router.push(resolvedReturnUrl ?? '/');
+    if (
+      isInitialized &&
+      user &&
+      !isRedirecting &&
+      !suppressSignedInReturnNavigationRef.current &&
+      !suppressExternalSignedInNav
+    ) {
+      push(resolvedReturnUrl ?? '/');
     }
-  }, [user, isInitialized, router, isRedirecting, resolvedReturnUrl]);
+  }, [user, isInitialized, push, isRedirecting, resolvedReturnUrl, suppressExternalSignedInNav]);
 
   useEffect(() => {
     if (queryReturnUrl || typeof window === 'undefined') return;
@@ -135,7 +120,7 @@ export function useLoginPage() {
     try {
       const referrerUrl = new URL(referrer);
       const referrerPath = sanitizeReturnUrl(referrerUrl.pathname + referrerUrl.search);
-      if (referrerPath && !isAuthPath(referrerUrl.pathname) && referrerPath !== '/') {
+      if (referrerPath && !isAuthRoutePathname(referrerUrl.pathname) && referrerPath !== '/') {
         setReferrerReturnUrl(referrerPath);
       }
     } catch {
@@ -159,12 +144,23 @@ export function useLoginPage() {
     }
   };
 
+  const handleLoginChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    const login = normalizeLoginFieldInput(raw);
+    setFormData((prev) => ({ ...prev, login }));
+    setErrors((prev) => (prev.login ? { ...prev, login: undefined } : prev));
+  }, []);
+
   const validateForm = (): boolean => {
     const newErrors: { login?: string; password?: string } = {};
+    const loginTrimmed = formData.login.trim();
+    const loginPhoneCompact = loginTrimmed.includes('@')
+      ? loginTrimmed
+      : compactE164Phone(loginTrimmed);
 
-    if (!formData.login.trim()) {
+    if (!loginTrimmed) {
       newErrors.login = t('login.emailOrPhoneRequired');
-    } else if (!isValidEmail(formData.login) && !isValidPhone(formData.login)) {
+    } else if (!isValidEmail(loginTrimmed) && !isValidPhone(loginPhoneCompact)) {
       newErrors.login = t('login.emailOrPhoneInvalid');
     }
 
@@ -176,6 +172,18 @@ export function useLoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleLoginBlur = useCallback(() => {
+    const trimmed = formData.login.trim();
+    if (!trimmed || trimmed.includes('@')) {
+      return;
+    }
+    const sanitized = sanitizePhoneInput(trimmed);
+    const formatted = formatPhoneOnBlur(sanitized);
+    if (formatted !== formData.login) {
+      setFormData((prev) => ({ ...prev, login: formatted }));
+    }
+  }, [formData.login]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
@@ -183,23 +191,30 @@ export function useLoginPage() {
       return;
     }
     setLoading(true);
-    const loginMethod = isValidEmail(formData.login) ? 'email' : 'phone';
+    const loginTrimmed = formData.login.trim();
+    const loginForApi = isValidEmail(loginTrimmed) ? loginTrimmed : compactE164Phone(loginTrimmed);
+    const loginMethod = isValidEmail(loginTrimmed) ? 'email' : 'phone';
     const filledFields: Record<string, boolean> = {
       login: !!formData.login,
       password: !!formData.password,
     };
     try {
-      const res = await authApi.login(formData);
+      await authApi.login({ ...formData, login: loginForApi });
+      suppressSignedInReturnNavigationRef.current = true;
       setIsRedirecting(true);
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
       try {
-        setAuth(res.data.user, res.data.access_token, res.data.refresh_token);
+        const me = await authApi.me();
+        const syncedUser = await syncPartnerPromoDismissAfterAuth(me.data);
+        setAuth(syncedUser);
         if (typeof window === 'undefined') {
           analytics.login(loginMethod as 'email' | 'phone');
           analytics.formSubmit('login', true, filledFields);
           return;
         }
-        await processPendingFavorites(res.data.user.id);
+        await syncPendingFavoritesAfterAuth(syncedUser.id);
+        const syncedAgain = await syncPartnerPromoDismissAfterAuth(useAuthStore.getState().user!);
+        setAuth(syncedAgain);
         await applyComparisonAfterAuth();
       } finally {
         releaseComparisonHold();
@@ -212,9 +227,21 @@ export function useLoginPage() {
         resolvedReturnUrl,
       );
       if (filterHandled) return;
+      if (!useAuthStore.getState().user?.phoneVerified) {
+        const safeReturn = resolvedReturnUrl ? sanitizeReturnUrl(resolvedReturnUrl) : null;
+        const target =
+          safeReturn && typeof window !== 'undefined'
+            ? `/complete-profile?mode=phone_required&returnUrl=${encodeURIComponent(buildPostAuthRedirect(safeReturn, getClientLocale()))}`
+            : '/complete-profile?mode=phone_required';
+        if (typeof window !== 'undefined' && window.location) {
+          window.location.href = buildPostAuthRedirect(target, getClientLocale());
+        }
+        return;
+      }
       const returnUrl = resolvedReturnUrl || '/';
       applyLoginSuccessRedirect(returnUrl, loginMethod, filledFields);
     } catch {
+      suppressSignedInReturnNavigationRef.current = false;
       analytics.formSubmit('login', false, filledFields);
     } finally {
       setLoading(false);
@@ -233,6 +260,8 @@ export function useLoginPage() {
     showPassword,
     setShowPassword,
     handleFormFieldFocus,
+    handleLoginChange,
+    handleLoginBlur,
     handleSubmit,
   };
 }

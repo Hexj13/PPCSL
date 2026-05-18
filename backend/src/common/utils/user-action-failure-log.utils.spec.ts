@@ -29,6 +29,18 @@ describe('user-action-failure-log.utils', () => {
         shouldLogUserActionFailure('/api/listings/550e8400-e29b-41d4-a716-446655440000', 'GET'),
       ).toBe(true);
     });
+
+    it('returns false for guest refresh without cookie (expected noise)', () => {
+      expect(shouldLogUserActionFailure('/api/auth/refresh', 'POST', 'errors.unauthorized')).toBe(
+        false,
+      );
+    });
+
+    it('returns true for refresh with invalid or revoked token', () => {
+      expect(
+        shouldLogUserActionFailure('/api/auth/refresh', 'POST', 'errors.invalidRefreshToken'),
+      ).toBe(true);
+    });
   });
 
   describe('buildUserActionFailureContext', () => {

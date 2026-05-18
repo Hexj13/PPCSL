@@ -2,14 +2,17 @@
 
 import { useMemo } from 'react';
 
-import { Dropdown } from '@/components/common/Dropdown';
+import { SearchFilterYearIcon } from '@/components/search/search-filters/search-filter-field-icons';
 import { useTranslation } from '@/hooks/useTranslation';
+import { vehicleBrandLogoUrl } from '@/lib/brand-logo-urls';
 import { getPopularBrands } from '@/lib/content/popular-brands';
 import { getYearOptions } from '@/lib/options';
 import { sortByName } from '@/lib/utils';
 import { HintTooltip } from '@/ui';
 
 import { BrandModelCatalogInfoBlock } from './BrandModelCatalogInfoBlock';
+import { ListingYearField } from './ListingYearField';
+import { MobileSelectField } from './MobileSelectField';
 import { RequiredAsterisk } from './RequiredAsterisk';
 import type { ListingFormSectionProps } from './types';
 
@@ -29,12 +32,18 @@ export function BasicInfoSection({
     const popularNames = getPopularBrands(vehicleType);
     const popularBrands = sortByName(brands.filter((brand) => popularNames.includes(brand.name)));
     const otherBrands = sortByName(brands.filter((brand) => !popularNames.includes(brand.name)));
-    const options: Array<{ value: string; label: string; category?: string }> = [];
+    const options: Array<{ value: string; label: string; category?: string; logoSrc?: string }> =
+      [];
     if (popularBrands.length > 0) {
       const popularLabel = t('searchFilters.popular');
       options.push({ value: '__category__popular', label: popularLabel, category: popularLabel });
       popularBrands.forEach((brand) => {
-        options.push({ value: brand.id, label: brand.name, category: popularLabel });
+        options.push({
+          value: brand.id,
+          label: brand.name,
+          category: popularLabel,
+          logoSrc: vehicleBrandLogoUrl(brand.name),
+        });
       });
     }
     if (otherBrands.length > 0) {
@@ -47,6 +56,8 @@ export function BasicInfoSection({
     return options;
   }, [brands, vehicleType, t]);
 
+  const yearOptions = useMemo(() => getYearOptions(), []);
+
   return (
     <div className="mb-6">
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
@@ -54,11 +65,11 @@ export function BasicInfoSection({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-700">
+          <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
             {t('listings.brandLabel')}
             <RequiredAsterisk filled={!!formData.vehicle.brand_id} />
           </label>
-          <Dropdown
+          <MobileSelectField
             value={formData.vehicle.brand_id}
             onChange={(value) => {
               clearError('vehicle.brand_id');
@@ -67,6 +78,8 @@ export function BasicInfoSection({
                 vehicle: { ...prev.vehicle, brand_id: value },
               }));
             }}
+            sheetTitle={t('listings.brandLabel')}
+            requiredAsteriskFilled={!!formData.vehicle.brand_id}
             searchable={true}
             placeholder={t('listings.selectBrand')}
             error={!!errors['vehicle.brand_id']}
@@ -81,11 +94,11 @@ export function BasicInfoSection({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-700">
+          <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
             {t('listings.modelLabel')}
             <RequiredAsterisk filled={!!formData.vehicle.model_id} />
           </label>
-          <Dropdown
+          <MobileSelectField
             value={formData.vehicle.model_id}
             onChange={(value) => {
               clearError('vehicle.model_id');
@@ -94,6 +107,8 @@ export function BasicInfoSection({
                 vehicle: { ...prev.vehicle, model_id: value },
               }));
             }}
+            sheetTitle={t('listings.modelLabel')}
+            requiredAsteriskFilled={!!formData.vehicle.model_id}
             disabled={!formData.vehicle.brand_id || loadingModels}
             searchable={true}
             placeholder={loadingModels ? t('common.loading') : t('listings.selectModel')}
@@ -112,32 +127,35 @@ export function BasicInfoSection({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-700">
+          <label className="mb-2 hidden items-center gap-2 text-sm font-semibold text-primary-900 md:flex">
+            <SearchFilterYearIcon />
             {t('listings.yearLabel')}
             <RequiredAsterisk filled={!!formData.vehicle.year} />
           </label>
-          <Dropdown
+          <ListingYearField
             value={formData.vehicle.year}
-            onChange={(value) => {
+            onChange={(v) => {
               clearError('vehicle.year');
               setFormData((prev) => ({
                 ...prev,
-                vehicle: { ...prev.vehicle, year: value },
+                vehicle: { ...prev.vehicle, year: v },
               }));
             }}
-            searchable={true}
+            sheetTitle={t('listings.yearLabel')}
+            leadingIcon={<SearchFilterYearIcon />}
+            requiredAsteriskFilled={!!formData.vehicle.year}
             placeholder={t('searchFilters.selectYear')}
             error={!!errors['vehicle.year']}
             autoPosition={true}
             menuMaxHeight={300}
-            options={getYearOptions()}
+            options={yearOptions}
             dataTestId="listing-create-year-select"
           />
         </div>
 
         <div>
           <div className="flex items-center gap-1.5 mb-2">
-            <label htmlFor="vin-input" className="text-sm font-semibold text-primary-700">
+            <label htmlFor="vin-input" className="text-sm font-semibold text-primary-900">
               {t('listings.vinLabel')}
             </label>
             <HintTooltip ariaLabel={t('listings.vinHintButton')}>
