@@ -64,13 +64,25 @@ describe('ServiceWorkerRegistration', () => {
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv;
+    if (originalNodeEnv !== undefined) {
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalNodeEnv,
+        writable: true,
+        configurable: true,
+      });
+    } else {
+      Reflect.deleteProperty(process.env, 'NODE_ENV');
+    }
     controllerChangeHandler = null;
     jest.restoreAllMocks();
   });
 
   it('should unregister all service workers when not in production', async () => {
-    process.env.NODE_ENV = 'development';
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'development',
+      writable: true,
+      configurable: true,
+    });
     setupNavigatorServiceWorker({ controller: null });
 
     render(<ServiceWorkerRegistration />);
@@ -81,7 +93,11 @@ describe('ServiceWorkerRegistration', () => {
   });
 
   it('should register service worker in production', async () => {
-    process.env.NODE_ENV = 'production';
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'production',
+      writable: true,
+      configurable: true,
+    });
     setupNavigatorServiceWorker({
       controller: {},
       registerImpl: () =>
@@ -98,7 +114,11 @@ describe('ServiceWorkerRegistration', () => {
   });
 
   it('should not reload on controllerchange until user confirms update', async () => {
-    process.env.NODE_ENV = 'production';
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'production',
+      writable: true,
+      configurable: true,
+    });
     const reload = jest.fn();
     const oldLocation = window.location;
     Object.defineProperty(window, 'location', {
