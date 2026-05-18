@@ -1,13 +1,10 @@
-const CACHE_NAME = 'kupito-v2';
-const STATIC_CACHE_NAME = 'kupito-static-v2';
-const DATA_CACHE_NAME = 'kupito-data-v2';
+const CACHE_NAME = 'kupito-v3';
+const STATIC_CACHE_NAME = 'kupito-static-v3';
+const DATA_CACHE_NAME = 'kupito-data-v3';
 const CACHE_EXPIRY = 60 * 60 * 1000;
 const MAX_CACHE_SIZE = 2 * 1024 * 1024;
 
-const STATIC_ASSETS = [
-  '/',
-  '/offline',
-];
+const STATIC_ASSETS = ['/offline'];
 
 const installHandler = async () => {
   const staticCache = await caches.open(STATIC_CACHE_NAME);
@@ -95,6 +92,15 @@ const shouldCache = async (response) => {
     return size <= MAX_CACHE_SIZE;
   } catch {
     return false;
+  }
+};
+
+const getSameOriginUrl = (url) => {
+  try {
+    const parsed = new URL(url, location.origin);
+    return parsed.origin === location.origin ? parsed.href : null;
+  } catch {
+    return null;
   }
 };
 
@@ -275,7 +281,7 @@ const fetchHandler = async (event) => {
 
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    if (response.ok && request.mode !== 'navigate') {
       const canCache = await shouldCache(response);
       if (canCache) {
         const cache = await caches.open(CACHE_NAME);
@@ -305,8 +311,17 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(activateHandler());
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    (async () => {
+      const claimPromise = self.clients.claim();
+      try {
+        await activateHandler();
+      } catch (error) {
+        console.warn('Service worker activation cleanup failed:', error);
+      }
+      await claimPromise;
+    })()
+  );
 });
 
 self.addEventListener('fetch', (event) => {
@@ -327,16 +342,21 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
   if (event.data && event.data.type === 'CACHE_URLS') {
+    const urls = Array.isArray(event.data.urls) ? event.data.urls : [];
     event.waitUntil(
       caches.open(CACHE_NAME).then(async (cache) => {
         const results = await Promise.allSettled(
-          event.data.urls.map(async (url) => {
+          urls.map(async (url) => {
             try {
-              const response = await fetch(url);
+              const cacheUrl = getSameOriginUrl(url);
+              if (!cacheUrl) {
+                return;
+              }
+              const response = await fetch(cacheUrl);
               if (response.ok) {
                 const canCache = await shouldCache(response);
                 if (canCache) {
-                  await cache.put(url, response);
+                  await cache.put(cacheUrl, response);
                 }
               }
             } catch (error) {

@@ -101,6 +101,12 @@ export const faqRo: FAQConfig = {
         'Puteți adăuga minimum 2 și maximum 20 de fotografii la fiecare anunț. Recomandăm să adăugați cât mai multe fotografii din diferite unghiuri pentru o prezentare mai bună a autoturismului.',
     },
     {
+      id: '10-video',
+      question: 'Pot adăuga video la un anunț?',
+      answer:
+        'Da, puteți adăuga un singur video la un anunț, la creare sau editare. Formatele, dimensiunea și durata acceptate sunt verificate în formularul de încărcare. După încărcare, video este procesat și apare în anunț când procesarea se finalizează.',
+    },
+    {
       id: '11',
       question: 'Cum pot contacta vânzătorul?',
       answer:
@@ -251,6 +257,12 @@ export const faqRo: FAQConfig = {
         'Sunt acceptate doar imagini statice (JPG, PNG, WebP). Imaginile animate (ex. GIF) nu sunt acceptate la încărcare.',
       ],
     },
+    {
+      id: '25',
+      question: 'Ce este analiza AI a unui anunț?',
+      answer:
+        'Analiza AI este un scurt rezumat informativ bazat pe datele din anunț. Este disponibilă pentru utilizatori autentificați și pentru anunțuri eligibile, dacă serviciul este disponibil. Nu este o verificare tehnică a autoturismului și nu înlocuiește consultanța profesională.',
+    },
   ],
   scenarios: [
     {
@@ -260,7 +272,7 @@ export const faqRo: FAQConfig = {
         'Înregistrați-vă sau conectați-vă la profilul dvs.',
         'Faceți clic pe "Plasează anunț" din meniul de sus (sau mergeți la "Anunțurile mele" și faceți clic pe "Creează anunț")',
         'Completați toate informațiile necesare despre autoturism',
-        'Adăugați fotografii (minimum 2, maximum 20)',
+        'Adăugați fotografii (minimum 2, maximum 20) și, opțional, un singur video',
         'Selectați statusul anunțului (implicit este "Publicat")',
         'Faceți clic pe "Creează anunț"',
         'Anunțul dvs. va fi creat cu statusul selectat',

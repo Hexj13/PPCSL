@@ -43,10 +43,11 @@ Frontend-specific documentation for PPCSL Next.js application.
 - **Filter conversion:** IDs ↔ slugs for SEO
 
 ### PWA Support
-- Service worker with 1h cache TTL
-- Offline support with cached content
+- Service worker (`public/sw.js`) with 1h TTL for selected navigations and small catalog API responses
+- Precache on install: `/offline` only (home is not precached)
+- Offline fallback for favorites, profile, my-listings, and listing detail when network fails
 - Installation prompts for iOS/Android
-- Auto-update notifications
+- Update banner reloads the page only after the user taps update (`ServiceWorkerRegistration`)
 
 ### SEO & Metadata
 - Open Graph tags on all pages

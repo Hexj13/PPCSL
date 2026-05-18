@@ -13,3 +13,10 @@ After migrating guests from legacy `localStorage` tokens to cookies, users were 
 `POST /api/auth/refresh` with response `errorKey: errors.unauthorized` means the request had no refresh token (neither `kupito_refresh_token` cookie nor `refresh_token` in JSON). The app calls refresh after `GET /api/auth/me` fails (`initAuth` in the auth store, invoked from `AuthProvider` on load and after cross-tab `auth-storage` storage events) and when the Axios interceptor retries a `401` on a protected request. Guests without a session therefore hit this endpoint regularly. That is expected and not a backend bug.
 
 For cookies to be sent from the browser, the page origin must be allowed by backend CORS (`CORS_ORIGINS` or `FRONTEND_URL` in Nest) and the frontend must call the API with credentials (`NEXT_PUBLIC_API_URL` must match the API origin you use in the browser).
+
+## Client refresh behavior
+
+- **`initAuth`** (auth store, invoked from `AuthProvider` on load and after cross-tab `storage` on auth keys) is idempotent: concurrent calls share one in-flight promise.
+- **`GET /api/auth/me` during init** uses `X-Skip-Auth-Refresh` so a `401` does not trigger the Axios interceptor refresh before `refreshQuiet` runs.
+- **`POST /api/auth/refresh`** goes through `refreshAuthSession()` in `api-client.ts`: one shared promise for concurrent refresh calls, `X-Skip-Auth-Refresh` on the request, no interceptor retry on `429` for that URL.
+- Protected requests that receive `401` still use the interceptor queue and `refreshAuthSession()` before retrying the original request.

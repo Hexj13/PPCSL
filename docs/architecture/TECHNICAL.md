@@ -1149,11 +1149,13 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 - URL parameter synchronization for search filters and sorting
 - Lazy loading for images with priority for above-the-fold content
 - Skeleton loaders for improved UX
-- **PWA Support:** Service Worker with intelligent caching strategy
-  - Static assets cached permanently (CSS, JS, images, fonts)
-  - API responses cached with 1 hour TTL (stale-while-revalidate strategy)
-  - Page caching for specific routes (favorites, profile, my-listings, listing detail) with 1 hour TTL
-  - Automatic cache cleanup for expired entries
+- **PWA Support:** Service Worker (`frontend/public/sw.js`) with selective caching
+  - Static assets (CSS, JS, images, fonts) cached in a dedicated static cache
+  - Small catalog API responses (`/api/brands`, `/api/cities`, brand models) cached with 1 hour TTL (stale-while-revalidate)
+  - Navigate caching with 1 hour TTL only for favorites, profile, my-listings, and listing detail; other navigations are not stored as documents
+  - Precache on install: `/offline` only (not the home route)
+  - Automatic cache cleanup for expired entries and old cache names on activate
+  - Full-page reload after a waiting worker activates only when the user confirms an update (`ServiceWorkerRegistration`)
   - Offline page support
   - PWA installation support for iOS and Android with tabbed modal interface
   - Installation instructions with keyword highlighting and browser compatibility notes

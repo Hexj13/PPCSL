@@ -2221,6 +2221,7 @@
     "offlineMessage": "You are not connected to the internet. Check your connection.",
     "retry": "Try Again",
     "updateAvailable": "New version available",
+    "updateDescription": "A new version of the app is ready. Update now to get the latest improvements.",
     "updateNow": "Update Now",
     "updateLater": "Later"
   },

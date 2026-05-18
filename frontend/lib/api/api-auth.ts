@@ -1,6 +1,6 @@
 import type { AxiosRequestConfig } from 'axios';
 
-import { api } from './api-client';
+import { api, refreshAuthSession } from './api-client';
 import type {
   ChangePasswordDto,
   ChangeEmailConfirmDto,
@@ -38,9 +38,11 @@ export const authApi = {
   login: (data: LoginDto, config?: AxiosRequestConfig) =>
     api.post<LoginResponse>('/api/auth/login', data, config),
   refresh: (data?: RefreshTokenDto) => api.post<LoginResponse>('/api/auth/refresh', data ?? {}),
-  meQuiet: () => api.get<User>('/api/auth/me', { headers: { ...quietAuthHeaders } }),
-  refreshQuiet: (data?: RefreshTokenDto) =>
-    api.post<LoginResponse>('/api/auth/refresh', data ?? {}, { headers: { ...quietAuthHeaders } }),
+  meQuiet: () =>
+    api.get<User>('/api/auth/me', {
+      headers: { ...quietAuthHeaders, 'X-Skip-Auth-Refresh': 'true' },
+    }),
+  refreshQuiet: (data?: RefreshTokenDto) => refreshAuthSession(data ?? {}),
   googleSignIn: (data: GoogleSignInDto) => api.post<GoogleSignInResponse>('/api/auth/google', data),
   logout: () => api.post<{ success: boolean }>('/api/auth/logout', {}),
   me: () => api.get<User>('/api/auth/me'),

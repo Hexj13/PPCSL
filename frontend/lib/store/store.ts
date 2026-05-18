@@ -15,6 +15,11 @@ import { PARTNER_PROMO_DISMISS_STORAGE_KEY } from '@/lib/partner-promo-dismiss-s
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 
 const MAX_COMPARE = 3;
+let initAuthPromise: Promise<void> | null = null;
+
+export function resetInitAuthPromiseForTests(): void {
+  initAuthPromise = null;
+}
 
 function normalizeCompareIds(ids: unknown): string[] {
   if (!Array.isArray(ids)) return [];
@@ -73,33 +78,39 @@ export const useAuthStore = create<AuthState>()(
           useComparisonStore.getState().clear();
         }
       },
-      initAuth: async () => {
-        if (typeof window === 'undefined') {
-          set({ isInitialized: true });
-          return;
-        }
+      initAuth: () => {
+        if (initAuthPromise) return initAuthPromise;
+        initAuthPromise = (async () => {
+          if (typeof window === 'undefined') {
+            set({ isInitialized: true });
+            return;
+          }
 
-        localStorageRemoveItem('token');
-        localStorageRemoveItem('refresh_token');
+          localStorageRemoveItem('token');
+          localStorageRemoveItem('refresh_token');
 
-        try {
-          const response = await authApi.meQuiet();
-          const syncedUser = await syncPartnerPromoDismissAfterAuth(response.data);
-          set({ user: syncedUser, isInitialized: true });
-        } catch {
           try {
-            const refreshResponse = await authApi.refreshQuiet();
-            const syncedUser = await syncPartnerPromoDismissAfterAuth(refreshResponse.data.user);
+            const response = await authApi.meQuiet();
+            const syncedUser = await syncPartnerPromoDismissAfterAuth(response.data);
             set({ user: syncedUser, isInitialized: true });
           } catch {
-            clearClientAuthLocalStorage({
-              clearReturnUrl: false,
-              clearAuthPersistKey: true,
-              clearPendingMigrationAndFilters: false,
-            });
-            set({ user: null, isInitialized: true });
+            try {
+              const refreshResponse = await authApi.refreshQuiet();
+              const syncedUser = await syncPartnerPromoDismissAfterAuth(refreshResponse.data.user);
+              set({ user: syncedUser, isInitialized: true });
+            } catch {
+              clearClientAuthLocalStorage({
+                clearReturnUrl: false,
+                clearAuthPersistKey: true,
+                clearPendingMigrationAndFilters: false,
+              });
+              set({ user: null, isInitialized: true });
+            }
           }
-        }
+        })().finally(() => {
+          initAuthPromise = null;
+        });
+        return initAuthPromise;
       },
     }),
     {

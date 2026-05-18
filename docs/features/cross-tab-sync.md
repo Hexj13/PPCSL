@@ -35,6 +35,7 @@ How open tabs stay consistent for marketplace UI state and session.
 
 - After `POST /api/auth/refresh`, the Axios layer persists the new access/refresh pair (see cookie + JSON session notes in [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md)).
 - **Zustand** auth state must match `localStorage` after any await that can trigger silent refresh; other tabs rely on **`storage` listeners** on auth persistence keys (see `AuthProvider` / auth store init) so a tab that refreshed tokens does not leave peers stale.
+- **`initAuth`** deduplicates overlapping calls (e.g. mount plus a cross-tab `storage` event). Silent refresh uses `refreshAuthSession()` so parallel tabs or interceptor retries do not fan out multiple refresh requests.
 
 ## E2E
 

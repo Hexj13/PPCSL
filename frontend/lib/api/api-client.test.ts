@@ -19,6 +19,7 @@ const makeMockApiInstance = (): MockApiInstance => {
 };
 
 let mockApiInstance: MockApiInstance;
+let apiClientModule: { refreshAuthSession: () => Promise<unknown> };
 let localStorageGetItemMock: jest.Mock;
 
 jest.mock('axios', () => {
@@ -85,7 +86,7 @@ describe('api-client auth refresh guards', () => {
     });
     jest.clearAllMocks();
     jest.isolateModules(() => {
-      require('./api-client');
+      apiClientModule = require('./api-client') as { refreshAuthSession: () => Promise<unknown> };
     });
   });
 
@@ -151,6 +152,65 @@ describe('api-client auth refresh guards', () => {
 
     await expect(onRejected(quietError)).rejects.toEqual(quietError);
     expect(mockApiInstance.post).not.toHaveBeenCalled();
+  });
+
+  it('does not start refresh when request has X-Skip-Auth-Refresh', async () => {
+    const onRejected = getResponseRejectedHandler();
+
+    const quietRequest = {
+      headers: { 'X-Skip-Auth-Refresh': 'true', 'X-Skip-Error-Handling': 'true' },
+      url: '/api/listings',
+      method: 'get',
+    };
+    const quietError = {
+      response: { status: 401, headers: {}, data: {} },
+      config: quietRequest,
+      code: 'ERR_BAD_REQUEST',
+      name: 'AxiosError',
+      message: 'Unauthorized',
+    };
+
+    await expect(onRejected(quietError)).rejects.toEqual(quietError);
+    expect(mockApiInstance.post).not.toHaveBeenCalled();
+  });
+
+  it('does not retry rate-limited refresh requests', async () => {
+    const onRejected = getResponseRejectedHandler();
+
+    const refreshRequest = {
+      headers: { 'X-Skip-Error-Handling': 'true' },
+      url: '/api/auth/refresh',
+      method: 'post',
+    };
+    const refreshError = {
+      response: { status: 429, headers: {}, data: {} },
+      config: refreshRequest,
+      code: 'ERR_BAD_REQUEST',
+      name: 'AxiosError',
+      message: 'Too many requests',
+    };
+
+    await expect(onRejected(refreshError)).rejects.toEqual(refreshError);
+    expect(mockApiInstance).not.toHaveBeenCalled();
+    expect(mockApiInstance.request).not.toHaveBeenCalled();
+  });
+
+  it('deduplicates direct refresh session calls', async () => {
+    mockApiInstance.post.mockResolvedValue({ data: { user: { id: 'user-1' } } });
+
+    await Promise.all([apiClientModule.refreshAuthSession(), apiClientModule.refreshAuthSession()]);
+
+    expect(mockApiInstance.post).toHaveBeenCalledTimes(1);
+    expect(mockApiInstance.post).toHaveBeenCalledWith(
+      '/api/auth/refresh',
+      {},
+      {
+        headers: {
+          'X-Skip-Auth-Refresh': 'true',
+          'X-Skip-Error-Handling': 'true',
+        },
+      },
+    );
   });
 
   it('does not start refresh when request reached refresh attempts limit', async () => {

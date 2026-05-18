@@ -1,5 +1,13 @@
-import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
+
+import { clearClientAuthLocalStorage } from '../client-auth-storage';
+import { getClientLocale, loadTranslations, type Translations } from '../i18n';
+import { buildSignInHref } from '../return-url';
+import { sanitizeForSentryExtra } from '../sentry-sanitize';
+
+import type { LoginResponse } from './api-types';
+import { isCatalogReadGetNoResponse } from './is-catalog-read-get-request';
 
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _rateLimitRetry?: boolean;
@@ -10,6 +18,18 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
 }
 
 const SKIP_AUTH_REDIRECT_HEADER = 'x-skip-auth-redirect';
+const SKIP_AUTH_REFRESH_HEADER = 'x-skip-auth-refresh';
+
+function shouldSkipAuthRefreshOn401(config: InternalAxiosRequestConfig | undefined): boolean {
+  if (!config?.headers) return false;
+  const h = config.headers;
+  const v =
+    typeof (h as { get?: (k: string) => string | undefined }).get === 'function'
+      ? (h as { get: (k: string) => string | undefined }).get(SKIP_AUTH_REFRESH_HEADER)
+      : ((h as Record<string, unknown>)[SKIP_AUTH_REFRESH_HEADER] ??
+        (h as Record<string, unknown>)['X-Skip-Auth-Refresh']);
+  return v === 'true' || v === '1' || v === 1;
+}
 
 function shouldSkipAuthRedirectOn401(config: InternalAxiosRequestConfig | undefined): boolean {
   if (!config?.headers) return false;
@@ -22,14 +42,6 @@ function shouldSkipAuthRedirectOn401(config: InternalAxiosRequestConfig | undefi
   return v === 'true' || v === '1' || v === 1;
 }
 
-import { clearClientAuthLocalStorage } from '../client-auth-storage';
-import { getClientLocale, loadTranslations, type Translations } from '../i18n';
-import { buildSignInHref } from '../return-url';
-import { sanitizeForSentryExtra } from '../sentry-sanitize';
-
-import type { User } from './api';
-import { isCatalogReadGetNoResponse } from './is-catalog-read-get-request';
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export const api = axios.create({
@@ -41,6 +53,7 @@ export const api = axios.create({
 });
 
 let isRefreshing = false;
+let refreshSessionPromise: Promise<AxiosResponse<LoginResponse>> | null = null;
 let failedQueue: Array<{
   resolve: (_value?: unknown) => void;
   reject: (_error?: unknown) => void;
@@ -74,6 +87,22 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+export function refreshAuthSession(data: unknown = {}): Promise<AxiosResponse<LoginResponse>> {
+  if (!refreshSessionPromise) {
+    refreshSessionPromise = api
+      .post<LoginResponse>('/api/auth/refresh', data, {
+        headers: {
+          'X-Skip-Auth-Refresh': 'true',
+          'X-Skip-Error-Handling': 'true',
+        },
+      })
+      .finally(() => {
+        refreshSessionPromise = null;
+      });
+  }
+  return refreshSessionPromise;
+}
 
 function createErrorT(
   translations: Translations | null,
@@ -208,6 +237,7 @@ async function handle429Retry(
 ): Promise<unknown> {
   if (error.response?.status !== 429 || !originalRequest || originalRequest._rateLimitRetry)
     return undefined;
+  if (isRefreshRequest(originalRequest.url)) return undefined;
   originalRequest._rateLimitRetry = true;
   const retryAfter = error.response.headers['retry-after']
     ? parseInt(error.response.headers['retry-after'], 10) * 1000
@@ -331,11 +361,7 @@ async function showErrorToastAndSentry(error: AxiosError): Promise<void> {
 }
 
 async function doRefreshAndRetry(originalRequest: ExtendedAxiosRequestConfig): Promise<unknown> {
-  await api.post<{ user: User }>(
-    '/api/auth/refresh',
-    {},
-    { headers: { 'X-Skip-Error-Handling': 'true' } },
-  );
+  await refreshAuthSession();
   processQueue(null);
   return api(originalRequest);
 }
@@ -371,6 +397,9 @@ api.interceptors.response.use(
         originalRequest &&
         canRetryAuthRefresh(originalRequest)
       ) {
+        if (shouldSkipAuthRefreshOn401(originalRequest)) {
+          return Promise.reject(axiosError);
+        }
         if (shouldSkipAuthRedirectOn401(originalRequest)) {
           return Promise.reject(axiosError);
         }
