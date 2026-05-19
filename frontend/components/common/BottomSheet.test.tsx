@@ -1,5 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
+import { resetOverlayHistoryForTests, triggerOverlayPopStateForTests } from '@/lib/overlay-history';
+
 import { BottomSheet } from './BottomSheet';
 
 jest.mock('react-dom', () => ({
@@ -33,7 +35,19 @@ function mockMobileViewport() {
 
 describe('BottomSheet', () => {
   beforeEach(() => {
+    resetOverlayHistoryForTests();
     mockMobileViewport();
+    const pushState = jest.fn((state: Record<string, unknown>) => {
+      window.history.state = state;
+    });
+    Object.defineProperty(window, 'history', {
+      configurable: true,
+      value: { state: null, pushState, back: jest.fn() },
+    });
+  });
+
+  afterEach(() => {
+    resetOverlayHistoryForTests();
   });
 
   it('renders title and calls onClose when close is triggered', () => {
@@ -50,6 +64,26 @@ describe('BottomSheet', () => {
     act(() => {
       jest.advanceTimersByTime(400);
     });
+    expect(onClose).toHaveBeenCalled();
+    jest.useRealTimers();
+  });
+
+  it('closes when the user navigates back in history', () => {
+    jest.useFakeTimers();
+    const onClose = jest.fn();
+    render(
+      <BottomSheet isOpen onClose={onClose} title="Test sheet">
+        <p>Content</p>
+      </BottomSheet>,
+    );
+
+    act(() => {
+      triggerOverlayPopStateForTests();
+    });
+    act(() => {
+      jest.advanceTimersByTime(400);
+    });
+
     expect(onClose).toHaveBeenCalled();
     jest.useRealTimers();
   });

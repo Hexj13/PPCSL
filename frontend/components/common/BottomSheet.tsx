@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useTranslation } from '@/hooks/useTranslation';
 import { designTokens } from '@/ui';
@@ -58,6 +59,7 @@ export function BottomSheet({
   const [slideReady, setSlideReady] = useState(false);
   const [portalMounted, setPortalMounted] = useState(isOpen);
   const isMobileViewport = useMobileSheetViewport();
+  const overlayHistoryId = useId();
 
   useScrollLock(portalMounted && isMobileViewport);
 
@@ -105,6 +107,8 @@ export function BottomSheet({
       finishCloseAnimation();
     }, CLOSE_TRANSITION_FALLBACK_MS);
   }, [clearCloseFallback, finishCloseAnimation, portalMounted]);
+
+  useHistoryBackClose(isOpen && isMobileViewport, beginClose, overlayHistoryId);
 
   const handleSheetPanelTransitionEnd = useCallback(
     (e: React.TransitionEvent<HTMLDivElement>) => {

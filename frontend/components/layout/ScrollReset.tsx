@@ -59,13 +59,12 @@ function setupHomeScrollRestoration(
 
         if (Number.isFinite(scrollY) && scrollY > 0) {
           isRestoringRef.current = true;
-          setTimeout(() => {
-            window.scrollTo({ top: scrollY, behavior: 'instant' });
-            setTimeout(() => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
               window.scrollTo({ top: scrollY, behavior: 'instant' });
               isRestoringRef.current = false;
-            }, 200);
-          }, 0);
+            });
+          });
         }
       } else {
         sessionStorageRemoveItem('homeReloadScrollY');
@@ -83,13 +82,12 @@ function setupHomeScrollRestoration(
       sessionStorageRemoveItem('homeScrollPosition');
       if (scrollY > 0) {
         isRestoringRef.current = true;
-        setTimeout(() => {
-          window.scrollTo({ top: scrollY, behavior: 'instant' });
-          setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
             window.scrollTo({ top: scrollY, behavior: 'instant' });
             isRestoringRef.current = false;
-          }, 100);
-        }, 0);
+          });
+        });
       }
     } else {
       sessionStorageRemoveItem('homeScrollPosition');

@@ -1,8 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
+import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getOptimizedImageUrl } from '@/lib/utils';
 import { blurhashToDataURL } from '@/lib/utils/blurhash';
@@ -42,7 +44,6 @@ export function useListingPageImageModal({
   const touchEndX = useRef<number | null>(null);
   const swipeHandledRef = useRef(false);
   const swipeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const savedScrollYRef = useRef(0);
   const prevIsOpenRef = useRef(false);
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
 
@@ -76,6 +77,10 @@ export function useListingPageImageModal({
   isOpenRef.current = isOpen;
   const imagesLengthRef = useRef(images.length);
   imagesLengthRef.current = images.length;
+  const overlayHistoryId = useId();
+
+  useHistoryBackClose(isOpen, onClose, overlayHistoryId);
+  useScrollLock(isOpen);
 
   const getBlurDataURL = useCallback(
     (galleryIndex: number) => {
@@ -397,20 +402,10 @@ export function useListingPageImageModal({
       e.preventDefault();
     };
 
-    savedScrollYRef.current = window.scrollY;
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${savedScrollYRef.current}px`;
-    document.body.style.width = '100%';
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('touchmove', preventScroll, { passive: false });
 
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, savedScrollYRef.current);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('touchmove', preventScroll);
       clearImageNavGuard(syncClickLockRef, syncUnlockTimeoutRef);

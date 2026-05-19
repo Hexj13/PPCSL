@@ -154,6 +154,7 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 ## Mobile layout
 
 - Below `md`, vehicle filters use `MobileSearchFilters` (bottom sheets for field editing).
+- System **Back** on Android/PWA closes the open bottom sheet first (shared overlay stack — see [overlay-back-navigation.md](./overlay-back-navigation.md)).
 - The same four tab panels stay mounted with CSS `hidden` on inactive tabs (values persist when switching tabs).
 - Mileage sheet inputs and summaries use thousands with spaces (same formatting helper as price).
 

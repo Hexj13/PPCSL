@@ -65,6 +65,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [search-title-url.md](./features/search-title-url.md) — Search page URL and title (slugs, diacritics)
 - Approximate price in default currency (≈ EUR) — FXRatesAPI, daily cron, listing enrichment, price sorting in default currency; env: `FXRATESAPI_API_KEY`, `DEFAULT_CURRENCY` (see [TECHNICAL.md](./architecture/TECHNICAL.md) §6 Exchange Rates)
 - [image-preview.md](./features/image-preview.md) — Image preview system (card carousel vs listing hero layers, modal; blurhash; `image_blur_hashes` + backfill scripts)
+- [overlay-back-navigation.md](./features/overlay-back-navigation.md) — System Back closes modals, bottom sheets, and photo viewer before route navigation (overlay history stack)
 - [listings.md](./features/listings.md) — Optional listing video (seller upload, transcoding) and partner-import video-from-URL
 - [infocar-history-section.md](./features/infocar-history-section.md) — Infocar report card + on-site VIN history (two cards, RO/RU links)
 - [ai-listing-report-ru.md](./features/ai-listing-report-ru.md) — Listing AI analysis (Gemini, PDP modal, RU spec: API, cache, prompts). Clear persisted rows: `npm run clear-listing-ai-reports(:prod)` from `core/backend` ([SCRIPTS.md](../backend/docs/SCRIPTS.md)); Render steps: platform repo [`docs/deployment/production-deployment.md`](../../docs/deployment/production-deployment.md) §2.3.

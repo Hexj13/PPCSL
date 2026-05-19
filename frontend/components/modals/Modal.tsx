@@ -1,6 +1,9 @@
-import { useEffect, useRef } from 'react';
+'use client';
+
+import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { designTokens } from '@/ui';
 
@@ -30,8 +33,10 @@ export function Modal({
   onCloseRef.current = onClose;
 
   const pointerStartedOnBackdropRef = useRef(false);
+  const overlayHistoryId = useId();
 
   useScrollLock(isOpen);
+  useHistoryBackClose(isOpen, onClose, overlayHistoryId);
 
   useEffect(() => {
     if (!isOpen) return;

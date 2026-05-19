@@ -1,6 +1,9 @@
+'use client';
+
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { designTokens } from '@/ui';
 
@@ -27,11 +30,13 @@ export function BottomSheet({
   onCloseRef.current = onClose;
 
   const titleId = useId();
+  const overlayHistoryId = useId();
   const pointerStartedOnBackdropRef = useRef(false);
   const [isRendered, setIsRendered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
   useScrollLock(isRendered);
+  useHistoryBackClose(isOpen, onClose, overlayHistoryId);
 
   useEffect(() => {
     if (isOpen) {

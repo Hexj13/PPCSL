@@ -258,10 +258,11 @@ The inline preview on the listing page is expected to behave as follows:
 ### Controls
 
 - **Escape / Enter / Space** — Close modal.
+- **System Back (Android / PWA)** — Closes the modal via shared overlay history (`overlay-back-navigation.md`); does not leave the listing page.
 - **ArrowLeft / ArrowRight** — Previous/next photo (handled only in the modal; no duplicate handler in the page hook).
 - **Click on overlay** — Close modal.
 - **Swipe** — Next/previous on touch.
-- **Scroll** — Locked while modal is open; position restored on close.
+- **Scroll** — Locked while modal is open (`useScrollLock`); position restored on close.
 
 ---
 

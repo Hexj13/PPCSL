@@ -1,8 +1,25 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+
+import { resetOverlayHistoryForTests, triggerOverlayPopStateForTests } from '@/lib/overlay-history';
 
 import { BottomSheet } from './BottomSheet';
 
 describe('BottomSheet', () => {
+  beforeEach(() => {
+    resetOverlayHistoryForTests();
+    const pushState = jest.fn((state: Record<string, unknown>) => {
+      window.history.state = state;
+    });
+    Object.defineProperty(window, 'history', {
+      configurable: true,
+      value: { state: null, pushState, back: jest.fn() },
+    });
+  });
+
+  afterEach(() => {
+    resetOverlayHistoryForTests();
+  });
+
   it('should render title and children when open', async () => {
     render(
       <BottomSheet isOpen onClose={jest.fn()} title="Update available">
@@ -30,6 +47,25 @@ describe('BottomSheet', () => {
     });
 
     fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call onClose when the user navigates back in history', async () => {
+    const onClose = jest.fn();
+    render(
+      <BottomSheet isOpen onClose={onClose} title="Update available">
+        <p>Update description</p>
+      </BottomSheet>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    act(() => {
+      triggerOverlayPopStateForTests();
+    });
+
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
