@@ -862,6 +862,8 @@
     "externalReports": "Report for this vehicle",
     "externalReportsHint": "We redirect you to partners who compile the vehicle report from various sources. Details and terms are on the partner's site.",
     "orderReport": "Order report",
+    "actionCardContactTitle": "Contact",
+    "actionCardContactDescription": "With the seller",
     "actionCardFavoriteDescription": "Save this listing",
     "actionCardFavoriteTitleWhenSaved": "In favorites",
     "actionCardFavoriteDescriptionWhenSaved": "Remove from saved",

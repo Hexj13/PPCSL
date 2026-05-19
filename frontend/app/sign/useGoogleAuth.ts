@@ -168,5 +168,10 @@ export function useGoogleAuth(options: {
     renderButton();
   }, [renderButton]);
 
-  return { containerRef, clientIdConfigured: Boolean(clientId), isGoogleAuthInFlight };
+  return {
+    containerRef,
+    clientIdConfigured: Boolean(clientId),
+    isGoogleAuthInFlight,
+    isButtonReady: ready,
+  };
 }

@@ -48,7 +48,7 @@ Filter state is synced with the URL; submitting the form runs the search and upd
 | Equipment           | `searchFilters.equipment`          | Equipment checkboxes by category, match mode (full/partial)                                                |
 | Popular             | `searchFilters.popularFilters`     | Quick links for popular brands and models                                                                  |
 
-Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanced' | 'equipment' | 'popular'`). Tab state is managed by `useSearchTabs`.
+Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | 'equipment' | 'popular'`). Inactive panels stay mounted and use CSS `hidden` so filter values persist when switching tabs. Tab state is managed by `useSearchTabs`.
 
 ---
 
@@ -68,7 +68,7 @@ Only one tab’s content is rendered at a time (`activeTab === 'basic' | 'advanc
 
 | Column 1                                                         | Column 2                                                     | Column 3                                        |
 | ---------------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------- |
-| **Price** (paired: From / To text inputs, thousands with spaces) | **Transmission** + **Drive type** (two MultiSelectDropdowns) | **Mileage** (paired: From / To text inputs, km) |
+| **Price** (paired: From / To text inputs, thousands with spaces) | **Transmission** + **Drive type** (two MultiSelectDropdowns) | **Mileage** (paired: From / To text inputs, km; displayed with thousands separators like price) |
 
 ### Row 3 (full width)
 
@@ -151,6 +151,14 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 
 ---
 
+## Mobile layout
+
+- Below `md`, vehicle filters use `MobileSearchFilters` (bottom sheets for field editing).
+- The same four tab panels stay mounted with CSS `hidden` on inactive tabs (values persist when switching tabs).
+- Mileage sheet inputs and summaries use thousands with spaces (same formatting helper as price).
+
+---
+
 ## Styling and UX Details
 
 ### Paired inputs (From/To)
@@ -174,7 +182,7 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 
 - **Filter state:** `useSearchFilters` — holds all filter fields (brand_ids, model_ids, year_gte/lte, price_gte/lte, cities, currency, etc.).
 - **URL sync:** `useSearchFiltersSync` — reads/writes URL search params and applies initial state from URL.
-- **Handlers:** `useFilterHandlers` — change handlers, validation (year/price/mileage/engine/horsepower ranges and brand/model selection limits), submit, reset.
+- **Handlers:** `useFilterHandlers` — change handlers, validation (year/price/mileage/engine/horsepower ranges and brand/model selection limits), submit, reset. On submit, blurs the active input so formatted values (e.g. mileage with spaces) are committed before building the URL.
 - **Options:** `useFilterOptions` — brand/model options (with popular/other categories), city options, colors, doors, condition, registration type, registration yes/no, currency list.
 - **Tabs:** `useSearchTabs` — active tab, refs for indicator and scroll.
 - **Vehicle type:** `useVehicleType` — from URL or default `car`.
@@ -186,7 +194,8 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 
 | File                                        | Role                                                                                       |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `SearchFilters.tsx`                         | Form container, vehicle type, tabs, conditional render of tab content, actions, save modal |
+| `SearchFilters.tsx`                         | Form container, vehicle type, tabs, tab visibility (`hidden`), actions, save modal |
+| `search-filters/mobile/MobileSearchFilters.tsx` | Mobile vehicle/tire filter UI and sheets |
 | `search-filters/BasicFilters.tsx`           | Basic criteria grid + PopularBodyTypesFilter                                               |
 | `search-filters/AdvancedFilters.tsx`        | Additional criteria grid + labels                                                          |
 | `search-filters/EquipmentFilters.tsx`       | Equipment checkboxes and match mode                                                        |
@@ -209,4 +218,4 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 
 ---
 
-**Last updated:** 2026-04-22
+**Last updated:** 2026-05-19

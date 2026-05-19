@@ -261,8 +261,8 @@ export function MobileVehicleSheetsGroupA(props: MobileVehicleSheetsProps) {
           showDualInputColumnLabels={false}
           fromLabel={t('searchFilters.from')}
           toLabel={t('searchFilters.to')}
-          fromValue={mobileDraft?.mileage_gte ?? filters.mileage_gte}
-          toValue={mobileDraft?.mileage_lte ?? filters.mileage_lte}
+          fromValue={formatPriceWithSpaces(mobileDraft?.mileage_gte ?? filters.mileage_gte)}
+          toValue={formatPriceWithSpaces(mobileDraft?.mileage_lte ?? filters.mileage_lte)}
           onFromChange={(v) => {
             const clean = v.replace(/[^0-9]/g, '');
             const num = parseInt(clean, 10);

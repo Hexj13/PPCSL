@@ -607,6 +607,44 @@ describe('SearchFilters', () => {
         expect(parseInt(formattedValue, 10)).toBe(500000);
       });
     });
+
+    it('should format mileage with spaces for thousands', async () => {
+      renderWithProviders(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const mileageInputs = screen.getAllByTitle(/Enter mileage in kilometers/i);
+      const mileageFromInput = mileageInputs[0] as HTMLInputElement;
+
+      fireEvent.change(mileageFromInput, { target: { value: '100000' } });
+
+      await waitFor(() => {
+        expect(mileageFromInput.value).toBe('100 000');
+      });
+    });
+
+    it('should blur active mileage input on search submit', async () => {
+      renderWithProviders(<SearchFilters />);
+
+      await waitFor(() => {
+        expect(brandsApi.getAll).toHaveBeenCalled();
+      });
+
+      const mileageInputs = screen.getAllByTitle(/Enter mileage in kilometers/i);
+      const mileageInput = mileageInputs[0] as HTMLInputElement;
+
+      fireEvent.change(mileageInput, { target: { value: '100000' } });
+      mileageInput.focus();
+      expect(mileageInput).toHaveFocus();
+
+      fireEvent.submit(screen.getByRole('form', { name: /search filters/i }));
+
+      await waitFor(() => {
+        expect(mileageInput).not.toHaveFocus();
+      });
+    });
   });
 
   describe('Popular Body Types Filter', () => {

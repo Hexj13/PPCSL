@@ -24,7 +24,7 @@
 
 ## Поведение в приложении
 
-- Скрипт `https://accounts.google.com/gsi/client` подключается на странице `/sign` (вкладки вход и регистрация). Инициализация GIS (`initialize` / `renderButton`) выполняется **после** `onLoad` этого скрипта и при наличии `NEXT_PUBLIC_GOOGLE_CLIENT_ID`; иначе кнопка не появится.
+- Скрипт `https://accounts.google.com/gsi/client` подключается на странице `/sign` (вкладки вход и регистрация). Инициализация GIS (`initialize` / `renderButton`) выполняется **после** `onReady` этого скрипта (Next.js `Script`) и при наличии `NEXT_PUBLIC_GOOGLE_CLIENT_ID`; иначе кнопка не появится. До готовности кнопки показывается skeleton; при remount проверяется `window.google?.accounts?.id`.
 - После успеха GIS фронт вызывает `POST /api/auth/google` с полем `idToken`; бэкенд проверяет токен через `google-auth-library`, выставляет httpOnly cookies `kupito_access_token` и `kupito_refresh_token` (path у refresh — `/api/auth`).
 - Дальнейшие запросы API идут с `withCredentials: true`; access JWT содержит `phoneVerified`; без подтверждённого телефона пользователь перенаправляется на `/complete-profile?mode=phone_required` (middleware + клиентский guard). Для юр. лица без названия компании в профиле действует отдельный клиентский гард на `/complete-profile?mode=business_onboarding` (см. [auth-onboarding-gates.md](../features/auth-onboarding-gates.md)).
 
@@ -37,4 +37,4 @@
 - **CORS / cookies не приходят** — проверить `CORS_ORIGINS` и что фронт обращается к API с того же «семейства» origin, что в списке; в ответах должны быть `Access-Control-Allow-Credentials: true`.
 - **Middleware не видит `phoneVerified`** — на фронт-сервисе должен быть задан тот же `JWT_SECRET`, что и у Nest JWT.
 - **401 после логина** — проверить, что refresh-cookie доступен на пути `/api/auth` и что клиент не блокирует third-party cookies (для SameSite=Lax обычно достаточно same-site запросов к API).
-- **Нет кнопки Google при заданном `NEXT_PUBLIC_GOOGLE_CLIENT_ID`** — убедиться, что скрипт GIS реально загрузился (сеть / блокировщики); инициализация привязана к `onLoad` скрипта.
+- **Нет кнопки Google при заданном `NEXT_PUBLIC_GOOGLE_CLIENT_ID`** — убедиться, что скрипт GIS реально загрузился (сеть / блокировщики); инициализация привязана к `onReady` скрипта. Если skeleton не исчезает, проверить блокировку `accounts.google.com` и консоль на ошибки GIS.

@@ -46,6 +46,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [e2e-playwright-standards.md](./guides/e2e-playwright-standards.md) — Playwright E2E standards for this project
 - [search-filter-limits.md](./guides/search-filter-limits.md) — Brand/model selection limits in search
 - [quick-start-ru.md](./guides/quick-start-ru.md) — Quick start (Russian)
+- [MOBILE-APP-ru.md](./guides/MOBILE-APP-ru.md) — Android app via PWA + TWA (Bubblewrap, Google Play; Russian operators)
 - [linting.md](./engineering/linting.md) — Linting and code quality (single source)
 - [inp-validation.md](./engineering/inp-validation.md) — INP validation checklist
 
@@ -67,7 +68,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [listings.md](./features/listings.md) — Optional listing video (seller upload, transcoding) and partner-import video-from-URL
 - [infocar-history-section.md](./features/infocar-history-section.md) — Infocar report card + on-site VIN history (two cards, RO/RU links)
 - [ai-listing-report-ru.md](./features/ai-listing-report-ru.md) — Listing AI analysis (Gemini, PDP modal, RU spec: API, cache, prompts). Clear persisted rows: `npm run clear-listing-ai-reports(:prod)` from `core/backend` ([SCRIPTS.md](../backend/docs/SCRIPTS.md)); Render steps: platform repo [`docs/deployment/production-deployment.md`](../../docs/deployment/production-deployment.md) §2.3.
-- Listing seller phones and full VIN — masked in public listing payloads; optional reveal on the listing page with per-viewer Redis rate limits (`GET /api/listings/:id/phones`, `GET /api/listings/:id/vin`); see [TECHNICAL.md](./architecture/TECHNICAL.md) § API Reference → Listings
+- Listing seller phones and full VIN — masked in public listing payloads; optional reveal on the listing page (eye control or Contact action card) with per-viewer Redis rate limits (`GET /api/listings/:id/phones`, `GET /api/listings/:id/vin`); see [TECHNICAL.md](./architecture/TECHNICAL.md) § API Reference → Listings
 - [loading-states.md](./features/loading-states.md) — Loading states
 - [cross-tab-sync.md](./features/cross-tab-sync.md) — Favorites, comparison, listing status, auth session, and refresh-token rotation across tabs (UI: `BroadcastChannel` + storage; auth: `storage` on auth keys — see doc)
 - [auth-onboarding-gates.md](./features/auth-onboarding-gates.md) — Mandatory phone verification and business company onboarding (middleware, client guards, verify-phone branching)

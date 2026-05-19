@@ -127,11 +127,12 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
   const driveSummary = summarizeMulti(filters.drive_types, driveTypeOptions, t);
 
   const mileageSummary = useMemo(() => {
-    const a = filters.mileage_gte;
-    const b = filters.mileage_lte;
+    const a = formatPriceWithSpaces(filters.mileage_gte);
+    const b = formatPriceWithSpaces(filters.mileage_lte);
     if (!a && !b) return '';
-    return `${a || '—'} – ${b || '—'}`;
-  }, [filters.mileage_gte, filters.mileage_lte]);
+    const dash = t('common.rangeDash');
+    return `${a || dash} – ${b || dash}`;
+  }, [filters.mileage_gte, filters.mileage_lte, t]);
 
   const priceSummary = useMemo(() => {
     const a = formattedPriceGte;
@@ -244,7 +245,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
 
   return (
     <div className="flex flex-col gap-3 mb-4">
-      {activeTab === 'basic' && (
+      <div className={activeTab === 'basic' ? '' : 'hidden'}>
         <MobileVehicleBasicTab
           t={t}
           filters={filters}
@@ -260,9 +261,9 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
           mileageSummary={mileageSummary}
           openSheetForEdit={openSheetForEdit}
         />
-      )}
+      </div>
 
-      {activeTab === 'advanced' && (
+      <div className={activeTab === 'advanced' ? '' : 'hidden'}>
         <MobileVehicleAdvancedTab
           t={t}
           vehicleType={vehicleType}
@@ -278,9 +279,9 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
           openSheetForEdit={openSheetForEdit}
           onCheckboxChange={onCheckboxChange}
         />
-      )}
+      </div>
 
-      {activeTab === 'equipment' && (
+      <div className={activeTab === 'equipment' ? '' : 'hidden'}>
         <EquipmentFilters
           equipment={filters.equipment}
           equipmentMatchMode={filters.equipment_match_mode}
@@ -288,9 +289,9 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
           onChange={(keys) => updateMultiple({ equipment: keys })}
           vehicleType={vehicleType}
         />
-      )}
+      </div>
 
-      {activeTab === 'popular' && (
+      <div className={activeTab === 'popular' ? '' : 'hidden'}>
         <PopularFilters
           key={vehicleType}
           brands={brands}
@@ -299,7 +300,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
           setFilters={setFilters}
           vehicleType={vehicleType}
         />
-      )}
+      </div>
 
       <MobileVehicleSheets
         openSheet={openSheet}

@@ -104,6 +104,19 @@ function Harness() {
   );
 }
 
+function HarnessGisLoaded({ loaded }: { loaded: boolean }) {
+  const { containerRef, isButtonReady } = useGoogleAuth({
+    mode: 'login',
+    gisScriptLoaded: loaded,
+  });
+  return (
+    <>
+      <div ref={containerRef} data-testid="gis-root" />
+      <span data-testid="button-ready">{isButtonReady ? 'true' : 'false'}</span>
+    </>
+  );
+}
+
 function Tree({ children }: { children: React.ReactNode }) {
   return (
     <I18nProvider initialLocale="ru" initialTranslations={minimalTranslations}>
@@ -154,6 +167,31 @@ describe('useGoogleAuth', () => {
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = originalClientId;
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = originalSwitcher;
     delete window.google;
+  });
+
+  it('returns isButtonReady false when gisScriptLoaded is false', () => {
+    render(
+      <Tree>
+        <HarnessGisLoaded loaded={false} />
+      </Tree>,
+    );
+
+    expect(screen.getByTestId('button-ready')).toHaveTextContent('false');
+    expect(window.google?.accounts?.id.initialize).not.toHaveBeenCalled();
+  });
+
+  it('returns isButtonReady true and renders GIS button when gisScriptLoaded is true', async () => {
+    render(
+      <Tree>
+        <HarnessGisLoaded loaded={true} />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
+    });
+    expect(window.google?.accounts?.id.initialize).toHaveBeenCalled();
+    expect(window.google?.accounts?.id.renderButton).toHaveBeenCalled();
   });
 
   it('re-renders GIS button with new locale when app locale changes', async () => {

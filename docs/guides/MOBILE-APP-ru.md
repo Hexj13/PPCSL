@@ -1,5 +1,5 @@
 ---
-title: Мобильное приложение
+title: Мобильное приложение через PWA + TWA
 owner: platform
 tags:
   - type/guide
@@ -8,462 +8,505 @@ tags:
   - status/draft
 ---
 
-# Мобильное приложение PPCSL
+# Мобильное приложение kupito.club через PWA + TWA
 
-План реализации нативных мобильных приложений (Android + iOS) на базе Expo (React Native).
+Этот документ фиксирует новую стратегию мобильного приложения для kupito.club: не писать отдельное React Native/Expo приложение, а выпустить Android-приложение как Trusted Web Activity поверх существующей PWA.
 
-## Оглавление
+Старый подход с отдельным `core/mobile/`, Expo Router, EAS Build, OTA-обновлениями и отдельной мобильной кодовой базой больше не используется.
 
-1. [Стратегия](#1-стратегия)
-2. [Выбор технологии](#2-выбор-технологии)
-3. [Размещение в репозитории](#3-размещение-в-репозитории)
-4. [Взаимодействие с бэкендом](#4-взаимодействие-с-бэкендом)
-5. [Сборка](#5-сборка)
-6. [Отладка](#6-отладка)
-7. [Тестирование](#7-тестирование)
-8. [Публикация в сторы](#8-публикация-в-сторы)
-9. [OTA-обновления](#9-ota-обновления)
-10. [CI/CD](#10-cicd)
-11. [Изменения в веб-версии](#11-изменения-в-веб-версии)
-12. [Фазы реализации](#12-фазы-реализации)
+## 1. Решение
 
----
+Базовая цепочка:
 
-## 1. Стратегия
-
-### Android first, iOS second
-
-Сначала выпускаем Android-приложение, стабилизируем, собираем фидбэк, потом выпускаем iOS. При этом архитектура с первого дня рассчитана на две платформы:
-
-- Бизнес-логика, компоненты, навигация, API-клиент, хуки — **кроссплатформенные** с первого дня.
-- Платформозависимый код (permissions, store-специфика) изолирован через `Platform.OS` и суффиксы `.android.tsx` / `.ios.tsx`.
-- Expo Router, expo-secure-store, expo-notifications и другие Expo-модули уже кроссплатформенные — переписывать под iOS не придётся.
-- Профили сборки в `eas.json` сразу описывают обе платформы (iOS-секции заполняются минимально, детализируются при переходе к iOS).
-
-**Результат**: после выпуска и стабилизации Android, переход на iOS — это тестирование, UI-полировка под iOS-гайдлайны и настройка App Store, а не переписывание кода.
-
----
-
-## 2. Выбор технологии
-
-### Expo (React Native), SDK 55+
-
-| Критерий | Expo |
-|----------|------|
-| Язык | TypeScript + React 19.2 — тот же стек, что и на фронте (Next.js 16) |
-| Навигация | Expo Router — file-based routing, аналог Next.js App Router |
-| Сборка | EAS Build — облачные сборки без локального Android Studio / Xcode |
-| OTA-обновления | EAS Update — обновления JS-бандла без ревью в сторах, bundle diffing (~75% экономия трафика) |
-| CI/CD | EAS Workflows — YAML-конфиг, триггеры на push/PR/расписание |
-| Производительность | New Architecture (Fabric, TurboModules) — единственный вариант в SDK 55 |
-| Нативный код | Expo Modules API — когда стандартных модулей недостаточно |
-
-### Альтернативы
-
-| Технология | Почему не подходит |
-|------------|-------------------|
-| Capacitor | WebView-обёртка, не нативный UX, ограничена производительность |
-| Flutter | Dart вместо TypeScript, другая парадигма, нельзя переиспользовать React-экспертизу |
-| Kotlin Multiplatform | Только shared-логика, UI платформозависимый, две кодовые базы для UI |
-
----
-
-## 3. Размещение в репозитории
-
-### Текущая структура
-
-```
-kupito.club/              (платформа — локали, тема, конфиг, ассеты)
-  core/                   (PPCSL субмодуль — весь код)
-    frontend/             (Next.js)
-    backend/              (NestJS)
-    docs/
+```text
+Next.js site -> PWA -> Bubblewrap/PWABuilder -> Android TWA -> Google Play
 ```
 
-### Структура с мобильным приложением
+TWA открывает `https://kupito.club` в fullscreen-режиме через браузер пользователя, а не через обычный WebView. Связь между Android-приложением и доменом подтверждается через Digital Asset Links.
 
+Для kupito.club это лучший первый релиз мобильного приложения, потому что:
+
+- весь продукт уже живёт в вебе: поиск авто, фильтры, объявления, избранное, сравнение, профиль и создание объявлений;
+- не нужно дублировать UI, роутинг, авторизацию, i18n и бизнес-логику в отдельном мобильном проекте;
+- большинство изменений сайта будут попадать в приложение без релиза в Google Play;
+- Google поддерживает TWA как официальный способ публиковать PWA в Android-экосистеме;
+- приложение не выглядит как пустая обёртка, потому что сайт уже имеет полноценную мобильную функциональность.
+
+## 2. Границы решения
+
+Что делаем:
+
+- доводим текущий Next.js frontend до корректной PWA;
+- создаём Android TWA wrapper для домена `kupito.club`;
+- публикуем `.aab` в Google Play;
+- добавляем `/.well-known/assetlinks.json` для верификации домена и Android package;
+- после публикации обновляем web CTA “Мобильное приложение”, чтобы Android-пользователи попадали в Google Play.
+
+Что не делаем на первом этапе:
+
+- не создаём `core/mobile/`;
+- не пишем React Native/Expo приложение;
+- не используем WebView converter;
+- не делаем отдельный iOS-клиент;
+- не добавляем нативные фичи до успешного Android-релиза.
+
+iOS на первом этапе остаётся обычной PWA-установкой через Safari. Отдельное iOS-решение нужно принимать позже, потому что TWA является Android-подходом.
+
+### Ограничения TWA
+
+- TWA работает через браузер пользователя. На Android основной целевой вариант — Chrome 72+ или другой браузер с поддержкой Trusted Web Activity.
+- Если verification не проходит, пользователь увидит fallback Custom Tab с browser UI.
+- Android wrapper не имеет прямого доступа к cookies, `localStorage` и DOM сайта.
+- Любая нативная функция должна добавляться отдельно и только если она действительно нужна продукту.
+- Для первого релиза все критичные сценарии должны быть полезны и доступны в обычном браузере, потому что TWA открывает тот же production site.
+
+## 3. Архитектура
+
+```mermaid
+flowchart TD
+  platformFiles["Platform files: locales, theme, config, assets"] --> prepareBuild["npm run prepare:build"]
+  prepareBuild --> nextPwa["Next.js PWA in core/frontend"]
+  nextPwa --> manifest["/manifest.json"]
+  nextPwa --> serviceWorker["/sw.js"]
+  nextPwa --> assetLinks["/.well-known/assetlinks.json"]
+  manifest --> bubblewrap["Bubblewrap or PWABuilder"]
+  assetLinks --> verification["Digital Asset Links verification"]
+  bubblewrap --> androidProject["Android TWA wrapper"]
+  androidProject --> artifacts["APK for testing and AAB for Play"]
+  artifacts --> googlePlay["Google Play"]
+  googlePlay --> installedApp["Installed Kupito Android app"]
+  installedApp --> nextPwa
 ```
-kupito.club/
-  assets/
-    mobile/                  платформенные ассеты
-      android/               иконка, splash, store-скриншоты для Google Play
-      ios/                   иконка, splash, store-скриншоты для App Store (позже)
-  core/
-    frontend/                Next.js (без изменений)
-    backend/                 NestJS (без изменений)
-    mobile/                  Expo-проект: один codebase, две платформы
-      app/                   Expo Router — экраны (общие для обеих платформ)
-        (tabs)/              основная таб-навигация
-        auth/                экраны логина/регистрации
-        listing/             карточка объявления
-        _layout.tsx          корневой layout
-      src/
-        api/                 API-клиент (кроссплатформенный)
-        auth/                JWT через expo-secure-store (кроссплатформенный)
-        hooks/               React-хуки (кроссплатформенные)
-        components/          UI-компоненты (кроссплатформенные)
-          platform/          платформозависимые: .android.tsx / .ios.tsx
-        i18n/                ro/ru/en — копируются из корневых locales/
-        theme/               копируется из корневой theme/
-        types/               общие типы
-      assets/                шрифты, иконки внутри приложения
-      app.json               Expo-конфиг (android + ios секции)
-      eas.json               EAS Build: профили для обеих платформ
-      package.json
-    shared/                  (опционально) общие типы/утилиты для frontend + mobile
-    docs/
+
+Ключевой принцип: приложение остаётся сайтом. Android wrapper должен быть максимально тонким и стабильным, а основная разработка продолжает идти в `core/frontend`.
+
+## 4. Текущее состояние PWA
+
+В проекте уже есть PWA-фундамент:
+
+- `core/frontend/app/manifest.ts` генерирует web app manifest.
+- `core/frontend/public/sw.js` содержит service worker.
+- `core/frontend/components/pwa/ServiceWorkerRegistration.tsx` регистрирует service worker в production и показывает update prompt.
+- `core/frontend/app/offline/page.tsx` содержит offline fallback page.
+- `core/frontend/components/pwa/PWAInstallButtonGray.tsx` показывает текущую кнопку установки PWA.
+- `core/frontend/hooks/usePWAInstall.ts` обрабатывает `beforeinstallprompt`, standalone mode и iOS-инструкции.
+- `locales/{en,ro,ru}.json` содержат секцию `pwa`.
+
+Текущий manifest уже задаёт:
+
+- `start_url: '/'`;
+- `display: 'standalone'`;
+- `background_color` из `theme.pwa.backgroundColor`;
+- `theme_color` из `theme.pwa.themeColor`;
+- иконки `192x192` и `512x512`;
+- `purpose: 'any'` и `purpose: 'maskable'`.
+
+Перед TWA-релизом это нужно не переписать с нуля, а проверить и усилить.
+
+## 5. PWA checklist перед TWA
+
+Минимум для релиза:
+
+- `https://kupito.club/manifest.json` доступен в production без редиректов и ошибок.
+- `https://kupito.club/sw.js` доступен в production.
+- Service worker регистрируется только в production и не ломает навигацию.
+- Offline fallback открывается при потере сети.
+- Главные мобильные сценарии работают на HTTPS:
+  - открыть главную;
+  - найти авто;
+  - применить фильтры;
+  - открыть объявление;
+  - авторизоваться;
+  - добавить в избранное;
+  - открыть профиль;
+  - создать объявление;
+  - загрузить фото.
+- Manifest содержит корректные `name`, `short_name`, `description`, `start_url`, `display`, `theme_color`, `background_color`, `icons`.
+- Иконка `512x512` действительно квадратная, без прозрачных полей, и подходит для launcher icon.
+- Maskable icon проверена через maskable icon preview.
+- Lighthouse/PWA audit не показывает блокирующих проблем.
+- В Chrome на Android сайт можно установить как PWA.
+
+Проверки:
+
+```bash
+npm run prepare:build
+cd core/frontend
+npm run build
 ```
 
-### Принципы
+После деплоя production:
 
-- Код приложения в `core/mobile/` — часть PPCSL-субмодуля, шарится между платформами-площадками.
-- **Один Expo-проект = два приложения** (Android + iOS). Общее: навигация, компоненты, хуки. Платформозависимое: `Platform.OS` или суффиксы `.android.tsx` / `.ios.tsx`.
-- Платформенные ассеты (иконка под бренд, splash, store-скриншоты) — в корне платформы `assets/mobile/{android,ios}/`.
-- Локали и тема копируются при сборке так же, как для frontend (расширение скрипта `prepare:build`).
-
----
-
-## 4. Взаимодействие с бэкендом
-
-Мобильное приложение использует **тот же REST API**, что и веб-клиент:
-
-```
-Mobile App  ──HTTPS──>  NestJS Backend (/api/*)  ──>  PostgreSQL + Redis
+```bash
+bubblewrap validate --url=https://kupito.club
 ```
 
-### Авторизация
+Если `bubblewrap validate` показывает PWA-проблемы, сначала исправляем сайт, потом возвращаемся к Android wrapper.
 
-- JWT Bearer token + refresh token.
-- Хранение: `expo-secure-store` (Keychain на iOS, Encrypted SharedPreferences на Android) вместо localStorage.
-- Заголовки: `Authorization: Bearer <token>`, `Accept-Language: ro|ru`, `X-Request-Id: <uuid>`.
-- Refresh flow: `POST /api/auth/refresh` при 401 — та же логика, что и на вебе.
+## 6. Иконки и ассеты
 
-### API-клиент
+Источник истины для платформенных ассетов находится в корне platform repo:
 
-Axios с интерцепторами — аналог `core/frontend/lib/api/api-client.ts`, адаптированный под secure storage:
+```text
+assets/frontend/public/
+```
 
-- Request interceptor: Bearer-токен из `expo-secure-store`, язык из `expo-localization`, UUID для request-id.
-- Response interceptor: автоматический refresh при 401, retry оригинального запроса.
+Во время `npm run prepare:build` ассеты копируются в:
 
-### Push-уведомления
+```text
+core/frontend/public/
+```
 
-- `expo-notifications` (кроссплатформенный модуль).
-- Android: FCM (Firebase Cloud Messaging).
-- iOS: APNs (Apple Push Notification Service).
-- Бэкенд: новый эндпоинт `POST /api/devices` для регистрации device-токенов.
+Для TWA нужно убедиться, что в source assets есть production-ready файлы:
 
-### Доработки бэкенда
+- `pwa192.png`;
+- `logo.png` или отдельная `pwa512.png`/launcher icon 512x512;
+- maskable icon без важных деталей у краёв;
+- screenshots для Google Play;
+- feature graphic для Google Play;
+- при необходимости отдельные store-ассеты в `assets/mobile/android/`.
 
-Для базовой работы приложения **бэкенд менять не нужно** — тот же API, те же контракты. Доработки понадобятся позже:
+Если добавляется новый public asset, его нужно добавлять в root `assets/`, а не напрямую в `core/frontend/public/`.
 
-| Эндпоинт | Назначение | Фаза |
-|----------|-----------|------|
-| `POST /api/devices` | Регистрация push-токенов | 2 |
-| `POST /api/notifications/send` | Отправка push из админки | 2 |
-| `GET /.well-known/apple-app-site-association` | Universal links для iOS | 3 |
-| `GET /.well-known/assetlinks.json` | App Links для Android | 2 |
+Рекомендуемая структура для store-материалов:
 
----
+```text
+assets/
+  mobile/
+    android/
+      icon-512.png
+      feature-graphic.png
+      screenshots/
+        phone-01.png
+        phone-02.png
+        phone-03.png
+```
 
-## 5. Сборка
+Store-ассеты не обязаны копироваться в `core/frontend/public/`, если они используются только для Google Play Console.
 
-### Профили в `eas.json`
+## 7. Где хранить TWA wrapper
 
-Три профиля сразу с секциями для обеих платформ (iOS-секции дополняются на фазе 3):
+TWA wrapper привязан к конкретной платформе:
+
+- домен: `kupito.club`;
+- package name;
+- signing key;
+- Google Play listing;
+- production URL;
+- store assets.
+
+Поэтому базовая рекомендация для kupito.club: хранить Android wrapper в platform repo, а не в `core/`.
+
+Рекомендуемый путь:
+
+```text
+android/twa/
+```
+
+Внутри будет обычный Android-проект, сгенерированный Bubblewrap:
+
+```text
+android/twa/
+  twa-manifest.json
+  build.gradle
+  app/
+  gradle/
+  gradlew
+  gradlew.bat
+```
+
+Не нужно создавать:
+
+```text
+core/mobile/
+```
+
+Если позже появится несколько платформ с одинаковым TWA-подходом, можно вынести общий шаблон или инструкцию в `core/docs`, но package/signing/store-конфигурация всё равно останется платформенной.
+
+## 8. Package name и URL
+
+Рекомендуемые значения для первого Android-релиза:
+
+```text
+Application name: Kupito
+Package name: club.kupito.app
+Host: kupito.club
+Start URL: https://kupito.club/
+Manifest URL: https://kupito.club/manifest.json
+Display mode: standalone или fullscreen
+Fallback: customtabs
+```
+
+Package name нельзя менять после публикации в Google Play без выпуска нового приложения. Перед созданием Play Console app нужно финально подтвердить `club.kupito.app`.
+
+`fallbackType` должен оставаться `customtabs`, а не `webview`. Если TWA verification не проходит, лучше увидеть Custom Tab с browser UI и исправить Digital Asset Links, чем скрывать проблему WebView fallback.
+
+## 9. Bubblewrap workflow
+
+Bubblewrap является основным вариантом, потому что он даёт контролируемый Android-проект и воспроизводимые команды.
+
+Установка:
+
+```bash
+npm i -g @bubblewrap/cli
+```
+
+Проверка окружения:
+
+```bash
+bubblewrap doctor
+```
+
+Инициализация проекта:
+
+```bash
+mkdir -p android/twa
+cd android/twa
+bubblewrap init --manifest=https://kupito.club/manifest.json
+```
+
+Во время `init` проверить:
+
+- `name`: `Kupito`;
+- `launcherName`: `Kupito`;
+- `packageId`: `club.kupito.app`;
+- `host`: `kupito.club`;
+- `startUrl`: `/`;
+- `themeColor` и `backgroundColor` соответствуют `theme/colors.ts`;
+- icon URL указывает на production 512x512 icon;
+- maskable icon URL задан, если есть отдельная maskable icon;
+- orientation: portrait;
+- fallback: custom tabs.
+
+Сборка:
+
+```bash
+cd android/twa
+bubblewrap build
+```
+
+Ожидаемые артефакты:
+
+```text
+android/twa/app-release-signed.apk
+android/twa/app-release-bundle.aab
+```
+
+Назначение:
+
+- `.apk` используется для ручного теста на устройстве;
+- `.aab` загружается в Google Play Console.
+
+Установка на устройство:
+
+```bash
+cd android/twa
+bubblewrap install
+```
+
+или:
+
+```bash
+adb install app-release-signed.apk
+```
+
+## 10. PWABuilder workflow
+
+PWABuilder можно использовать как быстрый no-code вариант или как sanity check для manifest/PWA readiness.
+
+Использование:
+
+1. Открыть `https://www.pwabuilder.com/`.
+2. Ввести `https://kupito.club`.
+3. Проверить PWA score и warnings.
+4. Сгенерировать Android package.
+5. Сверить package name, icons, colors, start URL и signing flow.
+
+Если PWABuilder и Bubblewrap дают разные предупреждения, приоритет для реализации должен быть у Bubblewrap, потому что проект будет воспроизводимо собираться из CLI.
+
+## 11. Digital Asset Links
+
+Digital Asset Links связывает сайт и Android-приложение. Без него TWA verification не пройдёт, и приложение может открыться как Custom Tab с browser UI.
+
+Файл должен быть доступен строго по адресу:
+
+```text
+https://kupito.club/.well-known/assetlinks.json
+```
+
+Source-of-truth путь в platform repo:
+
+```text
+assets/frontend/public/.well-known/assetlinks.json
+```
+
+После `npm run prepare:build` файл должен появиться здесь:
+
+```text
+core/frontend/public/.well-known/assetlinks.json
+```
+
+Формат:
 
 ```json
-{
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "android": { "buildType": "apk" },
-      "ios": { "simulator": true }
-    },
-    "preview": {
-      "distribution": "internal",
-      "android": { "buildType": "apk" }
-    },
-    "production": {
-      "autoIncrement": true,
-      "android": { "buildType": "app-bundle" }
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "club.kupito.app",
+      "sha256_cert_fingerprints": [
+        "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99"
+      ]
     }
   }
-}
+]
 ```
 
-| Профиль | Назначение | Android | iOS (фаза 3) |
-|---------|-----------|---------|---------------|
-| `development` | Dev-клиент, дебаг-инструменты, hot reload | `.apk` | simulator build |
-| `preview` | Release-сборка без дебага для QA | `.apk` | ad-hoc |
-| `production` | Оптимизированный билд для сторов | `.aab` (Google Play) | `.ipa` (App Store) |
+Fingerprint в примере является placeholder. Его нельзя коммитить как реальное значение.
 
-### Команды
+## 12. Signing keys и fingerprints
+
+Самая частая причина провала TWA verification: в `assetlinks.json` указан не тот SHA-256 fingerprint.
+
+Нужно различать:
+
+- local/debug key, которым подписан тестовый APK;
+- upload key, которым загружается `.aab` в Google Play;
+- app signing key, которым Google Play подписывает приложение для пользователей.
+
+Для локального теста можно временно добавить fingerprint локального ключа. Для production нужно добавить fingerprint Google Play App Signing certificate.
+
+После создания приложения в Play Console:
+
+1. Открыть Play Console.
+2. Перейти в app signing / app integrity.
+3. Найти SHA-256 certificate fingerprint для App signing key certificate.
+4. Добавить этот fingerprint в `assetlinks.json`.
+5. Запустить `npm run prepare:build`.
+6. Задеплоить frontend.
+7. Проверить `https://kupito.club/.well-known/assetlinks.json`.
+
+Bubblewrap умеет работать с fingerprints:
 
 ```bash
-cd core/mobile
-
-# Фаза 1–2: только Android
-eas build --profile development --platform android
-eas build --profile preview --platform android
-eas build --profile production --platform android
-
-# Фаза 3: добавляется iOS
-eas build --profile development --platform ios
-eas build --profile production --platform ios
-
-# Обе платформы одновременно
-eas build --profile production --platform all
+cd android/twa
+bubblewrap fingerprint list
+bubblewrap fingerprint add "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99"
+bubblewrap fingerprint generateAssetLinks --output=assetlinks.json
 ```
 
-Сборки происходят **в облаке EAS** — не нужен локальный Android SDK / Xcode. Результат: ссылка на скачивание и QR-код для установки на устройство.
+Перед копированием результата в `assets/frontend/public/.well-known/assetlinks.json` нужно проверить JSON вручную и оставить только нужные production fingerprints.
 
-### Expo Fingerprint
+## 13. Проверка TWA verification
 
-EAS Workflows используют **Expo Fingerprint** — автоматическое определение, изменился ли нативный код. Если изменился только JS, достаточно OTA-обновления, полная пересборка не нужна. Экономит время и деньги (бесплатный план EAS: 30 билдов/месяц).
-
----
-
-## 6. Отладка
-
-### Локальная разработка
-
-1. Запуск dev-сервера: `npx expo start --dev-client` из `core/mobile/`.
-2. Физическое устройство: установить development build (`.apk`), подключить к той же Wi-Fi. Сканировать QR из терминала.
-3. Эмулятор Android: Android Studio Emulator, dev build устанавливается автоматически через `--device`.
-4. Fast Refresh: мгновенное обновление при сохранении файла (без полной перезагрузки).
-
-### Инструменты
-
-| Инструмент | Назначение |
-|-----------|-----------|
-| React DevTools | Инспекция дерева компонентов, props, state (встроено в dev-клиент) |
-| Network Inspector | Просмотр HTTP-запросов к API прямо в dev-клиенте |
-| Chrome DevTools | Клавиша `j` в терминале Expo — JS-дебаггер с breakpoints |
-| Flipper | Расширенная отладка нативного слоя, БД, сети (опционально) |
-| `console.log` | Вывод в Metro bundler терминал |
-| Sentry | Мониторинг ошибок в production |
-| `adb logcat` | Нативные логи Android при подключении по USB |
-
-### Стейджинг
-
-- Собрать **preview**-профиль с `EXPO_PUBLIC_API_URL`, указывающим на staging-бэкенд.
-- Раздать `.apk` через EAS (ссылка/QR) или Internal App Sharing в Google Play Console.
-- Логи: `adb logcat` при USB-подключении.
-
----
-
-## 7. Тестирование
-
-### Юнит- и интеграционные тесты
-
-- **Jest + React Native Testing Library** — тесты компонентов и хуков (аналогично фронту).
-- Конфигурация: `jest-expo` пресет (поставляется с Expo).
-- Запуск: `npm run test` из `core/mobile/`.
-- Общие утилиты/типы из `core/shared/` тестируются один раз.
-
-### E2E тесты
-
-- **Maestro** — рекомендуемый Expo инструмент для E2E (YAML-сценарии, проще Detox).
-- Запуск локально на эмуляторе или в облаке через EAS Workflows.
-- Пример сценария: открыть приложение → найти авто по фильтру → открыть карточку → добавить в избранное.
-
-### Ручное (QA)
-
-- **preview**-сборка раздаётся через EAS (ссылка + QR).
-- **Internal Testing** в Google Play Console — до 100 тестировщиков по email.
-- Тестирование на реальных устройствах: разные версии Android (API 24+), размеры экранов.
-
----
-
-## 8. Публикация в сторы
-
-### Google Play — первый релиз (фаза 1–2)
-
-**Подготовка (однократно):**
-
-1. Аккаунт Google Play Developer ($25, одноразово).
-2. Создать приложение в Google Play Console (название, описание, скриншоты, иконка).
-3. Заполнить Data Safety Form (какие данные собираем).
-4. Настроить подпись: EAS управляет ключами автоматически (или upload key вручную).
-5. Сгенерировать **Google Service Account JSON** для автоматического сабмита через EAS.
-
-**Конфиг EAS Submit** (добавляется в `eas.json`):
-
-```json
-{
-  "submit": {
-    "production": {
-      "android": {
-        "serviceAccountKeyPath": "./google-service-account.json",
-        "track": "internal"
-      }
-    }
-  }
-}
-```
-
-**Процесс релиза:**
+На устройстве:
 
 ```bash
-eas build --profile production --platform android --auto-submit
+adb logcat -v brief | grep -e TWAProviderPicker -e cr_TrustedWebActivity
 ```
 
-Одна команда: сборка `.aab` в облаке → автоматическая загрузка в Google Play на указанный трек.
+Ожидаемое поведение:
 
-### Треки Google Play
+- приложение открывается fullscreen;
+- нет верхней browser toolbar;
+- переходы внутри `kupito.club` остаются внутри приложения;
+- внешние ссылки уходят во внешний браузер или Custom Tab;
+- при offline состоянии показывается существующий offline fallback;
+- авторизация и cookies работают как в Chrome, потому что TWA использует browser runtime.
 
-```
-internal  →  closed (alpha)  →  open (beta)  →  production
-```
+Если появляется browser toolbar:
 
-| Трек | Тестировщики | Ревью Google | Скорость |
-|------|-------------|-------------|----------|
-| internal | До 100, по email | Нет | Мгновенно |
-| closed (alpha) | Приглашённые группы | Лёгкое | Часы |
-| open (beta) | Все желающие | Полное | 1–3 дня |
-| production | Публичный | Полное | 1–3 дня (первый раз), потом быстрее |
+1. Проверить, что `assetlinks.json` доступен по production URL.
+2. Проверить `Content-Type` и отсутствие HTML-страницы вместо JSON.
+3. Проверить package name.
+4. Проверить SHA-256 fingerprint.
+5. Проверить, что установленный build подписан тем ключом, fingerprint которого указан в `assetlinks.json`.
+6. Переустановить приложение после исправлений.
 
-Рекомендация: `internal` → `closed` → `production`. Staged rollout: 10% → 50% → 100%.
+## 14. Google Play checklist
 
-### App Store (фаза 3)
+Для Google Play Console понадобятся:
 
-- Аккаунт Apple Developer ($99/год).
-- App Store Connect: скриншоты, описание, возрастной рейтинг, Privacy Policy URL.
-- **TestFlight** для тестирования (аналог Internal Testing).
-- EAS Submit: `eas submit --platform ios`.
-- Ревью Apple строже (1–7 дней для первого релиза).
+- Google Play Developer account;
+- package name `club.kupito.app`;
+- `.aab` файл из Bubblewrap;
+- название приложения;
+- короткое описание;
+- полное описание;
+- app icon;
+- feature graphic;
+- phone screenshots;
+- privacy policy URL;
+- Data safety form;
+- content rating questionnaire;
+- target audience;
+- contact email;
+- support URL или сайт;
+- staged rollout plan.
 
----
+Перед отправкой на review проверить:
 
-## 9. OTA-обновления
+- приложение стабильно запускается;
+- главная страница не пустая;
+- основные сценарии работают на мобильном экране;
+- нет broken links в ключевых потоках;
+- login и profile flow не ломаются внутри TWA;
+- загрузка фото не блокируется Android permissions или browser limitations;
+- cookie consent и legal links доступны;
+- privacy policy соответствует фактическому сбору данных;
+- Data safety form соответствует analytics/auth/listing/photo flows.
 
-Для изменений в JS/React-коде (без нативных изменений) — **EAS Update**:
+Google Play не принимает приложения с ограниченной полезностью, broken functionality или пустой оболочкой. Kupito проходит базовую продуктовую проверку за счёт реальной marketplace-функциональности, но wrapper должен быть стабильным и отзывчивым.
 
-```bash
-eas update --branch production --message "fix: search filter bug"
-```
+## 15. Что обновляется без Google Play релиза
 
-| Возможность | Описание |
-|------------|---------|
-| Bundle diffing | Передаётся только diff (~75% экономия трафика) |
-| Staged rollout | `eas update --rollout-percentage=10` — сначала 10% |
-| Автооткат | Если обновление крашит до рендера root-компонента, откат автоматический |
-| Скорость | Минуты вместо дней — не требует ревью стора |
+Через обычный web deploy обновляются:
 
-### Когда нужен полный билд vs OTA
+- UI;
+- страницы;
+- фильтры;
+- карточки объявлений;
+- поиск;
+- профиль;
+- создание объявлений;
+- переводы;
+- SEO/metadata сайта;
+- AI или партнёрские функции;
+- service worker logic;
+- offline fallback.
 
-| Полный билд (стор) | Достаточно OTA |
-|-------------------|----------------|
-| Обновление Expo SDK / React Native | Исправление багов в JS/TS |
-| Новый нативный модуль (камера, push) | Новые экраны, компоненты, стили |
-| Изменение `app.json` (версия, permissions, splash) | Обновление переводов, бизнес-логики |
+Новый Android release нужен, если меняются:
 
----
+- package name;
+- app name в Android manifest;
+- launcher icon;
+- splash screen;
+- signing config;
+- Android permissions;
+- intent filters;
+- supported origins;
+- TWA display mode;
+- notification delegation;
+- native Android integrations;
+- target SDK или Android dependencies.
 
-## 10. CI/CD
+## 16. Web CTA после публикации
 
-### EAS Workflows
+Текущая кнопка находится в:
 
-Файл `.eas/workflows/deploy.yaml` в `core/mobile/`. Начинаем только с Android (фазы 1–2), iOS-джобы раскомментируются на фазе 3:
-
-```yaml
-name: Deploy
-on:
-  push:
-    branches: [main]
-
-jobs:
-  fingerprint:
-    name: Check native changes
-    steps:
-      - uses: expo/fingerprint
-
-  build_android:
-    name: Build Android
-    needs: [fingerprint]
-    if: needs.fingerprint.outputs.changed == 'true'
-    steps:
-      - uses: eas/build
-        with:
-          platform: android
-          profile: production
-
-  submit_android:
-    name: Submit to Google Play
-    needs: [build_android]
-    steps:
-      - uses: eas/submit
-        with:
-          platform: android
-          profile: production
-
-  # --- iOS (раскомментировать на фазе 3) ---
-  # build_ios:
-  #   name: Build iOS
-  #   needs: [fingerprint]
-  #   if: needs.fingerprint.outputs.changed == 'true'
-  #   steps:
-  #     - uses: eas/build
-  #       with:
-  #         platform: ios
-  #         profile: production
-  #
-  # submit_ios:
-  #   name: Submit to App Store
-  #   needs: [build_ios]
-  #   steps:
-  #     - uses: eas/submit
-  #       with:
-  #         platform: ios
-  #         profile: production
-
-  ota_update:
-    name: OTA Update
-    needs: [fingerprint]
-    if: needs.fingerprint.outputs.changed == 'false'
-    steps:
-      - uses: eas/update
-        with:
-          branch: production
+```text
+core/frontend/components/pwa/PWAInstallButtonGray.tsx
 ```
 
-Логика: push в main → fingerprint → если нативный код изменился: сборка + сабмит (сначала только Android, потом обе платформы); если только JS → OTA.
+Сейчас она показывает PWA-install flow. После появления Google Play URL нужно изменить поведение:
 
----
+- Android mobile: открыть Google Play listing;
+- iOS mobile: оставить PWA-инструкции;
+- desktop: показать modal с QR code и кнопкой Google Play;
+- если Google Play URL выключен или отсутствует: оставить текущие PWA-инструкции.
 
-## 11. Изменения в веб-версии
-
-### Модалка установки в футере
-
-Текущее поведение: кнопка «Мобильное приложение» открывает модалку с пошаговыми инструкциями по установке PWA (табы iOS/Android).
-
-Файлы:
-- `core/frontend/components/pwa/PWAInstallButtonGray.tsx`
-- `core/frontend/hooks/usePWAInstall.ts`
-- `locales/{en,ro,ru}.json` → секция `pwa`
-
-### Новое поведение (поэтапно)
-
-**Фаза 2 (только Android в сторе):**
-
-| Устройство | Действие при нажатии |
-|-----------|---------------------|
-| Android (мобильный) | Редирект в Google Play |
-| iOS (мобильный) | Старые PWA-инструкции (приложения в App Store ещё нет) |
-| Десктоп | Модалка: QR-код (Google Play) + кнопка Google Play |
-
-**Фаза 3 (оба стора):**
-
-| Устройство | Действие при нажатии |
-|-----------|---------------------|
-| Android (мобильный) | Редирект в Google Play |
-| iOS (мобильный) | Редирект в App Store |
-| Десктоп | Модалка: QR-код + кнопки Google Play и App Store |
-
-### Конфигурация
-
-В `config/site.ts` добавляется секция:
+Рекомендуемая platform config секция:
 
 ```typescript
 mobileApp: {
@@ -473,112 +516,185 @@ mobileApp: {
 }
 ```
 
-| Состояние конфига | Поведение |
-|------------------|-----------|
-| `enabled = false` | Текущие PWA-инструкции (обратная совместимость) |
-| `enabled = true`, `androidUrl` задан, `iosUrl = null` | Фаза 2: Android есть, iOS — PWA-инструкции |
-| `enabled = true`, оба URL заданы | Фаза 3: оба стора |
+Для этого нужно будет расширить:
 
----
+- `site-config.ts`;
+- `config/site.ts`;
+- `core/frontend/lib/site-config.ts`;
+- компоненты CTA в `core/frontend/components/pwa/`;
+- root `locales/en.json`, `locales/ro.json`, `locales/ru.json`.
 
-## 12. Фазы реализации
+После изменения root config/locales обязательно:
 
-### Фаза 1 — Фундамент + Android MVP
+```bash
+npm run prepare:build
+```
 
-**Цель:** рабочее Android-приложение в Google Play (Internal Testing).
+Нельзя править copied locales напрямую в `core/frontend/lib/locales/`.
 
-**Инфраструктура (сразу под две платформы):**
-- Инициализация Expo-проекта в `core/mobile/` (`npx create-expo-app`).
-- Кроссплатформенная структура папок: `app/`, `src/`, `assets/`.
-- `app.json` с секциями `android` и `ios` (iOS минимально, детализируется позже).
-- `eas.json` с профилями `development`, `preview`, `production` для обеих платформ.
-- `tsconfig.json`, path aliases, линтинг.
-- Расширение скрипта `prepare:build` для копирования локалей и темы в `core/mobile/`.
+## 17. Deep links и scope
 
-**API и авторизация (кроссплатформенные):**
-- API-клиент на Axios (Bearer, refresh, Accept-Language, X-Request-Id).
-- JWT через `expo-secure-store`.
-- Хуки: `useAuth`, `useApi`, `useTranslation` — без платформозависимого кода.
+На первом релизе TWA открывает основной origin:
 
-**Экраны и навигация:**
-- Expo Router: таб-навигация (каталог, избранное, создание объявления, профиль).
-- Каталог: список объявлений с фильтрами, поиск, пагинация.
-- Карточка объявления: фото-галерея, характеристики, контакт продавца.
-- Избранное: список сохранённых.
-- Профиль: авторизация/регистрация, мои объявления, настройки.
+```text
+https://kupito.club/
+```
 
-**Тема и локализация:**
-- Тема из `theme/colors.ts`, адаптированная под React Native (без CSS-переменных).
-- i18n: `expo-localization` + JSON из корневых `locales/`.
+Все внутренние ссылки в пределах `kupito.club` должны оставаться внутри приложения. Внешние партнёрские ссылки должны открываться вне TWA или как Custom Tab, чтобы пользователь видел переход на другой домен.
 
-**Тестирование и сборка (Android):**
-- Jest + React Native Testing Library.
-- EAS Build: `development` (dev-клиент) + `preview` (QA) для Android.
-- Ручное тестирование на устройствах.
-- Публикация в Google Play Console → **Internal Testing**.
+Если позже нужно удерживать fullscreen для дополнительных owned origins, их можно добавить как `additionalTrustedOrigins`, но только после настройки Digital Asset Links на каждом origin.
 
----
+Для первого релиза не добавлять лишние origins.
 
-### Фаза 2 — Android production
+## 18. Push и permissions
 
-**Цель:** стабильный публичный релиз в Google Play, сбор фидбэка.
+Push-уведомления не являются обязательными для первого TWA-релиза.
 
-**Доработки по результатам тестирования:**
-- Фиксы багов, найденных на Internal Testing.
-- Оптимизация производительности (списки, изображения, навигация).
-- Push-уведомления: `expo-notifications` + FCM + `POST /api/devices` на бэке.
+Причина: push потребует отдельного продуктового и legal review:
 
-**Публикация:**
-- Google Play: Internal → Closed Testing → Production (staged rollout 10% → 50% → 100%).
-- EAS Workflows (CI/CD): push → fingerprint → build/OTA.
-- OTA-обновления (EAS Update) для быстрых фиксов без ревью.
+- какие события отправляем;
+- как пользователь подписывается и отписывается;
+- какие данные передаются в push provider;
+- как это отражается в Privacy Policy и Data safety;
+- как хранить push subscription/device token.
 
-**Веб-интеграция (первая часть):**
-- Модалка в футере: QR-код + кнопка Google Play (iOS — PWA-инструкции).
-- `config/site.ts`: `mobileApp.androidUrl` = ссылка на Google Play.
+Фаза после production-релиза:
 
-**Сбор фидбэка:**
-- Sentry для крашей, Google Play Console для отзывов.
-- OTA-фиксы критичных багов (минуты вместо дней на ревью).
+- web push или notification delegation через TWA;
+- backend endpoint для подписок;
+- пользовательские настройки уведомлений;
+- обновление legal и Data safety;
+- отдельные тесты permission flow.
 
----
+## 19. Legal и Data safety
 
-### Фаза 3 — iOS
+Сам переход на TWA не должен менять сбор данных, если приложение просто открывает существующий сайт.
 
-**Цель:** выпуск iOS-приложения с учётом опыта Android.
+Перед публикацией в Google Play всё равно нужно проверить:
 
-**Подготовка (специфика iOS):**
-- Аккаунт Apple Developer ($99/год).
-- App Store Connect (скриншоты, описание, возрастной рейтинг, Privacy Policy URL).
-- APNs ключ (.p8) для push-уведомлений.
+- privacy policy URL доступен публично;
+- в legal text описаны auth, listings, photos, analytics, cookies и партнёрские переходы;
+- Data safety form совпадает с фактическим поведением сайта;
+- Google Play listing не обещает функций, которых нет в production;
+- screenshots не показывают фейковые данные или недоступные функции.
 
-**Адаптация UI под iOS:**
-- Тестирование всех экранов на iOS-симуляторе и устройствах.
-- Платформозависимые компоненты (при необходимости): `*.ios.tsx`.
-- iOS-специфика: Safe Area, Dynamic Island, жесты, анимации.
-- Human Interface Guidelines: отступы, шрифты, навигационные паттерны.
+Если добавляются push, native share, file handling, geolocation или новые analytics SDK, нужно отдельно пересмотреть `config/legal.ts`.
 
-**Код менять минимально** — основная работа:
-- Заполнение iOS-секций в `eas.json`.
-- Тестирование на разных iPhone/iPad (размеры экранов, iOS-версии).
-- E2E тесты (Maestro) для iOS.
-- TestFlight → ревью Apple → публикация.
+## 20. Фазы реализации
 
-**Веб-интеграция (вторая часть):**
-- Модалка: кнопка App Store рядом с Google Play.
-- `config/site.ts`: `mobileApp.iosUrl` = ссылка на App Store.
-- Smart App Banner для iOS Safari (`<meta name="apple-itunes-app">`).
-- Deep links / Universal links (`.well-known/apple-app-site-association` на бэке).
+### Phase 0: PWA audit
 
----
+Цель: убедиться, что production site готов быть основой приложения.
 
-### Фаза 4 — Зрелость
+Работы:
 
-**Цель:** полный feature parity между вебом и мобильными приложениями.
+- проверить `https://kupito.club/manifest.json`;
+- проверить `https://kupito.club/sw.js`;
+- проверить installability в Chrome Android;
+- прогнать Lighthouse/PWA audit;
+- прогнать `bubblewrap validate --url=https://kupito.club`;
+- проверить мобильные сценарии каталога, объявления, auth, profile, создание объявления и загрузку фото;
+- подготовить production-ready launcher/maskable icons.
 
-- Создание/редактирование объявлений с камерой (`expo-image-picker`, `expo-camera`).
-- Биометрическая авторизация (`expo-local-authentication`) — Face ID / отпечаток.
-- Deep linking с веба в приложение (Firebase Dynamic Links или аналог).
-- Оффлайн-режим (кэширование каталога, TanStack Query).
-- Виджеты (Android), Live Activities (iOS) — опционально.
-- A/B тестирование через EAS Update rollout.
+Результат: список PWA blockers закрыт, сайт можно безопасно оборачивать в TWA.
+
+### Phase 1: TWA prototype
+
+Цель: получить первый APK для ручного тестирования.
+
+Работы:
+
+- создать `android/twa/`;
+- запустить `bubblewrap init --manifest=https://kupito.club/manifest.json`;
+- подтвердить `club.kupito.app`;
+- собрать `app-release-signed.apk`;
+- установить APK на Android device;
+- проверить, что приложение открывает сайт и основные flows работают.
+
+Результат: test APK запускается и показывает Kupito.
+
+### Phase 2: Digital Asset Links и Internal testing
+
+Цель: добиться trusted fullscreen TWA и загрузить первый `.aab` в Internal testing.
+
+Работы:
+
+- создать приложение в Play Console;
+- получить App signing SHA-256 fingerprint;
+- добавить `assets/frontend/public/.well-known/assetlinks.json`;
+- выполнить `npm run prepare:build`;
+- задеплоить frontend;
+- проверить production `/.well-known/assetlinks.json`;
+- собрать `app-release-bundle.aab`;
+- загрузить `.aab` в Internal testing;
+- установить приложение через Play testing track;
+- проверить TWA verification на build из Play.
+
+Результат: Internal testing build открывается fullscreen без browser toolbar.
+
+### Phase 3: Production rollout
+
+Цель: публичный релиз Android-приложения в Google Play.
+
+Работы:
+
+- подготовить screenshots и feature graphic;
+- заполнить description, Data safety, content rating и contact details;
+- проверить legal/privacy policy;
+- пройти review;
+- запустить staged rollout;
+- мониторить Play Console vitals, отзывы, frontend errors и conversion на мобильных сценариях;
+- после появления listing URL обновить web CTA.
+
+Результат: Android-приложение доступно пользователям из Google Play.
+
+### Phase 4: Улучшения после релиза
+
+Возможные улучшения:
+
+- Android app install CTA с QR на desktop;
+- Web Share Target для публикации ссылок в Kupito;
+- file handling или улучшенный photo upload flow;
+- push-уведомления;
+- richer offline для сохранённых объявлений;
+- deeplink routing на объявления;
+- app shortcuts для поиска, избранного и создания объявления;
+- отдельная стратегия для iOS.
+
+Эти улучшения делать только после стабильного Android production-релиза.
+
+## 21. Release checklist
+
+Перед merge изменений, связанных с TWA:
+
+- root assets обновлены в `assets/`, а не напрямую в `core/frontend/public/`;
+- если добавлен `assetlinks.json`, он лежит в `assets/frontend/public/.well-known/assetlinks.json`;
+- после root assets/config/locales изменений выполнен `npm run prepare:build`;
+- `core/frontend/app/manifest.ts` не содержит временных URL;
+- package name в docs, `twa-manifest.json`, Play Console и `assetlinks.json` совпадает;
+- SHA-256 fingerprint соответствует нужному signing key;
+- не закоммичены keystore-файлы, passwords или service account JSON;
+- Google Play URL добавлен в config только после реального listing URL;
+- UI-тексты добавлены во все root frontend locales;
+- docs не обещают iOS/native фичи как уже реализованные.
+
+## 22. Секреты и файлы, которые нельзя коммитить
+
+Нельзя коммитить:
+
+- keystore passwords;
+- private keys;
+- Play Console service account JSON;
+- локальные `.jks`/`.keystore`, если они не управляются отдельной согласованной secure-процедурой;
+- `.env` с signing credentials;
+- temporary APK/AAB artifacts, если они не нужны как release artifacts.
+
+Нужно добавить или проверить `.gitignore` для Android wrapper перед первым коммитом `android/twa/`.
+
+## 23. Источники
+
+- [Android Developers: Trusted Web Activities](https://developer.android.com/develop/ui/views/layout/webapps/trusted-web-activities)
+- [Chrome Developers: Trusted Web Activity quick start](https://developer.chrome.com/docs/android/trusted-web-activity/quick-start)
+- [Bubblewrap CLI README](https://github.com/GoogleChromeLabs/bubblewrap/tree/main/packages/cli)
+- [Digital Asset Links documentation](https://developers.google.com/digital-asset-links/v1/getting-started)
+- [Google Play policy: Functionality, Content, and User Experience](https://support.google.com/googleplay/android-developer/answer/9898783?hl=en)

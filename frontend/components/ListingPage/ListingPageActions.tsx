@@ -7,6 +7,7 @@ import {
   getListingActionGridClass,
   getListingActionItemWrapperClass,
 } from '@/components/ListingPage/listingPageActionLayout';
+import { listingPageShowsPromoteCard } from '@/components/ListingPage/listingPagePromoteCard';
 import { FileAiIcon } from '@/components/common/FileAiIcon';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing, PromotionAccessStatus } from '@/lib/api';
@@ -58,11 +59,17 @@ function compareActionCopy(isInComparison: boolean, t: Translate) {
   };
 }
 
-function listingPagePromoteDiscoverable(access: PromotionAccessStatus | null | undefined): boolean {
-  if (!access?.enabled) return false;
-  if (access.access === 'all') return true;
-  if (access.access === 'admin') return access.isAdmin;
-  return false;
+function PhoneIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+      />
+    </svg>
+  );
 }
 
 function PromoteIcon() {
@@ -128,6 +135,8 @@ interface ListingPageActionsProps {
   onToggleFavorite: () => void;
   onPromoteClick: () => void;
   promotionAccess: PromotionAccessStatus | null;
+  showContact?: boolean;
+  onContactSellerClick?: () => void;
 }
 
 function ListingPageActionsSecondRow(props: {
@@ -167,15 +176,14 @@ export function ListingPageActions({
   onToggleFavorite,
   onPromoteClick,
   promotionAccess,
+  showContact = false,
+  onContactSellerClick,
 }: ListingPageActionsProps) {
   const { t } = useTranslation();
 
   const hasAi = Boolean(onAiReportClick) && listing.status !== 'Closed';
   const hasCompare = listing.status !== 'Closed' && showCompare;
-  const showPromoteCard =
-    listingPagePromoteDiscoverable(promotionAccess) &&
-    listing.status === 'Active' &&
-    (!listing.is_promoted || isOwnListing);
+  const showPromoteCard = listingPageShowsPromoteCard(listing, promotionAccess, isOwnListing);
   const promoteCardIsInformational = isOwnListing && Boolean(listing.is_promoted);
 
   const { title: promoteTitle, description: promoteDescription } = promoteActionCopy(
@@ -195,10 +203,25 @@ export function ListingPageActions({
   const showAiNewBadge = hasAi;
   const pageActionsLocked = !isInitialized;
 
+  const contactCard = showContact && onContactSellerClick && (
+    <ListingPageActionCard
+      variant="accent"
+      layout="stack"
+      onClick={onContactSellerClick}
+      disabled={pageActionsLocked}
+      title={t('listingDetail.actionCardContactTitle')}
+      description={t('listingDetail.actionCardContactDescription')}
+      aria-label={t('listingDetail.actionCardContactTitle')}
+      dataTestId="listing-detail-action-contact"
+    >
+      <PhoneIcon />
+    </ListingPageActionCard>
+  );
+
   const favoriteCard = (
     <ListingPageActionCard
       variant="default"
-      layout={showPromoteCard ? 'stack' : 'inline'}
+      layout={showPromoteCard || showContact ? 'stack' : 'inline'}
       onClick={onToggleFavorite}
       disabled={pageActionsLocked}
       title={favoriteTitle}
@@ -256,6 +279,7 @@ export function ListingPageActions({
   );
 
   const hasPromote = Boolean(showPromoteCard && promoteBlock);
+  const hasContact = Boolean(showContact && contactCard);
   const cellClass = getListingActionItemWrapperClass();
   const secondRowHasContent = Boolean(aiBlock || (hasCompare && compareBlock));
 
@@ -264,6 +288,11 @@ export function ListingPageActions({
       {hasPromote ? (
         <div className={getListingActionGridClass()}>
           <div className={cellClass}>{promoteBlock}</div>
+          <div className={cellClass}>{favoriteCard}</div>
+        </div>
+      ) : hasContact ? (
+        <div className={getListingActionGridClass()}>
+          <div className={cellClass}>{contactCard}</div>
           <div className={cellClass}>{favoriteCard}</div>
         </div>
       ) : (

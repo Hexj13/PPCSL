@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useMemo, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useMemo, useState, type RefObject } from 'react';
 
 import { ListingPageActions } from '@/components/ListingPage/ListingPageActions';
 import { ListingPageBreadcrumbs } from '@/components/ListingPage/ListingPageBreadcrumbs';
@@ -13,6 +13,7 @@ import {
   type ListingPageImagesHandle,
 } from '@/components/ListingPage/ListingPageImages';
 import { ListingPageSeller } from '@/components/ListingPage/ListingPageSeller';
+import { listingPageShowsContactCard } from '@/components/ListingPage/listingPagePromoteCard';
 import { ListingDetailPageSkeleton } from '@/components/listing/ListingDetailSkeleton';
 import { BreadcrumbsSkeleton } from '@/components/listing/ListingPageSkeleton';
 import { SimilarListings } from '@/components/listing/SimilarListings';
@@ -166,7 +167,7 @@ function ListingPageListingInfoSection({
           </svg>
           <span>{t('listingDetail.copyLink')}</span>
         </button>
-        {canShare ? (
+        {canShare && (
           <button
             onClick={onShare}
             className="w-full min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10! select-none"
@@ -186,8 +187,6 @@ function ListingPageListingInfoSection({
             </svg>
             <span>{t('listingDetail.share')}</span>
           </button>
-        ) : (
-          <div className="w-full min-h-12" aria-hidden />
         )}
       </div>
     </div>
@@ -354,6 +353,8 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     closeAiReportModal,
   } = props;
   const previewRef = useRef<ListingPageImagesHandle>(null);
+  const sellerSectionRef = useRef<HTMLDivElement>(null);
+  const [contactRevealNonce, setContactRevealNonce] = useState(0);
   const listingRef = useRef(listing);
   listingRef.current = listing;
   const failureScopeRef = useRef<'listing_page' | 'listing_modal'>('listing_page');
@@ -428,8 +429,19 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
   );
 
   useListingPageGalleryKeyboard(previewRef, galleryImages.length, isImageModalOpen);
+
+  const handleContactSellerClick = useCallback(() => {
+    const el = sellerSectionRef.current ?? document.getElementById('listing-contact-info');
+    if (el) {
+      const offsetPosition = el.getBoundingClientRect().top + window.pageYOffset - 110;
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+    }
+    setContactRevealNonce((n) => n + 1);
+  }, []);
+
   if (!listing) return null;
 
+  const showContact = listingPageShowsContactCard(listing, promotionAccess, isOwnListing);
   const closingDate = getClosingDate(listing.last_updated_at);
   const h1Title = listingPagePrimaryHeadingTitle(listing, t);
 
@@ -483,6 +495,8 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
                 onToggleFavorite={handleToggleFavorite}
                 onPromoteClick={handlePromoteClick}
                 promotionAccess={promotionAccess}
+                showContact={showContact}
+                onContactSellerClick={handleContactSellerClick}
               />
             </div>
           </div>
@@ -539,12 +553,13 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
           </div>
 
           <div className="space-y-6 min-w-0">
-            <div data-testid="listing-detail-seller">
+            <div ref={sellerSectionRef} data-testid="listing-detail-seller">
               <ListingPageSeller
                 listing={listing}
                 listingId={id}
                 activeListingsCount={activeListingsCount}
                 boardSlug={getBoardSlug(listing)}
+                contactRevealNonce={contactRevealNonce}
               />
             </div>
 

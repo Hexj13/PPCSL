@@ -9,6 +9,7 @@ import { useLoginPage } from '@/app/login/useLoginPage';
 import { RegisterPanel } from '@/app/register/RegisterPanel';
 import { useRegisterPage } from '@/app/register/useRegisterPage';
 import { GoogleSignInButton } from '@/app/sign/GoogleSignInButton';
+import { GoogleSignInButtonSkeleton } from '@/app/sign/GoogleSignInButtonSkeleton';
 import { useGoogleAuth } from '@/app/sign/useGoogleAuth';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
@@ -46,10 +47,17 @@ export function SignPageContent() {
 
   const [gisReady, setGisReady] = useState(false);
   const gisHl = useMemo(() => gisScriptHl(locale), [locale]);
+  const googleClientIdConfigured = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
 
   useEffect(() => {
     setGisReady(false);
   }, [gisHl]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+      setGisReady(true);
+    }
+  }, []);
 
   const registerPage = useRegisterPage();
   const googleAuth = useGoogleAuth({
@@ -84,12 +92,12 @@ export function SignPageContent() {
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16" data-testid="auth-page">
-      {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+      {googleClientIdConfigured ? (
         <Script
           key={`gsi-client-${gisHl}`}
           src={`https://accounts.google.com/gsi/client?hl=${encodeURIComponent(gisHl)}`}
           strategy="afterInteractive"
-          onLoad={() => setGisReady(true)}
+          onReady={() => setGisReady(true)}
         />
       ) : null}
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
@@ -188,17 +196,25 @@ export function SignPageContent() {
           />
         </div>
       </div>
-      {gisReady ? (
+      {googleClientIdConfigured ? (
         <div className="mt-6 space-y-4" data-testid="auth-google-outside-card">
           <div className="flex items-center gap-3">
             <span className="grow h-px bg-primary-700/25" />
             <span className="text-sm text-hint shrink-0">{t('sign.dividerOr')}</span>
             <span className="grow h-px bg-primary-700/25" />
           </div>
-          <GoogleSignInButton
-            containerRef={googleAuth.containerRef}
-            clientIdConfigured={googleAuth.clientIdConfigured}
-          />
+          {!googleAuth.isButtonReady ? <GoogleSignInButtonSkeleton /> : null}
+          {gisReady ? (
+            <div
+              className={googleAuth.isButtonReady ? undefined : 'sr-only'}
+              aria-hidden={!googleAuth.isButtonReady}
+            >
+              <GoogleSignInButton
+                containerRef={googleAuth.containerRef}
+                clientIdConfigured={googleAuth.clientIdConfigured}
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

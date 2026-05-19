@@ -34,7 +34,7 @@ const PopularBodyTypesFilter = dynamic(() => import('./PopularBodyTypesFilter'),
   ssr: false,
 });
 
-const formatPriceWithSpaces = (value: string): string => {
+const formatThousandsWithSpaces = (value: string): string => {
   if (!value || value === '') return '';
   const numericValue = value.replace(/\s/g, '');
   if (!numericValue) return '';
@@ -76,7 +76,7 @@ export function BasicFilters({
 
   const handleMileageBlur = (key: string, value: string) => {
     if (value && value.trim() !== '') {
-      const mileage = parseInt(value, 10);
+      const mileage = parseInt(value.replace(/\s/g, ''), 10);
       if (Number.isNaN(mileage) || !isInRange(mileage, MILEAGE_RANGE)) {
         toast.error(t('searchFilters.mileageRangeError'));
         onFilterChange(key as keyof FilterState, '');
@@ -85,12 +85,20 @@ export function BasicFilters({
   };
 
   const formattedPriceGte = useMemo(
-    () => formatPriceWithSpaces(filters.price_gte),
+    () => formatThousandsWithSpaces(filters.price_gte),
     [filters.price_gte],
   );
   const formattedPriceLte = useMemo(
-    () => formatPriceWithSpaces(filters.price_lte),
+    () => formatThousandsWithSpaces(filters.price_lte),
     [filters.price_lte],
+  );
+  const formattedMileageGte = useMemo(
+    () => formatThousandsWithSpaces(filters.mileage_gte),
+    [filters.mileage_gte],
+  );
+  const formattedMileageLte = useMemo(
+    () => formatThousandsWithSpaces(filters.mileage_lte),
+    [filters.mileage_lte],
   );
 
   const yearOptions = useMemo(() => getYearOptions(), []);
@@ -278,7 +286,7 @@ export function BasicFilters({
           <div className="flex">
             <input
               type="text"
-              value={filters.mileage_gte}
+              value={formattedMileageGte}
               onChange={(e) => {
                 const value = e.target.value.replace(/[^0-9]/g, '');
                 const num = parseInt(value, 10);
@@ -286,7 +294,7 @@ export function BasicFilters({
                   onFilterChange('mileage_gte', value);
                 }
               }}
-              onBlur={(e) => handleMileageBlur('mileage_gte', e.target.value)}
+              onBlur={(e) => handleMileageBlur('mileage_gte', e.target.value.replace(/\s/g, ''))}
               onWheel={onWheel}
               className="input-field paired-left"
               placeholder={t('searchFilters.from')}
@@ -294,7 +302,7 @@ export function BasicFilters({
             />
             <input
               type="text"
-              value={filters.mileage_lte}
+              value={formattedMileageLte}
               onChange={(e) => {
                 const value = e.target.value.replace(/[^0-9]/g, '');
                 const num = parseInt(value, 10);
@@ -302,7 +310,7 @@ export function BasicFilters({
                   onFilterChange('mileage_lte', value);
                 }
               }}
-              onBlur={(e) => handleMileageBlur('mileage_lte', e.target.value)}
+              onBlur={(e) => handleMileageBlur('mileage_lte', e.target.value.replace(/\s/g, ''))}
               onWheel={onWheel}
               className="input-field paired-right"
               placeholder={t('searchFilters.to')}

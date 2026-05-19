@@ -248,6 +248,13 @@ export function useFilterHandlers({
       if (isSearching) return;
       if (!validateRanges()) return;
 
+      if (typeof document !== 'undefined') {
+        const active = document.activeElement;
+        if (active instanceof HTMLElement) {
+          active.blur();
+        }
+      }
+
       const merged = { ...filters, ...overrides };
       setIsSearching(true);
       isInternalSearchRef.current = true;

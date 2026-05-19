@@ -92,6 +92,7 @@ function ListingPhoneRow({
   revealTitleKey,
   hideTitleKey,
   plainContactsMode = false,
+  contactRevealNonce = 0,
 }: {
   field: 'phone' | 'additionalPhone';
   maskedDisplay: string;
@@ -102,6 +103,7 @@ function ListingPhoneRow({
   revealTitleKey: string;
   hideTitleKey: string;
   plainContactsMode?: boolean;
+  contactRevealNonce?: number;
 }) {
   const { t } = useTranslation();
   const [show, setShow] = useState(false);
@@ -112,6 +114,32 @@ function ListingPhoneRow({
     setLocalPlain(null);
     setShow(false);
   }, [maskedDisplay]);
+
+  const revealPhone = useCallback(async () => {
+    if (show || busy) return;
+    setBusy(true);
+    try {
+      const data = await ensureFull();
+      const unlocked = field === 'phone' ? data.phone : data.additionalPhone;
+      if (unlocked) {
+        setLocalPlain(unlocked);
+        setShow(true);
+      }
+    } catch {
+    } finally {
+      setBusy(false);
+    }
+  }, [show, busy, ensureFull, field]);
+
+  const lastRevealNonceRef = useRef(0);
+  useEffect(() => {
+    if (plainContactsMode || contactRevealNonce <= 0) return;
+    if (contactRevealNonce === lastRevealNonceRef.current) return;
+    lastRevealNonceRef.current = contactRevealNonce;
+    if (!show) {
+      void revealPhone();
+    }
+  }, [contactRevealNonce, plainContactsMode, show, revealPhone]);
 
   const plainStatic =
     plainContactsMode && maskedDisplay && !maskedDisplay.includes('*') ? maskedDisplay : null;
@@ -151,18 +179,7 @@ function ListingPhoneRow({
       setShow(false);
       return;
     }
-    setBusy(true);
-    try {
-      const data = await ensureFull();
-      const unlocked = field === 'phone' ? data.phone : data.additionalPhone;
-      if (unlocked) {
-        setLocalPlain(unlocked);
-        setShow(true);
-      }
-    } catch {
-    } finally {
-      setBusy(false);
-    }
+    await revealPhone();
   };
 
   return (
@@ -257,6 +274,7 @@ interface ListingPageSellerProps {
   listingId: string;
   activeListingsCount: number;
   boardSlug: string | null;
+  contactRevealNonce?: number;
 }
 
 type ListingUser = NonNullable<Listing['user']>;
@@ -399,6 +417,7 @@ function ListingSellerContactsWhenOpen({
   ensureFull,
   fullPhones,
   plainContactsMode,
+  contactRevealNonce,
 }: {
   user: ListingUser;
   listing: Listing;
@@ -408,6 +427,7 @@ function ListingSellerContactsWhenOpen({
   ensureFull: () => Promise<{ phone: string | null; additionalPhone: string | null }>;
   fullPhones: { phone: string | null; additionalPhone: string | null } | null;
   plainContactsMode: boolean;
+  contactRevealNonce?: number;
 }) {
   const primaryPhoneLabel = getPrimaryPhoneContactLabel(t, isBusiness, user.additionalPhone);
   return (
@@ -450,6 +470,7 @@ function ListingSellerContactsWhenOpen({
             revealTitleKey="listingDetail.revealPhone"
             hideTitleKey="listingDetail.hidePhone"
             plainContactsMode={plainContactsMode}
+            contactRevealNonce={contactRevealNonce}
           />
         </div>
       )}
@@ -480,6 +501,7 @@ function ListingPageSellerInner({
   listingId: id,
   activeListingsCount,
   boardSlug,
+  contactRevealNonce,
 }: ListingPageSellerProps) {
   const { t } = useTranslation();
   const { locale } = useI18n();
@@ -500,7 +522,7 @@ function ListingPageSellerInner({
   const phoneDialForMessengers =
     fullPhones?.phone ?? (user.phone && !user.phone.includes('*') ? user.phone : null);
   return (
-    <div className="surface overflow-hidden">
+    <div id="listing-contact-info" className="surface overflow-hidden">
       <h2
         className={`text-xl md:text-2xl font-bold text-primary-900 ${showPlatformPartnerLabel ? 'mb-2' : 'mb-4'}`}
       >
@@ -535,6 +557,7 @@ function ListingPageSellerInner({
             ensureFull={ensureFull}
             fullPhones={fullPhones}
             plainContactsMode={plainContactsMode}
+            contactRevealNonce={contactRevealNonce}
           />
         )}
 
