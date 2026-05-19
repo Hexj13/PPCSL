@@ -32,6 +32,7 @@ export interface ThemeColors {
   text: {
     primary: string;
     secondary: string;
+    onPrimary: string;
   };
   divider: string;
   accent: string;

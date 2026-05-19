@@ -1,19 +1,27 @@
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { mobileFavoritesApi } from '@/api/favorites';
+import { getApiErrorMessage } from '@/api/getApiErrorMessage';
 import { useAuth } from '@/auth/AuthContext';
+import { AuthRequiredScreen } from '@/components/auth/AuthRequiredScreen';
+import { MobileAppShell } from '@/components/layout/MobileAppShell';
+import { ListingCard } from '@/components/listing/ListingCard';
+import { SavedFiltersList } from '@/components/search/SavedFiltersList';
+import { showToast } from '@/components/providers/ToastProvider';
 import { Text } from '@/components/Themed';
 import { useI18n } from '@/i18n/I18nContext';
 import type { FavoriteItem } from '@/synced/api-types';
 import colors from '@/theme/synced/colors';
 
+type FavoritesTab = 'listings' | 'filters';
+
 export default function FavoritesScreen() {
   const { t } = useI18n();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<FavoritesTab>('listings');
   const [items, setItems] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +50,17 @@ export default function FavoritesScreen() {
     };
   }, [authLoading, refresh]);
 
-  if (authLoading || loading) {
+  async function removeFavorite(listingId: string) {
+    try {
+      await mobileFavoritesApi.remove(listingId);
+      setItems((prev) => prev.filter((f) => f.listing.id !== listingId));
+      showToast('success', t('common.success'));
+    } catch (err) {
+      showToast('error', getApiErrorMessage(err, t('common.error')));
+    }
+  }
+
+  if (authLoading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary[500]} />
@@ -52,69 +70,72 @@ export default function FavoritesScreen() {
 
   if (!user) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.hint}>{t('mobile.favorites.needAuth')}</Text>
-        <Pressable style={styles.btn} onPress={() => router.push('/auth/sign-in')}>
-          <Text style={styles.btnText}>{t('mobile.auth.signIn')}</Text>
-        </Pressable>
-      </View>
+      <MobileAppShell title={t('header.favorites')}>
+        <AuthRequiredScreen titleKey="mobile.favorites.needAuth" />
+      </MobileAppShell>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.listing.id}
-        ListEmptyComponent={
-          <Text style={styles.empty}>{t('mobile.favorites.empty')}</Text>
-        }
-        renderItem={({ item }) => {
-          const l = item.listing;
-          const uri = l.images?.[0];
-          return (
-            <Pressable style={styles.card} onPress={() => router.push(`/listing/${l.id}`)}>
-              {uri ? (
-                <Image source={{ uri }} style={styles.thumb} contentFit="cover" />
-              ) : (
-                <View style={[styles.thumb, styles.thumbPlaceholder]} />
-              )}
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle} numberOfLines={2}>
-                  {l.title}
-                </Text>
-                <Text style={styles.price}>
-                  {l.price != null ? `${l.price} ${l.currency ?? 'EUR'}` : '—'}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        }}
-      />
-    </View>
+    <MobileAppShell title={t('header.favorites')}>
+      <View style={styles.tabs}>
+        <Pressable
+          style={[styles.tab, activeTab === 'listings' && styles.tabActive]}
+          onPress={() => setActiveTab('listings')}
+        >
+          <Text style={[styles.tabText, activeTab === 'listings' && styles.tabTextActive]}>
+            {t('favorites.listings')}
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.tab, activeTab === 'filters' && styles.tabActive]}
+          onPress={() => setActiveTab('filters')}
+        >
+          <Text style={[styles.tabText, activeTab === 'filters' && styles.tabTextActive]}>
+            {t('favorites.filters')}
+          </Text>
+        </Pressable>
+      </View>
+
+      {activeTab === 'filters' ? (
+        <SavedFiltersList
+          onApplied={() => {
+            router.push('/(tabs)');
+          }}
+        />
+      ) : loading ? (
+        <ActivityIndicator style={{ marginTop: 24 }} color={colors.primary[500]} />
+      ) : (
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item.listing.id}
+          ListEmptyComponent={<Text style={styles.empty}>{t('mobile.favorites.empty')}</Text>}
+          renderItem={({ item }) => (
+            <ListingCard
+              listing={item.listing}
+              onPress={() => router.push(`/listing/${item.listing.id}`)}
+              favorite
+              onToggleFavorite={() => removeFavorite(item.listing.id)}
+            />
+          )}
+        />
+      )}
+    </MobileAppShell>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg.base },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  hint: { textAlign: 'center', color: colors.text.secondary, marginBottom: 16 },
-  btn: { backgroundColor: colors.primary[500], paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
-  btnText: { color: '#fff', fontWeight: '600' },
-  card: {
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  tabs: {
     flexDirection: 'row',
     marginHorizontal: 12,
-    marginVertical: 6,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.divider,
+    marginTop: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.divider,
   },
-  thumb: { width: 120, height: 90 },
-  thumbPlaceholder: { backgroundColor: colors.bg.darker },
-  cardBody: { flex: 1, padding: 10, justifyContent: 'center' },
-  cardTitle: { fontSize: 15, fontWeight: '600' },
-  price: { marginTop: 4, fontSize: 16, color: colors.primary[700], fontWeight: '700' },
+  tab: { flex: 1, paddingVertical: 12, alignItems: 'center' },
+  tabActive: { borderBottomWidth: 2, borderBottomColor: colors.primary[700], marginBottom: -2 },
+  tabText: { fontSize: 14, color: colors.text.secondary, fontWeight: '500' },
+  tabTextActive: { color: colors.primary[900], fontWeight: '700' },
   empty: { textAlign: 'center', marginTop: 40, color: colors.text.secondary },
 });

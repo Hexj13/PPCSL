@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { Modal } from '@/components/modals/Modal';
 import { PWAStoreDesktopModal } from '@/components/pwa/PWAStoreDesktopModal';
@@ -13,7 +13,7 @@ interface PWAInstallButtonGrayProps {
   mobileApp?: MobileAppLinks;
 }
 
-function highlightKeywords(text: string, keywords: string[]): React.ReactNode {
+function highlightKeywords(text: string, keywords: string[]): ReactNode {
   const isInsideParentheses = (s: string, position: number): boolean => {
     let openCount = 0;
     for (let i = 0; i < position; i++) {
@@ -61,7 +61,7 @@ function highlightKeywords(text: string, keywords: string[]): React.ReactNode {
     return text;
   }
 
-  const parts: React.ReactNode[] = [];
+  const parts: ReactNode[] = [];
   let lastIndex = 0;
 
   highlightedParts.forEach((part, index) => {

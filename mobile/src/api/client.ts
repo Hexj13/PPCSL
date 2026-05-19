@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 
 export const TOKEN_KEY = 'token';
 export const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -15,15 +15,113 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
 }
 
 const extra = Constants.expoConfig?.extra as { apiUrl?: string } | undefined;
-const baseURL = extra?.apiUrl ?? 'http://10.0.2.2:4000';
+
+const PRODUCTION_API_URL = 'https://kupito.club';
+
+function defaultBundledDevApiUrl(): string {
+  if (Platform.OS === 'android') return 'http://10.0.2.2:4000';
+  return 'http://127.0.0.1:4000';
+}
+
+function isTunnelLikeBundlerHost(host: string): boolean {
+  const h = host.toLowerCase();
+  return h.includes('exp.direct') || h.includes('ngrok');
+}
+
+function isBundledDefaultLocalApiUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:') return false;
+    if (u.port !== '' && u.port !== '4000') return false;
+    return (
+      u.hostname === '10.0.2.2' ||
+      u.hostname === '127.0.0.1' ||
+      u.hostname === 'localhost'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function hostFromBundlerHostUri(hostUri: unknown): string | null {
+  if (typeof hostUri !== 'string') return null;
+  const trimmed = hostUri.trim();
+  if (!trimmed) return null;
+  const host = trimmed.split(':')[0];
+  if (!host || host === 'localhost' || host === '127.0.0.1') return null;
+  return host;
+}
+
+function inferMetroBundlerHost(): string | null {
+  const expoCfg = Constants.expoConfig as { hostUri?: string } | null | undefined;
+  const fromExpo = hostFromBundlerHostUri(expoCfg?.hostUri);
+  if (fromExpo) return fromExpo;
+
+  const platformManifest = Constants.platform as { hostUri?: string } | undefined;
+  const fromPlatform = hostFromBundlerHostUri(platformManifest?.hostUri);
+  if (fromPlatform) return fromPlatform;
+
+  try {
+    const scriptURL = NativeModules.SourceCode?.scriptURL as string | undefined;
+    if (!scriptURL || scriptURL.startsWith('file:')) return null;
+    const afterProto = scriptURL.split('://')[1];
+    if (!afterProto) return null;
+    const host = afterProto.split('/')[0]?.split(':')[0];
+    if (!host || host.length === 0) return null;
+    return host;
+  } catch {
+    return null;
+  }
+}
+
+function getResolvedApiBaseUrl(): string {
+  const apiUrlExtra = extra?.apiUrl;
+  const raw = typeof apiUrlExtra === 'string' ? apiUrlExtra.trim() : '';
+  let url = raw.length > 0 ? raw.replace(/\/$/, '') : defaultBundledDevApiUrl();
+  if (!__DEV__) return url;
+
+  const metroHost = inferMetroBundlerHost();
+  if (metroHost && isTunnelLikeBundlerHost(metroHost) && isBundledDefaultLocalApiUrl(url)) {
+    return PRODUCTION_API_URL;
+  }
+
+  if (!metroHost && isBundledDefaultLocalApiUrl(url) && Platform.OS === 'android') {
+    const scriptURL = NativeModules.SourceCode?.scriptURL as string | undefined;
+    if (scriptURL?.startsWith('file:')) {
+      return PRODUCTION_API_URL;
+    }
+  }
+
+  if (!metroHost) return url;
+
+  try {
+    const u = new URL(url);
+    if (u.hostname === '10.0.2.2' && metroHost !== '10.0.2.2') {
+      u.hostname = metroHost;
+      return u.toString().replace(/\/$/, '');
+    }
+    if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
+      if (metroHost !== 'localhost' && metroHost !== '127.0.0.1') {
+        u.hostname = metroHost;
+      }
+      return u.toString().replace(/\/$/, '');
+    }
+  } catch {
+    return url;
+  }
+  return url;
+}
 
 const refreshClient = axios.create({
-  baseURL,
   headers: { 'Content-Type': 'application/json', 'X-Client': 'mobile' },
 });
 
+refreshClient.interceptors.request.use((config) => {
+  config.baseURL = getResolvedApiBaseUrl();
+  return config;
+});
+
 export const api = axios.create({
-  baseURL,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -121,6 +219,16 @@ function markAuthRefreshAttempt(originalRequest: ExtendedAxiosRequestConfig): vo
   originalRequest._refreshAttempts = (originalRequest._refreshAttempts ?? 0) + 1;
 }
 
+function createRequestId(): string {
+  const c = globalThis.crypto as Crypto | undefined;
+  if (c?.randomUUID) return c.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ch) => {
+    const r = (Math.random() * 16) | 0;
+    const v = ch === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 async function doRefreshAndRetry(
   originalRequest: ExtendedAxiosRequestConfig,
   refreshToken: string,
@@ -141,7 +249,8 @@ async function doRefreshAndRetry(
 }
 
 api.interceptors.request.use(async (config) => {
-  const rid = globalThis.crypto.randomUUID();
+  config.baseURL = getResolvedApiBaseUrl();
+  const rid = createRequestId();
   (config as ExtendedAxiosRequestConfig)._requestId = rid;
   config.headers = config.headers ?? {};
   config.headers['X-Request-Id'] = rid;

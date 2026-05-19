@@ -26,6 +26,8 @@ const catalogs: Record<Locale, Messages> = {
   ru: require('./ru.json') as Messages,
 };
 
+const enCatalog = require('./en.json') as Messages;
+
 const I18nContext = createContext<{
   locale: Locale;
   setLocale: (l: Locale) => Promise<void>;
@@ -66,9 +68,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>) => {
-      const raw = getByPath(catalogs[locale], key) ?? getByPath(catalogs.ro, key) ?? key;
-      if (!params) return raw;
-      return raw.replace(/\{(\w+)\}/g, (m, k) => (params[k] != null ? String(params[k]) : m));
+      const raw =
+        getByPath(catalogs[locale], key) ??
+        getByPath(catalogs.ro, key) ??
+        getByPath(enCatalog, key) ??
+        key;
+      const text = typeof raw === 'string' ? raw : key;
+      if (!params) return text;
+      return text.replace(/\{(\w+)\}/g, (m, k) => (params[k] != null ? String(params[k]) : m));
     },
     [locale],
   );

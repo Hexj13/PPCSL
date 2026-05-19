@@ -4,13 +4,14 @@
     "tagline": "Platformă pentru publicarea anunțurilor de vânzare auto în Moldova",
     "partnersTitle": "Partenerii noștri",
     "faq": "Întrebări frecvente",
+    "partners": "Partenerilor",
+    "investors": "Investitorilor",
     "terms": "Termeni de utilizare",
     "privacy": "Politica de confidențialitate",
     "cookieSettings": "Setări cookies",
     "contacts": "Contacte",
-    "partnerCipautoDescription": "Import și vânzare auto",
-    "partnerInfocarDescription": "Rapoarte de istoric auto",
-    "partnerFactumDescription": "Import și vânzare auto"
+    "partnerImportSalesDescription": "Import și vânzare auto",
+    "partnerInfocarDescription": "Rapoarte de istoric auto"
   },
   "header": {
     "addListing": "Creează anunț",
@@ -35,6 +36,8 @@
   },
   "home": {
     "title": "Vânzare auto în Moldova",
+    "titleWithBrand": "Vânzare {brand} în Moldova",
+    "titleWithBrandModel": "Vânzare {brand} {model} în Moldova",
     "subtitle": "Publicați anunțul",
     "subtitleBold": "Kupito!",
     "subtitle2": ". Cumpărați sau vindeți auto pe ",
@@ -68,6 +71,7 @@
     "no": "Nu",
     "search": "Caută",
     "choose": "Alege...",
+    "rangeDash": "—",
     "selectedCount": "Selectate {count}",
     "requiredAsterisk": "*",
     "apiErrors": {
@@ -130,7 +134,8 @@
     "daysAgo": "acum {days} zile",
     "languageEn": "Engleză",
     "languageRo": "Română",
-    "languageRu": "Русский"
+    "languageRu": "Русский",
+    "languageLocaleCode": "{code}"
   },
   "errors": {
     "smsHourlyLimit": "Limita SMS pentru acest număr a fost atinsă. Puteți solicita un cod nou peste o oră.",
@@ -142,7 +147,10 @@
     "emailChangeTooManyAttempts": "Poți schimba emailul de cel mult 2 ori în 24 de ore. Încearcă mai târziu.",
     "invalidCurrentPassword": "Parola actuală este incorectă",
     "newPasswordMustDiffer": "Parola nouă trebuie să fie diferită de cea actuală",
-    "emailVerificationResendOnCooldown": "Un email de confirmare a fost deja trimis. Poți solicita altul după ce expiră linkul din acel mesaj."
+    "emailVerificationResendOnCooldown": "Un email de confirmare a fost deja trimis. Poți solicita altul după ce expiră linkul din acel mesaj.",
+    "googleSignInFailed": "Autentificarea Google a eșuat. Încearcă din nou.",
+    "googleEmailNotVerified": "Emailul Google nu este verificat. Verifică-l în Google și încearcă din nou.",
+    "useGoogleSignIn": "Acest cont folosește autentificarea Google. Autentificarea cu parolă nu este disponibilă."
   },
   "cookieSettings": {
     "loading": "Se încarcă...",
@@ -178,7 +186,62 @@
       "description": "Pentru mai multe informații despre modul în care folosim cookies și despre modul în care protejăm datele dvs., vă rugăm să citiți"
     },
     "privacyPolicy": "Politica de confidențialitate",
-    "preferencesSavedMessage": "Preferințele dvs. sunt salvate în browser-ul dvs. și vor rămâne active 365 de zile. Le puteți schimba în orice moment de pe această pagină."
+    "preferencesSavedMessage": "Preferințele dvs. sunt salvate în browser-ul dvs. și vor rămâne active 365 de zile. Le puteți schimba în orice moment de pe această pagină.",
+    "cookieTable": {
+      "title": "Inventar cookies și stocare",
+      "intro": "Mai jos sunt principalele cookie-uri HTTP și chei similare de stocare în browser. Autentificarea folosește cookie-uri httpOnly de sesiune (token de acces și reîmprospătare). Opțional, autentificarea Google încarcă scriptul Google Identity Services pe pagina de autentificare când este activată. Când acceptați cookies analitice, Google Analytics rulează cu valorile implicite Consent Mode și actualizări ulterioare.",
+      "headers": {
+        "name": "Denumire",
+        "type": "Tip",
+        "purpose": "Scop",
+        "duration": "Păstrare",
+        "provider": "Furnizor"
+      },
+      "rows": {
+        "ga": {
+          "name": "_ga",
+          "type": "Analitic",
+          "purpose": "ID client Google Analytics; folosit numai după ce acordați cookies analitice.",
+          "duration": "Până la 2 ani (implicit Google)",
+          "provider": "Google Ireland Limited / Google LLC"
+        },
+        "gid": {
+          "name": "_gid",
+          "type": "Analitic",
+          "purpose": "Grupare sesiune Google Analytics; folosit numai după ce acordați cookies analitice.",
+          "duration": "24 de ore (implicit Google)",
+          "provider": "Google Ireland Limited / Google LLC"
+        },
+        "consentCookie": {
+          "name": "cookie_consent",
+          "type": "Esențial",
+          "purpose": "Stochează alegerea dvs. privind cookies (JSON cu marcaj temporal) pentru sincronizare cu Consent Mode.",
+          "duration": "365 de zile",
+          "provider": "Kupito"
+        },
+        "localeCookie": {
+          "name": "kupito-locale",
+          "type": "Funcțional",
+          "purpose": "Memorează limba interfeței (ro sau ru) când comutatorul de limbă este activat.",
+          "duration": "365 de zile",
+          "provider": "Kupito"
+        },
+        "gtm": {
+          "name": "gtag.js (Google Tag)",
+          "type": "Analitic",
+          "purpose": "Încarcă Google Analytics după consimțământ și trimite actualizări Consent Mode (analytics_storage).",
+          "duration": "Sesiune / conform politicii Google",
+          "provider": "Google Ireland Limited / Google LLC"
+        },
+        "authLocalStorage": {
+          "name": "auth-storage (localStorage)",
+          "type": "Esențial (stocare locală)",
+          "purpose": "Păstrează starea sesiunii autentificate (token-uri) pentru utilizatori conectați; nu este un cookie HTTP.",
+          "duration": "Până la deconectare sau expirare gestionată de aplicație",
+          "provider": "Kupito"
+        }
+      }
+    }
   },
   "login": {
     "title": "Autentificare",
@@ -198,6 +261,12 @@
     "filterSaveError": "Eroare la salvarea filtrului",
     "filterLimitError": "Puteți salva maximum 20 de filtre. Vă rugăm să ștergeți unul dintre filtrele existente."
   },
+  "phone": {
+    "mustStartWithPlus": "Folosiți format internațional cu prefixul + (ex. +373...)",
+    "invalidCountry": "Prefix de țară necunoscut",
+    "invalidLength": "Lungimea numărului nu corespunde acestei țări",
+    "notMobile": "Introduceți un număr mobil pentru SMS (telefoanele fixe nu sunt acceptate)"
+  },
   "register": {
     "title": "Înregistrare",
     "userType": "Tip utilizator",
@@ -211,12 +280,6 @@
     "emailHint": "Autentificarea poate fi efectuată cu acest email sau cu numărul de telefon",
     "phoneRequired": "Telefonul este obligatoriu",
     "phoneInvalid": "Introduceți un telefon valid (format: +cod țară număr)",
-    "phoneMustStartWithPlus": "Telefonul trebuie să înceapă cu +",
-    "phoneLength": "Telefonul trebuie să conțină 7-19 cifre (inclusiv codul țării)",
-    "phoneDigitsOnly": "Telefonul trebuie să conțină doar cifre după +",
-    "phoneFormat": "Telefonul trebuie să fie în format +cod țară (1-4 cifre) + număr (6-15 cifre)",
-    "countryCodeLength": "Codul țării trebuie să fie 1-4 cifre",
-    "numberLength": "Numărul trebuie să fie 6-15 cifre",
     "messengers": "Mesageri disponibili",
     "optional": "(opțional)",
     "optionalShort": "(opț.)",
@@ -253,6 +316,7 @@
     "registering": "Se înregistrează...",
     "registerButton": "Înregistrează-te",
     "phoneExists": "Există deja un utilizator cu acest număr de telefon",
+    "primaryPhoneMustUseChangeFlow": "Pentru a schimba numărul de telefon al contului, folosește opțiunea „Schimbă telefonul” din profil.",
     "serviceUnavailable": "Serviciul nu este disponibil. Verificați dacă serverul funcționează și a fost repornit.",
     "invalidPhoneFormat": "Format de telefon invalid",
     "serverError": "Eroare pe server. Încercați din nou mai târziu.",
@@ -264,7 +328,12 @@
   },
   "sign": {
     "pageTitle": "Autentificare și înregistrare",
-    "greeting": "Bună!"
+    "greeting": "Bună!",
+    "dividerOr": "sau",
+    "continueWithGoogle": "Continuă cu Google",
+    "googleConsentPrefix": "Continuând cu Google, acceptați ",
+    "googleConsentConjunction": " și ",
+    "googleConsentSuffix": "."
   },
   "resetPassword": {
     "title": "Resetare parolă",
@@ -355,6 +424,30 @@
     "closed": "Închis",
     "loadingTimeout": "Timpul de încărcare a anunțurilor a expirat"
   },
+  "listingForm": {
+    "video": {
+      "title": "Video",
+      "posterAlt": "Imagine previzualizare video",
+      "addButton": "Adaugă video",
+      "remove": "Elimină video",
+      "fileLabel": "Fișier:",
+      "constraints": "Dimensiune maximă {maxSizeMb} MB, durată maximă {maxDurationMin} minute. Formate acceptate: MP4, MOV, AVI, WebM, MKV.",
+      "stagedHintTooltip": "Acest video se va încărca automat imediat după crearea anunțului.",
+      "status": {
+        "uploading": "Se încarcă…",
+        "processing": "Se procesează video…",
+        "ready": "Video este gata",
+        "failed": "Procesarea video a eșuat"
+      },
+      "errors": {
+        "invalidType": "Format video neacceptat",
+        "tooLarge": "Fișierul este prea mare",
+        "uploadFailed": "Încărcarea video a eșuat",
+        "uploadAfterCreateFailed": "Anunțul a fost creat, dar video nu s-a putut încărca. Îl puteți adăuga la editarea anunțului.",
+        "deleteFailed": "Nu s-a putut elimina video"
+      }
+    }
+  },
   "listings": {
     "defaultTitle": "Autoturism de vânzare",
     "imageAlt": "{title} - Imagine {index}",
@@ -362,6 +455,8 @@
     "closeImageModal": "Închide vizualizarea foto",
     "previousPhoto": "Imaginea anterioară",
     "nextPhoto": "Imaginea următoare",
+    "cardImageCounter": "{current} / {total}",
+    "modalThumbnailAlt": "Imaginea {index} din {total}",
     "notFoundTitle": "Anunțul nu a fost găsit",
     "notFoundDescription": "Anunțul nu există sau nu este disponibil.",
     "addToFavorites": "Adăugat la favorite",
@@ -416,6 +511,23 @@
     "loadMore": "Încarcă mai multe",
     "showMore": "Arată mai multe",
     "noMoreListings": "Nu mai există anunțuri",
+    "partnerPromo": {
+      "titleQuestion": "Vindeți multe automobile?",
+      "titlePartnerLead": "Deveniți ",
+      "titlePartnerEmphasis": "partener",
+      "titlePartnerTail": " Kupito.club",
+      "description": "Dacă publicați anunțuri regulat sau sunteți dealer auto, suntem pregătiți să vă oferim condiții speciale de parteneriat.",
+      "features": {
+        "sync": "Sincronizare automată a anunțurilor",
+        "promotion": "Promovări gratuite",
+        "visibility": "Vizibilitate suplimentară pe platformă"
+      },
+      "sideTitle": "Împreună — mai puternici",
+      "sideDescription": "Dezvoltați afacerea cu Kupito.club.",
+      "cta": "Detalii",
+      "dismiss": "Nu mai afișa",
+      "imageAlt": "Automobile pentru programul de parteneriat Kupito"
+    },
     "selectBrand": "Selectați marca",
     "selectCity": "Selectați orașul",
     "descriptionPlaceholder": "Adăugați o descriere a autoturismului...",
@@ -523,6 +635,7 @@
     "liters": "l",
     "km": "km",
     "priceLabel": "Preț",
+    "currency": "Monedă",
     "negotiable": "Preț negociabil",
     "availableInCredit": "Disponibil în credit/rate",
     "downPaymentFrom": "Suma primei rate de la",
@@ -562,6 +675,7 @@
     "tireCardPriceScopePerUnit": "(pe anvelopă)",
     "tireCardPriceScopePerSet": "(pentru set)",
     "promoted": "Promovat",
+    "videoBadge": "Video",
     "promote": "Promovează",
     "unpromote": "Anulează promovarea",
     "promotionEnabled": "Promovarea este activată",
@@ -675,12 +789,16 @@
     "ownerNoticeText": "Aici sunt afișate toate anunțurile dvs. active. Puteți folosi linkul către această pagină pentru a o trimite în mesagerii sau rețelele sociale și a afișa toate anunțurile pe o singură pagină."
   },
   "listingDetail": {
+    "video": {
+      "playButton": "Redă video anunțului",
+      "playIcon": "▶",
+      "captionsTrackLabel": "Fără subtitrări pentru dialog"
+    },
     "home": "Acasă",
     "addToFavorites": "La favorite",
     "removeFromFavorites": "Elimină din favorite",
     "yourListing": "Anunțul dvs.",
-    "cannotAddOwnListing": "Nu puteți adăuga propriul anunț la favorite",
-    "cannotFavoriteOwnListingToast": "Nu puteți adăuga propriile anunțuri la favorite.\nAcestea se află în secțiunea «Anunțurile mele».",
+    "cannotFavoriteOwnListingToast": "Nu puteți adăuga propriile anunțuri la favorite.",
     "compare": "Compară",
     "alreadyInComparison": "Deja în comparație",
     "cannotCompareMore": "Puteți compara maximum 3 vehicule",
@@ -709,7 +827,12 @@
     "revealVin": "Afișează VIN",
     "hideVin": "Ascunde VIN",
     "vinLoadError": "Nu s-a putut încărca VIN-ul. Încercați din nou.",
-    "vinRateLimitExceeded": "Puteți solicita VIN de maximum 5 ori pe oră. Încercați mai târziu.",
+    "vinRateLimitExceeded": "Puteți afișa VIN-ul pentru maximum 50 anunțuri diferite pe oră. Încercați mai târziu.",
+    "revealPhone": "Afișează numărul",
+    "hidePhone": "Ascunde numărul",
+    "phoneLoadError": "Nu s-a putut încărca numărul de telefon. Încercați din nou.",
+    "phoneRateLimitExceededGuest": "Puteți afișa numerele de telefon pentru maximum 20 anunțuri pe oră. Încercați mai târziu.",
+    "phoneRateLimitExceededAuth": "Puteți afișa numerele de telefon pentru maximum 50 de anunțuri diferite pe oră. Încercați mai târziu.",
     "copied": "{label} a fost copiat",
     "copyError": "Eroare la copiere",
     "engine": "Motor",
@@ -739,7 +862,42 @@
     "externalReports": "Raport despre acest autovehicul",
     "externalReportsHint": "Vă redirecționăm către parteneri care întocmesc raportul vehiculului din diverse surse. Detalii și condiții pe site-ul partenerului.",
     "orderReport": "Comandă raport",
-    "sampleReport": "Exemplu raport",
+    "actionCardFavoriteDescription": "Salvați anunțul",
+    "actionCardFavoriteTitleWhenSaved": "La favorite",
+    "actionCardFavoriteDescriptionWhenSaved": "Eliminați din salvate",
+    "actionCardCompareDescription": "Comparați cu alte vehicule",
+    "actionCardCompareTitleWhenInComparison": "În comparație",
+    "actionCardCompareDescriptionWhenInComparison": "Eliminați din comparație",
+    "actionCardPromoteDescription": "Îmbunătățiți poziția în căutare",
+    "actionCardPromoteTitleWhenPromoted": "Este promovat",
+    "actionCardPromoteDescriptionWhenPromoted": "Asta îi crește vizibilitatea în listări",
+    "actionCardAiDescription": "Analiza acestui anunț",
+    "aiReportNewBadge": "New",
+    "aiReportActionCardGenerating": "Generăm analiza anunțului…",
+    "aiReportActionCardAlreadyCreating": "Analiza anunțului se creează deja",
+    "aiReport": "Analiză AI",
+    "aiReportModalTitle": "Analiză AI a anunțului",
+    "aiReportLoading": "Pregătim analiza anunțului…",
+    "aiReportPending": "Analizăm anunțul…",
+    "aiReportUnavailableTitle": "Temporar indisponibil",
+    "aiReportUnavailableBody": "Analiza AI nu a putut fi încărcată. Încercați mai târziu.",
+    "aiReportSectionSummary": "Rezumatul anunțului",
+    "aiReportSectionModelContext": "Despre acest model de vehicul",
+    "aiReportSectionAnalysis": "Analiza anunțului",
+    "aiReportAnalysisPrice": "Preț",
+    "aiReportAnalysisMileage": "Kilometraj",
+    "aiReportAnalysisDescription": "Descriere",
+    "aiReportAnalysisRegistration": "Înregistrare",
+    "aiReportAnalysisOptions": "Echipare",
+    "aiReportSectionStrengths": "Puncte forte",
+    "aiReportSectionWeaknesses": "Puncte slabe",
+    "aiReportSectionChecks": "Ce să verificați la cumpărare",
+    "aiReportSectionQuestions": "Ce întrebări să puneți la cumpărare",
+    "aiReportSectionRisks": "Riscuri posibile",
+    "aiReportCopy": "Copiază întreaga analiză",
+    "aiReportCopied": "Copiat",
+    "aiReportProductDisclaimer": "Formulat de o rețea neuronală pe baza Google Gemini. Informațiile au caracter orientativ, pot conține inexactități și nu înlocuiesc inspecția sau diagnosticul profesional. Se recomandă verificarea independentă a informațiilor esențiale.",
+    "sampleReport": "Exemplu de raport",
     "historyHint": "Afișăm anunțuri anterioare pentru acest vehicul cu același VIN. Pentru protecția confidențialității, prețul și datele personale ale autorilor sunt ascunse pentru anunțuri închise.",
     "vinNotProvided": "Codul VIN nu este specificat de vânzător",
     "vinNotProvidedDescription": "Fără el, nu putem identifica anunțurile anterioare pentru acest vehicul.",
@@ -929,6 +1087,8 @@
     "city": "Oraș",
     "yearFrom": "An de la",
     "yearTo": "An până la",
+    "yearRangeSummary": "de la {from} la {to}",
+    "priceRangeSummary": "de la {from} la {to}",
     "selectYear": "Selectează anul",
     "currency": "Valută",
     "priceFrom": "Preț de la",
@@ -955,6 +1115,10 @@
     "creditSection": "Credit/rate",
     "downPaymentFromTitle": "Suma minimă a avansului (număr întreg)",
     "labels": "Etichete",
+    "sellerTypeLabel": "Tipul vânzătorului",
+    "sellerTypePlaceholder": "Neselectat",
+    "sellerTypeIndividual": "Persoană fizică",
+    "sellerTypeBusiness": "Persoană juridică (Dealer auto)",
     "urgent": "Urgent",
     "new": "Autoturism nou",
     "newMoto": "Nou",
@@ -1006,6 +1170,7 @@
     "companyWebsiteUrlPlaceholder": "https://example.com",
     "invalidCompanyWebsiteUrl": "Introduceți o adresă validă care începe cu http:// sau https://",
     "partnerProgramTitle": "Parteneriat",
+    "partnerProgramSync": "Partenerii pot activa sincronizarea automată cu site-ul lor sau cu orice platformă unde anunțurile lor sunt deja publicate.",
     "partnerProgramHint": "Partenerii platformei primesc promovări gratuite nelimitate.",
     "partnerProgramDescription": "La fiecare 20 de anunțuri noi se adaugă 1 promovare gratuită în sold.",
     "partnerStatus": "Status:",
@@ -1014,7 +1179,8 @@
     "partnerNextRewardCounter": "Până la următoarea promovare gratuită:",
     "partnerNextRewardCounterValue": "{count} anunțuri noi",
     "partnerUsageHint": "Puteți folosi soldul pe pagina unui anunț concret sau în „Anunțurile mele”, alegând promovarea nelimitată din soldul de partener.",
-    "partnerContactCta": "Contactați-ne pentru parteneriat",
+    "partnerLearnMore": "Află mai mult",
+    "partnerContactCta": "Contactați-ne",
     "personalData": "Date personale",
     "firstName": "Prenume",
     "firstNamePlaceholder": "Introduceți prenumele dvs.",
@@ -1274,8 +1440,6 @@
       "archiveDisabledHasListings": "Există anunțuri active cu această marcă/model"
     },
     "parsing": {
-      "envTitle": "Mediul parserului",
-      "envBody": "Rulările folosesc mediul țintă: {env}. Valoarea este setată pe server și nu poate fi schimbată din interfață.",
       "subtabPlp": "Catalog (PLP)",
       "subtabPdp": "Pagini anunț (PDP)",
       "subtabScheduler": "Programe",
@@ -1434,6 +1598,14 @@
       "fieldCheckUserDuplicatesBeforeCreate": "Verifică duplicate înainte de creare",
       "fieldCheckUserDuplicatesBeforeCreateHint": "Înainte de a crea un anunț nou, încarcă din baza de date vehiculele utilizatorului partener și omite crearea dacă există un duplicat (reguli specifice parserului). Necesită acces la baza de date din procesul de import.",
       "fieldCheckUserDuplicatesBeforeCreateHintButton": "Ajutor verificare duplicate",
+      "pdp": {
+        "autoCreateBrands": "Creează automat mărci lipsă",
+        "autoCreateBrandsHint": "Dacă marca parsată lipsește din catalogul nostru, o creează prin API admin (utilizatorul de import trebuie să fie Admin), apoi continuă importul anunțului în aceeași rulare.",
+        "autoCreateBrandsHintButton": "Ajutor creare automată mărci",
+        "autoCreateModels": "Creează automat modele lipsă",
+        "autoCreateModelsHint": "Dacă modelul parsat lipsește din catalogul nostru, îl creează prin API admin (utilizatorul de import trebuie să fie Admin), apoi continuă importul anunțului în aceeași rulare.",
+        "autoCreateModelsHintButton": "Ajutor creare automată modele"
+      },
       "fieldRemoveClosed": "Închide anunțurile când sursa nu mai este disponibilă",
       "fieldRemoveClosedHint": "Când sursa marchează un anunț ca închis sau indisponibil (404, 410, șablon „închis\"), acesta va fi închis și pe platforma noastră. Când este dezactivat, anunțul este marcat în registru, dar rămâne activ pe platformă.",
       "fieldRemoveClosedHintButton": "Ajutor: închidere anunțuri indisponibile",
@@ -1479,7 +1651,6 @@
       "plpFileDeleted": "Fișierul PLP a fost șters",
       "searchPlaceholder": "Căutare în text",
       "searchMatches": "Potriviri: {count}",
-      "searchNoMatches": "Nu au fost găsite potriviri",
       "copy": "Copiază",
       "copySuccess": "{label} a fost copiat",
       "copyError": "Eroare la copiere",
@@ -1844,6 +2015,135 @@
       "email": "support@kupito.club"
     }
   },
+  "partners": {
+    "title": "Pentru parteneri",
+    "intro": "Invităm companii să devină parteneri Kupito. Pe scurt: cum aplicați, ce oferă programul și cum puteți încheia colaborarea.",
+    "howToBecome": {
+      "title": "Cum deveniți partener",
+      "items": [
+        "Scrieți-ne prin pagina Contacte și descrieți scurt afacerea.",
+        "Participă doar conturile înregistrate pe platformă ca persoane juridice.",
+        "Vă răspundem și, la nevoie, configurăm sincronizarea automată a anunțurilor cu site-ul dvs. sau alte platforme."
+      ]
+    },
+    "benefits": {
+      "title": "Ce oferă parteneriatul",
+      "items": [
+        "Sincronizarea automată a anunțurilor cu site-ul dvs. sau cu alte platforme, fără dublare manuală.",
+        "Bonusuri de promovare gratuită: un bonus la fiecare 20 de anunțuri noi. Statusul și balanța apar în profil.",
+        "Pe pagina „Anunțurile mele” cheltuiți singuri balanța, activând promovarea gratuită pentru anunțul ales.",
+        "Eticheta de partener pe pagina de anunț și pe panoul dvs. public de anunțuri.",
+        "Sigla și linkul dvs. în subsolul Kupito."
+      ]
+    },
+    "whoCan": {
+      "title": "Cine poate deveni partener",
+      "items": [
+        "Doar utilizatorii înregistrați pe platformă ca persoană juridică (la înregistrare alegeți varianta pentru companie, nu pentru persoană fizică).",
+        "Vânzătorii particulari nu participă la program."
+      ]
+    },
+    "howToLeave": {
+      "title": "Cum puteți încheia parteneriatul",
+      "items": [
+        "Scrieți-ne pe canalele de contact și spuneți că doriți încheierea parteneriatului.",
+        "Vă retragem statutul, vă scoatem din subsol și anulăm balanța de promovări gratuite acumulate.",
+        "Condițiile complete despre statut și bonusuri sunt în Termenii de utilizare."
+      ]
+    },
+    "obligations": {
+      "title": "Așteptări și recomandări",
+      "items": [
+        "Parteneriatul nu adaugă obligații financiare sau juridice suplimentare față de ceea ce este descris în serviciu și în Termeni.",
+        "Apreciem dacă menționați Kupito pe site și în rețelele sociale și ne trimiteți clienții care doresc să vândă o mașină, dar dvs. nu o cumpărați."
+      ]
+    },
+    "contactCta": "Contactați-ne"
+  },
+  "investors": {
+    "title": "Pentru investitori",
+    "intro": "Kupito.club este o platformă pentru anunțuri de vânzare auto, axată pe simplitate, automatizare și scalabilitate.",
+    "about": {
+      "title": "Despre proiect",
+      "paragraphs": [
+        "Proiectul pornește de la ipoteza că maturitatea pieței de anunțuri auto urmărește nivelul economiei și al pieței IT din țară. În țările dezvoltate apar produse comode și tehnologice, iar pe piețe mai puțin dezvoltate experiența rămâne adesea învechită și inconfortabilă.",
+        "Kupito.club rezolvă această problemă printr-un nucleu universal care permite lansarea unei platforme moderne de anunțuri în orice țară în câteva zile."
+      ]
+    },
+    "done": {
+      "title": "Ce am realizat deja",
+      "items": [
+        "Platformă lansată în Republica Moldova ca piață de test",
+        "Sistem de anunțuri cu interfață modernă",
+        "Primii parteneri, dealeri auto",
+        "Sincronizare automată a anunțurilor",
+        "Trafic inițial și primii utilizatori"
+      ]
+    },
+    "product": {
+      "title": "Produs",
+      "lead": "Kupito.club oferă:",
+      "items": [
+        "Publicarea gratuită a anunțurilor",
+        "Căutarea și compararea ușoară a anunțurilor",
+        "Salvarea anunțurilor la favorite",
+        "Salvarea filtrelor de căutare",
+        "Posibilitatea de a obține un rezumat informativ scurt cu AI pentru anunțuri auto eligibile (utilizatori autentificați; în funcție de disponibilitate și limite)",
+        "Panoul de anunțuri al unui vânzător, cu toate anunțurile sale pe o singură pagină",
+        "Sincronizarea automată cu site-uri externe",
+        "Interfața orientată spre mobile și dezvoltarea aplicației mobile"
+      ]
+    },
+    "businessModel": {
+      "title": "Model de business",
+      "lead": "Principalele surse de venit:",
+      "items": [
+        "Promovare plătită a anunțurilor",
+        "Publicitate pe platformă",
+        "Abonamente premium cu funcții extinse",
+        "Instrumente B2B pentru dealeri"
+      ]
+    },
+    "vision": {
+      "title": "Viziune",
+      "paragraphs": [
+        "Crearea unei infrastructuri universale pentru anunțuri auto, care poate fi implementată și adaptată rapid la orice piață."
+      ]
+    },
+    "strategy": {
+      "title": "Strategie de creștere",
+      "items": [
+        "Validarea modelului pe piața din Republica Moldova",
+        "Scalarea marketingului",
+        "Creșterea rețelei de parteneri dealeri",
+        "Intrarea pe piețe noi"
+      ]
+    },
+    "scaling": {
+      "title": "Scalare",
+      "lead": "După validarea modelului, planificăm lansări în alte țări cu condiții de piață similare:",
+      "items": ["Europa de Est", "Balcanii", "America Latină", "Africa", "Asia"]
+    },
+    "whyNow": {
+      "title": "De ce acum",
+      "items": [
+        "Piața anunțurilor auto rămâne fragmentată",
+        "În multe țări lipsesc soluții moderne",
+        "Putem ocupa rapid o nișă prin viteza de lansare și calitatea produsului"
+      ]
+    },
+    "offer": {
+      "title": "Propunere de investiție",
+      "lead": "Căutăm investiții pentru:",
+      "items": [
+        "Scalarea marketingului",
+        "Accelerarea dezvoltării produsului",
+        "Intrarea pe piețe noi"
+      ],
+      "footer": "Suntem deschiși să discutăm termenii parteneriatului și putem furniza informații suplimentare la cerere."
+    },
+    "contactCta": "Contactați-ne"
+  },
   "contacts": {
     "title": "Contacte",
     "intro": "Suntem echipa de dezvoltare kupito.club și suntem mereu gata să vă ajutăm. Contactați-ne prin oricare din canalele de mai jos.",
@@ -1891,7 +2191,13 @@
     "fixErrors": "Vă rugăm corectați erorile din formular",
     "fillAtLeastOne": "Introduceți cel puțin un câmp pentru a salva",
     "registrationSuccess": "V-ați înregistrat cu succes",
-    "registrationEmailVerificationSent": "Ți-am trimis un email la adresa indicată pentru confirmarea adresei de email."
+    "registrationEmailVerificationSent": "Ți-am trimis un email la adresa indicată pentru confirmarea adresei de email.",
+    "phoneRequiredTitle": "Verifică numărul de telefon",
+    "phoneRequiredDescription": "Pentru a continua să folosești Kupito, confirmă numărul de telefon prin SMS. Acest lucru ajută la protejarea contului tău.",
+    "phoneRequiredCurrent": "Număr de verificat",
+    "phoneRequiredContinue": "Trimite codul SMS",
+    "businessOnboardingTitle": "Datele companiei",
+    "businessOnboardingInfo": "Câmpurile opționale pot fi completate mai târziu în secțiunea „Profil”."
   },
   "pwa": {
     "install": "Instalează aplicația",
@@ -1919,6 +2225,7 @@
     "offlineMessage": "Nu sunteți conectat la internet. Verificați conexiunea.",
     "retry": "Încearcă din nou",
     "updateAvailable": "O nouă versiune este disponibilă",
+    "updateDescription": "O nouă versiune a aplicației este gata. Actualizează acum pentru cele mai recente îmbunătățiri.",
     "updateNow": "Actualizează acum",
     "updateLater": "Mai târziu",
     "openPlayStore": "Deschide în Google Play",
@@ -1985,6 +2292,20 @@
       "ogDescription": "Găsiți răspunsuri la cele mai frecvente întrebări despre Kupito. Aflați cum să publicați un anunț, cum să gestionați anunțurile, cum să căutați și să comparați autoturisme și multe altele.",
       "ogAlt": "Kupito - Întrebări frecvente"
     },
+    "partners": {
+      "title": "Pentru parteneri - Kupito",
+      "description": "Programul de parteneri Kupito: sincronizare anunțuri, promovări gratuite, etichetă de partener și prezență în subsol. Pentru persoane juridice.",
+      "ogTitle": "Pentru parteneri - Kupito",
+      "ogDescription": "Informații pentru parteneri: cum să aplicați, ce oferă programul, cine poate participa, cum încheiați colaborarea.",
+      "ogAlt": "Kupito - Pentru parteneri"
+    },
+    "investors": {
+      "title": "Pentru investitori - Kupito",
+      "description": "Kupito.club: platformă de anunțuri auto, nucleu pentru lansări rapide, model de business, strategie. Pagina nu este destinată indexării în motoarele de căutare.",
+      "ogTitle": "Pentru investitori - Kupito",
+      "ogDescription": "Prezentare Kupito: produs, model de business și strategie. Contactați-ne pentru a discuta parteneriatul.",
+      "ogAlt": "Kupito - Pentru investitori"
+    },
     "contacts": {
       "title": "Contacte - kupito.club",
       "description": "Contactați echipa kupito.club. Email, Telegram bot și WhatsApp Business.",
@@ -2013,10 +2334,27 @@
       "ogDescription": "Aflați cum Kupito colectează, folosește și protejează datele dvs. personale. Citiți politica noastră de confidențialitate pentru a înțelege cum procesăm datele dvs. în conformitate cu GDPR.",
       "ogAlt": "Kupito - Politica de confidențialitate"
     },
+    "brandLanding": {
+      "title": "Cumpără {brand} în Moldova: autoturisme rulate și noi de vânzare",
+      "titleWithPrice": "Cumpără {brand} în Moldova: autoturisme rulate și noi de la {price}",
+      "description": "Răsfoiți anunțuri {brand} pe Kupito. Listări actuale din Republica Moldova.",
+      "h1": "{brand} — de vânzare",
+      "intro": "Găsiți mașini {brand} verificate de la proprietari și dealeri.",
+      "ogAlt": "{brand} — anunțuri auto Kupito"
+    },
+    "brandModelLanding": {
+      "title": "Cumpără {brand} {model} în Moldova: autoturisme rulate și noi de vânzare",
+      "titleWithPrice": "Cumpără {brand} {model} în Moldova: autoturisme rulate și noi de la {price}",
+      "description": "Răsfoiți {brand} {model} pe Kupito. Prețuri actuale în Moldova.",
+      "h1": "{brand} {model} — de vânzare",
+      "ogAlt": "{brand} {model} — Kupito"
+    },
     "listing": {
       "notFoundTitle": "Anunțul nu a fost găsit",
       "notFoundDescription": "Anunțul nu există sau nu este disponibil.",
       "defaultDescription": "Cumpără sau vinde auto pe Kupito! Publică anunț gratuit.",
+      "ogAltVehicle": "{brand} {model} {year} — de vânzare în {city}",
+      "ogAltTire": "{title} — de vânzare în {city}",
       "keywords": {
         "cars": "autoturisme",
         "buyCar": "cumpără autoturism",
@@ -2069,7 +2407,19 @@
       "emailOptional": "Email (opțional)",
       "firstNameOptional": "Prenume (opțional)",
       "signInFailed": "Autentificare eșuată. Verificați datele.",
-      "signUpFailed": "Înregistrare eșuată. Încercați din nou."
+      "signUpFailed": "Înregistrare eșuată. Încercați din nou.",
+      "requiredTitle": "Autentificați-vă pentru a continua"
+    },
+    "nav": {
+      "language": "Limbă"
+    },
+    "comparison": {
+      "emptyTitle": "Lista de comparare este goală",
+      "emptyHint": "Adăugați anunțuri din catalog pentru a le compara",
+      "browse": "Vezi anunțuri"
+    },
+    "myListings": {
+      "title": "Anunțurile mele"
     },
     "tabs": {
       "catalog": "Catalog",
@@ -2080,18 +2430,40 @@
     "catalog": {
       "title": "Anunțuri",
       "empty": "Nu există anunțuri",
-      "loadMore": "Încarcă mai multe"
+      "loadMore": "Încarcă mai multe",
+      "searchPlaceholder": "Căutare în titlu…",
+      "filters": "Filtre",
+      "filtersTitle": "Filtre de căutare",
+      "vehicleType": "Categorie",
+      "vehicleType_car": "Autoturisme",
+      "vehicleType_truck": "Camioane",
+      "vehicleType_moto": "Motociclete",
+      "priceRange": "Preț (EUR)",
+      "priceFrom": "De la",
+      "priceTo": "Până la",
+      "sort": "Sortare",
+      "applyFilters": "Aplică",
+      "resetFilters": "Resetează",
+      "activeFilters": "Filtre active",
+      "categoryVehicles": "Autovehicule",
+      "categoryTires": "Anvelope"
     },
     "listing": {
       "price": "Preț",
       "city": "Oraș",
       "callSeller": "Contact",
       "favoriteAdd": "La favorite",
-      "favoriteRemove": "Scoate din favorite"
+      "favoriteRemove": "Scoate din favorite",
+      "specsTitle": "Detalii vehicul",
+      "tireSpecsTitle": "Detalii anvelope"
     },
     "create": {
+      "needAuth": "Autentificați-vă pentru a publica un anunț",
       "title": "Anunț nou",
       "editTitle": "Editează anunț",
+      "modeVehicle": "Autovehicul",
+      "modeTire": "Anvelope",
+      "photoCount": "{count} fotografii",
       "brand": "Marcă",
       "model": "Model",
       "year": "An",
@@ -2109,7 +2481,8 @@
       "success": "Anunț creat",
       "publish": "Publică anunțul",
       "selectBrand": "Selectați marca",
-      "selectModel": "Selectați modelul"
+      "selectModel": "Selectați modelul",
+      "selectCity": "Selectați orașul"
     },
     "favorites": {
       "title": "Favorite",

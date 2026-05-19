@@ -16,6 +16,10 @@ export const mobileListingsApi = {
   update: (id: string, data: UpdateListingDto) =>
     api.patch<Listing>(`/api/listings/${id}`, data),
   publish: (id: string) => api.post(`/api/listings/${id}/publish`),
+  pause: (id: string) => api.post(`/api/listings/${id}/pause`),
+  close: (id: string) => api.post(`/api/listings/${id}/close`),
+  promote: (id: string) => api.post(`/api/listings/${id}/promote`),
+  unpromote: (id: string) => api.post(`/api/listings/${id}/unpromote`),
   getMy: (
     page: number = 1,
     limit: number = 20,
@@ -28,7 +32,7 @@ export const mobileListingsApi = {
     params.set('limit', limit.toString());
     if (status) params.set('status', status);
     if (promoted !== undefined) params.set('promoted', String(promoted));
-    if (search?.trim()) params.set('search', search.trim());
+    if (typeof search === 'string' && search.trim()) params.set('search', search.trim());
     return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/listings/my?${params}`);
   },
 };

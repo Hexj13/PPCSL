@@ -34,6 +34,7 @@ const colors: ThemeColors = {
   text: {
     primary: '#1B1B1B',
     secondary: '#4A4A4A',
+    onPrimary: '#FFFFFF',
   },
   divider: '#DADADA',
   accent: '#ec9e1c',

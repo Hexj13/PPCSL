@@ -61,6 +61,7 @@ export default (): ExpoConfig => {
       favicon: './assets/images/favicon.png',
     },
     plugins: [
+      './plugins/withGradleNode.js',
       'expo-router',
       'expo-secure-store',
       'expo-localization',

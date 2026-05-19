@@ -78,7 +78,7 @@ export default function SignUpScreen() {
           disabled={busy}
         >
           {busy ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.bg.partnerLogo} />
           ) : (
             <Text style={styles.btnText}>{t('mobile.auth.signUp')}</Text>
           )}
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.bg.partnerLogo,
     color: colors.text.primary,
   },
   btn: {
@@ -112,6 +112,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontWeight: '600' },
+  btnText: { color: colors.bg.partnerLogo, fontWeight: '600' },
   link: { marginTop: 16, textAlign: 'center', color: colors.primary[600] },
 });

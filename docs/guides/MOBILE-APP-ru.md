@@ -42,6 +42,11 @@ tags:
 
 **Результат**: после выпуска и стабилизации Android, переход на iOS — это тестирование, UI-полировка под iOS-гайдлайны и настройка App Store, а не переписывание кода.
 
+### Админ-панель только на вебе
+
+- В мобильном приложении **нет админ-панели** ни на одной фазе: отдельных экранов, табов, deep links и обходов к маршрутам админки не планируется и не допускается.
+- Работа модераторов и администраторов — **только через веб** (браузер на десктопе или на телефоне): одна кодовая база Next.js, без дублирования правил доступа и UI в нативном клиенте.
+
 ---
 
 ## 2. Выбор технологии
@@ -117,6 +122,7 @@ kupito.club/
 ### Принципы
 
 - Код приложения в `core/mobile/` — часть PPCSL-субмодуля, шарится между платформами-площадками.
+- Админ-панель в `core/mobile/` **не реализуется** — только веб (`core/frontend/`).
 - **Один Expo-проект = два приложения** (Android + iOS). Общее: навигация, компоненты, хуки. Платформозависимое: `Platform.OS` или суффиксы `.android.tsx` / `.ios.tsx`.
 - Платформенные ассеты (иконка под бренд, splash, store-скриншоты) — в корне платформы `assets/mobile/{android,ios}/`.
 - Локали и тема копируются при сборке так же, как для frontend (расширение скрипта `prepare:build`).
@@ -233,6 +239,8 @@ EAS Workflows используют **Expo Fingerprint** — автоматиче
 3. Эмулятор Android: Android Studio Emulator, dev build устанавливается автоматически через `--device`.
 4. Fast Refresh: мгновенное обновление при сохранении файла (без полной перезагрузки).
 
+**Локальный NestJS (порт 4000):** эмулятор по умолчанию ходит на `http://10.0.2.2:4000`, симулятор iOS — на `http://127.0.0.1:4000`. На **физическом** телефоне в dev-клиенте клиент подставляет IP машины с Metro: сначала из `Constants.expoConfig.hostUri` / `Constants.platform.hostUri`, иначе из `SourceCode.scriptURL` (если это не `file://`). Если Metro в режиме **tunnel** (`*.exp.direct` и т.п.), локальный бэкенд на порту 4000 через тот же хост недоступен: в `__DEV__` при дефолтном локальном URL клиент переключается на **`https://kupito.club`**. Для работы с локальным Nest при tunnel задайте явный `EXPO_PUBLIC_API_URL` (LAN, staging или свой туннель до порта 4000). Если всё равно `Network Error`, проверьте, что бэкенд запущен и слушает `0.0.0.0:4000`, либо задайте явный URL в `EXPO_PUBLIC_API_URL` (например `http://192.168.x.x:4000`). Для USB без Wi‑Fi можно `adb reverse tcp:4000 tcp:4000` и `EXPO_PUBLIC_API_URL=http://127.0.0.1:4000`.
+
 ### Инструменты
 
 | Инструмент | Назначение |
@@ -244,6 +252,28 @@ EAS Workflows используют **Expo Fingerprint** — автоматиче
 | `console.log` | Вывод в Metro bundler терминал |
 | Sentry | Мониторинг ошибок в production |
 | `adb logcat` | Нативные логи Android при подключении по USB |
+
+### Android Studio: `command 'node'` not found
+
+При открытии `core/mobile/android` в Android Studio Gradle может не найти `node` (GUI-приложения не наследуют PATH из shell с Homebrew/nvm).
+
+Плагин `plugins/withGradleNode.js` в `app.config.ts` при `expo prebuild`:
+
+- записывает `node.dir` в `android/local.properties` (по `which node` на машине разработчика);
+- подставляет путь к Node в `settings.gradle` и `app/build.gradle`;
+- задаёт `REACT_NATIVE_NODE_MODULES_DIR` в корневом `build.gradle`, чтобы `react-native-svg` и другие модули не вызывали `node` при конфигурации.
+
+Порядок поиска Node: `NODE_BINARY` → `node.dir` в `local.properties` → `/opt/homebrew/bin/node` → `/usr/local/bin/node`.
+
+Если Node в нестандартном месте, добавьте в `android/local.properties` (файл локальный, в git не коммитится):
+
+```properties
+node.dir=/полный/путь/к/каталогу/с/node
+```
+
+Либо задайте `NODE_BINARY` в окружении IDE. После изменения конфига: `npx expo prebuild --platform android` и **Sync Project with Gradle Files**.
+
+Для повседневной разработки предпочтительнее CLI: `npx expo run:android` (терминал уже видит `node`).
 
 ### Стейджинг
 
@@ -501,8 +531,13 @@ mobileApp: {
 - Хуки: `useAuth`, `useApi`, `useTranslation` — без платформозависимого кода.
 
 **Экраны и навигация:**
-- Expo Router: таб-навигация (каталог, избранное, создание объявления, профиль).
-- Каталог: список объявлений с фильтрами, поиск, пагинация.
+- Expo Router: Stack без нижнего tab bar; burger-menu слева (`MobileAppShell`, `MobileNavDrawer`).
+- Язык ro/ru — только в drawer; переключатель убран с экрана профиля.
+- Гостевой gate: одна кнопка `header.loginAndRegister` (`AuthRequiredScreen`); после входа — `returnTo`.
+- Сравнение доступно гостю (AsyncStorage `comparison-storage`); после входа — sync через API.
+- Избранное: вкладки «анунțuri» / «filtre» (сохранённые фильтры).
+- Каталог: список с `ListingCard`, фильтры без поиска по title.
+- Фильтры: подписи `searchFilters.*`; кнопка «Caută» outline, disabled без активных критериев.
 - Карточка объявления: фото-галерея, характеристики, контакт продавца.
 - Избранное: список сохранённых.
 - Профиль: авторизация/регистрация, мои объявления, настройки.
@@ -574,7 +609,7 @@ mobileApp: {
 
 ### Фаза 4 — Зрелость
 
-**Цель:** полный feature parity между вебом и мобильными приложениями.
+**Цель:** паритет **публичного** функционала площадки с веб-клиентом (каталог, объявления, профиль, продавец и т.д.). Админ-панель по-прежнему только на вебе — в приложение не переносится.
 
 - Создание/редактирование объявлений с камерой (`expo-image-picker`, `expo-camera`).
 - Биометрическая авторизация (`expo-local-authentication`) — Face ID / отпечаток.

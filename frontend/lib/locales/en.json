@@ -2414,18 +2414,39 @@
     "catalog": {
       "title": "Listings",
       "empty": "No listings",
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "searchPlaceholder": "Search in title…",
+      "filters": "Filters",
+      "filtersTitle": "Search filters",
+      "vehicleType": "Category",
+      "vehicleType_car": "Cars",
+      "vehicleType_truck": "Trucks",
+      "vehicleType_moto": "Motorcycles",
+      "priceRange": "Price (EUR)",
+      "priceFrom": "From",
+      "priceTo": "To",
+      "sort": "Sort",
+      "applyFilters": "Apply",
+      "resetFilters": "Reset",
+      "activeFilters": "Filters on",
+      "categoryVehicles": "Vehicles",
+      "categoryTires": "Tires"
     },
     "listing": {
       "price": "Price",
       "city": "City",
       "callSeller": "Contact",
       "favoriteAdd": "Save",
-      "favoriteRemove": "Remove"
+      "favoriteRemove": "Remove",
+      "specsTitle": "Vehicle details",
+      "tireSpecsTitle": "Tire details"
     },
     "create": {
       "title": "New listing",
       "editTitle": "Edit listing",
+      "modeVehicle": "Vehicle",
+      "modeTire": "Tires",
+      "photoCount": "{count} photos",
       "brand": "Brand",
       "model": "Model",
       "year": "Year",
@@ -2443,7 +2464,8 @@
       "success": "Listing created",
       "publish": "Publish listing",
       "selectBrand": "Select brand",
-      "selectModel": "Select model"
+      "selectModel": "Select model",
+      "selectCity": "Select city"
     },
     "favorites": {
       "title": "Favorites",
