@@ -23,7 +23,7 @@ test.describe('Language switcher', () => {
       {
         name: 'Pick another locale from menu',
         action: async () => {
-          const beforePath = pathnameWithoutLocalePrefix(new URL(page.url()).pathname);
+          const beforePath = pathnameWithoutLocalePrefix(page.url());
           const beforeSearch = new URL(page.url()).search;
           await page.getByRole('navigation').getByTestId('language-switcher').click();
           const menu = page.getByTestId('language-switcher-menu');
@@ -44,7 +44,7 @@ test.describe('Language switcher', () => {
             throw new Error('No unselected locale option in language switcher menu');
           }
           await expect(page).toHaveURL((url) => {
-            const path = pathnameWithoutLocalePrefix(url.pathname);
+            const path = pathnameWithoutLocalePrefix(url);
             const search = url.search;
             return path === beforePath && search === beforeSearch;
           });

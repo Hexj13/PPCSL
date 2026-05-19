@@ -19,7 +19,7 @@ export class ProfilePage {
 
   async expectPageView(): Promise<void> {
     await expect(this.page).toHaveURL((url) =>
-      pathnameWithoutLocalePrefix(url.pathname).startsWith('/profile'),
+      pathnameWithoutLocalePrefix(url).startsWith('/profile'),
     );
     await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.editForm)).toBeVisible();

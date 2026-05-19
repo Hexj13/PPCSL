@@ -17,7 +17,7 @@ export class AdminPage {
 
   async expectPageView(): Promise<void> {
     await expect(this.page).toHaveURL((url) =>
-      pathnameWithoutLocalePrefix(url.pathname).startsWith('/admin'),
+      pathnameWithoutLocalePrefix(url).startsWith('/admin'),
     );
     await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
   }

@@ -29,6 +29,7 @@ export interface ThemeColors {
     base: string;
     secondary: string;
     darker: string;
+    card: string;
     partnerLogo: string;
   };
   text: {
@@ -110,6 +111,7 @@ const defaultTheme: ThemeColors = {
     base: '#F5F5F5',
     secondary: '#F4F4F4',
     darker: '#E8E8E8',
+    card: '#FAFAFA',
     partnerLogo: '#FFFFFF',
   },
   text: {

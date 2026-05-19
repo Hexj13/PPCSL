@@ -1,16 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
+import React, { type ReactNode, useEffect, useState } from 'react';
 
-import { Modal } from '@/components/modals/Modal';
-import { usePWAInstall } from '@/hooks/usePWAInstall';
-import { useTranslation } from '@/hooks/useTranslation';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { useTranslation } from '../../hooks/useTranslation';
+import { loadSiteConfigSync } from '../../lib/site-config';
+import { getCountry } from '../../lib/utils';
+import { Modal } from '../modals/Modal';
 
 interface PWAInstallButtonGrayProps {
   fullWidth?: boolean;
 }
 
-function highlightKeywords(text: string, keywords: string[]): React.ReactNode {
+const STORE_QR_SIZE = 168;
+
+function highlightKeywords(text: string, keywords: string[]): ReactNode {
   const isInsideParentheses = (text: string, position: number): boolean => {
     let openCount = 0;
     for (let i = 0; i < position; i++) {
@@ -58,7 +63,7 @@ function highlightKeywords(text: string, keywords: string[]): React.ReactNode {
     return text;
   }
 
-  const parts: React.ReactNode[] = [];
+  const parts: ReactNode[] = [];
   let lastIndex = 0;
 
   highlightedParts.forEach((part, index) => {
@@ -81,17 +86,21 @@ function highlightKeywords(text: string, keywords: string[]): React.ReactNode {
 }
 
 export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGrayProps) {
-  const { canInstall, isInstalled, isIOS, isReady, install } = usePWAInstall();
+  const { canInstall, isInstalled, isAndroid, isIOS, isMobile, isReady, install } = usePWAInstall();
   const { t } = useTranslation();
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'ios' | 'android'>('ios');
   const [isMounted, setIsMounted] = useState(false);
+  const siteConfig = loadSiteConfigSync(getCountry());
+  const androidStoreUrl =
+    siteConfig.mobileApp?.enabled === true ? siteConfig.mobileApp.androidUrl : null;
+  const hasAndroidStoreUrl = !!androidStoreUrl;
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const shouldShow = isMounted && isReady && !isInstalled && canInstall;
+  const shouldShow = isMounted && isReady && !isInstalled && (canInstall || hasAndroidStoreUrl);
   const highlightKeywordsList = [
     'Safari',
     'iPhone',
@@ -104,6 +113,17 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
   ];
 
   const handleInstall = () => {
+    if (hasAndroidStoreUrl && androidStoreUrl && isAndroid && isMobile) {
+      window.location.assign(androidStoreUrl);
+      return;
+    }
+
+    if (hasAndroidStoreUrl && !isIOS) {
+      setActiveTab('android');
+      setShowModal(true);
+      return;
+    }
+
     if (isIOS) {
       setActiveTab('ios');
       setShowModal(true);
@@ -162,7 +182,11 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
         <Modal
           isOpen={showModal}
           onClose={() => setShowModal(false)}
-          title={t('pwa.installInstructions')}
+          title={
+            hasAndroidStoreUrl && activeTab === 'android'
+              ? t('pwa.googlePlayTitle')
+              : t('pwa.installInstructions')
+          }
           size="medium"
         >
           <div className="space-y-4 text-left" style={{ color: 'rgb(var(--text-primary-rgb))' }}>
@@ -206,6 +230,40 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
                   {highlightKeywords(t('pwa.iosStep3'), highlightKeywordsList)}
                 </li>
               </ol>
+            ) : hasAndroidStoreUrl && androidStoreUrl ? (
+              <div className="space-y-4">
+                <p>
+                  {t(
+                    isMobile
+                      ? 'pwa.googlePlayMobileDescription'
+                      : 'pwa.googlePlayDesktopDescription',
+                  )}
+                </p>
+                <div className="flex flex-col items-center gap-4">
+                  <div className="rounded-xl bg-white p-3 shadow-sm">
+                    <QRCodeSVG
+                      value={androidStoreUrl}
+                      size={STORE_QR_SIZE}
+                      role="img"
+                      aria-label={t('pwa.googlePlayQrAlt')}
+                    />
+                  </div>
+                  <a
+                    href={androidStoreUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover-only:hover:bg-primary-600 active:bg-primary-700"
+                  >
+                    {t('pwa.openGooglePlay')}
+                  </a>
+                </div>
+                <p
+                  className="text-sm mt-4 pt-4 border-t border-primary-500/20"
+                  style={{ color: 'rgb(var(--text-primary-rgb))' }}
+                >
+                  {t('pwa.googlePlayFallbackNote')}
+                </p>
+              </div>
             ) : (
               <>
                 <ol className="list-decimal list-outside space-y-2 pl-5">

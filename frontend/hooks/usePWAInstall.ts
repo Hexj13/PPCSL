@@ -15,6 +15,7 @@ export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -25,6 +26,7 @@ export function usePWAInstall() {
     const checkInstalled = () => {
       const userAgent = window.navigator.userAgent.toLowerCase();
       const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
+      const isAndroidDevice = /android/.test(userAgent);
       const isMobileDevice =
         /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent) ||
         window.innerWidth <= 768;
@@ -36,6 +38,7 @@ export function usePWAInstall() {
       const isInStandaloneMode = isIOSStandalone || isStandaloneMedia;
 
       setIsIOS(isIOSDevice);
+      setIsAndroid(isAndroidDevice);
       setIsMobile(isMobileDevice);
       setIsStandalone(isInStandaloneMode);
       setIsInstalled(isInStandaloneMode);
@@ -118,6 +121,7 @@ export function usePWAInstall() {
   return {
     canInstall,
     isInstalled,
+    isAndroid,
     isIOS,
     isMobile,
     isStandalone,

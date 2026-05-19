@@ -1,9 +1,9 @@
 import type { Page } from '@playwright/test';
 
-import { expect, test } from '../fixtures/base';
+import { test } from '../fixtures/base';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
 import type { SearchHomePage } from '../page-objects/search-home.page';
-import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+import { expectPagePath } from '../utils/app-path';
 import { ensureListingDetailFromSearch } from '../utils/listings';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
@@ -67,10 +67,10 @@ test.describe('Listing detail: view and interaction @p0', () => {
       {
         name: 'Verify current page stays on listing detail URL',
         action: async () => {
-          await expect(page).toHaveURL((url) => {
-            const path = pathnameWithoutLocalePrefix(url.pathname);
-            return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
-          });
+          await expectPagePath(
+            page,
+            (path) => /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new',
+          );
         },
       },
     ];

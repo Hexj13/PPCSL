@@ -42,7 +42,7 @@ export class FavoritesPage {
 
   async expectPageView(): Promise<void> {
     await expect(this.page).toHaveURL((url) =>
-      pathnameWithoutLocalePrefix(url.pathname).startsWith('/favorites'),
+      pathnameWithoutLocalePrefix(url).startsWith('/favorites'),
     );
   }
 

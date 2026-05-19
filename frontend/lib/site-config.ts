@@ -13,6 +13,13 @@ export interface LocaleRoutingConfig {
   languageSwitcherTranslationKeys?: Readonly<Record<string, string>>;
 }
 
+export interface MobileAppConfig {
+  enabled: boolean;
+  androidUrl: string | null;
+  iosUrl: string | null;
+  androidPackageName?: string;
+}
+
 export interface SiteConfig {
   country: string;
   name: string;
@@ -25,6 +32,7 @@ export interface SiteConfig {
   siteUrl: string;
   localeRouting?: LocaleRoutingConfig;
   assetVersion?: string;
+  mobileApp?: MobileAppConfig;
   footerPartnerLogoSurfaceDefault?: 'light' | 'transparent';
   footerPartners?: Array<{
     name: string;
@@ -82,6 +90,11 @@ const defaultConfig: SiteConfig = {
   countryCode: 'MD',
   supportEmail: 'support@ppcsl.com',
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://ppcsl.com',
+  mobileApp: {
+    enabled: false,
+    androidUrl: null,
+    iosUrl: null,
+  },
   localeRouting: {
     defaultLocale: 'ro',
     supportedLocales: ['ro', 'ru'],

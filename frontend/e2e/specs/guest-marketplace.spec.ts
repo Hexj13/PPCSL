@@ -1,5 +1,5 @@
 import { expect, test } from '../fixtures/base';
-import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+import { expectPagePath } from '../utils/app-path';
 import { gotoWithDomContentLoadedRetry } from '../utils/session';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
@@ -35,7 +35,7 @@ test.describe('Guest marketplace guards', () => {
       {
         name: 'Expect home route',
         action: async () => {
-          await expect(page).toHaveURL((url) => pathnameWithoutLocalePrefix(url.pathname) === '/');
+          await expectPagePath(page, (path) => path === '/');
         },
       },
     ];

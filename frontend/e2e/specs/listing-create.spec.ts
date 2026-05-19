@@ -101,7 +101,7 @@ test.describe('Listing create @p0', () => {
         action: async () => {
           await expect(page).toHaveURL(
             (url) => {
-              const path = pathnameWithoutLocalePrefix(url.pathname);
+              const path = pathnameWithoutLocalePrefix(url);
               return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
             },
             { timeout: 30_000 },

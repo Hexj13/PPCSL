@@ -20,7 +20,7 @@ export class ComparePage {
 
   async expectPageView(): Promise<void> {
     await expect(this.page).toHaveURL((url) =>
-      pathnameWithoutLocalePrefix(url.pathname).startsWith('/compare'),
+      pathnameWithoutLocalePrefix(url).startsWith('/compare'),
     );
     await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
   }

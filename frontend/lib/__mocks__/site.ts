@@ -10,6 +10,11 @@ const config: SiteConfig = {
   countryCode: 'MD',
   supportEmail: 'support@test.com',
   siteUrl: 'https://test.com',
+  mobileApp: {
+    enabled: false,
+    androidUrl: null,
+    iosUrl: null,
+  },
 };
 
 export default config;

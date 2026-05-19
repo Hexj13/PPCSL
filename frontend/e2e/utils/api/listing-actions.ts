@@ -22,7 +22,7 @@ type ListingOwnership = {
 const LISTING_ID_UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function getCurrentListingId(page: Page): string {
-  const path = pathnameWithoutLocalePrefix(new URL(page.url()).pathname);
+  const path = pathnameWithoutLocalePrefix(page.url());
   const match = /^\/listings\/([^/]+)$/.exec(path);
   if (!match) {
     throw new Error(`Expected listing detail URL, got ${page.url()}`);

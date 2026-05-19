@@ -2137,7 +2137,11 @@
     "offer": {
       "title": "Investment offer",
       "lead": "We are raising funds to:",
-      "items": ["Scale marketing", "Accelerate product development", "Enter new markets"],
+      "items": [
+        "Scale marketing",
+        "Accelerate product development",
+        "Enter new markets"
+      ],
       "footer": "We are open to discuss partnership terms and can share more details on request."
     },
     "contactCta": "Contact us"
@@ -2218,6 +2222,12 @@
     "androidStep2": "In the menu, select 'Add to Home Screen'",
     "androidStep3": "Confirm by tapping 'Add'. The app will appear on your home screen",
     "browserNote": "Note: Option names may differ in other browsers (Samsung Internet, Firefox, Edge, etc.)",
+    "googlePlayTitle": "Kupito on Google Play",
+    "googlePlayDesktopDescription": "Install the Android app from Google Play or scan the QR code with your phone.",
+    "googlePlayMobileDescription": "Install the Android app from Google Play.",
+    "googlePlayQrAlt": "QR code for installing Kupito from Google Play",
+    "openGooglePlay": "Open Google Play",
+    "googlePlayFallbackNote": "If the Google Play link is not available yet, use the browser installation instructions.",
     "offline": "No Internet",
     "offlineMode": "Offline Mode",
     "offlineMessage": "You are not connected to the internet. Check your connection.",

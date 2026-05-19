@@ -68,12 +68,12 @@ async function registerVerifyAndCompleteProfile(
       action: async () => {
         await page.waitForURL(
           (url) => {
-            const path = pathnameWithoutLocalePrefix(url.pathname);
+            const path = pathnameWithoutLocalePrefix(url);
             return path.startsWith('/complete-profile') || path.startsWith('/sign');
           },
           { timeout: 30_000 },
         );
-        if (pathnameWithoutLocalePrefix(new URL(page.url()).pathname).startsWith('/sign')) {
+        if (pathnameWithoutLocalePrefix(page.url()).startsWith('/sign')) {
           throw new Error(
             'Phone verification did not establish a session (check API SMS bypass 000000 in development and auth cookies).',
           );

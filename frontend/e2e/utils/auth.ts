@@ -57,15 +57,15 @@ export async function loginByUi(page: Page, credentials: AuthCredentials): Promi
     const body = await response.text().catch(() => '');
     throw new Error(`Login failed: HTTP ${response.status()} ${body}`);
   }
-  await page.waitForURL((url) => !pathnameWithoutLocalePrefix(url.pathname).startsWith('/sign'), {
+  await page.waitForURL((url) => !pathnameWithoutLocalePrefix(url).startsWith('/sign'), {
     timeout: 30_000,
     waitUntil: 'domcontentloaded',
   });
-  if (pathnameWithoutLocalePrefix(new URL(page.url()).pathname).startsWith('/sign')) {
+  if (pathnameWithoutLocalePrefix(page.url()).startsWith('/sign')) {
     throw new Error('Expected to leave sign-in route after login');
   }
   const currentUrl = new URL(page.url());
-  const currentPath = pathnameWithoutLocalePrefix(currentUrl.pathname);
+  const currentPath = pathnameWithoutLocalePrefix(currentUrl);
   const mode = currentUrl.searchParams.get('mode');
   if (
     currentPath.startsWith('/complete-profile') &&

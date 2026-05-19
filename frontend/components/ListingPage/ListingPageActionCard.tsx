@@ -95,7 +95,7 @@ function listingPageActionCardSurfaces(
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base',
     };
   }
-  const defaultBase = 'border-2 border-primary-400 bg-white';
+  const defaultBase = 'border-2 border-primary-400 bg-bg-card';
   return {
     surfaceInteractive: `${defaultBase} hover-only:hover:border-primary-500 hover-only:hover:shadow-sm active:bg-primary-50/40`,
     surface: disabled

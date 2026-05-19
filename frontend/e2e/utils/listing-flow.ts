@@ -25,7 +25,7 @@ export async function createListingForViewScenario(
   await listingCreatePage.submitCreateForm();
   await expect(page).toHaveURL(
     (url) => {
-      const path = pathnameWithoutLocalePrefix(url.pathname);
+      const path = pathnameWithoutLocalePrefix(url);
       return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
     },
     { timeout: 30_000 },

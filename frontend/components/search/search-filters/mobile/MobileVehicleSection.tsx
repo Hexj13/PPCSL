@@ -245,7 +245,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
 
   return (
     <div className="flex flex-col gap-3 mb-4">
-      <div className={activeTab === 'basic' ? '' : 'hidden'}>
+      <div className={`flex flex-col gap-3 ${activeTab === 'basic' ? '' : 'hidden'}`}>
         <MobileVehicleBasicTab
           t={t}
           filters={filters}
@@ -263,7 +263,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
         />
       </div>
 
-      <div className={activeTab === 'advanced' ? '' : 'hidden'}>
+      <div className={`flex flex-col gap-3 ${activeTab === 'advanced' ? '' : 'hidden'}`}>
         <MobileVehicleAdvancedTab
           t={t}
           vehicleType={vehicleType}

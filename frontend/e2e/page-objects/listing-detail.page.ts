@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+import { expectPagePath } from '../utils/app-path';
 
 export class ListingDetailPage {
   private readonly testIds = {
@@ -33,10 +33,10 @@ export class ListingDetailPage {
   }
 
   async expectPageView(): Promise<void> {
-    await expect(this.page).toHaveURL((url) => {
-      const path = pathnameWithoutLocalePrefix(url.pathname);
-      return /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new';
-    });
+    await expectPagePath(
+      this.page,
+      (path) => /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new',
+    );
     await expect(this.copyLinkButton).toBeVisible();
   }
 

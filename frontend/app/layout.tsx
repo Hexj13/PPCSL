@@ -23,6 +23,7 @@ import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 import { getVersionedAssetPath } from '@/lib/assets';
 import { getServerTranslations, getMetadataLocale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
+import { loadThemeSync } from '@/lib/theme';
 import { Toaster } from '@/lib/toast';
 import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
 import { getCountry } from '@/lib/utils';
@@ -30,6 +31,7 @@ import { designTokens } from '@/ui';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' });
+const theme = loadThemeSync(getCountry());
 
 export async function generateMetadata(): Promise<Metadata> {
   const siteConfig = await loadSiteConfig(getCountry());
@@ -128,7 +130,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#40916B',
+  themeColor: theme.pwa?.themeColor || '#40916B',
   userScalable: true,
 };
 
