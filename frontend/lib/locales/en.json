@@ -2137,11 +2137,7 @@
     "offer": {
       "title": "Investment offer",
       "lead": "We are raising funds to:",
-      "items": [
-        "Scale marketing",
-        "Accelerate product development",
-        "Enter new markets"
-      ],
+      "items": ["Scale marketing", "Accelerate product development", "Enter new markets"],
       "footer": "We are open to discuss partnership terms and can share more details on request."
     },
     "contactCta": "Contact us"
