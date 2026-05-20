@@ -25,6 +25,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 - **[architecture-overview.md](./architecture/architecture-overview.md)** — **START HERE**
 - [multi-repository.md](./architecture/multi-repository.md) — Core + Platform repos
+- [backend-overview.md](./architecture/backend-overview.md) — Backend monolith, stack, modules, background jobs
 - [backend-layers.md](./architecture/backend-layers.md) — Backend layered architecture (use cases, domain)
 - [scripts-architecture.md](./architecture/scripts-architecture.md) — **CRITICAL**
 - [known-issues.md](./architecture/known-issues.md) — Known issues
@@ -111,8 +112,9 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 ### For Backend developer
 
 1. [architecture/multi-repository.md](./architecture/multi-repository.md)
-2. [architecture/scripts-architecture.md](./architecture/scripts-architecture.md) — **REQUIRED**
-3. [guides/local-development.md](./guides/local-development.md)
+2. [architecture/backend-overview.md](./architecture/backend-overview.md)
+3. [architecture/scripts-architecture.md](./architecture/scripts-architecture.md) — **REQUIRED**
+4. [guides/local-development.md](./guides/local-development.md)
 
 ### For Frontend developer
 

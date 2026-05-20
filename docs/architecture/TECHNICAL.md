@@ -265,9 +265,14 @@ See [paid-promotion.md](../features/paid-promotion.md) for complete promotion fe
 
 ## 4. Architecture
 
-### Backend layered architecture
+### Backend: monolith and layers
 
-The backend uses a layered design: **Presentation** (controllers, DTOs) → **Application** (use cases, ports) → **Domain** (entities, value objects, domain services) → **Infrastructure** (TypeORM, Redis, SMS, etc.). Controllers are thin; business logic lives in use cases and domain. See [backend-layers.md](./backend-layers.md) for layer conventions and module structure (Listings, Auth).
+The backend (`core/backend/`) is a **single NestJS monolith**: one process, one PostgreSQL database, feature areas as NestJS modules in `AppModule`. It exposes a **REST** API (no GraphQL or WebSockets). Background work uses **cron** (`@nestjs/schedule`), in-process **events** (`EventEmitterModule`), and **CLI scripts** — there is no Bull/Redis queue.
+
+Layered design (target): **Presentation** → **Application** (use cases, ports) → **Domain** → **Infrastructure** (TypeORM, Redis, S3, SMS). Fully adopted in **Listings** and **Auth**; other modules are hybrid or classic controller → service. Deployments are **multi-platform** (`COUNTRY` env), not multi-tenant SaaS.
+
+- [backend-overview.md](./backend-overview.md) — monolith, stack, module list, Redis, auth summary, what is not used
+- [backend-layers.md](./backend-layers.md) — layer conventions, bounded contexts, migration state
 
 ### Project Structure
 

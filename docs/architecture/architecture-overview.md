@@ -59,26 +59,28 @@ Moldova (kupito.club)              Future Platform
 
 ### For developers (important)
 
-5. **[backend-layers.md](./backend-layers.md)** — Backend layered architecture (Presentation → Application → Domain → Infrastructure), use cases, ports, Listings/Auth module structure.
+5. **[backend-overview.md](./backend-overview.md)** — Backend monolith, stack, NestJS modules, what is not used (GraphQL, queues), background jobs, multi-platform vs multi-tenant.
 
-6. **[scripts-architecture.md](./scripts-architecture.md)** — **CRITICAL**
+6. **[backend-layers.md](./backend-layers.md)** — Backend layered architecture (Presentation → Application → Domain → Infrastructure), use cases, ports, Listings/Auth module structure.
+
+7. **[scripts-architecture.md](./scripts-architecture.md)** — **CRITICAL**
    - Scripts and platform configs in core
    - Configs in `platforms/{country}/config.ts`
    - Running with `COUNTRY` variable
 
-7. **[known-issues.md](./known-issues.md)** — **KNOWN ISSUES**
+8. **[known-issues.md](./known-issues.md)** — **KNOWN ISSUES**
    - Hardcoded data in core
    - SEO keywords, metadata, OpenGraph
    - Optimization plan
 
 ### Deploy
 
-8. **[DEPLOYMENT.md](../guides/DEPLOYMENT.md)**
+9. **[DEPLOYMENT.md](../guides/DEPLOYMENT.md)**
    - Deploy instructions for Render.com
    - CI/CD setup
    - Production checklist
 
-9. **[local-development.md](../guides/local-development.md)**
+10. **[local-development.md](../guides/local-development.md)**
    - Local development
    - Environment setup
    - Debugging
@@ -135,10 +137,11 @@ Moldova (kupito.club)              Future Platform
 ### For Backend developer
 
 1. [multi-repository.md](./multi-repository.md)
-2. [backend-layers.md](./backend-layers.md) — layers and use cases
-3. [scripts-architecture.md](./scripts-architecture.md) — **REQUIRED**
-4. [platform-guide.md](../guides/platform-guide.md)
-5. [local-development.md](../guides/local-development.md)
+2. [backend-overview.md](./backend-overview.md) — monolith and stack
+3. [backend-layers.md](./backend-layers.md) — layers and use cases
+4. [scripts-architecture.md](./scripts-architecture.md) — **REQUIRED**
+5. [platform-guide.md](../guides/platform-guide.md)
+6. [local-development.md](../guides/local-development.md)
 
 ### For Frontend developer
 
@@ -174,4 +177,4 @@ If you have questions:
 
 ---
 
-**Last updated:** 2026-01-29
+**Last updated:** 2026-05

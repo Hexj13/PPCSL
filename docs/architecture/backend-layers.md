@@ -61,6 +61,18 @@ listings/
 - **Configuration:** Injected via constructor (e.g. `PromotionRulesConfig`) rather than `process.env` in domain.
 - **Testing:** Entity tests use real class instances (`Object.assign(new Entity(), defaults, overrides)`). Domain and use cases are unit-tested with mocked ports.
 
+## Migration state
+
+Layered structure is **required for new code** in core domains; legacy modules still use controller → service → entity. When touching a module, prefer moving logic into use cases and domain services rather than expanding fat services.
+
+| Layer adoption | Modules |
+| -------------- | ------- |
+| Full (reference) | `listings/`, `auth/` |
+| Hybrid | `users/`, `brands/` |
+| Classic NestJS | `favorites/`, `saved-filters/`, `board/`, `comparison/`, `exchange-rates/`, `sitemap/`, `telegram/`, `notifications/`, `diagnostics/` |
+
+Overview of monolith, stack, and all NestJS modules: [backend-overview.md](./backend-overview.md).
+
 ## Bounded contexts
 
 | Context      | Responsibility                          | Main aggregate       |
@@ -69,10 +81,15 @@ listings/
 | Auth         | Registration, login, JWT, verification  | — (coordinates User) |
 | Users        | Profile, limits, board slug             | User                 |
 | Catalog      | Brands and models (reference data)      | Brand → VehicleModel |
+| Tires        | Tire brands/models and tire listings    | TireBrand → TireModel |
 | Favorites    | Saved listings                          | Favorite             |
 | SavedFilters | Saved search filters                    | SavedFilter          |
+| Comparison   | Guest/user comparison lists             | ComparisonItem       |
+| Upload       | Images and storage                      | —                    |
+| Parsing      | Partner import runs and schedules       | ParserRun            |
 
 ## Related documentation
 
-- [technical.md](./technical.md) — project structure, API, database, testing
+- [backend-overview.md](./backend-overview.md) — monolith, stack, modules, background jobs
+- [TECHNICAL.md](./TECHNICAL.md) — project structure, API, database, testing
 - [scripts-architecture.md](./scripts-architecture.md) — platform scripts and configs
