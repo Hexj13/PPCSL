@@ -131,6 +131,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   themeColor: theme.pwa?.themeColor || '#40916B',
+  colorScheme: 'light',
   userScalable: true,
 };
 

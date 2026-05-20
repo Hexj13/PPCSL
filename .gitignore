@@ -97,3 +97,6 @@ frontend/public/pwa192.png
 frontend/public/partners/
 backend/assets/watermark/logo.png
 
+# Legacy native app path — use platform android/twa/ instead
+mobile/
+

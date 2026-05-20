@@ -20,13 +20,16 @@ describe('useHistoryBackClose', () => {
     resetOverlayHistoryForTests();
     pushState.mockClear();
     back.mockClear();
+    let historyState: OverlayHistoryState | null = null;
     pushState.mockImplementation((state: OverlayHistoryState) => {
-      window.history.state = state;
+      historyState = state;
     });
     Object.defineProperty(window, 'history', {
       configurable: true,
       value: {
-        state: null,
+        get state() {
+          return historyState;
+        },
         pushState,
         back,
       },

@@ -13,13 +13,16 @@ describe('overlay-history', () => {
     resetOverlayHistoryForTests();
     pushState.mockClear();
     back.mockClear();
+    let historyState: Record<string, unknown> | null = null;
     pushState.mockImplementation((state: Record<string, unknown>) => {
-      window.history.state = state;
+      historyState = state;
     });
     Object.defineProperty(window, 'history', {
       configurable: true,
       value: {
-        state: null,
+        get state() {
+          return historyState;
+        },
         pushState,
         back,
       },

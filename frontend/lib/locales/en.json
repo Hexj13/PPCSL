@@ -2093,7 +2093,7 @@
         "The option to get short AI-generated informational summaries for eligible vehicle listings (signed-in users; subject to availability and limits)",
         "A seller listing board with all of one seller’s listings on a single page",
         "Automatic synchronization with external sites",
-        "A mobile-first interface and ongoing mobile app development"
+        "A mobile-first interface, PWA installation, and an Android app on Google Play (TWA)"
       ]
     },
     "businessModel": {

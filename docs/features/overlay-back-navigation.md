@@ -28,6 +28,10 @@ Nested overlays (e.g. modal over a sheet) each push one history entry; Back clos
 
 Overlays use `useScrollLock` (reference-counted `position: fixed` on `document.body`). The listing image modal no longer duplicates body scroll lock logic.
 
+## Home scroll after Back from listing
+
+Returning from a listing detail page to `/` restores the saved feed scroll position in `useLayoutEffect` before paint (`lib/home-scroll-restore.ts`, wired from `ScrollReset.tsx`). A brief `position: fixed` offset on `document.body` avoids a one-frame flash at scroll top before `scrollTo` commits.
+
 ## Related
 
 - [image-preview.md](./image-preview.md) — photo viewer controls

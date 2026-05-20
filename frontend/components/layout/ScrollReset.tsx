@@ -8,7 +8,7 @@ import {
   sessionStorageRemoveItem,
   sessionStorageSetItem,
 } from '@/lib/browser-session-storage';
-import { shouldRestoreHomeScrollAfterPath } from '@/lib/preserve-home-scroll';
+import { applyHomeScrollRestore, readHomeScrollRestoreTarget } from '@/lib/home-scroll-restore';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
 function scrollListingDetailToTopIfNeeded(restPath: string): boolean {
@@ -21,7 +21,6 @@ function scrollListingDetailToTopIfNeeded(restPath: string): boolean {
 
 function setupHomeScrollRestoration(
   previousPath: string | null,
-  isRestoringRef: MutableRefObject<boolean>,
   removeHomeListenersRef: MutableRefObject<(() => void) | null>,
 ) {
   if ('scrollRestoration' in window.history) {
@@ -41,59 +40,9 @@ function setupHomeScrollRestoration(
     }
   };
 
-  try {
-    const navEntry = performance.getEntriesByType('navigation')[0] as
-      | PerformanceNavigationTiming
-      | undefined;
-    const navType = navEntry?.type;
-
-    const savedReloadY = sessionStorageGetItem('homeReloadScrollY');
-    const reloadTs = sessionStorageGetItem('homeReloadScrollTs');
-
-    if ((navType === 'reload' || navType === 'back_forward') && savedReloadY && reloadTs) {
-      const savedTime = parseInt(reloadTs, 10);
-      if (Date.now() - savedTime < 10 * 60 * 1000) {
-        const scrollY = parseInt(savedReloadY, 10);
-        sessionStorageRemoveItem('homeReloadScrollY');
-        sessionStorageRemoveItem('homeReloadScrollTs');
-
-        if (Number.isFinite(scrollY) && scrollY > 0) {
-          isRestoringRef.current = true;
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              window.scrollTo({ top: scrollY, behavior: 'instant' });
-              isRestoringRef.current = false;
-            });
-          });
-        }
-      } else {
-        sessionStorageRemoveItem('homeReloadScrollY');
-        sessionStorageRemoveItem('homeReloadScrollTs');
-      }
-    }
-  } catch {}
-
-  const savedScroll = sessionStorageGetItem('homeScrollPosition');
-  const timestamp = sessionStorageGetItem('homeScrollTimestamp');
-  if (savedScroll && timestamp && shouldRestoreHomeScrollAfterPath(previousPath)) {
-    const savedTime = parseInt(timestamp, 10);
-    if (Date.now() - savedTime < 5 * 60 * 1000) {
-      const scrollY = parseInt(savedScroll, 10);
-      sessionStorageRemoveItem('homeScrollPosition');
-      if (scrollY > 0) {
-        isRestoringRef.current = true;
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            window.scrollTo({ top: scrollY, behavior: 'instant' });
-            isRestoringRef.current = false;
-          });
-        });
-      }
-    } else {
-      sessionStorageRemoveItem('homeScrollPosition');
-      sessionStorageRemoveItem('homeScrollTimestamp');
-      sessionStorageRemoveItem('kupito_grid_state');
-    }
+  const target = readHomeScrollRestoreTarget(previousPath);
+  if (target) {
+    applyHomeScrollRestore(target.scrollY);
   }
 }
 
@@ -116,7 +65,6 @@ function shouldSkipScrollResetForPreservedScroll(
 export function ScrollReset() {
   const pathname = usePathname();
   const previousPathRef = useRef<string | null>(null);
-  const isRestoringRef = useRef(false);
   const removeHomeListenersRef = useRef<(() => void) | null>(null);
 
   useLayoutEffect(() => {
@@ -141,7 +89,7 @@ export function ScrollReset() {
     }
 
     if (restPath === '/') {
-      setupHomeScrollRestoration(previousPath, isRestoringRef, removeHomeListenersRef);
+      setupHomeScrollRestoration(previousPath, removeHomeListenersRef);
       return cleanup;
     }
 

@@ -37,12 +37,19 @@ describe('BottomSheet', () => {
   beforeEach(() => {
     resetOverlayHistoryForTests();
     mockMobileViewport();
+    let historyState: Record<string, unknown> | null = null;
     const pushState = jest.fn((state: Record<string, unknown>) => {
-      window.history.state = state;
+      historyState = state;
     });
     Object.defineProperty(window, 'history', {
       configurable: true,
-      value: { state: null, pushState, back: jest.fn() },
+      value: {
+        get state() {
+          return historyState;
+        },
+        pushState,
+        back: jest.fn(),
+      },
     });
   });
 
