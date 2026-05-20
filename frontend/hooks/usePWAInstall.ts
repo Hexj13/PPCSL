@@ -2,13 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { isInstalledWebApp } from '@/lib/is-installed-web-app';
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
-
-interface NavigatorStandalone extends Navigator {
-  standalone?: boolean;
 }
 
 export function usePWAInstall() {
@@ -31,11 +29,7 @@ export function usePWAInstall() {
         /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent) ||
         window.innerWidth <= 768;
 
-      const navigatorStandalone = window.navigator as NavigatorStandalone;
-      const isIOSStandalone = navigatorStandalone.standalone === true;
-      const isStandaloneMedia =
-        window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-      const isInStandaloneMode = isIOSStandalone || isStandaloneMedia;
+      const isInStandaloneMode = isInstalledWebApp();
 
       setIsIOS(isIOSDevice);
       setIsAndroid(isAndroidDevice);

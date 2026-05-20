@@ -20,8 +20,8 @@ export function useListingData({
   onListingUpdate,
 }: UseListingDataProps) {
   const id = listingId;
-  const { user } = useAuthStore();
-  const { check } = useFavoritesStore();
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const checkFavorite = useFavoritesStore((s) => s.check);
   const checkVehicle = useComparisonStore((s) => s.checkVehicle);
   const checkTire = useComparisonStore((s) => s.checkTire);
 
@@ -41,7 +41,7 @@ export function useListingData({
       return;
     }
     const applyFavoritesAndComparisonFromClientStores = () => {
-      setIsFavorite(check(id));
+      setIsFavorite(checkFavorite(id));
       setIsInComparison(isTireListing(listing) ? checkTire(id) : checkVehicle(id));
     };
     if (useFavoritesStore.persist.hasHydrated() && useComparisonStore.persist.hasHydrated()) {
@@ -57,11 +57,34 @@ export function useListingData({
       unfav();
       uncomp();
     };
-  }, [listing, id, check, checkTire, checkVehicle]);
+  }, [listing, id, checkFavorite, checkTire, checkVehicle]);
 
   useEffect(() => {
     onListingUpdateRef.current = onListingUpdate;
   }, [onListingUpdate]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!userId) {
+      setIsFavorite(checkFavorite(id));
+      return;
+    }
+    favoritesApi
+      .check(id)
+      .then((res) => {
+        if (!cancelled) {
+          setIsFavorite(res.data.isFavorite);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIsFavorite(checkFavorite(id));
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, userId, checkFavorite]);
 
   const fetchListingData = useCallback(
     (forceRefresh = false) => {
@@ -79,15 +102,8 @@ export function useListingData({
           })
         : listingsApi.getOne(currentId);
 
-      const favoritePromise = user
-        ? favoritesApi
-            .check(currentId)
-            .then((res) => res.data.isFavorite)
-            .catch(() => check(currentId))
-        : Promise.resolve(check(currentId));
-
-      Promise.all([listingPromise, favoritePromise])
-        .then(([listingRes, favoriteValue]) => {
+      listingPromise
+        .then((listingRes) => {
           if (currentId !== id) {
             return;
           }
@@ -101,7 +117,6 @@ export function useListingData({
           const nextListing = listingRes.data;
           listingRef.current = nextListing;
           setListing(nextListing);
-          setIsFavorite(favoriteValue);
           setIsInComparison(
             isTireListing(nextListing) ? checkTire(currentId) : checkVehicle(currentId),
           );
@@ -175,14 +190,12 @@ export function useListingData({
             return;
           }
 
-          const favoriteValue = check(currentId);
           listingRef.current = null;
           setListing(null);
-          setIsFavorite(favoriteValue);
           setIsInComparison(checkVehicle(currentId) || checkTire(currentId));
         });
     },
-    [id, user, check, checkVehicle, checkTire],
+    [id, checkVehicle, checkTire],
   );
 
   useEffect(() => {

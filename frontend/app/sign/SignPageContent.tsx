@@ -11,12 +11,14 @@ import { useRegisterPage } from '@/app/register/useRegisterPage';
 import { GoogleSignInButton } from '@/app/sign/GoogleSignInButton';
 import { GoogleSignInButtonSkeleton } from '@/app/sign/GoogleSignInButtonSkeleton';
 import { useGoogleAuth } from '@/app/sign/useGoogleAuth';
+import { AuthTransitionLoader } from '@/components/auth/AuthTransitionLoader';
 import { useI18n } from '@/components/providers/I18nProvider';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
+import { AUTH_TRANSITION_LOADER_MIN_MS } from '@/lib/auth-transition-loader';
 import { buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
-import { Spinner } from '@/ui';
 
 export type AuthTab = 'login' | 'register';
 
@@ -69,6 +71,17 @@ export function SignPageContent() {
     suppressSignedInReturnNavigation: googleAuth.isGoogleAuthInFlight,
   });
 
+  const isAuthTransitionBusy =
+    googleAuth.isGoogleAuthInFlight ||
+    login.isRedirecting ||
+    (login.isInitialized && !!login.user && !googleAuth.isGoogleAuthInFlight);
+  const { visible: showAuthLoader } = useLoadingState({
+    isLoading: isAuthTransitionBusy,
+    immediate: true,
+    minDisplayTime: AUTH_TRANSITION_LOADER_MIN_MS,
+    showDelay: 0,
+  });
+
   const handleTabClick = (next: AuthTab) => {
     if (next === tab) return;
     analytics.authTabSelect(next);
@@ -76,18 +89,8 @@ export function SignPageContent() {
     router.replace(href, { scroll: false });
   };
 
-  if (login.isInitialized && login.user && !googleAuth.isGoogleAuthInFlight) {
-    return null;
-  }
-
-  if (googleAuth.isGoogleAuthInFlight) {
-    return (
-      <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16" data-testid="auth-page">
-        <div className="card p-6 md:p-8 text-center">
-          <Spinner size="md" text={t('common.loading')} />
-        </div>
-      </div>
-    );
+  if (showAuthLoader) {
+    return <AuthTransitionLoader label={t('common.loading')} />;
   }
 
   return (

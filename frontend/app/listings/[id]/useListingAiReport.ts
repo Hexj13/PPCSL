@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Listing, ListingAiReportPayload } from '@/lib/api';
 import { listingsApi } from '@/lib/api';
 import { buildSignInHref } from '@/lib/return-url';
-import { isTireListing } from '@/lib/utils';
+import { getListingHref, isTireListing } from '@/lib/utils';
 
 import type { ListingAiReportModalPhase } from './ListingPageAiReportModal';
 
@@ -159,8 +159,14 @@ export function useListingAiReport(options: {
       }
       const qs = new URLSearchParams(window.location.search);
       qs.set('openAiReport', '1');
-      const q = qs.toString();
-      const returnPath = `/listings/${id}${q ? `?${q}` : ''}`;
+      const query = qs.toString();
+      const basePath =
+        listing != null
+          ? getListingHref(listing)
+          : typeof window !== 'undefined'
+            ? window.location.pathname
+            : `/listings/${id}`;
+      const returnPath = query ? `${basePath}?${query}` : basePath;
       router.push(buildSignInHref(returnPath));
       return;
     }

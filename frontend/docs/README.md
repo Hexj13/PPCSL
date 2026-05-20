@@ -46,7 +46,7 @@ Frontend-specific documentation for PPCSL Next.js application.
 - Service worker (`public/sw.js`) with 1h TTL for selected navigations and small catalog API responses
 - Precache on install: `/offline` only (home is not precached)
 - Offline fallback for favorites, profile, my-listings, and listing detail when network fails
-- Installation prompts for iOS/Android
+- Installation prompts for iOS/Android and installed app detection (`standalone`, `fullscreen`, TWA referrer)
 - Update banner reloads the page only after the user taps update (`ServiceWorkerRegistration`)
 
 ### SEO & Metadata

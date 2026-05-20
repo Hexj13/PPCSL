@@ -4,9 +4,15 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useI18n } from '@/components/providers/I18nProvider';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { GoogleSignInDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
+import {
+  clearAuthTransitionLoader,
+  markAuthTransitionLoader,
+  waitForAuthTransitionLoaderMinDisplay,
+} from '@/lib/auth-transition-loader';
 import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
@@ -54,10 +60,12 @@ export function useGoogleAuth(options: {
   const { locale: appLocale } = useI18n();
   const gisUiLocale = useMemo(() => gisButtonLocale(appLocale), [appLocale]);
   const searchParams = useSearchParams();
+  const { replace } = useLocalizedNavigation();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [ready, setReady] = useState(false);
   const [isGoogleAuthInFlight, setIsGoogleAuthInFlight] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const flightStartedAtRef = useRef<number | null>(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const gisScriptLoaded = options.gisScriptLoaded ?? true;
 
@@ -85,20 +93,25 @@ export function useGoogleAuth(options: {
         if (safeReturn) {
           phoneQs.set('returnUrl', buildPostAuthRedirect(safeReturn, locale));
         }
+        await waitForAuthTransitionLoaderMinDisplay(flightStartedAtRef.current);
+        markAuthTransitionLoader();
         const path = `/complete-profile?${phoneQs.toString()}`;
         if (typeof window !== 'undefined' && window.location) {
           window.location.href = buildPostAuthRedirect(path, locale);
         }
         return;
       }
+      await waitForAuthTransitionLoaderMinDisplay(flightStartedAtRef.current);
+      markAuthTransitionLoader();
+
       const dest = returnUrl ? sanitizeReturnUrl(returnUrl) : '/';
-      if (typeof window !== 'undefined' && window.location) {
-        window.location.href = dest
-          ? buildPostAuthRedirect(dest, locale)
-          : buildPostAuthRedirect('/', locale);
+      if (dest) {
+        replace(dest);
+      } else {
+        replace('/');
       }
     },
-    [searchParams, setAuth, options.mode, options.userType],
+    [searchParams, setAuth, options.mode, options.userType, replace],
   );
 
   useEffect(() => {
@@ -117,6 +130,8 @@ export function useGoogleAuth(options: {
     window.google.accounts.id.initialize({
       client_id: clientId,
       callback: (resp) => {
+        flightStartedAtRef.current = Date.now();
+        markAuthTransitionLoader();
         setIsGoogleAuthInFlight(true);
         void (async () => {
           try {
@@ -133,6 +148,8 @@ export function useGoogleAuth(options: {
             setAuth(syncedUser);
             await finishSession(syncedUser);
           } catch {
+            flightStartedAtRef.current = null;
+            clearAuthTransitionLoader();
             setIsGoogleAuthInFlight(false);
             toast.error(t('errors.googleSignInFailed'));
           }

@@ -4,56 +4,19 @@ import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useMemo } from 'react';
 
+import { AuthTransitionLoader } from '@/components/auth/AuthTransitionLoader';
+import { useAuthTransitionLoaderHold } from '@/hooks/useAuthTransitionLoaderHold';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-
-function FormSkeleton() {
-  return (
-    <div className="card p-4 md:p-6 lg:p-8 animate-pulse min-h-[800px]">
-      <div className="mb-6 border-b border-gray-200 pb-4">
-        <div className="h-8 bg-gray-200 rounded-sm w-48 mb-4" />
-        <div className="flex gap-2">
-          <div className="h-16 w-16 bg-gray-200 rounded-lg shrink-0" />
-          <div className="h-16 w-16 bg-gray-200 rounded-lg shrink-0" />
-          <div className="h-16 w-16 bg-gray-200 rounded-lg shrink-0" />
-          <div className="h-16 w-16 bg-gray-200 rounded-lg shrink-0" />
-        </div>
-      </div>
-      <div className="space-y-6">
-        <div className="h-8 bg-gray-200 rounded-sm w-56 mb-4" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="h-12 bg-gray-200 rounded-sm" />
-          <div className="h-12 bg-gray-200 rounded-sm" />
-          <div className="h-12 bg-gray-200 rounded-sm" />
-          <div className="h-12 bg-gray-200 rounded-sm" />
-        </div>
-        <div className="h-8 bg-gray-200 rounded-sm w-48 mt-6 mb-4" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="h-12 bg-gray-200 rounded-sm" />
-          <div className="h-12 bg-gray-200 rounded-sm" />
-        </div>
-        <div className="h-8 bg-gray-200 rounded-sm w-40 mt-6 mb-4" />
-        <div className="h-32 bg-gray-200 rounded-sm" />
-        <div className="h-12 bg-gray-200 rounded-sm w-full mt-6" />
-      </div>
-    </div>
-  );
-}
-
-function PageSkeleton() {
-  return (
-    <div className="max-w-4xl mx-auto mt-6 md:mt-12">
-      <div className="h-10 bg-gray-200 rounded-sm w-64 mb-6 ml-4 md:ml-6 lg:ml-8 animate-pulse" />
-      <FormSkeleton />
-    </div>
-  );
-}
+import { AUTH_TRANSITION_LOADER_MIN_MS } from '@/lib/auth-transition-loader';
 
 const ListingForm = dynamic(
   () => import('@/components/ListingForm').then((mod) => ({ default: mod.ListingForm })),
   {
     ssr: false,
+    loading: () => null,
   },
 );
 
@@ -78,10 +41,25 @@ function NewListingFormSection() {
 
 export default function NewListingPage() {
   const { t } = useTranslation();
-  const { isLoading, isAuthorized } = useRequireAuth();
+  const { isLoading, isAuthorized } = useRequireAuth({ signReturnPath: '/listings/new' });
+  const transitionHold = useAuthTransitionLoaderHold();
+  const authGateBusy = isLoading || transitionHold;
+  const { visible: showAuthLoader } = useLoadingState({
+    isLoading: authGateBusy,
+    immediate: true,
+    minDisplayTime: AUTH_TRANSITION_LOADER_MIN_MS,
+    showDelay: 0,
+  });
 
-  if (isLoading || !isAuthorized) {
-    return <PageSkeleton />;
+  if (!isAuthorized) {
+    if (!showAuthLoader) {
+      return null;
+    }
+    return <AuthTransitionLoader label={t('common.loading')} />;
+  }
+
+  if (showAuthLoader) {
+    return <AuthTransitionLoader label={t('common.loading')} />;
   }
 
   return (
@@ -92,7 +70,7 @@ export default function NewListingPage() {
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 pl-4 md:pl-6 lg:pl-8 text-primary-900">
         {t('header.createListing')}
       </h1>
-      <Suspense fallback={<FormSkeleton />}>
+      <Suspense fallback={null}>
         <NewListingFormSection />
       </Suspense>
     </div>

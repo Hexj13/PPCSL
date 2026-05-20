@@ -6,6 +6,7 @@ import { CopyButton } from '@/components/common/CopyButton';
 import { PlatformPartnerBadge } from '@/components/common/PlatformPartnerBadge';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
+import { useShouldOpenLinkInNewTab } from '@/hooks/useShouldOpenLinkInNewTab';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics, buildListingViewItemParams } from '@/lib/analytics';
 import { listingsApi, type Listing } from '@/lib/api';
@@ -233,6 +234,8 @@ function SellerBoardLink({
   boardSlug: string | null;
   t: (k: string) => string;
 }) {
+  const openInNewTab = useShouldOpenLinkInNewTab();
+
   if (!listing.user || activeListingsCount <= 1 || !boardSlug) return null;
   const icon = (
     <svg
@@ -259,8 +262,7 @@ function SellerBoardLink({
   return (
     <a
       href={`/board/${boardSlug}`}
-      target="_blank"
-      rel="noopener noreferrer"
+      {...(openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
       className="w-full min-h-12 px-4 md:px-8 py-2 md:py-2.5 text-sm md:text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10! select-none"
     >
       {icon}

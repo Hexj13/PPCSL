@@ -85,7 +85,7 @@ flowchart TD
 - `core/frontend/components/pwa/ServiceWorkerRegistration.tsx` регистрирует service worker в production и показывает update prompt.
 - `core/frontend/app/offline/page.tsx` содержит offline fallback page.
 - `core/frontend/components/pwa/PWAInstallButtonGray.tsx` показывает текущую кнопку установки PWA.
-- `core/frontend/hooks/usePWAInstall.ts` обрабатывает `beforeinstallprompt`, standalone mode и iOS-инструкции.
+- `core/frontend/hooks/usePWAInstall.ts` обрабатывает `beforeinstallprompt`, installed app detection (`standalone`, `fullscreen`, TWA referrer) и iOS-инструкции.
 - `locales/{en,ro,ru}.json` содержат секцию `pwa`.
 
 Текущий manifest уже задаёт:

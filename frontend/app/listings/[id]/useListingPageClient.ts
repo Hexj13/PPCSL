@@ -16,6 +16,7 @@ import {
   publishListingDetailComparisonCrossTab,
   publishListingDetailFavoriteCrossTab,
 } from '@/lib/cross-tab-listing-detail-publish';
+import { buildListingEquipmentDisplay } from '@/lib/options';
 import { buildSignInHref } from '@/lib/return-url';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
@@ -24,9 +25,9 @@ import {
   getCityName,
   getCountry,
   getListingDisplayTitle,
+  getListingHref,
   getTireModelDisplayLabel,
   isTireListing,
-  sortOptionsByLabel,
 } from '@/lib/utils';
 
 import { applyListingPromotionSelection } from './applyListingPromotionSelection';
@@ -100,18 +101,10 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     return user.id === listing.user.id;
   }, [user, listing]);
 
-  const equipmentColumns = useMemo(() => {
-    const eq = listing?.equipment;
-    if (!eq?.length) return { left: [] as string[], right: [] as string[] };
-    const sorted = sortOptionsByLabel(
-      eq.map((key) => ({
-        value: key,
-        label: t(`vehicleOptions.equipment.${key}`),
-      })),
-    ).map((opt) => opt.value);
-    const mid = Math.ceil(sorted.length / 2);
-    return { left: sorted.slice(0, mid), right: sorted.slice(mid) };
-  }, [listing?.equipment, t]);
+  const equipmentDisplay = useMemo(
+    () => buildListingEquipmentDisplay(listing?.equipment ?? [], t),
+    [listing?.equipment, t],
+  );
 
   const isLoadingListing = listingFromApi === null && !initialListing;
   const { visible: showSkeleton } = useLoadingState({
@@ -186,7 +179,13 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
           localStorageSetItem('pendingFavorites', JSON.stringify(pendingFavorites));
         }
       }
-      router.push(buildSignInHref(`/listings/${id}`));
+      const signInReturnPath =
+        listing != null
+          ? getListingHref(listing)
+          : typeof window !== 'undefined'
+            ? window.location.pathname + window.location.search
+            : `/listings/${id}`;
+      router.push(buildSignInHref(signInReturnPath));
       return;
     }
     if (isFavorite) {
@@ -423,7 +422,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
     isOwnListing,
     isFavorite,
     isInComparison,
-    equipmentColumns,
+    equipmentDisplay,
     displayTitle,
     imageAltTitle,
     getClosingDate,

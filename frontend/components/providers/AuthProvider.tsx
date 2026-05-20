@@ -11,19 +11,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isInitialized = useAuthStore((state) => state.isInitialized);
 
   useLayoutEffect(() => {
-    void useAuthStore.persist?.rehydrate?.();
-  }, []);
-
-  useEffect(() => {
     const run = async () => {
-      await Promise.all([
-        useFavoritesStore.persist?.rehydrate?.() ?? Promise.resolve(),
-        useComparisonStore.persist?.rehydrate?.() ?? Promise.resolve(),
-      ]);
+      await useAuthStore.persist?.rehydrate?.();
       await initAuth();
     };
     void run();
   }, [initAuth]);
+
+  useEffect(() => {
+    void Promise.all([
+      useFavoritesStore.persist?.rehydrate?.() ?? Promise.resolve(),
+      useComparisonStore.persist?.rehydrate?.() ?? Promise.resolve(),
+    ]);
+  }, []);
 
   useEffect(() => {
     if (!isInitialized || !user) return;

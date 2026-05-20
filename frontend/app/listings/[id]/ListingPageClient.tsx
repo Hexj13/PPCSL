@@ -32,6 +32,7 @@ import {
 import { formatDate, formatMileage, formatRegistrationType, isTireListing } from '@/lib/utils';
 import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
+import { ListingPageEquipmentSection } from './ListingPageEquipmentSection';
 import { ListingPageHistorySection } from './ListingPageHistorySection';
 import { listingPageShowsHeaderDivider } from './listing-page-header-divider';
 import {
@@ -193,45 +194,6 @@ function ListingPageListingInfoSection({
   );
 }
 
-function ListingPageEquipmentSection({
-  equipmentColumns,
-  t,
-}: {
-  equipmentColumns: { left: string[]; right: string[] };
-  t: (k: string) => string;
-}) {
-  if (equipmentColumns.left.length === 0 && equipmentColumns.right.length === 0) return null;
-  return (
-    <div className="surface overflow-hidden">
-      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
-        {t('listingDetail.equipment')}
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-        <ul
-          className="list-disc list-outside pl-5 space-y-1"
-          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-        >
-          {equipmentColumns.left.map((key) => (
-            <li key={key} className="ml-0">
-              {t(`vehicleOptions.equipment.${key}`)}
-            </li>
-          ))}
-        </ul>
-        <ul
-          className="list-disc list-outside pl-5 space-y-1"
-          style={{ color: 'rgb(var(--text-secondary-rgb))' }}
-        >
-          {equipmentColumns.right.map((key) => (
-            <li key={key} className="ml-0">
-              {t(`vehicleOptions.equipment.${key}`)}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
-
 function ListingPageConditionRegistrationSection({
   listing,
   t,
@@ -318,7 +280,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     isInComparison,
     isFavorite,
     isOwnListing,
-    equipmentColumns,
+    equipmentDisplay,
     displayTitle: _displayTitle,
     imageAltTitle,
     getClosingDate,
@@ -524,7 +486,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
 
             {!isTireListing(listing) && (
               <div data-testid="listing-detail-equipment">
-                <ListingPageEquipmentSection equipmentColumns={equipmentColumns} t={t} />
+                <ListingPageEquipmentSection equipmentDisplay={equipmentDisplay} t={t} />
               </div>
             )}
 

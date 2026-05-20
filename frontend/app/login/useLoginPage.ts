@@ -8,6 +8,11 @@ import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, savedFiltersApi } from '@/lib/api';
+import {
+  clearAuthTransitionLoader,
+  markAuthTransitionLoader,
+  waitForAuthTransitionLoaderMinDisplay,
+} from '@/lib/auth-transition-loader';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import {
   applyComparisonAfterAuth,
@@ -77,21 +82,9 @@ async function processPendingSavedFilter(
   }
 }
 
-function applyLoginSuccessRedirect(
-  returnUrl: string,
-  loginMethod: 'email' | 'phone',
-  filledFields: Record<string, boolean>,
-): void {
-  analytics.login(loginMethod as 'email' | 'phone');
-  analytics.formSubmit('login', true, filledFields);
-  if (typeof window !== 'undefined' && (window as Window).location) {
-    (window as Window).location.href = localizedHref(returnUrl, getClientLocale());
-  }
-}
-
 export function useLoginPage(options?: { suppressSignedInReturnNavigation?: boolean }) {
   const suppressExternalSignedInNav = options?.suppressSignedInReturnNavigation ?? false;
-  const { push } = useLocalizedNavigation();
+  const { push, replace } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { setAuth, user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
@@ -99,6 +92,7 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
   const queryReturnUrl = getReturnUrlFromSearchParams(searchParams);
   const resolvedReturnUrl = queryReturnUrl ?? referrerReturnUrl;
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const redirectStartedAtRef = useRef<number | null>(null);
   const suppressSignedInReturnNavigationRef = useRef(false);
 
   useEffect(() => {
@@ -201,6 +195,8 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
     try {
       await authApi.login({ ...formData, login: loginForApi });
       suppressSignedInReturnNavigationRef.current = true;
+      redirectStartedAtRef.current = Date.now();
+      markAuthTransitionLoader();
       setIsRedirecting(true);
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
       try {
@@ -234,14 +230,24 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
             ? `/complete-profile?mode=phone_required&returnUrl=${encodeURIComponent(buildPostAuthRedirect(safeReturn, getClientLocale()))}`
             : '/complete-profile?mode=phone_required';
         if (typeof window !== 'undefined' && window.location) {
+          await waitForAuthTransitionLoaderMinDisplay(redirectStartedAtRef.current);
+          markAuthTransitionLoader();
           window.location.href = buildPostAuthRedirect(target, getClientLocale());
         }
         return;
       }
       const returnUrl = resolvedReturnUrl || '/';
-      applyLoginSuccessRedirect(returnUrl, loginMethod, filledFields);
+      const safeReturn = sanitizeReturnUrl(returnUrl) ?? '/';
+      analytics.login(loginMethod as 'email' | 'phone');
+      analytics.formSubmit('login', true, filledFields);
+      await waitForAuthTransitionLoaderMinDisplay(redirectStartedAtRef.current);
+      markAuthTransitionLoader();
+      replace(safeReturn);
     } catch {
       suppressSignedInReturnNavigationRef.current = false;
+      redirectStartedAtRef.current = null;
+      clearAuthTransitionLoader();
+      setIsRedirecting(false);
       analytics.formSubmit('login', false, filledFields);
     } finally {
       setLoading(false);
@@ -263,5 +269,6 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
     handleLoginChange,
     handleLoginBlur,
     handleSubmit,
+    isRedirecting,
   };
 }

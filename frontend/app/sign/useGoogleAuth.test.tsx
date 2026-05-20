@@ -14,6 +14,23 @@ import { toast } from '@/lib/toast';
 
 import { useGoogleAuth } from './useGoogleAuth';
 
+const mockReplace = jest.fn();
+
+jest.mock('@/hooks/useLocalizedNavigation', () => ({
+  useLocalizedNavigation: () => ({
+    replace: mockReplace,
+    push: jest.fn(),
+    href: (path: string) => path,
+  }),
+}));
+
+jest.mock('@/lib/auth-transition-loader', () => ({
+  clearAuthTransitionLoader: jest.fn(),
+  markAuthTransitionLoader: jest.fn(),
+  waitForAuthTransitionLoaderMinDisplay: jest.fn(async () => {}),
+  AUTH_TRANSITION_LOADER_MIN_MS: 2000,
+}));
+
 jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
   usePathname: () => mockPathname(),
@@ -280,20 +297,6 @@ describe('useGoogleAuth', () => {
         }),
     );
 
-    let href = '';
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        pathname: '/ru/sign',
-        set href(next: string) {
-          href = next;
-        },
-        get href() {
-          return href;
-        },
-      },
-    });
-
     render(
       <Tree>
         <Harness />
@@ -321,25 +324,11 @@ describe('useGoogleAuth', () => {
     });
 
     await waitFor(() => {
-      expect(href.length).toBeGreaterThan(0);
+      expect(mockReplace).toHaveBeenCalled();
     });
   });
 
   it('redirects to localized home when phone is verified and returnUrl is absent', async () => {
-    let href = '';
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        pathname: '/ru/sign',
-        set href(next: string) {
-          href = next;
-        },
-        get href() {
-          return href;
-        },
-      },
-    });
-
     render(
       <Tree>
         <Harness />
@@ -359,7 +348,7 @@ describe('useGoogleAuth', () => {
     });
 
     await waitFor(() => {
-      expect(href === '/ru' || href.endsWith('/ru')).toBe(true);
+      expect(mockReplace).toHaveBeenCalledWith('/');
     });
   });
 

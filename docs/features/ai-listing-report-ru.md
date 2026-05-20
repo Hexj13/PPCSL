@@ -58,7 +58,7 @@ tags:
 
 ### Возврат на объявление
 
-- Собрать href входа через **`buildSignInHref(returnPath)`** ([`return-url.ts`](../../frontend/lib/return-url.ts)): в `returnPath` — `/listings/:id` с query, включая **`openAiReport=1`**. Те же правила санитизации `returnUrl`, что на логине/регистрации и в профиле: [`useLoginPage.ts`](../../frontend/app/login/useLoginPage.ts), [`useRegisterPage.ts`](../../frontend/app/register/useRegisterPage.ts), complete-profile. Клик гостя по ИИ-анализу: [`useListingAiReport.ts`](../../frontend/app/listings/[id]/useListingAiReport.ts).
+- Собрать href входа через **`buildSignInHref(returnPath)`** ([`return-url.ts`](../../frontend/lib/return-url.ts)): в `returnPath` — канонический путь объявления (`getListingHref`, slug при наличии) с query, включая **`openAiReport=1`**. Те же правила санитизации `returnUrl`, что на логине/регистрации и в профиле: [`useLoginPage.ts`](../../frontend/app/login/useLoginPage.ts), [`useRegisterPage.ts`](../../frontend/app/register/useRegisterPage.ts), complete-profile. Клик гостя по ИИ-анализу: [`useListingAiReport.ts`](../../frontend/app/listings/[id]/useListingAiReport.ts).
 
 ### Автооткрытие модалки один раз после входа
 
