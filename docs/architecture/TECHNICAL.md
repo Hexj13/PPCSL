@@ -1389,12 +1389,12 @@ For deploying kupito.club backend on Render.com, configure the following:
 - Optional listing video: MediaConvert account endpoint, queue ARN, role ARN, webhook SNS → `POST /api/webhooks/mediaconvert`, plus optional `AWS_CLOUDFRONT_URL`, `LISTING_VIDEO_WATERMARK_S3_URI`, `VIDEO_MAX_SIZE_BYTES`, `VIDEO_MAX_DURATION_SEC` — see [listing-video-production-setup-ru.md](../guides/listing-video-production-setup-ru.md) (operators, Russian) and [listings.md](../features/listings.md)
 - `REDIS_HOST` - Redis host (if using external Redis)
 - `REDIS_PORT` - Redis port (if using external Redis)
-- `ONNXRUNTIME_NODE_INSTALL` - Optional. Set to `skip` if `npm ci` fails on `onnxruntime-node` postinstall (NuGet download for optional GPU binaries). Plate masking uses CPU only.
+- `ONNXRUNTIME_NODE_INSTALL` - Set to `skip` on Render (or inline in the Build Command). Skips `onnxruntime-node` postinstall NuGet downloads for optional GPU binaries; plate masking uses CPU only. Without it, backend `npm ci` may fail with `ETIMEDOUT` to `api.nuget.org`.
 
 **Build Command:**
 
 ```bash
-git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && cd core/backend && npm ci && npm run build
+git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm ci && npm run prepare:build && cd core/backend && ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build
 ```
 
 **Start Command:**

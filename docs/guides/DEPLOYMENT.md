@@ -490,7 +490,7 @@ After creation, Render will show:
 - **Branch:** `main`
 - **Root Directory:** (leave empty)
 - **Runtime:** `Node`
-- **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && cd core/backend && npm ci && npm run build`
+- **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm ci && npm run prepare:build && cd core/backend && ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build`
 - **Start Command:** `cd core/backend && npm run start:prod`
 
 **Advanced Settings:**
@@ -521,9 +521,10 @@ DB_PASSWORD=<your-database-password>
 ```env
 NODE_ENV=production
 PORT=10000
+ONNXRUNTIME_NODE_INSTALL=skip
 ```
 
-**Note:** Render automatically sets `PORT` environment variable. Your app should use `process.env.PORT || 4000`.
+**Note:** Render automatically sets `PORT` environment variable. Your app should use `process.env.PORT || 4000`. `ONNXRUNTIME_NODE_INSTALL=skip` can also be set inline in the Build Command (`ONNXRUNTIME_NODE_INSTALL=skip npm ci`); it prevents `onnxruntime-node` from downloading optional GPU binaries from NuGet during install (plate masking uses CPU only).
 
 **Authentication (REQUIRED):**
 
@@ -639,7 +640,7 @@ Sentry image diagnostics use the backend `HEAD` proxy (`/api/diagnostics/image-s
 **Build Settings:**
 
 1. **Root Directory:** Leave empty
-2. **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && cd core/backend && npm ci && npm run build`
+2. **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm ci && npm run prepare:build && cd core/backend && ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build`
 3. **Start Command:** `cd core/backend && npm run start:prod`
 
 ### 3.6. Database Migrations
