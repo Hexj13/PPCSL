@@ -1,125 +1,136 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
-import type { ReadonlyURLSearchParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
+import { renderHook } from '@testing-library/react';
 
 import { getVehicleTypeFromUrlAndBodyTypesOnly, useVehicleType } from './useVehicleType';
 
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(),
+const replaceMock = jest.fn();
+
+jest.mock('@/hooks/useLocalizedNavigation', () => ({
+  useLocalizedNavigation: () => ({
+    replace: replaceMock,
+    href: (path: string) => path,
+  }),
 }));
 
 jest.mock('@/lib/analytics', () => ({
-  analytics: {
-    selectVehicleType: jest.fn(),
-  },
+  analytics: { selectVehicleType: jest.fn() },
 }));
 
-const mockReplace = jest.fn();
+jest.mock('@/lib/browser-local-storage', () => ({
+  localStorageGetItem: jest.fn(() => 'moto'),
+  localStorageSetItem: jest.fn(),
+}));
 
-function createSearchParams(entries: Record<string, string>): ReadonlyURLSearchParams {
-  const sp = new URLSearchParams();
-  for (const [k, v] of Object.entries(entries)) {
-    sp.set(k, v);
-  }
-  return sp as ReadonlyURLSearchParams;
+function createSearchParams(query: string) {
+  const params = new URLSearchParams(query);
+  return {
+    get: (key: string) => params.get(key),
+    toString: () => params.toString(),
+  } as Parameters<typeof useVehicleType>[0]['searchParams'];
 }
 
+const defaultHookOptions = {
+  resetToVehicleSearchDefaults: jest.fn(),
+  setLastAppliedFilters: jest.fn(),
+  setActiveTab: jest.fn(),
+};
+
 describe('getVehicleTypeFromUrlAndBodyTypesOnly', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    localStorage.setItem('kupito_vehicle_type', 'truck');
+  it('should return car when URL has no vehicleType', () => {
+    expect(getVehicleTypeFromUrlAndBodyTypesOnly(createSearchParams(''))).toBe('car');
   });
 
-  afterEach(() => {
-    localStorage.clear();
-  });
-
-  it('returns car for empty params regardless of localStorage', () => {
-    expect(getVehicleTypeFromUrlAndBodyTypesOnly(new URLSearchParams())).toBe('car');
-  });
-
-  it('returns vehicleType from URL when valid', () => {
-    expect(getVehicleTypeFromUrlAndBodyTypesOnly(createSearchParams({ vehicleType: 'moto' }))).toBe(
+  it('should return vehicleType from URL when present', () => {
+    expect(getVehicleTypeFromUrlAndBodyTypesOnly(createSearchParams('vehicleType=moto'))).toBe(
       'moto',
     );
-  });
-
-  it('returns uniform category from body_types when present', () => {
-    expect(getVehicleTypeFromUrlAndBodyTypesOnly(createSearchParams({ body_types: 'Van' }))).toBe(
+    expect(getVehicleTypeFromUrlAndBodyTypesOnly(createSearchParams('vehicleType=truck'))).toBe(
       'truck',
     );
   });
 });
 
 describe('useVehicleType', () => {
-  const noopSetState = () => {};
-  const noopTab = () => {};
-
   beforeEach(() => {
     jest.clearAllMocks();
-    localStorage.clear();
-    (useRouter as jest.Mock).mockReturnValue({ replace: mockReplace });
   });
 
-  afterEach(() => {
-    localStorage.clear();
-  });
-
-  it('applies stored vehicle type when URL does not specify it', async () => {
-    localStorage.setItem('kupito_vehicle_type', 'truck');
-    const searchParams = createSearchParams({});
-
+  it('should use car from URL when localStorage has moto but URL has no vehicleType', () => {
+    const searchParams = createSearchParams('');
     const { result } = renderHook(() =>
       useVehicleType({
         searchParams,
-        resetToVehicleSearchDefaults: noopSetState,
-        setLastAppliedFilters: noopSetState,
-        setActiveTab: noopTab,
+        ...defaultHookOptions,
       }),
     );
 
-    await waitFor(() => {
-      expect(result.current.vehicleType).toBe('truck');
-    });
+    expect(result.current.vehicleType).toBe('car');
   });
 
-  it('keeps URL vehicleType over localStorage', async () => {
-    localStorage.setItem('kupito_vehicle_type', 'truck');
-    const searchParams = createSearchParams({ vehicleType: 'moto' });
-
+  it('should keep moto when URL specifies vehicleType=moto', () => {
+    const searchParams = createSearchParams('vehicleType=moto');
     const { result } = renderHook(() =>
       useVehicleType({
         searchParams,
-        resetToVehicleSearchDefaults: noopSetState,
-        setLastAppliedFilters: noopSetState,
-        setActiveTab: noopTab,
+        ...defaultHookOptions,
       }),
     );
 
     expect(result.current.vehicleType).toBe('moto');
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(result.current.vehicleType).toBe('moto');
   });
 
-  it('does not override body-derived type with localStorage', async () => {
-    localStorage.setItem('kupito_vehicle_type', 'moto');
-    const searchParams = createSearchParams({ body_types: 'Van' });
+  it('should switch to car when URL changes from vehicleType=moto to clean home', () => {
+    let query = 'vehicleType=moto';
+    const searchParams = createSearchParams(query);
+    const { result, rerender } = renderHook(
+      ({ params }) =>
+        useVehicleType({
+          searchParams: params,
+          ...defaultHookOptions,
+        }),
+      { initialProps: { params: searchParams } },
+    );
 
+    expect(result.current.vehicleType).toBe('moto');
+
+    query = '';
+    rerender({ params: createSearchParams(query) });
+
+    expect(result.current.vehicleType).toBe('car');
+  });
+
+  it('should not read vehicleType from localStorage when URL is clean', () => {
+    const { localStorageGetItem } = jest.requireMock('@/lib/browser-local-storage') as {
+      localStorageGetItem: jest.Mock;
+    };
+    localStorageGetItem.mockReturnValue('moto');
+
+    const searchParams = createSearchParams('brand=peugeot');
     const { result } = renderHook(() =>
       useVehicleType({
         searchParams,
-        resetToVehicleSearchDefaults: noopSetState,
-        setLastAppliedFilters: noopSetState,
-        setActiveTab: noopTab,
+        ...defaultHookOptions,
       }),
     );
 
-    expect(result.current.vehicleType).toBe('truck');
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(result.current.vehicleType).toBe('truck');
+    expect(result.current.vehicleType).toBe('car');
+    expect(localStorageGetItem).not.toHaveBeenCalled();
+  });
+
+  it('should ignore vehicle type sync when category is tire', () => {
+    const searchParams = createSearchParams('category=tire');
+    const { result, rerender } = renderHook(
+      ({ params }) =>
+        useVehicleType({
+          searchParams: params,
+          ...defaultHookOptions,
+        }),
+      { initialProps: { params: createSearchParams('vehicleType=moto') } },
+    );
+
+    expect(result.current.vehicleType).toBe('moto');
+
+    rerender({ params: searchParams });
+
+    expect(result.current.vehicleType).toBe('moto');
   });
 });

@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, startTransition } from 'react';
 
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { analytics } from '@/lib/analytics';
-import { localStorageGetItem, localStorageSetItem } from '@/lib/browser-local-storage';
+import { localStorageSetItem } from '@/lib/browser-local-storage';
 import { VEHICLE_TYPE_BY_BODY_TYPE } from '@/lib/constants';
 import { isBrowser } from '@/lib/utils';
 
@@ -15,16 +15,6 @@ const saveVehicleTypeToStorage = (vehicleType: 'car' | 'moto' | 'truck') => {
   if (isBrowser) {
     localStorageSetItem(VEHICLE_TYPE_STORAGE_KEY, vehicleType);
   }
-};
-
-const getVehicleTypeFromStorage = (): 'car' | 'moto' | 'truck' | null => {
-  if (isBrowser) {
-    const stored = localStorageGetItem(VEHICLE_TYPE_STORAGE_KEY);
-    if (stored && ['car', 'truck', 'moto'].includes(stored)) {
-      return stored as 'car' | 'moto' | 'truck';
-    }
-  }
-  return null;
 };
 
 export function getVehicleTypeFromUrlAndBodyTypesOnly(searchParams: {
@@ -70,20 +60,7 @@ export function useVehicleType({
     if (searchParams.get('category') === 'tire') {
       return;
     }
-    const vehicleTypeParam = searchParams.get('vehicleType');
-    const urlSpecifiesVehicleType =
-      vehicleTypeParam !== null &&
-      vehicleTypeParam !== '' &&
-      ['car', 'truck', 'moto'].includes(vehicleTypeParam);
-
-    let newVehicleType = getVehicleTypeFromUrlAndBodyTypesOnly(searchParams);
-
-    if (!urlSpecifiesVehicleType && newVehicleType === 'car') {
-      const stored = getVehicleTypeFromStorage();
-      if (stored) {
-        newVehicleType = stored;
-      }
-    }
+    const newVehicleType = getVehicleTypeFromUrlAndBodyTypesOnly(searchParams);
 
     if (newVehicleType !== vehicleType) {
       setVehicleType(newVehicleType);

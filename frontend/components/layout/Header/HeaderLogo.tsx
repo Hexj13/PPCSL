@@ -19,7 +19,7 @@ type HeaderLogoProps = {
 export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { href } = useLocalizedNavigation();
+  const { href, replace } = useLocalizedNavigation();
   const siteConfig = loadSiteConfigSync(getCountry());
   const desktopLogoUrl = getVersionedAssetPath('/logo-desktop.svg', siteConfig.assetVersion);
   const mobileLogoUrl = getVersionedAssetPath('/logo-mobile.svg', siteConfig.assetVersion);
@@ -28,12 +28,13 @@ export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
     const { restPath } = stripLocalePrefixFromPathname(pathname ?? '/');
     if (restPath !== '/') return;
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent(RESET_SEARCH_EVENT));
     const hasParams = searchParams.toString().length > 0;
-    if (!hasParams) {
-      e.preventDefault();
-      window.dispatchEvent(new CustomEvent(RESET_SEARCH_EVENT));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (hasParams) {
+      replace(href('/'), { scroll: false });
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (

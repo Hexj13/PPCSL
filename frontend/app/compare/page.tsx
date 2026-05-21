@@ -4,8 +4,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
+import { RESET_SEARCH_EVENT } from '@/components/layout/Header/HeaderLogo';
 import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
 import { useI18n } from '@/components/providers/I18nProvider';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
@@ -146,6 +148,7 @@ function CompareTableBlock({
 function ComparePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { replace } = useLocalizedNavigation();
   const { t } = useTranslation();
   const { locale } = useI18n();
   const user = useAuthStore((s) => s.user);
@@ -344,9 +347,8 @@ function ComparePageContent() {
             heading={t('compare.noVehicles')}
             hint={t('compare.addVehiclesHint')}
             onBrowse={() => {
-              if (typeof window !== 'undefined') {
-                window.location.href = localePrefixPath('/', locale);
-              }
+              window.dispatchEvent(new CustomEvent(RESET_SEARCH_EVENT));
+              replace('/', { scroll: false });
             }}
             browseLabel={t('compare.browseListings')}
             dataTestId="compare-empty-vehicles"
