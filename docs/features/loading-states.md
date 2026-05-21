@@ -427,6 +427,18 @@ Define and implement a single standard:
 
 - Button loader display: 200ms delay (to avoid flicker), 1000ms minimum display time (so it can actually be seen).
 
+### Example C1: Auth submit actions
+
+**Goal:** keep the sign page stable during email/phone and Google authentication.
+
+**After:**
+
+- Do not show a full-page auth transition loader from the sign page.
+- Email/phone login uses the `LoadingButton` spinner in the login submit button and keeps it visible for at least 1000ms via `auth-submit-loader`.
+- Google auth uses its own loading state in the Google button area. It must not turn the email/phone submit button into a spinner.
+- Keep auth submit state local while the sign page is visible. Do not write the authenticated user into the global auth store until navigation reloads the destination page.
+- Use a hard redirect after successful auth so the destination page initializes auth state from cookies.
+
 ### Example D: Toast must not appear at the same time as the button loader
 
 **Goal:** the user first sees the action finish (loader goes away), then the toast.

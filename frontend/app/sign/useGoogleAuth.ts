@@ -4,15 +4,10 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useI18n } from '@/components/providers/I18nProvider';
-import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
-import type { GoogleSignInDto } from '@/lib/api';
+import type { GoogleSignInDto, User } from '@/lib/api';
 import { authApi } from '@/lib/api';
-import {
-  clearAuthTransitionLoader,
-  markAuthTransitionLoader,
-  waitForAuthTransitionLoaderMinDisplay,
-} from '@/lib/auth-transition-loader';
+import { waitForAuthSubmitLoaderMinDisplay } from '@/lib/auth-submit-loader';
 import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
@@ -20,10 +15,12 @@ import {
 import { getClientLocale } from '@/lib/i18n';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
-import { useAuthStore } from '@/lib/store';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
+
+const GOOGLE_SIGN_IN_INTENT_MS = 15_000;
+const GOOGLE_POPUP_CANCEL_FOCUS_MS = 400;
 
 declare global {
   interface Window {
@@ -60,59 +57,175 @@ export function useGoogleAuth(options: {
   const { locale: appLocale } = useI18n();
   const gisUiLocale = useMemo(() => gisButtonLocale(appLocale), [appLocale]);
   const searchParams = useSearchParams();
-  const { replace } = useLocalizedNavigation();
-  const setAuth = useAuthStore((s) => s.setAuth);
   const [ready, setReady] = useState(false);
   const [isGoogleAuthInFlight, setIsGoogleAuthInFlight] = useState(false);
+  const [isGooglePopupPending, setIsGooglePopupPending] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const flightStartedAtRef = useRef<number | null>(null);
+  const submitStartedAtRef = useRef<number | null>(null);
+  const isGoogleAuthInFlightRef = useRef(false);
+  const googleSignInIntentRef = useRef(false);
+  const googleSignInIntentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelPopupPendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const googleCallbackProcessingRef = useRef(false);
+  const gisInitializedRef = useRef(false);
+  const isMountedRef = useRef(true);
+  const authOptionsRef = useRef({
+    mode: options.mode,
+    userType: options.userType,
+  });
+  const finishSessionRef = useRef<
+    (
+      syncedUser: User,
+      authMode: 'login' | 'register',
+      authUserType?: GoogleSignInDto['type'],
+    ) => Promise<void>
+  >(async () => {});
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const gisScriptLoaded = options.gisScriptLoaded ?? true;
+  const isGoogleBusy = isGoogleAuthInFlight || isGooglePopupPending;
+
+  useEffect(() => {
+    authOptionsRef.current = {
+      mode: options.mode,
+      userType: options.userType,
+    };
+  }, [options.mode, options.userType]);
+
+  const clearCancelPopupPendingTimer = useCallback(() => {
+    if (cancelPopupPendingTimerRef.current) {
+      clearTimeout(cancelPopupPendingTimerRef.current);
+      cancelPopupPendingTimerRef.current = null;
+    }
+  }, []);
+
+  const clearGoogleSignInIntent = useCallback(() => {
+    googleSignInIntentRef.current = false;
+    if (googleSignInIntentTimerRef.current) {
+      clearTimeout(googleSignInIntentTimerRef.current);
+      googleSignInIntentTimerRef.current = null;
+    }
+  }, []);
+
+  const markGoogleSignInIntent = useCallback(() => {
+    if (isGoogleAuthInFlightRef.current) return;
+    googleSignInIntentRef.current = true;
+    if (googleSignInIntentTimerRef.current) {
+      clearTimeout(googleSignInIntentTimerRef.current);
+    }
+    googleSignInIntentTimerRef.current = setTimeout(() => {
+      googleSignInIntentRef.current = false;
+      googleSignInIntentTimerRef.current = null;
+    }, GOOGLE_SIGN_IN_INTENT_MS);
+  }, []);
+
+  const resetGoogleBusyState = useCallback(() => {
+    clearCancelPopupPendingTimer();
+    clearGoogleSignInIntent();
+    submitStartedAtRef.current = null;
+    isGoogleAuthInFlightRef.current = false;
+    googleCallbackProcessingRef.current = false;
+    setIsGooglePopupPending(false);
+    setIsGoogleAuthInFlight(false);
+  }, [clearCancelPopupPendingTimer, clearGoogleSignInIntent]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      clearCancelPopupPendingTimer();
+      clearGoogleSignInIntent();
+    };
+  }, [clearCancelPopupPendingTimer, clearGoogleSignInIntent]);
+
+  useEffect(() => {
+    isGoogleAuthInFlightRef.current = isGoogleAuthInFlight;
+  }, [isGoogleAuthInFlight]);
+
+  useEffect(() => {
+    if (!ready || typeof window === 'undefined') return;
+
+    const onWindowBlur = () => {
+      if (isGoogleAuthInFlightRef.current) return;
+      if (document.visibilityState !== 'visible') return;
+      const focused = document.activeElement as HTMLElement | null;
+      const focusedIsGisIframe =
+        focused?.tagName === 'IFRAME' && containerRef.current?.contains(focused) === true;
+      if (!focusedIsGisIframe && !googleSignInIntentRef.current) return;
+      clearCancelPopupPendingTimer();
+      setIsGooglePopupPending(true);
+      if (submitStartedAtRef.current === null) {
+        submitStartedAtRef.current = Date.now();
+      }
+    };
+
+    const onWindowFocus = () => {
+      if (isGoogleAuthInFlightRef.current) return;
+      clearCancelPopupPendingTimer();
+      cancelPopupPendingTimerRef.current = setTimeout(async () => {
+        if (isGoogleAuthInFlightRef.current) return;
+        await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
+        if (isGoogleAuthInFlightRef.current) return;
+        if (!isMountedRef.current) return;
+        resetGoogleBusyState();
+      }, GOOGLE_POPUP_CANCEL_FOCUS_MS);
+    };
+
+    window.addEventListener('blur', onWindowBlur);
+    window.addEventListener('focus', onWindowFocus);
+    return () => {
+      clearCancelPopupPendingTimer();
+      window.removeEventListener('blur', onWindowBlur);
+      window.removeEventListener('focus', onWindowFocus);
+    };
+  }, [ready, clearCancelPopupPendingTimer, resetGoogleBusyState]);
 
   const finishSession = useCallback(
-    async (syncedUser: { id: string }) => {
+    async (
+      syncedUser: User,
+      authMode: 'login' | 'register',
+      authUserType?: GoogleSignInDto['type'],
+    ) => {
+      let postAuthUser = syncedUser;
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
       try {
-        await syncPendingFavoritesAfterAuth(syncedUser.id);
-        const syncedAgain = await syncPartnerPromoDismissAfterAuth(useAuthStore.getState().user!);
-        setAuth(syncedAgain);
+        await syncPendingFavoritesAfterAuth(postAuthUser.id);
+        postAuthUser = await syncPartnerPromoDismissAfterAuth(postAuthUser);
         await applyComparisonAfterAuth();
       } finally {
         releaseComparisonHold();
       }
       const returnUrl = getReturnUrlFromSearchParams(searchParams);
       const locale = getClientLocale();
-      if (!useAuthStore.getState().user?.phoneVerified) {
+      if (!postAuthUser.phoneVerified) {
         const safeReturn = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
         const phoneQs = new URLSearchParams();
         phoneQs.set('mode', 'phone_required');
-        if (options.mode === 'register') {
+        if (authMode === 'register') {
           phoneQs.set('source', 'google_register');
-          phoneQs.set('selectedType', options.userType ?? 'Individual');
+          phoneQs.set('selectedType', authUserType ?? 'Individual');
         }
         if (safeReturn) {
           phoneQs.set('returnUrl', buildPostAuthRedirect(safeReturn, locale));
         }
-        await waitForAuthTransitionLoaderMinDisplay(flightStartedAtRef.current);
-        markAuthTransitionLoader();
         const path = `/complete-profile?${phoneQs.toString()}`;
         if (typeof window !== 'undefined' && window.location) {
+          await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
           window.location.href = buildPostAuthRedirect(path, locale);
         }
         return;
       }
-      await waitForAuthTransitionLoaderMinDisplay(flightStartedAtRef.current);
-      markAuthTransitionLoader();
-
-      const dest = returnUrl ? sanitizeReturnUrl(returnUrl) : '/';
-      if (dest) {
-        replace(dest);
-      } else {
-        replace('/');
+      await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
+      const dest = (returnUrl ? sanitizeReturnUrl(returnUrl) : null) ?? '/';
+      if (typeof window !== 'undefined' && window.location) {
+        window.location.href = buildPostAuthRedirect(dest, locale);
       }
     },
-    [searchParams, setAuth, options.mode, options.userType, replace],
+    [searchParams],
   );
+
+  useEffect(() => {
+    finishSessionRef.current = finishSession;
+  }, [finishSession]);
 
   useEffect(() => {
     if (!clientId || typeof window === 'undefined') {
@@ -127,44 +240,61 @@ export function useGoogleAuth(options: {
       setReady(false);
       return;
     }
-    window.google.accounts.id.initialize({
-      client_id: clientId,
-      callback: (resp) => {
-        flightStartedAtRef.current = Date.now();
-        markAuthTransitionLoader();
-        setIsGoogleAuthInFlight(true);
-        void (async () => {
-          try {
-            const body: GoogleSignInDto = {
-              idToken: resp.credential,
-              termsAccepted: true,
-            };
-            if (options.mode === 'register' && options.userType) {
-              body.type = options.userType;
+    if (!gisInitializedRef.current) {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (resp) => {
+          if (!resp?.credential) {
+            if (isMountedRef.current) {
+              resetGoogleBusyState();
             }
-            await authApi.googleSignIn(body);
-            const me = await authApi.me();
-            const syncedUser = await syncPartnerPromoDismissAfterAuth(me.data);
-            setAuth(syncedUser);
-            await finishSession(syncedUser);
-          } catch {
-            flightStartedAtRef.current = null;
-            clearAuthTransitionLoader();
-            setIsGoogleAuthInFlight(false);
-            toast.error(t('errors.googleSignInFailed'));
+            return;
           }
-        })();
-      },
-    });
+          if (googleCallbackProcessingRef.current) {
+            return;
+          }
+          googleCallbackProcessingRef.current = true;
+          clearCancelPopupPendingTimer();
+          clearGoogleSignInIntent();
+          if (submitStartedAtRef.current === null) {
+            submitStartedAtRef.current = Date.now();
+          }
+          isGoogleAuthInFlightRef.current = true;
+          setIsGooglePopupPending(false);
+          setIsGoogleAuthInFlight(true);
+          void (async () => {
+            try {
+              const { mode, userType } = authOptionsRef.current;
+              const body: GoogleSignInDto = {
+                idToken: resp.credential,
+                termsAccepted: true,
+              };
+              if (mode === 'register' && userType) {
+                body.type = userType;
+              }
+              await authApi.googleSignIn(body);
+              const me = await authApi.me();
+              const syncedUser = await syncPartnerPromoDismissAfterAuth(me.data);
+              if (!isMountedRef.current) return;
+              await finishSessionRef.current(syncedUser, mode, userType);
+            } catch {
+              await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
+              if (!isMountedRef.current) return;
+              resetGoogleBusyState();
+              toast.error(t('errors.googleSignInFailed'));
+            }
+          })();
+        },
+      });
+      gisInitializedRef.current = true;
+    }
     setReady(true);
   }, [
     clientId,
-    finishSession,
     gisScriptLoaded,
-    gisUiLocale,
-    options.mode,
-    options.userType,
-    setAuth,
+    clearCancelPopupPendingTimer,
+    clearGoogleSignInIntent,
+    resetGoogleBusyState,
     t,
   ]);
 
@@ -189,6 +319,8 @@ export function useGoogleAuth(options: {
     containerRef,
     clientIdConfigured: Boolean(clientId),
     isGoogleAuthInFlight,
+    isGoogleBusy,
     isButtonReady: ready,
+    markGoogleSignInIntent,
   };
 }

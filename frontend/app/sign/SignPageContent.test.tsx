@@ -53,7 +53,6 @@ jest.mock('@/app/login/useLoginPage', () => ({
     handleLoginChange: jest.fn(),
     handleLoginBlur: jest.fn(),
     handleSubmit: jest.fn(),
-    isRedirecting: false,
   }),
 }));
 

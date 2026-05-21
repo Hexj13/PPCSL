@@ -4,6 +4,10 @@ import {
   getCurrentListingOwnership,
   removeComparisonViaBrowserApi,
 } from '../utils/api/listing-actions';
+import {
+  waitUntilComparisonInIdsApi,
+  waitUntilComparisonNotInIdsApi,
+} from '../utils/api/wait-comparison-api';
 import { loginByUi } from '../utils/auth';
 import { ensureNonOwnListingDetailFromSearch } from '../utils/listings';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
@@ -15,6 +19,7 @@ test.describe('Listing detail actions', () => {
     listingDetailPage,
     comparePage,
   }) => {
+    test.setTimeout(120_000);
     const openSteps: E2EStep[] = [
       {
         name: 'Login and open another user listing detail',
@@ -38,6 +43,7 @@ test.describe('Listing detail actions', () => {
         name: 'Ensure listing is not already compared',
         action: async () => {
           await removeComparisonViaBrowserApi(page, listingId);
+          await waitUntilComparisonNotInIdsApi(page, listingId);
           await page.evaluate(() => {
             window.localStorage.removeItem('comparison-storage');
             window.localStorage.removeItem('comparison-storage-backup');
@@ -51,6 +57,7 @@ test.describe('Listing detail actions', () => {
         action: async () => {
           await listingDetailPage.expectCompareActionVisible();
           await listingDetailPage.clickCompareAction();
+          await waitUntilComparisonInIdsApi(page, listingId);
         },
       },
       {

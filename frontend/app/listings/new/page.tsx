@@ -4,13 +4,9 @@ import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useMemo } from 'react';
 
-import { AuthTransitionLoader } from '@/components/auth/AuthTransitionLoader';
-import { useAuthTransitionLoaderHold } from '@/hooks/useAuthTransitionLoaderHold';
-import { useLoadingState } from '@/hooks/useLoadingState';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { AUTH_TRANSITION_LOADER_MIN_MS } from '@/lib/auth-transition-loader';
 
 const ListingForm = dynamic(
   () => import('@/components/ListingForm').then((mod) => ({ default: mod.ListingForm })),
@@ -42,24 +38,9 @@ function NewListingFormSection() {
 export default function NewListingPage() {
   const { t } = useTranslation();
   const { isLoading, isAuthorized } = useRequireAuth({ signReturnPath: '/listings/new' });
-  const transitionHold = useAuthTransitionLoaderHold();
-  const authGateBusy = isLoading || transitionHold;
-  const { visible: showAuthLoader } = useLoadingState({
-    isLoading: authGateBusy,
-    immediate: true,
-    minDisplayTime: AUTH_TRANSITION_LOADER_MIN_MS,
-    showDelay: 0,
-  });
 
-  if (!isAuthorized) {
-    if (!showAuthLoader) {
-      return null;
-    }
-    return <AuthTransitionLoader label={t('common.loading')} />;
-  }
-
-  if (showAuthLoader) {
-    return <AuthTransitionLoader label={t('common.loading')} />;
+  if (isLoading || !isAuthorized) {
+    return null;
   }
 
   return (

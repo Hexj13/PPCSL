@@ -7,12 +7,8 @@ import { isAuthRoutePathname } from '@/components/layout/header-flow-paths';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
-import { authApi, savedFiltersApi } from '@/lib/api';
-import {
-  clearAuthTransitionLoader,
-  markAuthTransitionLoader,
-  waitForAuthTransitionLoaderMinDisplay,
-} from '@/lib/auth-transition-loader';
+import { authApi, savedFiltersApi, type User } from '@/lib/api';
+import { waitForAuthSubmitLoaderMinDisplay } from '@/lib/auth-submit-loader';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import {
   applyComparisonAfterAuth,
@@ -39,6 +35,42 @@ const isValidEmail = (value: string): boolean => {
 const isValidPhone = (value: string): boolean => {
   return /^\+\d{1,4}\d{6,15}$/.test(value);
 };
+
+type LoginSubmitError = {
+  code?: string;
+  message?: string;
+  response?: {
+    data?: {
+      message?: string | string[];
+    };
+  };
+};
+
+const quietSubmitRequest = {
+  headers: { 'X-Skip-Auth-Redirect': 'true', 'X-Skip-Error-Handling': 'true' },
+} as const;
+
+function getLoginSubmitErrorMessage(error: unknown, t: (k: string) => string): string {
+  const err = error as LoginSubmitError;
+  const backendMessage = err.response?.data?.message;
+  const message = Array.isArray(backendMessage) ? backendMessage.join(', ') : backendMessage;
+
+  if (message) {
+    if (message.startsWith('errors.') || message.startsWith('validation.')) {
+      const translated = t(message);
+      return translated === message ? t('common.apiErrors.unauthorized') : translated;
+    }
+    return message;
+  }
+
+  if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+    return t('common.apiErrors.timeout');
+  }
+  if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+    return t('common.apiErrors.networkError');
+  }
+  return t('common.apiErrors.connectionError');
+}
 
 async function processPendingSavedFilter(
   pendingSavedFilter: string | null,
@@ -84,28 +116,25 @@ async function processPendingSavedFilter(
 
 export function useLoginPage(options?: { suppressSignedInReturnNavigation?: boolean }) {
   const suppressExternalSignedInNav = options?.suppressSignedInReturnNavigation ?? false;
-  const { push, replace } = useLocalizedNavigation();
+  const { push } = useLocalizedNavigation();
   const searchParams = useSearchParams();
-  const { setAuth, user, isInitialized } = useAuthStore();
+  const { user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
   const [referrerReturnUrl, setReferrerReturnUrl] = useState<string | null>(null);
   const queryReturnUrl = getReturnUrlFromSearchParams(searchParams);
   const resolvedReturnUrl = queryReturnUrl ?? referrerReturnUrl;
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const redirectStartedAtRef = useRef<number | null>(null);
   const suppressSignedInReturnNavigationRef = useRef(false);
 
   useEffect(() => {
     if (
       isInitialized &&
       user &&
-      !isRedirecting &&
       !suppressSignedInReturnNavigationRef.current &&
       !suppressExternalSignedInNav
     ) {
       push(resolvedReturnUrl ?? '/');
     }
-  }, [user, isInitialized, push, isRedirecting, resolvedReturnUrl, suppressExternalSignedInNav]);
+  }, [user, isInitialized, push, resolvedReturnUrl, suppressExternalSignedInNav]);
 
   useEffect(() => {
     if (queryReturnUrl || typeof window === 'undefined') return;
@@ -130,6 +159,7 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
   const [errors, setErrors] = useState<{ login?: string; password?: string }>({});
   const [showPassword, setShowPassword] = useState(false);
   const formStartSentRef = useRef(false);
+  const submitStartedAtRef = useRef<number | null>(null);
 
   const handleFormFieldFocus = () => {
     if (!formStartSentRef.current) {
@@ -180,10 +210,12 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     if (!validateForm()) {
       analytics.formSubmit('login', false);
       return;
     }
+    submitStartedAtRef.current = Date.now();
     setLoading(true);
     const loginTrimmed = formData.login.trim();
     const loginForApi = isValidEmail(loginTrimmed) ? loginTrimmed : compactE164Phone(loginTrimmed);
@@ -193,28 +225,26 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
       password: !!formData.password,
     };
     try {
-      await authApi.login({ ...formData, login: loginForApi });
+      await authApi.login({ ...formData, login: loginForApi }, quietSubmitRequest);
       suppressSignedInReturnNavigationRef.current = true;
-      redirectStartedAtRef.current = Date.now();
-      markAuthTransitionLoader();
-      setIsRedirecting(true);
+      let postAuthUser: User | null = null;
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
       try {
-        const me = await authApi.me();
-        const syncedUser = await syncPartnerPromoDismissAfterAuth(me.data);
-        setAuth(syncedUser);
+        const me = await authApi.me(quietSubmitRequest);
+        let syncedUser = await syncPartnerPromoDismissAfterAuth(me.data);
         if (typeof window === 'undefined') {
           analytics.login(loginMethod as 'email' | 'phone');
           analytics.formSubmit('login', true, filledFields);
           return;
         }
         await syncPendingFavoritesAfterAuth(syncedUser.id);
-        const syncedAgain = await syncPartnerPromoDismissAfterAuth(useAuthStore.getState().user!);
-        setAuth(syncedAgain);
+        syncedUser = await syncPartnerPromoDismissAfterAuth(syncedUser);
         await applyComparisonAfterAuth();
+        postAuthUser = syncedUser;
       } finally {
         releaseComparisonHold();
       }
+      await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
       const filterHandled = await processPendingSavedFilter(
         localStorageGetItem('pendingSavedFilter'),
         t,
@@ -223,15 +253,13 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
         resolvedReturnUrl,
       );
       if (filterHandled) return;
-      if (!useAuthStore.getState().user?.phoneVerified) {
+      if (!postAuthUser?.phoneVerified) {
         const safeReturn = resolvedReturnUrl ? sanitizeReturnUrl(resolvedReturnUrl) : null;
         const target =
           safeReturn && typeof window !== 'undefined'
             ? `/complete-profile?mode=phone_required&returnUrl=${encodeURIComponent(buildPostAuthRedirect(safeReturn, getClientLocale()))}`
             : '/complete-profile?mode=phone_required';
         if (typeof window !== 'undefined' && window.location) {
-          await waitForAuthTransitionLoaderMinDisplay(redirectStartedAtRef.current);
-          markAuthTransitionLoader();
           window.location.href = buildPostAuthRedirect(target, getClientLocale());
         }
         return;
@@ -240,17 +268,17 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
       const safeReturn = sanitizeReturnUrl(returnUrl) ?? '/';
       analytics.login(loginMethod as 'email' | 'phone');
       analytics.formSubmit('login', true, filledFields);
-      await waitForAuthTransitionLoaderMinDisplay(redirectStartedAtRef.current);
-      markAuthTransitionLoader();
-      replace(safeReturn);
-    } catch {
+      if (typeof window !== 'undefined' && window.location) {
+        window.location.href = buildPostAuthRedirect(safeReturn, getClientLocale());
+      }
+    } catch (error: unknown) {
+      const errorMessage = getLoginSubmitErrorMessage(error, t);
+      await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
       suppressSignedInReturnNavigationRef.current = false;
-      redirectStartedAtRef.current = null;
-      clearAuthTransitionLoader();
-      setIsRedirecting(false);
-      analytics.formSubmit('login', false, filledFields);
-    } finally {
+      submitStartedAtRef.current = null;
       setLoading(false);
+      analytics.formSubmit('login', false, filledFields);
+      toast.error(errorMessage);
     }
   };
 
@@ -269,6 +297,5 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
     handleLoginChange,
     handleLoginBlur,
     handleSubmit,
-    isRedirecting,
   };
 }

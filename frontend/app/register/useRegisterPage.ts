@@ -12,7 +12,6 @@ import { authApi } from '@/lib/api';
 import { localStorageSetItem } from '@/lib/browser-local-storage';
 import { compactE164Phone, finalizePhoneFromRawInput, sanitizePhoneInput } from '@/lib/phone';
 import { getReturnUrlFromSearchParams } from '@/lib/return-url';
-import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 
 import { getRegisterSubmitErrorMessage, validatePhone } from './utils';
@@ -82,7 +81,6 @@ export type RegisterPageHandle = ReturnType<typeof useRegisterPage>;
 export function useRegisterPage() {
   const { push } = useLocalizedNavigation();
   const searchParams = useSearchParams();
-  const { user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
   const returnUrl = getReturnUrlFromSearchParams(searchParams);
   const [formData, setFormData] = useState<RegisterFormState>(initialFormState);
@@ -93,12 +91,6 @@ export function useRegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const prevTypeRef = useRef<'Individual' | 'Business'>(formData.type);
   const formStartSentRef = useRef(false);
-
-  useEffect(() => {
-    if (isInitialized && user) {
-      push('/');
-    }
-  }, [user, isInitialized, push]);
 
   useEffect(() => {
     if (formData.type === 'Individual' && prevTypeRef.current !== formData.type) {

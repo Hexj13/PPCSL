@@ -11,13 +11,10 @@ import { useRegisterPage } from '@/app/register/useRegisterPage';
 import { GoogleSignInButton } from '@/app/sign/GoogleSignInButton';
 import { GoogleSignInButtonSkeleton } from '@/app/sign/GoogleSignInButtonSkeleton';
 import { useGoogleAuth } from '@/app/sign/useGoogleAuth';
-import { AuthTransitionLoader } from '@/components/auth/AuthTransitionLoader';
 import { useI18n } from '@/components/providers/I18nProvider';
-import { useLoadingState } from '@/hooks/useLoadingState';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
-import { AUTH_TRANSITION_LOADER_MIN_MS } from '@/lib/auth-transition-loader';
 import { buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
 
 export type AuthTab = 'login' | 'register';
@@ -68,30 +65,23 @@ export function SignPageContent() {
     gisScriptLoaded: gisReady,
   });
   const login = useLoginPage({
-    suppressSignedInReturnNavigation: googleAuth.isGoogleAuthInFlight,
+    suppressSignedInReturnNavigation: googleAuth.isGoogleBusy,
   });
 
-  const isAuthTransitionBusy =
-    googleAuth.isGoogleAuthInFlight ||
-    login.isRedirecting ||
-    (login.isInitialized && !!login.user && !googleAuth.isGoogleAuthInFlight);
-  const { visible: showAuthLoader } = useLoadingState({
-    isLoading: isAuthTransitionBusy,
-    immediate: true,
-    minDisplayTime: AUTH_TRANSITION_LOADER_MIN_MS,
-    showDelay: 0,
-  });
+  const isAlreadySignedInRedirecting =
+    login.isInitialized && !!login.user && !googleAuth.isGoogleBusy;
+  const authSubmitBusy = login.loading || isAlreadySignedInRedirecting || googleAuth.isGoogleBusy;
+  const loginSubmitBusy = login.loading || isAlreadySignedInRedirecting;
+  const googleDisabled = authSubmitBusy;
+  const registerAuthBusy = googleAuth.isGoogleBusy;
 
   const handleTabClick = (next: AuthTab) => {
     if (next === tab) return;
+    if (authSubmitBusy) return;
     analytics.authTabSelect(next);
     const href = buildSignPageHref({ tab: next, returnUrl });
     router.replace(href, { scroll: false });
   };
-
-  if (showAuthLoader) {
-    return <AuthTransitionLoader label={t('common.loading')} />;
-  }
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16" data-testid="auth-page">
@@ -126,6 +116,7 @@ export function SignPageContent() {
                 : 'hover-only:hover:bg-primary-500/10'
             }`}
             onClick={() => handleTabClick('login')}
+            disabled={authSubmitBusy}
           >
             {t('login.title')}
           </button>
@@ -142,6 +133,7 @@ export function SignPageContent() {
                 : 'hover-only:hover:bg-primary-500/10'
             }`}
             onClick={() => handleTabClick('register')}
+            disabled={authSubmitBusy}
           >
             {t('register.title')}
           </button>
@@ -168,7 +160,8 @@ export function SignPageContent() {
             formData={login.formData}
             setFormData={login.setFormData}
             setErrors={login.setErrors}
-            loading={login.loading}
+            loading={loginSubmitBusy}
+            disabled={authSubmitBusy}
             errors={login.errors}
             showPassword={login.showPassword}
             setShowPassword={login.setShowPassword}
@@ -196,11 +189,17 @@ export function SignPageContent() {
             showTitle={false}
             showLoginLink={false}
             formClassName="p-6 md:p-8"
+            authBusy={registerAuthBusy}
+            disabled={authSubmitBusy}
           />
         </div>
       </div>
       {googleClientIdConfigured ? (
-        <div className="mt-6 space-y-4" data-testid="auth-google-outside-card">
+        <div
+          className="mt-6 space-y-4"
+          data-testid="auth-google-outside-card"
+          onPointerDown={googleAuth.markGoogleSignInIntent}
+        >
           <div className="flex items-center gap-3">
             <span className="grow h-px bg-primary-700/25" />
             <span className="text-sm text-hint shrink-0">{t('sign.dividerOr')}</span>
@@ -215,6 +214,8 @@ export function SignPageContent() {
               <GoogleSignInButton
                 containerRef={googleAuth.containerRef}
                 clientIdConfigured={googleAuth.clientIdConfigured}
+                disabled={googleDisabled}
+                loading={googleAuth.isGoogleBusy}
               />
             </div>
           ) : null}

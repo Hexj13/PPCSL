@@ -16,6 +16,8 @@ type RegisterPanelProps = {
   showTitle?: boolean;
   showLoginLink?: boolean;
   formClassName?: string;
+  authBusy?: boolean;
+  disabled?: boolean;
 };
 
 export function RegisterPanel({
@@ -23,6 +25,8 @@ export function RegisterPanel({
   showTitle = true,
   showLoginLink = true,
   formClassName = 'card p-6 md:p-8',
+  authBusy = false,
+  disabled = false,
 }: RegisterPanelProps) {
   const { t } = useTranslation();
   const {
@@ -41,6 +45,8 @@ export function RegisterPanel({
     handleFormFieldFocus,
     handleSubmit,
   } = registerPage;
+  const submitBusy = loading;
+  const formDisabled = loading || authBusy || disabled;
 
   return (
     <>
@@ -54,6 +60,7 @@ export function RegisterPanel({
         className={formClassName}
         autoComplete="off"
         data-testid="auth-register-form"
+        aria-busy={submitBusy}
       >
         <RegisterFormType formData={formData} setFormData={setFormData} />
         <RegisterFormFields
@@ -76,8 +83,10 @@ export function RegisterPanel({
 
         <LoadingButton
           type="submit"
-          loading={loading}
+          loading={submitBusy}
+          disabled={formDisabled}
           loadingText={t('register.registering')}
+          loaderInstant
           className="w-full text-primary-700 font-medium text-sm md:text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="auth-register-submit"
         >

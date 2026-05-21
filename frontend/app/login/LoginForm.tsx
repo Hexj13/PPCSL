@@ -13,6 +13,7 @@ type LoginFormProps = {
   setFormData: React.Dispatch<React.SetStateAction<{ login: string; password: string }>>;
   setErrors: React.Dispatch<React.SetStateAction<{ login?: string; password?: string }>>;
   loading: boolean;
+  disabled?: boolean;
   errors: { login?: string; password?: string };
   showPassword: boolean;
   setShowPassword: (v: boolean | ((p: boolean) => boolean)) => void;
@@ -32,6 +33,7 @@ export function LoginForm({
   setFormData,
   setErrors,
   loading,
+  disabled = false,
   errors,
   showPassword,
   setShowPassword,
@@ -46,6 +48,7 @@ export function LoginForm({
 }: LoginFormProps) {
   const { locale } = useI18n();
   const registerLink = registerHref ?? buildSignPageHref({ tab: 'register' });
+  const formDisabled = loading || disabled;
   return (
     <>
       {showTitle && (
@@ -53,7 +56,12 @@ export function LoginForm({
           {t('login.title')}
         </h1>
       )}
-      <form onSubmit={handleSubmit} className={formClassName} data-testid="auth-login-form">
+      <form
+        onSubmit={handleSubmit}
+        className={formClassName}
+        data-testid="auth-login-form"
+        aria-busy={loading}
+      >
         <div className="mb-5">
           <label className="block text-sm font-semibold mb-2 text-primary-900">
             {t('login.emailOrPhone')}
@@ -64,6 +72,7 @@ export function LoginForm({
             onChange={handleLoginChange}
             onBlur={handleLoginBlur}
             onFocus={handleFormFieldFocus}
+            disabled={formDisabled}
             className={`input-field ${errors.login ? 'border-red-500' : ''}`}
             placeholder={t('login.emailOrPhone')}
             autoComplete="username"
@@ -95,6 +104,7 @@ export function LoginForm({
                   setErrors({ ...errors, password: undefined });
                 }
               }}
+              disabled={formDisabled}
               className={`input-field pr-10 ${errors.password ? 'border-red-500' : ''}`}
               placeholder={t('login.passwordPlaceholder')}
               autoComplete="current-password"
@@ -103,6 +113,7 @@ export function LoginForm({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              disabled={formDisabled}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover-only:hover:text-primary-400 transition-colors"
               tabIndex={-1}
               data-testid="auth-login-password-toggle"
@@ -152,7 +163,9 @@ export function LoginForm({
         <LoadingButton
           type="submit"
           loading={loading}
+          disabled={formDisabled}
           loadingText={t('login.loggingIn')}
+          loaderInstant
           className="w-full text-primary-700 font-medium text-sm md:text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="auth-login-submit"
         >

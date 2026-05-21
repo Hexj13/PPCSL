@@ -45,7 +45,7 @@ export const authApi = {
   refreshQuiet: (data?: RefreshTokenDto) => refreshAuthSession(data ?? {}),
   googleSignIn: (data: GoogleSignInDto) => api.post<GoogleSignInResponse>('/api/auth/google', data),
   logout: () => api.post<{ success: boolean }>('/api/auth/logout', {}),
-  me: () => api.get<User>('/api/auth/me'),
+  me: (config?: AxiosRequestConfig) => api.get<User>('/api/auth/me', config),
   updateProfile: (data: UpdateProfileDto) =>
     api.patch<UpdateProfileResponse>('/api/auth/profile', data),
   changePassword: (data: ChangePasswordDto) =>
