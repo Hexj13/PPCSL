@@ -24,7 +24,7 @@ import {
 } from '@/lib/phone';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
-import { useAuthStore } from '@/lib/store';
+import { persistAuthSnapshotForRedirect, useAuthStore } from '@/lib/store';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
@@ -245,6 +245,9 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
         releaseComparisonHold();
       }
       await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
+      if (postAuthUser) {
+        persistAuthSnapshotForRedirect(postAuthUser);
+      }
       const filterHandled = await processPendingSavedFilter(
         localStorageGetItem('pendingSavedFilter'),
         t,

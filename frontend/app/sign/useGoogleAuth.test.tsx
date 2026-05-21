@@ -64,11 +64,13 @@ type AuthMeFnMock = jest.MockedFunction<(...args: unknown[]) => Promise<AuthMeSn
 const authStoreState: {
   user: AuthUserSlice;
   setAuth: jest.MockedFunction<(...args: unknown[]) => void>;
+  persistAuthSnapshotForRedirect: jest.MockedFunction<(...args: unknown[]) => void>;
 } = {
   user: { id: '1', phoneVerified: true },
   setAuth: jest.fn((...args: unknown[]) => {
     authStoreState.user = args[0] as AuthUserSlice;
   }),
+  persistAuthSnapshotForRedirect: jest.fn(),
 };
 
 jest.mock('@/lib/store', () => {
@@ -76,7 +78,11 @@ jest.mock('@/lib/store', () => {
     (sel: (s: typeof authStoreState) => unknown) => sel(authStoreState),
     { getState: () => authStoreState },
   );
-  return { useAuthStore };
+  return {
+    persistAuthSnapshotForRedirect: (...args: unknown[]) =>
+      authStoreState.persistAuthSnapshotForRedirect(...args),
+    useAuthStore,
+  };
 });
 
 jest.mock('@/lib/i18n', () => {
@@ -170,6 +176,7 @@ describe('useGoogleAuth', () => {
     authStoreState.setAuth.mockImplementation((...args: unknown[]) => {
       authStoreState.user = args[0] as AuthUserSlice;
     });
+    authStoreState.persistAuthSnapshotForRedirect.mockClear();
     (authApi.me as unknown as AuthMeFnMock).mockResolvedValue({
       data: { id: '1', phoneVerified: true },
     });
@@ -409,6 +416,10 @@ describe('useGoogleAuth', () => {
 
     await waitFor(() => {
       expect(assignedHref).toBe('/ru');
+    });
+    expect(authStoreState.persistAuthSnapshotForRedirect).toHaveBeenCalledWith({
+      id: '1',
+      phoneVerified: true,
     });
   });
 

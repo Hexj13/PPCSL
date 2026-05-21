@@ -21,6 +21,13 @@ export function resetInitAuthPromiseForTests(): void {
   initAuthPromise = null;
 }
 
+export function persistAuthSnapshotForRedirect(user: User | null): void {
+  if (typeof window === 'undefined') return;
+  localStorageRemoveItem('token');
+  localStorageRemoveItem('refresh_token');
+  localStorageSetItem('auth-storage', JSON.stringify({ state: { user }, version: 2 }));
+}
+
 function normalizeCompareIds(ids: unknown): string[] {
   if (!Array.isArray(ids)) return [];
   const seen = new Set<string>();
@@ -57,8 +64,7 @@ export const useAuthStore = create<AuthState>()(
         applyPreferredLocaleFromProfile(_user?.preferredLocale);
         set({ user: _user, isInitialized: true });
         if (typeof window !== 'undefined') {
-          localStorageRemoveItem('token');
-          localStorageRemoveItem('refresh_token');
+          persistAuthSnapshotForRedirect(_user);
         }
       },
       logout: () => {

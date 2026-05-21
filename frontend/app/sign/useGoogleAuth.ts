@@ -15,6 +15,7 @@ import {
 import { getClientLocale } from '@/lib/i18n';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
+import { persistAuthSnapshotForRedirect } from '@/lib/store';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
@@ -196,6 +197,7 @@ export function useGoogleAuth(options: {
       }
       const returnUrl = getReturnUrlFromSearchParams(searchParams);
       const locale = getClientLocale();
+      persistAuthSnapshotForRedirect(postAuthUser);
       if (!postAuthUser.phoneVerified) {
         const safeReturn = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
         const phoneQs = new URLSearchParams();
