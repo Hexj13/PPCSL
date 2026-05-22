@@ -1090,7 +1090,7 @@
     "yearFrom": "Year from",
     "yearTo": "Year to",
     "yearRangeSummary": "from {from} to {to}",
-    "priceRangeSummary": "from {from} to {to}",
+    "fromToRangeSummary": "from {from} to {to}",
     "selectYear": "Select year",
     "currency": "Currency",
     "priceFrom": "Price from",
