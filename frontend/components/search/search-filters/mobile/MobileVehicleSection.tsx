@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
+import { preloadImageUrls } from '@/lib/brand-logo-urls';
 import {
   getBodyTypeOptions,
   getDoorOptions,
@@ -32,6 +33,13 @@ import type { MobileSearchFiltersVehicleProps } from './mobile-search-filters-ty
 import { formatPriceWithSpaces, summarizeMulti } from './mobile-search-filters-utils';
 import { createMobileSheetDraft } from './mobile-sheet-draft';
 import { runVehicleSheetConfirm } from './mobile-vehicle-sheet-confirm';
+import type { MultiSelectOption } from './sheets/MultiSelectSheet';
+
+function collectBrandLogoUrls(options: MultiSelectOption[]): string[] {
+  return options
+    .map((option) => option.logoSrc)
+    .filter((src): src is string => typeof src === 'string' && src.length > 0);
+}
 
 export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
   const {
@@ -65,12 +73,27 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
     setMobileDraft((prev) => ({ ...(prev ?? {}), ...patch }));
   }, []);
 
+  const brandLogoPreloadKey = useMemo(
+    () => collectBrandLogoUrls(brandOptions).join('|'),
+    [brandOptions],
+  );
+
+  useEffect(() => {
+    if (!brandLogoPreloadKey) {
+      return;
+    }
+    preloadImageUrls(brandLogoPreloadKey.split('|'));
+  }, [brandLogoPreloadKey]);
+
   const openSheetForEdit = useCallback(
     (id: string) => {
+      if (id === 'vehicle_brand' && brandLogoPreloadKey) {
+        preloadImageUrls(brandLogoPreloadKey.split('|'));
+      }
       setMobileDraft(createMobileSheetDraft(id, filters));
       setOpenSheet(id);
     },
-    [filters],
+    [filters, brandLogoPreloadKey],
   );
 
   const dismissSheet = useCallback(() => {
@@ -131,7 +154,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
     const b = formatPriceWithSpaces(filters.mileage_lte);
     if (!a && !b) return '';
     const dash = t('common.rangeDash');
-    return `${a || dash} – ${b || dash}`;
+    return t('searchFilters.fromToRangeSummary', { from: a || dash, to: b || dash });
   }, [filters.mileage_gte, filters.mileage_lte, t]);
 
   const priceSummary = useMemo(() => {
@@ -139,7 +162,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
     const b = formattedPriceLte;
     if (!a && !b) return '';
     const dash = t('common.rangeDash');
-    return t('searchFilters.priceRangeSummary', { from: a || dash, to: b || dash });
+    return t('searchFilters.fromToRangeSummary', { from: a || dash, to: b || dash });
   }, [formattedPriceGte, formattedPriceLte, t]);
 
   const yearSummary = useMemo(() => {

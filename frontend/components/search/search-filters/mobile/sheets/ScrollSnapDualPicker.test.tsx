@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import { ScrollSnapDualPicker } from './ScrollSnapDualPicker';
 
@@ -10,7 +10,7 @@ jest.mock('@/hooks/useTranslation', () => ({
 
 describe('ScrollSnapDualPicker', () => {
   it('renders from and to wheels side by side in one row', () => {
-    const { container } = render(
+    render(
       <ScrollSnapDualPicker
         fromLabel="From"
         toLabel="To"
@@ -27,8 +27,9 @@ describe('ScrollSnapDualPicker', () => {
       />,
     );
 
-    const pickerRow = container.querySelector('.flex.flex-row.items-center.gap-x-2');
-    expect(pickerRow).not.toBeNull();
-    expect(pickerRow?.querySelectorAll('[role="listbox"]')).toHaveLength(2);
+    expect(screen.getAllByRole('listbox')).toHaveLength(2);
+    expect(screen.getByRole('listbox', { name: 'From' })).toBeInTheDocument();
+    expect(screen.getByRole('listbox', { name: 'To' })).toBeInTheDocument();
+    expect(screen.getByText('—')).toBeInTheDocument();
   });
 });
