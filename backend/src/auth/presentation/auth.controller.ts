@@ -234,6 +234,7 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Sign in or register with Google' })
   @Throttle(getThrottleLimit(5, 200))
+  @UseGuards(IpBlockGuard)
   @HttpCode(200)
   @Post('google')
   async googleSignIn(

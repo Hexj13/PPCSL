@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useI18n } from '@/components/providers/I18nProvider';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { GoogleSignInDto, User } from '@/lib/api';
 import { authApi } from '@/lib/api';
@@ -15,7 +16,7 @@ import {
 import { getClientLocale } from '@/lib/i18n';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
-import { persistAuthSnapshotForRedirect } from '@/lib/store';
+import { useAuthStore } from '@/lib/store';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
@@ -50,12 +51,14 @@ function gisButtonLocale(locale: string): string {
 }
 
 export function useGoogleAuth(options: {
-  mode: 'login' | 'register';
-  userType?: GoogleSignInDto['type'];
+  tab: 'login' | 'register';
+  preferredNewUserType?: GoogleSignInDto['type'];
   gisScriptLoaded?: boolean;
 }) {
   const { t } = useTranslation();
   const { locale: appLocale } = useI18n();
+  const { replace } = useLocalizedNavigation();
+  const setAuth = useAuthStore((state) => state.setAuth);
   const gisUiLocale = useMemo(() => gisButtonLocale(appLocale), [appLocale]);
   const searchParams = useSearchParams();
   const [ready, setReady] = useState(false);
@@ -71,14 +74,15 @@ export function useGoogleAuth(options: {
   const gisInitializedRef = useRef(false);
   const isMountedRef = useRef(true);
   const authOptionsRef = useRef({
-    mode: options.mode,
-    userType: options.userType,
+    tab: options.tab,
+    preferredNewUserType: options.preferredNewUserType,
   });
   const finishSessionRef = useRef<
     (
       syncedUser: User,
-      authMode: 'login' | 'register',
-      authUserType?: GoogleSignInDto['type'],
+      isNewUser: boolean,
+      requiresPhoneVerification: boolean,
+      preferredNewUserType?: GoogleSignInDto['type'],
     ) => Promise<void>
   >(async () => {});
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -87,10 +91,10 @@ export function useGoogleAuth(options: {
 
   useEffect(() => {
     authOptionsRef.current = {
-      mode: options.mode,
-      userType: options.userType,
+      tab: options.tab,
+      preferredNewUserType: options.preferredNewUserType,
     };
-  }, [options.mode, options.userType]);
+  }, [options.tab, options.preferredNewUserType]);
 
   const clearCancelPopupPendingTimer = useCallback(() => {
     if (cancelPopupPendingTimerRef.current) {
@@ -183,8 +187,9 @@ export function useGoogleAuth(options: {
   const finishSession = useCallback(
     async (
       syncedUser: User,
-      authMode: 'login' | 'register',
-      authUserType?: GoogleSignInDto['type'],
+      isNewUser: boolean,
+      requiresPhoneVerification: boolean,
+      preferredNewUserType?: GoogleSignInDto['type'],
     ) => {
       let postAuthUser = syncedUser;
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
@@ -197,32 +202,28 @@ export function useGoogleAuth(options: {
       }
       const returnUrl = getReturnUrlFromSearchParams(searchParams);
       const locale = getClientLocale();
-      persistAuthSnapshotForRedirect(postAuthUser);
-      if (!postAuthUser.phoneVerified) {
+      setAuth(postAuthUser);
+      if (requiresPhoneVerification) {
         const safeReturn = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
         const phoneQs = new URLSearchParams();
         phoneQs.set('mode', 'phone_required');
-        if (authMode === 'register') {
+        if (isNewUser) {
           phoneQs.set('source', 'google_register');
-          phoneQs.set('selectedType', authUserType ?? 'Individual');
+          phoneQs.set('selectedType', preferredNewUserType ?? postAuthUser.type ?? 'Individual');
         }
         if (safeReturn) {
           phoneQs.set('returnUrl', buildPostAuthRedirect(safeReturn, locale));
         }
         const path = `/complete-profile?${phoneQs.toString()}`;
-        if (typeof window !== 'undefined' && window.location) {
-          await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
-          window.location.href = buildPostAuthRedirect(path, locale);
-        }
+        await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
+        replace(buildPostAuthRedirect(path, locale));
         return;
       }
       await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
       const dest = (returnUrl ? sanitizeReturnUrl(returnUrl) : null) ?? '/';
-      if (typeof window !== 'undefined' && window.location) {
-        window.location.href = buildPostAuthRedirect(dest, locale);
-      }
+      replace(buildPostAuthRedirect(dest, locale));
     },
-    [searchParams],
+    [searchParams, replace, setAuth],
   );
 
   useEffect(() => {
@@ -266,19 +267,24 @@ export function useGoogleAuth(options: {
           setIsGoogleAuthInFlight(true);
           void (async () => {
             try {
-              const { mode, userType } = authOptionsRef.current;
+              const { tab, preferredNewUserType } = authOptionsRef.current;
               const body: GoogleSignInDto = {
                 idToken: resp.credential,
                 termsAccepted: true,
               };
-              if (mode === 'register' && userType) {
-                body.type = userType;
+              if (tab === 'register' && preferredNewUserType) {
+                body.type = preferredNewUserType;
               }
-              await authApi.googleSignIn(body);
+              const authResult = await authApi.googleSignIn(body);
               const me = await authApi.me();
-              const syncedUser = await syncPartnerPromoDismissAfterAuth(me.data);
+              const syncedUser = me.data;
               if (!isMountedRef.current) return;
-              await finishSessionRef.current(syncedUser, mode, userType);
+              await finishSessionRef.current(
+                syncedUser,
+                authResult.data.isNewUser,
+                authResult.data.requiresPhoneVerification,
+                preferredNewUserType,
+              );
             } catch {
               await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
               if (!isMountedRef.current) return;

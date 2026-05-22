@@ -16,6 +16,7 @@ import { Header } from '@/components/layout/Header';
 import { MainContentShell } from '@/components/layout/MainContentShell';
 import { ScrollReset } from '@/components/layout/ScrollReset';
 import { AuthProvider } from '@/components/providers/AuthProvider';
+import { ClientToaster } from '@/components/providers/ClientToaster';
 import { CookieConsent } from '@/components/providers/CookieConsent';
 import { I18nProvider } from '@/components/providers/I18nProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
@@ -24,7 +25,6 @@ import { getVersionedAssetPath } from '@/lib/assets';
 import { getServerTranslations, getMetadataLocale } from '@/lib/i18n';
 import { loadSiteConfig } from '@/lib/site-config';
 import { loadThemeSync } from '@/lib/theme';
-import { Toaster } from '@/lib/toast';
 import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
 import { getCountry } from '@/lib/utils';
 import { designTokens } from '@/ui';
@@ -204,7 +204,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     </div>
                   </Suspense>
                   <Suspense fallback={null}>
-                    <Toaster
+                    <ClientToaster
                       position="top-right"
                       containerStyle={{
                         top: '80px',

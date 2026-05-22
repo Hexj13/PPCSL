@@ -3,8 +3,14 @@
 import { usePathname } from 'next/navigation';
 import { useState, useCallback, startTransition, useEffect } from 'react';
 
-import { isAuthRoutePathname, isSignRoutePathname } from '@/components/layout/header-flow-paths';
+import {
+  isAuthRequiredPathname,
+  isAuthRoutePathname,
+  isSignRoutePathname,
+} from '@/components/layout/header-flow-paths';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getClientLocale } from '@/lib/i18n';
+import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 
@@ -24,11 +30,15 @@ export function useHeaderState() {
   }, [pathname]);
 
   const handleLogout = useCallback(() => {
+    const redirectHome = isAuthRequiredPathname(pathname);
     startTransition(() => {
       logout();
       setIsMobileMenuOpen(false);
+      if (redirectHome && typeof window !== 'undefined') {
+        window.location.href = buildPostAuthRedirect('/', getClientLocale());
+      }
     });
-  }, [logout]);
+  }, [logout, pathname]);
 
   const handleMobileMenuToggle = useCallback(() => {
     setIsMobileMenuOpen((prev) => !prev);

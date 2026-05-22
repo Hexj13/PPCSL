@@ -246,6 +246,24 @@ export function buildBrandCandidateKeys(
     return ['rangerover', normalizedBrand];
   }
 
+  const lynkcoKeys = new Set<string>();
+  const maybeAddLynkco = (key: string) => {
+    if (!key) return;
+    lynkcoKeys.add(key);
+  };
+  if (
+    normalizedBrand === 'lynk' ||
+    normalizedBrand === 'lync' ||
+    normalizedBrand === 'lynkco' ||
+    normalizedBrand === 'lyncco' ||
+    normalizedBrand === 'lyncoco' ||
+    normalizedBrand === 'lynco'
+  ) {
+    maybeAddLynkco('lynkco');
+    maybeAddLynkco(normalizedBrand);
+    return [...lynkcoKeys];
+  }
+
   return [normalizedBrand];
 }
 

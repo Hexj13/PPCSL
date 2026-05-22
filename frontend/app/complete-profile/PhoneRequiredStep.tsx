@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { FormEvent } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { RegisterFormMessengers } from '@/app/register/RegisterFormMessengers';
 import { validatePhone } from '@/app/register/utils';
@@ -53,12 +53,12 @@ export function PhoneRequiredStep({ returnUrl }: PhoneRequiredStepProps) {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [accountType, setAccountType] = useState<'Individual' | 'Business'>('Individual');
-  const didInitAccountTypeRef = useRef(false);
+  const [accountType, setAccountType] = useState<'Individual' | 'Business'>(() =>
+    user ? readInitialAccountType(selectedTypeParam, user) : 'Individual',
+  );
 
   useEffect(() => {
-    if (!user || didInitAccountTypeRef.current) return;
-    didInitAccountTypeRef.current = true;
+    if (!user) return;
     setAccountType(readInitialAccountType(selectedTypeParam, user));
   }, [user, selectedTypeParam]);
 

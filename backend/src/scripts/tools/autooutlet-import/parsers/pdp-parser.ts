@@ -6,7 +6,12 @@ import { isProbablyVideoUrl } from '../../partner-import-shared/utils/video-url'
 import { parseVehiclePriceText } from '../parse-vehicle-price-text';
 import type { AutooutletConfig, ParsedPdpData, ParsedPdpEquipmentOption } from '../types';
 
-import { extractSourceListingId, splitTitleToBrandModel } from './plp-parser';
+import {
+  extractSourceListingId,
+  fetchCatalogBrandNames,
+  mergeBrandNameLists,
+  splitTitleToBrandModel,
+} from './plp-parser';
 
 const BROWSER_HEADERS: Record<string, string> = {
   'User-Agent':
@@ -16,24 +21,47 @@ const BROWSER_HEADERS: Record<string, string> = {
 };
 
 export class PdpParser {
+  private catalogBrandNamesPromise?: Promise<string[]>;
+
   constructor(private readonly config: AutooutletConfig) {}
 
+  private async ensureCatalogBrandNames(): Promise<string[]> {
+    if (!this.catalogBrandNamesPromise) {
+      this.catalogBrandNamesPromise = fetchCatalogBrandNames({
+        autooutletBaseUrl: this.config.autooutletBaseUrl,
+        requestTimeoutMs: this.config.requestTimeoutMs,
+        maxRetries: this.config.maxRetries,
+      }).catch(() => {
+        this.catalogBrandNamesPromise = undefined;
+        return [];
+      });
+    }
+    return this.catalogBrandNamesPromise;
+  }
+
   async parse(originalUrl: string): Promise<ParsedPdpData> {
-    const { data: html } = await requestText({
-      url: originalUrl,
-      method: 'GET',
-      headers: BROWSER_HEADERS,
-      timeoutMs: this.config.requestTimeoutMs,
-      retries: this.config.maxRetries,
-    });
-    const parsed = parsePdpHtml(html, originalUrl);
+    const [{ data: html }, catalogBrandNames] = await Promise.all([
+      requestText({
+        url: originalUrl,
+        method: 'GET',
+        headers: BROWSER_HEADERS,
+        timeoutMs: this.config.requestTimeoutMs,
+        retries: this.config.maxRetries,
+      }),
+      this.ensureCatalogBrandNames(),
+    ]);
+    const parsed = parsePdpHtml(html, originalUrl, catalogBrandNames);
     parsed.sourceUrl = originalUrl;
     parsed.canonicalUrl = canonicalizeUrl(originalUrl);
     return parsed;
   }
 }
 
-export function parsePdpHtml(html: string, url: string): ParsedPdpData {
+export function parsePdpHtml(
+  html: string,
+  url: string,
+  catalogBrandNames: string[] = [],
+): ParsedPdpData {
   const $ = cheerio.load(html);
   const warnings: string[] = [];
   const sourceListingId = extractSourceListingId(url);
@@ -43,7 +71,7 @@ export function parsePdpHtml(html: string, url: string): ParsedPdpData {
 
   const sourceStatus = detectSourceStatus($, html);
   const jsonLd = extractProductJsonLd($);
-  const brandNames = extractBrandNamesFromPdp($, html);
+  const brandNames = mergeBrandNameLists(extractBrandNamesFromPdp($, html), catalogBrandNames);
   const titleRaw = readTitle($, jsonLd);
   const { year: yearFromTitle, restTitle } = stripYearFromTitleEnd(titleRaw);
   const restForBrand = restTitle
@@ -51,11 +79,11 @@ export function parsePdpHtml(html: string, url: string): ParsedPdpData {
     .replace(/\s+/g, ' ')
     .trim();
   let { brand, model } = splitTitleToBrandModel(restForBrand, brandNames);
-  if (!brand && model) {
-    const tokens = model.trim().split(/\s+/);
-    if (tokens.length >= 2) {
-      brand = tokens[0];
-      model = tokens.slice(1).join(' ');
+  if (!brand && model && catalogBrandNames.length > 0) {
+    const fromCatalog = splitTitleToBrandModel(model, catalogBrandNames);
+    if (fromCatalog.brand) {
+      brand = fromCatalog.brand;
+      model = fromCatalog.model;
     }
   }
 

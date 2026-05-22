@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   EMAIL_NOTIFICATION_FIELDS,
@@ -14,14 +14,27 @@ import {
 } from '@/app/profile/utils';
 import { validatePhone } from '@/app/register/utils';
 import { isPasswordValid, validatePassword } from '@/app/reset-password/utils';
-import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
+import { localStorageSetItem } from '@/lib/browser-local-storage';
+import { getClientLocale } from '@/lib/i18n';
 import { compactE164Phone, formatPhoneForDisplay } from '@/lib/phone';
-import { buildSignInHref } from '@/lib/return-url';
+import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
+
+function redirectToHomeAfterAuthExit(): void {
+  if (typeof window === 'undefined') return;
+  const target = buildPostAuthRedirect('/', getClientLocale());
+  window.location.replace(target);
+  window.setTimeout(() => {
+    const targetUrl = new URL(target, window.location.origin);
+    if (window.location.pathname !== targetUrl.pathname) {
+      window.location.assign(target);
+    }
+  }, 0);
+}
 
 function hasProfileFormChanges(
   formData: UpdateProfileDto,
@@ -177,7 +190,6 @@ function handleProfileSubmitError(err: unknown, t: (key: string) => string): voi
 }
 
 export function useProfilePage() {
-  const { push, replace } = useLocalizedNavigation();
   const { user, isInitialized, setAuth, logout } = useAuthStore();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -189,6 +201,7 @@ export function useProfilePage() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const hasLoadedRef = useRef(false);
+  const accountDeletedRef = useRef(false);
   const previousEmailForChangeRef = useRef(getSafeEmailValue(user?.email));
   const emailNotificationsInteractionLockedRef = useRef(Boolean(getSafeEmailValue(user?.email)));
   const logoutRef = useRef(logout);
@@ -222,10 +235,15 @@ export function useProfilePage() {
     [user, formData.additionalPhone, t],
   );
 
+  useLayoutEffect(() => {
+    if (!accountDeletedRef.current || user || !isInitialized) return;
+    redirectToHomeAfterAuthExit();
+  }, [user, isInitialized]);
+
   useEffect(() => {
     if (!isInitialized) return;
     if (!user) {
-      push(buildSignInHref());
+      redirectToHomeAfterAuthExit();
       return;
     }
     if (hasLoadedRef.current) return;
@@ -234,6 +252,7 @@ export function useProfilePage() {
       try {
         if (!user) setLoadingProfile(true);
         const response = await authApi.me();
+        if (accountDeletedRef.current) return;
         const profileUser = response.data;
         setAuth(profileUser);
         const formDataToSet = {
@@ -263,16 +282,19 @@ export function useProfilePage() {
         setEmailForChange(nextEmailForChange);
         hasLoadedRef.current = true;
       } catch {
+        if (accountDeletedRef.current) return;
         hasLoadedRef.current = true;
         logoutRef.current();
-        push(buildSignInHref());
+        redirectToHomeAfterAuthExit();
       } finally {
-        setLoadingProfile(false);
+        if (!accountDeletedRef.current) {
+          setLoadingProfile(false);
+        }
       }
     };
 
     void loadProfile();
-  }, [isInitialized, push, setAuth, user]);
+  }, [isInitialized, setAuth, user]);
 
   useEffect(() => {
     if (!user || !hasLoadedRef.current) return;
@@ -393,17 +415,25 @@ export function useProfilePage() {
   const handleDeleteAccount = useCallback(async () => {
     if (!user) return;
     setDeleting(true);
+    accountDeletedRef.current = true;
+    hasLoadedRef.current = true;
     try {
       await authApi.deleteAccount();
-      toast.success(t('profile.deleteSuccess'));
-      logout();
-      replace('/');
     } catch {
-    } finally {
+      accountDeletedRef.current = false;
+      hasLoadedRef.current = false;
       setDeleting(false);
       setShowDeleteModal(false);
+      return;
     }
-  }, [user, replace, logout, t]);
+
+    localStorageSetItem('showProfileDeleteSuccess', 'true');
+    try {
+      logout();
+    } finally {
+      redirectToHomeAfterAuthExit();
+    }
+  }, [user, logout]);
 
   return {
     user,

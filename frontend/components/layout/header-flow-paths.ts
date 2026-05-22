@@ -44,3 +44,22 @@ export function isProfilePhoneFlowPath(pathname: string): boolean {
     return restPath === p || restPath.startsWith(`${p}/`) || restPath.startsWith(`${p}?`);
   });
 }
+
+const AUTH_REQUIRED_REST_PREFIXES = [
+  '/profile',
+  '/favorites',
+  '/my-listings',
+  '/listings/new',
+  '/admin',
+  '/complete-profile',
+] as const;
+
+const LISTING_EDIT_REST_PATH_RE = /^\/listings\/[^/]+\/edit(?:\/|$|\?)/;
+
+export function isAuthRequiredPathname(pathname: string): boolean {
+  const { restPath } = stripLocalePrefixFromPathname(pathname);
+  if (LISTING_EDIT_REST_PATH_RE.test(restPath)) {
+    return true;
+  }
+  return AUTH_REQUIRED_REST_PREFIXES.some((prefix) => restPathMatchesPrefix(restPath, prefix));
+}

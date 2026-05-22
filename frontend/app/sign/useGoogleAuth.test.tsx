@@ -14,9 +14,11 @@ import { toast } from '@/lib/toast';
 
 import { useGoogleAuth } from './useGoogleAuth';
 
+const mockReplace = jest.fn();
+
 jest.mock('@/hooks/useLocalizedNavigation', () => ({
   useLocalizedNavigation: () => ({
-    replace: jest.fn(),
+    replace: mockReplace,
     push: jest.fn(),
     href: (path: string) => path,
   }),
@@ -49,28 +51,40 @@ jest.mock('@/lib/toast', () => ({
   toast: { error: jest.fn(), success: jest.fn() },
 }));
 
+type GoogleSignInResponseSlice = {
+  isNewUser: boolean;
+  requiresPhoneVerification: boolean;
+  user: { id: string };
+};
+
 jest.mock('@/lib/api', () => ({
   authApi: {
-    googleSignIn: jest.fn(async (..._args: unknown[]) => undefined),
+    googleSignIn: jest.fn(async (..._args: unknown[]) => ({
+      data: {
+        isNewUser: false,
+        requiresPhoneVerification: false,
+        user: { id: '1' },
+      },
+    })),
     me: jest.fn(async (..._args: unknown[]) => ({ data: { id: '1', phoneVerified: true } })),
   },
 }));
 
-type AuthUserSlice = { id: string; phoneVerified: boolean };
+type AuthUserSlice = { id: string; phoneVerified: boolean; type?: string };
 type AuthMeSnapshot = { data: AuthUserSlice };
-type GoogleSignInFnMock = jest.MockedFunction<(...args: unknown[]) => Promise<unknown>>;
+type GoogleSignInFnMock = jest.MockedFunction<
+  (...args: unknown[]) => Promise<{ data: GoogleSignInResponseSlice }>
+>;
 type AuthMeFnMock = jest.MockedFunction<(...args: unknown[]) => Promise<AuthMeSnapshot>>;
 
 const authStoreState: {
   user: AuthUserSlice;
   setAuth: jest.MockedFunction<(...args: unknown[]) => void>;
-  persistAuthSnapshotForRedirect: jest.MockedFunction<(...args: unknown[]) => void>;
 } = {
   user: { id: '1', phoneVerified: true },
   setAuth: jest.fn((...args: unknown[]) => {
     authStoreState.user = args[0] as AuthUserSlice;
   }),
-  persistAuthSnapshotForRedirect: jest.fn(),
 };
 
 jest.mock('@/lib/store', () => {
@@ -78,12 +92,13 @@ jest.mock('@/lib/store', () => {
     (sel: (s: typeof authStoreState) => unknown) => sel(authStoreState),
     { getState: () => authStoreState },
   );
-  return {
-    persistAuthSnapshotForRedirect: (...args: unknown[]) =>
-      authStoreState.persistAuthSnapshotForRedirect(...args),
-    useAuthStore,
-  };
+  return { useAuthStore };
 });
+
+function lastReplacePath(): string {
+  const calls = mockReplace.mock.calls;
+  return String(calls[calls.length - 1]?.[0] ?? '');
+}
 
 jest.mock('@/lib/i18n', () => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- jest.requireActual module shape
@@ -102,8 +117,8 @@ const minimalTranslations = {
 
 function HarnessRegisterBusiness() {
   const { containerRef, isGoogleAuthInFlight, isGoogleBusy } = useGoogleAuth({
-    mode: 'register',
-    userType: 'Business',
+    tab: 'register',
+    preferredNewUserType: 'Business',
   });
   return (
     <>
@@ -114,20 +129,20 @@ function HarnessRegisterBusiness() {
   );
 }
 
-function HarnessWithMode({
-  mode,
-  userType,
+function HarnessWithTab({
+  tab,
+  preferredNewUserType,
 }: {
-  mode: 'login' | 'register';
-  userType?: 'Business' | 'Individual';
+  tab: 'login' | 'register';
+  preferredNewUserType?: 'Business' | 'Individual';
 }) {
-  const { containerRef } = useGoogleAuth({ mode, userType });
+  const { containerRef } = useGoogleAuth({ tab, preferredNewUserType });
   return <div ref={containerRef} data-testid="gis-root" />;
 }
 
 function Harness() {
   const { containerRef, isGoogleAuthInFlight, isGoogleBusy, markGoogleSignInIntent } =
-    useGoogleAuth({ mode: 'login' });
+    useGoogleAuth({ tab: 'login' });
   return (
     <>
       <div ref={containerRef} data-testid="gis-root" />
@@ -142,7 +157,7 @@ function Harness() {
 
 function HarnessGisLoaded({ loaded }: { loaded: boolean }) {
   const { containerRef, isButtonReady } = useGoogleAuth({
-    mode: 'login',
+    tab: 'login',
     gisScriptLoaded: loaded,
   });
   return (
@@ -169,14 +184,18 @@ describe('useGoogleAuth', () => {
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-google-client';
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = 'true';
     jest.clearAllMocks();
-    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockImplementation(
-      async () => undefined,
-    );
+    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockImplementation(async () => ({
+      data: {
+        isNewUser: false,
+        requiresPhoneVerification: false,
+        user: { id: '1' },
+      },
+    }));
     authStoreState.user = { id: '1', phoneVerified: true };
     authStoreState.setAuth.mockImplementation((...args: unknown[]) => {
       authStoreState.user = args[0] as AuthUserSlice;
     });
-    authStoreState.persistAuthSnapshotForRedirect.mockClear();
+    mockReplace.mockClear();
     (authApi.me as unknown as AuthMeFnMock).mockResolvedValue({
       data: { id: '1', phoneVerified: true },
     });
@@ -262,23 +281,16 @@ describe('useGoogleAuth', () => {
     });
   });
 
-  it('redirects to phone_required with Google register markers when phone is not verified', async () => {
-    let href = '';
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        pathname: '/ru/sign',
-        set href(next: string) {
-          href = next;
-        },
-        get href() {
-          return href;
-        },
+  it('redirects new Google users to phone_required with register markers', async () => {
+    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockResolvedValueOnce({
+      data: {
+        isNewUser: true,
+        requiresPhoneVerification: true,
+        user: { id: '1' },
       },
     });
-
     (authApi.me as unknown as AuthMeFnMock).mockResolvedValue({
-      data: { id: '1', phoneVerified: false },
+      data: { id: '1', phoneVerified: false, type: 'Business' },
     });
 
     render(
@@ -300,36 +312,68 @@ describe('useGoogleAuth', () => {
     });
 
     await waitFor(() => {
+      const path = lastReplacePath();
       expect(
-        href.includes('mode=phone_required') &&
-          href.includes('source=google_register') &&
-          href.includes('selectedType=Business'),
+        path.includes('mode=phone_required') &&
+          path.includes('source=google_register') &&
+          path.includes('selectedType=Business'),
       ).toBe(true);
     });
   });
 
-  it('uses latest mode and user type in the one-time GIS callback', async () => {
-    let href = '';
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        pathname: '/ru/sign',
-        set href(next: string) {
-          href = next;
-        },
-        get href() {
-          return href;
-        },
+  it('does not add google_register markers when backend returns existing user', async () => {
+    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockResolvedValueOnce({
+      data: {
+        isNewUser: false,
+        requiresPhoneVerification: true,
+        user: { id: '1' },
       },
     });
-
     (authApi.me as unknown as AuthMeFnMock).mockResolvedValue({
-      data: { id: '1', phoneVerified: false },
+      data: { id: '1', phoneVerified: false, type: 'Business' },
+    });
+
+    render(
+      <Tree>
+        <HarnessRegisterBusiness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(window.google?.accounts?.id.initialize).toHaveBeenCalled();
+    });
+
+    const init = (window.google!.accounts!.id.initialize as jest.Mock).mock.calls[0][0] as {
+      callback: (resp: { credential: string }) => void;
+    };
+
+    await act(async () => {
+      await init.callback({ credential: 'tok' });
+    });
+
+    await waitFor(() => {
+      const path = lastReplacePath();
+      expect(path.includes('mode=phone_required')).toBe(true);
+      expect(path.includes('source=google_register')).toBe(false);
+      expect(path.includes('selectedType')).toBe(false);
+    });
+  });
+
+  it('uses latest tab and preferred type in the one-time GIS callback', async () => {
+    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockResolvedValueOnce({
+      data: {
+        isNewUser: true,
+        requiresPhoneVerification: true,
+        user: { id: '1' },
+      },
+    });
+    (authApi.me as unknown as AuthMeFnMock).mockResolvedValue({
+      data: { id: '1', phoneVerified: false, type: 'Business' },
     });
 
     const { rerender } = render(
       <Tree>
-        <HarnessWithMode mode="login" />
+        <HarnessWithTab tab="login" />
       </Tree>,
     );
 
@@ -343,7 +387,7 @@ describe('useGoogleAuth', () => {
 
     rerender(
       <Tree>
-        <HarnessWithMode mode="register" userType="Business" />
+        <HarnessWithTab tab="register" preferredNewUserType="Business" />
       </Tree>,
     );
 
@@ -357,16 +401,59 @@ describe('useGoogleAuth', () => {
       type: 'Business',
     });
     await waitFor(() => {
+      const path = lastReplacePath();
       expect(
-        href.includes('mode=phone_required') &&
-          href.includes('source=google_register') &&
-          href.includes('selectedType=Business'),
+        path.includes('mode=phone_required') &&
+          path.includes('source=google_register') &&
+          path.includes('selectedType=Business'),
       ).toBe(true);
     });
   });
 
+  it('redirects new login-tab Google users to phone_required without selectedType', async () => {
+    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockResolvedValueOnce({
+      data: {
+        isNewUser: true,
+        requiresPhoneVerification: true,
+        user: { id: '1' },
+      },
+    });
+    (authApi.me as unknown as AuthMeFnMock).mockResolvedValue({
+      data: { id: '1', phoneVerified: false, type: 'Individual' },
+    });
+
+    render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(window.google?.accounts?.id.initialize).toHaveBeenCalled();
+    });
+
+    const init = (window.google!.accounts!.id.initialize as jest.Mock).mock.calls[0][0] as {
+      callback: (resp: { credential: string }) => void;
+    };
+
+    await act(async () => {
+      await init.callback({ credential: 'tok' });
+    });
+
+    expect(authApi.googleSignIn).toHaveBeenCalledWith({
+      idToken: 'tok',
+      termsAccepted: true,
+    });
+    await waitFor(() => {
+      const path = lastReplacePath();
+      expect(path.includes('mode=phone_required')).toBe(true);
+      expect(path.includes('source=google_register')).toBe(true);
+      expect(path.includes('selectedType=Individual')).toBe(true);
+    });
+  });
+
   it('sets isGoogleBusy true before googleSignIn resolves', async () => {
-    let resolveGoogleSignIn: (value?: unknown) => void = () => {};
+    let resolveGoogleSignIn: (value: { data: GoogleSignInResponseSlice }) => void = () => {};
     (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -396,28 +483,20 @@ describe('useGoogleAuth', () => {
       expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('true');
     });
 
-    let assignedHref = '';
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        pathname: '/ru/sign',
-        set href(next: string) {
-          assignedHref = next;
-        },
-        get href() {
-          return assignedHref;
-        },
-      },
-    });
-
     await act(async () => {
-      resolveGoogleSignIn(undefined);
+      resolveGoogleSignIn({
+        data: {
+          isNewUser: false,
+          requiresPhoneVerification: false,
+          user: { id: '1' },
+        },
+      });
     });
 
     await waitFor(() => {
-      expect(assignedHref).toBe('/ru');
+      expect(lastReplacePath()).toBe('/ru');
     });
-    expect(authStoreState.persistAuthSnapshotForRedirect).toHaveBeenCalledWith({
+    expect(authStoreState.setAuth).toHaveBeenCalledWith({
       id: '1',
       phoneVerified: true,
     });
@@ -519,21 +598,7 @@ describe('useGoogleAuth', () => {
     expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('false');
   });
 
-  it('hard-redirects to localized home when phone is verified and returnUrl is absent', async () => {
-    let assignedHref = '';
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        pathname: '/ru/sign',
-        set href(next: string) {
-          assignedHref = next;
-        },
-        get href() {
-          return assignedHref;
-        },
-      },
-    });
-
+  it('replaces route to localized home when phone is verified and returnUrl is absent', async () => {
     render(
       <Tree>
         <Harness />
@@ -553,7 +618,11 @@ describe('useGoogleAuth', () => {
     });
 
     await waitFor(() => {
-      expect(assignedHref).toBe('/ru');
+      expect(lastReplacePath()).toBe('/ru');
+    });
+    expect(authStoreState.setAuth).toHaveBeenCalledWith({
+      id: '1',
+      phoneVerified: true,
     });
   });
 

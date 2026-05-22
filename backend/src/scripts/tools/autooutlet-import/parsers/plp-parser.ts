@@ -33,6 +33,39 @@ export function extractBrandOptions(html: string): string[] {
   return [...new Set(names)].sort((a, b) => b.length - a.length);
 }
 
+export function mergeBrandNameLists(...lists: Array<string[] | undefined>): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const list of lists) {
+    if (!list) continue;
+    for (const name of list) {
+      const trimmed = name.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(trimmed);
+    }
+  }
+  return out.sort((a, b) => b.length - a.length);
+}
+
+export async function fetchCatalogBrandNames(config: {
+  autooutletBaseUrl: string;
+  requestTimeoutMs: number;
+  maxRetries: number;
+}): Promise<string[]> {
+  const url = buildCatalogUrl(config.autooutletBaseUrl, 1);
+  const { data } = await requestText({
+    url,
+    method: 'GET',
+    headers: BROWSER_HEADERS,
+    timeoutMs: config.requestTimeoutMs,
+    retries: config.maxRetries,
+  });
+  return extractBrandOptions(data);
+}
+
 export function readMaxPagesFromCatalogHtml(html: string): number | undefined {
   const m1 = html.match(/window\.vehiclesData\.maxPages\s*=\s*(\d+)/i);
   if (m1) {

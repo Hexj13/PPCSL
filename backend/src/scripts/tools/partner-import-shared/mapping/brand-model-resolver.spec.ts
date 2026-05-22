@@ -10,6 +10,12 @@ describe('buildBrandCandidateKeys', () => {
   it('prefers Mercedes-Benz when 999 uses short Mercedes', () => {
     expect(buildBrandCandidateKeys('Mercedes', 'GLA')).toEqual(['mercedesbenz', 'mercedes']);
   });
+
+  it('maps Lynk & Co source variants to lynkco', () => {
+    expect(buildBrandCandidateKeys('Lynk', '& Co 02')).toEqual(['lynkco', 'lynk']);
+    expect(buildBrandCandidateKeys('Lync&Co', '02')).toEqual(['lynkco', 'lyncco']);
+    expect(buildBrandCandidateKeys('Lynk & Co', '02')).toEqual(['lynkco']);
+  });
 });
 
 describe('findBrandCandidates', () => {

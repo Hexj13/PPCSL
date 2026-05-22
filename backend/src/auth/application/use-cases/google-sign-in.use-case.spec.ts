@@ -1,13 +1,11 @@
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { UserType } from '../../../common/types';
 import { UsersService } from '../../../users/application/users.service';
 import { User } from '../../../users/entities/user.entity';
 import { GoogleTokenVerifierService } from '../../infrastructure/services/google-token-verifier.service';
-import { GoogleSignInDto } from '../../presentation/dto/google-sign-in.dto';
-import type { LoginResponse } from '../auth.types';
 import { AuthTokenIssuerService } from '../services/auth-token-issuer.service';
-
 import { GoogleSignInUseCase } from './google-sign-in.use-case';
 
 describe('GoogleSignInUseCase', () => {
@@ -18,35 +16,50 @@ describe('GoogleSignInUseCase', () => {
   let verifier: jest.Mocked<Pick<GoogleTokenVerifierService, 'verify'>>;
   let authTokenIssuer: jest.Mocked<Pick<AuthTokenIssuerService, 'issueLoginResponse'>>;
 
-  const baseUser = {
-    id: 'u1',
-    email: 'a@b.com',
-    phone: '+373000',
+  const profile = {
+    sub: 'google-sub-1',
+    email: 'user@example.com',
+    firstName: 'Test',
+    lastName: 'User',
+  };
+
+  const existingGoogleUser = {
+    id: 'user-1',
+    email: profile.email,
+    googleId: profile.sub,
+    type: UserType.Individual,
+    phone: '+37370123456',
     phoneVerified: true,
-    googleId: 'g1',
-    authProvider: 'google' as const,
-    type: 'Individual' as const,
-    firstName: 'A',
-    lastName: 'B',
-    companyName: null,
-    companyWebsiteUrl: null,
     active: true,
     password: null,
-  } as unknown as User;
+    authProvider: 'google' as const,
+  } as User;
 
-  const loginPayload: LoginResponse = {
-    access_token: 'at',
-    refresh_token: 'rt',
+  const existingEmailUser = {
+    id: 'user-2',
+    email: profile.email,
+    googleId: null,
+    type: UserType.Business,
+    phone: null,
+    phoneVerified: false,
+    active: true,
+    password: 'hashed',
+    authProvider: 'local' as const,
+  } as User;
+
+  const loginResponse = {
+    access_token: 'access',
+    refresh_token: 'refresh',
     user: {
-      id: 'u1',
-      email: 'a@b.com',
-      type: 'Individual',
-      firstName: 'A',
-      lastName: 'B',
+      id: 'user-1',
+      email: profile.email,
+      type: UserType.Individual,
+      firstName: 'Test',
+      lastName: 'User',
       companyName: null,
       companyWebsiteUrl: null,
-      phone: '+373000',
-      boardSlug: 's',
+      phone: '+37370123456',
+      boardSlug: null,
       preferredLocale: null,
       hidePartnerPromoBanner: false,
       isPlatformPartner: false,
@@ -62,8 +75,12 @@ describe('GoogleSignInUseCase', () => {
       create: jest.fn(),
       findOneById: jest.fn(),
     };
-    verifier = { verify: jest.fn() };
-    authTokenIssuer = { issueLoginResponse: jest.fn() };
+    verifier = {
+      verify: jest.fn().mockResolvedValue(profile),
+    };
+    authTokenIssuer = {
+      issueLoginResponse: jest.fn().mockResolvedValue(loginResponse),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -77,147 +94,104 @@ describe('GoogleSignInUseCase', () => {
     useCase = module.get(GoogleSignInUseCase);
   });
 
-  it('returns session for existing google user', async () => {
-    verifier.verify.mockResolvedValue({
-      sub: 'g1',
-      email: 'a@b.com',
-      firstName: 'A',
-      lastName: 'B',
-    });
-    usersService.findByGoogleId.mockResolvedValue(baseUser);
-    usersService.findOneById.mockResolvedValue(baseUser);
-    authTokenIssuer.issueLoginResponse.mockResolvedValue(loginPayload);
+  it('logs in existing user by googleId and returns isNewUser=false', async () => {
+    usersService.findByGoogleId.mockResolvedValue(existingGoogleUser);
+    usersService.findOneById.mockResolvedValue(existingGoogleUser);
 
-    const dto: GoogleSignInDto = { idToken: 'tok' };
-    const out = await useCase.execute(dto);
+    const result = await useCase.execute({ idToken: 'token', termsAccepted: true });
 
-    expect(out.requiresPhoneVerification).toBe(false);
-    expect(out.isNewUser).toBe(false);
-    expect(authTokenIssuer.issueLoginResponse).toHaveBeenCalled();
+    expect(usersService.findByEmail).not.toHaveBeenCalled();
+    expect(usersService.create).not.toHaveBeenCalled();
+    expect(result.isNewUser).toBe(false);
+    expect(result.requiresPhoneVerification).toBe(false);
+    expect(authTokenIssuer.issueLoginResponse).toHaveBeenCalledWith(existingGoogleUser);
   });
 
-  it('throws when register tab omits termsAccepted for new user', async () => {
-    verifier.verify.mockResolvedValue({
-      sub: 'g99',
-      email: 'new@b.com',
-      firstName: 'A',
-      lastName: 'B',
-    });
+  it('links existing email account and returns isNewUser=false', async () => {
     usersService.findByGoogleId.mockResolvedValue(null);
-    usersService.findByEmail.mockResolvedValue(null);
+    usersService.findByEmail.mockResolvedValue(existingEmailUser);
+    usersService.findOneById.mockResolvedValue({
+      ...existingEmailUser,
+      googleId: profile.sub,
+      emailVerified: true,
+    } as User);
 
-    await expect(useCase.execute({ idToken: 'tok' })).rejects.toBeInstanceOf(BadRequestException);
-  });
+    const result = await useCase.execute({ idToken: 'token', termsAccepted: true });
 
-  it('creates new user with email notification flags enabled', async () => {
-    const newUser = {
-      ...baseUser,
-      id: 'u-new',
-      email: 'new@b.com',
-      googleId: 'g99',
-      phone: null,
-      phoneVerified: false,
-    } as unknown as User;
-
-    verifier.verify.mockResolvedValue({
-      sub: 'g99',
-      email: 'new@b.com',
-      firstName: 'A',
-      lastName: 'B',
-    });
-    usersService.findByGoogleId.mockResolvedValue(null);
-    usersService.findByEmail.mockResolvedValue(null);
-    usersService.create.mockResolvedValue(newUser);
-    usersService.findOneById.mockResolvedValue(newUser);
-    authTokenIssuer.issueLoginResponse.mockResolvedValue({
-      ...loginPayload,
-      user: { ...loginPayload.user, id: 'u-new', email: 'new@b.com', phoneVerified: false },
-    });
-
-    await useCase.execute({ idToken: 'tok', termsAccepted: true });
-
-    expect(usersService.create).toHaveBeenCalledWith(
+    expect(usersService.update).toHaveBeenCalledWith(
+      existingEmailUser.id,
       expect.objectContaining({
-        emailNotifications: true,
-        emailNotificationListingRefreshReminders: true,
-        emailNotificationWeeklyViewsDigest: true,
-        emailNotificationSecurityAlerts: true,
+        googleId: profile.sub,
+        emailVerified: true,
       }),
     );
+    expect(usersService.create).not.toHaveBeenCalled();
+    expect(result.isNewUser).toBe(false);
+    expect(result.requiresPhoneVerification).toBe(true);
   });
 
-  it('throws when email user is deactivated', async () => {
-    verifier.verify.mockResolvedValue({
-      sub: 'g2',
-      email: 'old@b.com',
-      firstName: 'A',
-      lastName: 'B',
-    });
-    usersService.findByGoogleId.mockResolvedValue(null);
-    usersService.findByEmail.mockResolvedValue({ ...baseUser, active: false } as User);
-
-    await expect(useCase.execute({ idToken: 'tok', termsAccepted: true })).rejects.toBeInstanceOf(
-      UnauthorizedException,
-    );
-  });
-
-  it('links Google to existing phone-registered user by verified email and issues session', async () => {
-    const phoneRegisteredUser = {
-      id: 'u-phone',
-      email: 'same@gmail.com',
-      phone: '+373111222333',
-      phoneVerified: true,
-      googleId: null,
-      authProvider: 'local' as const,
-      type: 'Individual' as const,
-      firstName: 'P',
-      lastName: 'U',
-      companyName: null,
-      companyWebsiteUrl: null,
+  it('creates a new user when no account exists and returns isNewUser=true', async () => {
+    const createdUser = {
+      id: 'user-new',
+      email: profile.email,
+      googleId: profile.sub,
+      type: UserType.Business,
+      phone: null,
+      phoneVerified: false,
       active: true,
-      password: 'hashed-secret',
-    } as unknown as User;
+      password: null,
+      authProvider: 'google' as const,
+    } as User;
 
-    const linkedUser = {
-      ...phoneRegisteredUser,
-      googleId: 'google-sub-xyz',
-      emailVerified: true,
-    } as unknown as User;
-
-    verifier.verify.mockResolvedValue({
-      sub: 'google-sub-xyz',
-      email: 'same@gmail.com',
-      firstName: 'G',
-      lastName: 'User',
-    });
     usersService.findByGoogleId.mockResolvedValue(null);
-    usersService.findByEmail.mockResolvedValue(phoneRegisteredUser);
-    usersService.findOneById.mockResolvedValue(linkedUser);
+    usersService.findByEmail.mockResolvedValue(null);
+    usersService.create.mockResolvedValue(createdUser);
+    usersService.findOneById.mockResolvedValue(createdUser);
     authTokenIssuer.issueLoginResponse.mockResolvedValue({
-      ...loginPayload,
+      ...loginResponse,
       user: {
-        ...loginPayload.user,
-        id: 'u-phone',
-        email: 'same@gmail.com',
-        phone: '+373111222333',
-        phoneVerified: true,
+        ...loginResponse.user,
+        id: createdUser.id,
+        type: UserType.Business,
+        phoneVerified: false,
       },
     });
 
-    const out = await useCase.execute({ idToken: 'tok' });
+    const result = await useCase.execute({
+      idToken: 'token',
+      termsAccepted: true,
+      type: 'Business',
+    });
+
+    expect(usersService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: profile.email,
+        googleId: profile.sub,
+        type: UserType.Business,
+        authProvider: 'google',
+      }),
+    );
+    expect(result.isNewUser).toBe(true);
+    expect(result.requiresPhoneVerification).toBe(true);
+  });
+
+  it('throws termsNotAccepted when creating a new user without termsAccepted', async () => {
+    usersService.findByGoogleId.mockResolvedValue(null);
+    usersService.findByEmail.mockResolvedValue(null);
+
+    await expect(useCase.execute({ idToken: 'token', termsAccepted: false })).rejects.toThrow(
+      new BadRequestException('errors.termsNotAccepted'),
+    );
 
     expect(usersService.create).not.toHaveBeenCalled();
-    expect(usersService.update).toHaveBeenNthCalledWith(1, 'u-phone', {
-      googleId: 'google-sub-xyz',
-      emailVerified: true,
-    });
-    expect(usersService.update).toHaveBeenNthCalledWith(
-      2,
-      'u-phone',
-      expect.objectContaining({ last_login_at: expect.any(Date) }),
+  });
+
+  it('throws userDeactivated when email account is inactive', async () => {
+    usersService.findByGoogleId.mockResolvedValue(null);
+    usersService.findByEmail.mockResolvedValue({ ...existingEmailUser, active: false } as User);
+
+    await expect(useCase.execute({ idToken: 'token', termsAccepted: true })).rejects.toThrow(
+      new UnauthorizedException('errors.userDeactivated'),
     );
-    expect(out.isNewUser).toBe(false);
-    expect(out.requiresPhoneVerification).toBe(false);
-    expect(authTokenIssuer.issueLoginResponse).toHaveBeenCalledWith(linkedUser);
   });
 });

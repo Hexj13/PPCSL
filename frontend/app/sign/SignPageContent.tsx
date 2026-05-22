@@ -60,8 +60,8 @@ export function SignPageContent() {
 
   const registerPage = useRegisterPage();
   const googleAuth = useGoogleAuth({
-    mode: tab === 'register' ? 'register' : 'login',
-    userType: tab === 'register' ? registerPage.formData.type : undefined,
+    tab,
+    preferredNewUserType: tab === 'register' ? registerPage.formData.type : undefined,
     gisScriptLoaded: gisReady,
   });
   const login = useLoginPage({

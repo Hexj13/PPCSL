@@ -15,7 +15,6 @@ import {
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
 import { getClientLocale } from '@/lib/i18n';
-import { localizedHref } from '@/lib/localized-href';
 import {
   compactE164Phone,
   formatPhoneOnBlur,
@@ -24,7 +23,7 @@ import {
 } from '@/lib/phone';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
-import { persistAuthSnapshotForRedirect, useAuthStore } from '@/lib/store';
+import { useAuthStore } from '@/lib/store';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
@@ -78,8 +77,8 @@ async function processPendingSavedFilter(
   loginMethod: 'email' | 'phone',
   filledFields: Record<string, boolean>,
   returnUrl: string | null,
-): Promise<boolean> {
-  if (!pendingSavedFilter) return false;
+): Promise<string | null> {
+  if (!pendingSavedFilter) return null;
   try {
     const filters = JSON.parse(pendingSavedFilter);
     const now = new Date();
@@ -94,31 +93,24 @@ async function processPendingSavedFilter(
     analytics.login(loginMethod as 'email' | 'phone');
     analytics.formSubmit('login', true, filledFields);
     toast.success(t('login.filterSavedSuccess'));
-    if (typeof window !== 'undefined' && window.location) {
-      window.location.href = localizedHref('/favorites?tab=filters', getClientLocale());
-    }
-    return true;
+    return '/favorites?tab=filters';
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };
     const errorMessage = err?.response?.data?.message ?? t('login.filterSaveError');
     toast.error(errorMessage);
     localStorageRemoveItem('pendingSavedFilter');
     const isLimitError = errorMessage === t('login.filterLimitError');
-    const url = isLimitError ? '/favorites?tab=filters' : (returnUrl ?? '/');
     analytics.login(loginMethod as 'email' | 'phone');
     analytics.formSubmit('login', true, filledFields);
-    if (typeof window !== 'undefined' && window.location) {
-      window.location.href = localizedHref(url, getClientLocale());
-    }
-    return true;
+    return isLimitError ? '/favorites?tab=filters' : (returnUrl ?? '/');
   }
 }
 
 export function useLoginPage(options?: { suppressSignedInReturnNavigation?: boolean }) {
   const suppressExternalSignedInNav = options?.suppressSignedInReturnNavigation ?? false;
-  const { push } = useLocalizedNavigation();
+  const { push, replace } = useLocalizedNavigation();
   const searchParams = useSearchParams();
-  const { user, isInitialized } = useAuthStore();
+  const { user, isInitialized, setAuth } = useAuthStore();
   const { t } = useTranslation();
   const [referrerReturnUrl, setReferrerReturnUrl] = useState<string | null>(null);
   const queryReturnUrl = getReturnUrlFromSearchParams(searchParams);
@@ -231,7 +223,7 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
       const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
       try {
         const me = await authApi.me(quietSubmitRequest);
-        let syncedUser = await syncPartnerPromoDismissAfterAuth(me.data);
+        let syncedUser = me.data;
         if (typeof window === 'undefined') {
           analytics.login(loginMethod as 'email' | 'phone');
           analytics.formSubmit('login', true, filledFields);
@@ -245,35 +237,38 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
         releaseComparisonHold();
       }
       await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
-      if (postAuthUser) {
-        persistAuthSnapshotForRedirect(postAuthUser);
+      if (typeof window === 'undefined') {
+        return;
       }
-      const filterHandled = await processPendingSavedFilter(
+      const locale = getClientLocale();
+      if (postAuthUser) {
+        setAuth(postAuthUser);
+      }
+      const filterDestination = await processPendingSavedFilter(
         localStorageGetItem('pendingSavedFilter'),
         t,
         loginMethod,
         filledFields,
         resolvedReturnUrl,
       );
-      if (filterHandled) return;
+      if (filterDestination) {
+        replace(buildPostAuthRedirect(filterDestination, locale));
+        return;
+      }
       if (!postAuthUser?.phoneVerified) {
         const safeReturn = resolvedReturnUrl ? sanitizeReturnUrl(resolvedReturnUrl) : null;
         const target =
-          safeReturn && typeof window !== 'undefined'
-            ? `/complete-profile?mode=phone_required&returnUrl=${encodeURIComponent(buildPostAuthRedirect(safeReturn, getClientLocale()))}`
+          safeReturn !== null
+            ? `/complete-profile?mode=phone_required&returnUrl=${encodeURIComponent(buildPostAuthRedirect(safeReturn, locale))}`
             : '/complete-profile?mode=phone_required';
-        if (typeof window !== 'undefined' && window.location) {
-          window.location.href = buildPostAuthRedirect(target, getClientLocale());
-        }
+        replace(buildPostAuthRedirect(target, locale));
         return;
       }
       const returnUrl = resolvedReturnUrl || '/';
       const safeReturn = sanitizeReturnUrl(returnUrl) ?? '/';
       analytics.login(loginMethod as 'email' | 'phone');
       analytics.formSubmit('login', true, filledFields);
-      if (typeof window !== 'undefined' && window.location) {
-        window.location.href = buildPostAuthRedirect(safeReturn, getClientLocale());
-      }
+      replace(buildPostAuthRedirect(safeReturn, locale));
     } catch (error: unknown) {
       const errorMessage = getLoginSubmitErrorMessage(error, t);
       await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);

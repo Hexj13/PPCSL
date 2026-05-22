@@ -80,8 +80,9 @@ export function buildCreateListingPayload(
 export function buildUpdateListingPayload(
   input: BuildListingPayloadInput,
 ): Partial<KupitoCreateListingPayload> {
-  const createPayload = buildCreateListingPayload(input);
-  return createPayload;
+  const payload = buildCreateListingPayload(input) as Partial<KupitoCreateListingPayload>;
+  delete payload.status;
+  return payload;
 }
 
 export function shouldPublishAfterCreate(status: ListingStatus): boolean {

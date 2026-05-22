@@ -770,7 +770,7 @@ const BRANDS_AND_MODELS = {
   Lucid: ['Air', 'Gravity'],
   Smart: ['#1', '#3', 'EQ fortwo', 'Forfour', 'Roadster', 'Crossblade'],
   MG: ['MG3', 'ZS', 'HS', 'MG4', 'MG5', 'Marvel R', 'One', 'TF', 'ZR', 'ZT'],
-  'Lynk & Co': ['01', '02', '03', '09'],
+  'Lynk & Co': ['01', '02', '03', '08', '09', '900'],
   BYD: [
     'Dolphin',
     'Atto 3',

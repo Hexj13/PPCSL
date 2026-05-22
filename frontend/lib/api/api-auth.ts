@@ -44,13 +44,15 @@ export const authApi = {
     }),
   refreshQuiet: (data?: RefreshTokenDto) => refreshAuthSession(data ?? {}),
   googleSignIn: (data: GoogleSignInDto) => api.post<GoogleSignInResponse>('/api/auth/google', data),
-  logout: () => api.post<{ success: boolean }>('/api/auth/logout', {}),
+  logout: () =>
+    api.post<{ success: boolean }>('/api/auth/logout', {}, { headers: { ...quietAuthHeaders } }),
+  deleteAccount: () =>
+    api.delete<{ success: boolean }>('/api/auth/profile', { headers: { ...quietAuthHeaders } }),
   me: (config?: AxiosRequestConfig) => api.get<User>('/api/auth/me', config),
   updateProfile: (data: UpdateProfileDto) =>
     api.patch<UpdateProfileResponse>('/api/auth/profile', data),
   changePassword: (data: ChangePasswordDto) =>
     api.post<{ success: boolean }>('/api/auth/change-password', data),
-  deleteAccount: () => api.delete<{ success: boolean }>('/api/auth/profile'),
   verifyPhone: (data: VerifyPhoneDto) => api.post<LoginResponse>('/api/auth/verify-phone', data),
   sendSms: (data: SendSmsDto) =>
     api.post<{ success: boolean }>('/api/auth/send-sms', data, {

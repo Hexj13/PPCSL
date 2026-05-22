@@ -10,6 +10,7 @@ import { KupitoApiClient } from '../partner-import-shared/api/kupito-api';
 import { UploadClient } from '../partner-import-shared/api/upload-client';
 import { uploadImportImagesSequentially } from '../partner-import-shared/api/upload-import-images';
 import { maybeImportPartnerListingVideo } from '../partner-import-shared/import/maybe-import-listing-video';
+import { getUpdateExistingRequiresKupitoListingIdError } from '../partner-import-shared/import/update-existing-guard';
 import { mapBodyType } from '../partner-import-shared/mapping/body-type-mapper';
 import { BrandModelResolver } from '../partner-import-shared/mapping/brand-model-resolver';
 import { mapColor } from '../partner-import-shared/mapping/color-mapper';
@@ -513,6 +514,16 @@ async function processSingleItem(params: {
         'IMPORT',
         `[SKIP][${sourceId}] already has kupitoListingId=${item.kupitoListingId}`,
       );
+      return;
+    }
+
+    const updateOnlyError = getUpdateExistingRequiresKupitoListingIdError(options, item);
+    if (updateOnlyError) {
+      registry.markState(sourceId, 'manual_review', {
+        warnings,
+        error: updateOnlyError,
+      });
+      logger.warn('IMPORT', `[MANUAL][${sourceId}] ${updateOnlyError}`);
       return;
     }
 

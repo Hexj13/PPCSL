@@ -52,4 +52,29 @@ describe('autooutlet PDP parser', () => {
     expect(parsed.warnings).toContain('MISSING_PRICE');
     expect(parsed.warnings).toContain('MISSING_IMAGES');
   });
+
+  it('does not split Lynk & Co on first space when catalog brand list is missing', () => {
+    const html = `<!DOCTYPE html><html><body class="postid-3"><main class="autooutlet-single-vehicle"><h1>Lynk &amp; Co 02 2024</h1><div class="autooutlet-header-badges"><span class="badge">Disponibil</span></div><div class="autooutlet-price"><span class="price-main">10.000€</span></div><script id="gallery-data">{"images":["https://autooutlet.md/a.jpg","https://autooutlet.md/b.jpg"]}</script></main></body></html>`;
+    const parsed = parsePdpHtml(html, 'https://autooutlet.md/vehicul/3-lynk-co-02/');
+    expect(parsed.brand).not.toBe('Lynk');
+    expect(parsed.model).not.toBe('& Co 02');
+    expect(parsed.model).toBe('Lynk & Co 02');
+  });
+
+  it('splits Lynk & Co from PDP title when catalog brand list is provided', () => {
+    const html = `<!DOCTYPE html><html><body class="postid-3"><main class="autooutlet-single-vehicle"><h1>Lynk &amp; Co 02 2024</h1><div class="autooutlet-header-badges"><span class="badge">Disponibil</span></div><div class="autooutlet-price"><span class="price-main">10.000€</span></div><script id="gallery-data">{"images":["https://autooutlet.md/a.jpg","https://autooutlet.md/b.jpg"]}</script></main></body></html>`;
+    const parsed = parsePdpHtml(html, 'https://autooutlet.md/vehicul/3-lynk-co-02/', ['Lynk & Co']);
+    expect(parsed.brand).toBe('Lynk & Co');
+    expect(parsed.model).toBe('02');
+  });
+
+  it('splits Lynk & Co 900 with trim suffix when catalog brand list is provided', () => {
+    const html = `<!DOCTYPE html><html><body class="postid-4"><main class="autooutlet-single-vehicle"><h1>Lynk &amp; Co 900 (4x4) 2025</h1><div class="autooutlet-header-badges"><span class="badge">Disponibil</span></div><div class="autooutlet-price"><span class="price-main">51.800€</span></div><script id="gallery-data">{"images":["https://autooutlet.md/a.jpg","https://autooutlet.md/b.jpg"]}</script></main></body></html>`;
+    const parsed = parsePdpHtml(html, 'https://autooutlet.md/vehicul/4-lynk-co-900/', [
+      'Lynk & Co',
+    ]);
+    expect(parsed.brand).toBe('Lynk & Co');
+    expect(parsed.model).toBe('900');
+    expect(parsed.year).toBe(2025);
+  });
 });
