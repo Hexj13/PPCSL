@@ -89,13 +89,14 @@ export function useSearchTabs({
       if (TIRE_POPULAR_HINT_KEYS.some((key) => searchParams.get(key))) return 'popular';
       return 'basic';
     }
-    if (BASIC_PARAM_KEYS.some((key) => searchParams.get(key))) return 'basic';
     if (ADVANCED_PARAM_KEYS.some((key) => searchParams.get(key))) return 'advanced';
     if (searchParams.get('equipment')) return 'equipment';
+    if (BASIC_PARAM_KEYS.some((key) => searchParams.get(key))) return 'basic';
     return 'basic';
   }, [searchParams, mode]);
 
   const [activeTab, setActiveTab] = useState<SearchTab>(() => getInitialTab());
+  const prevSearchParamsStringRef = useRef(searchParams.toString());
 
   useEffect(() => {
     if (mode === 'tire' && (activeTab === 'advanced' || activeTab === 'equipment')) {
@@ -104,13 +105,20 @@ export function useSearchTabs({
   }, [mode, activeTab]);
 
   useEffect(() => {
+    const paramsString = searchParams.toString();
     if (preserveTabOnNextSyncRef?.current) {
       preserveTabOnNextSyncRef.current = false;
+      prevSearchParamsStringRef.current = paramsString;
       return;
     }
     if (isInternalSearchRef?.current) {
+      prevSearchParamsStringRef.current = paramsString;
       return;
     }
+    if (paramsString === prevSearchParamsStringRef.current) {
+      return;
+    }
+    prevSearchParamsStringRef.current = paramsString;
     setActiveTab(getInitialTab());
   }, [searchParams, isInternalSearchRef, preserveTabOnNextSyncRef, getInitialTab]);
 

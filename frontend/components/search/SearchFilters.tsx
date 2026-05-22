@@ -504,13 +504,6 @@ export function SearchFilters({
                 includePopularBodyTypes={false}
               />
             </div>
-            <PopularBodyTypesFilter
-              selectedBodyTypes={filters.body_types}
-              onSelectionChange={(bodyTypes) =>
-                handlers.handleMultiSelectChange('body_types', bodyTypes)
-              }
-              vehicleType={vehicleType}
-            />
           </div>
 
           <div className={tabs.activeTab === 'advanced' ? '' : 'hidden'}>
@@ -581,6 +574,16 @@ export function SearchFilters({
               onPriceBlur={handlers.handlePriceBlur}
               onWheel={handlers.handleWheel}
               updateMultiple={updateMultiple}
+            />
+          </div>
+
+          <div className={tabs.activeTab === 'basic' ? '' : 'hidden'}>
+            <PopularBodyTypesFilter
+              selectedBodyTypes={filters.body_types}
+              onSelectionChange={(bodyTypes) =>
+                handlers.handleMultiSelectChange('body_types', bodyTypes)
+              }
+              vehicleType={vehicleType}
             />
           </div>
         </>

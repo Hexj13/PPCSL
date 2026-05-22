@@ -219,29 +219,33 @@ export function ScrollSnapDualPicker({
 
   return (
     <div
-      className={`grid w-full shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-2 px-4 pb-2 ${
-        showColumnLabels ? 'gap-y-1' : ''
-      }`}
+      className={`flex w-full shrink-0 flex-col px-4 pb-2 ${showColumnLabels ? 'gap-y-1' : 'gap-y-0'}`}
     >
       {showColumnLabels ? (
-        <>
-          <span className="text-center text-xs font-semibold text-primary-700">{fromLabel}</span>
-          <span className="min-w-[1.25rem]" aria-hidden />
-          <span className="text-center text-xs font-semibold text-primary-700">{toLabel}</span>
-        </>
+        <div className="flex flex-row items-center gap-x-2">
+          <span className="min-w-0 flex-1 text-center text-xs font-semibold text-primary-700">
+            {fromLabel}
+          </span>
+          <span className="min-w-[1.25rem] shrink-0" aria-hidden />
+          <span className="min-w-0 flex-1 text-center text-xs font-semibold text-primary-700">
+            {toLabel}
+          </span>
+        </div>
       ) : null}
-      <div className="min-h-0 min-w-0">
-        {renderWheel(fromLabel, fromScrollRef, fromHighlightIdx, handleFromScroll, (item) => {
-          if (item.value !== fromValue) onFromChange(item.value);
-        })}
-      </div>
-      <span className="select-none self-center text-center text-base font-semibold text-primary-700">
-        {rangeDash}
-      </span>
-      <div className="min-h-0 min-w-0">
-        {renderWheel(toLabel, toScrollRef, toHighlightIdx, handleToScroll, (item) => {
-          if (item.value !== toValue) onToChange(item.value);
-        })}
+      <div className="flex flex-row items-center gap-x-2">
+        <div className="min-h-0 min-w-0 flex-1 basis-0">
+          {renderWheel(fromLabel, fromScrollRef, fromHighlightIdx, handleFromScroll, (item) => {
+            if (item.value !== fromValue) onFromChange(item.value);
+          })}
+        </div>
+        <span className="shrink-0 select-none self-center text-center text-base font-semibold text-primary-700">
+          {rangeDash}
+        </span>
+        <div className="min-h-0 min-w-0 flex-1 basis-0">
+          {renderWheel(toLabel, toScrollRef, toHighlightIdx, handleToScroll, (item) => {
+            if (item.value !== toValue) onToChange(item.value);
+          })}
+        </div>
       </div>
     </div>
   );

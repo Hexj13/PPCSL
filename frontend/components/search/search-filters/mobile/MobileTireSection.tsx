@@ -174,7 +174,7 @@ export function MobileTireSection(props: MobileSearchFiltersTireProps) {
     const b = formattedPriceLte;
     if (!a && !b) return '';
     const dash = t('common.rangeDash');
-    return t('searchFilters.priceRangeSummary', { from: a || dash, to: b || dash });
+    return t('searchFilters.fromToRangeSummary', { from: a || dash, to: b || dash });
   }, [formattedPriceGte, formattedPriceLte, t]);
 
   const sizeSummary = useMemo(() => {

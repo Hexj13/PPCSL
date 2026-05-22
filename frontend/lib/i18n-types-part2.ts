@@ -64,7 +64,7 @@ export interface TranslationsPart2 {
     yearFrom: string;
     yearTo: string;
     yearRangeSummary: string;
-    priceRangeSummary: string;
+    fromToRangeSummary: string;
     currency: string;
     priceFrom: string;
     priceTo: string;
