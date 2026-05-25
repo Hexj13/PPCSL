@@ -26,6 +26,7 @@ export function SingleSelectSheetContent({
           <button
             key={option.value === '' ? `empty-${index}` : option.value}
             type="button"
+            data-testid={option.value === '' ? undefined : `search-sheet-option-${option.value}`}
             onClick={() => onChange(option.value)}
             className={`w-full px-4 py-3.5 text-left hover:bg-primary-500/10 flex items-center justify-between gap-2 ${
               selected ? 'bg-primary-500/15 font-semibold' : ''

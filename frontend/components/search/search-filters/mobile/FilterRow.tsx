@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 
 interface FilterRowProps {
+  sheetId: string;
   label: string;
   valueSummary: string;
   placeholder?: string;
@@ -12,6 +13,7 @@ interface FilterRowProps {
 }
 
 export function FilterRow({
+  sheetId,
   label,
   valueSummary,
   placeholder,
@@ -20,11 +22,14 @@ export function FilterRow({
   leadingIcon,
 }: FilterRowProps) {
   const display = valueSummary.trim() !== '' ? valueSummary : (placeholder ?? '');
+  const hasSelection = valueSummary.trim() !== '';
 
   return (
     <button
       type="button"
       disabled={disabled}
+      data-testid={`search-filter-row-${sheetId}`}
+      data-has-selection={hasSelection ? 'true' : 'false'}
       onClick={onClick}
       className="flex h-12 w-full items-center justify-between gap-3 rounded-lg border-2 border-primary-500/25 bg-bg-base px-4 text-left disabled:cursor-not-allowed disabled:opacity-50 hover-only:hover:border-primary-600/50 transition-colors"
     >

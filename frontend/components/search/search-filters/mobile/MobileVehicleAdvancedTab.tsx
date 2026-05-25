@@ -52,27 +52,32 @@ export function MobileVehicleAdvancedTab({
   return (
     <>
       <FilterRow
+        sheetId="vehicle_city"
         leadingIcon={<SearchFilterCityIcon />}
         label={t('searchFilters.city')}
         valueSummary={citySummary}
         onClick={() => openSheetForEdit('vehicle_city')}
       />
       <FilterRow
+        sheetId="vehicle_registration"
         label={t('searchFilters.registrationTypeLabel')}
         valueSummary={registrationSummary}
         onClick={() => openSheetForEdit('vehicle_registration')}
       />
       <FilterRow
+        sheetId="vehicle_condition"
         label={t('searchFilters.condition')}
         valueSummary={conditionSummary}
         onClick={() => openSheetForEdit('vehicle_condition')}
       />
       <FilterRow
+        sheetId="vehicle_engine"
         label={t('searchFilters.engine')}
         valueSummary={engineSummary}
         onClick={() => openSheetForEdit('vehicle_engine')}
       />
       <FilterRow
+        sheetId="vehicle_horsepower"
         label={t('searchFilters.horsepower')}
         valueSummary={horsepowerSummary}
         onClick={() => openSheetForEdit('vehicle_horsepower')}
@@ -80,11 +85,13 @@ export function MobileVehicleAdvancedTab({
       {vehicleType !== 'moto' ? (
         <>
           <FilterRow
+            sheetId="vehicle_color"
             label={t('searchFilters.color')}
             valueSummary={colorSummary}
             onClick={() => openSheetForEdit('vehicle_color')}
           />
           <FilterRow
+            sheetId="vehicle_doors"
             label={t('searchFilters.doors')}
             valueSummary={doorsSummary}
             onClick={() => openSheetForEdit('vehicle_doors')}
@@ -92,12 +99,14 @@ export function MobileVehicleAdvancedTab({
         </>
       ) : (
         <FilterRow
+          sheetId="vehicle_color"
           label={t('searchFilters.color')}
           valueSummary={colorSummary}
           onClick={() => openSheetForEdit('vehicle_color')}
         />
       )}
       <FilterRow
+        sheetId="vehicle_seller"
         label={t('searchFilters.sellerTypeLabel')}
         valueSummary={sellerSummary}
         onClick={() => openSheetForEdit('vehicle_seller')}

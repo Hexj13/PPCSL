@@ -24,6 +24,7 @@ interface EquipmentFiltersProps {
   onEquipmentMatchModeChange: (_mode: 'full' | 'partial') => void;
   onChange: (_keys: string[]) => void;
   vehicleType: 'car' | 'truck' | 'moto';
+  enableE2eTestIds?: boolean;
 }
 
 export function EquipmentFilters({
@@ -32,6 +33,7 @@ export function EquipmentFilters({
   onEquipmentMatchModeChange,
   onChange,
   vehicleType,
+  enableE2eTestIds = false,
 }: EquipmentFiltersProps) {
   const { t } = useTranslation();
   const availableKeys = getEquipmentKeysByVehicleType(vehicleType);
@@ -120,6 +122,7 @@ export function EquipmentFilters({
                   {col1.map((key) => (
                     <Checkbox
                       key={key}
+                      data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
                       checked={equipment.includes(key)}
                       onChange={(checked) => handleChange(key, checked)}
                       label={t(`vehicleOptions.equipment.${key}`)}
@@ -131,6 +134,7 @@ export function EquipmentFilters({
                   {col2.map((key) => (
                     <Checkbox
                       key={key}
+                      data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
                       checked={equipment.includes(key)}
                       onChange={(checked) => handleChange(key, checked)}
                       label={t(`vehicleOptions.equipment.${key}`)}
@@ -142,6 +146,7 @@ export function EquipmentFilters({
                   {col3.map((key) => (
                     <Checkbox
                       key={key}
+                      data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
                       checked={equipment.includes(key)}
                       onChange={(checked) => handleChange(key, checked)}
                       label={t(`vehicleOptions.equipment.${key}`)}

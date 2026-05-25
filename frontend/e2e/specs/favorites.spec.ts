@@ -72,6 +72,13 @@ test.describe('Favorites', () => {
           await favoritesPage.expectListingCardVisible(listingId);
         },
       },
+      {
+        name: 'Open listing detail from favorites card',
+        action: async () => {
+          await favoritesPage.clickListingCard(listingId);
+          await listingDetailPage.expectPageView();
+        },
+      },
     ];
 
     await runSteps(steps);

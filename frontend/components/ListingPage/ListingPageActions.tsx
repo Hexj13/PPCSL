@@ -259,6 +259,7 @@ export function ListingPageActions({
       compactDescriptionNarrowLg
       titleId="listing-action-ai-title"
       aria-label={t('listingDetail.aiReport')}
+      dataTestId="listing-detail-action-ai-report"
     >
       <FileAiIcon className="h-5 w-5 shrink-0" />
     </ListingPageActionCard>

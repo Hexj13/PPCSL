@@ -29,6 +29,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [backend-layers.md](./architecture/backend-layers.md) — Backend layered architecture (use cases, domain)
 - [scripts-architecture.md](./architecture/scripts-architecture.md) — **CRITICAL**
 - [known-issues.md](./architecture/known-issues.md) — Known issues
+- [e2e-test-architecture.md](./architecture/e2e-test-architecture.md) — Playwright E2E layers and coverage matrix
 - [TECHNICAL.md](./architecture/TECHNICAL.md) — Technical details
 
 ### [`guides/`](./guides/)

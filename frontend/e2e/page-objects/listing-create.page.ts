@@ -2,8 +2,10 @@ import path from 'node:path';
 
 import { expect, type Page } from '@playwright/test';
 
+import { BottomSheetComponent } from '../components/common/bottom-sheet.component';
 import { createRandomListingPrice } from '../test-data/listings';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
+import { pageUsesMobileLayout } from '../utils/viewport';
 
 export class ListingCreatePage {
   private readonly testIds = {
@@ -42,7 +44,11 @@ export class ListingCreatePage {
     photosGrid: 'photos-grid',
   } as const;
 
-  constructor(private readonly page: Page) {}
+  readonly bottomSheet: BottomSheetComponent;
+
+  constructor(private readonly page: Page) {
+    this.bottomSheet = new BottomSheetComponent(page);
+  }
 
   async open(): Promise<void> {
     await forceDefaultCanonicalLocaleCookies(this.page);
@@ -69,20 +75,35 @@ export class ListingCreatePage {
     return this.page.getByTestId(this.testIds.editSubmitButton);
   }
 
-  async selectFirstDropdownOption(testId: string): Promise<void> {
-    await this.page.getByTestId(testId).click();
+  private async pickDropdownOption(testId: string, pick: 'first' | 'last'): Promise<void> {
+    const trigger = this.page.getByTestId(testId);
+    await trigger.scrollIntoViewIfNeeded();
+    await trigger.click();
+    if (await pageUsesMobileLayout(this.page)) {
+      await this.bottomSheet.expectOpen();
+      if (testId === this.testIds.yearSelect) {
+        await this.page.getByRole('button', { name: 'OK' }).click();
+        await this.bottomSheet.expectHidden();
+        return;
+      }
+    }
     const options = this.page.locator(`[data-testid^="${testId}-option-"]`);
-    await expect(options.first()).toBeVisible({ timeout: 15_000 });
-    await expect(options.first()).toBeEnabled({ timeout: 15_000 });
-    await options.first().click();
+    const target = pick === 'first' ? options.first() : options.last();
+    await expect(target).toBeVisible({ timeout: 15_000 });
+    await expect(target).toBeEnabled({ timeout: 15_000 });
+    await target.scrollIntoViewIfNeeded();
+    await target.click();
+    if (await pageUsesMobileLayout(this.page)) {
+      await this.bottomSheet.expectHidden();
+    }
+  }
+
+  async selectFirstDropdownOption(testId: string): Promise<void> {
+    await this.pickDropdownOption(testId, 'first');
   }
 
   async selectLastDropdownOption(testId: string): Promise<void> {
-    await this.page.getByTestId(testId).click();
-    const options = this.page.locator(`[data-testid^="${testId}-option-"]`);
-    await expect(options.last()).toBeVisible({ timeout: 15_000 });
-    await expect(options.last()).toBeEnabled({ timeout: 15_000 });
-    await options.last().click();
+    await this.pickDropdownOption(testId, 'last');
   }
 
   async setCheckboxCheckedById(
@@ -192,13 +213,15 @@ export class ListingCreatePage {
 
   async uploadPhotos(photoFiles: readonly string[]): Promise<void> {
     const resolvedPhotoFiles = photoFiles.map((filePath) => path.resolve(process.cwd(), filePath));
+    const photosCount = this.page.getByTestId(this.testIds.photosCount);
+    const expectedCountLabel = `${photoFiles.length}/20`;
     await this.page.getByTestId(this.testIds.photosInput).setInputFiles(resolvedPhotoFiles);
-    await expect(this.page.getByTestId(this.testIds.photosCount)).toContainText(
-      `${photoFiles.length}/20`,
-      {
-        timeout: 30_000,
-      },
-    );
+    await expect
+      .poll(async () => (await photosCount.textContent())?.includes(expectedCountLabel) ?? false, {
+        timeout: 45_000,
+        intervals: [400, 600, 1000, 1600],
+      })
+      .toBe(true);
     await expect(this.page.getByTestId(this.testIds.photosGrid)).toBeVisible();
   }
 

@@ -210,6 +210,24 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 
 ---
 
+## E2E selectors (Playwright)
+
+Stable `data-testid` values used by `search-filters-mobile.spec.ts` and `search-filters-desktop.spec.ts`. Add or rename IDs in the same change as the E2E flow.
+
+| Surface | IDs |
+| --- | --- |
+| Tabs | `search-tab-basic`, `search-tab-advanced`, `search-tab-equipment`, `search-tab-popular` |
+| Desktop panels | `search-panel-basic`, `search-panel-advanced`, `search-panel-equipment`, `search-panel-popular` |
+| Mobile panels | `search-panel-mobile-basic`, `search-panel-mobile-advanced`, `search-panel-mobile-equipment`, `search-panel-mobile-popular` |
+| Mobile sheet rows | `search-filter-row-{sheetId}` (e.g. `vehicle_brand`); `data-has-selection` on the row |
+| Sheet UI | `search-sheet-option-{value}`, `search-sheet-confirm` |
+| Mobile equipment / popular | `search-equipment-{key}` (mobile layout only), `search-popular-chip-{brand}-{model}` |
+| Actions | `search-submit`, `search-reset`, `search-smart-selection`, `search-save-filter` |
+
+See [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md) for project layout and flow completeness rules.
+
+---
+
 ## Related Documentation
 
 - [search-title-url.md](./search-title-url.md) — URL slugs for brand/model, page title with diacritics.

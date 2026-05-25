@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
+import { ListingAiReportModalComponent } from '../components/listing/listing-ai-report-modal.component';
 import { expectPagePath } from '../utils/app-path';
 
 export class ListingDetailPage {
@@ -16,9 +17,14 @@ export class ListingDetailPage {
     detailSeller: 'listing-detail-seller',
     detailInfo: 'listing-detail-info',
     detailCopyLinkButton: 'listing-detail-copy-link',
+    aiReportAction: 'listing-detail-action-ai-report',
   } as const;
 
-  constructor(private readonly page: Page) {}
+  readonly aiReportModal: ListingAiReportModalComponent;
+
+  constructor(private readonly page: Page) {
+    this.aiReportModal = new ListingAiReportModalComponent(page);
+  }
 
   get copyLinkButton() {
     return this.page.getByTestId(this.testIds.detailCopyLinkButton);
@@ -70,6 +76,18 @@ export class ListingDetailPage {
 
   async expectFavoriteActionReady(): Promise<void> {
     await expect(this.favoriteActionButton).toBeEnabled({ timeout: 30_000 });
+  }
+
+  get aiReportActionButton() {
+    return this.page.getByTestId(this.testIds.aiReportAction);
+  }
+
+  async expectAiReportActionVisible(): Promise<void> {
+    await expect(this.aiReportActionButton).toBeVisible();
+  }
+
+  async clickAiReportAction(): Promise<void> {
+    await this.aiReportActionButton.click();
   }
 
   async expectFullPageView(

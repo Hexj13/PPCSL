@@ -216,6 +216,7 @@ export function ListingPageAiReportModal({
       onClose={onClose}
       title={t('listingDetail.aiReportModalTitle')}
       size="large"
+      dataTestId="listing-ai-report-modal"
     >
       <div
         className={
@@ -225,7 +226,10 @@ export function ListingPageAiReportModal({
         }
       >
         {isReportLoading && (
-          <div className={`flex flex-col items-center gap-3 ${BODY_CLASS}`}>
+          <div
+            className={`flex flex-col items-center gap-3 ${BODY_CLASS}`}
+            data-testid="listing-ai-report-loading"
+          >
             <Spinner inline size="md" className="opacity-80" />
             <p className="text-center max-w-xs">
               {phase === 'loading'
@@ -236,7 +240,10 @@ export function ListingPageAiReportModal({
         )}
 
         {(phase === 'unavailable' || phase === 'rate_limited') && (
-          <div className="py-12 px-1 text-center space-y-3 max-w-md mx-auto">
+          <div
+            className="py-12 px-1 text-center space-y-3 max-w-md mx-auto"
+            data-testid="listing-ai-report-unavailable"
+          >
             <p className="text-xl md:text-2xl font-bold text-primary-900">
               {t('listingDetail.aiReportUnavailableTitle')}
             </p>
@@ -245,7 +252,10 @@ export function ListingPageAiReportModal({
         )}
 
         {phase === 'ready' && report && (
-          <div className="listing-ai-report-content max-w-3xl mx-auto">
+          <div
+            className="listing-ai-report-content max-w-3xl mx-auto"
+            data-testid="listing-ai-report-ready"
+          >
             <ReportSection title={t('listingDetail.aiReportSectionModelContext')}>
               <ul className={LIST_CLASS}>
                 {report.modelContext.map((item, i) => (

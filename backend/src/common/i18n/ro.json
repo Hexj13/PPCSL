@@ -313,10 +313,10 @@
   },
   "smartSelection": {
     "filterNames": {
-      "practical": "Smart-selectare: alegere practică",
-      "family": "Smart-selectare: alegere pentru familie",
-      "city": "Smart-selectare: alegere pentru oraș",
-      "comfort": "Smart-selectare: alegere confortabilă"
+      "practical": "Selecție inteligentă: alegere practică",
+      "family": "Selecție inteligentă: alegere pentru familie",
+      "city": "Selecție inteligentă: alegere pentru oraș",
+      "comfort": "Selecție inteligentă: alegere confortabilă"
     }
   },
   "telegram": {

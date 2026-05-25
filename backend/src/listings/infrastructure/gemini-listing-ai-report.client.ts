@@ -182,7 +182,7 @@ function buildSystemInstruction(reportLanguage: AiReportLanguage): string {
     '# Vehicle Score Definitions',
     'Evaluate the vehicle characteristics on a 0–100 scale. 0–39 weak, 40–69 average, 70–84 good, 85–100 excellent.',
     '- **overallScore:** Arithmetic mean of all five criterion scores, rounded to the nearest integer.',
-    '- **mileage:** Evaluate mileage vs year. Lower relative mileage = higher score. Label MUST be exactly "Пробег" (ru) or "Parcurs" (ro).',
+    '- **mileage:** Evaluate mileage vs year. Lower relative mileage = higher score. Label MUST be exactly "Пробег" (ru) or "Kilometraj" (ro).',
     '- **equipment:** Evaluate richness of options/equipment. More options = higher score. Label MUST be exactly "Комплектация авто" (ru) or "Echipare" (ro).',
     '- **reliability:** General model reliability based on widely known facts about this generation/engine. Label MUST be exactly "Надёжность модели" (ru) or "Fiabilitatea modelului" (ro).',
     '- **liquidity:** Ease of resale / market liquidity for this model. Label MUST be exactly "Ликвидность" (ru) or "Lichiditate" (ro).',

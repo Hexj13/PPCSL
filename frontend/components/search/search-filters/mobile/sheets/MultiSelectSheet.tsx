@@ -130,6 +130,7 @@ export function MultiSelectSheetContent({
                 ) : null}
                 <button
                   type="button"
+                  data-testid={`search-sheet-option-${option.value}`}
                   onClick={() => handleToggle(option.value)}
                   className={`w-full px-4 py-3.5 text-left text-text-primary hover:bg-primary-500/10 flex items-center justify-between gap-2 ${
                     isSelected ? 'bg-primary-500/15 font-semibold' : ''

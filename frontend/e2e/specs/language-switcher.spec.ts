@@ -3,12 +3,16 @@ import { pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Language switcher', () => {
-  test('changes locale and keeps query string', async ({ page }) => {
+  test('changes locale and keeps query string', async ({
+    page,
+    searchHomePage,
+    languageSwitcherPage,
+  }) => {
     const openSteps: E2EStep[] = [
       {
         name: 'Open home with query',
         action: async () => {
-          await page.goto('/?vehicleType=car', { waitUntil: 'load' });
+          await searchHomePage.open('/?vehicleType=car');
           await expect(page.getByTestId('search-filters-form')).toBeVisible();
         },
       },
@@ -16,8 +20,7 @@ test.describe('Language switcher', () => {
 
     await runSteps(prependClearBrowserState(page, openSteps));
 
-    const sw = page.getByRole('navigation').getByTestId('language-switcher');
-    await expect(sw).toBeVisible();
+    await languageSwitcherPage.expectSwitcherVisible();
 
     const switchSteps: E2EStep[] = [
       {
@@ -25,9 +28,8 @@ test.describe('Language switcher', () => {
         action: async () => {
           const beforePath = pathnameWithoutLocalePrefix(page.url());
           const beforeSearch = new URL(page.url()).search;
-          await page.getByRole('navigation').getByTestId('language-switcher').click();
-          const menu = page.getByTestId('language-switcher-menu');
-          await expect(menu).toBeVisible();
+          await languageSwitcherPage.openMenu();
+          const menu = languageSwitcherPage.headerNav.languageSwitcherMenu;
           const optionButtons = menu.locator('button[type="button"]');
           const count = await optionButtons.count();
           const checkmarkPath = 'path[d="M5 13l4 4L19 7"]';

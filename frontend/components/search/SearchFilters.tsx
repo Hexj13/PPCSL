@@ -486,7 +486,10 @@ export function SearchFilters({
 
       {filters.listing_category === 'vehicle' && (
         <>
-          <div className={tabs.activeTab === 'basic' ? '' : 'hidden'}>
+          <div
+            data-testid="search-panel-basic"
+            className={tabs.activeTab === 'basic' ? '' : 'hidden'}
+          >
             <div className="hidden md:block">
               <BasicFilters
                 filters={filters}
@@ -506,7 +509,10 @@ export function SearchFilters({
             </div>
           </div>
 
-          <div className={tabs.activeTab === 'advanced' ? '' : 'hidden'}>
+          <div
+            data-testid="search-panel-advanced"
+            className={tabs.activeTab === 'advanced' ? '' : 'hidden'}
+          >
             <div className="hidden md:block">
               <AdvancedFilters
                 filters={filters}
@@ -523,7 +529,10 @@ export function SearchFilters({
             </div>
           </div>
 
-          <div className={tabs.activeTab === 'equipment' ? '' : 'hidden'}>
+          <div
+            data-testid="search-panel-equipment"
+            className={tabs.activeTab === 'equipment' ? '' : 'hidden'}
+          >
             <div className="hidden md:block">
               <EquipmentFilters
                 equipment={filters.equipment}
@@ -537,7 +546,10 @@ export function SearchFilters({
             </div>
           </div>
 
-          <div className={tabs.activeTab === 'popular' ? '' : 'hidden'}>
+          <div
+            data-testid="search-panel-popular"
+            className={tabs.activeTab === 'popular' ? '' : 'hidden'}
+          >
             <div className="hidden md:block">
               <PopularFilters
                 key={vehicleType}

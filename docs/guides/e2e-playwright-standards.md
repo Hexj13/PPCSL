@@ -78,18 +78,49 @@ Local registration flow expectation:
 - Registration E2E should cover both user types: individual and business.
 - Registration flow is complete only after `verify-phone` -> `complete-profile` (with additional data) -> home page.
 
+## Viewport priority (mobile first)
+
+- **Priority:** automate and stabilize flows on **mobile** first, then **desktop**.
+- **Coverage:** every spec in `e2e/specs` runs on **both** viewports (no separate `mobile-*.spec.ts` smoke files unless documenting a one-off experiment).
+- **Mobile viewport:** `390×844` (`e2e/constants/viewport.ts`), touch enabled (`Pixel 5` device profile).
+- **Desktop viewport:** `Desktop Chrome` profile from Playwright.
+- **Layout breakpoint:** app mobile sheets match `max-width: 767px` (`BottomSheet`, `MobileSelectField`, mobile search filters).
+
+### Mobile vs desktop UI differences
+
+| Area | Desktop (`md+`) | Mobile (`≤767px`) |
+| --- | --- | --- |
+| Search filters (brand, price, …) | Inline controls in tabs | `FilterRow` opens bottom sheets (`MobileVehicleSection`) |
+| Search vehicle type / tabs | Same top bar | Same top bar (still visible) |
+| Listing create selects | `Dropdown` menu | `MobileSelectField` bottom sheet; year uses scroll picker + **OK** |
+| Modals (save filter, AI report) | `Modal` | `Modal` (unchanged) |
+
+Page objects must absorb these differences (`ListingCreatePage.pickDropdownOption`, `BottomSheetComponent`, `pageUsesMobileLayout`).
+
 ## Playwright projects
 
-`playwright.config.ts` defines two Chromium projects:
+`playwright.config.ts` defines **four** Chromium projects (mobile runs **before** desktop):
 
-- **`chromium-serial-account`**: specs that share the seeded E2E admin account and mutate backend or UI state (favorites, comparison, saved filters, listing create/view, my listings, **`sync-favorites-cross-tab.spec.ts`**), plus **`search-filters.spec.ts`** (URL-driven search UI is sensitive to parallel load on the dev server). Runs with **one worker** to reduce cross-file races. Match list is the `statefulAccountSpecs` regex in `playwright.config.ts`.
-- **`chromium`**: remaining specs; in CI uses two workers where safe.
+| Project | Viewport | Specs | Workers |
+| --- | --- | --- | --- |
+| **`mobile-serial-account`** | Mobile | `statefulAccountSpecs` regex | 1 |
+| **`mobile`** | Mobile | All other specs | 1–2 |
+| **`desktop-serial-account`** | Desktop | `statefulAccountSpecs` regex | 1 |
+| **`desktop`** | Desktop | All other specs | 1–2 |
 
-Run a single project explicitly:
+`desktop-serial-account` declares `dependencies: ['mobile-serial-account']` so both serial projects never run at the same time on the shared seeded admin (avoids favorites/saved-filter races).
+
+**Viewport-only specs** (no `test.skip`): `search-filters-mobile.spec.ts` runs only in mobile projects; `search-filters-desktop.spec.ts` only in desktop projects (`mobileOnlySpecs` / `desktopOnlySpecs` in `playwright.config.ts`). All other specs run on both viewports.
+
+`statefulAccountSpecs` (shared E2E admin, mutates backend/UI): favorites, saved-filters, smart-selection, listing-detail-actions, sync-favorites-cross-tab, listing-create, my-listings, listing-view, search-filters.
+
+Run a subset explicitly:
 
 ```bash
-npx playwright test --project=chromium
-npx playwright test --project=chromium-serial-account
+npx playwright test --project=mobile
+npx playwright test --project=mobile-serial-account
+npx playwright test --project=desktop
+npx playwright test --project=desktop-serial-account
 ```
 
 ## Required architecture for specs
@@ -219,23 +250,33 @@ await page.locator(`[data-testid^="${testId}-option-"]`).first().click();
 - Keep assertions deterministic and language-independent.
 - Use Allure as the source of truth for E2E run reports.
 
+## End-to-end flow completeness
+
+A spec must cover the user-visible outcome of the feature, not only an intermediate API or list state.
+
+- **Saved filters / smart selection:** after create or wizard submit, click the saved filter card, assert navigation to search home (`/`), URL query params match the saved `filters` payload, and results grid or empty state is visible.
+- **Favorites:** after toggle on listing detail, open favorites tab, assert the card, then open listing detail again from that card. `FavoritesPage.expectListingCardVisible` polls with reload until `GET /api/favorites` returns the card (shared account + parallel guest projects can delay list hydration).
+- **AI listing report:** guest redirect with `openAiReport` intent; authenticated flow waits for terminal modal state and, when `ready`, asserts report content (not only loading/unavailable shells).
+- **Compare / listing actions:** add-to-compare on detail must reach compare page with table visible, not only empty-state tabs.
+- **Search filters (mobile):** all vehicle tabs (`basic`, `advanced`, `equipment`, `popular`); each mobile bottom sheet opens, offers options, confirms with OK, and sets `data-has-selection` on the filter row; separate spec submits with a changed filter and waits for `GET /api/listings`. See `search-filters-mobile.spec.ts`.
+
+Prefer parsing create/save API responses for `id` and `filters` when asserting apply-on-home, so expander or backend relaxations stay aligned with what the UI applies.
+
 ## Allure defaults
 
 - `e2e/fixtures/base.ts` applies an automatic Allure `layer` label (`e2e-ui`) for every test via an auto fixture.
 
 ## P0 smoke scope
 
-P0 is the minimum E2E subset that protects release readiness for the primary marketplace flow.
+P0 is the minimum E2E subset that protects release readiness for the primary marketplace flow. P0 scenarios run on **both** mobile and desktop projects when tagged.
 
-- Search home page opens and filter interactions work for core vehicle types.
+- Search home page opens and filter interactions work for core vehicle types (`search-filters.spec.ts` @p0).
 - Listing detail page opens from search results and key detail blocks are visible.
 - Login flow is stable for valid credentials and unauthenticated access stays guarded.
 - Registration flow reaches home through `verify-phone` and `complete-profile`.
 - Listing creation flow covers guest guard and successful authenticated publish.
-- My listings page is accessible for authenticated users and route guard works after logout.
-- Mobile viewport smoke for search filters (`@p0` in `mobile-search.spec.ts`).
 
-Tag P0 scenarios with `@p0` in the `test.describe` title. Run `npm run test:e2e:p0` to execute only tagged tests.
+Tag P0 scenarios with `@p0` in the `test.describe` title. Run `npm run test:e2e:p0` to execute only tagged tests (all viewport projects that match the grep).
 
 All other end-to-end checks are considered non-P0 coverage and can run in the full suite.
 
@@ -251,11 +292,15 @@ Current suite is aligned with this standard:
 - API origin + locale cookies: `e2e/utils/api-origin.ts`, `e2e/utils/e2e-locale.ts`
 - URL assertions: `e2e/utils/app-path.ts` `pathnameWithoutLocalePrefix()` strips only configured URL locale prefixes (e.g. `ru`), not arbitrary two-letter path segments (so `/listings/...` is not mangled).
 - Saved filters quota: `e2e/utils/api/saved-filters.ts` `deleteAllSavedFiltersForSession` (used by `saved-filters.spec.ts` so `POST /api/saved-filters` does not hit the per-user cap during repeated local runs)
-- Shared test-data factories: `e2e/test-data/auth.ts`
+- Shared test-data factories: `e2e/test-data/auth.ts`, `e2e/test-data/search-filter-sheets.ts` (mobile sheet matrix for vehicle search)
 - Shared component objects:
   - `components/auth/register-form.component.ts`
   - `components/auth/verify-phone-form.component.ts`
   - `components/profile/complete-profile-form.component.ts`
+  - `components/listing/listing-ai-report-modal.component.ts`
+  - `components/common/bottom-sheet.component.ts`
+  - `components/layout/header-nav.component.ts`
+  - `LanguageSwitcherPage`
 - Required page objects with `expectPageView()`:
   - `SignPage`
   - `VerifyPhonePage`
@@ -268,3 +313,4 @@ Current suite is aligned with this standard:
   - `ComparePage`
   - `ProfilePage`
   - `AdminPage`
+  - `SmartSelectionPage`

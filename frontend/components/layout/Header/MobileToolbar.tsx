@@ -44,6 +44,7 @@ export function MobileToolbar({
           type="button"
           onClick={onToggle}
           disabled={isMenuToggleLocked}
+          data-testid="header-mobile-menu-toggle"
           className="touch-manipulation lg:hidden text-primary-700 transition-colors duration-200 p-2 select-none hover-only:hover:text-primary-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base disabled:pointer-events-none disabled:opacity-100"
           aria-label={toggleAriaLabel}
           aria-expanded={isMobileMenuOpen}

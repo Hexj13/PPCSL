@@ -34,6 +34,7 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmVehicleSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >
@@ -58,6 +59,7 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmVehicleSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >
@@ -80,6 +82,7 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmVehicleSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >
@@ -102,6 +105,7 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmVehicleSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >
@@ -136,6 +140,7 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmVehicleSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >
@@ -171,6 +176,7 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmVehicleSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >
@@ -195,6 +201,7 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmVehicleSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >
@@ -217,6 +224,7 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmVehicleSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >

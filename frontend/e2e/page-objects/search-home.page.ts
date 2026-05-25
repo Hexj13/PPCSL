@@ -140,6 +140,7 @@ export class SearchHomePage {
   async submitSearch(): Promise<void> {
     const submit = this.page.getByTestId('search-submit');
     await expect(submit).toBeEnabled({ timeout: 20_000 });
+    await submit.scrollIntoViewIfNeeded();
     await submit.click();
     await this.expectResultsOrEmptyVisible();
   }
@@ -221,9 +222,17 @@ export class SearchHomePage {
     return true;
   }
 
+  async clickSmartSelection(): Promise<void> {
+    const btn = this.page.getByTestId('search-smart-selection');
+    await expect(btn).toBeEnabled({ timeout: 20_000 });
+    await btn.scrollIntoViewIfNeeded();
+    await btn.click();
+  }
+
   async openSaveFilterModal(): Promise<void> {
     const btn = this.page.getByTestId('search-save-filter');
     await expect(btn).toBeEnabled({ timeout: 20_000 });
+    await btn.scrollIntoViewIfNeeded();
     await btn.click();
   }
 

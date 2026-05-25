@@ -27,6 +27,7 @@ interface PopularFiltersProps {
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   vehicleType: 'car' | 'truck' | 'moto';
+  enableE2eTestIds?: boolean;
 }
 
 type ChipItem = { brand: string; model: string };
@@ -104,6 +105,7 @@ export function PopularFilters({
   filters,
   setFilters,
   vehicleType = 'car',
+  enableE2eTestIds = false,
 }: PopularFiltersProps) {
   const { t } = useTranslation();
   const [showMore, setShowMore] = useState(false);
@@ -265,6 +267,7 @@ export function PopularFilters({
         {mostPopularChips.map(({ brand, model }) => (
           <PopularFilterChip
             key={`${brand}-${model}`}
+            dataTestId={enableE2eTestIds ? `search-popular-chip-${brand}-${model}` : undefined}
             label={`${brand} ${model}`}
             selected={isModelSelected(brand, model)}
             onToggle={() => toggleModel(brand, model)}

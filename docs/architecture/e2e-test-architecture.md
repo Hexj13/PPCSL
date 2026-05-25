@@ -67,7 +67,7 @@ Layered architecture for Playwright E2E in `core/frontend/e2e`.
 ### Test Data
 
 - Location: `core/frontend/e2e/test-data`.
-- Generate deterministic runtime data for scenarios (`test-data/auth.ts`).
+- Generate deterministic runtime data for scenarios (`test-data/auth.ts`, `test-data/search-filter-sheets.ts` for mobile vehicle filter sheets).
 - Do not hardcode random generation in spec bodies when reusable factory is possible.
 
 ## Dependency Direction
@@ -80,12 +80,17 @@ Utilities and test-data can be consumed by specs/page-objects, but must not depe
 
 ## Coverage matrix (high level)
 
-Browser: **Chromium only**. Viewports: **desktop default** in Playwright config; **narrow viewport** covered by `mobile-search.spec.ts` via `test.use({ viewport })`.
+Browser: **Chromium only**. Viewports: **every spec runs on mobile and desktop** via Playwright projects (`mobile`, `mobile-serial-account`, `desktop`, `desktop-serial-account`). Mobile is listed first in config and is the preferred target when adding or fixing flows.
+
+`desktop-serial-account` depends on `mobile-serial-account` so stateful specs for the shared E2E admin never run in parallel across viewports.
 
 | Area | Guest | Auth | Admin | P0 tag |
 | --- | --- | --- | --- | --- |
-| Search filters (desktop) | yes | yes | n/a | yes (`search-filters.spec.ts`) |
-| Search filters (mobile viewport) | yes | n/a | n/a | yes (`mobile-search.spec.ts`) |
+| Search filters (shared) | yes | yes | n/a | yes (`search-filters.spec.ts`) |
+| Search filters (mobile sheets) | yes | yes | n/a | yes (`search-filters-mobile.spec.ts`, mobile projects only) |
+| Search filters (desktop tabs) | yes | yes | n/a | yes (`search-filters-desktop.spec.ts`, desktop projects only) |
+| Smart selection | yes | yes | n/a | no |
+| Listing AI report | yes | yes | n/a | no |
 | Listing detail view | via shared prep | yes | n/a | yes (`listing-view.spec.ts`) |
 | Listing detail actions (compare) | n/a | yes | n/a | no |
 | Listing create / my listings | n/a | yes | n/a | yes |
@@ -104,3 +109,5 @@ Browser: **Chromium only**. Viewports: **desktop default** in Playwright config;
 
 `e2e/src_example` was a reference implementation and is not part of active runtime architecture.
 Its useful patterns were applied into active layers above.
+
+Removed `mobile-search.spec.ts`: mobile search coverage lives in viewport projects plus `search-filters-mobile.spec.ts` / `search-filters-desktop.spec.ts` (see [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md)).

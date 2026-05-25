@@ -268,7 +268,10 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
 
   return (
     <div className="flex flex-col gap-3 mb-4">
-      <div className={`flex flex-col gap-3 ${activeTab === 'basic' ? '' : 'hidden'}`}>
+      <div
+        data-testid="search-panel-mobile-basic"
+        className={`flex flex-col gap-3 ${activeTab === 'basic' ? '' : 'hidden'}`}
+      >
         <MobileVehicleBasicTab
           t={t}
           filters={filters}
@@ -286,7 +289,10 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
         />
       </div>
 
-      <div className={`flex flex-col gap-3 ${activeTab === 'advanced' ? '' : 'hidden'}`}>
+      <div
+        data-testid="search-panel-mobile-advanced"
+        className={`flex flex-col gap-3 ${activeTab === 'advanced' ? '' : 'hidden'}`}
+      >
         <MobileVehicleAdvancedTab
           t={t}
           vehicleType={vehicleType}
@@ -304,17 +310,24 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
         />
       </div>
 
-      <div className={activeTab === 'equipment' ? '' : 'hidden'}>
+      <div
+        data-testid="search-panel-mobile-equipment"
+        className={activeTab === 'equipment' ? '' : 'hidden'}
+      >
         <EquipmentFilters
           equipment={filters.equipment}
           equipmentMatchMode={filters.equipment_match_mode}
           onEquipmentMatchModeChange={(mode) => onFilterChange('equipment_match_mode', mode)}
           onChange={(keys) => updateMultiple({ equipment: keys })}
           vehicleType={vehicleType}
+          enableE2eTestIds
         />
       </div>
 
-      <div className={activeTab === 'popular' ? '' : 'hidden'}>
+      <div
+        data-testid="search-panel-mobile-popular"
+        className={activeTab === 'popular' ? '' : 'hidden'}
+      >
         <PopularFilters
           key={vehicleType}
           brands={brands}
@@ -322,6 +335,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
           filters={filters}
           setFilters={setFilters}
           vehicleType={vehicleType}
+          enableE2eTestIds
         />
       </div>
 

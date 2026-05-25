@@ -1,15 +1,18 @@
 import { expect, type Page } from '@playwright/test';
 
+import { HeaderNavComponent } from '../components/layout/header-nav.component';
+
 export class MyListingsPage {
   private readonly testIds = {
     page: 'my-listings-page',
     editLinkPrefix: 'my-listings-edit-link-',
-    userMoreToggle: 'header-user-more-toggle',
-    userMoreMenu: 'header-user-more-menu',
-    userLogout: 'header-user-logout',
   } as const;
 
-  constructor(private readonly page: Page) {}
+  readonly headerNav: HeaderNavComponent;
+
+  constructor(private readonly page: Page) {
+    this.headerNav = new HeaderNavComponent(page);
+  }
 
   get editLinks() {
     return this.page.locator(`[data-testid^="${this.testIds.editLinkPrefix}"]`);
@@ -21,12 +24,11 @@ export class MyListingsPage {
   }
 
   async openUserMenu(): Promise<void> {
-    await this.page.getByTestId(this.testIds.userMoreToggle).click();
-    await expect(this.page.getByTestId(this.testIds.userMoreMenu)).toBeVisible();
+    await this.headerNav.openUserMenuForLogout();
   }
 
   async logoutFromUserMenu(): Promise<void> {
-    await this.page.getByTestId(this.testIds.userLogout).click();
+    await this.headerNav.logout();
   }
 
   async hasEditableListing(): Promise<boolean> {

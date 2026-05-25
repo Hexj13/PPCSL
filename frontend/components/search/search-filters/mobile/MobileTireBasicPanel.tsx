@@ -106,6 +106,7 @@ export function MobileTireBasicPanel({
       </div>
 
       <FilterRow
+        sheetId="tire_size"
         leadingIcon={<SearchFilterTireSizeIcon />}
         label={t('searchFilters.tireSizeCriteria')}
         valueSummary={sizeSummary}
@@ -113,6 +114,7 @@ export function MobileTireBasicPanel({
       />
 
       <FilterRow
+        sheetId="tire_price"
         leadingIcon={<SearchFilterPriceIcon />}
         label={t('searchFilters.priceWithSearchCurrency', {
           currency: loadSiteConfigSync(getCountry()).currency,
@@ -122,11 +124,13 @@ export function MobileTireBasicPanel({
       />
 
       <FilterRow
+        sheetId="tire_brand"
         label={t('searchFilters.tireBrand')}
         valueSummary={tireBrandSummary}
         onClick={() => openSheetForEdit('tire_brand')}
       />
       <FilterRow
+        sheetId="tire_model"
         label={t('searchFilters.tireModel')}
         valueSummary={tireModelSummary}
         disabled={filters.tire_brand_ids.length === 0 || loadingTireModels}
@@ -134,6 +138,7 @@ export function MobileTireBasicPanel({
       />
 
       <FilterRow
+        sheetId="tire_tread"
         leadingIcon={<SearchFilterCloudIcon />}
         label={t('searchFilters.tireTreadLabel')}
         valueSummary={treadSummary}
@@ -141,6 +146,7 @@ export function MobileTireBasicPanel({
       />
 
       <FilterRow
+        sheetId="tire_features"
         leadingIcon={<SearchFilterSlidersIcon />}
         label={t('searchFilters.tireOptionsLabel')}
         valueSummary={tireFeatureSummary}
@@ -148,6 +154,7 @@ export function MobileTireBasicPanel({
       />
 
       <FilterRow
+        sheetId="tire_city"
         leadingIcon={<SearchFilterCityIcon />}
         label={t('searchFilters.city')}
         valueSummary={tireCitySummary}
@@ -155,6 +162,7 @@ export function MobileTireBasicPanel({
       />
 
       <FilterRow
+        sheetId="tire_condition"
         leadingIcon={<SearchFilterShieldIcon />}
         label={t('searchFilters.tireConditionLabel')}
         valueSummary={tireConditionSummary}
@@ -162,6 +170,7 @@ export function MobileTireBasicPanel({
       />
 
       <FilterRow
+        sheetId="tire_quantity"
         leadingIcon={<SearchFilterHashtagIcon />}
         label={t('searchFilters.tireQuantityLabel')}
         valueSummary={quantitySummary}
@@ -169,6 +178,7 @@ export function MobileTireBasicPanel({
       />
 
       <FilterRow
+        sheetId="tire_seller"
         leadingIcon={<SearchFilterUserIcon />}
         label={t('searchFilters.sellerTypeLabel')}
         valueSummary={sellerSummary}

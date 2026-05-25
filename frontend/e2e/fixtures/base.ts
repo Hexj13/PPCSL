@@ -5,12 +5,14 @@ import { AdminPage } from '../page-objects/admin.page';
 import { ComparePage } from '../page-objects/compare.page';
 import { CompleteProfilePage } from '../page-objects/complete-profile.page';
 import { FavoritesPage } from '../page-objects/favorites.page';
+import { LanguageSwitcherPage } from '../page-objects/language-switcher.page';
 import { ListingCreatePage } from '../page-objects/listing-create.page';
 import { ListingDetailPage } from '../page-objects/listing-detail.page';
 import { MyListingsPage } from '../page-objects/my-listings.page';
 import { ProfilePage } from '../page-objects/profile.page';
 import { SearchHomePage } from '../page-objects/search-home.page';
 import { SignPage } from '../page-objects/sign.page';
+import { SmartSelectionPage } from '../page-objects/smart-selection.page';
 import { VerifyPhonePage } from '../page-objects/verify-phone.page';
 import { applyDefaultLocaleCookiesToBrowserContext } from '../utils/e2e-locale';
 
@@ -20,12 +22,14 @@ type E2EFixtures = {
   comparePage: ComparePage;
   completeProfilePage: CompleteProfilePage;
   favoritesPage: FavoritesPage;
+  languageSwitcherPage: LanguageSwitcherPage;
   listingCreatePage: ListingCreatePage;
   listingDetailPage: ListingDetailPage;
   myListingsPage: MyListingsPage;
   profilePage: ProfilePage;
   searchHomePage: SearchHomePage;
   signPage: SignPage;
+  smartSelectionPage: SmartSelectionPage;
   verifyPhonePage: VerifyPhonePage;
 };
 
@@ -54,6 +58,9 @@ export const test = base.extend<E2EFixtures>({
   favoritesPage: async ({ page }, fixture) => {
     await fixture(new FavoritesPage(page));
   },
+  languageSwitcherPage: async ({ page }, fixture) => {
+    await fixture(new LanguageSwitcherPage(page));
+  },
   listingCreatePage: async ({ page }, fixture) => {
     await fixture(new ListingCreatePage(page));
   },
@@ -71,6 +78,9 @@ export const test = base.extend<E2EFixtures>({
   },
   signPage: async ({ page }, fixture) => {
     await fixture(new SignPage(page));
+  },
+  smartSelectionPage: async ({ page }, fixture) => {
+    await fixture(new SmartSelectionPage(page));
   },
   verifyPhonePage: async ({ page }, fixture) => {
     await fixture(new VerifyPhonePage(page));
