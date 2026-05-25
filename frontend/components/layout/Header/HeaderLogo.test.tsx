@@ -45,14 +45,19 @@ jest.mock('@/lib/utils', () => ({
   getCountry: () => 'md',
 }));
 
+const mockScrollTo = jest.fn();
+
 describe('HeaderLogo', () => {
-  const scrollToSpy = jest.spyOn(window, 'scrollTo').mockImplementation(() => {});
   const dispatchEventSpy = jest.spyOn(window, 'dispatchEvent');
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockPathname = '/';
-    scrollToSpy.mockClear();
+    Object.defineProperty(window, 'scrollTo', {
+      value: mockScrollTo,
+      writable: true,
+      configurable: true,
+    });
     dispatchEventSpy.mockClear();
   });
 
@@ -70,7 +75,7 @@ describe('HeaderLogo', () => {
     );
     expect(mockPush).toHaveBeenCalledWith('/');
     expect(mockReplace).not.toHaveBeenCalled();
-    expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+    expect(mockScrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
   });
 
   it('resets search and replaces URL when already on home with query params', () => {
@@ -87,7 +92,7 @@ describe('HeaderLogo', () => {
     );
     expect(mockReplace).toHaveBeenCalledWith('/', { scroll: false });
     expect(mockPush).not.toHaveBeenCalled();
-    expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+    expect(mockScrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
   });
 
   it('does not intercept modifier-click navigation', () => {
@@ -102,7 +107,7 @@ describe('HeaderLogo', () => {
     expect(dispatchEventSpy).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalled();
     expect(mockReplace).not.toHaveBeenCalled();
-    expect(scrollToSpy).not.toHaveBeenCalled();
+    expect(mockScrollTo).not.toHaveBeenCalled();
   });
 
   it('does not intercept non-left-click navigation', () => {
@@ -117,6 +122,6 @@ describe('HeaderLogo', () => {
     expect(dispatchEventSpy).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalled();
     expect(mockReplace).not.toHaveBeenCalled();
-    expect(scrollToSpy).not.toHaveBeenCalled();
+    expect(mockScrollTo).not.toHaveBeenCalled();
   });
 });

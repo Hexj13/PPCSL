@@ -104,6 +104,9 @@ function lastReplacePath(): string {
   return String(calls[calls.length - 1]?.[0] ?? '');
 }
 
+const mockLogin = jest.mocked(authApi.login);
+const mockMe = jest.mocked(authApi.me);
+
 describe('useLoginPage post-auth navigation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -112,10 +115,10 @@ describe('useLoginPage post-auth navigation', () => {
     authStoreState.setAuth.mockImplementation((user: UserSlice | null) => {
       authStoreState.user = user;
     });
-    (authApi.login as jest.Mock).mockResolvedValue({});
-    (authApi.me as jest.Mock).mockResolvedValue({
+    mockLogin.mockResolvedValue({} as never);
+    mockMe.mockResolvedValue({
       data: { id: 'user-1', phoneVerified: true },
-    });
+    } as never);
   });
 
   it('calls setAuth and replace to localized home when phone is verified and returnUrl is absent', async () => {
@@ -141,9 +144,9 @@ describe('useLoginPage post-auth navigation', () => {
   });
 
   it('calls setAuth and replace to complete-profile when phone is not verified', async () => {
-    (authApi.me as jest.Mock).mockResolvedValue({
+    mockMe.mockResolvedValue({
       data: { id: 'user-1', phoneVerified: false },
-    });
+    } as never);
 
     const { result } = renderHook(() => useLoginPage());
 

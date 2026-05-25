@@ -41,11 +41,13 @@ jest.mock('@/lib/url-locale', () => ({
   },
 }));
 
+const mockLocalStorageGetItem = jest.mocked(localStorageGetItem);
+
 describe('ProfileSaveSuccessToast', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUsePathname.mockReturnValue('/ru');
-    (localStorageGetItem as jest.Mock).mockImplementation((key: string) =>
+    mockLocalStorageGetItem.mockImplementation((key) =>
       key === 'showProfileDeleteSuccess' ? 'true' : null,
     );
   });
