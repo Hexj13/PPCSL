@@ -220,7 +220,7 @@ INFOCAR_SECRET_KEY=<secret-from-infocar>
 
 # Google Gemini (optional) — listing AI analysis (POST /api/listings/:id/ai-report). If GEMINI_API_KEY is unset, the endpoint returns status unavailable.
 GEMINI_API_KEY=<google-ai-studio-api-key>
-# Optional: GEMINI_MODEL (default gemini-3.1-flash-lite-preview). GEMINI_MODEL_FALLBACK (default gemini-3-flash-preview) is used when the primary model returns transient errors (e.g. 503 / overload).
+# Optional: GEMINI_MODEL (default gemini-3.5-flash). GEMINI_MODEL_FALLBACK (default gemini-3.1-flash-lite) is used when the primary model returns transient errors (e.g. 503 / overload).
 # Production only: max new AI report generations per user per rolling hour (Redis). Unset = 5. Non-production (e.g. development): quota disabled.
 # AI_REPORT_MAX_GENERATIONS_PER_HOUR=5
 
@@ -295,6 +295,7 @@ PPCSL/
 │   │   ├── listings/ # Listings
 │   │   ├── favorites/# Favorites
 │   │   ├── saved-filters/ # Saved search filters
+│   │   ├── smart-selection/ # Guided questionnaire that creates saved filters
 │   │   ├── board/    # Seller listings board (public by slug)
 │   │   ├── brands/   # Brands and models
 │   │   ├── admin/    # Admin panel
@@ -342,6 +343,7 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 - **Adaptive Quality:** Different quality levels for different contexts (70% for thumbnails, 75-80% for cards and detail pages, 85% for full-size modal views)
 - **File Storage:** AWS S3 for persistent images and optional listing video (using AWS SDK v3, required for production on Render.com), AWS CloudFront CDN for fast global delivery when configured
 - **Search:** PostgreSQL Full-Text Search with extensive filtering options
+- **Smart Selection:** authenticated questionnaire that maps car-use preferences to a saved search filter
 - **Caching:** Redis for SMS codes, cache optimization (SCAN instead of KEYS), listing AI analysis generation locks and per-user hourly quotas (production; see `POST /api/listings/:id/ai-report` and `AI_REPORT_MAX_GENERATIONS_PER_HOUR`)
 - **Monitoring:** Health check endpoint (`/health`) with database and Redis connectivity checks
 - **Code Quality:** TypeScript strict mode, CI/CD automation, bundle optimization
@@ -476,6 +478,16 @@ DELETE /api/saved-filters/:id          # Delete saved filter
 **Saved filters payload sanitization:** Client-side create requests keep only allowed filter keys before calling `POST /api/saved-filters`. This prevents accidental UI-only/transient fields from being persisted.
 
 **E2E:** Reusing the same authenticated user across runs can hit the per-user cap (`400` from `POST`). Specs that create filters should clear existing rows first (see [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md)).
+
+### Smart Selection
+
+Guided saved-filter creation for authenticated, phone-verified users. The frontend route is `/smart-selection`; guests are redirected through sign-in with that return path.
+
+```http
+POST /api/smart-selection             # Create a saved car filter from questionnaire answers (JWT + phone verified)
+```
+
+The request includes purpose, driving mode, budget preset, currency, flexible budget flag, size/body type preferences, transmission/fuel choices, year/mileage presets, and up to three priorities. The backend maps answers to a regular saved filter (`vehicleType=car`) and relaxes narrow filters until enough listings are found or all expansion steps are exhausted. The saved filter is returned and appears on `/favorites?tab=filters`. See [smart-selection.md](../features/smart-selection.md).
 
 ### Seller Listings Board
 
@@ -1237,7 +1249,7 @@ Or use `npm run dev` in root - it will start both servers.
 - **API Documentation:** Swagger available at `/api/docs` (when running in non-production)
 - **Project README:** See [README.md](../../README.md) in project root
 - **Deployment Guide:** See [DEPLOYMENT.md](../guides/DEPLOYMENT.md) for production deployment
-- **Feature docs:** [seller-listings-board.md](../features/seller-listings-board.md), [paid-promotion.md](../features/paid-promotion.md), [image-preview.md](../features/image-preview.md), [ui-components.md](../features/ui-components.md), [TODO.md](../features/TODO.md)
+- **Feature docs:** [seller-listings-board.md](../features/seller-listings-board.md), [paid-promotion.md](../features/paid-promotion.md), [image-preview.md](../features/image-preview.md), [smart-selection.md](../features/smart-selection.md), [ui-components.md](../features/ui-components.md), [TODO.md](../features/TODO.md)
 
 ---
 
@@ -1550,8 +1562,8 @@ cd core/backend && npm run test -- listings.service.spec.ts
 
 ---
 
-**Last Updated:** 2026-04-23
-**Version:** 1.13
+**Last Updated:** 2026-05-25
+**Version:** 1.14
 
 ### Recent Updates
 

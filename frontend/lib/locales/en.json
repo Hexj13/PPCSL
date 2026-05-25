@@ -884,11 +884,27 @@
     "aiReportUnavailableTitle": "Temporarily unavailable",
     "aiReportUnavailableBody": "The AI analysis could not be loaded. Please try again later.",
     "aiReportSectionSummary": "Summary of the listing",
+    "aiReportQualityOverall": "{score}/100",
+    "aiReportQualityItemScore": "{score}/100",
+    "aiReportQualityScoreSuffix": "/100",
+    "aiReportQualityScoreAfterLabel": "): ",
+    "aiReportQualityDetails": "Details",
+    "aiReportQualityPositivePoints": "What is good",
+    "aiReportQualityNegativePoints": "What can be improved",
+    "aiReportQualityChartLabel": "Listing score by criteria",
+    "aiReportQualityCriterionDataCompleteness": "Data completeness",
+    "aiReportQualityCriterionSafeChoice": "Safe choice",
+    "aiReportVehicleCriterionMileage": "Mileage",
+    "aiReportVehicleCriterionEquipment": "Equipment",
+    "aiReportVehicleCriterionReliability": "Model reliability",
+    "aiReportVehicleCriterionLiquidity": "Liquidity",
+    "aiReportVehicleCriterionPopularity": "Market popularity",
     "aiReportSectionModelContext": "About this car model",
     "aiReportSectionAnalysis": "Listing analysis",
-    "aiReportAnalysisPrice": "Price",
+    "aiReportSectionQualityAssessment": "Listing quality assessment",
+    "aiReportSectionVehicleCharacteristics": "Vehicle characteristics assessment",
     "aiReportAnalysisMileage": "Mileage",
-    "aiReportAnalysisDescription": "Description",
+    "aiReportAnalysisCondition": "Condition",
     "aiReportAnalysisRegistration": "Registration",
     "aiReportAnalysisOptions": "Equipment and options",
     "aiReportSectionStrengths": "Strengths",
@@ -1130,6 +1146,8 @@
     "searching": "Searching...",
     "reset": "Reset",
     "addToFavorites": "Add to favorites",
+    "smartSelection": "Smart selection",
+    "smartSelectionFilterLimitError": "Saved filter limit reached ({max} filters)",
     "login": "Login",
     "noResults": "No results found",
     "year": "Year",
@@ -2391,6 +2409,128 @@
       "empty": "No promotion history",
       "active": "Active",
       "loadError": "Error loading history"
+    }
+  },
+  "smartSelection": {
+    "title": "Smart selection",
+    "home": "Home",
+    "intro": "Answer a few quick questions and we will create a saved search filter tailored to your needs.",
+    "progress": "Step {current} of {total}",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Get smart selection",
+    "submitSuccess": "Your smart filter has been saved",
+    "submitError": "Could not create smart filter. Please try again.",
+    "sizeLabel": "Car size",
+    "flexibleBudget": "I can stretch the budget a bit for a better match",
+    "bodyTypesLabel": "Body types",
+    "transmissionLabel": "Transmission",
+    "fuelsLabel": "Fuel type",
+    "yearLabel": "Vehicle age",
+    "mileageLabel": "Maximum mileage",
+    "prioritiesLabel": "What matters most (up to 3)",
+    "steps": {
+      "0": {
+        "title": "What do you need the car for?",
+        "hint": "Choose up to 3 scenarios that describe your daily use."
+      },
+      "1": {
+        "title": "Where will you drive most often?",
+        "hint": "This helps us choose body type, fuel, and drivetrain."
+      },
+      "2": {
+        "title": "What is your budget?",
+        "hint": "Pick a comfortable price range for your budget."
+      },
+      "3": {
+        "title": "Size and body type",
+        "hint": "Tell us how much space you need and which body styles you like."
+      },
+      "4": {
+        "title": "Fuel and transmission",
+        "hint": "Choose what suits your driving style."
+      },
+      "5": {
+        "title": "Age, mileage, and priorities",
+        "hint": "We will balance freshness, mileage, and what you care about most."
+      }
+    },
+    "purposes": {
+      "city": "City driving",
+      "commute": "Daily commute",
+      "family": "Family and kids",
+      "long_trips": "Long trips",
+      "travel": "Travel",
+      "first_car": "First car",
+      "taxi_work": "Taxi / work / delivery",
+      "business": "Business",
+      "active_offroad": "Active leisure / rough roads",
+      "comfort": "Comfort first"
+    },
+    "drivingModes": {
+      "city": "Mostly city",
+      "city_highway": "City and highway",
+      "highway": "Mostly highway",
+      "rural_bad_roads": "Villages / rough roads",
+      "mixed": "Mixed use"
+    },
+    "budgetPresets": {
+      "up_to_5000": "Up to 5,000 {currency}",
+      "up_to_8000": "Up to 8,000 {currency}",
+      "up_to_12000": "Up to 12,000 {currency}",
+      "up_to_15000": "Up to 15,000 {currency}",
+      "up_to_20000": "Up to 20,000 {currency}",
+      "up_to_30000": "Up to 30,000 {currency}",
+      "up_to_50000": "Up to 50,000 {currency}"
+    },
+    "sizes": {
+      "small": "Compact and easy in the city",
+      "medium": "Versatile mid-size",
+      "large": "Spacious",
+      "any": "Does not matter if it fits otherwise"
+    },
+    "bodyTypes": {
+      "auto_pick": "Let the system choose"
+    },
+    "transmissions": {
+      "automatic_only": "Automatic only",
+      "manual_only": "Manual only",
+      "any": "Any",
+      "prefer_automatic": "Prefer automatic",
+      "prefer_manual": "Prefer manual"
+    },
+    "fuels": {
+      "any": "Any",
+      "auto_pick": "Let the system choose"
+    },
+    "yearPresets": {
+      "not_older_than_2": "Not older than 2 years",
+      "not_older_than_3": "Not older than 3 years",
+      "not_older_than_5": "Not older than 5 years",
+      "not_older_than_7": "Not older than 7 years",
+      "not_older_than_10": "Not older than 10 years",
+      "any": "Age is not critical"
+    },
+    "mileagePresets": {
+      "up_to_50000": "Up to 50,000 km",
+      "up_to_100000": "Up to 100,000 km",
+      "up_to_150000": "Up to 150,000 km",
+      "up_to_200000": "Up to 200,000 km",
+      "any": "Mileage is not critical"
+    },
+    "priorities": {
+      "low_consumption": "Low fuel consumption",
+      "reliability": "Reliability",
+      "low_maintenance": "Affordable maintenance",
+      "comfort": "Comfort",
+      "safety": "Safety",
+      "luggage": "Large trunk",
+      "dynamics": "Performance",
+      "looks": "Appearance",
+      "fresh_year": "Newer year",
+      "low_mileage": "Lower mileage",
+      "resale": "Resale value",
+      "equipment": "Rich equipment"
     }
   }
 }

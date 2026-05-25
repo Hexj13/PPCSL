@@ -152,6 +152,12 @@ import { MediaConvertService } from './video/mediaconvert.service';
     MediaConvertService,
     ListingVideoReconcileCronService,
   ],
-  exports: [ListingsService, LISTING_CACHE, TypeOrmModule, ListingVideoService],
+  exports: [
+    ListingsService,
+    SearchListingsUseCase,
+    LISTING_CACHE,
+    TypeOrmModule,
+    ListingVideoService,
+  ],
 })
 export class ListingsModule {}

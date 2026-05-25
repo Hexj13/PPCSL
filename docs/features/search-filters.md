@@ -24,7 +24,7 @@ The search form is split into:
 
 1. **Vehicle type selector** — Car / Truck / Moto (above tabs).
 2. **Four tabs:** Basic criteria, Additional criteria, Equipment, Popular.
-3. **Actions:** Search, Reset, (Save filter), Log in.
+3. **Actions:** Search, Reset, Smart selection, (Save filter), Log in.
 
 Filter state is synced with the URL; submitting the form runs the search and updates results. See [search-title-url.md](./search-title-url.md) for brand/model slugs and [technical.md](../architecture/technical.md) for API and URL parameters.
 
@@ -202,7 +202,7 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 | `search-filters/EquipmentFilters.tsx`       | Equipment checkboxes and match mode                                                        |
 | `search-filters/PopularFilters.tsx`         | Popular brands/models links                                                                |
 | `search-filters/SearchTabs.tsx`             | Tab buttons and indicator                                                                  |
-| `search-filters/SearchFormActions.tsx`      | Search, Reset, Save, Log in buttons                                                        |
+| `search-filters/SearchFormActions.tsx`      | Available-count display, sort dropdown, Smart selection, Save, Search, Reset, and Log in buttons |
 | `search-filters/VehicleTypeSelector.tsx`    | Car / Truck / Moto selector                                                                |
 | `search-filters/PopularBodyTypesFilter.tsx` | Body type chips under Basic filters                                                        |
 | `hooks/usePopularModels.ts`                 | Popular tab: brand/model selection, mutual exclusion, selectedItems                         |
@@ -213,10 +213,11 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 ## Related Documentation
 
 - [search-title-url.md](./search-title-url.md) — URL slugs for brand/model, page title with diacritics.
+- [smart-selection.md](./smart-selection.md) — Guided questionnaire that creates saved filters.
 - [vehicle-type.md](./vehicle-type.md) — Vehicle type classification and usage in search/form.
 - [technical.md](../architecture/technical.md) — Listings API, filter query params, slug handling.
 - [ui-components.md](./ui-components.md) — InfoBlock / HintTooltip (used in forms; equipment uses HintTooltip).
 
 ---
 
-**Last updated:** 2026-05-19
+**Last updated:** 2026-05-25

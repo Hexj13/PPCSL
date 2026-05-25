@@ -5,8 +5,15 @@ import { ConfigService } from '@nestjs/config';
 import type { ListingAiInputSnapshot } from '../application/listing-ai-report-snapshot';
 import type { AiReportLanguage } from '../application/listing-ai-report.types';
 
-const DEFAULT_GEMINI_PRIMARY_MODEL = 'gemini-3.1-flash-lite-preview';
-const DEFAULT_GEMINI_FALLBACK_MODEL = 'gemini-3-flash-preview';
+const DEFAULT_GEMINI_PRIMARY_MODEL = 'gemini-3.5-flash';
+const DEFAULT_GEMINI_FALLBACK_MODEL = 'gemini-3.1-flash-lite';
+const AI_PROMPT_OMITTED_SNAPSHOT_FIELDS = [
+  'listingId',
+  'reportSchemaVersion',
+  'category',
+  'status',
+  'last_updated_at',
+] as const;
 
 export type GeminiListingAiReportJsonResult = {
   text: string | null;
@@ -16,11 +23,13 @@ export type GeminiListingAiReportJsonResult = {
 
 function shouldAttemptFallbackModel(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
-  if (/\[\s*(429|500|502|503|504)\s/i.test(msg)) {
+  if (/\[\s*(404|429|500|502|503|504)\s/i.test(msg)) {
     return true;
   }
   const l = msg.toLowerCase();
   return (
+    l.includes('no longer available') ||
+    l.includes('not found') ||
     l.includes('service unavailable') ||
     l.includes('high demand') ||
     l.includes('overloaded') ||
@@ -45,35 +54,81 @@ const LIST_TWO_TO_FIVE = {
   maxItems: 5,
 } as const;
 
-const listingAnalysisObjectSchema: Record<string, unknown> = {
+const scoreItemSchema: Record<string, unknown> = {
   type: SchemaType.OBJECT,
-  required: ['priceComment', 'mileageComment', 'descriptionComment'],
+  required: ['label', 'score', 'summary'],
   properties: {
-    priceComment: { type: SchemaType.STRING },
-    mileageComment: { type: SchemaType.STRING },
-    descriptionComment: { type: SchemaType.STRING },
-    registrationComment: { type: SchemaType.STRING },
-    optionsComment: { type: SchemaType.STRING },
+    label: { type: SchemaType.STRING },
+    score: { type: SchemaType.NUMBER },
+    summary: { type: SchemaType.STRING },
+  },
+};
+
+const qualityScoreObjectSchema: Record<string, unknown> = {
+  type: SchemaType.OBJECT,
+  required: ['overallScore', 'summary', 'items'],
+  properties: {
+    overallScore: { type: SchemaType.NUMBER },
+    summary: { type: SchemaType.STRING },
+    items: {
+      type: SchemaType.OBJECT,
+      required: [
+        'dataCompleteness',
+        'mediaQuality',
+        'descriptionQuality',
+        'priceAdequacy',
+        'safeChoice',
+      ],
+      properties: {
+        dataCompleteness: scoreItemSchema,
+        mediaQuality: scoreItemSchema,
+        descriptionQuality: scoreItemSchema,
+        priceAdequacy: scoreItemSchema,
+        safeChoice: scoreItemSchema,
+      },
+    },
+  },
+};
+
+const vehicleScoreObjectSchema: Record<string, unknown> = {
+  type: SchemaType.OBJECT,
+  required: ['overallScore', 'summary', 'items'],
+  properties: {
+    overallScore: { type: SchemaType.NUMBER },
+    summary: { type: SchemaType.STRING },
+    items: {
+      type: SchemaType.OBJECT,
+      required: ['mileage', 'equipment', 'reliability', 'liquidity', 'popularity'],
+      properties: {
+        mileage: scoreItemSchema,
+        equipment: scoreItemSchema,
+        reliability: scoreItemSchema,
+        liquidity: scoreItemSchema,
+        popularity: scoreItemSchema,
+      },
+    },
   },
 };
 
 const REPORT_SCHEMA: ResponseSchema = {
   type: SchemaType.OBJECT,
   required: [
+    '_scratchpad',
     'modelContext',
     'summary',
-    'listingAnalysis',
     'strengths',
     'weaknesses',
     'buyingChecks',
     'questionsForSeller',
     'redFlags',
     'confidence',
+    'qualityScore',
+    'vehicleScore',
   ],
   properties: {
+    _scratchpad: { type: SchemaType.STRING },
     modelContext: { ...LIST_TWO_TO_FIVE },
     summary: { type: SchemaType.STRING },
-    listingAnalysis: listingAnalysisObjectSchema as never,
     strengths: { ...LIST_THREE_TO_SIX },
     weaknesses: { ...LIST_THREE_TO_SIX },
     buyingChecks: { ...LIST_THREE_TO_SIX },
@@ -85,63 +140,65 @@ const REPORT_SCHEMA: ResponseSchema = {
       maxItems: 6,
     },
     confidence: { type: SchemaType.NUMBER },
+    qualityScore: qualityScoreObjectSchema as never,
+    vehicleScore: vehicleScoreObjectSchema as never,
   },
 } as ResponseSchema;
 
 function buildSystemInstruction(reportLanguage: AiReportLanguage): string {
   return [
-    'You analyze vehicle sale listings on a car marketplace.',
-    `All user-visible text fields in the JSON report must be in language: ${reportLanguage}. Supported languages: ru, ro.`,
-
-    'Return only valid JSON that matches the provided schema. No markdown, no extra text, no comments in any string field.',
-
-    'Style: short, factual, dry, business-like, neutral. No fluff. No hype. No emotional wording.',
-    'Do not recommend buying or avoiding the car. Do not use purchase imperatives or phrases like "buy", "take it", "recommended", "best deal", "great purchase", "avoid this car".',
-    'Use cautious wording: "may indicate", "requires verification", "data is insufficient", "looks consistent based on listing data".',
-
-    'Do not invent facts absent from the input JSON.',
-    'Do not make categorical technical conclusions about the real condition of the vehicle.',
-    'Do not claim defects, accidents, service history, ownership history, or legal status unless explicitly present in the input.',
-    'If data is sparse or vague, lower confidence and state uncertainty clearly.',
-
-    'The input has no image analysis. Do not mention missing photos, photo quality, stock photos, real-car photos, or anything photo-related.',
-    'The input has no external VIN/history check unless explicitly provided. Do not infer VIN/history issues from absence of data.',
-
-    'Use only structured and textual listing data: title, description, brand, model, year, mileage, price, currency, fuel, transmission, body type, drive type, equipment, registration type, seller type, location, and provided backend metrics.',
-
-    'Consider registration type if provided: imported, local, or unknown. If unknown, treat it as uncertainty, not as a red flag by itself.',
-    'Consider important equipment/options only when present in the input. Do not assume equipment that is not listed.',
-
-    'modelContext must be exactly 2–5 list items (one array). It is the "about the model" section: well-known features of this model/generation/trim in general, not a repeat of this listing strengths/weaknesses. Aim for a rough balance: about half the bullets reflect typical pros or strong sides of the model, about half reflect typical cons, compromises, or caveats, without being a copy of strengths/weaknesses. Facts and practical implications only, no filler. You may add at most one distinctive fact if it is genuinely material for a purchase decision. Ground in widely known, general knowledge about the model/segment; do not invent listing-specific defects or service history. If brand/model in the input is too vague, stay generic and mark uncertainty in wording.',
-
-    'summary must be 2–4 short sentences in one string. It should synthesize the main takeaways without repeating every raw field.',
-
-    'listingAnalysis must contain concise comments in priceComment, mileageComment, and descriptionComment. Optionally add registrationComment and/or optionsComment when relevant. Each comment must add interpretation, not simply restate raw values. Omit optional fields or leave them as short empty string when not applicable.',
-
-    'strengths: 3–6 items. Each item must be a practical, buyer-relevant inference grounded in the listing data or common model/segment context.',
-    'weaknesses: 3–6 items. Each item must describe uncertainty, trade-off, missing data, or typical risk without exaggeration.',
-    'buyingChecks: 3–6 items. Practical checks before inspection/purchase, phrased neutrally, not as commands to buy.',
-    'questionsForSeller: 3–6 short questions. Ask only about relevant missing or important information.',
-    'redFlags: 0–6 items. Include only material concerns grounded in the input. Do not force red flags if there are none. Use an empty array when appropriate.',
-
-    'Within every list, order items by importance for a prospective buyer: most material first, except modelContext which follows the balanced pros/cons pattern above.',
-    'No list may contain more than 6 items, except modelContext (max 5 items).',
-
-    'confidence must reflect listing completeness, data consistency, description quality, and uncertainty.',
-  ].join(' ');
+    '# Role',
+    'You are an expert vehicle evaluator analyzing car marketplace listings. Your goal is to provide a structured, objective, and highly factual AI report.',
+    '',
+    '# Core Guidelines',
+    `- **Language:** All user-visible text fields in the JSON report MUST be in language: ${reportLanguage}. Supported languages: ru, ro.`,
+    '- **Format:** Return ONLY valid JSON matching the provided schema. No markdown, no extra text.',
+    '- **Tone:** Short, factual, dry, business-like, neutral. No fluff, hype, or emotional wording.',
+    '- **No Advice:** Do NOT recommend buying or avoiding the car. Do not use purchase imperatives ("buy", "take it", "best deal", "avoid").',
+    '- **Cautious Wording:** Use phrases like "may indicate", "requires verification", "data is insufficient", "looks consistent based on listing data".',
+    '- **No Hallucinations:** Do NOT invent facts absent from the input JSON. Do NOT make categorical technical conclusions about the real condition of the vehicle.',
+    '- **No Inferences from Absence:** Do not claim defects, accidents, service history, or legal status unless explicitly present. If data is sparse, lower confidence and state uncertainty clearly.',
+    '- **No Image Analysis:** The input has NO image analysis. Do NOT mention missing photos, photo quality, stock photos, or anything photo-related in text fields (except for `mediaQuality` score).',
+    '- **No External Data:** The input has NO external VIN/history check. Do not infer history issues from absence of data.',
+    '',
+    '# Output Structure Rules',
+    '- **_scratchpad:** Use this field FIRST to write down your step-by-step reasoning, analyze the data, and plan your scores. This helps you produce better final JSON.',
+    '- **modelContext:** Exactly 2–5 items. Well-known general features/pros/cons of this model/generation. Do NOT repeat listing-specific strengths/weaknesses. Ground in widely known facts.',
+    '- **summary:** A single string of 2–4 short sentences synthesizing the main takeaways.',
+    '- **strengths / weaknesses / buyingChecks / questionsForSeller:** 3–6 items each. Practical, buyer-relevant inferences. Order items from most important to least important.',
+    '- **redFlags:** 0–6 items. Include ONLY material concerns grounded in the input. Use an empty array if none exist.',
+    '- **confidence:** A float (0.0 to 1.0) reflecting listing completeness, data consistency, and uncertainty.',
+    '',
+    '# Quality Score Definitions',
+    'Evaluate listing quality on a 0–100 scale. 0–39 weak, 40–69 average, 70–84 good, 85–100 excellent.',
+    '- **overallScore:** Arithmetic mean of all five criterion scores, rounded to the nearest integer.',
+    '- **dataCompleteness:** Measures DATA COMPLETENESS ONLY. Use `data_completeness.score_hint` as the main anchor. Explain `important_missing_fields`. Do NOT judge writing style or seller trust here. Label MUST be exactly "Полнота данных" (ru) or "Completitudinea datelor" (ro).',
+    '- **mediaQuality:** Quantity of photos (`images_count`) and presence of video (`has_video`). Do NOT claim visual quality or angles, just sufficiency of media count.',
+    '- **descriptionQuality:** Informativeness, specificity, and usefulness of the description text about condition/service/equipment.',
+    '- **priceAdequacy:** Price plausibility vs year/mileage/model from input ONLY. You do NOT have live market data. If price looks generally plausible for the specs, score high and state it looks adequate. Do NOT imply a real market comparison.',
+    '- **safeChoice:** Measures trustworthiness and internal consistency for a cautious buyer. Use consistency between title/description/specs/price, and absence of suspicious gaps. Score 100 = safer choice to explore further; Score 0 = many gaps warrant extra caution. Label MUST be exactly "Безопасный выбор" (ru) or "Alegere sigură" (ro). Do NOT use words like "risk", "риск", "danger", "опасно", "unsafe", or "risky".',
+    '- **Separation:** `dataCompleteness` and `safeChoice` must NOT overlap. One is just missing fields, the other is trustworthiness of present data.',
+    '',
+    '# Vehicle Score Definitions',
+    'Evaluate the vehicle characteristics on a 0–100 scale. 0–39 weak, 40–69 average, 70–84 good, 85–100 excellent.',
+    '- **overallScore:** Arithmetic mean of all five criterion scores, rounded to the nearest integer.',
+    '- **mileage:** Evaluate mileage vs year. Lower relative mileage = higher score. Label MUST be exactly "Пробег" (ru) or "Parcurs" (ro).',
+    '- **equipment:** Evaluate richness of options/equipment. More options = higher score. Label MUST be exactly "Комплектация авто" (ru) or "Echipare" (ro).',
+    '- **reliability:** General model reliability based on widely known facts about this generation/engine. Label MUST be exactly "Надёжность модели" (ru) or "Fiabilitatea modelului" (ro).',
+    '- **liquidity:** Ease of resale / market liquidity for this model. Label MUST be exactly "Ликвидность" (ru) or "Lichiditate" (ro).',
+    '- **popularity:** Market demand and popularity in the region. Label MUST be exactly "Популярность на рынке" (ru) or "Popularitate pe piață" (ro).',
+  ].join('\n');
 }
 
 function buildUserPrompt(snapshot: ListingAiInputSnapshot): string {
+  const cleanSnapshot: Record<string, unknown> = { ...snapshot };
+  for (const field of AI_PROMPT_OMITTED_SNAPSHOT_FIELDS) {
+    delete cleanSnapshot[field];
+  }
+
   return [
     'Input listing JSON — use only these facts for the entire report:',
-    JSON.stringify(snapshot),
-    '',
-    'Reminder: photos are not included in this input. Do not output any point about missing or insufficient photographs.',
-    'Reminder: redFlags may be empty or have 1–6 items; never exceed 6. Do not pad redFlags with invented risks.',
-    'Reminder: inside each bullet list, order items from most important to least important (first item = highest priority for the reader).',
-    'Reminder: modelContext is 2–5 short bullets, separate from strengths and weaknesses — model-level context, not this listing. The product UI presents modelContext as the first section after the title, before summary.',
-    'Reminder: summary is a single string of 2–4 sentences, not an array.',
-    'Reminder: listingAnalysis is an object with priceComment, mileageComment, descriptionComment, and optional registrationComment and optionsComment — not an array of strings.',
+    JSON.stringify(cleanSnapshot, null, 2),
   ].join('\n');
 }
 
@@ -167,7 +224,7 @@ export class GeminiListingAiReportClient {
         responseMimeType: 'application/json',
         responseSchema: REPORT_SCHEMA,
         temperature: 0.35,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 6144,
       },
       systemInstruction: buildSystemInstruction(reportLanguage),
     });

@@ -316,6 +316,14 @@
       "tiresHomePageDescriptionWithBrandModel": "{brand} {model} tires on Kupito! Selection and prices for {brand} {model} in Moldova."
     }
   },
+  "smartSelection": {
+    "filterNames": {
+      "practical": "Smart selection: practical choice",
+      "family": "Smart selection: family choice",
+      "city": "Smart selection: city choice",
+      "comfort": "Smart selection: comfort choice"
+    }
+  },
   "telegram": {
     "welcome": "Hi. You can send a message about a bug or issue on the site here. Describe what happened and add a link to the page if possible.",
     "confirmation": "Thank you. Your message has been received.",

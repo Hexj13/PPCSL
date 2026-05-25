@@ -81,4 +81,45 @@ describe('listing-ai-report-snapshot', () => {
       isVehicleListingForAiReport(baseListing({ category: constants.ListingCategory.Tire })),
     ).toBe(false);
   });
+
+  it('includes report schema version and media metadata', () => {
+    const snapshot = buildListingAiInputSnapshot(
+      baseListing({
+        images: ['a.jpg', 'b.jpg'],
+        vin: 'WVWZZZ1JZXW000001',
+        video: { status: 'published' },
+      }),
+      'ru',
+    );
+    expect(snapshot.reportSchemaVersion).toBe(7);
+    expect(snapshot.images_count).toBe(2);
+    expect(snapshot.has_video).toBe(true);
+    expect(snapshot.vin_present).toBe(true);
+    expect(snapshot.data_completeness.filled_fields).toContain('description');
+    expect(snapshot.data_completeness.filled_fields).toContain('photos');
+    expect(snapshot.data_completeness.important_missing_fields).not.toContain('video');
+    expect(snapshot.data_completeness.score_hint).toBeGreaterThan(0);
+    expect(snapshot.data_completeness.completeness_percent).toBeGreaterThan(0);
+  });
+
+  it('tracks missing fields in data completeness', () => {
+    const snapshot = buildListingAiInputSnapshot(
+      baseListing({
+        description: null,
+        description_ro: null,
+        description_ru: null,
+        vin: null,
+        images: [],
+        registration_type: null,
+      }),
+      'ru',
+    );
+    expect(snapshot.data_completeness.missing_fields).toEqual(
+      expect.arrayContaining(['description', 'vin', 'photos', 'registration_type']),
+    );
+    expect(snapshot.data_completeness.important_missing_fields).toEqual(
+      expect.arrayContaining(['description', 'photos', 'registration_type']),
+    );
+    expect(snapshot.data_completeness.optional_missing_fields).toContain('vin');
+  });
 });

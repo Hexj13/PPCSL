@@ -1,7 +1,16 @@
 'use client';
 
+import { SmartSelectionIcon } from '@/components/layout/Header/icons';
+import {
+  isSavedFiltersLimitReached,
+  resolveSavedFiltersCount,
+} from '@/components/search/SavedFiltersList';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
+import { MAX_SAVED_FILTERS } from '@/lib/constants';
+import { buildSignInHref } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
+import { toast } from '@/lib/toast';
 import { LoadingButton } from '@/ui';
 
 import { SortDropdown } from '../SortDropdown';
@@ -36,8 +45,28 @@ export function SearchFormActions({
   onSortChange,
 }: SearchFormActionsProps) {
   const { t } = useTranslation();
+  const { push: localizedPush } = useLocalizedNavigation();
   const { user, isInitialized } = useAuthStore();
   const userForUi = user;
+
+  const handleSmartSelectionClick = async () => {
+    if (!userForUi) {
+      localizedPush(buildSignInHref('/smart-selection'));
+      return;
+    }
+
+    const savedFiltersCount = await resolveSavedFiltersCount();
+    if (isSavedFiltersLimitReached(savedFiltersCount)) {
+      toast.error(
+        t('searchFilters.smartSelectionFilterLimitError', {
+          max: String(MAX_SAVED_FILTERS),
+        }),
+      );
+      return;
+    }
+
+    localizedPush('/smart-selection');
+  };
 
   const isSearchReady = Boolean(hasFiltersChanged && !isSyncingFromUrl);
 
@@ -97,32 +126,46 @@ export function SearchFormActions({
                   <span className="whitespace-nowrap text-base">{t('common.loading')}</span>
                 </button>
               ) : (
-                <button
-                  type="button"
-                  onClick={onSaveClick}
-                  disabled={Boolean(!canSaveFilter)}
-                  className="w-full btn-secondary flex items-center justify-center gap-2 px-3! lg:px-6! text-primary-900!"
-                  title={!userForUi ? t('common.loginRequired') : ''}
-                  data-testid="search-save-filter"
-                >
-                  <svg
-                    className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
+                <>
+                  <button
+                    type="button"
+                    onClick={handleSmartSelectionClick}
+                    className="w-full btn-secondary flex items-center justify-center gap-2 px-3! lg:px-6! text-primary-900!"
+                    title={!userForUi ? t('common.loginRequired') : ''}
+                    data-testid="search-smart-selection"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                  <span className="whitespace-nowrap text-base">
-                    {userForUi ? t('searchFilters.addToFavorites') : t('searchFilters.login')}
-                  </span>
-                </button>
+                    <SmartSelectionIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="whitespace-nowrap text-base">
+                      {t('searchFilters.smartSelection')}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onSaveClick}
+                    disabled={Boolean(!canSaveFilter)}
+                    className="w-full btn-secondary flex items-center justify-center gap-2 px-3! lg:px-6! text-primary-900!"
+                    title={!userForUi ? t('common.loginRequired') : ''}
+                    data-testid="search-save-filter"
+                  >
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
+                    <span className="whitespace-nowrap text-base">
+                      {userForUi ? t('searchFilters.addToFavorites') : t('searchFilters.login')}
+                    </span>
+                  </button>
+                </>
               )}
               <button
                 type="button"

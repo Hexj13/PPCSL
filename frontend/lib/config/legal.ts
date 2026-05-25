@@ -4,7 +4,7 @@ const legal: LegalConfig = {
   terms: {
     en: {
       title: 'Terms and Conditions',
-      lastUpdated: 'Last updated: May 5, 2026',
+      lastUpdated: 'Last updated: May 25, 2026',
       languageToggle: 'Switch language',
       dictionary: {
         title: 'Glossary of Terms',
@@ -100,7 +100,7 @@ const legal: LegalConfig = {
             '• Use the Platform offline with access to cached pages',
             '• Compare up to 3 vehicles and up to 3 tire listings simultaneously',
             '• Add listings to favorites for easy access',
-            '• When signed in, optionally request a short AI-generated informational summary for eligible vehicle listings (subject to availability and per-user limits; not professional or mechanical advice)',
+            '• When signed in, optionally request an AI-generated informational analysis for eligible vehicle listings (subject to availability and per-user limits; not professional or mechanical advice)',
             'Kupito acts solely as an intermediary between sellers and buyers. The Platform does not participate in actual transactions between users, does not charge commissions or fees, and does not guarantee any aspect of the sale or the vehicle being sold.',
             'Kupito is a non-commercial initiative; all services are provided free of charge as a community service.',
             'When a listing price is displayed in a currency other than the platform default (e.g. EUR), the Platform may show an approximate equivalent in the default currency for convenience; this is based on daily exchange rates from a third-party rates service (no personal data is sent to that service) and is not binding. The price that counts for the transaction is the one stated by the seller in the listing currency.',
@@ -214,7 +214,7 @@ const legal: LegalConfig = {
             '• Information provided by users is accurate or secure',
             "The display on the Platform of a partner's name, logo, link, or informational material only means that Kupito has allowed such placement within the Platform interface. Unless explicitly stated otherwise, this does not constitute an endorsement, guarantee, or assumption of responsibility by Kupito for the partner's products, services, or statements.",
             "The Platform may redirect you to partner sites (e.g. for vehicle history reports). Use of those services is subject to the partner's terms and privacy policy; Kupito is not responsible for the content, availability, or data processing of partner services.",
-            'Optional AI-generated text on vehicle listings is provided for general information only, may be incomplete or inaccurate, and does not replace your own checks, a professional inspection, or independent advice. Kupito is not liable for decisions you make based on such text.',
+            'Optional AI-generated analysis on vehicle listings is provided for general information only, may be incomplete or inaccurate, and does not replace your own checks, a professional inspection, or independent advice. Kupito is not liable for decisions you make based on such analysis.',
             'Kupito is not liable for any direct, indirect, incidental, special, or consequential damages resulting from the use or inability to use the Platform.',
           ],
         },
@@ -270,7 +270,7 @@ const legal: LegalConfig = {
     },
     ro: {
       title: 'Termeni și condiții',
-      lastUpdated: 'Ultima actualizare: 5 mai 2026',
+      lastUpdated: 'Ultima actualizare: 25 mai 2026',
       languageToggle: 'Schimbă limba',
       dictionary: {
         title: 'Glosar de termeni',
@@ -370,7 +370,7 @@ const legal: LegalConfig = {
             '• Folosească platforma în mod offline cu acces la pagini cache',
             '• Compară până la 3 autoturisme și până la 3 anunțuri pentru anvelope simultan',
             '• Adauge anunțuri la favorite pentru acces ușor',
-            '• Când sunteți autentificat, puteți solicita opțional un scurt rezumat informativ generat cu AI pentru anunțuri eligibile de vehicul (în funcție de disponibilitate și limite per utilizator; nu constituie consultanță tehnică sau profesională)',
+            '• Când sunteți autentificat, puteți solicita opțional o analiză informativă generată cu AI pentru anunțuri eligibile de vehicul (în funcție de disponibilitate și limite per utilizator; nu constituie consultanță tehnică sau profesională)',
             'Kupito acționează doar ca intermediar între vânzători și cumpărători. Platforma nu participă la tranzacțiile reale între utilizatori, nu percepe comisioane sau taxe și nu garantează niciun aspect al vânzării sau al autoturismului care se vinde.',
             'Kupito este o inițiativă necomercială; toate serviciile sunt oferite gratuit ca serviciu pentru comunitate.',
             'Când prețul unui anunț este afișat într-o valută diferită de cea implicită a platformei (ex. EUR), Platforma poate afișa un echivalent aproximativ în valuta implicită pentru comoditate; acesta se bazează pe cursuri valutar zilnice obținute de la un furnizor terț (fără transmitere de date cu caracter personal către acel serviciu) și nu este obligatoriu. Prețul care contează pentru tranzacție este cel indicat de vânzător în valuta anunțului.',
@@ -484,7 +484,7 @@ const legal: LegalConfig = {
             '• Informațiile furnizate de utilizatori sunt exacte sau sigure',
             'Afișarea pe Platformă a numelui, logo-ului, linkului sau materialelor informative ale unui partener înseamnă doar că Kupito a permis o astfel de plasare în interfața Platformei. Dacă nu se precizează expres altfel, aceasta nu constituie aprobare, garanție sau asumare de răspundere de către Kupito pentru produsele, serviciile ori declarațiile partenerului.',
             'Platforma vă poate redirecționa către site-uri ale partenerilor (ex. pentru rapoarte de istoric vehicul). Utilizarea acestor servicii este supusă termenilor și politicii de confidențialitate a partenerului; Kupito nu este răspunzătoare pentru conținutul, disponibilitatea sau prelucrarea datelor de către serviciile partenerilor.',
-            'Textul opțional generat cu AI pentru anunțuri de vehicul este furnizat doar în scop informativ general, poate fi incomplet sau inexact și nu înlocuiește verificările proprii, inspecția profesională sau sfaturi independente. Kupito nu este răspunzătoare pentru deciziile luate pe baza acestui text.',
+            'Analiza opțională generată cu AI pentru anunțuri de vehicul este furnizată doar în scop informativ general, poate fi incompletă sau inexactă și nu înlocuiește verificările proprii, inspecția profesională sau sfaturi independente. Kupito nu este răspunzătoare pentru deciziile luate pe baza acestei analize.',
             'Kupito nu este răspunzătoare pentru orice daune directe, indirecte, accidentale, speciale sau consecvențiale rezultate din utilizarea sau imposibilitatea de a utiliza Platforma.',
           ],
         },
@@ -540,7 +540,7 @@ const legal: LegalConfig = {
     },
     ru: {
       title: 'Условия использования',
-      lastUpdated: 'Последнее обновление: 5 мая 2026 г.',
+      lastUpdated: 'Последнее обновление: 25 мая 2026 г.',
       languageToggle: 'Переключить язык',
       dictionary: {
         title: 'Глоссарий терминов',
@@ -637,7 +637,7 @@ const legal: LegalConfig = {
             '• Использовать платформу в офлайн-режиме с доступом к кэшированным страницам',
             '• Сравнивать до 3 автомобилей и до 3 объявлений о шинах одновременно',
             '• Добавлять объявления в избранное для легкого доступа',
-            '• После входа в аккаунт — по желанию запрашивать краткий информационный AI-анализ для подходящих объявлений о транспортных средствах (с учётом доступности сервиса и лимитов на пользователя; не является профессиональной или технической консультацией)',
+            '• После входа в аккаунт — по желанию запрашивать информационный AI-анализ для подходящих объявлений о транспортных средствах (с учётом доступности сервиса и лимитов на пользователя; не является профессиональной или технической консультацией)',
             'Kupito действует только как посредник между продавцами и покупателями. Платформа не участвует в реальных сделках между пользователями, не взимает комиссии или сборы и не гарантирует никаких аспектов продажи или продаваемого автомобиля.',
             'Kupito — некоммерческая инициатива; все услуги предоставляются бесплатно как сервис для сообщества.',
             'Когда цена в объявлении указана в валюте, отличной от валюты платформы по умолчанию (напр. EUR), Платформа может показывать приблизительный эквивалент в валюте по умолчанию для удобства; он основан на ежедневных курсах валют, получаемых от стороннего поставщика курсов (персональные данные в этот сервис не передаются), и не является обязательным. Ценой, имеющей силу для сделки, является цена, указанная продавцом в валюте объявления.',
@@ -751,7 +751,7 @@ const legal: LegalConfig = {
             '• Информация, предоставленная пользователями, является точной или безопасной',
             'Размещение на Платформе названия, логотипа, ссылки или информационного материала партнёра означает только то, что Kupito разрешила такое размещение в интерфейсе Платформы. Если прямо не указано иное, это не означает одобрение, гарантию или принятие Kupito ответственности за продукты, услуги или заявления партнёра.',
             'Платформа может перенаправлять вас на сайты партнёров (напр. для отчётов по истории автомобиля). Использование таких услуг регулируется условиями и политикой конфиденциальности партнёра; Kupito не несёт ответственности за содержание, доступность или обработку данных сервисами партнёров.',
-            'Опциональный текст ИИ-анализа по объявлениям о транспортных средствах носит исключительно общий информационный характер, может быть неполным или неточным и не заменяет самостоятельную проверку, профессиональный осмотр или независимую консультацию. Kupito не несёт ответственности за решения, принятые на основании такого текста.',
+            'Опциональный AI-анализ по объявлениям о транспортных средствах носит исключительно общий информационный характер, может быть неполным или неточным и не заменяет самостоятельную проверку, профессиональный осмотр или независимую консультацию. Kupito не несёт ответственности за решения, принятые на основании такого анализа.',
             'Kupito не несет ответственности за любые прямые, косвенные, случайные, особые или косвенные убытки, возникшие в результате использования или невозможности использования Платформы.',
           ],
         },
@@ -809,7 +809,7 @@ const legal: LegalConfig = {
   privacy: {
     ro: {
       title: 'Politica de confidențialitate',
-      lastUpdated: 'Ultima actualizare: 5 mai 2026',
+      lastUpdated: 'Ultima actualizare: 25 mai 2026',
       languageToggle: 'Schimbă limba',
       dictionary: {
         title: 'Glosar de termeni',
@@ -1015,7 +1015,7 @@ const legal: LegalConfig = {
             '7.3. Cu prelucrătorii de date și terți:',
             'Kupito folosește următoarele servicii terțe care pot accesa datele dvs.:',
             '• Google Analytics: Pentru analizarea utilizării Platformei și îmbunătățirea serviciilor. Google Analytics colectează date statistice anonime despre vizite. Pentru mai multe informații, consultați Politica de confidențialitate Google: https://policies.google.com/privacy',
-            '• Google AI (Gemini): Când sunteți autentificat și folosiți opțional „Analiză AI” pentru un anunț de vehicul, Platforma trimite către serviciul de inteligență artificială generativă Google informațiile din anunț deja afișate pe pagină (titlu, descriere, caracteristici tehnice și coduri de echipament—nu telefonul sau e-mailul vânzătorului) pentru a genera un scurt text informativ. Pentru detalii, consultați Politica de confidențialitate Google: https://policies.google.com/privacy',
+            '• Google AI (Gemini): Când sunteți autentificat și folosiți opțional „Analiză AI” pentru un anunț de vehicul, Platforma trimite către serviciul de inteligență artificială generativă Google informațiile din anunț deja afișate pe pagină (titlu, descriere, caracteristici tehnice și coduri de echipament—nu telefonul sau e-mailul vânzătorului) pentru a genera o analiză informativă. Pentru detalii, consultați Politica de confidențialitate Google: https://policies.google.com/privacy',
             '• Twilio: Pentru trimiterea mesajelor SMS pentru verificarea numărului de telefon. Twilio accesează doar numărul de telefon necesar pentru trimiterea SMS. Pentru mai multe informații, consultați Politica de confidențialitate Twilio: https://www.twilio.com/legal/privacy',
             '• Furnizor de servicii media în cloud (UE): pentru stocarea, procesarea/transcodarea și livrarea fotografiilor și a videoclipurilor opționale din anunțuri printr-o rețea de distribuție a conținutului; furnizorul este ales în baza unor standarde recunoscute de securitate și conformitate (inclusiv ISO 27001, SOC 2) și angajamente GDPR.',
             '• Furnizori de hosting: Pentru stocarea și prelucrarea datelor pe servere situate în Republica Moldova',
@@ -1100,7 +1100,7 @@ const legal: LegalConfig = {
             '9.9. Decizii automate și profilare:',
             '• Aveți dreptul să nu fiți supus unei decizii bazate exclusiv pe prelucrare automată, inclusiv profilare, care produce efecte juridice care vă privesc sau vă afectează în mod similar în mod semnificativ, în măsura în care acest drept este recunoscut de legea aplicabilă.',
             '• Puteți solicita o revizuire umană a unei astfel de decizii care vă privește pe Platformă.',
-            '• Rezumatul opțional generat cu AI pentru un anunț de vehicul are rol informativ și nu constituie, prin el însuși, o decizie automată care produce efecte juridice sau similare semnificative asupra dvs. ca persoană; dacă considerați că o anumită prelucrare trebuie revizuită manual, contactați-ne la support@kupito.club.',
+            '• Analiza opțională generată cu AI pentru un anunț de vehicul are rol informativ și nu constituie, prin ea însăși, o decizie automată care produce efecte juridice sau similare semnificative asupra dvs. ca persoană; dacă considerați că o anumită prelucrare trebuie revizuită manual, contactați-ne la support@kupito.club.',
             'Pentru a vă exercita drepturile, vă rugăm să ne contactați la support@kupito.club. Vom răspunde la solicitarea dvs. în termen de 30 de zile.',
           ],
         },
@@ -1180,7 +1180,7 @@ const legal: LegalConfig = {
     },
     en: {
       title: 'Privacy Policy',
-      lastUpdated: 'Last updated: May 5, 2026',
+      lastUpdated: 'Last updated: May 25, 2026',
       languageToggle: 'Switch language',
       dictionary: {
         title: 'Glossary of Terms',
@@ -1386,7 +1386,7 @@ const legal: LegalConfig = {
             '7.3. With data processors and third parties:',
             'Kupito uses the following third-party services that may have access to your data:',
             "• Google Analytics: For analyzing Platform usage and improving services. Google Analytics collects anonymous statistical data about visits. For more information, see Google's Privacy Policy: https://policies.google.com/privacy",
-            '• Google AI (Gemini): When you are signed in and use the optional "AI analysis" on a vehicle listing, the Platform sends listing information already shown on that page (such as title, description, vehicle attributes, and equipment codes—not seller phone or email) to Google\'s generative AI to produce a short informational text. For more information, see Google\'s Privacy Policy: https://policies.google.com/privacy',
+            '• Google AI (Gemini): When you are signed in and use the optional "AI analysis" on a vehicle listing, the Platform sends listing information already shown on that page (such as title, description, vehicle attributes, and equipment codes—not seller phone or email) to Google\'s generative AI to produce an informational analysis. For more information, see Google\'s Privacy Policy: https://policies.google.com/privacy',
             "• Twilio: For sending SMS messages to verify phone numbers. Twilio only has access to the phone number necessary for sending SMS. For more information, see Twilio's Privacy Policy: https://www.twilio.com/legal/privacy",
             '• EU cloud media services provider: for storing, processing/transcoding, and delivering listing photos and optional listing videos through a content delivery network; the provider is selected based on recognized security and compliance standards (including ISO 27001, SOC 2) and GDPR commitments.',
             '• Hosting providers: For storing and processing data on servers located in the Republic of Moldova',
@@ -1471,7 +1471,7 @@ const legal: LegalConfig = {
             '9.9. Automated decision-making and profiling:',
             '• You have the right not to be subject to a decision based solely on automated processing, including profiling, which produces legal effects concerning you or similarly significantly affects you, where applicable law grants this right.',
             '• You may request human review of any such decision that concerns you on the Platform.',
-            '• The optional AI-generated listing summary is provided to help you describe a vehicle and does not, by itself, constitute an automated decision that produces legal or similarly significant effects about you as a person; if you believe a particular processing should be reviewed manually, contact us at support@kupito.club.',
+            '• The optional AI-generated listing analysis is provided to help you assess a vehicle listing and does not, by itself, constitute an automated decision that produces legal or similarly significant effects about you as a person; if you believe a particular processing should be reviewed manually, contact us at support@kupito.club.',
             'To exercise your rights, please contact us at support@kupito.club. We will respond to your request within 30 days.',
           ],
         },
@@ -1551,7 +1551,7 @@ const legal: LegalConfig = {
     },
     ru: {
       title: 'Политика конфиденциальности',
-      lastUpdated: 'Последнее обновление: 5 мая 2026 г.',
+      lastUpdated: 'Последнее обновление: 25 мая 2026 г.',
       languageToggle: 'Переключить язык',
       dictionary: {
         title: 'Глоссарий терминов',
@@ -1757,7 +1757,7 @@ const legal: LegalConfig = {
             '7.3. С обработчиками данных и третьими сторонами:',
             'Kupito использует следующие сторонние сервисы, которые могут получить доступ к вашим данным:',
             '• Google Analytics: Для анализа использования Платформы и улучшения услуг. Google Analytics собирает анонимные статистические данные о посещениях. Для получения дополнительной информации см. Политику конфиденциальности Google: https://policies.google.com/privacy',
-            '• Google AI (Gemini): Когда вы авторизованы и по своему выбору запрашиваете «AI-анализ» по объявлению о транспортном средстве, Платформа передаёт в генеративный сервис Google уже отображаемые на странице данные объявления (заголовок, описание, характеристики и коды комплектации — без телефона и e-mail продавца) для формирования краткого информационного текста. Подробнее см. Политику конфиденциальности Google: https://policies.google.com/privacy',
+            '• Google AI (Gemini): Когда вы авторизованы и по своему выбору запрашиваете «AI-анализ» по объявлению о транспортном средстве, Платформа передаёт в генеративный сервис Google уже отображаемые на странице данные объявления (заголовок, описание, характеристики и коды комплектации — без телефона и e-mail продавца) для формирования информационного анализа. Подробнее см. Политику конфиденциальности Google: https://policies.google.com/privacy',
             '• Twilio: Для отправки SMS-сообщений для проверки номера телефона. Twilio получает доступ только к номеру телефона, необходимому для отправки SMS. Для получения дополнительной информации см. Политику конфиденциальности Twilio: https://www.twilio.com/legal/privacy',
             '• Поставщик облачных медиа-сервисов в ЕС: для хранения, обработки/транскодирования и доставки фотографий и опционального видео из объявлений через сеть доставки контента; поставщик выбирается с учётом признанных стандартов безопасности и соответствия (включая ISO 27001, SOC 2) и обязательств по GDPR.',
             '• Хостинг-провайдеры: Для хранения и обработки данных на серверах, расположенных в Республике Молдова',
@@ -1842,7 +1842,7 @@ const legal: LegalConfig = {
             '9.9. Автоматизированные решения и профилирование:',
             '• Вы имеете право не подвергаться решению, основанному исключительно на автоматизированной обработке, включая профилирование, которое порождает юридические последствия в отношении вас или существенно влияет на вас, если применимое законодательство предоставляет такое право.',
             '• Вы можете запросить участие человека (ручную проверку) в отношении такого решения, касающегося вас на Платформе.',
-            '• Опциональный AI-текст по объявлению о транспортном средстве носит вспомогательный информационный характер и сам по себе не является автоматизированным решением, порождающим юридические или существенно схожие последствия для вас как субъекта данных; если вы считаете, что конкретная обработка должна быть проверена вручную, свяжитесь с нами по адресу support@kupito.club.',
+            '• Опциональный AI-анализ по объявлению о транспортном средстве носит вспомогательный информационный характер и сам по себе не является автоматизированным решением, порождающим юридические или существенно схожие последствия для вас как субъекта данных; если вы считаете, что конкретная обработка должна быть проверена вручную, свяжитесь с нами по адресу support@kupito.club.',
             'Чтобы воспользоваться своими правами, пожалуйста, свяжитесь с нами по адресу support@kupito.club. Мы ответим на ваш запрос в течение 30 дней.',
           ],
         },

@@ -89,9 +89,9 @@ export function useSearchTabs({
       if (TIRE_POPULAR_HINT_KEYS.some((key) => searchParams.get(key))) return 'popular';
       return 'basic';
     }
-    if (ADVANCED_PARAM_KEYS.some((key) => searchParams.get(key))) return 'advanced';
-    if (searchParams.get('equipment')) return 'equipment';
     if (BASIC_PARAM_KEYS.some((key) => searchParams.get(key))) return 'basic';
+    if (searchParams.get('equipment')) return 'equipment';
+    if (ADVANCED_PARAM_KEYS.some((key) => searchParams.get(key))) return 'advanced';
     return 'basic';
   }, [searchParams, mode]);
 

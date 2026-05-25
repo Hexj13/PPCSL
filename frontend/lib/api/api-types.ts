@@ -14,18 +14,51 @@ import type {
 
 export type ListingCategory = 'vehicle' | 'tire';
 
-export interface ListingAiReportListingAnalysis {
-  priceComment: string;
-  mileageComment: string;
-  descriptionComment: string;
-  registrationComment?: string;
-  optionsComment?: string;
+export type ListingAiQualityScoreCriterionKey =
+  | 'dataCompleteness'
+  | 'mediaQuality'
+  | 'descriptionQuality'
+  | 'priceAdequacy'
+  | 'safeChoice';
+
+export type ListingAiVehicleScoreCriterionKey =
+  | 'mileage'
+  | 'equipment'
+  | 'reliability'
+  | 'liquidity'
+  | 'popularity';
+
+export interface ListingAiScoreItem {
+  label: string;
+  score: number;
+  summary: string;
+}
+
+export type ListingAiQualityScoreItems = Record<
+  ListingAiQualityScoreCriterionKey,
+  ListingAiScoreItem
+>;
+
+export type ListingAiVehicleScoreItems = Record<
+  ListingAiVehicleScoreCriterionKey,
+  ListingAiScoreItem
+>;
+
+export interface ListingAiQualityScore {
+  overallScore: number;
+  summary: string;
+  items: ListingAiQualityScoreItems;
+}
+
+export interface ListingAiVehicleScore {
+  overallScore: number;
+  summary: string;
+  items: ListingAiVehicleScoreItems;
 }
 
 export interface ListingAiReportPayload {
   modelContext: string[];
   summary: string;
-  listingAnalysis: ListingAiReportListingAnalysis;
   strengths: string[];
   weaknesses: string[];
   buyingChecks: string[];
@@ -33,6 +66,8 @@ export interface ListingAiReportPayload {
   redFlags: string[];
   confidence: number;
   disclaimer: string;
+  qualityScore?: ListingAiQualityScore;
+  vehicleScore?: ListingAiVehicleScore;
 }
 
 export type ListingAiReportPostResponse =

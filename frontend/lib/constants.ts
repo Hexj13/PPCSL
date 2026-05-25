@@ -12,6 +12,7 @@ export const CARD_EXIT_ANIMATION_MS = 300;
 export const MAX_SEARCH_BRAND_SELECTIONS = 20;
 export const MAX_SEARCH_MODEL_SELECTIONS = 20;
 export const MAX_TIRE_SIZE_SELECTIONS = 20;
+export const MAX_SAVED_FILTERS = 20;
 export const TIRE_LISTING_QUANTITY_MIN = 1;
 export const TIRE_LISTING_QUANTITY_MAX = 8;
 

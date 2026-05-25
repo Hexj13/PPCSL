@@ -2,8 +2,23 @@
 
 import type { ReactNode } from 'react';
 
+import {
+  ListingAiReportQualityCriteria,
+  ListingAiReportQualityOverview,
+  ListingAiReportVehicleOverview,
+  ListingAiReportVehicleCriteria,
+  QualityScoreValue,
+} from '@/components/ListingPage/ListingAiReportQualityScore';
+import {
+  getQualityCriterionLabel,
+  getVehicleCriterionLabel,
+} from '@/components/ListingPage/listing-ai-report-quality-labels';
 import { Modal } from '@/components/modals/Modal';
-import type { ListingAiReportListingAnalysis, ListingAiReportPayload } from '@/lib/api';
+import type {
+  ListingAiReportPayload,
+  ListingAiQualityScoreCriterionKey,
+  ListingAiVehicleScoreCriterionKey,
+} from '@/lib/api';
 import { Spinner } from '@/ui';
 
 export type ListingAiReportModalPhase =
@@ -41,14 +56,6 @@ function renderSummaryText(summary: string | string[] | undefined | null): strin
   return String(summary).trim();
 }
 
-const ANALYSIS_KEYS: { k: keyof ListingAiReportListingAnalysis; i18n: string }[] = [
-  { k: 'priceComment', i18n: 'listingDetail.aiReportAnalysisPrice' },
-  { k: 'mileageComment', i18n: 'listingDetail.aiReportAnalysisMileage' },
-  { k: 'descriptionComment', i18n: 'listingDetail.aiReportAnalysisDescription' },
-  { k: 'registrationComment', i18n: 'listingDetail.aiReportAnalysisRegistration' },
-  { k: 'optionsComment', i18n: 'listingDetail.aiReportAnalysisOptions' },
-];
-
 function getListingPageUrlForClipboard(): string {
   if (typeof window === 'undefined') return '';
   return `${window.location.origin}${window.location.pathname}`;
@@ -74,18 +81,38 @@ function buildPlainTextReport(
   lines.push(renderSummaryText(report.summary as string | string[]));
   lines.push('');
   lines.push(t('listingDetail.aiReportSectionAnalysis'));
-  if (isLegacyStringArrayList(report.listingAnalysis)) {
-    (report.listingAnalysis as string[]).forEach((s) => lines.push(`- ${s}`));
-  } else {
-    const a = report.listingAnalysis as ListingAiReportListingAnalysis;
-    for (const { k, i18n } of ANALYSIS_KEYS) {
-      const text = a[k];
-      if (typeof text === 'string' && text.trim().length > 0) {
-        lines.push(`${t(i18n)}: ${text.trim()}`);
-      }
+  if (report.qualityScore) {
+    lines.push(t('listingDetail.aiReportSectionQualityAssessment'));
+    lines.push(`${report.qualityScore.overallScore}/100`);
+    lines.push(report.qualityScore.summary);
+    for (const key of [
+      'dataCompleteness',
+      'mediaQuality',
+      'descriptionQuality',
+      'priceAdequacy',
+      'safeChoice',
+    ] as const) {
+      const item = report.qualityScore.items[key];
+      if (item == null) continue;
+      lines.push(
+        `${getQualityCriterionLabel(key as ListingAiQualityScoreCriterionKey, item.label, t)} (${item.score}/100): ${item.summary}`,
+      );
     }
+    lines.push('');
   }
-  lines.push('');
+  if (report.vehicleScore) {
+    lines.push(t('listingDetail.aiReportSectionVehicleCharacteristics'));
+    lines.push(`${report.vehicleScore.overallScore}/100`);
+    lines.push(report.vehicleScore.summary);
+    for (const key of ['mileage', 'equipment', 'reliability', 'liquidity', 'popularity'] as const) {
+      const item = report.vehicleScore.items[key];
+      if (item == null) continue;
+      lines.push(
+        `${getVehicleCriterionLabel(key as ListingAiVehicleScoreCriterionKey, item.label, t)} (${item.score}/100): ${item.summary}`,
+      );
+    }
+    lines.push('');
+  }
   lines.push(t('listingDetail.aiReportSectionStrengths'));
   report.strengths.forEach((s) => lines.push(`- ${s}`));
   lines.push('');
@@ -108,9 +135,11 @@ function buildPlainTextReport(
 }
 
 const SECTION_TITLE_CLASS = 'text-xl md:text-2xl font-bold mb-4 text-primary-900';
-const BODY_CLASS = 'leading-relaxed text-text-secondary';
-const LIST_CLASS = 'list-disc list-outside pl-8 space-y-1';
-const SUBHEAD_CLASS = 'font-semibold text-primary-800 text-base mb-1.5';
+const BODY_CLASS = 'text-base leading-relaxed text-text-secondary';
+const LIST_CLASS =
+  'list-disc list-outside pl-8 space-y-2 text-base leading-relaxed text-text-secondary';
+
+const SUBSECTION_TITLE_CLASS = 'text-lg font-bold mb-3 text-primary-900';
 
 function ReportSection({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -121,36 +150,30 @@ function ReportSection({ title, children }: { title: string; children: ReactNode
   );
 }
 
-function ListingAnalysisBlock({
-  analysis,
+function ReportSubSection({
+  title,
+  overallScore,
   t,
+  children,
 }: {
-  analysis: ListingAiReportPayload['listingAnalysis'];
-  t: (k: string) => string;
+  title: string;
+  overallScore?: number;
+  t?: (k: string, p?: Record<string, string | number>) => string;
+  children: ReactNode;
 }) {
-  if (isLegacyStringArrayList(analysis)) {
-    return (
-      <ul className={LIST_CLASS}>
-        {analysis.map((item, i) => (
-          <li key={`a-${i}-${item.slice(0, 48)}`}>{item}</li>
-        ))}
-      </ul>
-    );
-  }
   return (
-    <div className="space-y-5">
-      {ANALYSIS_KEYS.map(({ k, i18n }) => {
-        const text = (analysis as ListingAiReportListingAnalysis)[k];
-        if (typeof text !== 'string' || text.trim().length === 0) {
-          return null;
-        }
-        return (
-          <div key={k}>
-            <p className={SUBHEAD_CLASS}>{t(i18n)}</p>
-            <p className="whitespace-pre-wrap">{text.trim()}</p>
-          </div>
-        );
-      })}
+    <div className="mb-6 last:mb-0">
+      <h4 className={SUBSECTION_TITLE_CLASS}>
+        {title}
+        {overallScore != null && t != null && (
+          <>
+            <span className="text-text-secondary"> (</span>
+            <QualityScoreValue score={overallScore} t={t} size="inline" bold />
+            <span className="text-text-secondary">)</span>
+          </>
+        )}
+      </h4>
+      {children}
     </div>
   );
 }
@@ -246,7 +269,32 @@ export function ListingPageAiReportModal({
             </ReportSection>
 
             <ReportSection title={t('listingDetail.aiReportSectionAnalysis')}>
-              <ListingAnalysisBlock analysis={report.listingAnalysis} t={t} />
+              {report.qualityScore && (
+                <ReportSubSection
+                  title={t('listingDetail.aiReportSectionQualityAssessment')}
+                  overallScore={report.qualityScore.overallScore}
+                  t={t}
+                >
+                  <ListingAiReportQualityOverview qualityScore={report.qualityScore} t={t} />
+                  <p className={`${BODY_CLASS} mb-6 whitespace-pre-line`}>
+                    {report.qualityScore.summary}
+                  </p>
+                  <ListingAiReportQualityCriteria qualityScore={report.qualityScore} t={t} />
+                </ReportSubSection>
+              )}
+              {report.vehicleScore && (
+                <ReportSubSection
+                  title={t('listingDetail.aiReportSectionVehicleCharacteristics')}
+                  overallScore={report.vehicleScore.overallScore}
+                  t={t}
+                >
+                  <ListingAiReportVehicleOverview vehicleScore={report.vehicleScore} t={t} />
+                  <p className={`${BODY_CLASS} mb-6 whitespace-pre-line`}>
+                    {report.vehicleScore.summary}
+                  </p>
+                  <ListingAiReportVehicleCriteria vehicleScore={report.vehicleScore} t={t} />
+                </ReportSubSection>
+              )}
             </ReportSection>
 
             <ReportSection title={t('listingDetail.aiReportSectionStrengths')}>

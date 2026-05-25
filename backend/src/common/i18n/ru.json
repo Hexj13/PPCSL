@@ -311,6 +311,14 @@
       "tiresHomePageDescriptionWithBrandModel": "Шины {brand} {model} на Kupito! Выбор и цены на {brand} {model} в Молдове."
     }
   },
+  "smartSelection": {
+    "filterNames": {
+      "practical": "Smart-подбор: практичный выбор",
+      "family": "Smart-подбор: семейный вариант",
+      "city": "Smart-подбор: городской вариант",
+      "comfort": "Smart-подбор: комфортный вариант"
+    }
+  },
   "telegram": {
     "welcome": "Привет. Сюда можно отправить сообщение о баге или проблеме на сайте. Опишите, что случилось, и по возможности добавьте ссылку на страницу.",
     "confirmation": "Спасибо. Сообщение о проблеме получено.",

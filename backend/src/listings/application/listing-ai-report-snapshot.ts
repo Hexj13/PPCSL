@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 import * as constants from '../../common/constants';
 import type { Listing } from '../entities/listing.entity';
 
-import type { AiReportLanguage } from './listing-ai-report.types';
+import { AI_LISTING_REPORT_SCHEMA_VERSION, type AiReportLanguage } from './listing-ai-report.types';
 
 export interface ListingAiModelSnapshotVehicle {
   year: number;
@@ -19,7 +19,17 @@ export interface ListingAiModelSnapshotVehicle {
   doors: number | null;
 }
 
+export interface ListingAiDataCompletenessSnapshot {
+  filled_fields: string[];
+  missing_fields: string[];
+  important_missing_fields: string[];
+  optional_missing_fields: string[];
+  completeness_percent: number;
+  score_hint: number;
+}
+
 export interface ListingAiInputSnapshot {
+  reportSchemaVersion: number;
   listingId: string;
   reportLanguage: AiReportLanguage;
   category: string;
@@ -36,6 +46,10 @@ export interface ListingAiInputSnapshot {
   is_new: boolean;
   status: string;
   last_updated_at: string;
+  images_count: number;
+  has_video: boolean;
+  vin_present: boolean;
+  data_completeness: ListingAiDataCompletenessSnapshot;
   vehicle: ListingAiModelSnapshotVehicle | null;
 }
 
@@ -87,6 +101,96 @@ export function descriptionForReportLanguage(
   );
 }
 
+export function buildDataCompletenessSnapshot(params: {
+  title: string;
+  descriptionForReport: string | null;
+  city: string;
+  registration_type: string | null;
+  condition: string | null;
+  equipment: string[];
+  vin_present: boolean;
+  images_count: number;
+  has_video: boolean;
+  vehicle: ListingAiModelSnapshotVehicle | null;
+}): ListingAiDataCompletenessSnapshot {
+  const checks: Array<{ field: string; filled: boolean; weight: number; optional?: boolean }> = [
+    { field: 'title', filled: params.title.trim().length > 0, weight: 8 },
+    {
+      field: 'description',
+      filled: (params.descriptionForReport?.trim().length ?? 0) > 0,
+      weight: 12,
+    },
+    { field: 'city', filled: params.city.trim().length > 0, weight: 5 },
+    { field: 'registration_type', filled: params.registration_type != null, weight: 6 },
+    { field: 'condition', filled: params.condition != null, weight: 6 },
+    { field: 'equipment', filled: params.equipment.length > 0, weight: 5 },
+    { field: 'vin', filled: params.vin_present, weight: 4, optional: true },
+    { field: 'photos', filled: params.images_count > 0, weight: 10 },
+    { field: 'video', filled: params.has_video, weight: 2, optional: true },
+    { field: 'vehicle_year', filled: params.vehicle?.year != null, weight: 8 },
+    { field: 'vehicle_mileage', filled: params.vehicle?.mileage_km != null, weight: 8 },
+    { field: 'vehicle_fuel', filled: params.vehicle?.fuel != null, weight: 5 },
+    { field: 'vehicle_transmission', filled: params.vehicle?.transmission != null, weight: 5 },
+    {
+      field: 'vehicle_drive_type',
+      filled: params.vehicle?.drive_type != null,
+      weight: 3,
+      optional: true,
+    },
+    {
+      field: 'vehicle_body_type',
+      filled: (params.vehicle?.body_type?.trim().length ?? 0) > 0,
+      weight: 5,
+    },
+    {
+      field: 'vehicle_brand',
+      filled: (params.vehicle?.brand_name?.trim().length ?? 0) > 0,
+      weight: 8,
+    },
+    {
+      field: 'vehicle_model',
+      filled: (params.vehicle?.model_name?.trim().length ?? 0) > 0,
+      weight: 8,
+    },
+    {
+      field: 'vehicle_engine',
+      filled: params.vehicle?.engine_displ_l != null,
+      weight: 4,
+      optional: true,
+    },
+    {
+      field: 'vehicle_color',
+      filled: (params.vehicle?.color?.trim().length ?? 0) > 0,
+      weight: 2,
+      optional: true,
+    },
+    { field: 'vehicle_doors', filled: params.vehicle?.doors != null, weight: 2, optional: true },
+  ];
+
+  const filled_fields = checks.filter((c) => c.filled).map((c) => c.field);
+  const missing_fields = checks.filter((c) => !c.filled).map((c) => c.field);
+  const important_missing_fields = checks
+    .filter((c) => !c.filled && !c.optional)
+    .map((c) => c.field);
+  const optional_missing_fields = checks.filter((c) => !c.filled && c.optional).map((c) => c.field);
+  const completeness_percent =
+    checks.length === 0 ? 0 : Math.round((filled_fields.length / checks.length) * 100);
+  const totalWeight = checks.reduce((sum, check) => sum + check.weight, 0);
+  const filledWeight = checks
+    .filter((check) => check.filled)
+    .reduce((sum, check) => sum + check.weight, 0);
+  const score_hint = totalWeight === 0 ? 0 : Math.round((filledWeight / totalWeight) * 100);
+
+  return {
+    filled_fields,
+    missing_fields,
+    important_missing_fields,
+    optional_missing_fields,
+    completeness_percent,
+    score_hint,
+  };
+}
+
 export function buildListingAiInputSnapshot(
   listing: Listing,
   reportLanguage: AiReportLanguage,
@@ -110,7 +214,14 @@ export function buildListingAiInputSnapshot(
       }
     : null;
 
+  const images = listing.images?.filter(Boolean) ?? [];
+  const descriptionForReport = descriptionForReportLanguage(listing, reportLanguage);
+  const vin_present = typeof listing.vin === 'string' && listing.vin.trim().length > 0;
+  const has_video = listing.video != null;
+  const images_count = images.length;
+
   return {
+    reportSchemaVersion: AI_LISTING_REPORT_SCHEMA_VERSION,
     listingId: listing.id,
     reportLanguage,
     category: listing.category,
@@ -119,7 +230,7 @@ export function buildListingAiInputSnapshot(
     currency: listing.currency,
     negotiable: listing.negotiable,
     city: listing.city,
-    descriptionForReport: descriptionForReportLanguage(listing, reportLanguage),
+    descriptionForReport,
     registration_type,
     registration_semantic_hint: registrationSemanticHint(registration_type),
     equipment,
@@ -130,6 +241,21 @@ export function buildListingAiInputSnapshot(
       listing.last_updated_at instanceof Date
         ? listing.last_updated_at.toISOString()
         : String(listing.last_updated_at),
+    images_count,
+    has_video,
+    vin_present,
+    data_completeness: buildDataCompletenessSnapshot({
+      title: listing.title,
+      descriptionForReport,
+      city: listing.city,
+      registration_type,
+      condition: listing.condition ?? null,
+      equipment,
+      vin_present,
+      images_count,
+      has_video,
+      vehicle,
+    }),
     vehicle,
   };
 }

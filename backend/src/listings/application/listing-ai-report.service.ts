@@ -26,7 +26,11 @@ import {
   computeListingAiInputHash,
   isVehicleListingForAiReport,
 } from './listing-ai-report-snapshot';
-import { parseAndValidateAiListingReportPayload } from './listing-ai-report-validate';
+import {
+  parseAndValidateAiListingReportPayload,
+  hasRawQualityScore,
+  applyQualityScorePresentation,
+} from './listing-ai-report-validate';
 import type {
   AiListingReportPayload,
   AiListingReportPostResponse,
@@ -168,6 +172,12 @@ export class ListingAiReportService {
     if (cached?.report) {
       const validated = parseAndValidateAiListingReportPayload(cached.report);
       if (validated) {
+        const report = validated.qualityScore
+          ? {
+              ...validated,
+              qualityScore: applyQualityScorePresentation(validated.qualityScore, reportLanguage),
+            }
+          : validated;
         logUserEvent(this.logger, {
           event: 'ai_report_request',
           userId: params.userId,
@@ -176,7 +186,7 @@ export class ListingAiReportService {
           outcome: 'ready',
           reason: 'cache_hit',
         });
-        return { status: 'ready', report: validated };
+        return { status: 'ready', report };
       }
     }
 
@@ -365,7 +375,19 @@ export class ListingAiReportService {
         }
         return;
       }
-      await this.persistReport(ctx.listingId, ctx.reportLanguage, ctx.inputHash, report);
+      if (hasRawQualityScore(parsed) && !report.qualityScore) {
+        this.logger.warn(
+          `AI report qualityScore structure invalid for listing ${ctx.listingId} (${ctx.reportLanguage})`,
+          ListingAiReportService.name,
+        );
+      }
+      const normalizedReport = report.qualityScore
+        ? {
+            ...report,
+            qualityScore: applyQualityScorePresentation(report.qualityScore, ctx.reportLanguage),
+          }
+        : report;
+      await this.persistReport(ctx.listingId, ctx.reportLanguage, ctx.inputHash, normalizedReport);
       logUserEvent(this.logger, {
         event: 'ai_report_generated',
         userId: ctx.userId,
@@ -391,14 +413,14 @@ export class ListingAiReportService {
       if (!success && ctx.quotaConsumed) {
         try {
           await this.redisService.decr(ctx.quotaKey);
-        } catch {
-          // ignore rollback errors
+        } catch (rollbackError) {
+          void rollbackError;
         }
       }
       try {
         await this.redisService.del(ctx.lockKey);
-      } catch {
-        // ignore
+      } catch (lockCleanupError) {
+        void lockCleanupError;
       }
     }
   }

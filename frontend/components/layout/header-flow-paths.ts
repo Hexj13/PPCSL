@@ -48,6 +48,7 @@ export function isProfilePhoneFlowPath(pathname: string): boolean {
 const AUTH_REQUIRED_REST_PREFIXES = [
   '/profile',
   '/favorites',
+  '/smart-selection',
   '/my-listings',
   '/listings/new',
   '/admin',

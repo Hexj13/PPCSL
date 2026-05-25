@@ -91,6 +91,8 @@ export interface TranslationsPart2 {
     search: string;
     reset: string;
     addToFavorites: string;
+    smartSelection: string;
+    smartSelectionFilterLimitError: string;
     login: string;
     year: string;
     price: string;

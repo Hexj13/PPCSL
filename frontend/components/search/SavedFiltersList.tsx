@@ -10,7 +10,7 @@ import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { SavedFilter } from '@/lib/api';
 import { brandsApi, savedFiltersApi } from '@/lib/api';
-import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
+import { CARD_EXIT_ANIMATION_MS, MAX_SAVED_FILTERS } from '@/lib/constants';
 import { toast } from '@/lib/toast';
 import { createSlug, formatDateLong } from '@/lib/utils';
 
@@ -29,6 +29,25 @@ export function updateSavedFiltersCache(filters: SavedFilter[]) {
 export function clearSavedFiltersCache() {
   moduleCache = null;
   moduleHasLoaded = false;
+}
+
+export async function resolveSavedFiltersCount(): Promise<number> {
+  if (moduleHasLoaded && moduleCache !== null) {
+    return moduleCache.length;
+  }
+
+  try {
+    const res = await savedFiltersApi.getAll();
+    const filtersList = Array.isArray(res.data) ? res.data : [];
+    updateSavedFiltersCache(filtersList);
+    return filtersList.length;
+  } catch {
+    return 0;
+  }
+}
+
+export function isSavedFiltersLimitReached(count: number): boolean {
+  return count >= MAX_SAVED_FILTERS;
 }
 
 export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}) {

@@ -311,6 +311,14 @@
       "tiresHomePageDescriptionWithBrandModel": "Anvelope {brand} {model} pe Kupito! Alegere și prețuri pentru {brand} {model} în Moldova."
     }
   },
+  "smartSelection": {
+    "filterNames": {
+      "practical": "Smart-selectare: alegere practică",
+      "family": "Smart-selectare: alegere pentru familie",
+      "city": "Smart-selectare: alegere pentru oraș",
+      "comfort": "Smart-selectare: alegere confortabilă"
+    }
+  },
   "telegram": {
     "welcome": "Bună. Aici poți trimite un mesaj despre o eroare sau problemă pe site. Descrie ce s-a întâmplat și, dacă e posibil, adaugă un link către pagină.",
     "confirmation": "Mulțumim. Mesajul despre problemă a fost primit.",

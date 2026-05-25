@@ -28,6 +28,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ParsingModule } from './parsing/parsing.module';
 import { SavedFiltersModule } from './saved-filters/saved-filters.module';
 import { SitemapModule } from './sitemap/sitemap.module';
+import { SmartSelectionModule } from './smart-selection/smart-selection.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { TiresModule } from './tires/tires.module';
 import { UploadModule } from './upload/upload.module';
@@ -58,6 +59,7 @@ import { UsersModule } from './users/users.module';
     FavoritesModule,
     ComparisonModule,
     SavedFiltersModule,
+    SmartSelectionModule,
     AdminModule,
     ParsingModule,
     BrandsModule,

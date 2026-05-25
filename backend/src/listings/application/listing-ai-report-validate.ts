@@ -1,7 +1,30 @@
 import type {
-  AiListingReportListingAnalysis,
+  AiListingQualityScore,
+  AiListingQualityScoreCriterionKey,
+  AiListingQualityScoreItems,
+  AiListingScoreItem,
+  AiListingVehicleScore,
+  AiListingVehicleScoreCriterionKey,
+  AiListingVehicleScoreItems,
   AiListingReportPayload,
+  AiReportLanguage,
 } from './listing-ai-report.types';
+
+const QUALITY_SCORE_CRITERIA: AiListingQualityScoreCriterionKey[] = [
+  'dataCompleteness',
+  'mediaQuality',
+  'descriptionQuality',
+  'priceAdequacy',
+  'safeChoice',
+];
+
+const VEHICLE_SCORE_CRITERIA: AiListingVehicleScoreCriterionKey[] = [
+  'mileage',
+  'equipment',
+  'reliability',
+  'liquidity',
+  'popularity',
+];
 
 function isNonEmptyString(v: unknown): v is string {
   return typeof v === 'string' && v.trim().length > 0;
@@ -20,6 +43,11 @@ const MODEL_CONTEXT_MAX = 5;
 
 const SUMMARY_MIN_LEN = 40;
 const SUMMARY_MAX_LEN = 4000;
+
+const QUALITY_SUMMARY_MIN_LEN = 20;
+const QUALITY_SUMMARY_MAX_LEN = 600;
+const QUALITY_ITEM_SUMMARY_MIN_LEN = 10;
+const QUALITY_ITEM_SUMMARY_MAX_LEN = 400;
 
 function countSentences(text: string): number {
   const t = text.replace(/\s+/g, ' ').trim();
@@ -43,6 +71,13 @@ function countSentences(text: string): number {
     return byNl.length;
   }
   return byPunct.length > 0 ? 1 : 0;
+}
+
+function clampScore(v: unknown): number | null {
+  if (typeof v !== 'number' || Number.isNaN(v)) {
+    return null;
+  }
+  return Math.min(100, Math.max(0, Math.round(v)));
 }
 
 function normalizeSummaryString(v: unknown): string | null {
@@ -79,32 +114,189 @@ function normalizeSummaryString(v: unknown): string | null {
   return null;
 }
 
-function normalizeListingAnalysis(v: unknown): AiListingReportListingAnalysis | null {
+function normalizeQualitySummary(v: unknown): string | null {
+  if (!isNonEmptyString(v)) {
+    return null;
+  }
+  const t = v.trim();
+  if (t.length < QUALITY_SUMMARY_MIN_LEN || t.length > QUALITY_SUMMARY_MAX_LEN) {
+    return null;
+  }
+  return t;
+}
+
+const QUALITY_CRITERION_LABELS: Record<
+  AiReportLanguage,
+  Partial<Record<AiListingQualityScoreCriterionKey, string>>
+> = {
+  ru: {
+    dataCompleteness: 'Полнота данных',
+    safeChoice: 'Безопасный выбор',
+  },
+  ro: {
+    dataCompleteness: 'Completitudinea datelor',
+    safeChoice: 'Alegere sigură',
+  },
+};
+
+const SAFE_CHOICE_WORDING_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/\bhigh risk\b/gi, 'grounds for extra caution'],
+  [/\blow risk\b/gi, 'safer choice based on listing data'],
+  [/\brisky\b/gi, 'requiring extra caution'],
+  [/\bunsafe\b/gi, 'requiring extra caution'],
+  [/\bdanger(?:ous)?\b/gi, 'concern'],
+  [/\bвысок(?:ий|ого|ому|им|ом)?\s+риск\b/giu, 'повод для дополнительной осторожности'],
+  [/\bнизк(?:ий|ого|ому|им|ом)?\s+риск\b/giu, 'более безопасный выбор по данным объявления'],
+  [/\bриски\b/giu, 'поводы для осторожности'],
+  [/\bриск\b/giu, 'повод для осторожности'],
+  [/\bопасн(?:о|ый|ая|ое|ые|ого|ому|ым)?\b/giu, 'требует осторожности'],
+  [/\brisc (?:mare|înalt|ridicat)\b/giu, 'motiv de prudență suplimentară'],
+  [/\brisc (?:mic|scăzut)\b/giu, 'alegere mai sigură pe baza datelor anunțului'],
+  [/\brisc(?:uri|ul)?\b/giu, 'motiv de prudență'],
+];
+
+function softenSafeChoiceWording(text: string): string {
+  let result = text;
+  for (const [pattern, replacement] of SAFE_CHOICE_WORDING_REPLACEMENTS) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
+}
+
+function normalizeSafeChoiceItem(item: AiListingScoreItem): AiListingScoreItem {
+  return {
+    ...item,
+    summary: softenSafeChoiceWording(item.summary),
+  };
+}
+
+export function applyQualityScorePresentation(
+  qualityScore: AiListingQualityScore,
+  reportLanguage: AiReportLanguage,
+): AiListingQualityScore {
+  const labels = QUALITY_CRITERION_LABELS[reportLanguage];
+  const dataCompletenessLabel =
+    labels.dataCompleteness ?? qualityScore.items.dataCompleteness.label;
+  const safeChoiceLabel = labels.safeChoice ?? qualityScore.items.safeChoice.label;
+
+  return {
+    ...qualityScore,
+    items: {
+      ...qualityScore.items,
+      dataCompleteness: {
+        ...qualityScore.items.dataCompleteness,
+        label: dataCompletenessLabel,
+      },
+      safeChoice: normalizeSafeChoiceItem({
+        ...qualityScore.items.safeChoice,
+        label: safeChoiceLabel,
+      }),
+    },
+  };
+}
+
+function normalizeScoreItem(v: unknown): AiListingScoreItem | null {
   if (!v || typeof v !== 'object' || Array.isArray(v)) {
     return null;
   }
   const o = v as Record<string, unknown>;
+  const score = clampScore(o.score);
+  if (score == null || !isNonEmptyString(o.label)) {
+    return null;
+  }
+  const summaryRaw = o.summary;
+  if (!isNonEmptyString(summaryRaw)) {
+    return null;
+  }
+  const summary = summaryRaw.trim();
   if (
-    !isNonEmptyString(o.priceComment) ||
-    !isNonEmptyString(o.mileageComment) ||
-    !isNonEmptyString(o.descriptionComment)
+    summary.length < QUALITY_ITEM_SUMMARY_MIN_LEN ||
+    summary.length > QUALITY_ITEM_SUMMARY_MAX_LEN
   ) {
     return null;
   }
-  if (o.registrationComment != null && typeof o.registrationComment !== 'string') {
-    return null;
-  }
-  if (o.optionsComment != null && typeof o.optionsComment !== 'string') {
-    return null;
-  }
-  const reg = o.registrationComment;
-  const opt = o.optionsComment;
   return {
-    priceComment: o.priceComment.trim(),
-    mileageComment: o.mileageComment.trim(),
-    descriptionComment: o.descriptionComment.trim(),
-    registrationComment: typeof reg === 'string' && reg.trim() ? reg.trim() : undefined,
-    optionsComment: typeof opt === 'string' && opt.trim() ? opt.trim() : undefined,
+    label: o.label.trim(),
+    score,
+    summary,
+  };
+}
+
+function normalizeQualityScore(v: unknown): AiListingQualityScore | null {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) {
+    return null;
+  }
+  const o = v as Record<string, unknown>;
+  const summary = normalizeQualitySummary(o.summary);
+  if (!summary) {
+    return null;
+  }
+  if (!o.items || typeof o.items !== 'object' || Array.isArray(o.items)) {
+    return null;
+  }
+  const itemsRaw = o.items as Record<string, unknown>;
+  const items = {} as Partial<AiListingQualityScoreItems>;
+  const scores: number[] = [];
+
+  for (const key of QUALITY_SCORE_CRITERIA) {
+    const item = normalizeScoreItem(itemsRaw[key]);
+    if (!item) {
+      return null;
+    }
+    items[key] = item;
+    scores.push(item.score);
+  }
+
+  const computedOverall = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  const overallScore = clampScore(o.overallScore);
+  const normalizedOverall =
+    overallScore != null && Math.abs(overallScore - computedOverall) <= 2
+      ? overallScore
+      : computedOverall;
+
+  return {
+    overallScore: normalizedOverall,
+    summary,
+    items: items as AiListingQualityScoreItems,
+  };
+}
+
+function normalizeVehicleScore(v: unknown): AiListingVehicleScore | null {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) {
+    return null;
+  }
+  const o = v as Record<string, unknown>;
+  const summary = normalizeQualitySummary(o.summary);
+  if (!summary) {
+    return null;
+  }
+  if (!o.items || typeof o.items !== 'object' || Array.isArray(o.items)) {
+    return null;
+  }
+  const itemsRaw = o.items as Record<string, unknown>;
+  const items = {} as Partial<AiListingVehicleScoreItems>;
+  const scores: number[] = [];
+
+  for (const key of VEHICLE_SCORE_CRITERIA) {
+    const item = normalizeScoreItem(itemsRaw[key]);
+    if (!item) {
+      return null;
+    }
+    items[key] = item;
+    scores.push(item.score);
+  }
+
+  const computedOverall = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  const overallScore = clampScore(o.overallScore);
+  const normalizedOverall =
+    overallScore != null && Math.abs(overallScore - computedOverall) <= 2
+      ? overallScore
+      : computedOverall;
+
+  return {
+    overallScore: normalizedOverall,
+    summary,
+    items: items as AiListingVehicleScoreItems,
   };
 }
 
@@ -116,9 +308,6 @@ export function parseAndValidateAiListingReportPayload(
 
   const summary = normalizeSummaryString(o.summary);
   if (!summary) return null;
-
-  const listingAnalysis = normalizeListingAnalysis(o.listingAnalysis);
-  if (!listingAnalysis) return null;
 
   if (!isStringArray(o.modelContext, MODEL_CONTEXT_MIN, MODEL_CONTEXT_MAX)) {
     return null;
@@ -138,10 +327,14 @@ export function parseAndValidateAiListingReportPayload(
   if (typeof conf !== 'number' || Number.isNaN(conf)) return null;
   const confidence = Math.min(1, Math.max(0, conf));
 
+  // _scratchpad is ignored and not included in the final payload
+
+  const qualityScore = normalizeQualityScore(o.qualityScore) ?? undefined;
+  const vehicleScore = normalizeVehicleScore(o.vehicleScore) ?? undefined;
+
   return {
     modelContext: o.modelContext.map((s: string) => s.trim()),
     summary,
-    listingAnalysis,
     strengths: o.strengths.map((s: string) => s.trim()),
     weaknesses: o.weaknesses.map((s: string) => s.trim()),
     buyingChecks: o.buyingChecks.map((s: string) => s.trim()),
@@ -149,5 +342,12 @@ export function parseAndValidateAiListingReportPayload(
     redFlags: redFlagsRaw.map((s: string) => String(s).trim()),
     confidence,
     disclaimer: '',
+    ...(qualityScore ? { qualityScore } : {}),
+    ...(vehicleScore ? { vehicleScore } : {}),
   };
+}
+
+export function hasRawQualityScore(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  return 'qualityScore' in (raw as Record<string, unknown>);
 }

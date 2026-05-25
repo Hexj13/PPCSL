@@ -25,6 +25,7 @@ export { comparisonApi } from './api-comparison';
 export { favoritesApi } from './api-favorites';
 export { listingsApi } from './api-listings';
 export { savedFiltersApi } from './api-saved-filters';
+export { smartSelectionApi } from './api-smart-selection';
 export { tiresApi } from './api-tires';
 export type { TireBrand, TireModel } from './api-tires';
 export { uploadApi } from './api-upload';
