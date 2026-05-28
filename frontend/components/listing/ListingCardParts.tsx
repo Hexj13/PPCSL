@@ -107,8 +107,7 @@ export const ListingCardImageCarousel = React.forwardRef<
     }
     imagesCacheRef.current = [];
     setIndex(0);
-    markLoaded(0);
-  }, [imagesSignature, markLoaded]);
+  }, [imagesSignature]);
 
   const len = images.length;
   const goNext = useCallback(() => {
@@ -171,6 +170,7 @@ export const ListingCardImageCarousel = React.forwardRef<
       const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 640);
       const isFirst = priority && idx === 0;
       const b = slideBlur(idx);
+      const shouldUseBlurPlaceholder = Boolean(b) && !loadedRef.current.has(idx);
       return (
         <TrackedNextImage
           key={`card-slide-${idx}`}
@@ -186,16 +186,29 @@ export const ListingCardImageCarousel = React.forwardRef<
           loading={isFirst ? undefined : 'lazy'}
           priority={isFirst}
           draggable={false}
+          onLoad={() => {
+            markLoaded(idx);
+          }}
           onError={() => {
             onImageError(idx);
           }}
           unoptimized
-          placeholder={b ? 'blur' : undefined}
-          blurDataURL={b}
+          placeholder={shouldUseBlurPlaceholder ? 'blur' : undefined}
+          blurDataURL={shouldUseBlurPlaceholder ? b : undefined}
         />
       );
     },
-    [images, imageErrors, imageAltTitle, priority, t, onImageError, errorPlaceholder, slideBlur],
+    [
+      images,
+      imageErrors,
+      imageAltTitle,
+      priority,
+      t,
+      markLoaded,
+      onImageError,
+      errorPlaceholder,
+      slideBlur,
+    ],
   );
 
   return (
