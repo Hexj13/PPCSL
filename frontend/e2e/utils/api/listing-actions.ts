@@ -19,6 +19,11 @@ type ListingOwnership = {
   isOwnListing: boolean;
 };
 
+type ComparisonIdsPayload = {
+  vehicleListingIds?: string[];
+  tireListingIds?: string[];
+};
+
 const LISTING_ID_UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function getCurrentListingId(page: Page): string {
@@ -105,6 +110,41 @@ export async function removeFavoriteViaBrowserApi(page: Page, listingId: string)
 
 export async function removeComparisonViaBrowserApi(page: Page, listingId: string): Promise<void> {
   await deleteViaBrowserApi(page, `/api/comparison/${listingId}`);
+}
+
+export async function clearComparisonViaBrowserApi(page: Page): Promise<void> {
+  const origin = getE2eBackendApiOrigin();
+  const ids = await page.evaluate<ComparisonIdsPayload, string>(async (apiOrigin) => {
+    const response = await fetch(`${apiOrigin}/api/comparison/ids`, {
+      credentials: 'include',
+      headers: { 'X-Skip-Error-Handling': 'true' },
+    });
+    if (!response.ok) {
+      return {};
+    }
+    const json = (await response.json()) as Record<string, unknown> | null;
+    const payload =
+      json && typeof json === 'object' && json.data && typeof json.data === 'object'
+        ? (json.data as Record<string, unknown>)
+        : json;
+    return {
+      vehicleListingIds: Array.isArray(payload?.vehicleListingIds)
+        ? (payload.vehicleListingIds as string[])
+        : [],
+      tireListingIds: Array.isArray(payload?.tireListingIds)
+        ? (payload.tireListingIds as string[])
+        : [],
+    };
+  }, origin);
+
+  const listingIds = new Set([...(ids.vehicleListingIds ?? []), ...(ids.tireListingIds ?? [])]);
+  for (const id of listingIds) {
+    await deleteViaBrowserApi(page, `/api/comparison/${id}`);
+  }
+  await page.evaluate(() => {
+    window.localStorage.removeItem('comparison-storage');
+    window.localStorage.removeItem('comparison-storage-backup');
+  });
 }
 
 async function deleteViaBrowserApi(page: Page, path: string): Promise<void> {

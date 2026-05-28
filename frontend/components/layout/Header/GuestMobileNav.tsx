@@ -7,7 +7,9 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { isSignRoutePathname } from '@/components/layout/header-flow-paths';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
+import { prepareScrollLockReleaseToTop } from '@/hooks/useScrollLock';
 import { buildSignPageHref } from '@/lib/return-url';
+import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
 import { ScaleIcon } from './icons';
 
@@ -67,7 +69,17 @@ export function GuestMobileNav({
         <span suppressHydrationWarning>{t('header.loginAndRegister')}</span>
       </Link>
       <div className="flex flex-col gap-4 border-t border-primary-700 pt-4">
-        <Link href={href('/compare')} onClick={onClose} className={mobileNavLinkClasses}>
+        <Link
+          href={href('/compare')}
+          onClick={() => {
+            prepareScrollLockReleaseToTop();
+            onClose();
+            if (stripLocalePrefixFromPathname(pathname).restPath === '/compare') {
+              window.scrollTo({ top: 0, behavior: 'instant' });
+            }
+          }}
+          className={mobileNavLinkClasses}
+        >
           <ScaleIcon className={iconClass} />
           <span suppressHydrationWarning>{t('header.compare')}</span>
           {comparisonCount > 0 && (

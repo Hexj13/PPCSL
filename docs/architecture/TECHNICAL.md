@@ -464,6 +464,7 @@ DELETE /api/comparison/:listingId     # Remove listing from comparison (authenti
 - On login or registration, `applyComparisonAfterAuth` merges `pendingComparisons` (legacy) and buckets from `comparison-storage` (up to 3 vehicles and 3 tires separately) into the account via `POST /api/comparison/sync` (server order kept, then guest IDs fill free slots).
 - **Logout:** local comparison state is cleared; server-side rows remain for the next login.
 - Header shows a Compare link with a counter badge (total items in both lists).
+- Vehicle comparisons can show an optional equipment/options table built from the union of selected equipment keys in the compared listings.
 - **Multi-tab:** Compare UI and signed-in comparison IDs refresh when another tab changes comparison; guests rely on persist rehydrate. See [cross-tab-sync.md](../features/cross-tab-sync.md).
 
 ### Saved Filters

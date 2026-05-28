@@ -151,8 +151,10 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
     const visibleIndex = getConfirmedIndex(state);
 
     useEffect(() => {
+      const nextState = createPreviewState(currentImageIndex);
       setHeroPreviewBlurConsumed(false);
-      setState(createPreviewState(currentImageIndex));
+      previewStateRef.current = nextState;
+      setState(nextState);
       clearImageNavGuard(previewNavSyncLockRef, previewNavUnlockTimeoutRef);
       // eslint-disable-next-line react-hooks/exhaustive-deps -- reset carousel only when image set changes; index is parent value at that commit
     }, [imagesSignature]);
@@ -172,13 +174,17 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       if (state.pendingSlot || visibleIndex === currentImageIndex) {
         return;
       }
-      setState((prev) => ({
-        ...prev,
-        slotIndices: {
-          ...prev.slotIndices,
-          [prev.confirmedSlot]: currentImageIndex,
-        },
-      }));
+      setState((prev) => {
+        const nextState = {
+          ...prev,
+          slotIndices: {
+            ...prev.slotIndices,
+            [prev.confirmedSlot]: currentImageIndex,
+          },
+        };
+        previewStateRef.current = nextState;
+        return nextState;
+      });
     }, [currentImageIndex, state.pendingSlot, visibleIndex]);
 
     const blurDataURLForIndex = useMemo(() => {
@@ -223,13 +229,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
       }
     }, []);
 
-    const {
-      isTargetReady,
-      isHeroReady,
-      preloadTarget,
-      handleHeroImageLoad,
-      handleThumbnailImageLoad,
-    } = useListingImages({
+    const { isTargetReady, isHeroReady, preloadTarget, handleHeroImageLoad } = useListingImages({
       images,
       currentImageIndex: visibleIndex,
       imageErrors,
@@ -240,9 +240,13 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         if (navigationSeqRef.current !== sequence) {
           return;
         }
-        setState((prev) => {
-          return promotePendingPreviewState(prev, pendingSlot, toIndex);
-        });
+        const currentPreviewState = previewStateRef.current;
+        const promotedState = promotePendingPreviewState(currentPreviewState, pendingSlot, toIndex);
+        if (promotedState === currentPreviewState) {
+          return;
+        }
+        previewStateRef.current = promotedState;
+        setState(promotedState);
         setCurrentImageIndex(toIndex);
       },
       [setCurrentImageIndex],
@@ -325,6 +329,7 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
           toIndex,
         );
 
+        previewStateRef.current = nextState;
         setState(nextState);
 
         if (isHeroReady(toIndex)) {
@@ -333,15 +338,18 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         }
 
         if (isTargetReady(toIndex)) {
+          schedulePendingPromotion(pendingSlot, toIndex, sequence);
           return;
         }
 
         preloadCleanupRef.current = preloadTarget(toIndex, {
           onReady: () => {
             preloadCleanupRef.current = null;
+            schedulePendingPromotion(pendingSlot, toIndex, sequence);
           },
           onFailure: () => {
             preloadCleanupRef.current = null;
+            schedulePendingPromotion(pendingSlot, toIndex, sequence);
           },
         });
       },
@@ -506,7 +514,6 @@ export const ListingPageImages = forwardRef<ListingPageImagesHandle, ListingPage
         videoSlide={videoSlide}
         navigateTo={navigateTo}
         setCurrentImageIndex={setCurrentImageIndex}
-        handleThumbnailImageLoad={handleThumbnailImageLoad}
       />
     );
   },

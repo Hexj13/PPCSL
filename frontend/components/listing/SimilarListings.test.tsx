@@ -58,6 +58,14 @@ jest.mock('@/components/SkeletonContainer', () => ({
 
 const mockAnalytics = require('@/lib/analytics').analytics;
 const mockListingsApi = require('@/lib/api').listingsApi;
+let intersectionObserverCallbacks: IntersectionObserverCallback[] = [];
+
+async function triggerIntersection(index = 0) {
+  const callback = intersectionObserverCallbacks[index];
+  await act(async () => {
+    callback?.([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
+  });
+}
 
 const mockListing = (id: string, title: string) => ({
   id,
@@ -84,7 +92,9 @@ describe('SimilarListings', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    global.IntersectionObserver = jest.fn().mockImplementation(() => {
+    intersectionObserverCallbacks = [];
+    global.IntersectionObserver = jest.fn().mockImplementation((callback) => {
+      intersectionObserverCallbacks.push(callback);
       return {
         observe: jest.fn(),
         disconnect: jest.fn(),
@@ -117,7 +127,7 @@ describe('SimilarListings', () => {
     expect(screen.getByText('Similar listings')).toBeInTheDocument();
   });
 
-  it('should load all 8 listings on mount', async () => {
+  it('should load all 8 listings when the block approaches the viewport', async () => {
     const listings = Array.from({ length: 8 }, (_, i) =>
       mockListing(`id-${i}`, `Listing ${i + 1}`),
     );
@@ -127,6 +137,7 @@ describe('SimilarListings', () => {
     });
 
     render(<SimilarListings listingId="test-id" />);
+    await triggerIntersection();
 
     await act(async () => {
       jest.advanceTimersByTime(100);
@@ -169,6 +180,7 @@ describe('SimilarListings', () => {
     });
 
     render(<SimilarListings listingId="test-id" />);
+    await triggerIntersection();
 
     await act(async () => {
       jest.advanceTimersByTime(100);
@@ -183,6 +195,7 @@ describe('SimilarListings', () => {
     mockListingsApi.getSimilar.mockRejectedValue(new Error('API Error'));
 
     render(<SimilarListings listingId="test-id" />);
+    await triggerIntersection();
 
     await act(async () => {
       jest.advanceTimersByTime(100);
@@ -203,6 +216,7 @@ describe('SimilarListings', () => {
     });
 
     render(<SimilarListings listingId="test-id" />);
+    await triggerIntersection();
 
     await act(async () => {
       jest.advanceTimersByTime(100);
@@ -303,17 +317,8 @@ describe('SimilarListings', () => {
       data: listings,
     });
 
-    let observerCallback!: (_entries: Array<{ isIntersecting: boolean; target: Element }>) => void;
-    global.IntersectionObserver = jest.fn().mockImplementation((callback) => {
-      observerCallback = callback;
-      return {
-        observe: jest.fn(),
-        disconnect: jest.fn(),
-        unobserve: jest.fn(),
-      };
-    });
-
     render(<SimilarListings listingId="test-id" />);
+    await triggerIntersection();
 
     await act(async () => {
       jest.advanceTimersByTime(100);
@@ -323,14 +328,7 @@ describe('SimilarListings', () => {
       expect(screen.getByTestId('listing-card-id-0')).toBeInTheDocument();
     });
 
-    if (observerCallback) {
-      observerCallback([
-        {
-          isIntersecting: true,
-          target: document.createElement('div'),
-        },
-      ]);
-    }
+    await triggerIntersection(1);
     await act(async () => {
       jest.advanceTimersByTime(100);
     });
@@ -350,6 +348,7 @@ describe('SimilarListings', () => {
     });
 
     render(<SimilarListings listingId="test-id" />);
+    await triggerIntersection();
 
     await act(async () => {
       jest.advanceTimersByTime(100);
@@ -434,7 +433,7 @@ describe('SimilarListings', () => {
     expect(scrollContainer.scrollBy).toHaveBeenCalled();
   });
 
-  it('should only call API once (no lazy loading)', async () => {
+  it('should only call API once after lazy loading', async () => {
     const listings = Array.from({ length: 8 }, (_, i) =>
       mockListing(`id-${i}`, `Listing ${i + 1}`),
     );
@@ -444,6 +443,7 @@ describe('SimilarListings', () => {
     });
 
     render(<SimilarListings listingId="test-id" />);
+    await triggerIntersection();
 
     await act(async () => {
       jest.advanceTimersByTime(100);

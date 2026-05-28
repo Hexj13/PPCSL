@@ -1,16 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { memo, useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 
-import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
+import {
+  getListingPagePreviewImageUrl,
+  getListingPageThumbImageUrl,
+  isListingPageVideoHeroSlideUrl,
+} from '@/app/listings/[id]/listing-page-helpers';
 import { TrackedNextImage } from '@/components/common/TrackedNextImage';
-import { getOptimizedImageUrl } from '@/lib/utils';
 
 export const RESET_TO_FIRST_DELAY_MS = 10000;
 export const REWIND_STEP_MS = 220;
-
-const PREVIEW_IMAGE_QUALITY = 75;
-const PREVIEW_IMAGE_WIDTH = 1200;
 export const VIDEO_POSTER_BLUR_DATA_URL =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAzMiAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48ZmlsdGVyIGlkPSJiIiB4PSItMjAiIHk9Ii0yMCIgd2lkdGg9IjcyIiBoZWlnaHQ9IjU4IiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiPjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjgiLz48L2ZpbHRlcj48L2RlZnM+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjE4IiBmaWxsPSIjMDY0ZTM5Ii8+PGNpcmNsZSBjeD0iOSIgY3k9IjYiIHI9IjEwIiBmaWxsPSIjMTg3YjU4IiBmaWx0ZXI9InVybCgjYikiLz48Y2lyY2xlIGN4PSIyNCIgY3k9IjEzIiByPSIxMiIgZmlsbD0iIzAyMzUyOSIgb3BhY2l0eT0iLjkiIGZpbHRlcj0idXJsKCNiKSIvPjwvc3ZnPg==';
 
@@ -164,7 +164,7 @@ function renderPreviewSlide(index: number, params: SlideParams, options: Preview
     );
   }
 
-  const optimizedUrl = getOptimizedImageUrl(src, PREVIEW_IMAGE_QUALITY, PREVIEW_IMAGE_WIDTH);
+  const optimizedUrl = getListingPagePreviewImageUrl(src);
   const isExternal = optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
   const isVideoPosterSlide = index === 0 && !!videoSlide;
   const blurDataURL =
@@ -176,26 +176,33 @@ function renderPreviewSlide(index: number, params: SlideParams, options: Preview
   const priority = index === 0;
 
   return (
-    <TrackedNextImage
-      key={`preview-slide-${index}`}
-      src={optimizedUrl}
-      alt={t('listings.imageAltWithTotal', {
-        title: imageAltTitle,
-        index: String(index + 1),
-        total: String(images.length),
-      })}
-      fill
-      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
-      className="object-cover opacity-100"
-      loading={priority ? undefined : 'eager'}
-      priority={priority}
-      placeholder={blurDataURL ? 'blur' : undefined}
-      blurDataURL={blurDataURL}
-      draggable={false}
-      unoptimized={isExternal}
-      onLoad={() => handleImageLoad(index)}
-      onError={() => onImageError(index)}
-    />
+    <>
+      {blurDataURL ? (
+        <div
+          className="absolute inset-0 scale-105 bg-cover bg-center blur-md"
+          style={{ backgroundImage: `url(${blurDataURL})` }}
+          aria-hidden
+        />
+      ) : null}
+      <TrackedNextImage
+        key={`preview-slide-${index}`}
+        src={optimizedUrl}
+        alt={t('listings.imageAltWithTotal', {
+          title: imageAltTitle,
+          index: String(index + 1),
+          total: String(images.length),
+        })}
+        fill
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 65vw"
+        className="object-cover opacity-100"
+        loading={priority ? undefined : 'eager'}
+        priority={priority}
+        draggable={false}
+        unoptimized={isExternal}
+        onLoad={() => handleImageLoad(index)}
+        onError={() => onImageError(index)}
+      />
+    </>
   );
 }
 
@@ -296,20 +303,18 @@ type ListingThumbnailTileProps = {
   imageAltTitle: string;
   blurDataURLForIndex: (_index: number) => string | undefined;
   t: (_key: string, _params?: Record<string, string>) => string;
-  handleThumbnailImageLoad: (_idx: number) => void;
   onImageError: (_idx: number) => void;
   setCurrentImageIndex: Dispatch<SetStateAction<number>>;
   onImageClick: (_index: number) => void;
 };
 
-export function ListingThumbnailTile({
+function ListingThumbnailTileComponent({
   img,
   index,
   totalImages,
   imageAltTitle,
   blurDataURLForIndex,
   t,
-  handleThumbnailImageLoad,
   onImageError,
   setCurrentImageIndex,
   onImageClick,
@@ -321,12 +326,19 @@ export function ListingThumbnailTile({
   const remainingCountMobile = totalImages - 3;
   const remainingCountDesktop = totalImages - 4;
 
-  const optimizedUrl = getOptimizedImageUrl(img, PREVIEW_IMAGE_QUALITY, PREVIEW_IMAGE_WIDTH);
+  const optimizedUrl = getListingPageThumbImageUrl(img);
   const isExternal = optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
   const thumbBlur = blurDataURLForIndex(index);
 
   return (
     <>
+      {thumbBlur ? (
+        <div
+          className="absolute inset-0 scale-105 bg-cover bg-center blur-md"
+          style={{ backgroundImage: `url(${thumbBlur})` }}
+          aria-hidden
+        />
+      ) : null}
       <TrackedNextImage
         src={optimizedUrl}
         alt={t('listings.imageAltWithTotal', {
@@ -338,11 +350,8 @@ export function ListingThumbnailTile({
         sizes="(max-width: 640px) 33vw, 25vw"
         className="object-cover"
         loading="lazy"
-        placeholder={thumbBlur ? 'blur' : undefined}
-        blurDataURL={thumbBlur}
         draggable={false}
         unoptimized={isExternal}
-        onLoad={() => handleThumbnailImageLoad(index)}
         onError={() => onImageError(index)}
       />
       {isLastThumbnailMobile && hasMoreImagesMobile && (
@@ -374,3 +383,5 @@ export function ListingThumbnailTile({
     </>
   );
 }
+
+export const ListingThumbnailTile = memo(ListingThumbnailTileComponent);

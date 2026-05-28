@@ -8,7 +8,11 @@ import { getClientLocale } from '@/lib/i18n';
 import { formatPrice, formatTireSize, getListingHref, getTireModelDisplayLabel } from '@/lib/utils';
 
 import type { ComparisonField } from './comparisonFields';
-import { getCompareCellValue } from './comparisonFields';
+import {
+  compareDataCellClass,
+  comparePhotoLinkClass,
+  getCompareCellValue,
+} from './comparisonFields';
 
 function formatTireBool(v: boolean | null | undefined, t: (_key: string) => string): string {
   if (v === true) return t('listingDetail.tireYes');
@@ -26,11 +30,11 @@ export const tireComparisonFields: ComparisonField[] = [
       const isExternal = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
 
       return (
-        <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center">
+        <td key={listing.id} className={compareDataCellClass}>
           <div className="flex justify-center">
             <Link
               href={getListingHref(listing, locale ?? getClientLocale())}
-              className="relative w-24 h-16 bg-bg-darker rounded-lg overflow-hidden block"
+              className={comparePhotoLinkClass}
             >
               {isPlaceholder ? (
                 <div className="w-full h-full flex items-center justify-center text-text-secondary">
@@ -78,7 +82,7 @@ export const tireComparisonFields: ComparisonField[] = [
     key: 'title',
     labelKey: 'compare.titleColumn',
     renderCell: (listing, t, _, locale) => (
-      <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base">
+      <td key={listing.id} className={compareDataCellClass}>
         <div className="flex flex-col items-center gap-2">
           <Link
             href={getListingHref(listing, locale ?? getClientLocale())}
@@ -114,7 +118,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {getCompareCellValue(listing.tire?.brand?.name, t)}
@@ -130,7 +134,7 @@ export const tireComparisonFields: ComparisonField[] = [
       return (
         <td
           key={listing.id}
-          className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+          className={compareDataCellClass}
           style={{ color: 'rgb(var(--text-secondary-rgb))' }}
         >
           {getCompareCellValue(model, t)}
@@ -144,7 +148,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.tire?.tire_vehicle_type
@@ -159,7 +163,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.tire ? formatTireSize(listing.tire) : t('compare.notAvailable')}
@@ -172,7 +176,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.tire?.season
@@ -187,7 +191,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.tire?.condition
@@ -202,7 +206,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.tire?.quantity != null ? String(listing.tire.quantity) : t('compare.notAvailable')}
@@ -215,7 +219,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {getCompareCellValue(listing.tire?.load_index, t)}
@@ -228,7 +232,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {(() => {
@@ -245,7 +249,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {formatTireBool(listing.tire?.studded, t)}
@@ -258,7 +262,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {formatTireBool(listing.tire?.run_flat, t)}
@@ -271,7 +275,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {formatTireBool(listing.tire?.reinforced_xl, t)}
@@ -284,7 +288,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {formatTireBool(listing.tire?.spare_donut, t)}
@@ -297,7 +301,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {formatTireBool(listing.tire?.tubeless, t)}
@@ -310,7 +314,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {formatTireBool(listing.tire?.acoustic, t)}
@@ -323,7 +327,7 @@ export const tireComparisonFields: ComparisonField[] = [
     renderCell: (listing, t, siteConfig, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.status === 'Closed' || listing.price === undefined ? (

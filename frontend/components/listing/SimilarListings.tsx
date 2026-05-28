@@ -73,6 +73,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
   const { t } = useTranslation();
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [shouldLoad, setShouldLoad] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const hasTrackedImpression = useRef(false);
@@ -86,6 +87,35 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
   }, []);
 
   useEffect(() => {
+    setListings([]);
+    setIsLoading(true);
+    setShouldLoad(false);
+    hasTrackedImpression.current = false;
+  }, [listingId]);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section || shouldLoad) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setShouldLoad(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '800px 0px', threshold: 0 },
+    );
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [shouldLoad]);
+
+  useEffect(() => {
+    if (!shouldLoad) return;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       listingsApi
@@ -107,7 +137,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
       clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [listingId]);
+  }, [listingId, shouldLoad]);
 
   useEffect(() => {
     if (!sectionRef.current || hasTrackedImpression.current || listings.length === 0) return;

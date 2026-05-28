@@ -1772,6 +1772,8 @@
     "notRegistered": "Not Registered",
     "price": "Price",
     "notAvailable": "N/A",
+    "compareOptions": "Compare options",
+    "hideOptionsComparison": "Hide options comparison",
     "tireBrand": "Tire brand",
     "tireModel": "Tire model",
     "tireVehicleType": "Vehicle type",

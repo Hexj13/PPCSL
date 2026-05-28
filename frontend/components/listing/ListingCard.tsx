@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useCallback, useEffect, useMemo, startTransition } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, startTransition } from 'react';
 
+import { prewarmListingPageHeroImage } from '@/app/listings/[id]/listing-page-helpers';
 import {
   ListingCardBadges,
   ListingCardImageArea,
@@ -320,8 +321,12 @@ function ListingCardComponent({
   const [suppressBadgeHoverExpand, setSuppressBadgeHoverExpand] = React.useState(false);
   const carouselRef = React.useRef<ListingCardImageCarouselHandle>(null);
   const cardRef = React.useRef<HTMLDivElement>(null);
+  const navigationPreparedRef = useRef(false);
 
   React.useEffect(() => setIsHydrated(true), []);
+  React.useEffect(() => {
+    navigationPreparedRef.current = false;
+  }, [listing.id]);
 
   const {
     onMouseLeave: handleCardMouseLeave,
@@ -346,23 +351,35 @@ function ListingCardComponent({
     handleCardMouseLeave();
   }, [handleCardMouseLeave]);
 
-  const handleClick = useCallback(() => {
+  const prepareListingNavigation = useCallback(() => {
+    if (navigationPreparedRef.current) {
+      return;
+    }
+    navigationPreparedRef.current = true;
+
     if (listing.cover_blur_hash) {
       setBlurForListing(listing.id, listing.cover_blur_hash, images[0]);
     }
     const fromHome =
       typeof window !== 'undefined' &&
       stripLocalePrefixFromPathname(window.location.pathname).restPath === '/';
-    setIndexForListing(
-      listing.id,
-      fromHome ? 0 : (carouselRef.current?.getIndex() ?? carouselIndex),
-    );
+    const galleryIndex = fromHome ? 0 : (carouselRef.current?.getIndex() ?? carouselIndex);
+    setIndexForListing(listing.id, galleryIndex);
+    prewarmListingPageHeroImage(listing.id, images[galleryIndex] ?? images[0]);
     if (fromHome) {
       startTransition(() => {
         preserveHomeScrollPosition();
       });
     }
   }, [listing.id, listing.cover_blur_hash, images, carouselIndex]);
+
+  const handleClick = useCallback(() => {
+    prepareListingNavigation();
+  }, [prepareListingNavigation]);
+
+  const handleLinkPointerDown = useCallback(() => {
+    prepareListingNavigation();
+  }, [prepareListingNavigation]);
 
   const favoriteDisabled = isToggling;
   const favoriteButtonClass = getFavoriteButtonClassName(isToggling, isFavorite);
@@ -519,6 +536,7 @@ function ListingCardComponent({
         href={cardUrl}
         prefetch={linkPrefetch}
         onClick={handleClick}
+        onPointerDown={handleLinkPointerDown}
         aria-label={displayTitle}
         className="absolute inset-0 z-0"
         data-testid={`listing-card-link-${listing.id}`}

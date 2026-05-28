@@ -11,7 +11,9 @@ import {
 } from '@/components/layout/header-flow-paths';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
+import { prepareScrollLockReleaseToTop } from '@/hooks/useScrollLock';
 import type { User } from '@/lib/api';
+import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
 import { DocumentsIcon, HeartIcon, ScaleIcon, ShieldIcon, UserIcon, LogoutIcon } from './icons';
 
@@ -45,7 +47,15 @@ export function UserMobileNav({
     !isProfilePhoneFlowPath(pathname);
   const showCreateListingInDrawer = !isHideFooterPath(pathname);
 
-  const linkProps = { onClick: onClose, className: mobileNavLinkClasses };
+  const handleNavClick = (targetRestPath?: string) => {
+    prepareScrollLockReleaseToTop();
+    onClose();
+    if (targetRestPath && stripLocalePrefixFromPathname(pathname).restPath === targetRestPath) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  };
+
+  const linkProps = { onClick: () => handleNavClick(), className: mobileNavLinkClasses };
 
   return (
     <div className="flex flex-col gap-4">
@@ -56,11 +66,19 @@ export function UserMobileNav({
         <DocumentsIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.myListings')}</span>
       </Link>
-      <Link href={href('/favorites')} {...linkProps}>
+      <Link
+        href={href('/favorites')}
+        className={mobileNavLinkClasses}
+        onClick={() => handleNavClick('/favorites')}
+      >
         <HeartIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.favorites')}</span>
       </Link>
-      <Link href={href('/compare')} {...linkProps}>
+      <Link
+        href={href('/compare')}
+        className={mobileNavLinkClasses}
+        onClick={() => handleNavClick('/compare')}
+      >
         <ScaleIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.compare')}</span>
         {comparisonCount > 0 && (

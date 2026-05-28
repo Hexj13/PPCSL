@@ -5,7 +5,7 @@ import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStat
 import type { Listing } from '@/lib/api';
 import { getClientLocale } from '@/lib/i18n';
 import type { Locale } from '@/lib/i18n-types';
-import { getColorLabel } from '@/lib/options';
+import { getColorLabel, getEquipmentKeysByVehicleType } from '@/lib/options';
 import {
   formatPrice,
   formatMileage,
@@ -18,6 +18,7 @@ import {
   getListingHref,
   horsepowerToKw,
   getVehicleType,
+  sortOptionsByLabel,
 } from '@/lib/utils';
 import { blurhashToDataURL } from '@/lib/utils/blurhash';
 
@@ -42,6 +43,12 @@ export const getCompareCellValue = (
   return String(value);
 };
 
+export const compareDataCellClass =
+  'py-2 px-2 max-md:px-1.5 max-md:break-words md:py-4 md:px-4 text-center text-sm md:text-base';
+
+export const comparePhotoLinkClass =
+  'relative w-20 h-14 md:w-24 md:h-16 bg-bg-darker rounded-lg overflow-hidden block';
+
 export const comparisonFields: ComparisonField[] = [
   {
     key: 'photo',
@@ -55,11 +62,11 @@ export const comparisonFields: ComparisonField[] = [
         : undefined;
 
       return (
-        <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center">
+        <td key={listing.id} className={compareDataCellClass}>
           <div className="flex justify-center">
             <Link
               href={getListingHref(listing, locale ?? getClientLocale())}
-              className="relative w-24 h-16 bg-bg-darker rounded-lg overflow-hidden block"
+              className={comparePhotoLinkClass}
             >
               {isPlaceholder ? (
                 <div className="w-full h-full flex items-center justify-center text-text-secondary">
@@ -111,7 +118,7 @@ export const comparisonFields: ComparisonField[] = [
     key: 'title',
     labelKey: 'compare.titleColumn',
     renderCell: (listing, t, _, locale) => (
-      <td key={listing.id} className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base">
+      <td key={listing.id} className={compareDataCellClass}>
         <div className="flex flex-col items-center gap-2">
           <Link
             href={getListingHref(listing, locale ?? getClientLocale())}
@@ -147,7 +154,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {getCompareCellValue(listing.vehicle?.brand?.name, t)}
@@ -160,7 +167,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {getCompareCellValue(listing.vehicle?.model?.name, t)}
@@ -173,7 +180,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {getCompareCellValue(listing.vehicle?.year, t)}
@@ -186,7 +193,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.mileage_km
@@ -201,7 +208,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.engine_displ_l
@@ -216,7 +223,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.horsepower !== undefined && listing.horsepower !== null
@@ -233,7 +240,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.fuel ? formatFuel(listing.vehicle.fuel, t) : t('compare.notAvailable')}
@@ -246,7 +253,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.transmission
@@ -261,7 +268,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.drive_type
@@ -276,7 +283,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.body_type
@@ -291,7 +298,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.vehicle?.color
@@ -306,7 +313,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {getCompareCellValue(listing.vehicle?.doors, t)}
@@ -319,7 +326,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.condition
@@ -334,7 +341,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, _, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.registration_type
@@ -349,7 +356,7 @@ export const comparisonFields: ComparisonField[] = [
     renderCell: (listing, t, siteConfig, _locale) => (
       <td
         key={listing.id}
-        className="py-2 px-2 md:py-4 md:px-4 text-center text-sm md:text-base"
+        className={compareDataCellClass}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {listing.status === 'Closed' || listing.price === undefined
@@ -386,4 +393,107 @@ export function getComparisonFieldsForListings(listings: Listing[]): ComparisonF
 
   const excludeForMoto = ['driveType', 'doors'];
   return comparisonFields.filter((field) => !excludeForMoto.includes(field.key));
+}
+
+export type EquipmentCompareCellState = 'yes' | 'dash' | 'na';
+
+function getAvailableEquipmentKeysForListing(listing: Listing): ReadonlySet<string> {
+  const vehicleType = getVehicleType(listing);
+  return new Set(getEquipmentKeysByVehicleType(vehicleType));
+}
+
+export function isEquipmentApplicableToListing(listing: Listing, equipmentKey: string): boolean {
+  return getAvailableEquipmentKeysForListing(listing).has(equipmentKey);
+}
+
+export function isEquipmentSelectedOnListing(listing: Listing, equipmentKey: string): boolean {
+  return (listing.equipment ?? []).includes(equipmentKey);
+}
+
+export function getEquipmentCompareCellState(
+  listing: Listing,
+  equipmentKey: string,
+): EquipmentCompareCellState {
+  if (!isEquipmentApplicableToListing(listing, equipmentKey)) {
+    return 'na';
+  }
+  if (isEquipmentSelectedOnListing(listing, equipmentKey)) {
+    return 'yes';
+  }
+  return 'dash';
+}
+
+export function getEquipmentCompareCellLabel(
+  listing: Listing,
+  equipmentKey: string,
+  t: (_key: string) => string,
+): string {
+  const state = getEquipmentCompareCellState(listing, equipmentKey);
+  if (state === 'yes') {
+    return t('common.yes');
+  }
+  if (state === 'dash') {
+    return t('common.rangeDash');
+  }
+  return t('compare.notAvailable');
+}
+
+export function getSelectedEquipmentKeysUnion(listings: Listing[]): string[] {
+  const keys = new Set<string>();
+  for (const listing of listings) {
+    for (const key of listing.equipment ?? []) {
+      keys.add(key);
+    }
+  }
+  return [...keys];
+}
+
+function isEquipmentRowVisibleForComparison(listings: Listing[], equipmentKey: string): boolean {
+  return listings.some((listing) => getEquipmentCompareCellState(listing, equipmentKey) !== 'na');
+}
+
+export function getVisibleEquipmentComparisonRowKeys(
+  listings: Listing[],
+  t: (_key: string) => string,
+): string[] {
+  const candidateKeys = getSelectedEquipmentKeysUnion(listings);
+  const visibleKeys = candidateKeys.filter((key) =>
+    isEquipmentRowVisibleForComparison(listings, key),
+  );
+  return sortEquipmentKeys(visibleKeys, t);
+}
+
+export function hasVehicleEquipmentToCompare(listings: Listing[]): boolean {
+  return getSelectedEquipmentKeysUnion(listings).some((key) =>
+    isEquipmentRowVisibleForComparison(listings, key),
+  );
+}
+
+function sortEquipmentKeys(keys: string[], t: (_key: string) => string): string[] {
+  return sortOptionsByLabel(
+    keys.map((key) => ({
+      value: key,
+      label: t(`vehicleOptions.equipment.${key}`),
+    })),
+  ).map((opt) => opt.value);
+}
+
+export function getVehicleEquipmentComparisonFieldsForListings(
+  listings: Listing[],
+  t: (_key: string) => string,
+): ComparisonField[] {
+  const keys = getVisibleEquipmentComparisonRowKeys(listings, t);
+  return keys.map((equipmentKey) => ({
+    key: `equipment-${equipmentKey}`,
+    labelKey: `vehicleOptions.equipment.${equipmentKey}`,
+    renderCell: (listing, tCell) => (
+      <td
+        key={listing.id}
+        className={compareDataCellClass}
+        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+      >
+        {getEquipmentCompareCellLabel(listing, equipmentKey, tCell)}
+      </td>
+    ),
+  }));
 }

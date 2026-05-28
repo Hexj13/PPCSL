@@ -35,9 +35,14 @@ describe('useListingImages', () => {
 
   let imageSpy: jest.SpyInstance;
   let mockImageInstances: MockImg[];
+  let testImagePrefix = 0;
+
+  const uniqueImages = (images: string[], label: string) =>
+    images.map((image) => image.replace('/uploads/', `/uploads/${testImagePrefix}-${label}-`));
 
   beforeEach(() => {
     jest.clearAllTimers();
+    testImagePrefix += 1;
     mockImageInstances = [];
     imageSpy = jest.spyOn(window, 'Image').mockImplementation(() => {
       const img: MockImg = {
@@ -60,9 +65,10 @@ describe('useListingImages', () => {
 
   it('marks hero readiness separately from generic preload readiness', () => {
     const imageErrors = new Set<number>();
+    const images = uniqueImages(fiveImages, 'hero-ready');
     const { result } = renderHook(
       ({ index }: { index: number }) =>
-        useListingImages({ images: fiveImages, currentImageIndex: index, imageErrors }),
+        useListingImages({ images, currentImageIndex: index, imageErrors }),
       { initialProps: { index: 0 } },
     );
 
@@ -74,28 +80,26 @@ describe('useListingImages', () => {
     expect(result.current.isHeroReady(3)).toBe(true);
   });
 
-  it('does not mark a hero image as hero-ready when only the thumbnail loaded', () => {
+  it('does not mark readiness before preview preload or hero load completes', () => {
     const imageErrors = new Set<number>();
+    const images = uniqueImages(fiveImages, 'thumbnail-only');
     const { result } = renderHook(
       ({ index }: { index: number }) =>
-        useListingImages({ images: fiveImages, currentImageIndex: index, imageErrors }),
+        useListingImages({ images, currentImageIndex: index, imageErrors }),
       { initialProps: { index: 2 } },
     );
 
-    act(() => {
-      result.current.handleThumbnailImageLoad(3);
-    });
-
-    expect(result.current.isTargetReady(3)).toBe(true);
+    expect(result.current.isTargetReady(3)).toBe(false);
     expect(result.current.isHeroReady(3)).toBe(false);
   });
 
   it('preloadTarget for index 3 allocates a new Image when that index is not already preloading', async () => {
     const imageErrors = new Set<number>();
+    const images = uniqueImages(fourImages, 'target-new');
     const onReady = jest.fn();
     const onFailure = jest.fn();
     const { result } = renderHook(() =>
-      useListingImages({ images: fourImages, currentImageIndex: 0, imageErrors }),
+      useListingImages({ images, currentImageIndex: 0, imageErrors }),
     );
 
     act(() => {
@@ -122,21 +126,15 @@ describe('useListingImages', () => {
     expect(onReady).toHaveBeenCalledTimes(1);
   });
 
-  it('waitForExistingPreload calls onFailure when preloading flag is cleared before first rAF', async () => {
+  it('preloadTarget reuses an existing preload and resolves when it finishes', async () => {
     const imageErrors = new Set<number>();
+    const images = uniqueImages(fourImages, 'target-reuse');
     const onReady = jest.fn();
     const onFailure = jest.fn();
 
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
-      setTimeout(() => {
-        cb(0);
-      }, 0);
-      return 1;
-    });
-
-    const { result, rerender } = renderHook(
+    const { result } = renderHook(
       ({ index }: { index: number }) =>
-        useListingImages({ images: fourImages, currentImageIndex: index, imageErrors }),
+        useListingImages({ images, currentImageIndex: index, imageErrors }),
       { initialProps: { index: 0 } },
     );
 
@@ -144,26 +142,29 @@ describe('useListingImages', () => {
       jest.advanceTimersByTime(130);
     });
 
-    act(() => {
-      result.current.preloadTarget(3, { onReady, onFailure });
-    });
-
-    rerender({ index: 1 });
+    const before = mockImageInstances.length;
 
     await act(async () => {
-      jest.runAllTimers();
+      result.current.preloadTarget(3, { onReady, onFailure });
+      expect(mockImageInstances).toHaveLength(before);
+      const img = mockImageInstances[before - 1];
+      img.complete = true;
+      img.naturalWidth = 1;
+      img.onload?.();
+      await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    expect(onReady).not.toHaveBeenCalled();
-    expect(onFailure).toHaveBeenCalledTimes(1);
+    expect(onFailure).not.toHaveBeenCalled();
+    expect(onReady).toHaveBeenCalledTimes(1);
   });
 
   it('prioritizes nearest forward frames before the previous frame', () => {
     const imageErrors = new Set<number>();
+    const images = uniqueImages(fiveImages, 'priority');
 
-    renderHook(() => useListingImages({ images: fiveImages, currentImageIndex: 0, imageErrors }));
+    renderHook(() => useListingImages({ images, currentImageIndex: 0, imageErrors }));
 
     expect(mockImageInstances).toHaveLength(1);
 
@@ -190,9 +191,10 @@ describe('useListingImages', () => {
 
   it('does not burst-preload all remaining images after the first navigation', async () => {
     const imageErrors = new Set<number>();
+    const images = uniqueImages(sevenImages, 'navigation');
     const { rerender } = renderHook(
       ({ index }: { index: number }) =>
-        useListingImages({ images: sevenImages, currentImageIndex: index, imageErrors }),
+        useListingImages({ images, currentImageIndex: index, imageErrors }),
       { initialProps: { index: 0 } },
     );
 

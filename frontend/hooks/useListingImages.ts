@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
-import { bindImageReadiness } from '@/components/listing/useListingCardCarouselPreload';
-import { getOptimizedImageUrl } from '@/lib/utils';
+import {
+  getListingPagePreviewImageUrl,
+  isListingPageVideoHeroSlideUrl,
+} from '@/app/listings/[id]/listing-page-helpers';
 
 interface UseListingImagesProps {
   images: string[];
@@ -10,12 +11,90 @@ interface UseListingImagesProps {
   imageErrors: Set<number>;
 }
 
-const PREVIEW_IMAGE_QUALITY = 75;
-const PREVIEW_IMAGE_WIDTH = 1200;
 const PRELOAD_SECOND_AHEAD_DELAY_MS = 40;
 const PRELOAD_THIRD_AHEAD_DELAY_MS = 120;
+const PRELOAD_FOURTH_AHEAD_DELAY_MS = 220;
+const PRELOAD_FIFTH_AHEAD_DELAY_MS = 340;
 const PRELOAD_PREV_DELAY_MS = 180;
-const EXISTING_PRELOAD_MAX_FRAMES = 900;
+
+type PreviewImageCacheEntry = {
+  img: HTMLImageElement;
+  promise: Promise<void>;
+  status: 'pending' | 'ready' | 'error';
+};
+
+const previewImageCache = new Map<string, PreviewImageCacheEntry>();
+const PREVIEW_IMAGE_CACHE_MAX_SIZE = 120;
+
+function trimPreviewImageCache(): void {
+  if (previewImageCache.size <= PREVIEW_IMAGE_CACHE_MAX_SIZE) return;
+  for (const [key, entry] of previewImageCache) {
+    if (entry.status === 'pending') continue;
+    previewImageCache.delete(key);
+    if (previewImageCache.size <= PREVIEW_IMAGE_CACHE_MAX_SIZE) return;
+  }
+}
+
+function ensurePreviewImageReady(url: string): Promise<void> {
+  const cached = previewImageCache.get(url);
+  if (cached?.status === 'ready') {
+    return Promise.resolve();
+  }
+  if (cached?.status === 'pending') {
+    return cached.promise;
+  }
+  if (cached?.status === 'error') {
+    previewImageCache.delete(url);
+  }
+
+  const img = new window.Image();
+  const entry: PreviewImageCacheEntry = {
+    img,
+    status: 'pending',
+    promise: Promise.resolve(),
+  };
+
+  entry.promise = new Promise<void>((resolve, reject) => {
+    const markReady = () => {
+      entry.status = 'ready';
+      trimPreviewImageCache();
+      resolve();
+    };
+    const markError = () => {
+      entry.status = 'error';
+      reject();
+    };
+    const resolveReadiness = () => {
+      if (typeof img.decode !== 'function') {
+        if (img.complete && img.naturalWidth > 0) {
+          markReady();
+          return;
+        }
+        markError();
+        return;
+      }
+      void img
+        .decode()
+        .then(markReady)
+        .catch(() => {
+          if (img.complete && img.naturalWidth > 0) {
+            markReady();
+            return;
+          }
+          markError();
+        });
+    };
+    img.onload = resolveReadiness;
+    img.onerror = markError;
+    img.src = url;
+    if (img.complete) {
+      resolveReadiness();
+    }
+  });
+
+  previewImageCache.set(url, entry);
+  return entry.promise;
+}
 
 export function useListingImages({
   images,
@@ -25,12 +104,12 @@ export function useListingImages({
   const mainImageLoadedRef = useRef<Set<number>>(new Set());
   const heroImageLoadedRef = useRef<Set<number>>(new Set());
   const mainImagePreloadingRef = useRef<Set<number>>(new Set());
-  const imagesCacheRef = useRef<HTMLImageElement[]>([]);
+  const imagesRef = useRef(images);
+  imagesRef.current = images;
   const imagesSignature = images.join('\u0001');
 
   const getPreviewUrl = useCallback(
-    (imageUrl: string) =>
-      getOptimizedImageUrl(imageUrl, PREVIEW_IMAGE_QUALITY, PREVIEW_IMAGE_WIDTH),
+    (imageUrl: string) => getListingPagePreviewImageUrl(imageUrl),
     [],
   );
 
@@ -43,51 +122,75 @@ export function useListingImages({
     mainImageLoadedRef.current.clear();
     heroImageLoadedRef.current.clear();
     mainImagePreloadingRef.current.clear();
-    for (const img of imagesCacheRef.current) {
-      img.onload = null;
-      img.onerror = null;
-    }
-    imagesCacheRef.current = [];
   }, [imagesSignature]);
 
+  const preloadIndex = useCallback(
+    (
+      index: number,
+      callbacks?: {
+        onReady?: () => void;
+        onFailure?: () => void;
+      },
+    ) => {
+      const imageUrl = imagesRef.current[index];
+      if (!imageUrl || imageUrl === '/placeholder-car.jpg' || imageErrors.has(index)) {
+        callbacks?.onReady?.();
+        return () => {};
+      }
+      if (isListingPageVideoHeroSlideUrl(imageUrl)) {
+        callbacks?.onReady?.();
+        return () => {};
+      }
+      if (mainImageLoadedRef.current.has(index)) {
+        callbacks?.onReady?.();
+        return () => {};
+      }
+
+      let cancelled = false;
+      const previewUrl = getPreviewUrl(imageUrl);
+      mainImagePreloadingRef.current.add(index);
+
+      void ensurePreviewImageReady(previewUrl)
+        .then(() => {
+          if (cancelled) return;
+          markLoaded(index);
+          callbacks?.onReady?.();
+        })
+        .catch(() => {
+          mainImagePreloadingRef.current.delete(index);
+          if (cancelled) return;
+          callbacks?.onFailure?.();
+        });
+
+      return () => {
+        cancelled = true;
+        if (!mainImageLoadedRef.current.has(index)) {
+          mainImagePreloadingRef.current.delete(index);
+        }
+      };
+    },
+    [getPreviewUrl, imageErrors, markLoaded],
+  );
+
   useEffect(() => {
-    if (images.length <= 1 || typeof window === 'undefined') return;
+    const galleryImages = imagesRef.current;
+    if (galleryImages.length <= 1 || typeof window === 'undefined') return;
 
     const preloadCleanups: Array<() => void> = [];
 
     const preloadByIndex = (index: number, delay = 0) => {
-      const imageUrl = images[index];
-      if (!imageUrl || imageUrl === '/placeholder-car.jpg' || imageErrors.has(index)) {
-        return;
-      }
-      if (isListingPageVideoHeroSlideUrl(imageUrl)) {
-        return;
-      }
       if (mainImageLoadedRef.current.has(index) || mainImagePreloadingRef.current.has(index)) {
         return;
       }
 
       let preloadTimeout: ReturnType<typeof setTimeout> | null = null;
-      let img: HTMLImageElement | null = null;
+      let cleanup: (() => void) | null = null;
 
       const startPreload = () => {
         if (mainImageLoadedRef.current.has(index) || mainImagePreloadingRef.current.has(index)) {
           return;
         }
-        img = new window.Image();
-        imagesCacheRef.current.push(img);
-        mainImagePreloadingRef.current.add(index);
-        const resolveReadiness = bindImageReadiness(
-          img,
-          () => markLoaded(index),
-          () => {
-            mainImagePreloadingRef.current.delete(index);
-          },
-        );
-        img.src = getPreviewUrl(imageUrl);
-        if (img.complete) {
-          resolveReadiness();
-        }
+        cleanup = preloadIndex(index);
       };
 
       if (delay > 0) {
@@ -100,28 +203,21 @@ export function useListingImages({
         if (preloadTimeout) {
           clearTimeout(preloadTimeout);
         }
-        if (!img) {
-          return;
-        }
-        if (img.complete && img.naturalWidth > 0) {
-          markLoaded(index);
-        } else {
-          mainImagePreloadingRef.current.delete(index);
-        }
-        img.onload = null;
-        img.onerror = null;
+        cleanup?.();
       });
     };
 
-    const nextIndex = (currentImageIndex + 1) % images.length;
-    const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
-    const secondAheadIndex = (currentImageIndex + 2) % images.length;
-    const thirdAheadIndex = (currentImageIndex + 3) % images.length;
+    const nextIndex = (currentImageIndex + 1) % galleryImages.length;
+    const prevIndex = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
+    const secondAheadIndex = (currentImageIndex + 2) % galleryImages.length;
+    const thirdAheadIndex = (currentImageIndex + 3) % galleryImages.length;
+    const fourthAheadIndex = (currentImageIndex + 4) % galleryImages.length;
+    const fifthAheadIndex = (currentImageIndex + 5) % galleryImages.length;
 
     type PreloadJob = { index: number; delay: number };
     const preloadJobs: PreloadJob[] = [];
     const addPreloadJob = (idx: number, delay: number) => {
-      const url = images[idx];
+      const url = galleryImages[idx];
       if (
         !url ||
         url === '/placeholder-car.jpg' ||
@@ -139,11 +235,17 @@ export function useListingImages({
     };
 
     addPreloadJob(nextIndex, 0);
-    if (images.length > 2) {
+    if (galleryImages.length > 2) {
       addPreloadJob(secondAheadIndex, PRELOAD_SECOND_AHEAD_DELAY_MS);
     }
-    if (images.length > 3) {
+    if (galleryImages.length > 3) {
       addPreloadJob(thirdAheadIndex, PRELOAD_THIRD_AHEAD_DELAY_MS);
+    }
+    if (galleryImages.length > 4) {
+      addPreloadJob(fourthAheadIndex, PRELOAD_FOURTH_AHEAD_DELAY_MS);
+    }
+    if (galleryImages.length > 5) {
+      addPreloadJob(fifthAheadIndex, PRELOAD_FIFTH_AHEAD_DELAY_MS);
     }
     addPreloadJob(prevIndex, PRELOAD_PREV_DELAY_MS);
 
@@ -156,7 +258,7 @@ export function useListingImages({
         cleanup();
       }
     };
-  }, [currentImageIndex, getPreviewUrl, images, imageErrors, markLoaded]);
+  }, [currentImageIndex, imagesSignature, imageErrors, preloadIndex]);
 
   const isTargetReady = useCallback(
     (index: number) => {
@@ -181,7 +283,7 @@ export function useListingImages({
       if (isListingPageVideoHeroSlideUrl(imageUrl)) {
         return true;
       }
-      return heroImageLoadedRef.current.has(index);
+      return heroImageLoadedRef.current.has(index) || mainImageLoadedRef.current.has(index);
     },
     [images, imageErrors],
   );
@@ -207,90 +309,20 @@ export function useListingImages({
         callbacks?.onReady?.();
         return () => {};
       }
-      if (mainImagePreloadingRef.current.has(index)) {
-        if (!callbacks?.onReady && !callbacks?.onFailure) {
-          return () => {};
-        }
-
-        let cancelled = false;
-        let rafId: number | null = null;
-        let waitFrames = 0;
-
-        const waitForExistingPreload = () => {
-          if (cancelled) {
-            return;
-          }
-          if (mainImageLoadedRef.current.has(index)) {
-            callbacks?.onReady?.();
-            return;
-          }
-          if (!mainImagePreloadingRef.current.has(index)) {
-            callbacks?.onFailure?.();
-            return;
-          }
-          waitFrames += 1;
-          if (waitFrames > EXISTING_PRELOAD_MAX_FRAMES) {
-            mainImagePreloadingRef.current.delete(index);
-            callbacks?.onFailure?.();
-            return;
-          }
-          rafId = window.requestAnimationFrame(waitForExistingPreload);
-        };
-
-        rafId = window.requestAnimationFrame(waitForExistingPreload);
-
-        return () => {
-          cancelled = true;
-          if (rafId !== null) {
-            window.cancelAnimationFrame(rafId);
-          }
-        };
-      }
-
-      const img = new window.Image();
-      imagesCacheRef.current.push(img);
-      mainImagePreloadingRef.current.add(index);
-      const resolveReadiness = bindImageReadiness(
-        img,
-        () => {
-          markLoaded(index);
-          callbacks?.onReady?.();
-        },
-        () => {
-          mainImagePreloadingRef.current.delete(index);
-          callbacks?.onFailure?.();
-        },
-      );
-      img.src = getPreviewUrl(imageUrl);
-      if (img.complete) {
-        resolveReadiness();
-      }
-
-      return () => {
-        if (img.complete && img.naturalWidth > 0) {
-          markLoaded(index);
-        } else {
-          mainImagePreloadingRef.current.delete(index);
-        }
-        img.onload = null;
-        img.onerror = null;
-      };
+      return preloadIndex(index, callbacks);
     },
-    [getPreviewUrl, images, imageErrors, markLoaded],
+    [images, imageErrors, preloadIndex],
   );
 
-  const handleHeroImageLoad = (index: number) => {
-    const imageUrl = images[index];
-    if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
-    markLoaded(index);
-    heroImageLoadedRef.current.add(index);
-  };
-
-  const handleThumbnailImageLoad = (index: number) => {
-    const imageUrl = images[index];
-    if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
-    markLoaded(index);
-  };
+  const handleHeroImageLoad = useCallback(
+    (index: number) => {
+      const imageUrl = images[index];
+      if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
+      markLoaded(index);
+      heroImageLoadedRef.current.add(index);
+    },
+    [images, markLoaded],
+  );
 
   return {
     mainImageLoadedRef,
@@ -299,6 +331,5 @@ export function useListingImages({
     isHeroReady,
     preloadTarget,
     handleHeroImageLoad,
-    handleThumbnailImageLoad,
   };
 }

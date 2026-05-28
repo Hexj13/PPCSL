@@ -1,6 +1,48 @@
 import type { Listing } from '@/lib/api';
 import { consumeIndexForListing } from '@/lib/blur-navigation-cache';
-import { getTireModelDisplayLabel, isTireListing } from '@/lib/utils';
+import { getOptimizedImageUrl, getTireModelDisplayLabel, isTireListing } from '@/lib/utils';
+
+export const LISTING_PAGE_PREVIEW_IMAGE_QUALITY = 75;
+export const LISTING_PAGE_PREVIEW_IMAGE_WIDTH = 1200;
+export const LISTING_PAGE_THUMB_IMAGE_QUALITY = 68;
+export const LISTING_PAGE_THUMB_IMAGE_WIDTH = 420;
+const LISTING_PAGE_HERO_PREWARM_MAX_IMAGES = 24;
+
+export function getListingPagePreviewImageUrl(imageUrl: string): string {
+  return getOptimizedImageUrl(
+    imageUrl,
+    LISTING_PAGE_PREVIEW_IMAGE_QUALITY,
+    LISTING_PAGE_PREVIEW_IMAGE_WIDTH,
+  );
+}
+
+export function getListingPageThumbImageUrl(imageUrl: string): string {
+  return getOptimizedImageUrl(
+    imageUrl,
+    LISTING_PAGE_THUMB_IMAGE_QUALITY,
+    LISTING_PAGE_THUMB_IMAGE_WIDTH,
+  );
+}
+
+const listingPageHeroPrewarmImages = new Map<string, HTMLImageElement>();
+
+export function prewarmListingPageHeroImage(listingId: string, imageUrl: string | undefined): void {
+  if (typeof window === 'undefined') return;
+  if (!imageUrl || imageUrl === '/placeholder-car.jpg') return;
+  const key = `${listingId}\u0001${imageUrl}`;
+  if (listingPageHeroPrewarmImages.has(key)) return;
+  if (listingPageHeroPrewarmImages.size >= LISTING_PAGE_HERO_PREWARM_MAX_IMAGES) {
+    const oldestKey = listingPageHeroPrewarmImages.keys().next().value;
+    if (oldestKey) {
+      listingPageHeroPrewarmImages.delete(oldestKey);
+    }
+  }
+  const img = new window.Image();
+  img.onload = () => listingPageHeroPrewarmImages.delete(key);
+  img.onerror = () => listingPageHeroPrewarmImages.delete(key);
+  listingPageHeroPrewarmImages.set(key, img);
+  img.src = getListingPagePreviewImageUrl(imageUrl);
+}
 
 export const LISTING_PAGE_VIDEO_HERO_SLIDE_URL = 'listing-internal://video-hero-first-slide';
 

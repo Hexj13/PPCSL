@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { isHideFooterPath, isSignRoutePathname } from '@/components/layout/header-flow-paths';
 import { MOBILE_MENU_ENTER_ANIM_MS, useMenuDrawerPresence } from '@/hooks/useMenuDrawerPresence';
-import { useScrollLock } from '@/hooks/useScrollLock';
+import { forceReleaseScrollLockToTop, useScrollLock } from '@/hooks/useScrollLock';
 import { useComparisonStore } from '@/lib/store';
 
 import { DesktopNavActions, DesktopNavMenuArea } from './Header/DesktopNav';
@@ -75,6 +75,10 @@ export function Header() {
       handleMobileMenuClose();
     }
   }, [pathname, isMobileMenuOpen, handleMobileMenuClose]);
+
+  useEffect(() => {
+    forceReleaseScrollLockToTop();
+  }, [pathname]);
 
   useEffect(() => {
     if (!drawerMounted) return;

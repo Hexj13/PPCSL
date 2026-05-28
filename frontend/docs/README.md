@@ -25,7 +25,7 @@ Frontend-specific documentation for PPCSL Next.js application.
 - **Zustand stores** with persist middleware:
   - `useAuthStore` - Authentication
   - `useFavoritesStore` - Favorites (auth + guest support)
-  - `useComparisonStore` - Car comparison (up to 3 cars)
+  - `useComparisonStore` - Vehicle and tire comparison (up to 3 listings per category)
 
 ### Phone (SMS flows)
 - **`lib/phone/`** — shared `libphonenumber-js` validation aligned with backend `@IsPhone()`; sanitization, blur commit via `finalizePhoneFromRawInput` (uses the input’s live value on blur), E.164 compaction, and Axios error mapping for register, change-phone, and reset-password. The sign-in **email or phone** field uses `normalizeLoginFieldInput` / `isLoginFieldPhoneLike` so phone entry matches register sanitization without stripping letters before `@`.

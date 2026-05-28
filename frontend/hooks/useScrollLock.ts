@@ -4,12 +4,24 @@ import { useEffect } from 'react';
 
 let scrollLockDepth = 0;
 let lockedScrollY = 0;
+let releaseToTopNext = false;
 let bodyStyleSnapshot: {
   position: string;
   top: string;
   width: string;
   left: string;
 } | null = null;
+
+function restoreBodyStyles() {
+  const body = document.body;
+  if (bodyStyleSnapshot) {
+    body.style.position = bodyStyleSnapshot.position;
+    body.style.top = bodyStyleSnapshot.top;
+    body.style.width = bodyStyleSnapshot.width;
+    body.style.left = bodyStyleSnapshot.left;
+    bodyStyleSnapshot = null;
+  }
+}
 
 function acquireScrollLock() {
   if (scrollLockDepth === 0) {
@@ -38,15 +50,26 @@ function releaseScrollLock() {
     return;
   }
 
-  const body = document.body;
-  if (bodyStyleSnapshot) {
-    body.style.position = bodyStyleSnapshot.position;
-    body.style.top = bodyStyleSnapshot.top;
-    body.style.width = bodyStyleSnapshot.width;
-    body.style.left = bodyStyleSnapshot.left;
+  restoreBodyStyles();
+  const targetY = releaseToTopNext ? 0 : lockedScrollY;
+  releaseToTopNext = false;
+  window.scrollTo(0, targetY);
+}
+
+export function prepareScrollLockReleaseToTop() {
+  if (scrollLockDepth > 0) {
+    releaseToTopNext = true;
   }
-  bodyStyleSnapshot = null;
-  window.scrollTo(0, lockedScrollY);
+}
+
+export function forceReleaseScrollLockToTop() {
+  if (scrollLockDepth === 0) {
+    return;
+  }
+  scrollLockDepth = 0;
+  restoreBodyStyles();
+  releaseToTopNext = false;
+  window.scrollTo(0, 0);
 }
 
 export function useScrollLock(enabled: boolean) {

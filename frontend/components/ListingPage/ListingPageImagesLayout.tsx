@@ -44,7 +44,6 @@ export type ListingPageImagesLayoutProps = {
   videoSlide?: ListingPageHeroVideoSlide | null;
   navigateTo: (_index: number, _options?: { clearTimer?: boolean }) => void;
   setCurrentImageIndex: Dispatch<SetStateAction<number>>;
-  handleThumbnailImageLoad: (_idx: number) => void;
 };
 
 export function ListingPageImagesLayout({
@@ -72,7 +71,6 @@ export function ListingPageImagesLayout({
   videoSlide = null,
   navigateTo,
   setCurrentImageIndex,
-  handleThumbnailImageLoad,
 }: ListingPageImagesLayoutProps) {
   const renderThumbnail = (img: string, index: number, className?: string) => (
     <div
@@ -101,7 +99,6 @@ export function ListingPageImagesLayout({
               className="absolute inset-0 z-0 h-full w-full"
               videoClassName="h-full w-full object-cover"
               aria-hidden
-              onLoaded={() => handleThumbnailImageLoad(index)}
               onError={() => onImageError(index)}
             />
             <div className={listingPageVideoPlayOverlayClassName} aria-hidden />
@@ -123,7 +120,6 @@ export function ListingPageImagesLayout({
             imageAltTitle={imageAltTitle}
             blurDataURLForIndex={blurDataURLForIndex}
             t={t}
-            handleThumbnailImageLoad={handleThumbnailImageLoad}
             onImageError={onImageError}
             setCurrentImageIndex={setCurrentImageIndex}
             onImageClick={onImageClick}

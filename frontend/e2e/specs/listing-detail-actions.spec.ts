@@ -1,6 +1,7 @@
 import { test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import {
+  clearComparisonViaBrowserApi,
   getCurrentListingOwnership,
   removeComparisonViaBrowserApi,
 } from '../utils/api/listing-actions';
@@ -42,6 +43,7 @@ test.describe('Listing detail actions', () => {
       {
         name: 'Ensure listing is not already compared',
         action: async () => {
+          await clearComparisonViaBrowserApi(page);
           await removeComparisonViaBrowserApi(page, listingId);
           await waitUntilComparisonNotInIdsApi(page, listingId);
           await page.evaluate(() => {

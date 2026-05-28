@@ -11,6 +11,17 @@ import {
 import { applyHomeScrollRestore, readHomeScrollRestoreTarget } from '@/lib/home-scroll-restore';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
+const SCROLL_TOP_ON_ENTER_PATHS = new Set(['/favorites', '/compare']);
+
+function scrollWindowToTopInstant() {
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function scrollWindowToTopWithFollowUp() {
+  scrollWindowToTopInstant();
+  requestAnimationFrame(scrollWindowToTopInstant);
+}
+
 function scrollListingDetailToTopIfNeeded(restPath: string): boolean {
   if (restPath.startsWith('/listings/') && !restPath.includes('/edit')) {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -97,8 +108,16 @@ export function ScrollReset() {
       return cleanup;
     }
 
+    const prevRest = previousPath ? stripLocalePrefixFromPathname(previousPath).restPath : null;
+
+    if (SCROLL_TOP_ON_ENTER_PATHS.has(restPath) && prevRest !== restPath) {
+      sessionStorageRemoveItem('scrollPreserved');
+      scrollWindowToTopWithFollowUp();
+      return cleanup;
+    }
+
     if (previousPath && previousPath !== pathname) {
-      window.scrollTo({ top: 0, behavior: 'instant' });
+      scrollWindowToTopInstant();
     }
 
     return cleanup;
