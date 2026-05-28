@@ -218,7 +218,7 @@ export const ListingCardImageCarousel = React.forwardRef<
   const errorPlaceholder = React.useMemo(
     () => (
       <div
-        className="w-full h-full flex items-center justify-center"
+        className="w-full h-full flex items-center justify-center bg-bg-darker"
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,8 +322,10 @@ export const ListingCardImageCarousel = React.forwardRef<
         data-testid={isConfirmed ? 'carousel-layer-confirmed' : 'carousel-layer-pending'}
         className="absolute inset-0 overflow-hidden"
         style={{
-          opacity: isConfirmed ? 1 : 0,
           zIndex: isConfirmed ? 1 : 0,
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
         }}
       >
         {renderSlide(slotIndex, slotId, isPending)}
