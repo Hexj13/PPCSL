@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 
 import { ListingCardImageCarousel, type ListingCardImageCarouselHandle } from './ListingCardParts';
@@ -18,7 +18,9 @@ jest.mock('next/image', () => ({
     blurDataURL?: string;
     onLoad?: () => void;
   }) => (
-    <div
+    <img
+      alt={alt}
+      src={src}
       data-testid="carousel-image"
       data-src={src}
       data-alt={alt}
@@ -85,6 +87,20 @@ function CarouselHarness({
   );
 }
 
+function getCarouselImageByAlt(alt: string): HTMLElement {
+  const image = screen.getAllByTestId('carousel-image').find((img) => img.dataset.alt === alt);
+  if (!image) throw new Error(`Missing carousel image: ${alt}`);
+  return image;
+}
+
+function getCarouselImageInLayer(layer: 'confirmed' | 'pending'): HTMLElement {
+  return within(screen.getByTestId(`carousel-layer-${layer}`)).getByTestId('carousel-image');
+}
+
+function getVisibleCarouselImage(): HTMLElement {
+  return getCarouselImageInLayer('confirmed');
+}
+
 describe('ListingCardImageCarousel', () => {
   it('should commit new index immediately when target is ready (placeholder)', async () => {
     const ref = React.createRef<ListingCardImageCarouselHandle>();
@@ -125,30 +141,32 @@ describe('ListingCardImageCarousel', () => {
         await Promise.resolve();
         await Promise.resolve();
       });
-      expect(screen.getByTestId('carousel-image')).toHaveAttribute('data-placeholder', 'blur');
-      fireEvent.load(screen.getByTestId('carousel-image'));
+      expect(getVisibleCarouselImage()).toHaveAttribute('data-placeholder', 'blur');
+      fireEvent.load(getVisibleCarouselImage());
 
       fireEvent.click(screen.getByTestId('go-next'));
 
       await waitFor(() => {
         expect(ref.current?.getIndex()).toBe(1);
       });
-      expect(screen.getByTestId('carousel-image')).toHaveAttribute('data-placeholder', '');
-      expect(screen.getByTestId('carousel-image')).toHaveAttribute('data-blur-data-url', '');
+      expect(getVisibleCarouselImage()).toHaveAttribute('data-alt', 'Test - 2/2');
+      expect(getVisibleCarouselImage()).toHaveAttribute('data-placeholder', '');
+      expect(getVisibleCarouselImage()).toHaveAttribute('data-blur-data-url', '');
 
       fireEvent.click(screen.getByTestId('go-prev'));
 
       await waitFor(() => {
         expect(ref.current?.getIndex()).toBe(0);
       });
-      expect(screen.getByTestId('carousel-image')).toHaveAttribute('data-placeholder', '');
-      expect(screen.getByTestId('carousel-image')).toHaveAttribute('data-blur-data-url', '');
+      expect(getVisibleCarouselImage()).toHaveAttribute('data-alt', 'Test - 1/2');
+      expect(getVisibleCarouselImage()).toHaveAttribute('data-placeholder', '');
+      expect(getVisibleCarouselImage()).toHaveAttribute('data-blur-data-url', '');
     } finally {
       imageSpy.mockRestore();
     }
   });
 
-  it('should keep blur placeholder for an unready image after carousel navigation', async () => {
+  it('should keep the current image visible while the next image is not ready', async () => {
     const ref = React.createRef<ListingCardImageCarouselHandle>();
     render(
       <CarouselHarness
@@ -159,16 +177,23 @@ describe('ListingCardImageCarousel', () => {
     );
 
     await waitFor(() => expect(ref.current).not.toBeNull());
+    fireEvent.load(getVisibleCarouselImage());
     fireEvent.click(screen.getByTestId('go-next'));
+
+    expect(ref.current?.getIndex()).toBe(0);
+    expect(ref.current?.isBusy()).toBe(true);
+    expect(getVisibleCarouselImage()).toHaveAttribute('data-alt', 'Test - 1/2');
+    expect(screen.getByTestId('carousel-layer-pending')).toBeInTheDocument();
+    expect(getCarouselImageInLayer('pending')).toHaveAttribute('data-alt', 'Test - 2/2');
+    expect(getCarouselImageInLayer('pending')).toHaveAttribute('data-placeholder', '');
+
+    fireEvent.load(getCarouselImageByAlt('Test - 2/2'));
 
     await waitFor(() => {
       expect(ref.current?.getIndex()).toBe(1);
     });
-    expect(screen.getByTestId('carousel-image')).toHaveAttribute('data-placeholder', 'blur');
-    expect(screen.getByTestId('carousel-image')).toHaveAttribute(
-      'data-blur-data-url',
-      'data:image/png;base64,second',
-    );
+    expect(ref.current?.isBusy()).toBe(false);
+    expect(getVisibleCarouselImage()).toHaveAttribute('data-alt', 'Test - 2/2');
   });
 
   it('should show initial blur when blur data arrives before the image loads', async () => {
@@ -178,7 +203,7 @@ describe('ListingCardImageCarousel', () => {
     );
 
     await waitFor(() => expect(ref.current).not.toBeNull());
-    expect(screen.getByTestId('carousel-image')).toHaveAttribute('data-placeholder', '');
+    expect(getVisibleCarouselImage()).toHaveAttribute('data-placeholder', '');
 
     rerender(
       <CarouselHarness
@@ -188,8 +213,8 @@ describe('ListingCardImageCarousel', () => {
       />,
     );
 
-    expect(screen.getByTestId('carousel-image')).toHaveAttribute('data-placeholder', 'blur');
-    expect(screen.getByTestId('carousel-image')).toHaveAttribute(
+    expect(getVisibleCarouselImage()).toHaveAttribute('data-placeholder', 'blur');
+    expect(getVisibleCarouselImage()).toHaveAttribute(
       'data-blur-data-url',
       'data:image/png;base64,first',
     );

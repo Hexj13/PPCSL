@@ -65,6 +65,33 @@ export interface ListingCardImageCarouselHandle {
   getIndex: () => number;
 }
 
+type ListingCardCarouselSlotId = 'primary' | 'secondary';
+
+type ListingCardCarouselState = {
+  confirmedSlot: ListingCardCarouselSlotId;
+  pendingSlot: ListingCardCarouselSlotId | null;
+  slotIndices: Record<ListingCardCarouselSlotId, number | null>;
+};
+
+function createListingCardCarouselState(index = 0): ListingCardCarouselState {
+  return {
+    confirmedSlot: 'primary',
+    pendingSlot: null,
+    slotIndices: {
+      primary: index,
+      secondary: null,
+    },
+  };
+}
+
+function getConfirmedCardCarouselIndex(state: ListingCardCarouselState): number {
+  return state.slotIndices[state.confirmedSlot] ?? 0;
+}
+
+function getIdleCardCarouselSlot(state: ListingCardCarouselState): ListingCardCarouselSlotId {
+  return state.confirmedSlot === 'primary' ? 'secondary' : 'primary';
+}
+
 export const ListingCardImageCarousel = React.forwardRef<
   ListingCardImageCarouselHandle,
   {
@@ -81,17 +108,20 @@ export const ListingCardImageCarousel = React.forwardRef<
   { images, imageErrors, onImageError, onIndexChange, imageAltTitle, priority, blurDataURLs, t },
   ref,
 ) {
-  const [index, setIndex] = useState(0);
+  const [state, setState] = useState(() => createListingCardCarouselState(0));
+  const stateRef = useRef(state);
   const loadedRef = useRef<Set<number>>(new Set());
   const preloadingRef = useRef<Set<number>>(new Set());
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
   const imagesSignature = images.join('\u0001');
   const onIndexChangeRef = useRef(onIndexChange);
   onIndexChangeRef.current = onIndexChange;
+  stateRef.current = state;
+  const confirmedIndex = getConfirmedCardCarouselIndex(state);
 
   useEffect(() => {
-    onIndexChangeRef.current?.(index);
-  }, [index]);
+    onIndexChangeRef.current?.(confirmedIndex);
+  }, [confirmedIndex]);
 
   const markLoaded = useCallback((idx: number) => {
     loadedRef.current.add(idx);
@@ -106,33 +136,77 @@ export const ListingCardImageCarousel = React.forwardRef<
       img.onerror = null;
     }
     imagesCacheRef.current = [];
-    setIndex(0);
+    const nextState = createListingCardCarouselState(0);
+    stateRef.current = nextState;
+    setState(nextState);
   }, [imagesSignature]);
 
   const len = images.length;
+  const promotePendingSlot = useCallback((slotId: ListingCardCarouselSlotId, idx: number) => {
+    const snapshot = stateRef.current;
+    if (snapshot.pendingSlot !== slotId || snapshot.slotIndices[slotId] !== idx) return;
+    const nextState: ListingCardCarouselState = {
+      ...snapshot,
+      confirmedSlot: slotId,
+      pendingSlot: null,
+    };
+    stateRef.current = nextState;
+    setState(nextState);
+  }, []);
+
+  const navigateTo = useCallback(
+    (targetIndex: number) => {
+      if (len <= 1) return;
+      const snapshot = stateRef.current;
+      if (snapshot.pendingSlot !== null) return;
+      const currentIndex = getConfirmedCardCarouselIndex(snapshot);
+      if (currentIndex === targetIndex) return;
+
+      const targetSrc = images[targetIndex];
+      const nextSlot = getIdleCardCarouselSlot(snapshot);
+      const nextState: ListingCardCarouselState = {
+        ...snapshot,
+        pendingSlot: nextSlot,
+        slotIndices: {
+          ...snapshot.slotIndices,
+          [nextSlot]: targetIndex,
+        },
+      };
+      stateRef.current = nextState;
+      setState(nextState);
+
+      if (!targetSrc || targetSrc === '/placeholder-car.jpg') {
+        requestAnimationFrame(() => promotePendingSlot(nextSlot, targetIndex));
+      } else if (imageErrors.has(targetIndex)) {
+        requestAnimationFrame(() => promotePendingSlot(nextSlot, targetIndex));
+      }
+    },
+    [imageErrors, images, len, promotePendingSlot],
+  );
+
   const goNext = useCallback(() => {
-    if (len <= 1) return;
-    setIndex((i) => (i + 1) % len);
-  }, [len]);
+    const currentIndex = getConfirmedCardCarouselIndex(stateRef.current);
+    navigateTo((currentIndex + 1) % len);
+  }, [len, navigateTo]);
 
   const goPrev = useCallback(() => {
-    if (len <= 1) return;
-    setIndex((i) => (i - 1 + len) % len);
-  }, [len]);
+    const currentIndex = getConfirmedCardCarouselIndex(stateRef.current);
+    navigateTo((currentIndex - 1 + len) % len);
+  }, [len, navigateTo]);
 
   useImperativeHandle(
     ref,
     () => ({
       goNext,
       goPrev,
-      isBusy: () => false,
-      getIndex: () => index,
+      isBusy: () => stateRef.current.pendingSlot !== null,
+      getIndex: () => getConfirmedCardCarouselIndex(stateRef.current),
     }),
-    [goNext, goPrev, index],
+    [goNext, goPrev],
   );
 
   useListingCardCarouselPreload(
-    index,
+    confirmedIndex,
     images,
     imageErrors,
     markLoaded,
@@ -163,17 +237,17 @@ export const ListingCardImageCarousel = React.forwardRef<
   const slideBlur = useCallback((idx: number) => blurDataURLs?.[idx], [blurDataURLs]);
 
   const renderSlide = useCallback(
-    (idx: number) => {
+    (idx: number, slotId: ListingCardCarouselSlotId, isPending: boolean) => {
       const src = images[idx];
       if (!src) return null;
       if (imageErrors.has(idx)) return errorPlaceholder;
       const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 640);
       const isFirst = priority && idx === 0;
       const b = slideBlur(idx);
-      const shouldUseBlurPlaceholder = Boolean(b) && !loadedRef.current.has(idx);
+      const shouldUseBlurPlaceholder = Boolean(b) && !isPending && !loadedRef.current.has(idx);
       return (
         <TrackedNextImage
-          key={`card-slide-${idx}`}
+          key={`card-slide-${slotId}-${idx}`}
           src={imageUrl}
           alt={t('listings.imageAltWithTotal', {
             title: imageAltTitle,
@@ -188,9 +262,15 @@ export const ListingCardImageCarousel = React.forwardRef<
           draggable={false}
           onLoad={() => {
             markLoaded(idx);
+            if (isPending) {
+              promotePendingSlot(slotId, idx);
+            }
           }}
           onError={() => {
             onImageError(idx);
+            if (isPending) {
+              promotePendingSlot(slotId, idx);
+            }
           }}
           unoptimized
           placeholder={shouldUseBlurPlaceholder ? 'blur' : undefined}
@@ -207,13 +287,47 @@ export const ListingCardImageCarousel = React.forwardRef<
       markLoaded,
       onImageError,
       errorPlaceholder,
+      promotePendingSlot,
       slideBlur,
     ],
   );
 
+  useEffect(() => {
+    const pendingSlot = state.pendingSlot;
+    if (!pendingSlot) return;
+    const pendingIndex = state.slotIndices[pendingSlot];
+    if (pendingIndex === null || !loadedRef.current.has(pendingIndex)) return;
+    const frame = requestAnimationFrame(() => promotePendingSlot(pendingSlot, pendingIndex));
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [promotePendingSlot, state]);
+
+  const renderLayer = (slotId: ListingCardCarouselSlotId) => {
+    const slotIndex = state.slotIndices[slotId];
+    if (slotIndex === null) return null;
+    const isConfirmed = slotId === state.confirmedSlot;
+    const isPending = slotId === state.pendingSlot;
+    return (
+      <div
+        key={slotId}
+        data-testid={isConfirmed ? 'carousel-layer-confirmed' : 'carousel-layer-pending'}
+        className="absolute inset-0 overflow-hidden"
+        style={{
+          opacity: isConfirmed ? 1 : 0,
+          pointerEvents: isConfirmed ? 'auto' : 'none',
+          zIndex: isConfirmed ? 1 : 0,
+        }}
+      >
+        {renderSlide(slotIndex, slotId, isPending)}
+      </div>
+    );
+  };
+
   return (
     <div className="absolute inset-0 overflow-hidden" style={{ isolation: 'isolate' }}>
-      <div className="absolute inset-0">{renderSlide(index)}</div>
+      {renderLayer('primary')}
+      {renderLayer('secondary')}
     </div>
   );
 });
