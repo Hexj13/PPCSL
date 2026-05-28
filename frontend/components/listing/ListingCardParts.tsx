@@ -260,10 +260,18 @@ export const ListingCardImageCarousel = React.forwardRef<
           loading={isFirst ? undefined : 'lazy'}
           priority={isFirst}
           draggable={false}
-          onLoad={() => {
-            markLoaded(idx);
-            if (isPending) {
-              promotePendingSlot(slotId, idx);
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            const finish = () => {
+              markLoaded(idx);
+              if (isPending) {
+                promotePendingSlot(slotId, idx);
+              }
+            };
+            if (img && typeof img.decode === 'function') {
+              img.decode().then(finish).catch(finish);
+            } else {
+              finish();
             }
           }}
           onError={() => {
@@ -315,7 +323,6 @@ export const ListingCardImageCarousel = React.forwardRef<
         className="absolute inset-0 overflow-hidden"
         style={{
           opacity: isConfirmed ? 1 : 0,
-          pointerEvents: isConfirmed ? 'auto' : 'none',
           zIndex: isConfirmed ? 1 : 0,
         }}
       >
