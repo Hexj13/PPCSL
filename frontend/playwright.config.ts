@@ -1,89 +1,39 @@
 import { defineConfig, devices } from '@playwright/test';
 
-import { E2E_MOBILE_VIEWPORT } from './e2e/constants/viewport';
-
-const baseURL =
-  process.env.E2E_BASE_URL?.trim() ||
-  process.env.PLAYWRIGHT_BASE_URL?.trim() ||
-  'http://localhost:3000';
-
-const statefulAccountSpecs =
-  /\/(favorites|saved-filters|smart-selection|listing-detail-actions|sync-favorites-cross-tab|listing-create|my-listings|listing-view|search-filters)\.spec\.ts$/;
-
-const mobileOnlySpecs = /search-filters-mobile\.spec\.ts$/;
-const desktopOnlySpecs = /search-filters-desktop\.spec\.ts$/;
-
-const mobileDevice = {
-  ...devices['Pixel 5'],
-  viewport: E2E_MOBILE_VIEWPORT,
-};
-
-const desktopDevice = {
-  ...devices['Desktop Chrome'],
-};
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
 export default defineConfig({
   testDir: './e2e/specs',
+  fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 2 : 0,
-  timeout: 60_000,
-  expect: { timeout: 10_000 },
-  reporter: [
-    ['list'],
-    ['html', { open: 'never', outputFolder: 'playwright-report' }],
-    ['allure-playwright', { outputFolder: 'allure-results' }],
-  ],
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 2 : undefined,
+  reporter: process.env.CI ? [['github'], ['list']] : [['list']],
   use: {
     baseURL,
-    locale: 'ro-RO',
     trace: 'on-first-retry',
-    actionTimeout: 15_000,
-    navigationTimeout: 30_000,
+    screenshot: 'only-on-failure',
   },
   projects: [
     {
-      name: 'mobile-serial-account',
-      testMatch: [statefulAccountSpecs, mobileOnlySpecs],
-      testIgnore: desktopOnlySpecs,
-      fullyParallel: false,
-      workers: 1,
-      use: { ...mobileDevice },
-    },
-    {
       name: 'mobile',
-      testIgnore: [statefulAccountSpecs, mobileOnlySpecs, desktopOnlySpecs],
-      fullyParallel: false,
-      workers: process.env.CI ? 2 : 1,
-      use: { ...mobileDevice },
-    },
-    {
-      name: 'desktop-serial-account',
-      dependencies: ['mobile-serial-account'],
-      testMatch: [statefulAccountSpecs, desktopOnlySpecs],
-      testIgnore: mobileOnlySpecs,
-      fullyParallel: false,
-      workers: 1,
-      use: { ...desktopDevice },
+      use: {
+        ...devices['Pixel 7'],
+      },
     },
     {
       name: 'desktop',
-      testIgnore: [statefulAccountSpecs, mobileOnlySpecs, desktopOnlySpecs],
-      fullyParallel: false,
-      workers: process.env.CI ? 2 : 1,
-      use: { ...desktopDevice },
+      use: {
+        ...devices['Desktop Chrome'],
+      },
     },
   ],
-  webServer:
-    process.env.PLAYWRIGHT_SKIP_WEBSERVER === '1'
-      ? undefined
-      : {
-          command: 'npm run dev',
-          url: baseURL,
-          reuseExistingServer: true,
-          timeout: 180_000,
-          env: {
-            ...process.env,
-            NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER: 'true',
-          },
-        },
+  webServer: process.env.PLAYWRIGHT_SKIP_WEBSERVER
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 });

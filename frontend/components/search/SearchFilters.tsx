@@ -44,15 +44,30 @@ import { useAuthStore } from '@/lib/store';
 import { buildCategorizedTireBrandOptions } from '@/lib/tire-catalog-sort';
 import { isBrowser } from '@/lib/utils/utils';
 
-import { AdvancedFilters } from './search-filters/AdvancedFilters';
 import { BasicFilters } from './search-filters/BasicFilters';
-import { EquipmentFilters } from './search-filters/EquipmentFilters';
 import { PopularBodyTypesFilter } from './search-filters/PopularBodyTypesFilter';
 import { PopularFilters } from './search-filters/PopularFilters';
 import { SearchFormActions } from './search-filters/SearchFormActions';
 import { SearchTabs } from './search-filters/SearchTabs';
 import { VehicleTypeSelector } from './search-filters/VehicleTypeSelector';
-import { MobileSearchFilters } from './search-filters/mobile/MobileSearchFilters';
+
+const AdvancedFilters = dynamic(
+  () => import('./search-filters/AdvancedFilters').then((m) => ({ default: m.AdvancedFilters })),
+  { ssr: false },
+);
+
+const EquipmentFilters = dynamic(
+  () => import('./search-filters/EquipmentFilters').then((m) => ({ default: m.EquipmentFilters })),
+  { ssr: false },
+);
+
+const MobileSearchFilters = dynamic(
+  () =>
+    import('./search-filters/mobile/MobileSearchFilters').then((m) => ({
+      default: m.MobileSearchFilters,
+    })),
+  { ssr: false },
+);
 
 const TireSearchFilters = dynamic(
   () =>
@@ -403,12 +418,38 @@ export function SearchFilters({
   const basicTabHasActiveDot =
     filters.listing_category === 'tire' ? hasTireBasicFilters : hasBasicFilters;
 
+  const handleFormKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLFormElement>) => {
+      if (e.key !== 'Enter' || e.defaultPrevented || e.nativeEvent.isComposing) {
+        return;
+      }
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'TEXTAREA' ||
+          target.tagName === 'BUTTON' ||
+          target.tagName === 'A' ||
+          target.isContentEditable ||
+          target.closest('[role="button"], [role="listbox"], [role="option"]'))
+      ) {
+        return;
+      }
+      if (!handlers.hasFiltersChanged || isSyncingFromUrl || isSearching) {
+        return;
+      }
+      e.preventDefault();
+      handlers.applySearchWithOverrides({});
+    },
+    [handlers, isSyncingFromUrl, isSearching],
+  );
+
   return (
     <form
       id="search-filters"
       data-testid="search-filters-form"
       aria-label={t('searchFilters.formAriaLabel')}
       onSubmit={handlers.handleSubmit}
+      onKeyDown={handleFormKeyDown}
       className="card p-4 md:p-5 mb-6 overflow-visible relative"
     >
       <div className="mb-6 border-b border-primary-500/20 -mx-4 md:-mx-5 px-4 md:px-5 relative">

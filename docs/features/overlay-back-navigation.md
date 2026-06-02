@@ -32,6 +32,8 @@ Overlays use `useScrollLock` (reference-counted `position: fixed` on `document.b
 
 Returning from a listing detail page to `/` restores the saved feed scroll position in `useLayoutEffect` before paint (`lib/home-scroll-restore.ts`, wired from `ScrollReset.tsx`). A brief `position: fixed` offset on `document.body` avoids a one-frame flash at scroll top before `scrollTo` commits.
 
+On mobile viewports (`max-width: 767px`, single-column feed) restoration is anchor-based: the clicked card id is stored alongside the scroll position (`preserveHomeScrollPosition(listingId)`), and `restoreHomeScrollToListingCard` re-aligns that card just under the sticky header, re-correcting over a short window while images load and card heights settle. This keeps the previously opened listing pinned to the top instead of drifting to a neighbouring card. The saved pixel offset is still used as the immediate fallback and for desktop / reload / back-forward navigations.
+
 ## Related
 
 - [image-preview.md](./image-preview.md) — photo viewer controls

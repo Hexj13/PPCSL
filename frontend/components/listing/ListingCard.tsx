@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useRef, startTransition } from 'react';
 
-import { prewarmListingPageHeroImage } from '@/app/listings/[id]/listing-page-helpers';
+import { prewarmListingPageHeroImage } from '@/lib/listing/listing-page-helpers';
 import {
   ListingCardBadges,
   ListingCardImageArea,
@@ -17,7 +17,7 @@ import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhot
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import { useI18n } from '@/components/providers/I18nProvider';
-import { useCities } from '@/hooks/useCities';
+import { useListingGridCities } from '@/components/listing/CitiesProvider';
 import {
   getCompareButtonClassName,
   useListingCardComparison,
@@ -66,7 +66,7 @@ function ListingCardBody({
   listing: Listing;
   displayTitle: string;
   locale: string;
-  cities: ReturnType<typeof useCities>['cities'];
+  cities: ReturnType<typeof useListingGridCities>['cities'];
   isHydrated: boolean;
   t: (key: string, params?: Record<string, string | number>) => string;
 }) {
@@ -289,7 +289,7 @@ function ListingCardComponent({
 }: ListingCardProps) {
   const { t } = useTranslation();
   const { locale } = useI18n();
-  const { cities } = useCities();
+  const { cities } = useListingGridCities();
   const images = useMemo(
     () => (listing.images?.length ? listing.images : ['/placeholder-car.jpg']),
     [listing.images],
@@ -368,7 +368,7 @@ function ListingCardComponent({
     prewarmListingPageHeroImage(listing.id, images[galleryIndex] ?? images[0]);
     if (fromHome) {
       startTransition(() => {
-        preserveHomeScrollPosition();
+        preserveHomeScrollPosition(listing.id);
       });
     }
   }, [listing.id, listing.cover_blur_hash, images, carouselIndex]);

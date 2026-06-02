@@ -27,6 +27,9 @@ function withLocaleHeader(request: NextRequest, locale: string) {
 }
 
 function passthroughIfExcludedPath(pathname: string): NextResponse | null {
+  if (pathname.startsWith('/.well-known/')) {
+    return NextResponse.next();
+  }
   if (pathname.startsWith('/_next') || pathname.startsWith('/api')) {
     return NextResponse.next();
   }

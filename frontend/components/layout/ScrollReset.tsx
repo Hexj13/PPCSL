@@ -8,10 +8,22 @@ import {
   sessionStorageRemoveItem,
   sessionStorageSetItem,
 } from '@/lib/browser-session-storage';
-import { applyHomeScrollRestore, readHomeScrollRestoreTarget } from '@/lib/home-scroll-restore';
+import {
+  applyHomeScrollRestore,
+  readHomeScrollRestoreTarget,
+  restoreHomeScrollToListingCard,
+} from '@/lib/home-scroll-restore';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
 const SCROLL_TOP_ON_ENTER_PATHS = new Set(['/favorites', '/compare']);
+
+function isMobileViewport(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(max-width: 767px)').matches
+  );
+}
 
 function scrollWindowToTopInstant() {
   window.scrollTo({ top: 0, behavior: 'instant' });
@@ -53,7 +65,11 @@ function setupHomeScrollRestoration(
 
   const target = readHomeScrollRestoreTarget(previousPath);
   if (target) {
-    applyHomeScrollRestore(target.scrollY);
+    if (target.source === 'listing_return' && target.listingId && isMobileViewport()) {
+      restoreHomeScrollToListingCard(target.listingId, target.scrollY);
+    } else {
+      applyHomeScrollRestore(target.scrollY);
+    }
   }
 }
 

@@ -1,5 +1,9 @@
 const { withSentryConfig } = require('@sentry/nextjs');
 
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -16,6 +20,7 @@ const nextConfig = {
 
   experimental: {
     optimizeCss: true,
+    ...(process.env.REACT_COMPILER === 'true' ? { reactCompiler: true } : {}),
   },
 
   ...(process.env.NODE_ENV === 'production' && {
@@ -37,6 +42,8 @@ const nextConfig = {
   }),
 
   images: {
+    loader: 'custom',
+    loaderFile: './lib/cdn-image-loader.ts',
     remotePatterns: [
       {
         protocol: 'http',
@@ -52,7 +59,23 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'cdn.kupito.club',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.kupito.club',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.kupito.club',
+        pathname: '/api/upload/image/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'kupito.club',
+        pathname: '/**',
       },
     ],
     minimumCacheTTL: 86400,
@@ -65,6 +88,39 @@ const nextConfig = {
   },
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
+    const productionSecurityHeaders = isDev
+      ? []
+      : [
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload',
+          },
+          {
+            key: 'Permissions-Policy',
+            value:
+              'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
+          },
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
+          },
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "img-src 'self' data: blob: https: http://localhost:4000",
+              "font-src 'self' data: https://fonts.gstatic.com",
+              "connect-src 'self' https://api.kupito.club https://cdn.kupito.club https://www.google-analytics.com https://*.sentry.io",
+              "frame-src 'self' https://www.googletagmanager.com",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'self'",
+            ].join('; '),
+          },
+        ];
     const headers = [
       {
         source: '/:path*',
@@ -85,6 +141,7 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
           },
+          ...productionSecurityHeaders,
           ...(isDev
             ? [
                 {
@@ -192,4 +249,4 @@ const sentryWebpackPluginOptions = {
   },
 };
 
-module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+module.exports = withSentryConfig(withBundleAnalyzer(nextConfig), sentryWebpackPluginOptions);

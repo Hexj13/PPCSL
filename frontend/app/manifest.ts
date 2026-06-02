@@ -14,6 +14,13 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const t = getServerTranslations(locale);
   const pwa192Url = getVersionedAssetPath('/pwa192.png', siteConfig.assetVersion);
   const logoUrl = getVersionedAssetPath('/logo.png', siteConfig.assetVersion);
+  const backgroundColor = theme.pwa?.backgroundColor || '#F5F5F5';
+  const themeColor = theme.pwa?.themeColor || '#40916B';
+  const shortcutIcon = {
+    src: pwa192Url,
+    sizes: '192x192',
+    type: 'image/png' as const,
+  };
 
   return {
     name: `${siteConfig.name} - ${t.home.title}`,
@@ -23,8 +30,9 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     start_url: '/',
     scope: '/',
     display: 'standalone',
-    background_color: theme.pwa?.backgroundColor || '#0f172a',
-    theme_color: theme.pwa?.themeColor || '#3b82f6',
+    display_override: ['standalone', 'browser'],
+    background_color: backgroundColor,
+    theme_color: themeColor,
     icons: [
       {
         src: pwa192Url,
@@ -55,5 +63,28 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     lang: locale,
     dir: 'ltr',
     orientation: 'portrait',
+    shortcuts: [
+      {
+        name: t.common.search,
+        short_name: t.common.search,
+        url: '/',
+        icons: [shortcutIcon],
+      },
+      {
+        name: t.header.favorites,
+        short_name: t.header.favorites,
+        url: '/favorites',
+        icons: [shortcutIcon],
+      },
+    ],
+    screenshots: [
+      {
+        src: logoUrl,
+        sizes: '512x512',
+        type: 'image/png',
+        form_factor: 'narrow',
+        label: siteConfig.name,
+      },
+    ],
   };
 }

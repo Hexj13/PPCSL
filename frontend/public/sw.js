@@ -1,6 +1,6 @@
-const CACHE_NAME = 'kupito-v3';
-const STATIC_CACHE_NAME = 'kupito-static-v3';
-const DATA_CACHE_NAME = 'kupito-data-v3';
+const CACHE_NAME = 'kupito-v4';
+const STATIC_CACHE_NAME = 'kupito-static-v4';
+const DATA_CACHE_NAME = 'kupito-data-v4';
 const CACHE_EXPIRY = 60 * 60 * 1000;
 const MAX_CACHE_SIZE = 2 * 1024 * 1024;
 
@@ -62,10 +62,6 @@ const isStaticAsset = (url) => {
     url.endsWith('.woff2') ||
     url.endsWith('.ttf')
   );
-};
-
-const isListingPage = (url) => {
-  return url.pathname.startsWith('/listings/') && url.pathname !== '/listings' && !url.pathname.includes('/new');
 };
 
 const isSmallApiEndpoint = (url) => {
@@ -203,79 +199,15 @@ const fetchHandler = async (event) => {
   }
 
   if (request.mode === 'navigate') {
-    const isFavoritesPage = url.pathname === '/favorites';
-    const isProfilePage = url.pathname === '/profile';
-    const isMyListingsPage = url.pathname === '/my-listings';
-    const isListingDetailPage = isListingPage(url);
-    
-    if (isFavoritesPage || isProfilePage || isMyListingsPage || isListingDetailPage) {
-      const dataCache = await caches.open(DATA_CACHE_NAME);
-      const cached = await dataCache.match(request);
-      
-      if (cached) {
-        const cacheTime = cached.headers.get('sw-cache-time');
-        if (cacheTime) {
-          const age = Date.now() - parseInt(cacheTime, 10);
-          if (age < CACHE_EXPIRY) {
-            try {
-              const networkResponse = await fetch(request);
-              if (networkResponse.ok) {
-                const canCache = await shouldCache(networkResponse);
-                if (canCache) {
-                  const responseClone = networkResponse.clone();
-                  const headers = new Headers(responseClone.headers);
-                  headers.set('sw-cache-time', Date.now().toString());
-                  const cachedResponse = new Response(responseClone.body, {
-                    status: responseClone.status,
-                    statusText: responseClone.statusText,
-                    headers: headers,
-                  });
-                  await dataCache.put(request, cachedResponse).catch((error) => {
-                    console.warn(`Failed to cache ${request.url}:`, error);
-                  });
-                }
-                return networkResponse;
-              }
-            } catch {
-              return cached;
-            }
-          }
-        }
-        return cached;
+    try {
+      const networkResponse = await fetch(request);
+      return networkResponse;
+    } catch (error) {
+      const offlinePage = await caches.match('/offline');
+      if (offlinePage) {
+        return offlinePage;
       }
-      
-      try {
-        const response = await fetch(request);
-        if (response.ok) {
-          const canCache = await shouldCache(response);
-          if (canCache) {
-            const responseClone = response.clone();
-            const headers = new Headers(responseClone.headers);
-            headers.set('sw-cache-time', Date.now().toString());
-            const cachedResponse = new Response(responseClone.body, {
-              status: responseClone.status,
-              statusText: responseClone.statusText,
-              headers: headers,
-            });
-            await dataCache.put(request, cachedResponse).catch((error) => {
-              console.warn(`Failed to cache ${request.url}:`, error);
-            });
-          }
-        }
-        return response;
-      } catch (error) {
-        const fallbackCached = await dataCache.match(request);
-        if (fallbackCached) {
-          return fallbackCached;
-        }
-        if (isFavoritesPage || isProfilePage || isMyListingsPage || isListingDetailPage) {
-          const offlinePage = await caches.match('/offline');
-          if (offlinePage) {
-            return offlinePage;
-          }
-        }
-        throw error;
-      }
+      throw error;
     }
   }
 
@@ -337,9 +269,17 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(fetchHandler(event));
 });
 
+const clearUserDataCaches = async () => {
+  await caches.delete(DATA_CACHE_NAME);
+  await caches.delete(CACHE_NAME);
+};
+
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'CLEAR_USER_CACHE') {
+    event.waitUntil(clearUserDataCaches());
   }
   if (event.data && event.data.type === 'CACHE_URLS') {
     const urls = Array.isArray(event.data.urls) ? event.data.urls : [];
