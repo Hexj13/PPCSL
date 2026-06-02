@@ -303,28 +303,9 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
     }
   }, [isLoading, listings.length, updateScrollButtons]);
 
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-
-  useEffect(() => {
-    const checkTouchDevice = () => {
-      setIsTouchDevice(
-        'ontouchstart' in window ||
-          navigator.maxTouchPoints > 0 ||
-          ((navigator as Navigator & { msMaxTouchPoints?: number }).msMaxTouchPoints ?? 0) > 0,
-      );
-    };
-
-    checkTouchDevice();
-    window.addEventListener('resize', checkTouchDevice);
-
-    return () => {
-      window.removeEventListener('resize', checkTouchDevice);
-    };
-  }, []);
-
   const [totalPositions, setTotalPositions] = useState(1);
 
-  const showNavigation = listings.length > 1 && !isTouchDevice;
+  const showNavigation = listings.length > 1;
 
   if (!isLoading && listings.length === 0) {
     return null;
@@ -338,7 +319,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
             {t('similarListings.title')}
           </h2>
           {showNavigation && (
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="hidden hover-only:flex items-center gap-2 ml-auto">
               <button
                 type="button"
                 onClick={handleScrollLeft}
