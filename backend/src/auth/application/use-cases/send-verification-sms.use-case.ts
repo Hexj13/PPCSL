@@ -16,9 +16,9 @@ export class SendVerificationSmsUseCase {
 
   async execute(phone: string, requesterUserId?: string): Promise<{ success: true }> {
     const normalizedPhone = this.phoneService.normalize(phone);
-    await this.authPhoneRateLimit.assertWithinLimit(normalizedPhone);
     const existingUser = await this.usersService.findByPhone(normalizedPhone);
     if (!existingUser || existingUser.id === requesterUserId) {
+      await this.authPhoneRateLimit.assertWithinLimit(normalizedPhone, 'send');
       await this.smsService.sendVerificationCode(normalizedPhone);
     }
     return { success: true };

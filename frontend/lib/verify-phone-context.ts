@@ -6,6 +6,9 @@ import {
 
 const SESSION_KEY = 'verifyPhoneContext';
 
+export const VERIFY_PHONE_MODE_COMPLETE_PROFILE = 'complete-profile';
+export const VERIFY_PHONE_MODE_POST_REGISTER = 'post-register';
+
 export type VerifyPhoneContext = {
   phone: string;
   mode?: string;

@@ -8,6 +8,8 @@ import { RedisService } from '../../../common/redis.service';
 import { Listing } from '../../entities/listing.entity';
 
 const PENDING_VIEWS_HASH = 'listing:views:pending';
+const FLUSH_LOCK_KEY = 'listing:views:flush:lock';
+const FLUSH_LOCK_TTL_SECONDS = 120;
 
 @Injectable()
 export class ListingViewsCounterService implements OnModuleInit, OnModuleDestroy {
@@ -27,7 +29,7 @@ export class ListingViewsCounterService implements OnModuleInit, OnModuleDestroy
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.flushPendingViews();
+    await this.flushPendingViewsUnlocked();
   }
 
   async recordPendingView(listingId: string): Promise<void> {
@@ -36,6 +38,23 @@ export class ListingViewsCounterService implements OnModuleInit, OnModuleDestroy
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async flushPendingViews(): Promise<void> {
+    const acquired = await this.redisService.setIfNotExists(
+      FLUSH_LOCK_KEY,
+      '1',
+      FLUSH_LOCK_TTL_SECONDS,
+    );
+    if (!acquired) {
+      return;
+    }
+
+    try {
+      await this.flushPendingViewsUnlocked();
+    } finally {
+      await this.redisService.del(FLUSH_LOCK_KEY);
+    }
+  }
+
+  private async flushPendingViewsUnlocked(): Promise<void> {
     const pending = await this.redisService.hgetall(PENDING_VIEWS_HASH);
     const entries = Object.entries(pending);
     if (entries.length === 0) {

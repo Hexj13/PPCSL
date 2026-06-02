@@ -120,6 +120,7 @@
     "invalidCode": "Cod invalid. Încercați din nou.",
     "smsHourlyLimit": "Limita SMS pentru acest număr a fost atinsă. Puteți solicita un cod nou peste o oră.",
     "maxSmsCodeAttempts": "Prea multe încercări cu cod incorect. Solicitați un nou cod SMS.",
+    "tooManySmsRequests": "Prea multe solicitări SMS pentru acest număr. Încercați din nou mai târziu.",
     "ipBlockedTooManyAttempts": "Numărul maxim de încercări a fost atins. Încercați din nou peste {count} minute.",
     "maxVerificationAttemptsReached": "Numărul maxim de încercări de verificare a fost atins",
     "passwordResetCodeExpired": "Codul de resetare a parolei a expirat",

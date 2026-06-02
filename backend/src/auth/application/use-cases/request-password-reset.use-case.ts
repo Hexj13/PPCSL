@@ -16,7 +16,7 @@ export class RequestPasswordResetUseCase {
   ) {}
 
   async execute(dto: RequestPasswordResetDto): Promise<void> {
-    await this.authPhoneRateLimit.assertWithinLimit(dto.phone);
+    await this.authPhoneRateLimit.assertWithinLimit(dto.phone, 'password-reset');
     const normalizedPhone = this.phoneService.normalize(dto.phone);
     const user = await this.usersService.findByPhone(normalizedPhone);
 

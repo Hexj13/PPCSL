@@ -116,6 +116,7 @@
     "invalidCode": "Invalid code. Please try again.",
     "smsHourlyLimit": "SMS limit reached for this number. You can request a new code in one hour.",
     "maxSmsCodeAttempts": "Too many incorrect code attempts. Request a new SMS code.",
+    "tooManySmsRequests": "Too many SMS requests for this number. Please try again later.",
     "ipBlockedTooManyAttempts": "Maximum number of attempts reached. Try again in {count} minutes.",
     "codeRequired": "Code is required",
     "newPasswordRequired": "New password is required",

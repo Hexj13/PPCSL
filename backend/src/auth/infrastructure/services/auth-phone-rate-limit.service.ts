@@ -3,9 +3,31 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { RedisService } from '../../../common/redis.service';
 import { PhoneService } from '../../domain/services/phone.service';
 
-const PHONE_VERIFY_PREFIX = 'auth:phone-verify:';
-const PHONE_VERIFY_TTL_SECONDS = 600;
-const PHONE_VERIFY_MAX = 10;
+export type AuthPhoneRateLimitOperation = 'send' | 'verify' | 'password-reset';
+
+const OPERATION_CONFIG: Record<
+  AuthPhoneRateLimitOperation,
+  { prefix: string; ttlSeconds: number; max: number; errorKey: string }
+> = {
+  send: {
+    prefix: 'auth:phone-send:',
+    ttlSeconds: 600,
+    max: 5,
+    errorKey: 'errors.tooManySmsRequests',
+  },
+  verify: {
+    prefix: 'auth:phone-verify:',
+    ttlSeconds: 600,
+    max: 10,
+    errorKey: 'errors.maxSmsCodeAttempts',
+  },
+  'password-reset': {
+    prefix: 'auth:password-reset:',
+    ttlSeconds: 600,
+    max: 10,
+    errorKey: 'errors.maxSmsCodeAttempts',
+  },
+};
 
 @Injectable()
 export class AuthPhoneRateLimitService {
@@ -14,12 +36,13 @@ export class AuthPhoneRateLimitService {
     private readonly phoneService: PhoneService,
   ) {}
 
-  async assertWithinLimit(phone: string): Promise<void> {
+  async assertWithinLimit(phone: string, operation: AuthPhoneRateLimitOperation): Promise<void> {
     const normalized = this.phoneService.normalize(phone);
-    const key = `${PHONE_VERIFY_PREFIX}${normalized}`;
-    const count = await this.redisService.rateLimitIncr(key, PHONE_VERIFY_TTL_SECONDS);
-    if (count > PHONE_VERIFY_MAX) {
-      throw new BadRequestException('errors.maxSmsCodeAttempts');
+    const config = OPERATION_CONFIG[operation];
+    const key = `${config.prefix}${normalized}`;
+    const count = await this.redisService.rateLimitIncr(key, config.ttlSeconds);
+    if (count > config.max) {
+      throw new BadRequestException(config.errorKey);
     }
   }
 }

@@ -770,7 +770,7 @@ export class AuthController {
   async verifySms(@Request() req: AuthenticatedRequest, @Body() verifySmsDto: VerifySmsDto) {
     const ip = this.ipBlockService.getClientIp(req);
 
-    await this.authPhoneRateLimit.assertWithinLimit(verifySmsDto.phone);
+    await this.authPhoneRateLimit.assertWithinLimit(verifySmsDto.phone, 'verify');
     const isVerified = await this.smsService.verifyCode(verifySmsDto.phone, verifySmsDto.code);
 
     if (isVerified) {

@@ -1,4 +1,5 @@
 import {
+  VERIFY_PHONE_MODE_POST_REGISTER,
   buildVerifyPhoneSearchParams,
   clearVerifyPhoneContext,
   loadVerifyPhoneContext,
@@ -23,5 +24,11 @@ describe('verify-phone-context', () => {
     });
     expect(query).not.toContain('phone');
     expect(query).toContain('mode=complete-profile');
+  });
+
+  it('supports reserved post-register mode without phone in query', () => {
+    const query = buildVerifyPhoneSearchParams({ mode: VERIFY_PHONE_MODE_POST_REGISTER });
+    expect(query).toBe('mode=post-register');
+    expect(query).not.toContain('phone');
   });
 });

@@ -11,6 +11,15 @@ function normalizeKey(key: string): string {
 function isSensitiveKey(key: string): boolean {
   const n = normalizeKey(key);
   if (n.includes('password')) return true;
+  if (n === 'email' || n.endsWith('email')) return true;
+  if (
+    n === 'phone' ||
+    n.endsWith('phone') ||
+    n.includes('phonenumber') ||
+    n === 'msisdn' ||
+    n === 'tel'
+  )
+    return true;
   if (n.includes('authorization')) return true;
   if (n.includes('apikey') || n === 'key') return true;
   if (n.includes('cookie')) return true;

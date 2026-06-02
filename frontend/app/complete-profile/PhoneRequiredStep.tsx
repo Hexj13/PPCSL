@@ -20,6 +20,7 @@ import {
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
+import { buildVerifyPhoneSearchParams, saveVerifyPhoneContext } from '@/lib/verify-phone-context';
 import { InfoBlock, LoadingButton } from '@/ui';
 
 type PhoneRequiredStepProps = {
@@ -100,17 +101,15 @@ export function PhoneRequiredStep({ returnUrl }: PhoneRequiredStepProps) {
         toast.error(message);
         return;
       }
-      const p = new URLSearchParams();
-      p.set('phone', normalizedPhone);
-      p.set('mode', 'complete-profile');
-      if (returnUrl) {
-        p.set('returnUrl', returnUrl);
-      }
-      if (source) {
-        p.set('source', source);
-      }
-      p.set('selectedType', accountType);
-      router.push(buildPostAuthRedirect(`/verify-phone?${p.toString()}`, getClientLocale()));
+      saveVerifyPhoneContext({ phone: normalizedPhone, mode: 'complete-profile' });
+      const query = buildVerifyPhoneSearchParams({
+        mode: 'complete-profile',
+        returnUrl,
+        source,
+        selectedType: accountType,
+      });
+      const path = query ? `/verify-phone?${query}` : '/verify-phone';
+      router.push(buildPostAuthRedirect(path, getClientLocale()));
     } finally {
       setLoading(false);
     }
@@ -186,9 +185,9 @@ export function PhoneRequiredStep({ returnUrl }: PhoneRequiredStepProps) {
               const formatted = formatPhoneOnBlur(sanitizePhoneInput(phoneInput.trim()));
               if (formatted !== phoneInput) setPhoneInput(formatted);
             }}
-            className={`input-field !bg-white ${error ? 'border-red-500' : ''}`}
+            className={`input-field !bg-white ${error ? 'border-semantic-error' : ''}`}
           />
-          {error ? <p className="mt-1 text-sm text-red-400">{error}</p> : null}
+          {error ? <p className="mt-1 text-sm text-semantic-error">{error}</p> : null}
         </div>
         <RegisterFormMessengers
           messengers={messengers}

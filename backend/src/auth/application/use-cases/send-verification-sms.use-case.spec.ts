@@ -12,10 +12,12 @@ describe('SendVerificationSmsUseCase', () => {
   let useCase: SendVerificationSmsUseCase;
   let usersService: jest.Mocked<Pick<UsersService, 'findByPhone'>>;
   let smsService: jest.Mocked<Pick<SmsService, 'sendVerificationCode'>>;
+  let authPhoneRateLimit: { assertWithinLimit: jest.Mock };
 
   beforeEach(async () => {
     usersService = { findByPhone: jest.fn() };
     smsService = { sendVerificationCode: jest.fn().mockResolvedValue(undefined) };
+    authPhoneRateLimit = { assertWithinLimit: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -23,10 +25,7 @@ describe('SendVerificationSmsUseCase', () => {
         PhoneService,
         { provide: UsersService, useValue: usersService },
         { provide: SmsService, useValue: smsService },
-        {
-          provide: AuthPhoneRateLimitService,
-          useValue: { assertWithinLimit: jest.fn().mockResolvedValue(undefined) },
-        },
+        { provide: AuthPhoneRateLimitService, useValue: authPhoneRateLimit },
       ],
     }).compile();
 
@@ -40,6 +39,7 @@ describe('SendVerificationSmsUseCase', () => {
 
     expect(result).toEqual({ success: true });
     expect(smsService.sendVerificationCode).toHaveBeenCalledWith('+37370123456');
+    expect(authPhoneRateLimit.assertWithinLimit).toHaveBeenCalledWith('+37370123456', 'send');
   });
 
   it('should return success without sending SMS when phone belongs to another user', async () => {
@@ -49,6 +49,7 @@ describe('SendVerificationSmsUseCase', () => {
 
     expect(result).toEqual({ success: true });
     expect(smsService.sendVerificationCode).not.toHaveBeenCalled();
+    expect(authPhoneRateLimit.assertWithinLimit).not.toHaveBeenCalled();
   });
 
   it('should send SMS when phone belongs to the requesting user', async () => {
@@ -67,5 +68,6 @@ describe('SendVerificationSmsUseCase', () => {
 
     expect(result).toEqual({ success: true });
     expect(smsService.sendVerificationCode).not.toHaveBeenCalled();
+    expect(authPhoneRateLimit.assertWithinLimit).not.toHaveBeenCalled();
   });
 });

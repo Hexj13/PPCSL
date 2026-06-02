@@ -8,6 +8,7 @@ import { getClientLocale } from '@/lib/i18n';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { sanitizeReturnUrl } from '@/lib/return-url';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
+import { clearVerifyPhoneContext } from '@/lib/verify-phone-context';
 
 import { completeRegistrationAndGoToProfile } from './afterRegistration';
 
@@ -51,6 +52,7 @@ export async function submitVerifyPhoneWithAuthCode(params: {
     const me = await authApi.me();
     const synced = await syncPartnerPromoDismissAfterAuth(me.data);
     setAuth(synced);
+    clearVerifyPhoneContext();
     if (mode === 'post-register') {
       const flag = localStorageGetItem('postRegisterEmailVerificationSent');
       localStorageRemoveItem('postRegisterEmailVerificationSent');

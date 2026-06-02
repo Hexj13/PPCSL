@@ -10,6 +10,15 @@ describe('sanitizeForSentryExtra', () => {
     expect((out.nested as Record<string, unknown>).ok).toBe(true);
   });
 
+  it('redacts phone and email fields', () => {
+    const out = sanitizeForSentryExtra({
+      phone: '+37360123456',
+      email: 'user@example.com',
+    }) as Record<string, unknown>;
+    expect(out.phone).toBe('[REDACTED]');
+    expect(out.email).toBe('[REDACTED]');
+  });
+
   it('redacts api keys and cookies', () => {
     const out = sanitizeForSentryExtra({
       apiKey: 'secret-key',

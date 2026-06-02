@@ -4,7 +4,7 @@ import type { ErrorEvent, EventHint, Integration } from '@sentry/core';
 import * as Sentry from '@sentry/node';
 import { httpIntegration } from '@sentry/node';
 
-import { sanitizeForSentryExtra } from './utils/sentry-payload.utils';
+import { sanitizeSentryEvent } from './utils/sentry-event-sanitize.utils';
 
 const requireProfiling = createRequire(__filename);
 
@@ -37,17 +37,7 @@ const profiling = tryNodeProfilingIntegration();
 const integrations: Integration[] = [httpIntegration(), ...(profiling ? [profiling] : [])];
 
 function sentryBeforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | null {
-  if (event.user) {
-    const id = event.user.id;
-    event.user = id != null ? { id: String(id) } : {};
-  }
-  if (event.extra) {
-    event.extra = sanitizeForSentryExtra(event.extra) as Record<string, unknown>;
-  }
-  if (event.request?.headers) {
-    event.request.headers = sanitizeForSentryExtra(event.request.headers) as Record<string, string>;
-  }
-  return event;
+  return sanitizeSentryEvent(event);
 }
 
 Sentry.init({
