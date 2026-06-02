@@ -750,7 +750,7 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 - **Hourly Twilio quota** (`SmsService`): at most 3 SMS sends per phone per rolling hour (`errors.smsHourlyLimit`); at most 3 incorrect code submissions per active code (separate Redis counters for registration/phone-change vs password-reset)
 - **Development only:** when `NODE_ENV=development`, `DISABLE_SMS_SEND_RATE_LIMIT=true` on the API skips the per-phone hourly send counter (`SmsService`). Do not use outside local development.
 - **Non-production:** when `SMS_OUTBOUND_DISABLED=true` or `SMS_OUTBOUND_DISABLED=1` and `NODE_ENV` is not `production`, the API stores SMS codes in Redis but does not call Twilio `messages.create`. The flag has no effect in production. Use for local development and Playwright runs so Twilio credentials can stay in `.env` without sending real SMS.
-- **Fixed test code (`000000`):** accepted for SMS verify endpoints when `NODE_ENV` is `development` or `stage`, or when `NODE_ENV` is `test` and `ALLOW_SMS_TEST_CODE=true` / `1`. Never enabled in production (`ALLOW_SMS_TEST_CODE` is rejected at startup). Implementation: `sms-test-code.utils.ts`.
+- **Fixed test code (`000000`):** accepted for SMS verify endpoints when `NODE_ENV` is `development` or `stage`, or when `NODE_ENV` is `test` and `ALLOW_SMS_TEST_CODE=true` / `1`. Never enabled in production (`ALLOW_SMS_TEST_CODE` is rejected at startup). Implementation: `auth/infrastructure/services/sms-test-code.utils.ts`.
 - Frontend: 3 attempts per code before prompting for a new SMS; up to 2 resends after the initial send (3 SMS total per hour aligned with backend)
 - Frontend: when a resend fails with API error key `errors.smsHourlyLimit`, the client sets the resend cooldown to one hour (instead of clearing it) on registration verify, password reset, and profile phone-change verify, so the UI does not allow immediate repeated resend clicks against an exhausted per-phone quota
 - Automatic cleanup of expired IP blocks (hourly cron job)
@@ -1136,7 +1136,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 - **Server-side data fetching:** Initial listings data loaded on server using Next.js Server Components and native `fetch` API, improving SEO and initial page load performance
 - **Request deduplication:** `React.cache()` wrapper for server-side functions (`fetchBrands`, `fetchModelsByBrands`, `getListings`) eliminates duplicate API calls, reducing initial page load time by ~40-50%
 - **Centralized search parameter parsing:** Shared `lib/search/search-params.ts` module provides `buildSearchQuery()` (URL construction, base64 encoding, localStorage fallback for long query strings), `getDefaultFilters()`, URL parameter parsing via `parseSearchParams()`, base64 encoding/decoding, and slug-to-ID conversion via `createBrandResolver` / `createModelResolver`
-- **Optimized search filters:** Refactored `SearchFilters.tsx` component split into 5 custom hooks (`useSearchFiltersSync`, `useVehicleType`, `useSearchTabs`, `useFilterHandlers`, `useFilterOptions`) and 3 modular components (`VehicleTypeSelector`, `SearchTabs`, `SearchFormActions`), reducing main component from 1796 to 473 lines (73% reduction). On the home page, `useVehicleType` derives the active vehicle category from URL query params (and `body_types` when present), not from `kupito_vehicle_type` in localStorage; listing grid and search UI stay in sync.
+- **Search filters:** `SearchFilters.tsx` delegates to `useSearchFiltersController` → `search-filters/SearchFiltersForm.tsx` (composed hooks include `useSearchFiltersSync`, `useVehicleType`, `useSearchTabs`, `useFilterHandlers`, `useFilterOptions`). On the home page, `useVehicleType` derives the active vehicle category from URL query params (and `body_types` when present), not from `kupito_vehicle_type` in localStorage; listing grid and search UI stay in sync.
 - **Unified listing fetch logic:** Merged `fetchListings` and `handleLoadMore` functions into a single unified function, eliminating ~180 lines of duplicate code
 - **Component memoization:** React.memo, useMemo, useCallback for preventing unnecessary re-renders
   - ListingCard wrapped in React.memo for optimal re-render performance
@@ -1299,15 +1299,17 @@ PPCSL (core repository)
 
 Platform repo (kupito.club)
   on: push [main] | pull_request [main]
-    ├── prepare          (checkout + npm ci + npm run prepare:build + verify files)
-    ├── frontend-check   (lint, styles, format, test, next build)   needs: prepare
-    ├── backend-check    (lint, format, unit, integration, nest build) needs: prepare
-    ├── audit            (npm audit, non-blocking)                  needs: prepare
-    └── deploy           (only on push main, after frontend+backend OK)
+    ├── prepare              (checkout + npm ci + npm run prepare:build + verify files)
+    ├── frontend-check       (lint, styles, format, typecheck, knip, test, next build)   needs: prepare
+    ├── backend-check        (lint, format, unit, integration, nest build)               needs: prepare
+    ├── audit                (npm audit --audit-level=critical)                          needs: prepare
+    ├── frontend-lighthouse  (optional; vars.LIGHTHOUSE_URL)                               needs: prepare, frontend-check
+    ├── frontend-e2e-p0      (optional; vars.PLAYWRIGHT_BASE_URL, mobile @p0)            needs: prepare, frontend-check
+    └── deploy               (only on push main, after frontend-check + backend-check)
           └── POST Render deploy hooks (frontend + backend)
 ```
 
-`tsc --noEmit` is not run as a separate job — `next build` and `nest build` already perform type checking. This removes ~30–60s of duplicated work per run.
+Platform `frontend-check` runs `npm run typecheck` and `npm run knip` explicitly. PPCSL core keeps a separate `typecheck` job after tests; platform repos rely on `next build` / `nest build` for compile coverage in addition to `typecheck` on the frontend.
 
 ### 13.3. PPCSL Core CI/CD
 
@@ -1331,10 +1333,12 @@ Platform repo (kupito.club)
 **Jobs:**
 
 1. **prepare** — checkout with submodules, `npm ci` at the root, `npm run prepare:build`, then verifies that all expected files exist in the submodule (locales RO/RU/EN, `theme.json`, `config/site.ts`, `config/parsers.ts`, frontend and backend parsers catalog, `public/logo.png`, `watermark/logo.png`).
-2. **frontend-check** (needs prepare) — `npm ci` in `core/frontend`, restores `actions/cache` for `core/frontend/.next/cache`, runs lint / lint:styles / format:check / test / `next build`, verifies `.next` directory exists.
+2. **frontend-check** (needs prepare) — `npm ci` in `core/frontend`, restores `actions/cache` for `core/frontend/.next/cache`, runs lint / lint:styles / format:check / typecheck / knip / test / `next build`, verifies `.next` directory exists.
 3. **backend-check** (needs prepare) — runs with Postgres + Redis services, `npm ci` in `core/backend`, runs lint:check / format:check / unit / integration / `nest build`, verifies `dist/main.js`.
-4. **audit** (needs prepare, `continue-on-error: true`) — runs `npm audit --omit=dev --audit-level=high` for frontend and backend as a non-blocking advisory.
-5. **deploy** (needs frontend-check + backend-check, `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`) — POSTs to `RENDER_FRONTEND_DEPLOY_HOOK` and `RENDER_BACKEND_DEPLOY_HOOK`. If a hook secret is missing, that step is skipped and Render's own auto-deploy is expected as a fallback.
+4. **audit** (needs prepare) — runs `npm audit --omit=dev --audit-level=critical` for frontend and backend (blocking).
+5. **frontend-lighthouse** (optional, needs prepare + frontend-check, `if: vars.LIGHTHOUSE_URL != ''`) — Lighthouse CI against deployed URLs.
+6. **frontend-e2e-p0** (optional, needs prepare + frontend-check, `if: vars.PLAYWRIGHT_BASE_URL != ''`) — `npm run test:e2e:p0 -- --project=mobile` with `PLAYWRIGHT_SKIP_WEBSERVER=1`.
+7. **deploy** (needs frontend-check + backend-check, `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`) — POSTs to `RENDER_FRONTEND_DEPLOY_HOOK` and `RENDER_BACKEND_DEPLOY_HOOK`. If a hook secret is missing, that step is skipped and Render's own auto-deploy is expected as a fallback.
 
 `prepare:build` is the single source of truth: the same script runs locally (`npm run release-check`, `release-check:fast`) and in every CI job. No inline copy script duplicates it anywhere. The script never uses `rm -rf` against `core/frontend/lib/config` or `core/frontend/lib/locales`, so core-only files in those directories (for example `parsers.ts` kept under `!frontend/lib/config/parsers.ts` in `core/.gitignore`) are never accidentally wiped.
 
@@ -1349,7 +1353,7 @@ Caches:
 - `API_URL` — backend API URL injected as `NEXT_PUBLIC_API_URL` during `next build`.
 - `RENDER_FRONTEND_DEPLOY_HOOK`, `RENDER_BACKEND_DEPLOY_HOOK` — Render Deploy Hook URLs for frontend and backend services. If absent, CI skips the explicit deploy and Render's own auto-deploy on `push: main` still runs.
 
-**Branch protection for `main`** is documented in the platform repo at `docs/deployment/branch-protection.md` (required checks: `Prepare platform files`, `Frontend check`, `Backend check`; `Dependency audit (non-blocking)` is intentionally not required).
+**Branch protection for `main`** is documented in the platform repo at `docs/deployment/branch-protection.md` (required checks: `Prepare platform files`, `Frontend check`, `Backend check`, `Dependency audit`; optional: `Frontend Lighthouse`, `Frontend E2E @p0` when repo variables are set).
 
 `actions/checkout@v5` is configured with `token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}` across all jobs so private submodules resolve consistently.
 
@@ -1526,7 +1530,7 @@ Pre-push hook (husky) runs `npm run release-check:fast` locally (prepare:build +
 5. **Keep `release-check` and CI aligned.** If you add a validation step, add it to `release-check` too, and vice versa.
 6. **Let core changes propagate via PR**, not direct push. The auto-PR from `sync-to-locales` replaces any "push submodule bump" pattern.
 7. **Gate Render on CI.** Trigger deploys from the CI `deploy` job via Render Deploy Hooks; disable Render auto-deploy on the service so a red CI cannot ship.
-8. **Monitor the non-blocking audit job.** `npm audit --omit=dev --audit-level=high` runs on each push; triage high findings during the sprint.
+8. **Monitor the audit job.** `npm audit --omit=dev --audit-level=critical` runs on each push and blocks merges when critical vulnerabilities are found.
 9. **Keep caches effective.** `actions/setup-node` (npm) and `actions/cache` for `.next/cache` speed up CI significantly; do not key caches on branch names.
 10. **Review deploy logs on Render.** The GitHub `deploy` job only triggers the hook; actual build output lives on Render.
 

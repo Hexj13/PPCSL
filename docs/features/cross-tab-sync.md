@@ -39,4 +39,4 @@ How open tabs stay consistent for marketplace UI state and session.
 
 ## E2E
 
-- Cross-tab favorites coverage: `core/frontend/e2e/specs/sync-favorites-cross-tab.spec.ts` (serial Chromium project; see [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md)).
+- Cross-tab favorites coverage: `core/frontend/e2e/specs/sync-favorites-cross-tab.spec.ts` (runs on `mobile` and `desktop` Playwright projects; see [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md)).

@@ -27,6 +27,7 @@ Single reference for linting and formatting across the project (frontend and bac
 | Prettier            | v3.8                                | v3.8                                   |
 | Stylelint           | v17 (CSS + Tailwind)                | —                                      |
 | TypeScript          | v5.7 (strict)                       | v5.3 (strict, `noImplicitAny`)         |
+| Knip                | `npm run knip` (CI `frontend-check`) | —                                      |
 | Husky + lint-staged | Pre-commit hooks                    | Pre-commit hooks                       |
 | Custom plugins      | `no-hardcoded-text`                 | `no-hardcoded-text`, `require-vehicle-type` |
 

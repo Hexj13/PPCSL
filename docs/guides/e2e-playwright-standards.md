@@ -82,7 +82,7 @@ Local registration flow expectation:
 
 - **Priority:** automate and stabilize flows on **mobile** first, then **desktop**.
 - **Coverage:** every spec in `e2e/specs` runs on **both** viewports (no separate `mobile-*.spec.ts` smoke files unless documenting a one-off experiment).
-- **Mobile viewport:** `390×844` (`e2e/constants/viewport.ts`), touch enabled (`Pixel 5` device profile).
+- **Mobile viewport:** `390×844` (`e2e/constants/viewport.ts`); Playwright project uses `Pixel 7` device profile (touch enabled).
 - **Desktop viewport:** `Desktop Chrome` profile from Playwright.
 - **Layout breakpoint:** app mobile sheets match `max-width: 767px` (`BottomSheet`, `MobileSelectField`, mobile search filters).
 

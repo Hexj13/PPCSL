@@ -170,4 +170,4 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 When adding a new feature: create a doc in `features/`, describe architecture/API/UI, update the list in the features section above.
 
-**Last updated:** 2026-05
+**Last updated:** 2026-06

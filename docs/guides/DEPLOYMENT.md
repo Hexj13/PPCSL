@@ -492,6 +492,7 @@ After creation, Render will show:
 - **Runtime:** `Node`
 - **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm ci && npm run prepare:build && cd core/backend && ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build`
 - **Start Command:** `cd core/backend && npm run start:prod`
+- **Pre-Deploy Command (recommended):** `cd core/backend && npm run migration:run:prod` — run migrations before each deploy so schema and code stay aligned (see platform [production-deployment.md](../../../docs/deployment/production-deployment.md)).
 
 **Advanced Settings:**
 
@@ -642,10 +643,11 @@ Sentry image diagnostics use the backend `HEAD` proxy (`/api/diagnostics/image-s
 1. **Root Directory:** Leave empty
 2. **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm ci && npm run prepare:build && cd core/backend && ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build`
 3. **Start Command:** `cd core/backend && npm run start:prod`
+4. **Pre-Deploy Command (recommended):** `cd core/backend && npm run migration:run:prod`
 
 ### 3.6. Database Migrations
 
-After first deployment, run migrations:
+On Render, prefer **Pre-Deploy Command** above so migrations run on every deploy. For first deployment or manual recovery, run migrations in Shell:
 
 1. Go to Render Dashboard → Your Service → **Shell**
 2. Run:
@@ -946,7 +948,7 @@ ssh -i ~/.ssh/ppcsl_key -p 2200 yourusername@your-server.com
 #### OTP Code Bypass (000000)
 
 - **Status:** ✅ Implemented
-- **Description:** Fixed OTP `000000` bypasses SMS verification on verify endpoints when allowed by `sms-test-code.utils.ts`
+- **Description:** Fixed OTP `000000` bypasses SMS verification on verify endpoints when allowed by `auth/infrastructure/services/sms-test-code.utils.ts`
 - **Environment:**
   - `NODE_ENV=development` or `NODE_ENV=stage` — always allowed
   - `NODE_ENV=test` — only when `ALLOW_SMS_TEST_CODE=true` or `1` (integration tests; set in `jest-integration.setup.ts`)
