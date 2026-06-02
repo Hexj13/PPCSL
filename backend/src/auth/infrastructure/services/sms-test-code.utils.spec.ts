@@ -2,9 +2,10 @@ import { isSmsTestCodeAllowed, SMS_TEST_CODE } from './sms-test-code.utils';
 
 describe('sms-test-code.utils', () => {
   describe('isSmsTestCodeAllowed', () => {
-    it('returns false for development and stage without test flag', () => {
-      expect(isSmsTestCodeAllowed('development', undefined)).toBe(false);
-      expect(isSmsTestCodeAllowed('stage', undefined)).toBe(false);
+    it('returns true for development and stage', () => {
+      expect(isSmsTestCodeAllowed('development', undefined)).toBe(true);
+      expect(isSmsTestCodeAllowed('stage', undefined)).toBe(true);
+      expect(isSmsTestCodeAllowed('development', 'false')).toBe(true);
     });
 
     it('returns true for test env only with explicit flag', () => {
