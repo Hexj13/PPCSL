@@ -9,12 +9,13 @@ import type { ParserRun, PlpFileInfo } from '@/lib/api/admin-parsing';
 import { toast } from '@/lib/toast';
 
 import { isRunActive } from './parsing-tab-utils';
-import { useParserRunLogPoller } from './useParserRunLogPoller';
+import { useParserRunLogView } from './useParserRunLogView';
 
 export function useParsingTabRegistrySync() {
   const { t } = useTranslation();
 
   const [registrySyncModalOpen, setRegistrySyncModalOpen] = useState(false);
+  const registrySyncModalOpenRef = useRef(false);
   const [registrySyncFile, setRegistrySyncFile] = useState<PlpFileInfo | null>(null);
   const [registrySyncHintLoading, setRegistrySyncHintLoading] = useState(false);
   const [registrySyncHint, setRegistrySyncHint] = useState<{
@@ -23,136 +24,138 @@ export function useParsingTabRegistrySync() {
     plpLoginMatchesFileKey: boolean;
   } | null>(null);
   const [registrySyncAssignedUserId, setRegistrySyncAssignedUserId] = useState('');
-  const [registrySyncRunId, setRegistrySyncRunId] = useState<string | null>(null);
   const registrySyncRunIdsRef = useRef<Record<string, string>>({});
-  const registrySyncLogSeqRef = useRef(0);
   const registrySyncReportFetchedRef = useRef(false);
-  const [registrySyncLogLines, setRegistrySyncLogLines] = useState<string[]>([]);
   const [registrySyncModalRun, setRegistrySyncModalRun] = useState<ParserRun | null>(null);
   const [registrySyncSearchQuery, setRegistrySyncSearchQuery] = useState('');
   const [registrySyncReportJson, setRegistrySyncReportJson] = useState('');
 
   const registrySyncAssignValidation = useAssignUserValidation(registrySyncAssignedUserId);
 
-  const hasRegistrySyncLogContent = registrySyncLogLines.some(
-    (line) => typeof line === 'string' && line.trim().length > 0,
-  );
+  const {
+    logLines: registrySyncLogLines,
+    hasLogContent: hasRegistrySyncLogContent,
+    resetLogView,
+    loadRunLogs,
+    startPollingRunLogs,
+  } = useParserRunLogView({
+    sessionOpenRef: registrySyncModalOpenRef,
+    logsLoadErrorKey: t('admin.parsing.logsLoadError'),
+    onRunUpdate: setRegistrySyncModalRun,
+    onTerminal: (run) => {
+      if (
+        run.status === 'completed' &&
+        !registrySyncReportFetchedRef.current &&
+        registrySyncModalOpenRef.current
+      ) {
+        registrySyncReportFetchedRef.current = true;
+        void (async () => {
+          try {
+            const reportRes = await adminApi.getRunReport(run.id);
+            if (!registrySyncModalOpenRef.current) {
+              return;
+            }
+            setRegistrySyncReportJson(JSON.stringify(reportRes.data, null, 2));
+          } catch {
+            if (registrySyncModalOpenRef.current) {
+              setRegistrySyncReportJson('');
+            }
+          }
+        })();
+      }
+    },
+  });
 
   const plpRegistrySyncFileKey = useCallback(
     (file: PlpFileInfo) => `${file.parserCode}:${file.fileKey}`,
     [],
   );
 
+  const loadRegistrySyncReport = useCallback(async (runId: string) => {
+    registrySyncReportFetchedRef.current = true;
+    try {
+      const reportRes = await adminApi.getRunReport(runId);
+      if (!registrySyncModalOpenRef.current) {
+        return;
+      }
+      setRegistrySyncReportJson(JSON.stringify(reportRes.data, null, 2));
+    } catch {
+      if (registrySyncModalOpenRef.current) {
+        setRegistrySyncReportJson('');
+      }
+    }
+  }, []);
+
   const openRegistrySyncModal = useCallback(
     async (file: PlpFileInfo) => {
+      registrySyncModalOpenRef.current = true;
       setRegistrySyncFile(file);
       setRegistrySyncModalOpen(true);
       setRegistrySyncHint(null);
       setRegistrySyncHintLoading(true);
       setRegistrySyncSearchQuery('');
       setRegistrySyncReportJson('');
-      setRegistrySyncLogLines([]);
-      registrySyncLogSeqRef.current = 0;
+      resetLogView();
       registrySyncReportFetchedRef.current = false;
       try {
         const res = await adminApi.getRegistrySyncHint(file.parserCode, file.fileKey);
+        if (!registrySyncModalOpenRef.current) {
+          return;
+        }
         setRegistrySyncHint(res.data);
         setRegistrySyncAssignedUserId(res.data.suggestedAssignedUserId ?? '');
         const k = plpRegistrySyncFileKey(file);
         const persistedId = registrySyncRunIdsRef.current[k];
         if (persistedId) {
           const runRes = await adminApi.getRun(persistedId);
-          setRegistrySyncModalRun(runRes.data);
-          const activeLike =
-            isRunActive(runRes.data.status) ||
-            runRes.data.status === 'cancel_requested' ||
-            runRes.data.status === 'queued';
-          if (activeLike) {
-            setRegistrySyncRunId(persistedId);
-            registrySyncLogSeqRef.current = 0;
-            setRegistrySyncLogLines([]);
-            registrySyncReportFetchedRef.current = false;
+          if (!registrySyncModalOpenRef.current) {
             return;
           }
-          setRegistrySyncRunId(null);
-          registrySyncReportFetchedRef.current = false;
-          let afterSeq = 0;
-          const lines: string[] = [];
-          for (let pageIdx = 0; pageIdx < 50; pageIdx += 1) {
-            const lr = await adminApi.getRunLogs(persistedId, afterSeq);
-            const chunks = lr.data.data;
-            if (chunks.length === 0) break;
-            const maxSeq = Math.max(...chunks.map((c) => c.seq));
-            afterSeq = maxSeq;
-            lines.push(
-              ...chunks.flatMap((chunk) =>
-                typeof chunk.message === 'string' && chunk.message.trim().length > 0
-                  ? [chunk.message]
-                  : [],
-              ),
-            );
-            if (chunks.length < 500) break;
+          setRegistrySyncModalRun(runRes.data);
+          if (isRunActive(runRes.data.status)) {
+            startPollingRunLogs(persistedId);
+            return;
           }
-          registrySyncLogSeqRef.current = afterSeq;
-          setRegistrySyncLogLines(lines);
+          await loadRunLogs(runRes.data);
+          if (!registrySyncModalOpenRef.current) {
+            return;
+          }
           if (runRes.data.status === 'completed') {
-            registrySyncReportFetchedRef.current = true;
-            try {
-              const reportRes = await adminApi.getRunReport(persistedId);
-              setRegistrySyncReportJson(JSON.stringify(reportRes.data, null, 2));
-            } catch {
-              setRegistrySyncReportJson('');
-            }
+            await loadRegistrySyncReport(persistedId);
           } else {
             setRegistrySyncReportJson('');
           }
           return;
         }
-        setRegistrySyncRunId(null);
         setRegistrySyncModalRun(null);
       } catch {
-        toast.error(t('admin.parsing.registrySyncHintLoadError'));
+        if (registrySyncModalOpenRef.current) {
+          toast.error(t('admin.parsing.registrySyncHintLoadError'));
+        }
         setRegistrySyncAssignedUserId('');
-        setRegistrySyncRunId(null);
         setRegistrySyncModalRun(null);
+        resetLogView();
       } finally {
-        setRegistrySyncHintLoading(false);
+        if (registrySyncModalOpenRef.current) {
+          setRegistrySyncHintLoading(false);
+        }
       }
     },
-    [plpRegistrySyncFileKey, t],
+    [
+      loadRegistrySyncReport,
+      loadRunLogs,
+      plpRegistrySyncFileKey,
+      resetLogView,
+      startPollingRunLogs,
+      t,
+    ],
   );
 
   const closeRegistrySyncModal = useCallback(() => {
+    registrySyncModalOpenRef.current = false;
+    resetLogView();
     setRegistrySyncModalOpen(false);
-  }, []);
-
-  useParserRunLogPoller({
-    runId: registrySyncRunId,
-    logSeqRef: registrySyncLogSeqRef,
-    onLogChunks: (messages) => {
-      setRegistrySyncLogLines((prev) => [...prev, ...messages]);
-    },
-    onRunUpdate: setRegistrySyncModalRun,
-    isRunTerminal: (run) => !isRunActive(run.status) && run.status !== 'queued',
-    onTerminal: (run) => {
-      if (
-        run.status === 'completed' &&
-        !registrySyncReportFetchedRef.current &&
-        run.id === registrySyncRunId
-      ) {
-        registrySyncReportFetchedRef.current = true;
-        void (async () => {
-          try {
-            const reportRes = await adminApi.getRunReport(registrySyncRunId!);
-            setRegistrySyncReportJson(JSON.stringify(reportRes.data, null, 2));
-          } catch {
-            setRegistrySyncReportJson('');
-          }
-        })();
-      }
-    },
-    logsLoadErrorKey: t('admin.parsing.logsLoadError'),
-  });
+  }, [resetLogView]);
 
   const startRegistrySync = useCallback(async () => {
     if (!registrySyncFile) return;
@@ -171,18 +174,17 @@ export function useParsingTabRegistrySync() {
       );
       const k = plpRegistrySyncFileKey(registrySyncFile);
       registrySyncRunIdsRef.current[k] = run.data.id;
-      setRegistrySyncRunId(run.data.id);
       setRegistrySyncModalRun(run.data);
-      setRegistrySyncLogLines([]);
-      registrySyncLogSeqRef.current = 0;
       setRegistrySyncReportJson('');
       registrySyncReportFetchedRef.current = false;
+      startPollingRunLogs(run.data.id);
       toast.success(t('admin.parsing.runStarted'));
     } catch {
       toast.error(t('admin.parsing.registrySyncRunStartError'));
     }
   }, [
     plpRegistrySyncFileKey,
+    startPollingRunLogs,
     registrySyncAssignValidation.status,
     registrySyncAssignedUserId,
     registrySyncFile,
@@ -191,7 +193,7 @@ export function useParsingTabRegistrySync() {
 
   const cancelRegistrySyncRun = useCallback(async () => {
     if (!registrySyncModalRun) return;
-    if (!isRunActive(registrySyncModalRun.status) && registrySyncModalRun.status !== 'queued') {
+    if (!isRunActive(registrySyncModalRun.status)) {
       return;
     }
     try {
@@ -231,7 +233,6 @@ export function useParsingTabRegistrySync() {
     registrySyncHint,
     registrySyncAssignedUserId,
     setRegistrySyncAssignedUserId,
-    registrySyncRunId,
     registrySyncLogLines,
     registrySyncModalRun,
     registrySyncSearchQuery,

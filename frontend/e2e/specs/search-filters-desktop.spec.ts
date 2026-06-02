@@ -13,7 +13,8 @@ const TAB_BUTTON_TEST_IDS: Record<SearchFilterTab, string> = {
 };
 
 test.describe('Search: desktop filter tabs @p0', () => {
-  test.beforeEach(({}, testInfo) => {
+  test.beforeEach(({ page: _page }, testInfo) => {
+    void _page;
     test.skip(isMobileProjectName(testInfo.project.name), 'Desktop layout only');
   });
 

@@ -211,7 +211,7 @@ export function ParsingTabModals(c: ParsingTabControllerState) {
                   onSelect: () => {
                     const selectedRun = openRunActionsMenu.run;
                     setOpenRunActionsMenu(null);
-                    runModals.openLogs(selectedRun);
+                    void runModals.openLogs(selectedRun);
                   },
                 },
                 ...(openRunActionsMenu.run.run_type === 'pdp'

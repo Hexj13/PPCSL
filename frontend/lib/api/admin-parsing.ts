@@ -1,5 +1,11 @@
+import type { AxiosRequestConfig } from 'axios';
+
 import { api } from './api-client';
 import type { PaginatedResponse, PaginationMeta } from './api-types';
+
+const quietAdminParsingPollConfig: AxiosRequestConfig = {
+  headers: { 'X-Skip-Error-Handling': 'true' },
+};
 
 export type ParserScheduleRunType = 'plp' | 'pdp';
 export type ParserRunRecordType = 'plp' | 'pdp' | 'sync';
@@ -181,9 +187,29 @@ export const adminParsingApi = {
     api.get<PaginatedResponse<ParserRun, PaginationMeta>>(
       `/api/admin/parsing/pdp-runs?page=${page}&limit=${limit}`,
     ),
-  getRun: (id: string) => api.get<ParserRun>(`/api/admin/parsing/runs/${id}`),
-  getRunLogs: (id: string, afterSeq = 0) =>
-    api.get<{ data: ParserLogChunk[] }>(`/api/admin/parsing/runs/${id}/logs?afterSeq=${afterSeq}`),
+  getRun: (id: string, options?: { quiet?: boolean }) =>
+    api.get<ParserRun>(
+      `/api/admin/parsing/runs/${id}`,
+      options?.quiet ? quietAdminParsingPollConfig : undefined,
+    ),
+  getRunLogs: (id: string, afterSeq = 0, options?: { quiet?: boolean; limit?: number }) => {
+    const limitParam =
+      options?.limit !== undefined ? `&limit=${encodeURIComponent(String(options.limit))}` : '';
+    return api.get<{ data: ParserLogChunk[] }>(
+      `/api/admin/parsing/runs/${id}/logs?afterSeq=${afterSeq}${limitParam}`,
+      options?.quiet ? quietAdminParsingPollConfig : undefined,
+    );
+  },
+  getRunLogsFull: (id: string, options?: { quiet?: boolean }) =>
+    api.get<{ lines: string[]; lastSeq: number }>(
+      `/api/admin/parsing/runs/${id}/logs/full`,
+      options?.quiet ? quietAdminParsingPollConfig : undefined,
+    ),
+  pollRunLogs: (id: string, afterSeq = 0, options?: { quiet?: boolean }) =>
+    api.get<{ run: ParserRun; lines: string[]; lastSeq: number }>(
+      `/api/admin/parsing/runs/${id}/logs/poll?afterSeq=${afterSeq}`,
+      options?.quiet ? quietAdminParsingPollConfig : undefined,
+    ),
   getRunReport: (id: string) =>
     api.get<Record<string, unknown>>(`/api/admin/parsing/runs/${id}/report`),
   getRunCurrentPlpFile: (id: string) =>

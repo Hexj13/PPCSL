@@ -2,7 +2,12 @@ import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axio
 import axios from 'axios';
 
 import { clearClientAuthLocalStorage } from '../client-auth-storage';
-import { getClientLocale, loadTranslations, type Translations } from '../i18n';
+import {
+  getClientLocale,
+  loadTranslations,
+  loadTranslationsDynamic,
+  type Translations,
+} from '../i18n';
 import { buildSignInHref } from '../return-url';
 import { sanitizeForSentryExtra } from '../sentry-sanitize';
 
@@ -204,13 +209,17 @@ function clearAuthSetReturnUrlAndRedirect(): void {
   window.location.href = buildSignInHref(currentUrl);
 }
 
-const getErrorMessage = (error: AxiosError): string => {
+const getErrorMessage = async (error: AxiosError): Promise<string> => {
   const locale = getClientLocale();
   let translations: Translations | null = null;
   try {
-    translations = loadTranslations(locale);
+    translations = await loadTranslationsDynamic(locale);
   } catch {
-    translations = null;
+    try {
+      translations = loadTranslations(locale);
+    } catch {
+      translations = null;
+    }
   }
   const t = createErrorT(translations);
 
@@ -287,7 +296,7 @@ async function handleTransientGetRetry(
 
 async function showToastForError(error: AxiosError): Promise<void> {
   if (typeof window === 'undefined') return;
-  const errorMessage = getErrorMessage(error);
+  const errorMessage = await getErrorMessage(error);
   try {
     const { toast } = await import('@/lib/toast');
     toast.error(errorMessage);

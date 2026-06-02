@@ -13,7 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 
 import { AdminGuard } from '../../auth/infrastructure/guards/admin.guard';
@@ -199,16 +199,37 @@ export class AdminParsingController {
   }
 
   @Get('runs/:id/logs')
-  @Throttle({ default: { limit: 120, ttl: 60000 } })
-  @ApiOperation({ summary: 'Log chunks after seq' })
+  @SkipThrottle()
+  @ApiOperation({ summary: 'Log chunks after seq (legacy paginated)' })
   async getLogs(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('afterSeq') afterSeq?: string,
+    @Query('limit') limit?: string,
+  ): Promise<unknown> {
+    const parsed = afterSeq !== undefined && afterSeq !== '' ? Number.parseInt(afterSeq, 10) : 0;
+    const seq = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+    const take = parseLimitQuery(limit, { defaultValue: 500, maxValue: 10_000 });
+    const chunks = await this.orchestrator.getLogChunks(id, seq, take);
+    return { data: chunks };
+  }
+
+  @Get('runs/:id/logs/full')
+  @SkipThrottle()
+  @ApiOperation({ summary: 'Full parser run log lines (single request)' })
+  async getLogsFull(@Param('id', ParseUUIDPipe) id: string): Promise<unknown> {
+    return this.orchestrator.getRunLogsFull(id);
+  }
+
+  @Get('runs/:id/logs/poll')
+  @SkipThrottle()
+  @ApiOperation({ summary: 'Poll run status and new log lines (single request)' })
+  async pollLogs(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('afterSeq') afterSeq?: string,
   ): Promise<unknown> {
     const parsed = afterSeq !== undefined && afterSeq !== '' ? Number.parseInt(afterSeq, 10) : 0;
     const seq = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
-    const chunks = await this.orchestrator.getLogChunks(id, seq);
-    return { data: chunks };
+    return this.orchestrator.pollRunLogs(id, seq);
   }
 
   @Get('runs/:id/report')

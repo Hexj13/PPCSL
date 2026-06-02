@@ -7,15 +7,18 @@ import { adminApi } from '@/lib/api';
 import type { ParserRun, ParserRunCurrentPlpFile } from '@/lib/api/admin-parsing';
 import { toast } from '@/lib/toast';
 
-import { useParserRunLogPoller } from './useParserRunLogPoller';
+import { useParserRunLogView } from './useParserRunLogView';
 
 export function useParsingTabRunModals() {
   const { t } = useTranslation();
 
   const [logsModalRun, setLogsModalRun] = useState<ParserRun | null>(null);
-  const [logsRunId, setLogsRunId] = useState<string | null>(null);
-  const [logLines, setLogLines] = useState<string[]>([]);
-  const logSeqRef = useRef(0);
+  const logsModalOpenRef = useRef(false);
+  const { logLines, hasLogContent, resetLogView, loadRunLogs } = useParserRunLogView({
+    sessionOpenRef: logsModalOpenRef,
+    logsLoadErrorKey: t('admin.parsing.logsLoadError'),
+    onRunUpdate: setLogsModalRun,
+  });
 
   const [reportModalRun, setReportModalRun] = useState<ParserRun | null>(null);
   const [reportJson, setReportJson] = useState('');
@@ -26,31 +29,22 @@ export function useParsingTabRunModals() {
   const [reportSearchQuery, setReportSearchQuery] = useState('');
   const [plpFileSearchQuery, setPlpFileSearchQuery] = useState('');
 
-  const hasLogContent = logLines.some((line) => typeof line === 'string' && line.trim().length > 0);
-
-  const openLogs = useCallback((run: ParserRun) => {
-    setLogsModalRun(run);
-    setLogsRunId(run.id);
-    setLogLines([]);
-    setLogsSearchQuery('');
-    logSeqRef.current = 0;
-  }, []);
+  const openLogs = useCallback(
+    async (run: ParserRun) => {
+      logsModalOpenRef.current = true;
+      setLogsModalRun(run);
+      setLogsSearchQuery('');
+      await loadRunLogs(run);
+    },
+    [loadRunLogs],
+  );
 
   const closeLogsModal = useCallback(() => {
+    logsModalOpenRef.current = false;
+    resetLogView();
     setLogsModalRun(null);
-    setLogsRunId(null);
     setLogsSearchQuery('');
-  }, []);
-
-  useParserRunLogPoller({
-    runId: logsRunId,
-    logSeqRef,
-    onLogChunks: (messages) => {
-      setLogLines((prev) => [...prev, ...messages]);
-    },
-    onRunUpdate: setLogsModalRun,
-    logsLoadErrorKey: t('admin.parsing.logsLoadError'),
-  });
+  }, [resetLogView]);
 
   const openReport = useCallback(
     async (run: ParserRun) => {

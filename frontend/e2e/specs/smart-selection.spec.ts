@@ -38,72 +38,71 @@ test.describe('Smart selection', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('completes wizard, saves filter, and applies it on search home', { timeout: 90_000 }, async ({
-    page,
-    searchHomePage,
-    smartSelectionPage,
-    favoritesPage,
-  }) => {
-    let createdFilter: SmartSelectionCreateResponse | null = null;
+  test(
+    'completes wizard, saves filter, and applies it on search home',
+    { timeout: 90_000 },
+    async ({ page, searchHomePage, smartSelectionPage, favoritesPage }) => {
+      let createdFilter: SmartSelectionCreateResponse | null = null;
 
-    const steps: E2EStep[] = [
-      {
-        name: 'Login and clear saved filters quota',
-        action: async () => {
-          await loginByUi(page, requireAuthCredentials());
-          await deleteAllSavedFiltersForSession(page);
+      const steps: E2EStep[] = [
+        {
+          name: 'Login and clear saved filters quota',
+          action: async () => {
+            await loginByUi(page, requireAuthCredentials());
+            await deleteAllSavedFiltersForSession(page);
+          },
         },
-      },
-      {
-        name: 'Open smart selection from search',
-        action: async () => {
-          await searchHomePage.openAndExpectPageView();
-          await searchHomePage.clickSmartSelection();
-          await smartSelectionPage.expectPageView();
+        {
+          name: 'Open smart selection from search',
+          action: async () => {
+            await searchHomePage.openAndExpectPageView();
+            await searchHomePage.clickSmartSelection();
+            await smartSelectionPage.expectPageView();
+          },
         },
-      },
-      {
-        name: 'Submit smart selection answers',
-        action: async () => {
-          await completeSmartSelectionWizard(smartSelectionPage);
-          const [createResponse] = await Promise.all([
-            page.waitForResponse(
-              (r) => r.url().includes('/api/smart-selection') && r.request().method() === 'POST',
-              { timeout: 45_000 },
-            ),
-            smartSelectionPage.clickSubmit(),
-          ]);
-          expect(
-            createResponse.ok(),
-            `POST /api/smart-selection failed: HTTP ${createResponse.status()}`,
-          ).toBe(true);
-          createdFilter = (await createResponse.json()) as SmartSelectionCreateResponse;
-          expect(createdFilter.id).toBeTruthy();
-          expect(createdFilter.filters?.vehicleType).toBe('car');
+        {
+          name: 'Submit smart selection answers',
+          action: async () => {
+            await completeSmartSelectionWizard(smartSelectionPage);
+            const [createResponse] = await Promise.all([
+              page.waitForResponse(
+                (r) => r.url().includes('/api/smart-selection') && r.request().method() === 'POST',
+                { timeout: 45_000 },
+              ),
+              smartSelectionPage.clickSubmit(),
+            ]);
+            expect(
+              createResponse.ok(),
+              `POST /api/smart-selection failed: HTTP ${createResponse.status()}`,
+            ).toBe(true);
+            createdFilter = (await createResponse.json()) as SmartSelectionCreateResponse;
+            expect(createdFilter.id).toBeTruthy();
+            expect(createdFilter.filters?.vehicleType).toBe('car');
+          },
         },
-      },
-      {
-        name: 'Expect favorites filters tab after success',
-        action: async () => {
-          await expect(page).toHaveURL(/\/favorites/);
-          await expect(page).toHaveURL(/tab=filters/);
-          await favoritesPage.expectPageView();
-          await favoritesPage.openFiltersTab();
-          await favoritesPage.expectSavedFiltersListVisible();
+        {
+          name: 'Expect favorites filters tab after success',
+          action: async () => {
+            await expect(page).toHaveURL(/\/favorites/);
+            await expect(page).toHaveURL(/tab=filters/);
+            await favoritesPage.expectPageView();
+            await favoritesPage.openFiltersTab();
+            await favoritesPage.expectSavedFiltersListVisible();
+          },
         },
-      },
-      {
-        name: 'Apply saved smart filter and verify search home URL',
-        action: async () => {
-          if (!createdFilter) {
-            throw new Error('Smart selection filter was not created');
-          }
-          await favoritesPage.clickSavedFilterCard(createdFilter.id);
-          await expectHomeWithSavedFilterApplied(page, searchHomePage, createdFilter.filters);
+        {
+          name: 'Apply saved smart filter and verify search home URL',
+          action: async () => {
+            if (!createdFilter) {
+              throw new Error('Smart selection filter was not created');
+            }
+            await favoritesPage.clickSavedFilterCard(createdFilter.id);
+            await expectHomeWithSavedFilterApplied(page, searchHomePage, createdFilter.filters);
+          },
         },
-      },
-    ];
+      ];
 
-    await runSteps(prependClearBrowserState(page, steps));
-  });
+      await runSteps(prependClearBrowserState(page, steps));
+    },
+  );
 });

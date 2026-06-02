@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, type MutableRefObject } from 'react';
+import { useEffect, useRef, type MutableRefObject } from 'react';
 
 import { adminApi } from '@/lib/api';
 import type { ParserRun } from '@/lib/api/admin-parsing';
@@ -27,43 +27,52 @@ export function useParserRunLogPoller({
   onTerminal,
   isRunTerminal,
   logsLoadErrorKey,
-  pollIntervalMs = 2500,
+  pollIntervalMs = 5000,
 }: UseParserRunLogPollerOptions) {
+  const lastErrorToastAtRef = useRef(0);
+
   useEffect(() => {
     if (!runId) return;
     let interval: ReturnType<typeof setInterval> | null = null;
+    let stopped = false;
+
+    const notifyLoadError = () => {
+      const now = Date.now();
+      if (now - lastErrorToastAtRef.current < 30_000) {
+        return;
+      }
+      lastErrorToastAtRef.current = now;
+      toast.error(logsLoadErrorKey);
+    };
+
     const tick = async () => {
+      if (stopped) return;
       try {
-        const res = await adminApi.getRunLogs(runId, logSeqRef.current);
-        const chunks = res.data.data;
-        if (chunks.length > 0) {
-          const maxSeq = Math.max(...chunks.map((c) => c.seq));
-          logSeqRef.current = maxSeq;
-          onLogChunks(
-            chunks.flatMap((chunk) =>
-              typeof chunk.message === 'string' && chunk.message.trim().length > 0
-                ? [chunk.message]
-                : [],
-            ),
-          );
+        const res = await adminApi.pollRunLogs(runId, logSeqRef.current, { quiet: true });
+        const { run, lines, lastSeq } = res.data;
+        if (lines.length > 0) {
+          logSeqRef.current = lastSeq;
+          onLogChunks(lines);
         }
-        const refreshed = await adminApi.getRun(runId);
-        onRunUpdate(refreshed.data);
-        const terminal = isRunTerminal
-          ? isRunTerminal(refreshed.data)
-          : !isRunActive(refreshed.data.status);
-        if (terminal && interval) {
-          clearInterval(interval);
-          interval = null;
-          onTerminal?.(refreshed.data);
+        onRunUpdate(run);
+        const terminal = isRunTerminal ? isRunTerminal(run) : !isRunActive(run.status);
+        if (terminal) {
+          stopped = true;
+          if (interval) {
+            clearInterval(interval);
+            interval = null;
+          }
+          onTerminal?.(run);
         }
       } catch {
-        toast.error(logsLoadErrorKey);
+        notifyLoadError();
       }
     };
+
     void tick();
     interval = setInterval(() => void tick(), pollIntervalMs);
     return () => {
+      stopped = true;
       if (interval) clearInterval(interval);
     };
   }, [

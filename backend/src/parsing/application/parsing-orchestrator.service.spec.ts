@@ -60,7 +60,9 @@ describe('ParsingOrchestratorService', () => {
       update: jest.fn(),
       manager: {},
     } as unknown as Repository<ParserRun>;
-    const logChunkRepo = {} as unknown as Repository<ParserLogChunk>;
+    const logChunkRepo = {
+      find: jest.fn(),
+    } as unknown as Repository<ParserLogChunk>;
     const scheduleRepo = {} as unknown as Repository<ParserSchedule>;
     const cliRunner = {} as unknown as CliParserRunnerService;
     const plpStorage = {} as unknown as PlpStorageService;
@@ -107,7 +109,7 @@ describe('ParsingOrchestratorService', () => {
       pdpRunExecutor,
       syncRunExecutor,
     );
-    return { service, runRepo, adminAudit };
+    return { service, runRepo, logChunkRepo, adminAudit };
   };
 
   describe('reconcileStaleActiveRunsOnStartup', () => {
@@ -243,6 +245,43 @@ describe('ParsingOrchestratorService', () => {
 
       await expect(service.requestCancelRun('done-1', 'admin-1')).rejects.toBeInstanceOf(
         BadRequestException,
+      );
+    });
+  });
+
+  describe('run log views', () => {
+    it('getRunLogsFull returns flattened lines and lastSeq', async () => {
+      const { service, runRepo, logChunkRepo } = createService();
+      const run = createParserRun({ id: 'run-logs-1', status: 'completed' });
+      (runRepo.findOne as jest.Mock).mockResolvedValue(run);
+      (logChunkRepo.find as jest.Mock).mockResolvedValue([
+        { seq: 1, message: 'line one' },
+        { seq: 2, message: '  ' },
+        { seq: 3, message: 'line three' },
+      ]);
+
+      const result = await service.getRunLogsFull('run-logs-1');
+
+      expect(result.lines).toEqual(['line one', 'line three']);
+      expect(result.lastSeq).toBe(3);
+    });
+
+    it('pollRunLogs returns run, new lines, and lastSeq in one call', async () => {
+      const { service, runRepo, logChunkRepo } = createService();
+      const run = createParserRun({ id: 'run-poll-1', status: 'in_progress' });
+      (runRepo.findOne as jest.Mock).mockResolvedValue(run);
+      (logChunkRepo.find as jest.Mock).mockResolvedValue([{ seq: 4, message: 'new line' }]);
+
+      const result = await service.pollRunLogs('run-poll-1', 3);
+
+      expect(result.run).toBe(run);
+      expect(result.lines).toEqual(['new line']);
+      expect(result.lastSeq).toBe(4);
+      expect(logChunkRepo.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { run_id: 'run-poll-1', seq: expect.anything() },
+          take: 10_000,
+        }),
       );
     });
   });

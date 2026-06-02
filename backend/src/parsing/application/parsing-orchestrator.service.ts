@@ -39,6 +39,17 @@ import { ParsingRunChildProcessHost } from './parsing-run-child-process.host';
 import { ParsingRunLifecycleService } from './parsing-run-lifecycle.service';
 import { ParsingSyncRunExecutor } from './parsing-sync-run-executor.service';
 
+export type ParserRunLogsFullView = {
+  lines: string[];
+  lastSeq: number;
+};
+
+export type ParserRunLogsPollView = {
+  run: ParserRun;
+  lines: string[];
+  lastSeq: number;
+};
+
 @Injectable()
 export class ParsingOrchestratorService {
   private readonly logger = new Logger(ParsingOrchestratorService.name);
@@ -86,12 +97,61 @@ export class ParsingOrchestratorService {
     return this.runLifecycle.getRun(id);
   }
 
-  async getLogChunks(runId: string, afterSeq: number): Promise<ParserLogChunk[]> {
+  async getLogChunks(runId: string, afterSeq: number, take = 500): Promise<ParserLogChunk[]> {
+    const cappedTake = Math.min(Math.max(Math.trunc(take), 1), 10_000);
     return this.logChunkRepo.find({
       where: { run_id: runId, seq: MoreThan(afterSeq) },
       order: { seq: 'ASC' },
-      take: 500,
+      take: cappedTake,
     });
+  }
+
+  async getRunLogsFull(runId: string): Promise<ParserRunLogsFullView> {
+    await this.getRun(runId);
+    const chunks = await this.logChunkRepo.find({
+      where: { run_id: runId },
+      order: { seq: 'ASC' },
+    });
+    return {
+      lines: ParsingOrchestratorService.logChunksToLines(chunks),
+      lastSeq: chunks.length > 0 ? chunks[chunks.length - 1]!.seq : 0,
+    };
+  }
+
+  async pollRunLogs(runId: string, afterSeq: number): Promise<ParserRunLogsPollView> {
+    const safeAfterSeq = Number.isFinite(afterSeq) && afterSeq >= 0 ? Math.trunc(afterSeq) : 0;
+    const run = await this.getRun(runId);
+    const chunks = await this.collectLogChunksAfter(runId, safeAfterSeq);
+    const lastSeq =
+      chunks.length > 0 ? Math.max(...chunks.map((chunk) => chunk.seq)) : safeAfterSeq;
+    return {
+      run,
+      lines: ParsingOrchestratorService.logChunksToLines(chunks),
+      lastSeq,
+    };
+  }
+
+  private async collectLogChunksAfter(runId: string, afterSeq: number): Promise<ParserLogChunk[]> {
+    const collected: ParserLogChunk[] = [];
+    let cursor = afterSeq;
+    for (;;) {
+      const batch = await this.getLogChunks(runId, cursor, 10_000);
+      if (batch.length === 0) {
+        break;
+      }
+      collected.push(...batch);
+      cursor = batch[batch.length - 1]!.seq;
+      if (batch.length < 10_000) {
+        break;
+      }
+    }
+    return collected;
+  }
+
+  private static logChunksToLines(chunks: ParserLogChunk[]): string[] {
+    return chunks.flatMap((chunk) =>
+      typeof chunk.message === 'string' && chunk.message.trim().length > 0 ? [chunk.message] : [],
+    );
   }
 
   async getReportViewModel(runId: string): Promise<Record<string, unknown>> {

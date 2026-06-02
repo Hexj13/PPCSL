@@ -10,8 +10,8 @@ import { ListingDetailPage } from '../page-objects/listing-detail.page';
 import { MyListingsPage } from '../page-objects/my-listings.page';
 import { ProfilePage } from '../page-objects/profile.page';
 import { SearchHomePage } from '../page-objects/search-home.page';
-import { SmartSelectionPage } from '../page-objects/smart-selection.page';
 import { SignPage } from '../page-objects/sign.page';
+import { SmartSelectionPage } from '../page-objects/smart-selection.page';
 import { VerifyPhonePage } from '../page-objects/verify-phone.page';
 
 interface PageObjectFixtures {

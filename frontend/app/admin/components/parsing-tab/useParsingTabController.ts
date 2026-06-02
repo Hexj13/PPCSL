@@ -110,7 +110,7 @@ export function useParsingTabController({ isActive }: ParsingTabProps) {
       lists.setCancelRun(null);
       lists.plpRuns.reload(true);
       lists.pdpRuns.reload(true);
-      if (registrySync.registrySyncRunId === cancelRun.id) {
+      if (registrySync.registrySyncModalRun?.id === cancelRun.id) {
         const refreshed = await adminApi.getRun(cancelRun.id);
         registrySync.setRegistrySyncModalRun(refreshed.data);
       }
