@@ -228,6 +228,13 @@ export class SearchHomePage {
     return true;
   }
 
+  async clickSmartSelection(): Promise<void> {
+    const btn = this.searchFiltersForm().getByTestId('search-smart-selection');
+    await expect(btn).toBeVisible({ timeout: 20_000 });
+    await btn.scrollIntoViewIfNeeded();
+    await btn.click();
+  }
+
   async openSaveFilterModal(): Promise<void> {
     const btn = this.searchFiltersForm().getByTestId('search-save-filter');
     await expect(btn).toBeEnabled({ timeout: 20_000 });

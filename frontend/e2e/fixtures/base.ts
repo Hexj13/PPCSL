@@ -10,6 +10,7 @@ import { ListingDetailPage } from '../page-objects/listing-detail.page';
 import { MyListingsPage } from '../page-objects/my-listings.page';
 import { ProfilePage } from '../page-objects/profile.page';
 import { SearchHomePage } from '../page-objects/search-home.page';
+import { SmartSelectionPage } from '../page-objects/smart-selection.page';
 import { SignPage } from '../page-objects/sign.page';
 import { VerifyPhonePage } from '../page-objects/verify-phone.page';
 
@@ -24,6 +25,7 @@ interface PageObjectFixtures {
   myListingsPage: MyListingsPage;
   profilePage: ProfilePage;
   searchHomePage: SearchHomePage;
+  smartSelectionPage: SmartSelectionPage;
   signPage: SignPage;
   verifyPhonePage: VerifyPhonePage;
 }
@@ -58,6 +60,9 @@ export const test = base.extend<PageObjectFixtures>({
   },
   searchHomePage: async ({ page }, use) => {
     await use(new SearchHomePage(page));
+  },
+  smartSelectionPage: async ({ page }, use) => {
+    await use(new SmartSelectionPage(page));
   },
   signPage: async ({ page }, use) => {
     await use(new SignPage(page));

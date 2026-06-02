@@ -9,7 +9,7 @@ import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps
 import { isMobileProjectName } from '../utils/viewport';
 
 test.describe('Search: mobile filters and sheets @p0', () => {
-  test.beforeEach((_fixtures, testInfo) => {
+  test.beforeEach(({}, testInfo) => {
     test.skip(!isMobileProjectName(testInfo.project.name), 'Mobile layout only');
   });
 

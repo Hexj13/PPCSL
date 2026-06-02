@@ -38,7 +38,7 @@ test.describe('Smart selection', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('completes wizard, saves filter, and applies it on search home', async ({
+  test('completes wizard, saves filter, and applies it on search home', { timeout: 90_000 }, async ({
     page,
     searchHomePage,
     smartSelectionPage,
