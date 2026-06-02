@@ -1,5 +1,23 @@
+import { createRequire } from 'module';
+
 import { Module } from '@nestjs/common';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
+
+const nodeRequire = createRequire(__filename);
+
+function devPinoTransport():
+  | { target: 'pino-pretty'; options: { singleLine: true; colorize: true } }
+  | undefined {
+  if (process.env.NODE_ENV === 'production') {
+    return undefined;
+  }
+  try {
+    nodeRequire.resolve('pino-pretty');
+    return { target: 'pino-pretty', options: { singleLine: true, colorize: true } };
+  } catch {
+    return undefined;
+  }
+}
 
 @Module({
   imports: [
@@ -17,10 +35,7 @@ import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
             url: req.url,
           }),
         },
-        transport:
-          process.env.NODE_ENV !== 'production'
-            ? { target: 'pino-pretty', options: { singleLine: true, colorize: true } }
-            : undefined,
+        transport: devPinoTransport(),
       },
     }),
   ],
