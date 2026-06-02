@@ -347,7 +347,8 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 - **Search:** PostgreSQL Full-Text Search with extensive filtering options
 - **Smart Selection:** authenticated questionnaire that maps car-use preferences to a saved search filter
 - **Caching:** Redis for SMS codes, cache optimization (SCAN instead of KEYS), listing AI analysis generation locks and per-user hourly quotas (production; see `POST /api/listings/:id/ai-report` and `AI_REPORT_MAX_GENERATIONS_PER_HOUR`)
-- **Monitoring:** Health check endpoint (`/health`) with database and Redis connectivity checks; optional Prometheus text at `GET /metrics` (`MetricsModule`)
+- **Monitoring:** Health check endpoint (`/health`) with database and Redis connectivity checks; Prometheus text at `GET /metrics` (`MetricsModule`, protected by `CronSecretGuard` — scrapers must send `x-cron-secret: <CRON_SECRET>`)
+- **Listing views:** Pending view counts accumulate in Redis hash `listing:views:pending`; a cron flush every 5 minutes applies them to Postgres under Redis lock `listing:views:flush:lock` (single writer across instances); shutdown runs an unlocked flush
 - **Tracing (optional):** OpenTelemetry OTLP export when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (`OTEL_SERVICE_NAME`, default `kupito-backend`)
 - **Code Quality:** TypeScript strict mode, CI/CD automation, bundle optimization
 
@@ -359,21 +360,21 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 
 ```http
 POST /api/auth/register              # Register new user
-POST /api/auth/login                  # Login (returns access_token and refresh_token)
-POST /api/auth/refresh                # Refresh access token
+POST /api/auth/login                  # Login (sets httpOnly session cookies; JSON returns user only)
+POST /api/auth/refresh                # Refresh session (rotates refresh token in cookies; JSON returns user only)
 GET  /api/auth/me                     # Get current user profile
 PATCH /api/auth/profile              # Update user profile
 POST /api/auth/change-password       # Change password (JWT; current + new; throttle: 5/min per IP in production)
 POST /api/auth/change-phone-request  # Request phone number change; sends SMS to new number (JWT; per-phone SMS quota in Redis)
 POST /api/auth/change-phone-verify   # Complete phone change with SMS code (JWT)
 DELETE /api/auth/profile              # Delete user account
-POST /api/auth/send-sms              # Send SMS verification code
+POST /api/auth/send-sms              # Send SMS verification code (always { success: true } to avoid phone enumeration)
 POST /api/auth/verify-sms            # Verify SMS code
 POST /api/auth/request-password-reset # Request password reset
 POST /api/auth/reset-password         # Reset password
 ```
 
-Refresh tokens rotate on each successful refresh (the previous refresh token is revoked). The Axios client persists the new pair in `localStorage`; Zustand must stay aligned with those values after awaits that may trigger silent refresh—see [cross-tab-sync.md](../features/cross-tab-sync.md#auth-refresh-and-token-rotation).
+Refresh tokens rotate on each successful refresh (the previous refresh token is revoked). Access and refresh tokens are stored in **httpOnly cookies** (`kupito_access_token`, `kupito_refresh_token`); API JSON responses do not include token fields. `POST /api/auth/change-password` and `POST /api/auth/reset-password` revoke refresh tokens and clear session cookies. Already-issued access JWTs remain valid until expiry (see [auth-jwt-invalidation-followup.md](./auth-jwt-invalidation-followup.md)). The Axios client calls `POST /api/auth/refresh` with credentials; Zustand holds the `user` snapshot only—see [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md) and [cross-tab-sync.md](../features/cross-tab-sync.md#auth-refresh-and-token-rotation).
 
 **Profile password change (`/profile`):** The form uses **two fields only** (current + new password). There is no duplicate “confirm new password” field by product choice—to keep the UI light. The client validates length (max 100) and strength before calling `POST /api/auth/change-password`.
 
@@ -578,7 +579,7 @@ Entities: `brands` and `vehicle_models` have `is_archived`, `name_normalized`, `
 ```http
 GET /                                 # API status check
 GET /health                          # Health check (database, Redis)
-GET /metrics                         # Prometheus metrics (text/plain; exclude from public ingress unless scraped internally)
+GET /metrics                         # Prometheus metrics (text/plain). Requires header x-cron-secret: <CRON_SECRET> (CronSecretGuard). Scrape from private network only; do not expose without the secret
 ```
 
 ---
@@ -741,7 +742,12 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 #### SMS Verification
 
 - IP-based brute force protection (40 failed attempts per IP on guarded auth endpoints, 1-hour block)
-- Per phone number: at most 3 SMS sends per rolling hour (Redis); at most 3 incorrect code submissions per active code (Redis), separate counters for registration/phone-change codes vs password-reset codes
+- **Short-window per-phone limits** (`AuthPhoneRateLimitService`, separate Redis keys per operation, 10-minute TTL):
+  - `send`: 5 attempts → `errors.tooManySmsRequests`
+  - `verify`: 10 attempts → `errors.maxSmsCodeAttempts`
+  - `password-reset`: 10 attempts → `errors.maxSmsCodeAttempts`
+- The `send` bucket increments only when an SMS is actually sent (e.g. `SendVerificationSmsUseCase` skips send for another user's phone but still returns `{ success: true }` without consuming the send limit)
+- **Hourly Twilio quota** (`SmsService`): at most 3 SMS sends per phone per rolling hour (`errors.smsHourlyLimit`); at most 3 incorrect code submissions per active code (separate Redis counters for registration/phone-change vs password-reset)
 - **Development only:** when `NODE_ENV=development`, `DISABLE_SMS_SEND_RATE_LIMIT=true` on the API skips the per-phone hourly send counter (`SmsService`). Do not use outside local development.
 - **Non-production:** when `SMS_OUTBOUND_DISABLED=true` or `SMS_OUTBOUND_DISABLED=1` and `NODE_ENV` is not `production`, the API stores SMS codes in Redis but does not call Twilio `messages.create`. The flag has no effect in production. Use for local development and Playwright runs so Twilio credentials can stay in `.env` without sending real SMS.
 - **Fixed test code (`000000`):** accepted for SMS verify endpoints when `NODE_ENV` is `development` or `stage`, or when `NODE_ENV` is `test` and `ALLOW_SMS_TEST_CODE=true` / `1`. Never enabled in production (`ALLOW_SMS_TEST_CODE` is rejected at startup). Implementation: `sms-test-code.utils.ts`.

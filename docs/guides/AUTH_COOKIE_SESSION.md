@@ -2,6 +2,8 @@
 
 Session tokens are issued as `httpOnly` cookies (`kupito_access_token`, `kupito_refresh_token`). JSON responses from `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/google`, and `POST /api/auth/verify-phone` return only the `user` payload (and Google-specific flags) without token fields.
 
+`POST /api/auth/change-password` and `POST /api/auth/reset-password` revoke refresh tokens in the database and clear session cookies. Access JWTs already issued remain valid until their expiry; see [auth-jwt-invalidation-followup.md](../architecture/auth-jwt-invalidation-followup.md) for a planned hardening PR.
+
 Deploying Google Sign-In requires both `GOOGLE_CLIENT_ID` (NestJS) and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (Next.js build) with the same Web client ID. Next.js middleware validates the access cookie using `JWT_SECRET`; set the same secret as the backend JWT signing secret.
 
 Beyond `phoneVerified`, the SPA may enforce an extra **business company** step for verified Business users without `companyName` (client redirect to `/complete-profile?mode=business_onboarding`). That gate is not encoded in the JWT; see [auth-onboarding-gates.md](../features/auth-onboarding-gates.md).

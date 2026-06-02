@@ -91,6 +91,9 @@ Use this approach when:
    # Optional: bypass per-phone hourly SMS send limit locally only (requires NODE_ENV=development)
    # DISABLE_SMS_SEND_RATE_LIMIT=true
 
+   # SMS verify: fixed code 000000 when NODE_ENV=development or stage (see TECHNICAL.md § SMS Verification)
+   # For NODE_ENV=test (integration tests): ALLOW_SMS_TEST_CODE=true
+
    # Redis Configuration
    REDIS_HOST=localhost
    REDIS_PORT=6379
@@ -237,6 +240,9 @@ Use this approach when:
 
    # Optional: bypass per-phone hourly SMS send limit locally only (requires NODE_ENV=development)
    # DISABLE_SMS_SEND_RATE_LIMIT=true
+
+   # SMS verify: fixed code 000000 when NODE_ENV=development or stage (see TECHNICAL.md § SMS Verification)
+   # For NODE_ENV=test (integration tests): ALLOW_SMS_TEST_CODE=true
 
    # Redis Configuration
    REDIS_HOST=localhost

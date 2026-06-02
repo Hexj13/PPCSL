@@ -64,7 +64,7 @@ npx playwright install chromium
 - `E2E_USER_PASSWORD` (optional; default `GGGgggTEST777` when unset — matches stage `seed.ts` admin)
 - `API_URL` or `E2E_API_URL` (optional; default `http://localhost:4000` for API helpers such as `buildAvailableMdPhone`)
 - For browser-side API helpers (`e2e/utils/api-origin.ts`), only **absolute** `http(s)` URLs are used from env. Priority: `E2E_API_URL`, then `API_URL`, then `NEXT_PUBLIC_API_URL` (relative values such as `/api` are ignored so helpers do not call the wrong host).
-- Run the backend API with `SMS_OUTBOUND_DISABLED=true` (and `NODE_ENV` not `production`) when Twilio credentials are present in `.env` so Playwright flows do not trigger real outbound SMS; codes in Redis are still written; UI verification can use `000000` when the API runs with `NODE_ENV=development` or `stage` (see below).
+- Run the backend API with `SMS_OUTBOUND_DISABLED=true` (and `NODE_ENV` not `production`) when Twilio credentials are present in `.env` so Playwright flows do not trigger real outbound SMS; codes in Redis are still written; UI verification can use `000000` when the API runs with `NODE_ENV=development` or `stage`, or with `NODE_ENV=test` and `ALLOW_SMS_TEST_CODE=true` (see below).
 
 If you set `E2E_USER_*` explicitly, values must match a user in your database (password must match the hashed password from seed or your own reset).
 
@@ -74,7 +74,7 @@ Use `testInfo.skip(condition, reason)` only for rare environment constraints doc
 
 Local registration flow expectation:
 
-- SMS verification code `000000` is accepted when the API `NODE_ENV` is `development` or `stage` (not production). Registration submit waits for `POST /api/auth/send-sms` before asserting navigation to `/verify-phone`.
+- SMS verification code `000000` is accepted when the API `NODE_ENV` is `development` or `stage`, or when `NODE_ENV` is `test` and `ALLOW_SMS_TEST_CODE=true` (not production). Registration submit waits for `POST /api/auth/send-sms` before asserting navigation to `/verify-phone`.
 - Registration E2E should cover both user types: individual and business.
 - Registration flow is complete only after `verify-phone` -> `complete-profile` (with additional data) -> home page.
 

@@ -710,6 +710,13 @@ The application has built-in cron logic for closing old listings and expiring pr
    curl -X POST https://your-backend.onrender.com/api/listings/cron/expire-promotions -H "x-cron-secret: $CRON_SECRET"
    ```
 
+3. **Prometheus metrics** (internal scraper only):
+
+   - **URL:** `GET https://your-backend.onrender.com/metrics`
+   - **Header:** `x-cron-secret: <CRON_SECRET>`
+   - **Schedule:** per your monitoring stack (e.g. every 30–60s)
+   - The endpoint is protected by `CronSecretGuard`; unauthenticated requests receive 401. Do not expose `/metrics` on a public ingress without the secret.
+
 ### 3.9a. Partner parser state (persistent disk)
 
 If you run **CipAuto** or **999.md** import CLI from Render Shell, the parser keeps a JSON registry, PLP snapshot, and run reports on disk. The default app filesystem is **ephemeral** on deploy unless you use a **Render persistent disk**.
@@ -939,9 +946,11 @@ ssh -i ~/.ssh/ppcsl_key -p 2200 yourusername@your-server.com
 #### OTP Code Bypass (000000)
 
 - **Status:** ✅ Implemented
-- **Description:** On staging/development, OTP code `000000` bypasses SMS verification
-- **Environment:** Only when `NODE_ENV=stage` or `NODE_ENV=development`
-- **⚠️ Production:** Automatically disabled in production
+- **Description:** Fixed OTP `000000` bypasses SMS verification on verify endpoints when allowed by `sms-test-code.utils.ts`
+- **Environment:**
+  - `NODE_ENV=development` or `NODE_ENV=stage` — always allowed
+  - `NODE_ENV=test` — only when `ALLOW_SMS_TEST_CODE=true` or `1` (integration tests; set in `jest-integration.setup.ts`)
+- **⚠️ Production:** Never allowed; `ALLOW_SMS_TEST_CODE` in production fails env validation at startup
 
 #### Swagger API Documentation
 

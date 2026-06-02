@@ -30,6 +30,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [scripts-architecture.md](./architecture/scripts-architecture.md) — **CRITICAL**
 - [known-issues.md](./architecture/known-issues.md) — Known issues
 - [e2e-test-architecture.md](./architecture/e2e-test-architecture.md) — Playwright E2E layers and coverage matrix
+- [auth-jwt-invalidation-followup.md](./architecture/auth-jwt-invalidation-followup.md) — Planned access JWT invalidation after password change/reset
 - [TECHNICAL.md](./architecture/TECHNICAL.md) — Technical details
 
 ### [`guides/`](./guides/)
@@ -76,7 +77,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [ai-listing-report-ru.md](./features/ai-listing-report-ru.md) — Listing AI analysis (Gemini, PDP modal, RU spec: API, cache, prompts). Clear persisted rows: `npm run clear-listing-ai-reports(:prod)` from `core/backend` ([SCRIPTS.md](../backend/docs/SCRIPTS.md)); Render steps: platform repo [`docs/deployment/production-deployment.md`](../../docs/deployment/production-deployment.md) §2.3.
 - Listing seller phones and full VIN — masked in public listing payloads; optional reveal on the listing page (eye control or Contact action card) with per-viewer Redis rate limits (`GET /api/listings/:id/phones`, `GET /api/listings/:id/vin`); see [TECHNICAL.md](./architecture/TECHNICAL.md) § API Reference → Listings
 - [loading-states.md](./features/loading-states.md) — Loading states
-- [cross-tab-sync.md](./features/cross-tab-sync.md) — Favorites, comparison, listing status, auth session, and refresh-token rotation across tabs (UI: `BroadcastChannel` + storage; auth: `storage` on auth keys — see doc)
+- [cross-tab-sync.md](./features/cross-tab-sync.md) — Favorites, comparison, listing status, and cookie-based auth session across tabs (UI: `BroadcastChannel` + storage; auth: `storage` on auth keys — see doc)
 - [auth-onboarding-gates.md](./features/auth-onboarding-gates.md) — Mandatory phone verification and business company onboarding (middleware, client guards, verify-phone branching)
 - [paid-promotion.md](./features/paid-promotion.md) — Paid promotion
 - [partner-program.md](./features/partner-program.md) — Platform partners, bonus balance, partner promotion flow, footer partner logos, public `/partners` and `/investors` pages (sitemap / noindex)

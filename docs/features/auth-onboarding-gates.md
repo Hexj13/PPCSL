@@ -38,6 +38,10 @@ Applies when `user.type === 'Business'`, phone is verified, and `companyName` is
 
 After successful SMS verification in the “complete profile” flow, the client may send the user to `business_onboarding` when the selected account type is Business (query `selectedType` is carried through verify-phone). Password registration with business type already stores company name at signup, so this path mainly affects OAuth / flows without company name in DB.
 
+### Phone number in URL (privacy)
+
+For `complete-profile` and reserved `post-register` flows, the phone number is stored in **`sessionStorage`** via `lib/verify-phone-context.ts` (`saveVerifyPhoneContext` / `loadVerifyPhoneContext`). Navigation to `/verify-phone` uses `buildVerifyPhoneSearchParams()` with `mode`, `returnUrl`, `source`, and `selectedType` only — not `phone` in the query string. Legacy links with `?phone=` are migrated on load and stripped from the address bar. Context is cleared after successful verification (`clearVerifyPhoneContext`). Profile phone-change flows may still pass `phone` in the URL until migrated separately.
+
 ## API: profile `type` while phone unverified
 
 `PATCH` profile (see `UserProfilePatchService`) allows changing `type` (`Individual` | `Business`) only while `phoneVerified` is false, so the account kind can be corrected before SMS confirmation.

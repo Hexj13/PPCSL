@@ -18,6 +18,7 @@ Pre-launch verification for Sentry monitoring. Setup: [SENTRY.md](../guides/SENT
 - **Performance tracing** — 10% client, 100% server
 - **Session replay** — 100% error sessions, 10% all sessions
 - **Structured logs** — enabled
+- **Event sanitization** — `beforeSend` redacts phone, email, tokens, and SMS codes in `request` / `user` / breadcrumbs (see [logging.md](../guides/logging.md))
 - **Metrics** — enabled
 - **Cron monitors:** auto-close-old-listings, ip-block-cleanup, refresh-token-cleanup
 - **Business metrics:** users.registered, listings.created, listings.searches

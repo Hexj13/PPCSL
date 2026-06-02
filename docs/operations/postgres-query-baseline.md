@@ -56,7 +56,7 @@ For [`GetListingUseCase.execute`](../../backend/src/listings/application/use-cas
 
 - `findById` — one query with joins.
 - `ensureBoardSlug` — should no-op when `board_slug` exists; may write when missing.
-- `recordView` — fire-and-forget; still hits `listing_views` and listing meta.
+- `recordView` — fire-and-forget; increments Redis hash `listing:views:pending` (batched flush to `listings.views` every 5 minutes under `listing:views:flush:lock`).
 - `convertToDefaultCurrency` — [`ExchangeRatesService`](../../backend/src/exchange-rates/exchange-rates.service.ts) uses Redis then DB for rates.
 
 ## Redis observability

@@ -44,6 +44,13 @@ Do not send to Sentry `extra` / unstructured logs:
 
 Use `sanitizeForSentryExtra` on the backend (`core/backend/src/common/utils/sentry-payload.utils.ts`) and the frontend mirror (`core/frontend/lib/sentry-sanitize.ts`) before attaching dynamic objects.
 
+**Event-level scrubbing:** Both SDKs register `beforeSend` handlers that run `sanitizeSentryEvent` / shared logic to redact phone, email, tokens, and verification codes from `extra`, `request` (URL query, headers, body), `user` (keeps `id` only), `breadcrumbs`, and `contexts`:
+
+- Backend: `core/backend/src/common/utils/sentry-event-sanitize.utils.ts`, wired in `core/backend/src/common/sentry.config.ts`
+- Frontend: `core/frontend/lib/sentry-event-sanitize.ts`, wired in `core/frontend/lib/sentry-before-send.ts`
+
+Request URLs keep redacted query values as `[REDACTED]` (URL-encoded in the stored string).
+
 ## Request correlation
 
 - **Browser:** Axios sets `X-Request-Id` per request (`core/frontend/lib/api/api-client.ts`) and passes the same value into Sentry `tags`/`extra` when reporting API failures.

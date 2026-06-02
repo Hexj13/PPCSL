@@ -42,7 +42,7 @@ This strategy focuses on **practical, cost-effective improvements**. It does not
 
 | Domain | Storage keys | Impact without storage | Target | Effort | Action |
 |--------|-------------|----------------------|--------|--------|--------|
-| Auth session | `token`, `refresh_token`, `auth-storage` | Session lost on reload | Server-backed session (future) | Very high | **Future project.** Current safe wrappers + Zustand memory fallback are sufficient for now. |
+| Auth session | `kupito_access_token`, `kupito_refresh_token` (httpOnly cookies); Zustand `auth-storage` holds `user` only | Session requires cookies + CORS credentials | Cookie session (implemented) | — | **Done.** Tokens are not in `localStorage`; see [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md). Legacy `token` / `refresh_token` keys may still exist until users re-login. |
 | Post-login: `returnUrl` | `returnUrl` in localStorage (legacy) | User redirected to home instead of intended page | URL query parameter | Low | **Done.** Auth continuation now uses `?returnUrl=` in auth flows. |
 | Post-login: `pending*` keys | `pendingFavorites`, `pendingSavedFilter`, `pendingRegistration` | Guest pre-login actions lost | Server state or URL | High | **Partially done.** Safe storage access is in place; server-backed continuation remains future work. |
 | Consent | `cookie_consent` | Banner re-shown, analytics state unclear | Cookie-first | Low | **Done.** `useCookieConsent` writes consent to cookie as primary source with localStorage cache. |
@@ -73,16 +73,12 @@ All remaining raw `localStorage.*` / `sessionStorage.*` calls in the resilience 
 ## Remaining follow-ups
 
 - Keep monitoring Sentry for `SecurityError` regressions from frontend storage usage.
-- Track auth-session migration (`httpOnly` cookies or server-backed session) as a separate project.
+- Planned: access JWT invalidation after password change/reset ([auth-jwt-invalidation-followup.md](./auth-jwt-invalidation-followup.md)).
 - Evaluate server-backed continuation for `pending*` post-login flows if product data justifies it.
 
 ## Future directions (separate projects)
 
 These items are valuable but require significant effort beyond storage resilience. They should be tracked and prioritized independently.
-
-### Auth session migration
-
-Moving from `localStorage`-based tokens to `httpOnly` cookies or a server-backed session model would eliminate the session-on-reload problem entirely and improve security posture. This is a full backend+frontend project involving new API endpoints, CSRF protection, cookie management, and infrastructure changes.
 
 ### URL-backed guest comparison
 

@@ -153,9 +153,9 @@ Clear caches after catalog mutations: `npm run clear-cache:brands` (see platform
 
 ## Authentication (summary)
 
-- Access token: JWT (short-lived)
-- Refresh token: HTTP-only cookie, rotated on refresh, stored in DB
-- Strategies: `JwtStrategy`, `LocalStrategy`; guards: `JwtAuthGuard`, `OptionalJwtAuthGuard`, `AdminGuard`, `PhoneVerifiedGuard`, `IpBlockGuard`, `CronSecretGuard`
+- Access token: JWT in httpOnly cookie (short-lived); API JSON returns `user` only (no token fields in body)
+- Refresh token: HTTP-only cookie, rotated on refresh, stored in DB; password change/reset revoke refresh and clear cookies (access JWT until expiry — see [auth-jwt-invalidation-followup.md](./auth-jwt-invalidation-followup.md))
+- Strategies: `JwtStrategy`, `LocalStrategy`; guards: `JwtAuthGuard`, `OptionalJwtAuthGuard`, `AdminGuard`, `PhoneVerifiedGuard`, `IpBlockGuard`, `CronSecretGuard` (cron jobs and `GET /metrics`)
 - Google Sign-In, SMS verification, email (MJML templates in `common/email/`)
 - Global throttling: 600 req/min per IP in production (configurable per route on auth)
 

@@ -50,6 +50,7 @@ npm run test:integration -- src/test/auth.integration.ts
 
 - Database must be running and accessible
 - Auth tests (`auth.integration.ts`) use a shared helper `registerTestUser(request)` that registers with unique phone and email and retries on 400 (e.g. phone already exists) and 429 (rate limit), so shared or persistent DB does not cause failures
+- Integration tests that verify SMS with code `000000` require `NODE_ENV=test` and `ALLOW_SMS_TEST_CODE=true` (set automatically in `src/test/jest-integration.setup.ts`)
 - Test database should be configured via environment variables:
   - `DB_HOST` (default: localhost)
   - `DB_PORT` (default: 5432)

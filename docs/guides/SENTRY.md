@@ -532,9 +532,9 @@ testError() {
 
 ### 3. Privacy
 
-- Do not send sensitive data (passwords, tokens)
-- Use `beforeSend` to filter data
-- Configure Data Scrubbing in Sentry
+- Do not send sensitive data (passwords, tokens, raw phone, email) in manual `extra` / breadcrumbs
+- Production code runs **`sanitizeSentryEvent`** in `beforeSend` (backend and frontend) to redact phone, email, auth headers, and SMS codes from `request`, `user`, `breadcrumbs`, and `contexts` — see [logging.md](./logging.md)
+- Configure additional Data Scrubbing rules in Sentry as a safety net
 
 ### 4. Performance
 
