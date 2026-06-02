@@ -23,7 +23,7 @@ export function RegisterFormPhoneField({
   return (
     <div className="mb-5">
       <label className="block text-sm font-semibold mb-2 text-primary-900">
-        {t('register.phone')} <span className="text-red-400">*</span>
+        {t('register.phone')} <span className="text-semantic-error">*</span>
       </label>
       <input
         type="tel"
@@ -39,7 +39,7 @@ export function RegisterFormPhoneField({
         autoComplete="tel"
         data-testid="auth-register-phone-input"
       />
-      {touched && error && <p className="mt-1 text-sm text-red-400">{error}</p>}
+      {touched && error && <p className="mt-1 text-sm text-semantic-error">{error}</p>}
     </div>
   );
 }

@@ -68,7 +68,7 @@ export function RegisterFormTerms({ formData, setFormData }: RegisterFormTermsPr
           >
             {t('register.termsLink')}
           </Link>
-          <span className="text-red-400"> *</span>
+          <span className="text-semantic-error"> *</span>
         </span>
       </div>
     </div>

@@ -1,7 +1,7 @@
-import { expect, test } from '../fixtures/base';
+import { test } from '../fixtures/base';
 import { VEHICLE_SEARCH_TABS, type SearchFilterTab } from '../test-data/search-filter-sheets';
-import { visibleSearchFiltersForm } from '../utils/search-filters-form';
 import { expectVehicleSearchTabPanelVisible } from '../utils/search-filter-panels';
+import { visibleSearchFiltersForm } from '../utils/search-filters-form';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 import { isMobileProjectName } from '../utils/viewport';
 
@@ -13,7 +13,7 @@ const TAB_BUTTON_TEST_IDS: Record<SearchFilterTab, string> = {
 };
 
 test.describe('Search: desktop filter tabs @p0', () => {
-  test.beforeEach(({}, testInfo) => {
+  test.beforeEach((_fixtures, testInfo) => {
     test.skip(isMobileProjectName(testInfo.project.name), 'Desktop layout only');
   });
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 
-import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
+import { isListingPageVideoHeroSlideUrl } from '@/lib/listing/listing-page-helpers';
 import { getOptimizedImageUrl } from '@/lib/utils';
 
 type UseListingPageImageModalLoadingParams = {

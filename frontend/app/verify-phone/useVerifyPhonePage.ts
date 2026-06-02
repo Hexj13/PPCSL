@@ -16,6 +16,11 @@ import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { buildSignInHref, buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
+import {
+  clearVerifyPhoneContext,
+  loadVerifyPhoneContext,
+  saveVerifyPhoneContext,
+} from '@/lib/verify-phone-context';
 
 function getLoginValue(formData: RegisterDto): string | null {
   if (formData.type === 'Individual') {
@@ -64,8 +69,17 @@ export function useVerifyPhonePage() {
 
   useEffect(() => {
     const mode = searchParams.get('mode');
-    const phone = searchParams.get('phone');
+    const legacyPhoneFromUrl = searchParams.get('phone');
     if (mode === 'complete-profile' || mode === 'post-register') {
+      const sessionContext = loadVerifyPhoneContext();
+      const phone = sessionContext?.phone ?? legacyPhoneFromUrl;
+      if (legacyPhoneFromUrl && !sessionContext?.phone) {
+        saveVerifyPhoneContext({ phone: legacyPhoneFromUrl, mode });
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('phone');
+        const query = params.toString();
+        router.replace(query ? `/verify-phone?${query}` : '/verify-phone');
+      }
       if (!phone) {
         toast.error(t('verifyPhone.phoneNotAvailable'));
         if (mode === 'complete-profile') {
@@ -91,6 +105,7 @@ export function useVerifyPhonePage() {
         }
         return;
       }
+      saveVerifyPhoneContext({ phone, mode });
       setPhoneNumber(phone);
       setTimeout(() => {
         inputRefs.current[0]?.focus();
@@ -107,7 +122,7 @@ export function useVerifyPhonePage() {
       setFormData(parsedData);
     }
 
-    const phoneToUse = phone || parsedData?.phone;
+    const phoneToUse = parsedData?.phone;
     if (phoneToUse) {
       setPhoneNumber(phoneToUse);
     } else {
@@ -376,6 +391,7 @@ export function useVerifyPhonePage() {
   const handleBack = () => {
     const mode = searchParams.get('mode');
     clearPendingRegistration();
+    clearVerifyPhoneContext();
     if (mode === 'complete-profile') {
       const back = new URLSearchParams();
       back.set('mode', 'phone_required');

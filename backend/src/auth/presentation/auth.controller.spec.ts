@@ -11,6 +11,7 @@ import { I18nService } from '../../common/i18n/i18n.service';
 import type { LoginResponse } from '../application/auth.types';
 import { AuthService } from '../application/auth.service';
 import { AuthTokenIssuerService } from '../application/services/auth-token-issuer.service';
+import { AuthPhoneRateLimitService } from '../infrastructure/services/auth-phone-rate-limit.service';
 import { IpBlockService } from '../infrastructure/services/ip-block.service';
 import { SmsService } from '../infrastructure/services/sms.service';
 
@@ -29,7 +30,7 @@ describe('AuthController', () => {
   let controller: AuthController;
   let authService: jest.Mocked<AuthService>;
   let authTokenIssuer: jest.Mocked<
-    Pick<AuthTokenIssuerService, 'attachLoginCookies' | 'cookieAuthJsonBody'>
+    Pick<AuthTokenIssuerService, 'attachLoginCookies' | 'cookieAuthJsonBody' | 'clearAuthCookies'>
   >;
   let ipBlockService: jest.Mocked<IpBlockService>;
   let smsService: jest.Mocked<SmsService>;
@@ -130,7 +131,12 @@ describe('AuthController', () => {
               const { access_token, refresh_token, ...rest } = x;
               return rest;
             }),
+            clearAuthCookies: jest.fn(),
           },
+        },
+        {
+          provide: AuthPhoneRateLimitService,
+          useValue: { assertWithinLimit: jest.fn().mockResolvedValue(undefined) },
         },
         { provide: IpBlockService, useValue: mockIpBlockService },
         { provide: SmsService, useValue: mockSmsService },
@@ -663,11 +669,13 @@ describe('AuthController', () => {
       const result = await controller.resetPassword(
         req as unknown as AuthenticatedRequest,
         resetPasswordDto,
+        mockPassthroughRes,
       );
 
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(req);
       expect(authService.resetPassword).toHaveBeenCalledWith(resetPasswordDto);
       expect(ipBlockService.resetAttempts).toHaveBeenCalledWith('127.0.0.1');
+      expect(authTokenIssuer.clearAuthCookies).toHaveBeenCalledWith(mockPassthroughRes);
       expect(result).toEqual({
         success: true,
         user: {
@@ -696,7 +704,11 @@ describe('AuthController', () => {
       ipBlockService.recordFailedAttempt.mockResolvedValue(undefined);
 
       await expect(
-        controller.resetPassword(req as unknown as AuthenticatedRequest, resetPasswordDto),
+        controller.resetPassword(
+          req as unknown as AuthenticatedRequest,
+          resetPasswordDto,
+          mockPassthroughRes,
+        ),
       ).rejects.toThrow(BadRequestException);
       expect(ipBlockService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
     });

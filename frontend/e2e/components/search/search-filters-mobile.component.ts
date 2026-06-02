@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
-import { BottomSheetComponent } from '../common/bottom-sheet.component';
 import { visibleSearchFiltersForm } from '../../utils/search-filters-form';
+import { BottomSheetComponent } from '../common/bottom-sheet.component';
 
 export type SearchFilterTab = 'basic' | 'advanced' | 'equipment' | 'popular';
 
@@ -59,7 +59,9 @@ export class SearchFiltersMobileComponent {
           : tab === 'equipment'
             ? this.testIds.panelEquipment
             : this.testIds.panelPopular;
-    await expect(this.searchFiltersForm().locator('.md\\:hidden').getByTestId(panelId)).toBeVisible();
+    await expect(
+      this.searchFiltersForm().locator('.md\\:hidden').getByTestId(panelId),
+    ).toBeVisible();
   }
 
   async openFilterRow(sheetId: string): Promise<void> {
@@ -139,7 +141,9 @@ export class SearchFiltersMobileComponent {
 
   async toggleEquipmentOption(key: string): Promise<void> {
     await this.selectTab('equipment');
-    await this.searchFiltersForm().getByTestId(this.testIds.panelEquipment).scrollIntoViewIfNeeded();
+    await this.searchFiltersForm()
+      .getByTestId(this.testIds.panelEquipment)
+      .scrollIntoViewIfNeeded();
     const checkbox = this.searchFiltersForm()
       .locator('.md\\:hidden')
       .getByTestId(`search-equipment-${key}`);

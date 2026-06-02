@@ -30,6 +30,7 @@ const productionSchema = baseSchema.extend({
   CRON_SECRET: z.string().min(8),
   DB_PASSWORD: z.string().min(1),
   REDIS_HOST: z.string().min(1),
+  REDIS_PORT: z.string().min(1),
 });
 
 export function validateEnv(config: Record<string, unknown>): Record<string, unknown> {

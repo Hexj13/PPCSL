@@ -14,7 +14,7 @@ export function RegisterFormCompanyField({ formData, setFormData }: RegisterForm
   return (
     <div className="mb-5">
       <label className="block text-sm font-semibold mb-2 text-primary-900">
-        {t('register.companyName')} <span className="text-red-400">*</span>
+        {t('register.companyName')} <span className="text-semantic-error">*</span>
       </label>
       <input
         type="text"

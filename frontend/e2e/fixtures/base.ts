@@ -11,7 +11,6 @@ import { MyListingsPage } from '../page-objects/my-listings.page';
 import { ProfilePage } from '../page-objects/profile.page';
 import { SearchHomePage } from '../page-objects/search-home.page';
 import { SignPage } from '../page-objects/sign.page';
-import { SmartSelectionPage } from '../page-objects/smart-selection.page';
 import { VerifyPhonePage } from '../page-objects/verify-phone.page';
 
 interface PageObjectFixtures {
@@ -26,7 +25,6 @@ interface PageObjectFixtures {
   profilePage: ProfilePage;
   searchHomePage: SearchHomePage;
   signPage: SignPage;
-  smartSelectionPage: SmartSelectionPage;
   verifyPhonePage: VerifyPhonePage;
 }
 
@@ -63,9 +61,6 @@ export const test = base.extend<PageObjectFixtures>({
   },
   signPage: async ({ page }, use) => {
     await use(new SignPage(page));
-  },
-  smartSelectionPage: async ({ page }, use) => {
-    await use(new SmartSelectionPage(page));
   },
   verifyPhonePage: async ({ page }, use) => {
     await use(new VerifyPhonePage(page));

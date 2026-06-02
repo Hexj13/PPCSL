@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { UsersService } from '../../../users/application/users.service';
 import { PhoneService } from '../../domain/services/phone.service';
@@ -18,10 +18,9 @@ export class SendVerificationSmsUseCase {
     const normalizedPhone = this.phoneService.normalize(phone);
     await this.authPhoneRateLimit.assertWithinLimit(normalizedPhone);
     const existingUser = await this.usersService.findByPhone(normalizedPhone);
-    if (existingUser && existingUser.id !== requesterUserId) {
-      throw new BadRequestException('errors.smsSendError');
+    if (!existingUser || existingUser.id === requesterUserId) {
+      await this.smsService.sendVerificationCode(normalizedPhone);
     }
-    await this.smsService.sendVerificationCode(normalizedPhone);
     return { success: true };
   }
 }

@@ -7,6 +7,7 @@ describe('validateEnv', () => {
     CRON_SECRET: 'cron-secret',
     DB_PASSWORD: 'db-pass',
     REDIS_HOST: '127.0.0.1',
+    REDIS_PORT: '6379',
   };
 
   it('rejects ALLOW_SMS_TEST_CODE in production', () => {

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { UsersService } from '../../../users/application/users.service';
 import { PasswordService } from '../../domain/services/password.service';
+import { AuthPhoneRateLimitService } from '../../infrastructure/services/auth-phone-rate-limit.service';
 import { RefreshTokenService } from '../../infrastructure/services/refresh-token.service';
 import { SmsService } from '../../infrastructure/services/sms.service';
 import { ResetPasswordDto } from '../../presentation/dto/reset-password.dto';
@@ -14,9 +15,11 @@ export class ResetPasswordUseCase {
     private passwordService: PasswordService,
     private smsService: SmsService,
     private refreshTokenService: RefreshTokenService,
+    private readonly authPhoneRateLimit: AuthPhoneRateLimitService,
   ) {}
 
   async execute(resetPasswordDto: ResetPasswordDto): Promise<UserWithoutPassword> {
+    await this.authPhoneRateLimit.assertWithinLimit(resetPasswordDto.phone);
     const normalizedPhone = this.smsService.normalizePhoneNumber(resetPasswordDto.phone);
     const user = await this.usersService.findByPhone(normalizedPhone);
 

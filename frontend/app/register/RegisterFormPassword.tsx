@@ -24,7 +24,7 @@ export function RegisterFormPassword({
   return (
     <div className="mb-5">
       <label className="block text-sm font-semibold mb-2 text-primary-900">
-        {t('register.password')} <span className="text-red-400">*</span>
+        {t('register.password')} <span className="text-semantic-error">*</span>
       </label>
       <div className="relative">
         <input

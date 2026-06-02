@@ -25,9 +25,13 @@ export async function expectVehicleSearchTabPanelVisible(
 ): Promise<void> {
   if (await pageUsesMobileLayout(page)) {
     await expect(
-      visibleSearchFiltersForm(page).locator('.md\\:hidden').getByTestId(MOBILE_PANEL_TEST_IDS[tab]),
+      visibleSearchFiltersForm(page)
+        .locator('.md\\:hidden')
+        .getByTestId(MOBILE_PANEL_TEST_IDS[tab]),
     ).toBeVisible();
     return;
   }
-  await expect(visibleSearchFiltersForm(page).getByTestId(DESKTOP_PANEL_TEST_IDS[tab])).toBeVisible();
+  await expect(
+    visibleSearchFiltersForm(page).getByTestId(DESKTOP_PANEL_TEST_IDS[tab]),
+  ).toBeVisible();
 }

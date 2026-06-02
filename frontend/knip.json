@@ -37,7 +37,7 @@
     "files": "error",
     "exports": "off",
     "types": "off",
-    "dependencies": "off",
+    "dependencies": "error",
     "devDependencies": "off",
     "unlisted": "off"
   }

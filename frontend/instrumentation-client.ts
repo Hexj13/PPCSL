@@ -1,5 +1,7 @@
 import * as Sentry from '@sentry/nextjs';
 
+import { sentryBeforeSend } from '@/lib/sentry-before-send';
+
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -27,9 +29,9 @@ function initSentry() {
     tracesSampleRate: 0.1,
     debug: false,
     enableLogs: false,
-    beforeSend(event) {
+    beforeSend(event, hint) {
       if (shouldSuppressWebKitStacklessXdNoise(event)) return null;
-      return event;
+      return sentryBeforeSend(event, hint);
     },
     replaysOnErrorSampleRate: 1.0,
     replaysSessionSampleRate: isMobileViewport ? 0.05 : 0.1,

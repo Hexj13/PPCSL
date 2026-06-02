@@ -7,9 +7,6 @@ export function isSmsTestCodeAllowed(
   if (nodeEnv === 'production') {
     return false;
   }
-  if (nodeEnv === 'development' || nodeEnv === 'stage') {
-    return true;
-  }
   if (nodeEnv === 'test') {
     return allowSmsTestCode === 'true' || allowSmsTestCode === '1';
   }

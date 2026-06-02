@@ -247,7 +247,6 @@ export function PopularBodyTypesFilter({
                         }
                         loading="lazy"
                         draggable={false}
-                        unoptimized={true}
                         priority={false}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;

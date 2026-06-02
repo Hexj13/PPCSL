@@ -56,7 +56,6 @@
     "libphonenumber-js": "^1.12.42",
     "next": "^16.0.1",
     "postcss": "^8.5.10",
-    "qrcode.react": "^4.2.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-hot-toast": "^2.4.1",
@@ -125,10 +124,10 @@
     ],
     "coverageThreshold": {
       "global": {
-        "branches": 10,
-        "functions": 10,
-        "lines": 15,
-        "statements": 15
+        "branches": 15,
+        "functions": 12,
+        "lines": 20,
+        "statements": 20
       }
     },
     "setupFilesAfterEnv": [

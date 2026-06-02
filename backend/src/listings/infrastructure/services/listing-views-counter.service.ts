@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,7 +10,7 @@ import { Listing } from '../../entities/listing.entity';
 const PENDING_VIEWS_HASH = 'listing:views:pending';
 
 @Injectable()
-export class ListingViewsCounterService implements OnModuleInit {
+export class ListingViewsCounterService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ListingViewsCounterService.name);
 
   constructor(
@@ -24,6 +24,10 @@ export class ListingViewsCounterService implements OnModuleInit {
     this.metricsService.registerGauge('kupito_pending_view_counts', () =>
       this.redisService.hlen(PENDING_VIEWS_HASH),
     );
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.flushPendingViews();
   }
 
   async recordPendingView(listingId: string): Promise<void> {

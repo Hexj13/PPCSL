@@ -1,10 +1,13 @@
-import { Controller, Get, Header } from '@nestjs/common';
+import { Controller, Get, Header, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
+
+import { CronSecretGuard } from '../guards/cron-secret.guard';
 
 import { MetricsService } from './metrics.service';
 
 @ApiExcludeController()
 @Controller('metrics')
+@UseGuards(CronSecretGuard)
 export class MetricsController {
   constructor(private readonly metricsService: MetricsService) {}
 

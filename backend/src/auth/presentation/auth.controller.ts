@@ -26,6 +26,7 @@ import {
 import { IpBlockGuard } from '../infrastructure/guards/ip-block.guard';
 import { JwtAuthGuard } from '../infrastructure/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../infrastructure/guards/optional-jwt-auth.guard';
+import { AuthPhoneRateLimitService } from '../infrastructure/services/auth-phone-rate-limit.service';
 import { IpBlockService } from '../infrastructure/services/ip-block.service';
 import { SmsService } from '../infrastructure/services/sms.service';
 
@@ -65,6 +66,7 @@ export class AuthController {
     private smsService: SmsService,
     private usersService: UsersService,
     private i18nService: I18nService,
+    private authPhoneRateLimit: AuthPhoneRateLimitService,
   ) {}
 
   @ApiOperation({ summary: 'Register a new user' })
@@ -480,12 +482,14 @@ export class AuthController {
   async changePassword(
     @Request() req: AuthenticatedRequest,
     @Body() changePasswordDto: ChangePasswordDto,
+    @Res({ passthrough: true }) res: Response,
   ) {
     await this.authService.changePassword(
       req.user.id,
       changePasswordDto,
       this.getRequestLocale(req),
     );
+    this.authTokenIssuer.clearAuthCookies(res);
     return { success: true };
   }
 
@@ -766,6 +770,7 @@ export class AuthController {
   async verifySms(@Request() req: AuthenticatedRequest, @Body() verifySmsDto: VerifySmsDto) {
     const ip = this.ipBlockService.getClientIp(req);
 
+    await this.authPhoneRateLimit.assertWithinLimit(verifySmsDto.phone);
     const isVerified = await this.smsService.verifyCode(verifySmsDto.phone, verifySmsDto.code);
 
     if (isVerified) {
@@ -1010,12 +1015,14 @@ export class AuthController {
   async resetPassword(
     @Request() req: AuthenticatedRequest,
     @Body() resetPasswordDto: ResetPasswordDto,
+    @Res({ passthrough: true }) res: Response,
   ) {
     const ip = this.ipBlockService.getClientIp(req);
 
     try {
       const user = await this.authService.resetPassword(resetPasswordDto);
       await this.ipBlockService.resetAttempts(ip);
+      this.authTokenIssuer.clearAuthCookies(res);
       return {
         success: true,
         user: {
