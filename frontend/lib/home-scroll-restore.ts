@@ -72,6 +72,7 @@ export function readHomeScrollRestoreTarget(
       const savedListingId = sessionStorageGetItem('homeScrollListingId');
       sessionStorageRemoveItem('homeScrollPosition');
       sessionStorageRemoveItem('homeScrollListingId');
+      sessionStorageRemoveItem('homeScrollTimestamp');
       if (Number.isFinite(scrollY) && scrollY > 0) {
         return { scrollY, source: 'listing_return', listingId: savedListingId ?? undefined };
       }
