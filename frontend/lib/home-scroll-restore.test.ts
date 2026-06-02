@@ -40,16 +40,40 @@ describe('readHomeScrollRestoreTarget', () => {
 });
 
 describe('applyHomeScrollRestore', () => {
+  let rafCallbacks: FrameRequestCallback[];
+
   beforeEach(() => {
     window.scrollTo = jest.fn();
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 0, writable: true });
     document.body.style.cssText = '';
+    rafCallbacks = [];
+    jest
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb: FrameRequestCallback): number => {
+        rafCallbacks.push(cb);
+        return rafCallbacks.length;
+      });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('scrolls to the saved position synchronously', () => {
     applyHomeScrollRestore(800);
 
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 800, left: 0, behavior: 'instant' });
+  });
+
+  it('holds position fixed until the next animation frame to avoid flash', () => {
+    applyHomeScrollRestore(800);
+
+    expect(document.body.style.position).toBe('fixed');
+    expect(document.body.style.top).toBe('-800px');
+
+    rafCallbacks.forEach((cb) => cb(0));
+
     expect(document.body.style.position).toBe('');
+    expect(document.body.style.top).toBe('');
   });
 });

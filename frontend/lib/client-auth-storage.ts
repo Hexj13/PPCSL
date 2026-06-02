@@ -1,7 +1,7 @@
 import { localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { sessionStorageRemoveItem } from '@/lib/browser-session-storage';
-import { clearPendingRegistration } from '@/lib/pending-registration';
 import { clearServiceWorkerUserCaches } from '@/lib/clear-service-worker-cache';
+import { clearPendingRegistration } from '@/lib/pending-registration';
 
 export const AUTH_STORAGE_PERSIST_KEY = 'auth-storage';
 
@@ -26,11 +26,11 @@ export function clearClientAuthLocalStorage(options?: {
     localStorageRemoveItem('pendingComparisons');
     sessionStorageRemoveItem('kupito_search_filters');
     localStorageRemoveItem('kupito_search_filters');
+    clearPendingRegistration();
+    clearServiceWorkerUserCaches();
   }
   if (clearReturnUrl) {
     localStorageRemoveItem('returnUrl');
   }
-  clearPendingRegistration();
-  clearServiceWorkerUserCaches();
   document.cookie = 'kupito-preferred-locale=; path=/; max-age=0; SameSite=Lax';
 }
