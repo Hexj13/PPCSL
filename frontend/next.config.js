@@ -1,8 +1,14 @@
 const { withSentryConfig } = require('@sentry/nextjs');
 
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true',
-});
+function withOptionalBundleAnalyzer(config) {
+  if (process.env.ANALYZE !== 'true') {
+    return config;
+  }
+  const withBundleAnalyzer = require('@next/bundle-analyzer')({
+    enabled: true,
+  });
+  return withBundleAnalyzer(config);
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -249,4 +255,7 @@ const sentryWebpackPluginOptions = {
   },
 };
 
-module.exports = withSentryConfig(withBundleAnalyzer(nextConfig), sentryWebpackPluginOptions);
+module.exports = withSentryConfig(
+  withOptionalBundleAnalyzer(nextConfig),
+  sentryWebpackPluginOptions,
+);

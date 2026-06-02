@@ -46,7 +46,9 @@
     "**/*.stories.ts",
     "**/*.test-helpers.ts",
     "**/*.test.ts",
+    "**/*.test.tsx",
     "**/*.spec.ts",
+    "**/*.spec.tsx",
     "vitest.config.ts",
     "config/vitest.config.ts"
   ]
