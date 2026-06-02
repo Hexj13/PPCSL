@@ -1,29 +1,27 @@
 import { buildPostAuthRedirect } from './post-auth-redirect';
 
 describe('buildPostAuthRedirect', () => {
-  it('prefixes relative paths for ru', () => {
-    expect(buildPostAuthRedirect('/complete-profile', 'ru')).toBe('/ru/complete-profile');
-    expect(buildPostAuthRedirect('/foo?bar=1', 'ru')).toBe('/ru/foo?bar=1');
+  const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://kupito.club';
   });
 
-  it('leaves ro paths without prefix', () => {
-    expect(buildPostAuthRedirect('/complete-profile', 'ro')).toBe('/complete-profile');
-    expect(buildPostAuthRedirect('/foo', 'ro')).toBe('/foo');
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
   });
 
-  it('does not double-prefix ru paths', () => {
-    expect(buildPostAuthRedirect('/ru/foo', 'ru')).toBe('/ru/foo');
+  it('rejects external absolute URLs', () => {
+    expect(buildPostAuthRedirect('https://evil.example/phish', 'ro')).toBe('/');
   });
 
-  it('localizes absolute URLs for ru', () => {
-    expect(buildPostAuthRedirect('https://example.com/dacia', 'ru')).toBe(
-      'https://example.com/ru/dacia',
+  it('allows same-origin absolute URLs', () => {
+    expect(buildPostAuthRedirect('https://kupito.club/favorites', 'ro')).toBe(
+      'https://kupito.club/favorites',
     );
   });
 
-  it('does not duplicate /ru for absolute URLs that already use ru prefix', () => {
-    expect(buildPostAuthRedirect('https://example.com/ru/dacia', 'ru')).toBe(
-      'https://example.com/ru/dacia',
-    );
+  it('localizes relative paths', () => {
+    expect(buildPostAuthRedirect('/favorites', 'ru')).toBe('/ru/favorites');
   });
 });

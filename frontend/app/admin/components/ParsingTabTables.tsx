@@ -2,10 +2,16 @@
 
 import type { MouseEventHandler } from 'react';
 
-import type { ParserRun, PlpFileInfo } from '@/lib/api/admin-parsing';
+import type { ParserRun, ParserSchedule, PlpFileInfo } from '@/lib/api/admin-parsing';
 import { formatAdminTableDateTime } from '@/lib/utils';
+import { HintTooltip } from '@/ui';
 
 import { AdminActionButton } from './AdminButtons';
+import {
+  getAvailabilityIndicatorClassName,
+  getScheduleFrequencyLabel,
+  getScheduleStatusClassName,
+} from './parsing-tab/parsing-tab-utils';
 
 type InnerTab = 'plp' | 'pdp' | 'scheduler';
 
@@ -30,6 +36,21 @@ interface ParsingRunsTableProps {
     canOpenFile: boolean;
   }) => void;
   onRunActionsClose: () => void;
+}
+
+interface ParsingSchedulesTableProps {
+  rows: ParserSchedule[];
+  loading: boolean;
+  t: (_key: string, _params?: Record<string, string | number>) => string;
+  tableHeaderClassName: string;
+  tableCenteredCellClassName: string;
+  tableCenteredSecondaryCellClassName: string;
+  tablePrimaryButtonClassName: string;
+  getParserLabel: (_parserCode: string) => string;
+  getTranslatedParsingValue: (_group: string, _value: string | null | undefined) => string;
+  openScheduleActionsMenuId: string | null;
+  onScheduleActionsClick: (_args: { schedule: ParserSchedule; top: number; left: number }) => void;
+  onScheduleActionsClose: () => void;
 }
 
 interface ParsingPlpFilesTableProps {
@@ -169,6 +190,152 @@ export function ParsingRunsTable({
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+export function ParsingSchedulesTable({
+  rows,
+  loading,
+  t,
+  tableHeaderClassName,
+  tableCenteredCellClassName,
+  tableCenteredSecondaryCellClassName,
+  tablePrimaryButtonClassName,
+  getParserLabel,
+  getTranslatedParsingValue,
+  openScheduleActionsMenuId,
+  onScheduleActionsClick,
+  onScheduleActionsClose,
+}: ParsingSchedulesTableProps) {
+  const makeScheduleActionsClickHandler = (
+    schedule: ParserSchedule,
+  ): MouseEventHandler<HTMLButtonElement> => {
+    return (event) => {
+      if (openScheduleActionsMenuId === schedule.id) {
+        onScheduleActionsClose();
+        return;
+      }
+      const rect = event.currentTarget.getBoundingClientRect();
+      onScheduleActionsClick({ schedule, top: rect.bottom + 6, left: rect.right });
+    };
+  };
+
+  if (loading && rows.length === 0) {
+    return <div className="py-8 text-center text-text-secondary">{t('admin.parsing.loading')}</div>;
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="py-8 text-center text-text-secondary">{t('admin.parsing.noSchedules')}</div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse [&_tbody_tr:nth-child(even)]:bg-primary-500/5">
+        <thead>
+          <tr className="border-b border-primary-700/30">
+            <th className={`text-center ${tableHeaderClassName}`}>
+              {t('admin.parsing.colParser')}
+            </th>
+            <th className={`text-center ${tableHeaderClassName}`}>
+              {t('admin.parsing.colRunType')}
+            </th>
+            <th className={`text-center ${tableHeaderClassName}`}>
+              {t('admin.parsing.colAssignedUser')}
+            </th>
+            <th className={`text-center ${tableHeaderClassName}`}>
+              {t('admin.parsing.colFrequency')}
+            </th>
+            <th className={`text-center ${tableHeaderClassName}`}>
+              {t('admin.parsing.colStatus')}
+            </th>
+            <th className={`text-center ${tableHeaderClassName}`}>
+              {t('admin.parsing.colNextRun')}
+            </th>
+            <th className={`text-center ${tableHeaderClassName}`}>
+              {t('admin.parsing.colLastRun')}
+            </th>
+            <th className={`text-center ${tableHeaderClassName}`}>
+              <span className="inline-flex items-center justify-center gap-1">
+                <span>{t('admin.parsing.colAvailability')}</span>
+                <HintTooltip
+                  ariaLabel={t('admin.parsing.colAvailabilityHintButton')}
+                  width="w-72"
+                  className="align-middle"
+                >
+                  {t('admin.parsing.colAvailabilityHint')}
+                </HintTooltip>
+              </span>
+            </th>
+            <th className={`text-center ${tableHeaderClassName}`}>
+              {t('admin.parsing.colActions')}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((s) => (
+            <tr key={s.id} className="border-b border-primary-700/10">
+              <td className={tableCenteredCellClassName}>{getParserLabel(s.parser_code)}</td>
+              <td className={tableCenteredSecondaryCellClassName}>
+                {getTranslatedParsingValue('runType', s.run_type)}
+              </td>
+              <td className={`${tableCenteredSecondaryCellClassName} max-w-56`}>
+                <div className="mx-auto truncate text-center" title={s.assigned_user_id ?? ''}>
+                  {s.assigned_user_id || '—'}
+                </div>
+              </td>
+              <td className={`${tableCenteredSecondaryCellClassName} max-w-52`}>
+                <div className="truncate" title={s.cron_expression}>
+                  {getScheduleFrequencyLabel(s, getTranslatedParsingValue)}
+                </div>
+              </td>
+              <td
+                className={`${tableCenteredCellClassName} font-semibold ${getScheduleStatusClassName(s.status)}`}
+              >
+                {getTranslatedParsingValue('status', s.status)}
+              </td>
+              <td className={`${tableCenteredSecondaryCellClassName} whitespace-nowrap`}>
+                {formatAdminTableDateTime(s.next_run_at)}
+              </td>
+              <td className={`${tableCenteredSecondaryCellClassName} whitespace-nowrap`}>
+                {formatAdminTableDateTime(s.last_run_at)}
+              </td>
+              <td className={`${tableCenteredSecondaryCellClassName} max-w-xs`}>
+                <div className="truncate" title={s.resource_availability_summary ?? ''}>
+                  <span className="inline-flex max-w-full items-center gap-2 align-middle">
+                    <span
+                      className={`inline-block h-2 w-2 rounded-full bg-current ${getAvailabilityIndicatorClassName(
+                        s.resource_availability_status,
+                      )}`}
+                      aria-hidden
+                    />
+                    <span className="truncate">
+                      {getTranslatedParsingValue('availability', s.resource_availability_status)}
+                    </span>
+                  </span>
+                </div>
+              </td>
+              <td className={`${tableCenteredCellClassName} whitespace-nowrap`}>
+                <div className="relative flex items-center justify-center">
+                  <AdminActionButton
+                    variant="secondary"
+                    data-admin-actions-trigger
+                    aria-haspopup="menu"
+                    aria-expanded={openScheduleActionsMenuId === s.id}
+                    aria-label={t('admin.parsing.colActions')}
+                    className={tablePrimaryButtonClassName}
+                    onClick={makeScheduleActionsClickHandler(s)}
+                  >
+                    <span>{t('admin.parsing.colActions')}</span>
+                  </AdminActionButton>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

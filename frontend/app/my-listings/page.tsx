@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useLayoutEffect, useRef, useState } from 'react';
 
@@ -12,11 +13,22 @@ import { ListingManagementCardSkeleton } from '@/components/listing/ListingManag
 import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
 import { StatusFilterButtons } from '@/components/listing/StatusFilterButtons';
 import { Modal } from '@/components/modals/Modal';
-import { PromotionHistoryModal } from '@/components/modals/PromotionHistoryModal';
-import { PromotionModal } from '@/components/modals/PromotionModal';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { localizedHref } from '@/lib/localized-href';
+
+const PromotionModal = dynamic(
+  () => import('@/components/modals/PromotionModal').then((m) => ({ default: m.PromotionModal })),
+  { ssr: false },
+);
+
+const PromotionHistoryModal = dynamic(
+  () =>
+    import('@/components/modals/PromotionHistoryModal').then((m) => ({
+      default: m.PromotionHistoryModal,
+    })),
+  { ssr: false },
+);
 
 type TranslationFn = ReturnType<typeof useTranslation>['t'];
 

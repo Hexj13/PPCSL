@@ -7,6 +7,7 @@ import { ParserSchedule } from '../infrastructure/persistence/parser-schedule.en
 
 import { ParsingAvailabilityService } from './parsing-availability.service';
 import { ParsingOrchestratorService } from './parsing-orchestrator.service';
+import { ParserPlpFileService } from './parser-plp-file.service';
 import { ParsingScheduleService } from './parsing-schedule.service';
 
 function createSchedule(overrides: Partial<ParserSchedule> = {}): ParserSchedule {
@@ -71,12 +72,18 @@ describe('ParsingScheduleService', () => {
       getDefaultCatalogPageProbeCount: jest.fn(),
       probeParserSource: jest.fn().mockResolvedValue({ ok: 1, total: 1, summary: 'ok' }),
     } as unknown as ParsingAvailabilityService;
+    const plpFileService = {
+      resolvePdpPlpFilePath: jest.fn(),
+      resolvePlpOutputFileKey: jest.fn().mockReturnValue('default'),
+      getParserPlpMode: jest.fn().mockReturnValue('mono'),
+    } as unknown as ParserPlpFileService;
 
     const service = new ParsingScheduleService(
       scheduleRepo,
       adminAudit,
       adminService,
       orchestrator,
+      plpFileService,
       availability,
     );
 

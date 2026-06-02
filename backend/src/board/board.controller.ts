@@ -2,6 +2,7 @@ import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { UserType } from '../common/constants';
+import { parseLimitQuery, parsePageQuery } from '../common/utils/pagination.utils';
 import { ListingsService } from '../listings/listings.service';
 import { UsersService } from '../users/application/users.service';
 
@@ -49,8 +50,8 @@ export class BoardController {
     @Query('sortOrder') sortOrder?: string,
   ) {
     return this.listingsService.getBoardListings(slug, {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
+      page: parsePageQuery(page),
+      limit: parseLimitQuery(limit, { defaultValue: 20, maxValue: 100 }),
       sortBy: sortBy || 'created_at',
       sortOrder: (sortOrder === 'ASC' ? 'ASC' : 'DESC') as 'ASC' | 'DESC',
     });

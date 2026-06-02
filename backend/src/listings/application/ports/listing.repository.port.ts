@@ -10,6 +10,8 @@ export interface SimilarCandidatesCurrencyContext {
 export interface SearchCriteria {
   page?: number;
   limit?: number;
+  cursor?: string;
+  knownTotal?: number;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
   category?: 'vehicle' | 'tire';
@@ -74,7 +76,9 @@ export interface SearchCriteria {
 export interface IListingRepository {
   findById(id: string): Promise<Listing | null>;
   save(listing: Listing): Promise<Listing>;
-  search(criteria: SearchCriteria): Promise<{ data: Listing[]; total: number }>;
+  search(
+    criteria: SearchCriteria,
+  ): Promise<{ data: Listing[]; total: number; nextCursor?: string }>;
   countActiveByUser(userId: string): Promise<number>;
   countPromotedByUser(userId: string): Promise<number>;
   findByVin(vin: string): Promise<Listing | null>;

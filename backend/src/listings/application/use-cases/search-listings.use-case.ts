@@ -1,17 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { ListingStatus as ListingStatusEnum } from '../../../common/types';
-import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
-import { maskPhoneLastDigits } from '../../../common/utils/phone-mask.util';
+import { MetricsService } from '../../../common/metrics/metrics.service';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { Listing } from '../../entities/listing.entity';
+import { ListingPublicViewMapper } from '../mappers/listing-public-view.mapper';
 import { IListingCache, LISTING_CACHE } from '../ports/listing-cache.port';
 import {
   IListingRepository,
   LISTING_REPOSITORY,
   SearchCriteria,
 } from '../ports/listing.repository.port';
-import { stripListingVideoForListResponse } from '../utils/listing-video-public.util';
 
 export interface SearchListingsResult {
   data: Listing[];
@@ -20,26 +18,28 @@ export interface SearchListingsResult {
     page: number;
     limit: number;
     totalPages: number;
+    nextCursor?: string;
   };
 }
 
 @Injectable()
 export class SearchListingsUseCase {
-  private static readonly MAX_SEARCH_IMAGES = 5;
-
   constructor(
     @Inject(LISTING_REPOSITORY)
     private readonly listingRepo: IListingRepository,
     @Inject(LISTING_CACHE)
     private readonly listingCache: IListingCache,
     private readonly exchangeRatesService: ExchangeRatesService,
+    private readonly listingPublicViewMapper: ListingPublicViewMapper,
+    private readonly metricsService: MetricsService,
   ) {}
 
   async execute(criteria: SearchCriteria): Promise<SearchListingsResult> {
     const { page = 1, limit = 20 } = criteria;
 
-    const cached = await this.listingCache.getSearchResults(criteria);
+    const cached = criteria.cursor ? null : await this.listingCache.getSearchResults(criteria);
     if (cached) {
+      this.metricsService.incrementCacheHit('listings_search');
       const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(cached.data);
       return {
         data: enriched,
@@ -52,12 +52,24 @@ export class SearchListingsUseCase {
       };
     }
 
-    const searchCriteria = await this.ensurePriceSortRates(criteria);
-    const { data: listings, total } = await this.listingRepo.search(searchCriteria);
-    const masked = this.maskListings(listings);
+    if (!criteria.cursor) {
+      this.metricsService.incrementCacheMiss('listings_search');
+    }
+
+    const cachedTotal = await this.listingCache.getSearchCount(criteria);
+    const searchCriteria = await this.ensurePriceSortRates(
+      cachedTotal !== null ? { ...criteria, knownTotal: cachedTotal } : criteria,
+    );
+    const { data: listings, total, nextCursor } = await this.listingRepo.search(searchCriteria);
+    const masked = this.listingPublicViewMapper.toListViews(listings);
     const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(masked);
 
-    await this.listingCache.setSearchResults(criteria, { data: masked, total });
+    if (cachedTotal === null) {
+      await this.listingCache.setSearchCount(criteria, total);
+    }
+    if (!criteria.cursor) {
+      await this.listingCache.setSearchResults(criteria, { data: masked, total });
+    }
 
     return {
       data: enriched,
@@ -66,6 +78,7 @@ export class SearchListingsUseCase {
         page,
         limit,
         totalPages: Math.ceil(total / limit),
+        nextCursor,
       },
     };
   }
@@ -80,37 +93,5 @@ export class SearchListingsUseCase {
       defaultCurrency,
       priceSortRates: rates,
     };
-  }
-
-  private maskListings(listings: Listing[]): Listing[] {
-    return listings.map((listing) => {
-      if (listing.images && listing.images.length > SearchListingsUseCase.MAX_SEARCH_IMAGES) {
-        listing.images = listing.images.slice(0, SearchListingsUseCase.MAX_SEARCH_IMAGES);
-      }
-      if (listing.user) {
-        listing.user = removePasswordFromUser(listing.user) as typeof listing.user;
-        if (
-          listing.status === ListingStatusEnum.Closed ||
-          (!listing.user.email && !listing.user.phone)
-        ) {
-          listing.user.phone = null;
-          listing.user.additionalPhone = null;
-          listing.user.email = null;
-          listing.user.firstName = null;
-          listing.user.lastName = null;
-          listing.user.companyName = null;
-          listing.user.companyWebsiteUrl = null;
-        } else {
-          if (listing.user.phone) {
-            listing.user.phone = maskPhoneLastDigits(listing.user.phone);
-          }
-          if (listing.user.additionalPhone) {
-            listing.user.additionalPhone = maskPhoneLastDigits(listing.user.additionalPhone);
-          }
-        }
-      }
-      stripListingVideoForListResponse(listing);
-      return listing;
-    });
   }
 }

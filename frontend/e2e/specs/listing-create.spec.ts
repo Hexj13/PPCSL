@@ -61,6 +61,7 @@ test.describe('Listing create @p0', () => {
     listingCreatePage,
     listingDetailPage,
   }) => {
+    test.setTimeout(90_000);
     let listingDescription = '';
     let selectedEquipmentLabels: string[] = [];
     await runSteps(

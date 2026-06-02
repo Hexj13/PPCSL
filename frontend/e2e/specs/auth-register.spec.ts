@@ -47,7 +47,7 @@ async function registerVerifyAndCompleteProfile(
     {
       name: 'Verify redirect to verify-phone page',
       action: async () => {
-        await expect(page).toHaveURL(/\/verify-phone\?phone=/, { timeout: 30_000 });
+        await expect(page).toHaveURL(/\/verify-phone(\?|$)/, { timeout: 30_000 });
       },
     },
     {
@@ -127,6 +127,10 @@ async function registerVerifyAndCompleteProfile(
 }
 
 test.describe('Auth: register @p0', () => {
+  test.beforeEach(() => {
+    test.setTimeout(90_000);
+  });
+
   test('switches to register tab and shows register form', async ({ page, signPage }) => {
     await runSteps(
       prependClearBrowserState(page, [

@@ -7,7 +7,7 @@ import { IpBlockGuard } from './ip-block.guard';
 
 describe('IpBlockGuard', () => {
   let guard: IpBlockGuard;
-  let ipBlockService: jest.Mocked<IpBlockService>;
+  let ipBlockService: jest.Mocked<Pick<IpBlockService, 'getClientIp' | 'isBlocked'>>;
 
   beforeEach(async () => {
     const mockIpBlockService = {
@@ -34,7 +34,7 @@ describe('IpBlockGuard', () => {
   });
 
   describe('canActivate', () => {
-    it('should return true when IP is not blocked', () => {
+    it('should return true when IP is not blocked', async () => {
       const mockRequest = {
         headers: {},
       };
@@ -46,19 +46,19 @@ describe('IpBlockGuard', () => {
       } as ExecutionContext;
 
       ipBlockService.getClientIp.mockReturnValue('192.168.1.1');
-      ipBlockService.isBlocked.mockReturnValue({
+      ipBlockService.isBlocked.mockResolvedValue({
         blocked: false,
         blockedUntil: null,
       });
 
-      const result = guard.canActivate(mockContext);
+      const result = await guard.canActivate(mockContext);
 
       expect(result).toBe(true);
       expect(ipBlockService.getClientIp).toHaveBeenCalledWith(mockRequest);
       expect(ipBlockService.isBlocked).toHaveBeenCalledWith('192.168.1.1');
     });
 
-    it('should throw HttpException when IP is blocked', () => {
+    it('should throw HttpException when IP is blocked', async () => {
       const mockRequest = {
         headers: {},
       };
@@ -72,20 +72,18 @@ describe('IpBlockGuard', () => {
       const blockedUntil = new Date(Date.now() + 60 * 60 * 1000);
 
       ipBlockService.getClientIp.mockReturnValue('192.168.1.1');
-      ipBlockService.isBlocked.mockReturnValue({
+      ipBlockService.isBlocked.mockResolvedValue({
         blocked: true,
         blockedUntil,
       });
 
-      expect(() => guard.canActivate(mockContext)).toThrow(HttpException);
-      expect(() => guard.canActivate(mockContext)).toThrow(
-        expect.objectContaining({
-          status: HttpStatus.TOO_MANY_REQUESTS,
-        }),
-      );
+      await expect(guard.canActivate(mockContext)).rejects.toThrow(HttpException);
+      await expect(guard.canActivate(mockContext)).rejects.toMatchObject({
+        status: HttpStatus.TOO_MANY_REQUESTS,
+      });
     });
 
-    it('should include remaining minutes in error message', () => {
+    it('should include remaining minutes in error message', async () => {
       const mockRequest = {
         headers: {},
       };
@@ -99,13 +97,14 @@ describe('IpBlockGuard', () => {
       const blockedUntil = new Date(Date.now() + 30 * 60 * 1000);
 
       ipBlockService.getClientIp.mockReturnValue('192.168.1.1');
-      ipBlockService.isBlocked.mockReturnValue({
+      ipBlockService.isBlocked.mockResolvedValue({
         blocked: true,
         blockedUntil,
       });
 
       try {
-        guard.canActivate(mockContext);
+        await guard.canActivate(mockContext);
+        fail('Expected HttpException');
       } catch (error) {
         expect(error).toBeInstanceOf(HttpException);
         const httpError = error as HttpException;

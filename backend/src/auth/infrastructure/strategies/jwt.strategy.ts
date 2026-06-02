@@ -26,13 +26,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     configService: ConfigService,
     private usersService: UsersService,
   ) {
-    const secret = configService.get('JWT_SECRET');
-    const nodeEnv = configService.get('NODE_ENV');
+    const secret =
+      configService.get<string>('auth.jwtSecret') ?? configService.get<string>('JWT_SECRET');
+    const nodeEnv = configService.get<string>('NODE_ENV');
 
-    if (!secret) {
-      if (nodeEnv === 'production') {
-        throw new Error('JWT_SECRET must be set in production environment');
-      }
+    if (!secret && nodeEnv === 'production') {
+      throw new Error('JWT_SECRET must be set in production environment');
     }
 
     super({
@@ -41,7 +40,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
       ignoreExpiration: false,
-      secretOrKey: secret || 'your-secret-key-change-in-production-DEV-ONLY',
+      secretOrKey: secret || 'default-dev-secret',
     });
   }
 

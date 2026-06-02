@@ -8,6 +8,7 @@ import { cleanupIntegrationTestData } from './test-data-cleanup';
 
 beforeAll(async () => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+  process.env.ALLOW_SMS_TEST_CODE = 'true';
   delete process.env.TWILIO_ACCOUNT_SID;
   delete process.env.TWILIO_AUTH_TOKEN;
 

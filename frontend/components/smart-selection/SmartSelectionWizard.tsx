@@ -186,6 +186,17 @@ export function SmartSelectionWizard() {
   const canGoNext = isStepValid(step, answers);
   const isLastStep = step === STEP_COUNT - 1;
 
+  const goToStep = (nextStep: number) => {
+    setStep(nextStep);
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(max-width: 767px)').matches
+    ) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const handlePurposeSelect = (value: SmartPurpose) => {
     setAnswers((prev) => ({
       ...prev,
@@ -416,7 +427,7 @@ export function SmartSelectionWizard() {
       <div className="flex flex-col-reverse sm:flex-row gap-3 mt-8">
         <button
           type="button"
-          onClick={() => setStep((s) => Math.max(0, s - 1))}
+          onClick={() => goToStep(Math.max(0, step - 1))}
           disabled={step === 0 || submitting}
           className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 py-3 rounded-lg border-2 border-gray-500/40 text-text-secondary font-semibold disabled:opacity-50"
           data-testid="smart-selection-back"
@@ -438,7 +449,7 @@ export function SmartSelectionWizard() {
         ) : (
           <button
             type="button"
-            onClick={() => setStep((s) => Math.min(STEP_COUNT - 1, s + 1))}
+            onClick={() => goToStep(Math.min(STEP_COUNT - 1, step + 1))}
             disabled={!canGoNext || submitting}
             className={primaryActionButtonClass}
             data-testid="smart-selection-next"

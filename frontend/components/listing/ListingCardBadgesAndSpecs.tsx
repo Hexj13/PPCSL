@@ -1,15 +1,7 @@
 'use client';
 
 import type { Listing } from '@/lib/api';
-import {
-  formatBodyType,
-  formatDriveType,
-  formatEngineVolume,
-  formatFuel,
-  formatMileage,
-  formatTireSize,
-  isTireListing,
-} from '@/lib/utils';
+import { formatTireSize, isTireListing } from '@/lib/utils';
 
 const SPARKLES_EMOJI = '\u2728';
 
@@ -143,41 +135,4 @@ export function ListingCardTireSpecs({
   );
 }
 
-export function ListingCardVehicleSpecs({
-  vehicle,
-  t,
-}: {
-  vehicle: NonNullable<Listing['vehicle']>;
-  t: (_key: string) => string;
-}) {
-  return (
-    <div className="text-sm space-y-1.5" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-      {vehicle.engine_displ_l != null && (
-        <div>
-          {t('userListings.engine')}: {formatEngineVolume(vehicle.engine_displ_l)}{' '}
-          {t('listings.liters')}
-        </div>
-      )}
-      {vehicle.fuel && (
-        <div>
-          {t('userListings.fuel')}: {formatFuel(vehicle.fuel, t)}
-        </div>
-      )}
-      {vehicle.mileage_km !== null && vehicle.mileage_km !== undefined && (
-        <div>
-          {t('userListings.mileage')}: {formatMileage(vehicle.mileage_km)} {t('listings.km')}
-        </div>
-      )}
-      {vehicle.drive_type && (
-        <div>
-          {t('userListings.driveType')}: {formatDriveType(vehicle.drive_type, t)}
-        </div>
-      )}
-      {vehicle.body_type && (
-        <div>
-          {t('userListings.bodyType')}: {formatBodyType(vehicle.body_type, t)}
-        </div>
-      )}
-    </div>
-  );
-}
+export { ListingVehicleSpecsCompact as ListingCardVehicleSpecs } from './ListingVehicleSpecsCompact';

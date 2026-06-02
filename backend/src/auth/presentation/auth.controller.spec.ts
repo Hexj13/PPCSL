@@ -100,8 +100,8 @@ describe('AuthController', () => {
 
     const mockIpBlockService = {
       getClientIp: jest.fn(),
-      recordFailedAttempt: jest.fn(),
-      resetAttempts: jest.fn(),
+      recordFailedAttempt: jest.fn().mockResolvedValue(undefined),
+      resetAttempts: jest.fn().mockResolvedValue(undefined),
     };
 
     const mockSmsService = {
@@ -221,7 +221,7 @@ describe('AuthController', () => {
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       i18nService.getLocaleFromHeader.mockReturnValue(undefined as unknown as string);
       authService.login.mockResolvedValue(mockResponse);
-      ipBlockService.resetAttempts.mockReturnValue(undefined);
+      ipBlockService.resetAttempts.mockResolvedValue(undefined);
 
       const result = await controller.login(
         req as unknown as AuthenticatedRequest,
@@ -271,7 +271,7 @@ describe('AuthController', () => {
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       i18nService.getLocaleFromHeader.mockReturnValue('ru');
       authService.login.mockResolvedValue(mockResponse);
-      ipBlockService.resetAttempts.mockReturnValue(undefined);
+      ipBlockService.resetAttempts.mockResolvedValue(undefined);
 
       await controller.login(req as unknown as AuthenticatedRequest, mockPassthroughRes, loginDto);
 
@@ -285,7 +285,7 @@ describe('AuthController', () => {
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.login.mockRejectedValue(new BadRequestException('Invalid credentials'));
-      ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
+      ipBlockService.recordFailedAttempt.mockResolvedValue(undefined);
 
       await expect(
         controller.login(req as unknown as AuthenticatedRequest, mockPassthroughRes, loginDto),
@@ -366,14 +366,14 @@ describe('AuthController', () => {
       expect(result).toEqual({ available: true });
     });
 
-    it('should throw BadRequestException when phone already exists', async () => {
+    it('should return available even when phone is already registered', async () => {
       const sendSmsDto: SendSmsDto = { phone: '+37370123456' };
 
-      authService.checkPhoneAvailability.mockRejectedValue(
-        new BadRequestException('errors.phoneAlreadyExists'),
-      );
+      authService.checkPhoneAvailability.mockResolvedValue({ available: true });
 
-      await expect(controller.checkPhone(sendSmsDto)).rejects.toThrow(BadRequestException);
+      const result = await controller.checkPhone(sendSmsDto);
+
+      expect(result).toEqual({ available: true });
     });
   });
 
@@ -423,7 +423,7 @@ describe('AuthController', () => {
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       smsService.verifyCode.mockResolvedValue(true);
-      ipBlockService.resetAttempts.mockReturnValue(undefined);
+      ipBlockService.resetAttempts.mockResolvedValue(undefined);
 
       const result = await controller.verifySms(
         req as unknown as AuthenticatedRequest,
@@ -442,7 +442,7 @@ describe('AuthController', () => {
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       smsService.verifyCode.mockResolvedValue(false);
-      ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
+      ipBlockService.recordFailedAttempt.mockResolvedValue(undefined);
 
       await expect(
         controller.verifySms(req as unknown as AuthenticatedRequest, verifySmsDto),
@@ -536,7 +536,7 @@ describe('AuthController', () => {
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.requestPasswordReset.mockResolvedValue(undefined);
-      ipBlockService.resetAttempts.mockReturnValue(undefined);
+      ipBlockService.resetAttempts.mockResolvedValue(undefined);
 
       const result = await controller.requestPasswordReset(
         req as unknown as AuthenticatedRequest,
@@ -556,7 +556,7 @@ describe('AuthController', () => {
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.requestPasswordReset.mockRejectedValue(new BadRequestException('User not found'));
-      ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
+      ipBlockService.recordFailedAttempt.mockResolvedValue(undefined);
 
       await expect(
         controller.requestPasswordReset(
@@ -578,7 +578,7 @@ describe('AuthController', () => {
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.verifyResetCode.mockResolvedValue({ success: true });
-      ipBlockService.resetAttempts.mockReturnValue(undefined);
+      ipBlockService.resetAttempts.mockResolvedValue(undefined);
 
       const result = await controller.verifyResetCode(
         req as unknown as AuthenticatedRequest,
@@ -600,7 +600,7 @@ describe('AuthController', () => {
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.verifyResetCode.mockResolvedValue({ success: false });
-      ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
+      ipBlockService.recordFailedAttempt.mockResolvedValue(undefined);
 
       await expect(
         controller.verifyResetCode(req as unknown as AuthenticatedRequest, verifyResetCodeDto),
@@ -658,7 +658,7 @@ describe('AuthController', () => {
         listings: [],
         favorites: [],
       });
-      ipBlockService.resetAttempts.mockReturnValue(undefined);
+      ipBlockService.resetAttempts.mockResolvedValue(undefined);
 
       const result = await controller.resetPassword(
         req as unknown as AuthenticatedRequest,
@@ -693,7 +693,7 @@ describe('AuthController', () => {
 
       ipBlockService.getClientIp.mockReturnValue('127.0.0.1');
       authService.resetPassword.mockRejectedValue(new BadRequestException('Invalid code'));
-      ipBlockService.recordFailedAttempt.mockReturnValue(undefined);
+      ipBlockService.recordFailedAttempt.mockResolvedValue(undefined);
 
       await expect(
         controller.resetPassword(req as unknown as AuthenticatedRequest, resetPasswordDto),

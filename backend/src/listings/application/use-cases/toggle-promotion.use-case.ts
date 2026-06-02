@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 
 import { UserType } from '../../../common/constants';
+import { ValidationError } from '../../../common/errors/domain.errors';
 import { UsersService } from '../../../users/application/users.service';
 import { PromotionRulesService } from '../../domain/services/promotion-rules.service';
 import { Listing } from '../../entities/listing.entity';
@@ -93,6 +94,9 @@ export class TogglePromotionUseCase {
         if (e instanceof Error && e.message === 'errors.promotionOnlyActive') {
           throw new BadRequestException('errors.promotionOnlyActive');
         }
+        if (e instanceof ValidationError) {
+          throw new BadRequestException(e.message);
+        }
         throw e;
       }
       if (isPartnerBalancePromotion && partnerUser) {
@@ -119,6 +123,7 @@ export class TogglePromotionUseCase {
 
     const saved = await this.listingRepo.save(listing);
     await this.listingCache.invalidateSearch();
+    await this.listingCache.invalidateSimilar(listingId);
     await this.listingCache.invalidateSingle(listingId);
     return saved;
   }

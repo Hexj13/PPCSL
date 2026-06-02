@@ -97,6 +97,7 @@
     "userNotActive": "User is not active",
     "termsNotAccepted": "You must accept the terms of use",
     "phoneAlreadyExists": "User with this phone number already exists",
+    "registrationFailed": "Registration could not be completed. Please check your details and try again",
     "primaryPhoneMustUseChangeFlow": "To change your account phone number, use the \"Change phone\" option in your profile.",
     "emailAlreadyExists": "User with this email already exists",
     "invalidOrExpiredToken": "Invalid or expired verification token",

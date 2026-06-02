@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 import { BottomSheetComponent } from '../common/bottom-sheet.component';
+import { visibleSearchFiltersForm } from '../../utils/search-filters-form';
 
 export type SearchFilterTab = 'basic' | 'advanced' | 'equipment' | 'popular';
 
@@ -36,6 +37,10 @@ export class SearchFiltersMobileComponent {
     this.bottomSheet = new BottomSheetComponent(page);
   }
 
+  private searchFiltersForm() {
+    return visibleSearchFiltersForm(this.page);
+  }
+
   async selectTab(tab: SearchFilterTab): Promise<void> {
     const tabId =
       tab === 'basic'
@@ -45,7 +50,7 @@ export class SearchFiltersMobileComponent {
           : tab === 'equipment'
             ? this.testIds.tabEquipment
             : this.testIds.tabPopular;
-    await this.page.getByTestId(tabId).click();
+    await this.searchFiltersForm().getByTestId(tabId).click();
     const panelId =
       tab === 'basic'
         ? this.testIds.panelBasic
@@ -54,11 +59,11 @@ export class SearchFiltersMobileComponent {
           : tab === 'equipment'
             ? this.testIds.panelEquipment
             : this.testIds.panelPopular;
-    await expect(this.page.locator('.md\\:hidden').getByTestId(panelId)).toBeVisible();
+    await expect(this.searchFiltersForm().locator('.md\\:hidden').getByTestId(panelId)).toBeVisible();
   }
 
   async openFilterRow(sheetId: string): Promise<void> {
-    const row = this.page
+    const row = this.searchFiltersForm()
       .locator('.md\\:hidden')
       .getByTestId(`${this.testIds.filterRowPrefix}${sheetId}`);
     await expect(row).toBeVisible();
@@ -103,7 +108,9 @@ export class SearchFiltersMobileComponent {
 
   async expectFilterRowHasSelection(sheetId: string): Promise<void> {
     await expect(
-      this.page.locator('.md\\:hidden').getByTestId(`${this.testIds.filterRowPrefix}${sheetId}`),
+      this.searchFiltersForm()
+        .locator('.md\\:hidden')
+        .getByTestId(`${this.testIds.filterRowPrefix}${sheetId}`),
     ).toHaveAttribute('data-has-selection', 'true');
   }
 
@@ -132,8 +139,10 @@ export class SearchFiltersMobileComponent {
 
   async toggleEquipmentOption(key: string): Promise<void> {
     await this.selectTab('equipment');
-    await this.page.getByTestId(this.testIds.panelEquipment).scrollIntoViewIfNeeded();
-    const checkbox = this.page.locator('.md\\:hidden').getByTestId(`search-equipment-${key}`);
+    await this.searchFiltersForm().getByTestId(this.testIds.panelEquipment).scrollIntoViewIfNeeded();
+    const checkbox = this.searchFiltersForm()
+      .locator('.md\\:hidden')
+      .getByTestId(`search-equipment-${key}`);
     const visualLabel = checkbox
       .locator('xpath=ancestor::div[contains(@class,"relative")]/label')
       .first();
@@ -143,7 +152,7 @@ export class SearchFiltersMobileComponent {
 
   async selectFirstPopularChip(): Promise<void> {
     await this.selectTab('popular');
-    const chip = this.page
+    const chip = this.searchFiltersForm()
       .locator('.md\\:hidden')
       .locator('[data-testid^="search-popular-chip-"]')
       .first();
@@ -152,7 +161,9 @@ export class SearchFiltersMobileComponent {
   }
 
   async expectSubmitEnabled(): Promise<void> {
-    await expect(this.page.getByTestId(this.testIds.submit)).toBeEnabled({ timeout: 20_000 });
+    await expect(this.searchFiltersForm().getByTestId(this.testIds.submit)).toBeEnabled({
+      timeout: 20_000,
+    });
   }
 
   async submitSearchAndWaitForListingsApi(): Promise<void> {
@@ -166,7 +177,7 @@ export class SearchFiltersMobileComponent {
       },
       { timeout: 45_000 },
     );
-    await this.page.getByTestId(this.testIds.submit).click();
+    await this.searchFiltersForm().getByTestId(this.testIds.submit).click();
     const response = await listingsResponse;
     expect(response.ok(), `GET listings search failed: HTTP ${response.status()}`).toBe(true);
   }

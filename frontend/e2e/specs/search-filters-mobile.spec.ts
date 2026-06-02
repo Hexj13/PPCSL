@@ -1,5 +1,6 @@
 import { SearchFiltersMobileComponent } from '../components/search/search-filters-mobile.component';
 import { expect, test } from '../fixtures/base';
+import { isMobileProjectName } from '../utils/viewport';
 import {
   VEHICLE_ADVANCED_SHEETS,
   VEHICLE_BASIC_SHEETS,
@@ -8,6 +9,10 @@ import {
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Search: mobile filters and sheets @p0', () => {
+  test.beforeEach(({}, testInfo) => {
+    test.skip(!isMobileProjectName(testInfo.project.name), 'Mobile layout only');
+  });
+
   test('switches all vehicle search tabs', async ({ page, searchHomePage }) => {
     const mobileFilters = new SearchFiltersMobileComponent(page);
 

@@ -32,6 +32,9 @@ Frontend-specific documentation for PPCSL Next.js application.
 - **Listing detail:** seller numbers are loaded with `listingsApi.getListingPhones` only after the user reveals them (`components/ListingPage/ListingPageSeller.tsx`), matching backend rate limits. Optional Viber/WhatsApp/Telegram links (`ListingPageSellerMessengers.tsx`) render only when the seller enabled a channel and a dialable number is available (for guests, after reveal).
 
 ### Data Fetching
+- **Client hooks:** See [frontend-data-fetching.md](../../docs/guides/frontend-data-fetching.md) for list/pagination patterns (no React Query in runtime).
+- **API errors:** [frontend-api-error-handling.md](../../docs/guides/frontend-api-error-handling.md) (`X-Skip-Error-Handling`, `useApiErrorToast`).
+- **React Compiler:** opt-in via `REACT_COMPILER=true`; evaluation steps in [react-compiler-evaluation.md](../../docs/guides/react-compiler-evaluation.md).
 - **Server Components:** Initial data loaded on server (SEO)
 - **Server API:** `lib/api/server-api.ts` - Server-side fetching
 - **Client API:** `lib/api/` - Client-side Axios client; import via `@/lib/api`. Entry point is `api.ts` (barrel); implementation is split into `api-types.ts` (shared types), `api-client.ts` (Axios instance), and domain modules (`api-listings.ts`, `api-auth.ts`, `api-board.ts`, `api-upload.ts`, `api-favorites.ts`, `api-brands.ts`, `api-cities.ts`, `api-saved-filters.ts`, `api-admin.ts`).

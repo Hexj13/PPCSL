@@ -3,9 +3,9 @@ let sessionStorageUsable: boolean | null = null;
 function probeSessionStorage(): boolean {
   if (typeof window === 'undefined') return false;
   try {
-    const key = '__ss_probe__';
-    window.sessionStorage.setItem(key, '1');
-    window.sessionStorage.removeItem(key);
+    const k = '__ss_probe__';
+    window.sessionStorage.setItem(k, '1');
+    window.sessionStorage.removeItem(k);
     return true;
   } catch {
     return false;

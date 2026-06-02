@@ -17,6 +17,11 @@ const baseSchema = z.object({
   DB_SYNC: z.string().optional(),
   SENTRY_TRACES_SAMPLE_RATE: z.string().optional(),
   SENTRY_PROFILES_SAMPLE_RATE: z.string().optional(),
+  LOG_LEVEL: z.string().optional(),
+  REDIS_URL: z.string().optional(),
+  ENABLE_UPLOAD_QUEUE: z.string().optional(),
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
+  OTEL_SERVICE_NAME: z.string().optional(),
 });
 
 const productionSchema = baseSchema.extend({

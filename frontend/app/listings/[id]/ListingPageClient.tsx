@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useMemo, useState, type RefObject } from 'react';
 
 import { ListingPageActions } from '@/components/ListingPage/ListingPageActions';
@@ -15,10 +16,13 @@ import {
 import { ListingPageSeller } from '@/components/ListingPage/ListingPageSeller';
 import { listingPageShowsContactCard } from '@/components/ListingPage/listingPagePromoteCard';
 import { ListingDetailPageSkeleton } from '@/components/listing/ListingDetailSkeleton';
-import { BreadcrumbsSkeleton } from '@/components/listing/ListingPageSkeleton';
+import { BreadcrumbsSkeletonDecorative } from '@/components/listing/ListingPageSkeleton';
 import { SimilarListings } from '@/components/listing/SimilarListings';
 import { LISTING_DETAIL_PAGE_ROOT_CLASS } from '@/components/listing/listing-detail-layout';
-import { PromotionModal } from '@/components/modals/PromotionModal';
+const PromotionModal = dynamic(
+  () => import('@/components/modals/PromotionModal').then((m) => ({ default: m.PromotionModal })),
+  { ssr: false },
+);
 import { useI18n } from '@/components/providers/I18nProvider';
 import { LISTING_IMAGE_SCHEDULED_RETRY_COUNT, useImageRetry } from '@/hooks/useImageRetry';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -235,7 +239,7 @@ function ListingPageConditionRegistrationSection({
 }
 
 function ListingPageSkeleton() {
-  return <ListingDetailPageSkeleton breadcrumb={<BreadcrumbsSkeleton />} />;
+  return <ListingDetailPageSkeleton breadcrumb={<BreadcrumbsSkeletonDecorative />} />;
 }
 
 function useListingPageGalleryKeyboard(

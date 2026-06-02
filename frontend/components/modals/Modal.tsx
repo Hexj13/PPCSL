@@ -3,8 +3,10 @@
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { useTranslation } from '@/hooks/useTranslation';
 import { designTokens } from '@/ui';
 
 interface ModalProps {
@@ -14,7 +16,6 @@ interface ModalProps {
   children: React.ReactNode;
   size?: 'small' | 'medium' | 'large' | 'full';
   className?: string;
-  /** When false, no border under the title bar (default: true). */
   titleBottomBorder?: boolean;
   dataTestId?: string;
 }
@@ -29,14 +30,18 @@ export function Modal({
   titleBottomBorder = true,
   dataTestId,
 }: ModalProps) {
+  const { t } = useTranslation();
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
   const pointerStartedOnBackdropRef = useRef(false);
   const overlayHistoryId = useId();
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useScrollLock(isOpen);
   useHistoryBackClose(isOpen, onClose, overlayHistoryId);
+  useFocusTrap(panelRef, isOpen);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -71,19 +76,7 @@ export function Modal({
     <div
       className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 sm:p-6 md:p-8"
       style={{ zIndex: designTokens.zIndex.modal }}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          onCloseRef.current();
-          return;
-        }
-        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
-          e.preventDefault();
-          onCloseRef.current();
-        }
-      }}
+      role="presentation"
       onPointerDown={(e) => {
         pointerStartedOnBackdropRef.current = e.target === e.currentTarget;
       }}
@@ -95,8 +88,13 @@ export function Modal({
       }}
     >
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
         className={`bg-bg-base rounded-lg w-full ${sizeClasses[size]} flex max-h-[90vh] flex-col overflow-hidden scrollbar-custom ${className}`}
         data-testid={dataTestId}
+        onPointerDown={(e) => e.stopPropagation()}
       >
         {title && (
           <div
@@ -104,10 +102,14 @@ export function Modal({
               titleBottomBorder ? 'border-b border-primary-700' : ''
             }`}
           >
-            <h2 className="text-2xl font-bold text-primary-900">{title}</h2>
+            <h2 id={titleId} className="text-2xl font-bold text-primary-900">
+              {title}
+            </h2>
             <button
+              type="button"
               onClick={() => onCloseRef.current()}
               className="text-primary-700 hover-only:hover:text-primary-900 text-4xl transition-colors"
+              aria-label={t('common.close')}
             >
               ×
             </button>

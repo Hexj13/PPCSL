@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AuthModule } from '../auth/auth.module';
 import { CommonModule } from '../common/common.module';
 
 import { BRANDS_CACHE } from './application/ports/brands-cache.port';
@@ -11,7 +12,7 @@ import { VehicleModel } from './entities/vehicle-model.entity';
 import { RedisBrandsCache } from './infrastructure/cache/redis-brands-cache';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Brand, VehicleModel]), CommonModule],
+  imports: [TypeOrmModule.forFeature([Brand, VehicleModel]), CommonModule, AuthModule],
   controllers: [BrandsController],
   providers: [
     BrandsService,

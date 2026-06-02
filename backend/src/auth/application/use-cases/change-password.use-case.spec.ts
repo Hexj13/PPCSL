@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from '../../../users/application/users.service';
 import { PasswordService } from '../../domain/services/password.service';
 import { EmailService } from '../../infrastructure/services/email.service';
+import { RefreshTokenService } from '../../infrastructure/services/refresh-token.service';
 import { ChangePasswordDto } from '../../presentation/dto/change-password.dto';
 
 import { ChangePasswordUseCase } from './change-password.use-case';
@@ -14,6 +15,7 @@ describe('ChangePasswordUseCase', () => {
   >;
   let passwordService: jest.Mocked<Pick<PasswordService, 'verify' | 'hash'>>;
   let emailService: jest.Mocked<Pick<EmailService, 'sendPasswordChangedNotification'>>;
+  let refreshTokenService: jest.Mocked<Pick<RefreshTokenService, 'revokeAllUserTokens'>>;
 
   const userId = 'user-uuid';
   const dto: ChangePasswordDto = {
@@ -37,6 +39,9 @@ describe('ChangePasswordUseCase', () => {
     emailService = {
       sendPasswordChangedNotification: jest.fn(),
     };
+    refreshTokenService = {
+      revokeAllUserTokens: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -44,6 +49,7 @@ describe('ChangePasswordUseCase', () => {
         { provide: UsersService, useValue: usersService },
         { provide: PasswordService, useValue: passwordService },
         { provide: EmailService, useValue: emailService },
+        { provide: RefreshTokenService, useValue: refreshTokenService },
       ],
     }).compile();
 
@@ -67,6 +73,7 @@ describe('ChangePasswordUseCase', () => {
     expect(passwordService.verify).toHaveBeenCalledWith('OldPass123!', 'stored-hash');
     expect(passwordService.hash).toHaveBeenCalledWith('NewPass456!');
     expect(usersService.update).toHaveBeenCalledWith(userId, { password: 'new-hash' });
+    expect(refreshTokenService.revokeAllUserTokens).toHaveBeenCalledWith(userId);
     expect(emailService.sendPasswordChangedNotification).toHaveBeenCalledWith(
       'user@example.com',
       undefined,

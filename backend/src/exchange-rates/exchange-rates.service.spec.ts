@@ -1,17 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Logger } from '@nestjs/common';
-import { Repository } from 'typeorm';
 
 import { RedisService } from '../common/redis.service';
 
+import {
+  EXCHANGE_RATE_REPOSITORY,
+  IExchangeRateRepository,
+} from './application/ports/exchange-rate.repository.port';
+import { RefreshExchangeRatesUseCase } from './application/use-cases/refresh-exchange-rates.use-case';
 import { ExchangeRate } from './entities/exchange-rate.entity';
 import { ExchangeRatesService } from './exchange-rates.service';
 
 describe('ExchangeRatesService', () => {
   let service: ExchangeRatesService;
-  let exchangeRateRepo: jest.Mocked<Repository<ExchangeRate>>;
+  let exchangeRateRepo: jest.Mocked<Pick<IExchangeRateRepository, 'findRate' | 'findLatestRate'>>;
   let redisService: jest.Mocked<Pick<RedisService, 'getJson' | 'setJson' | 'invalidateByPrefix'>>;
+  let refreshUseCase: { execute: jest.Mock };
 
   const mockRateRow = {
     id: 'rate-1',
@@ -26,26 +29,29 @@ describe('ExchangeRatesService', () => {
 
   beforeEach(async () => {
     const mockRepo = {
-      findOne: jest.fn(),
-      upsert: jest.fn(),
-      delete: jest.fn(),
+      findRate: jest.fn(),
+      findLatestRate: jest.fn(),
+      upsertRate: jest.fn(),
+      pruneToRetention: jest.fn(),
     };
     const mockRedis = {
       getJson: jest.fn(),
       setJson: jest.fn(),
       invalidateByPrefix: jest.fn(),
     };
+    refreshUseCase = { execute: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ExchangeRatesService,
-        { provide: getRepositoryToken(ExchangeRate), useValue: mockRepo },
+        { provide: EXCHANGE_RATE_REPOSITORY, useValue: mockRepo },
         { provide: RedisService, useValue: mockRedis },
+        { provide: RefreshExchangeRatesUseCase, useValue: refreshUseCase },
       ],
     }).compile();
 
     service = module.get(ExchangeRatesService);
-    exchangeRateRepo = module.get(getRepositoryToken(ExchangeRate));
+    exchangeRateRepo = module.get(EXCHANGE_RATE_REPOSITORY);
     redisService = module.get(RedisService);
     jest.clearAllMocks();
   });
@@ -59,19 +65,19 @@ describe('ExchangeRatesService', () => {
       const result = await service.getRate('EUR');
       expect(result).toBeNull();
       expect(redisService.getJson).not.toHaveBeenCalled();
-      expect(exchangeRateRepo.findOne).not.toHaveBeenCalled();
+      expect(exchangeRateRepo.findRate).not.toHaveBeenCalled();
     });
 
     it('should return rate from cache when cached', async () => {
       redisService.getJson.mockResolvedValue({ rate: 19.5 });
       const result = await service.getRate('MDL');
       expect(result).toBe(19.5);
-      expect(exchangeRateRepo.findOne).not.toHaveBeenCalled();
+      expect(exchangeRateRepo.findRate).not.toHaveBeenCalled();
     });
 
     it('should return rate from DB when not cached', async () => {
       redisService.getJson.mockResolvedValue(null);
-      exchangeRateRepo.findOne.mockResolvedValue(mockRateRow);
+      exchangeRateRepo.findRate.mockResolvedValue(mockRateRow);
       const result = await service.getRate('MDL');
       expect(result).toBe(19.45);
       expect(redisService.setJson).toHaveBeenCalledWith(
@@ -83,7 +89,8 @@ describe('ExchangeRatesService', () => {
 
     it('should return null when no rate in DB and no env fallback', async () => {
       redisService.getJson.mockResolvedValue(null);
-      exchangeRateRepo.findOne.mockResolvedValue(null);
+      exchangeRateRepo.findRate.mockResolvedValue(null);
+      exchangeRateRepo.findLatestRate.mockResolvedValue(null);
       const orig = process.env.EXCHANGE_RATE_EUR_MDL;
       delete process.env.EXCHANGE_RATE_EUR_MDL;
       const result = await service.getRate('MDL');
@@ -93,7 +100,8 @@ describe('ExchangeRatesService', () => {
 
     it('should return env fallback when no rate in DB', async () => {
       redisService.getJson.mockResolvedValue(null);
-      exchangeRateRepo.findOne.mockResolvedValue(null);
+      exchangeRateRepo.findRate.mockResolvedValue(null);
+      exchangeRateRepo.findLatestRate.mockResolvedValue(null);
       process.env.EXCHANGE_RATE_EUR_MDL = '20';
       const result = await service.getRate('MDL');
       expect(result).toBe(20);
@@ -120,7 +128,8 @@ describe('ExchangeRatesService', () => {
 
     it('should return null when no rate available', async () => {
       redisService.getJson.mockResolvedValue(null);
-      exchangeRateRepo.findOne.mockResolvedValue(null);
+      exchangeRateRepo.findRate.mockResolvedValue(null);
+      exchangeRateRepo.findLatestRate.mockResolvedValue(null);
       const result = await service.convertToDefaultCurrency(19450, 'MDL');
       expect(result).toBeNull();
     });
@@ -129,7 +138,8 @@ describe('ExchangeRatesService', () => {
   describe('enrichListingsWithApproxPrice', () => {
     it('should leave EUR listing with null approx price', async () => {
       redisService.getJson.mockResolvedValue(null);
-      exchangeRateRepo.findOne.mockResolvedValue(null);
+      exchangeRateRepo.findRate.mockResolvedValue(null);
+      exchangeRateRepo.findLatestRate.mockResolvedValue(null);
       const listings = [{ id: '1', price: 1000, currency: 'EUR' }] as any[];
       const result = await service.enrichListingsWithApproxPrice(listings);
       expect(result).toHaveLength(1);
@@ -148,7 +158,8 @@ describe('ExchangeRatesService', () => {
 
     it('should batch fetch rates for multiple currencies', async () => {
       redisService.getJson.mockResolvedValueOnce({ rate: 19.45 }).mockResolvedValueOnce(null);
-      exchangeRateRepo.findOne.mockResolvedValue(null);
+      exchangeRateRepo.findRate.mockResolvedValue(null);
+      exchangeRateRepo.findLatestRate.mockResolvedValue(null);
       const listings = [
         { id: '1', price: 19450, currency: 'MDL' },
         { id: '2', price: 1080, currency: 'USD' },
@@ -160,7 +171,8 @@ describe('ExchangeRatesService', () => {
 
     it('should set null approx for listing with no rate', async () => {
       redisService.getJson.mockResolvedValue(null);
-      exchangeRateRepo.findOne.mockResolvedValue(null);
+      exchangeRateRepo.findRate.mockResolvedValue(null);
+      exchangeRateRepo.findLatestRate.mockResolvedValue(null);
       const listings = [{ id: '1', price: 19450, currency: 'MDL' }] as any[];
       const result = await service.enrichListingsWithApproxPrice(listings);
       expect(result[0].approxPriceDefaultCurrency).toBeNull();
@@ -169,7 +181,8 @@ describe('ExchangeRatesService', () => {
 
     it('should preserve has_video on enriched listings', async () => {
       redisService.getJson.mockResolvedValue(null);
-      exchangeRateRepo.findOne.mockResolvedValue(null);
+      exchangeRateRepo.findRate.mockResolvedValue(null);
+      exchangeRateRepo.findLatestRate.mockResolvedValue(null);
       const listings = [{ id: '1', price: 1000, currency: 'EUR', has_video: true }] as any[];
       const result = await service.enrichListingsWithApproxPrice(listings);
       expect((result[0] as { has_video?: boolean }).has_video).toBe(true);
@@ -177,7 +190,8 @@ describe('ExchangeRatesService', () => {
 
     it('should preserve has_video false on enriched listings', async () => {
       redisService.getJson.mockResolvedValue(null);
-      exchangeRateRepo.findOne.mockResolvedValue(null);
+      exchangeRateRepo.findRate.mockResolvedValue(null);
+      exchangeRateRepo.findLatestRate.mockResolvedValue(null);
       const listings = [{ id: '1', price: 1000, currency: 'EUR', has_video: false }] as any[];
       const result = await service.enrichListingsWithApproxPrice(listings);
       expect((result[0] as { has_video?: boolean }).has_video).toBe(false);
@@ -194,7 +208,8 @@ describe('ExchangeRatesService', () => {
 
     it('should return empty rates when no rates available', async () => {
       redisService.getJson.mockResolvedValue(null);
-      exchangeRateRepo.findOne.mockResolvedValue(null);
+      exchangeRateRepo.findRate.mockResolvedValue(null);
+      exchangeRateRepo.findLatestRate.mockResolvedValue(null);
       const result = await service.getAllRatesMap();
       expect(result.defaultCurrency).toBe('EUR');
       expect(result.rates).toEqual({});
@@ -202,13 +217,10 @@ describe('ExchangeRatesService', () => {
   });
 
   describe('doFetchRates', () => {
-    it('should throw when FXRATESAPI_API_KEY is not set', async () => {
-      const orig = process.env.FXRATESAPI_API_KEY;
-      delete process.env.FXRATESAPI_API_KEY;
-      const loggerSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
-      await expect(service.doFetchRates()).rejects.toThrow('FXRATESAPI_API_KEY is not set');
-      loggerSpy.mockRestore();
-      if (orig !== undefined) process.env.FXRATESAPI_API_KEY = orig;
+    it('should delegate to RefreshExchangeRatesUseCase', async () => {
+      refreshUseCase.execute.mockResolvedValue(undefined);
+      await service.doFetchRates();
+      expect(refreshUseCase.execute).toHaveBeenCalledTimes(1);
     });
   });
 });

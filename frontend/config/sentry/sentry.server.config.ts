@@ -1,5 +1,7 @@
 import * as Sentry from '@sentry/nextjs';
 
+import { sentryBeforeSend } from '../../lib/sentry-before-send';
+
 const dsn = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -8,9 +10,11 @@ if (dsn && isProduction) {
     dsn,
     environment: 'production',
     enabled: true,
+    sendDefaultPii: false,
     tracesSampleRate: 0.2,
     debug: false,
     enableLogs: true,
+    beforeSend: sentryBeforeSend,
     ignoreErrors: [
       'NEXT_REDIRECT',
       'NEXT_NOT_FOUND',

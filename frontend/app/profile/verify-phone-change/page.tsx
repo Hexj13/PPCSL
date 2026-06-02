@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
+import { OtpCodeInput } from '@/components/common/OtpCodeInput';
+import { useApiErrorToast } from '@/hooks/useApiErrorToast';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
@@ -16,6 +18,7 @@ import { LoadingButton } from '@/ui';
 
 function VerifyPhoneChangeContent() {
   const { t } = useTranslation();
+  const showApiError = useApiErrorToast();
   const router = useRouter();
   const { push } = useLocalizedNavigation();
   const searchParams = useSearchParams();
@@ -270,7 +273,7 @@ function VerifyPhoneChangeContent() {
         toast.error(t('errors.smsHourlyLimit'));
       } else {
         setResendCooldown(0);
-        toast.error(data?.message || t('profile.verifyPhoneChange.resendCodeError'));
+        showApiError(data?.message || t('profile.verifyPhoneChange.resendCodeError'));
       }
     }
   };
@@ -299,48 +302,18 @@ function VerifyPhoneChangeContent() {
           </div>
 
           <form onSubmit={handleVerifyCode} className="space-y-4">
-            <div className="flex justify-center gap-2 md:gap-3">
-              {[0, 1, 2, 3, 4, 5].map((index) => (
-                <div key={index} className="relative">
-                  <input
-                    ref={(el) => {
-                      inputRefs.current[index] = el;
-                    }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={code[index] || ''}
-                    onChange={(e) => handleCodeChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    onPaste={handlePaste}
-                    disabled={loading}
-                    className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-primary-700 focus:border-primary-700 ${
-                      error
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                        : 'border-primary-700/30 focus:border-primary-700'
-                    } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-primary-900`}
-                    style={{
-                      caretColor: 'transparent',
-                      fontFamily: "'Digital-7', monospace",
-                      letterSpacing: '0.05em',
-                    }}
-                    autoComplete={index === 0 ? 'one-time-code' : 'off'}
-                    autoFocus={index === 0} // eslint-disable-line jsx-a11y/no-autofocus
-                  />
-                  {!code[index] && (
-                    <span
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-500 opacity-60 select-none text-2xl md:text-3xl font-bold"
-                      style={{
-                        fontFamily: "'Digital-7', monospace",
-                        letterSpacing: '0.05em',
-                      }}
-                    >
-                      0
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
+            <OtpCodeInput
+              code={code}
+              error={error}
+              disabled={loading}
+              inputRefs={inputRefs}
+              onCodeChange={handleCodeChange}
+              onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
+              variant="digital"
+              showError={false}
+              testIdPrefix="verify-phone-change-code-input"
+            />
 
             {error && (
               <div className="text-center">

@@ -10,6 +10,7 @@ import type { ParserRunType, ParserScheduleStatus, ParserTargetEnv } from '../do
 import { ParserSchedule } from '../infrastructure/persistence/parser-schedule.entity';
 
 import { getParserCatalogItem } from './parser-catalog';
+import { ParserPlpFileService } from './parser-plp-file.service';
 import { ParsingAvailabilityService } from './parsing-availability.service';
 import { resolveParsingTargetEnv } from './parsing-env';
 import { ParsingOrchestratorService } from './parsing-orchestrator.service';
@@ -51,6 +52,7 @@ export class ParsingScheduleService {
     private readonly adminAudit: AdminAuditService,
     private readonly adminService: AdminUsersService,
     private readonly orchestrator: ParsingOrchestratorService,
+    private readonly plpFileService: ParserPlpFileService,
     private readonly availability: ParsingAvailabilityService,
   ) {}
 
@@ -117,10 +119,10 @@ export class ParsingScheduleService {
         throw new BadRequestException(validation.error ?? 'errors.invalidUserId');
       }
       const plpFileKey = String(params.configSnapshot?.plpFileKey ?? '').trim();
-      this.orchestrator.resolvePdpPlpFilePath(params.parserCode, plpFileKey);
+      this.plpFileService.resolvePdpPlpFilePath(params.parserCode, plpFileKey);
     }
     if (params.runType === 'plp') {
-      const plpFileKey = this.orchestrator.resolvePlpOutputFileKey(
+      const plpFileKey = this.plpFileService.resolvePlpOutputFileKey(
         params.parserCode,
         params.configSnapshot,
       );
@@ -231,17 +233,17 @@ export class ParsingScheduleService {
     if (params.configSnapshot) {
       if (existing.run_type === 'pdp') {
         const plpFileKey = String(params.configSnapshot?.plpFileKey ?? '').trim();
-        this.orchestrator.resolvePdpPlpFilePath(existing.parser_code, plpFileKey);
+        this.plpFileService.resolvePdpPlpFilePath(existing.parser_code, plpFileKey);
       }
       if (existing.run_type === 'plp') {
-        const plpFileKey = this.orchestrator.resolvePlpOutputFileKey(
+        const plpFileKey = this.plpFileService.resolvePlpOutputFileKey(
           existing.parser_code,
           params.configSnapshot,
         );
         await this.assertPlpScheduleFileRules({
           parserCode: existing.parser_code,
           targetEnv: existing.target_env,
-          parserPlpMode: this.orchestrator.getParserPlpMode(existing.parser_code),
+          parserPlpMode: this.plpFileService.getParserPlpMode(existing.parser_code),
           plpFileKey,
           excludeScheduleId: existing.id,
         });
@@ -561,7 +563,7 @@ export class ParsingScheduleService {
     const existingKeys = existingSchedules
       .filter((schedule) => schedule.id !== params.excludeScheduleId)
       .map((schedule) =>
-        this.orchestrator.resolvePlpOutputFileKey(params.parserCode, schedule.config_snapshot),
+        this.plpFileService.resolvePlpOutputFileKey(params.parserCode, schedule.config_snapshot),
       );
 
     if (params.parserPlpMode === 'mono') {

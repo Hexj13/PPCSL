@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -62,6 +63,7 @@ export function BottomSheet({
   const overlayHistoryId = useId();
 
   useScrollLock(portalMounted && isMobileViewport);
+  useFocusTrap(sheetRef, portalMounted && isMobileViewport && slideReady);
 
   const clearCloseFallback = useCallback(() => {
     if (closeFallbackTimerRef.current) {

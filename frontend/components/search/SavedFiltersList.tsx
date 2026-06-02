@@ -1,9 +1,13 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 
-import { SaveFilterModal } from '@/components/modals/SaveFilterModal';
+const SaveFilterModal = dynamic(
+  () => import('@/components/modals/SaveFilterModal').then((m) => ({ default: m.SaveFilterModal })),
+  { ssr: false },
+);
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';

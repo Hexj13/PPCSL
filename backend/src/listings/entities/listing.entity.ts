@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 
 import * as constants from '../../common/constants';
+import { ConflictError, ValidationError } from '../../common/errors/domain.errors';
 import {
   ConditionType,
   Currency,
@@ -225,7 +226,7 @@ export class Listing {
 
   publish(): void {
     if (this.status === ListingStatusClosed) {
-      throw new Error('errors.listingClosedCannotPublish');
+      throw new ConflictError('errors.listingClosedCannotPublish');
     }
     if (this.is_promoted && this.promoted_until && this.promoted_paused_at) {
       const now = new Date();
@@ -264,7 +265,7 @@ export class Listing {
 
   startPromotion(days: number | null): void {
     if (this.status !== ListingStatusActive) {
-      throw new Error('errors.promotionOnlyActive');
+      throw new ValidationError('errors.promotionOnlyActive');
     }
     const now = new Date();
     this.is_promoted = true;

@@ -71,6 +71,7 @@ export const CACHE_TTL: CacheTTL = {
 export const CACHE_PREFIXES = {
   listings: 'cache:listings',
   listingsSearch: 'cache:listings:search',
+  listingsSearchCount: 'cache:listings:search:count',
   listingsUser: 'cache:listings:user',
   listingsSimilar: 'cache:listings:similar',
   brands: 'cache:brands',

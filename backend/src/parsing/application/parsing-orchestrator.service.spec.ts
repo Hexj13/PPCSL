@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 
 import { AdminAuditService } from '../../admin/admin-audit.service';
@@ -9,7 +9,14 @@ import { ParserRun } from '../infrastructure/persistence/parser-run.entity';
 import { ParserSchedule } from '../infrastructure/persistence/parser-schedule.entity';
 import { PlpStorageService } from '../infrastructure/plp-storage.service';
 
+import { ParserPlpFileService } from './parser-plp-file.service';
+import { ParserRunLogWriter } from './parser-run-log-writer.service';
 import { ParsingOrchestratorService } from './parsing-orchestrator.service';
+import { ParsingPdpRunExecutor } from './parsing-pdp-run-executor.service';
+import { ParsingPlpRunExecutor } from './parsing-plp-run-executor.service';
+import { ParsingRunChildProcessHost } from './parsing-run-child-process.host';
+import { ParsingRunLifecycleService } from './parsing-run-lifecycle.service';
+import { ParsingSyncRunExecutor } from './parsing-sync-run-executor.service';
 
 function createParserRun(overrides: Partial<ParserRun> = {}): ParserRun {
   return {
@@ -61,6 +68,29 @@ describe('ParsingOrchestratorService', () => {
       log: jest.fn().mockResolvedValue(undefined),
     } as unknown as AdminAuditService;
     const adminService = {} as unknown as AdminUsersService;
+    const runLogWriter = {
+      append: jest.fn().mockResolvedValue(undefined),
+      flush: jest.fn().mockResolvedValue(undefined),
+      cleanup: jest.fn(),
+    } as unknown as ParserRunLogWriter;
+    const plpFileService = {} as unknown as ParserPlpFileService;
+    const runLifecycle = {
+      getRun: jest.fn(async (id: string) => {
+        const run = await (runRepo.findOne as jest.Mock)({ where: { id } });
+        if (!run) {
+          throw new NotFoundException('errors.parserRunNotFound');
+        }
+        return run;
+      }),
+      failRun: jest.fn().mockResolvedValue(undefined),
+    } as unknown as ParsingRunLifecycleService;
+    const childHost = {
+      getActive: jest.fn().mockReturnValue(undefined),
+      setKillTimer: jest.fn(),
+    } as unknown as ParsingRunChildProcessHost;
+    const plpRunExecutor = { run: jest.fn() } as unknown as ParsingPlpRunExecutor;
+    const pdpRunExecutor = { run: jest.fn() } as unknown as ParsingPdpRunExecutor;
+    const syncRunExecutor = { run: jest.fn() } as unknown as ParsingSyncRunExecutor;
     const service = new ParsingOrchestratorService(
       runRepo,
       logChunkRepo,
@@ -69,6 +99,13 @@ describe('ParsingOrchestratorService', () => {
       plpStorage,
       adminAudit,
       adminService,
+      runLogWriter,
+      plpFileService,
+      runLifecycle,
+      childHost,
+      plpRunExecutor,
+      pdpRunExecutor,
+      syncRunExecutor,
     );
     return { service, runRepo, adminAudit };
   };

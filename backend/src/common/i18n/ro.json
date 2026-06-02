@@ -97,6 +97,7 @@
     "userNotActive": "Utilizatorul nu este activ",
     "termsNotAccepted": "Trebuie să acceptați termenii de utilizare",
     "phoneAlreadyExists": "Utilizator cu acest număr de telefon există deja",
+    "registrationFailed": "Înregistrarea nu a putut fi finalizată. Verificați datele și încercați din nou",
     "primaryPhoneMustUseChangeFlow": "Pentru a schimba numărul de telefon al contului, folosește opțiunea „Schimbă telefonul” din profil.",
     "emailAlreadyExists": "Utilizator cu această adresă de email există deja",
     "invalidOrExpiredToken": "Token invalid sau expirat",

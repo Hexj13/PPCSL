@@ -2,6 +2,7 @@ import { expect, type Page } from '@playwright/test';
 
 import { getE2eBackendApiOrigin } from '../utils/api-origin';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
+import { visibleSearchFiltersForm } from '../utils/search-filters-form';
 
 const VEHICLE_CATEGORY_POLL = { timeout: 45_000, intervals: [400, 600, 1000, 1600] };
 
@@ -18,6 +19,10 @@ export class SearchHomePage {
   } as const;
 
   constructor(private readonly page: Page) {}
+
+  private searchFiltersForm() {
+    return visibleSearchFiltersForm(this.page);
+  }
 
   async open(path = '/'): Promise<void> {
     await forceDefaultCanonicalLocaleCookies(this.page);
@@ -58,15 +63,16 @@ export class SearchHomePage {
   }
 
   async expectPageView(): Promise<void> {
-    await expect(this.page.getByTestId(this.testIds.form)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.vehicleTypeCar)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.vehicleTypeTruck)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.vehicleTypeMoto)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.listingCategoryTire)).toBeVisible();
+    const form = this.searchFiltersForm();
+    await expect(form).toBeVisible();
+    await expect(form.getByTestId(this.testIds.vehicleTypeCar)).toBeVisible();
+    await expect(form.getByTestId(this.testIds.vehicleTypeTruck)).toBeVisible();
+    await expect(form.getByTestId(this.testIds.vehicleTypeMoto)).toBeVisible();
+    await expect(form.getByTestId(this.testIds.listingCategoryTire)).toBeVisible();
   }
 
   async selectVehicleTypeCar(): Promise<void> {
-    const target = this.page.getByTestId(this.testIds.vehicleTypeCar);
+    const target = this.searchFiltersForm().getByTestId(this.testIds.vehicleTypeCar);
     await expect(target).toBeEnabled({ timeout: 20_000 });
     await target.scrollIntoViewIfNeeded();
     await expect
@@ -84,7 +90,7 @@ export class SearchHomePage {
   }
 
   async selectVehicleTypeTruck(): Promise<void> {
-    const target = this.page.getByTestId(this.testIds.vehicleTypeTruck);
+    const target = this.searchFiltersForm().getByTestId(this.testIds.vehicleTypeTruck);
     await expect(target).toBeEnabled({ timeout: 20_000 });
     await target.scrollIntoViewIfNeeded();
     await expect
@@ -102,7 +108,7 @@ export class SearchHomePage {
   }
 
   async selectVehicleTypeMoto(): Promise<void> {
-    const target = this.page.getByTestId(this.testIds.vehicleTypeMoto);
+    const target = this.searchFiltersForm().getByTestId(this.testIds.vehicleTypeMoto);
     await expect(target).toBeEnabled({ timeout: 20_000 });
     await target.scrollIntoViewIfNeeded();
     await expect
@@ -120,7 +126,7 @@ export class SearchHomePage {
   }
 
   async selectListingCategoryTire(): Promise<void> {
-    const target = this.page.getByTestId(this.testIds.listingCategoryTire);
+    const target = this.searchFiltersForm().getByTestId(this.testIds.listingCategoryTire);
     await expect(target).toBeEnabled({ timeout: 20_000 });
     await target.scrollIntoViewIfNeeded();
     await expect
@@ -138,7 +144,7 @@ export class SearchHomePage {
   }
 
   async submitSearch(): Promise<void> {
-    const submit = this.page.getByTestId('search-submit');
+    const submit = this.searchFiltersForm().getByTestId('search-submit');
     await expect(submit).toBeEnabled({ timeout: 20_000 });
     await submit.scrollIntoViewIfNeeded();
     await submit.click();
@@ -223,14 +229,14 @@ export class SearchHomePage {
   }
 
   async clickSmartSelection(): Promise<void> {
-    const btn = this.page.getByTestId('search-smart-selection');
+    const btn = this.searchFiltersForm().getByTestId('search-smart-selection');
     await expect(btn).toBeEnabled({ timeout: 20_000 });
     await btn.scrollIntoViewIfNeeded();
     await btn.click();
   }
 
   async openSaveFilterModal(): Promise<void> {
-    const btn = this.page.getByTestId('search-save-filter');
+    const btn = this.searchFiltersForm().getByTestId('search-save-filter');
     await expect(btn).toBeEnabled({ timeout: 20_000 });
     await btn.scrollIntoViewIfNeeded();
     await btn.click();

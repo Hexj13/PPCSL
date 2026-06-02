@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useRef, startTransition } from 'react';
 
-import { prewarmListingPageHeroImage } from '@/lib/listing/listing-page-helpers';
+import { useListingGridCities } from '@/components/listing/CitiesProvider';
 import {
   ListingCardBadges,
   ListingCardImageArea,
@@ -17,7 +17,6 @@ import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhot
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import { useI18n } from '@/components/providers/I18nProvider';
-import { useListingGridCities } from '@/components/listing/CitiesProvider';
 import {
   getCompareButtonClassName,
   useListingCardComparison,
@@ -30,6 +29,7 @@ import { setBlurForListing, setIndexForListing } from '@/lib/blur-navigation-cac
 import { decodeBlurhashOffMain, getDecodedBlurhashFromCache } from '@/lib/blurhash-worker-client';
 import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
 import { observeElementVisibility } from '@/lib/intersection-observer-registry';
+import { prewarmListingPageHeroImage } from '@/lib/listing/listing-page-helpers';
 import { preserveHomeScrollPosition } from '@/lib/preserve-home-scroll';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 import {

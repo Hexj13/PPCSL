@@ -5,7 +5,9 @@ export function setListingHasVideoFlag(listing: Listing): void {
 }
 
 export function stripListingVideoForListResponse(listing: Listing): void {
-  setListingHasVideoFlag(listing);
+  if ((listing as Listing & { has_video?: boolean }).has_video === undefined) {
+    setListingHasVideoFlag(listing);
+  }
   (listing as { video?: unknown }).video = undefined;
 }
 

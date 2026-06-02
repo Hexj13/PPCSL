@@ -14,7 +14,7 @@ Feature documentation for the search/filter form on the main listing search page
 
 **Status:** Implemented.
 
-**Location:** Home page (`/`), form `#search-filters`. Main component: `core/frontend/components/search/SearchFilters.tsx`.
+**Location:** Home page (`/`), form `#search-filters` (`data-testid="search-filters-form"`). Entry: `SearchFilters.tsx` (controller hook) → `search-filters/SearchFiltersForm.tsx` (markup and tab panels).
 
 ---
 
@@ -188,6 +188,7 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 - **Tabs:** `useSearchTabs` — active tab, refs for indicator and scroll.
 - **Vehicle type:** `useVehicleType` — from URL or default `car`.
 - **Popular tab:** `usePopularModels` — toggleBrand, toggleModel, isBrandExplicitlySelected, isModelSelected, selectedItems, clearAll; syncs with `filters.brand_ids` and `filters.model_ids`.
+- **Controller:** `useSearchFiltersController` — wires hooks, handlers, and props for `SearchFiltersForm`; lifecycle in `useSearchFiltersControllerLifecycle`.
 
 ---
 
@@ -195,7 +196,10 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 
 | File                                        | Role                                                                                       |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `SearchFilters.tsx`                         | Form container, vehicle type, tabs, tab visibility (`hidden`), actions, save modal |
+| `SearchFilters.tsx`                         | Thin wrapper: `useSearchFiltersController` → `SearchFiltersForm` |
+| `search-filters/SearchFiltersForm.tsx`      | Form markup, vehicle type, tabs, desktop/mobile panels, actions, save modal |
+| `search-filters/searchFiltersDynamics.tsx`  | `dynamic()` imports for mobile/tire panels and save modal (code-split) |
+| `hooks/useSearchFiltersController.ts`       | Composes filter state, URL sync, handlers, and form props |
 | `search-filters/mobile/MobileSearchFilters.tsx` | Mobile vehicle/tire filter UI and sheets |
 | `search-filters/BasicFilters.tsx`           | Basic criteria grid + PopularBodyTypesFilter                                               |
 | `search-filters/AdvancedFilters.tsx`        | Additional criteria grid + labels                                                          |
@@ -216,6 +220,7 @@ Stable `data-testid` values used by `search-filters-mobile.spec.ts` and `search-
 
 | Surface | IDs |
 | --- | --- |
+| Form | `search-filters-form` (E2E uses `:visible` when a stale hidden instance exists after cookie reset) |
 | Tabs | `search-tab-basic`, `search-tab-advanced`, `search-tab-equipment`, `search-tab-popular` |
 | Desktop panels | `search-panel-basic`, `search-panel-advanced`, `search-panel-equipment`, `search-panel-popular` |
 | Mobile panels | `search-panel-mobile-basic`, `search-panel-mobile-advanced`, `search-panel-mobile-equipment`, `search-panel-mobile-popular` |

@@ -64,7 +64,7 @@ npx playwright install chromium
 - `E2E_USER_PASSWORD` (optional; default `GGGgggTEST777` when unset — matches stage `seed.ts` admin)
 - `API_URL` or `E2E_API_URL` (optional; default `http://localhost:4000` for API helpers such as `buildAvailableMdPhone`)
 - For browser-side API helpers (`e2e/utils/api-origin.ts`), only **absolute** `http(s)` URLs are used from env. Priority: `E2E_API_URL`, then `API_URL`, then `NEXT_PUBLIC_API_URL` (relative values such as `/api` are ignored so helpers do not call the wrong host).
-- Run the backend API with `SMS_OUTBOUND_DISABLED=true` (and `NODE_ENV` not `production`) when Twilio credentials are present in `.env` so Playwright flows do not trigger real outbound SMS; codes in Redis are still written; UI verification can use `000000` locally (see below).
+- Run the backend API with `SMS_OUTBOUND_DISABLED=true` (and `NODE_ENV` not `production`) when Twilio credentials are present in `.env` so Playwright flows do not trigger real outbound SMS; codes in Redis are still written; UI verification can use `000000` when the API runs with `NODE_ENV=development` or `stage` (see below).
 
 If you set `E2E_USER_*` explicitly, values must match a user in your database (password must match the hashed password from seed or your own reset).
 
@@ -74,7 +74,7 @@ Use `testInfo.skip(condition, reason)` only for rare environment constraints doc
 
 Local registration flow expectation:
 
-- On local environment SMS verification code is `000000`.
+- SMS verification code `000000` is accepted when the API `NODE_ENV` is `development` or `stage` (not production). Registration submit waits for `POST /api/auth/send-sms` before asserting navigation to `/verify-phone`.
 - Registration E2E should cover both user types: individual and business.
 - Registration flow is complete only after `verify-phone` -> `complete-profile` (with additional data) -> home page.
 
@@ -99,28 +99,22 @@ Page objects must absorb these differences (`ListingCreatePage.pickDropdownOptio
 
 ## Playwright projects
 
-`playwright.config.ts` defines **four** Chromium projects (mobile runs **before** desktop):
+`playwright.config.ts` defines **two** Chromium projects (mobile listed first, then desktop):
 
-| Project | Viewport | Specs | Workers |
-| --- | --- | --- | --- |
-| **`mobile-serial-account`** | Mobile | `statefulAccountSpecs` regex | 1 |
-| **`mobile`** | Mobile | All other specs | 1–2 |
-| **`desktop-serial-account`** | Desktop | `statefulAccountSpecs` regex | 1 |
-| **`desktop`** | Desktop | All other specs | 1–2 |
+| Project | Viewport | Specs |
+| --- | --- | --- |
+| **`mobile`** | `Pixel 7` | All specs in `e2e/specs` (unless skipped in-file) |
+| **`desktop`** | `Desktop Chrome` | All specs in `e2e/specs` (unless skipped in-file) |
 
-`desktop-serial-account` declares `dependencies: ['mobile-serial-account']` so both serial projects never run at the same time on the shared seeded admin (avoids favorites/saved-filter races).
+**Viewport-only specs** use `test.skip` in the spec file: `search-filters-mobile.spec.ts` skips non-mobile projects; `search-filters-desktop.spec.ts` skips mobile. All other specs run on both viewports.
 
-**Viewport-only specs** (no `test.skip`): `search-filters-mobile.spec.ts` runs only in mobile projects; `search-filters-desktop.spec.ts` only in desktop projects (`mobileOnlySpecs` / `desktopOnlySpecs` in `playwright.config.ts`). All other specs run on both viewports.
-
-`statefulAccountSpecs` (shared E2E admin, mutates backend/UI): favorites, saved-filters, smart-selection, listing-detail-actions, sync-favorites-cross-tab, listing-create, my-listings, listing-view, search-filters.
+Specs that mutate shared E2E admin data (favorites, saved-filters, smart-selection, listing-detail-actions, sync-favorites-cross-tab, listing-create, my-listings, listing-view, search-filters, promotion) rely on isolated flows or cleanup helpers; run the full suite locally before release when changing those areas.
 
 Run a subset explicitly:
 
 ```bash
 npx playwright test --project=mobile
-npx playwright test --project=mobile-serial-account
 npx playwright test --project=desktop
-npx playwright test --project=desktop-serial-account
 ```
 
 ## Required architecture for specs
@@ -286,7 +280,8 @@ Current suite is aligned with this standard:
 
 - Shared fixtures: `e2e/fixtures/base.ts` (page objects + Allure auto layer)
 - Browser reset helper: `e2e/utils/session.ts` (no `beforeEach` UI hooks)
-- Shared step runner: `e2e/utils/steps.ts` (`prependClearBrowserState`, `runSteps`)
+- Shared step runner: `e2e/utils/steps.ts` (`prependClearBrowserState`, `runSteps`); `clearBrowserState` restores default locale cookies (`ro`) before navigating home so i18n does not leave a duplicate hidden search form in the DOM
+- Search form locators: `e2e/utils/search-filters-form.ts` (`visibleSearchFiltersForm` — scopes to `[data-testid="search-filters-form"]:visible`)
 - API helpers: `e2e/utils/api/auth.ts`, `e2e/utils/api/check-phone.ts`, `e2e/utils/api/listing-actions.ts`, `e2e/utils/api/saved-filters.ts`, `e2e/utils/api/wait-favorite-api.ts`
 - Shared auth/listing helpers: `e2e/utils/auth.ts`, `e2e/utils/listings.ts`, `e2e/utils/listing-flow.ts`
 - API origin + locale cookies: `e2e/utils/api-origin.ts`, `e2e/utils/e2e-locale.ts`

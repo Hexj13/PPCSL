@@ -17,6 +17,10 @@ jest.mock('@/lib/api', () => ({
   },
 }));
 
+jest.mock('@/hooks/useCities', () => ({
+  useCities: () => ({ cities: [], loading: false }),
+}));
+
 jest.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({
     t: (key: string) => {

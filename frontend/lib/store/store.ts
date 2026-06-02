@@ -4,6 +4,11 @@ import { persist } from 'zustand/middleware';
 import type { User } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import {
+  AUTH_PERSIST_VERSION,
+  migrateAuthPersistedState,
+  toPersistedAuthUser,
+} from '@/lib/auth-persist';
+import {
   createPersistJSONStorage,
   localStorageGetItem,
   localStorageRemoveItem,
@@ -25,7 +30,10 @@ export function persistAuthSnapshotForRedirect(user: User | null): void {
   if (typeof window === 'undefined') return;
   localStorageRemoveItem('token');
   localStorageRemoveItem('refresh_token');
-  localStorageSetItem('auth-storage', JSON.stringify({ state: { user }, version: 2 }));
+  localStorageSetItem(
+    'auth-storage',
+    JSON.stringify({ state: { user: toPersistedAuthUser(user) }, version: AUTH_PERSIST_VERSION }),
+  );
 }
 
 function normalizeCompareIds(ids: unknown): string[] {
@@ -121,14 +129,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      version: 2,
-      migrate: (persisted) => {
-        const p = persisted as { user?: User | null } | null | undefined;
-        return { user: p?.user ?? null };
-      },
+      version: AUTH_PERSIST_VERSION,
+      migrate: (persisted, fromVersion) => migrateAuthPersistedState(persisted, fromVersion),
       storage: createPersistJSONStorage(),
       partialize: (state) => ({
-        user: state.user,
+        user: toPersistedAuthUser(state.user),
       }),
       skipHydration: true,
     },

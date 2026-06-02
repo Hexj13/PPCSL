@@ -1,5 +1,7 @@
 import type { Page } from '@playwright/test';
 
+import { forceDefaultCanonicalLocaleCookies } from './e2e-locale';
+
 export async function gotoWithDomContentLoadedRetry(page: Page, url: string): Promise<void> {
   let lastError: unknown;
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -23,6 +25,7 @@ async function gotoRoot(page: Page): Promise<void> {
 
 export async function clearBrowserState(page: Page): Promise<void> {
   await page.context().clearCookies();
+  await forceDefaultCanonicalLocaleCookies(page);
   await gotoRoot(page);
   await page.evaluate(() => {
     window.localStorage.clear();

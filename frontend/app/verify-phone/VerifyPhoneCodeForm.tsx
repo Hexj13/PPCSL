@@ -1,5 +1,6 @@
 'use client';
 
+import { OtpCodeInput } from '@/components/common/OtpCodeInput';
 import { useTranslation } from '@/hooks/useTranslation';
 import { formatPhoneForDisplay } from '@/lib/phone';
 import { smsResendCooldownButtonLabel } from '@/lib/utils';
@@ -56,49 +57,18 @@ export function VerifyPhoneCodeForm({
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4" data-testid="verify-phone-form">
-          <div className="flex justify-center gap-2 md:gap-3">
-            {[0, 1, 2, 3, 4, 5].map((index) => (
-              <div key={index} className="relative">
-                <input
-                  ref={(el) => {
-                    inputRefs.current[index] = el;
-                  }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={code[index] || ''}
-                  onChange={(e) => onCodeChange(index, e.target.value)}
-                  onKeyDown={(e) => onKeyDown(index, e)}
-                  onPaste={onPaste}
-                  disabled={isSubmitting}
-                  className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-primary-700 focus:border-primary-700 ${
-                    error
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                      : 'border-primary-700/30 focus:border-primary-700'
-                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-primary-900`}
-                  style={{
-                    caretColor: 'transparent',
-                    fontFamily: "'Digital-7', monospace",
-                    letterSpacing: '0.05em',
-                  }}
-                  autoComplete={index === 0 ? 'one-time-code' : 'off'}
-                  autoFocus={index === 0} // eslint-disable-line jsx-a11y/no-autofocus
-                  data-testid={`verify-phone-code-input-${index}`}
-                />
-                {!code[index] && (
-                  <span
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-500 opacity-60 select-none text-2xl md:text-3xl font-bold"
-                    style={{
-                      fontFamily: "'Digital-7', monospace",
-                      letterSpacing: '0.05em',
-                    }}
-                  >
-                    0
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
+          <OtpCodeInput
+            code={code}
+            error={error}
+            disabled={isSubmitting}
+            inputRefs={inputRefs}
+            onCodeChange={onCodeChange}
+            onKeyDown={onKeyDown}
+            onPaste={onPaste}
+            variant="digital"
+            showError={false}
+            testIdPrefix="verify-phone-code-input"
+          />
 
           {error && (
             <div className="text-center">

@@ -73,6 +73,7 @@ export const dataSourceOptions: DataSourceOptions = {
     min: parseInt(process.env.DB_POOL_MIN || '0'),
     idleTimeoutMillis: parseInt(process.env.DB_POOL_IDLE_TIMEOUT || '30000'),
     connectionTimeoutMillis: parseInt(process.env.DB_POOL_CONNECTION_TIMEOUT || '10000'),
+    statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT_MS || '30000'),
   },
 };
 

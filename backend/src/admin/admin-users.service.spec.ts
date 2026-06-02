@@ -439,6 +439,7 @@ describe('AdminUsersService', () => {
         {
           invalidateSearch: jest.fn(),
           invalidateSingle: jest.fn(),
+          invalidateSimilar: jest.fn(),
         } as unknown as IListingCache,
         {} as UsersService,
         {} as UserProfilePatchService,
@@ -462,6 +463,7 @@ describe('AdminUsersService', () => {
       const listingCache = {
         invalidateSearch: jest.fn(),
         invalidateSingle: jest.fn(),
+        invalidateSimilar: jest.fn(),
       } as unknown as IListingCache;
 
       const service = new AdminUsersService(
@@ -492,6 +494,7 @@ describe('AdminUsersService', () => {
       const listingCache = {
         invalidateSearch: jest.fn().mockResolvedValue(undefined),
         invalidateSingle: jest.fn().mockResolvedValue(undefined),
+        invalidateSimilar: jest.fn().mockResolvedValue(undefined),
       } as unknown as IListingCache;
 
       const service = new AdminUsersService(

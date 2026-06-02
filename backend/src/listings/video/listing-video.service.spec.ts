@@ -21,7 +21,11 @@ describe('ListingVideoService', () => {
       isEnabled: jest.Mock;
       getJob: jest.Mock;
     };
-    let listingCache: { invalidateSearch: jest.Mock; invalidateSingle: jest.Mock };
+    let listingCache: {
+      invalidateSearch: jest.Mock;
+      invalidateSingle: jest.Mock;
+      invalidateSimilar: jest.Mock;
+    };
     const uploadService = {} as unknown as UploadService;
     const configService = { get: jest.fn() };
 
@@ -42,6 +46,7 @@ describe('ListingVideoService', () => {
       listingCache = {
         invalidateSearch: jest.fn(async () => undefined),
         invalidateSingle: jest.fn(async () => undefined),
+        invalidateSimilar: jest.fn(async () => undefined),
       };
       service = new ListingVideoService(
         listingRepo as unknown as import('typeorm').Repository<Listing>,
@@ -122,7 +127,11 @@ describe('ListingVideoService', () => {
       deleteListingVideoKeys: jest.Mock;
     };
     let listingRepo: { save: jest.Mock };
-    let listingCache: { invalidateSearch: jest.Mock; invalidateSingle: jest.Mock };
+    let listingCache: {
+      invalidateSearch: jest.Mock;
+      invalidateSingle: jest.Mock;
+      invalidateSimilar: jest.Mock;
+    };
     const mediaConvert = {} as unknown as MediaConvertService;
     const configService = { get: jest.fn() };
 
@@ -135,6 +144,7 @@ describe('ListingVideoService', () => {
       listingCache = {
         invalidateSearch: jest.fn(async () => undefined),
         invalidateSingle: jest.fn(async () => undefined),
+        invalidateSimilar: jest.fn(async () => undefined),
       };
       service = new ListingVideoService(
         listingRepo as unknown as import('typeorm').Repository<Listing>,
@@ -192,7 +202,11 @@ describe('ListingVideoService', () => {
       headObjectContentLength: jest.Mock;
     };
     let mediaConvert: { getJob: jest.Mock };
-    let listingCache: { invalidateSearch: jest.Mock; invalidateSingle: jest.Mock };
+    let listingCache: {
+      invalidateSearch: jest.Mock;
+      invalidateSingle: jest.Mock;
+      invalidateSimilar: jest.Mock;
+    };
     const configService = { get: jest.fn() };
 
     function jobWithListingOutputs(listingId: string): Job {
@@ -243,6 +257,7 @@ describe('ListingVideoService', () => {
       listingCache = {
         invalidateSearch: jest.fn(async () => undefined),
         invalidateSingle: jest.fn(async () => undefined),
+        invalidateSimilar: jest.fn(async () => undefined),
       };
       service = new ListingVideoService(
         listingRepo as unknown as import('typeorm').Repository<Listing>,
@@ -361,6 +376,7 @@ describe('ListingVideoService', () => {
     const listingCache = {
       invalidateSearch: jest.fn(async () => undefined),
       invalidateSingle: jest.fn(async () => undefined),
+      invalidateSimilar: jest.fn(async () => undefined),
     } as unknown as IListingCache;
     const configService = { get: jest.fn() };
 
@@ -427,6 +443,7 @@ describe('ListingVideoService', () => {
         {
           invalidateSearch: jest.fn(async () => undefined),
           invalidateSingle: jest.fn(async () => undefined),
+          invalidateSimilar: jest.fn(async () => undefined),
         } as unknown as IListingCache,
         { get: jest.fn() } as unknown as import('@nestjs/config').ConfigService,
       );

@@ -90,6 +90,34 @@ export async function ensureListingDetailFromSearch(
   assert.ok(opened);
 }
 
+export async function publishListingViaApi(page: Page, listingId: string): Promise<void> {
+  const apiOrigin = getE2eBackendApiOrigin();
+  const response = await page.request.post(`${apiOrigin}/api/listings/${listingId}/publish`);
+  assert.ok(response.ok(), `Failed to publish listing ${listingId}: HTTP ${response.status()}`);
+}
+
+type MyListingRow = {
+  id?: string;
+  status?: string;
+  is_promoted?: boolean;
+};
+
+export async function findPromotableListingIdViaApi(page: Page): Promise<string | null> {
+  const apiOrigin = getE2eBackendApiOrigin();
+  const response = await page.request.get(`${apiOrigin}/api/listings/my?limit=50&status=Active`);
+  if (!response.ok()) {
+    return null;
+  }
+  const body = (await response.json()) as { data?: MyListingRow[] | { data?: MyListingRow[] } };
+  const rows = Array.isArray(body.data)
+    ? body.data
+    : body.data && typeof body.data === 'object' && Array.isArray(body.data.data)
+      ? body.data.data
+      : [];
+  const match = rows.find((row) => row.status === 'Active' && row.is_promoted === false);
+  return match?.id ?? null;
+}
+
 export async function ensureNonOwnListingDetailFromSearch(
   page: Page,
   searchHomePage: SearchHomePage,

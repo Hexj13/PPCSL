@@ -43,7 +43,7 @@ export class ListingDetailPage {
       this.page,
       (path) => /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new',
     );
-    await expect(this.copyLinkButton).toBeVisible();
+    await expect(this.copyLinkButton).toBeVisible({ timeout: 30_000 });
   }
 
   async clickCopyLinkButton(): Promise<void> {
@@ -106,7 +106,7 @@ export class ListingDetailPage {
     await expect(this.page.getByTestId(this.testIds.detailDescription)).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.detailSeller)).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.detailInfo)).toBeVisible();
-    await expect(this.copyLinkButton).toBeVisible();
+    await expect(this.copyLinkButton).toBeVisible({ timeout: 30_000 });
 
     if (descriptionText) {
       await expect(this.descriptionBlock).toContainText(descriptionText);

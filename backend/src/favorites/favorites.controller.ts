@@ -21,6 +21,7 @@ import {
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
 import { PhoneVerifiedGuard } from '../auth/infrastructure/guards/phone-verified.guard';
 import type { AuthenticatedRequest } from '../common/express-augmentation';
+import { parseLimitQuery, parsePageQuery } from '../common/utils/pagination.utils';
 
 import { CheckBatchDto } from './dto/check-batch.dto';
 import { FavoritesService } from './favorites.service';
@@ -81,8 +82,8 @@ export class FavoritesController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const pageNum = page && Number.isFinite(parseInt(page, 10)) ? parseInt(page, 10) : 1;
-    const limitNum = limit && Number.isFinite(parseInt(limit, 10)) ? parseInt(limit, 10) : 20;
+    const pageNum = parsePageQuery(page);
+    const limitNum = parseLimitQuery(limit, { defaultValue: 20, maxValue: 100 });
     return this.favoritesService.findAll(req.user.id, pageNum, limitNum);
   }
 

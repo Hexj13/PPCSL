@@ -1,3 +1,4 @@
+/* global process */
 module.exports = {
   ci: {
     collect: {

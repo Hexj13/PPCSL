@@ -1,0 +1,44 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/**/*.{ts,tsx}",
+    "next.config.js",
+    "instrumentation.ts",
+    "instrumentation-client.ts",
+    "middleware.ts"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "project": ["**/*.{ts,tsx}"],
+  "ignore": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.stories.tsx",
+    "e2e/**",
+    ".storybook/**",
+    "lib/cdn-image-loader.ts",
+    "config/proxy.ts"
+  ],
+  "ignoreDependencies": [
+    "@next/bundle-analyzer",
+    "critters",
+    "@chromatic-com/storybook",
+    "allure-js-commons",
+    "allure-playwright",
+    "baseline-browser-mapping",
+    "browserslist",
+    "eslint-config-next",
+    "eslint-plugin-storybook",
+    "stylelint-config-standard",
+    "stylelint-config-tailwindcss",
+    "@eslint/js",
+    "@next/eslint-plugin-next"
+  ],
+  "rules": {
+    "files": "error",
+    "exports": "off",
+    "types": "off",
+    "dependencies": "off",
+    "devDependencies": "off",
+    "unlisted": "off"
+  }
+}

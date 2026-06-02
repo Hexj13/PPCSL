@@ -35,7 +35,6 @@ export function ListingCardImageArea({
         priority={priority}
         draggable={false}
         onError={onError}
-        unoptimized
         placeholder={blurDataURL ? 'blur' : undefined}
         blurDataURL={blurDataURL}
       />
@@ -241,7 +240,7 @@ export const ListingCardImageCarousel = React.forwardRef<
       const src = images[idx];
       if (!src) return null;
       if (imageErrors.has(idx)) return errorPlaceholder;
-      const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65, 640);
+      const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65);
       const isFirst = priority && idx === 0;
       const b = slideBlur(idx);
       const shouldUseBlurPlaceholder = Boolean(b) && !isPending && !loadedRef.current.has(idx);
@@ -280,7 +279,6 @@ export const ListingCardImageCarousel = React.forwardRef<
               promotePendingSlot(slotId, idx);
             }
           }}
-          unoptimized
           placeholder={shouldUseBlurPlaceholder ? 'blur' : undefined}
           blurDataURL={shouldUseBlurPlaceholder ? b : undefined}
         />

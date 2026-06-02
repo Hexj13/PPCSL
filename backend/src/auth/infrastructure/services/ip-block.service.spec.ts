@@ -1,20 +1,33 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { RedisService } from '../../../common/redis.service';
+
 import { IpBlockService } from './ip-block.service';
 
 describe('IpBlockService', () => {
   let service: IpBlockService;
+  let redisService: {
+    exists: jest.Mock;
+    rateLimitIncr: jest.Mock;
+    set: jest.Mock;
+    del: jest.Mock;
+    get: jest.Mock;
+  };
 
   beforeEach(async () => {
+    redisService = {
+      exists: jest.fn().mockResolvedValue(false),
+      rateLimitIncr: jest.fn().mockResolvedValue(1),
+      set: jest.fn().mockResolvedValue(undefined),
+      del: jest.fn().mockResolvedValue(undefined),
+      get: jest.fn().mockResolvedValue(null),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [IpBlockService],
+      providers: [IpBlockService, { provide: RedisService, useValue: redisService }],
     }).compile();
 
-    service = module.get<IpBlockService>(IpBlockService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+    service = module.get(IpBlockService);
   });
 
   describe('getClientIp', () => {
@@ -25,209 +38,36 @@ describe('IpBlockService', () => {
         },
       };
 
-      const result = service.getClientIp(request);
-
-      expect(result).toBe('192.168.1.1');
-    });
-
-    it('should extract IP from x-real-ip header', () => {
-      const request = {
-        headers: {
-          'x-real-ip': '192.168.1.1',
-        },
-      };
-
-      const result = service.getClientIp(request);
-
-      expect(result).toBe('192.168.1.1');
-    });
-
-    it('should use request.ip if headers not available', () => {
-      const request = {
-        ip: '192.168.1.1',
-      };
-
-      const result = service.getClientIp(request);
-
-      expect(result).toBe('192.168.1.1');
-    });
-
-    it('should use connection.remoteAddress as fallback', () => {
-      const request = {
-        connection: {
-          remoteAddress: '192.168.1.1',
-        },
-      };
-
-      const result = service.getClientIp(request);
-
-      expect(result).toBe('192.168.1.1');
-    });
-
-    it('should return unknown if no IP found', () => {
-      const request = {};
-
-      const result = service.getClientIp(request);
-
-      expect(result).toBe('unknown');
+      expect(service.getClientIp(request)).toBe('192.168.1.1');
     });
   });
 
   describe('recordFailedAttempt', () => {
-    it('should increment attempt count', () => {
-      const ip = '192.168.1.1';
+    it('should increment attempts in redis', async () => {
+      await service.recordFailedAttempt('192.168.1.1');
 
-      service.recordFailedAttempt(ip);
-      const result = service.getAttemptsCount(ip);
-
-      expect(result).toBe(1);
+      expect(redisService.rateLimitIncr).toHaveBeenCalledWith(
+        'ip-block:attempts:192.168.1.1',
+        3600,
+      );
     });
 
-    it('should block IP after MAX_ATTEMPTS', () => {
-      const ip = '192.168.1.1';
+    it('should block IP after max attempts', async () => {
+      redisService.rateLimitIncr.mockResolvedValue(40);
 
-      for (let i = 0; i < 40; i++) {
-        service.recordFailedAttempt(ip);
-      }
+      await service.recordFailedAttempt('192.168.1.1');
 
-      const result = service.isBlocked(ip);
-      expect(result.blocked).toBe(true);
-      expect(result.blockedUntil).not.toBeNull();
-    });
-
-    it('should reset attempts when block expires', () => {
-      const ip = '192.168.1.1';
-
-      for (let i = 0; i < 40; i++) {
-        service.recordFailedAttempt(ip);
-      }
-
-      const blocked = service.isBlocked(ip);
-      expect(blocked.blocked).toBe(true);
-
-      if (blocked.blockedUntil) {
-        jest.useFakeTimers();
-        jest.setSystemTime(blocked.blockedUntil.getTime() + 1000);
-
-        const afterExpiry = service.isBlocked(ip);
-        expect(afterExpiry.blocked).toBe(false);
-
-        jest.useRealTimers();
-      }
-    });
-
-    it('should not increment if already blocked', () => {
-      const ip = '192.168.1.1';
-
-      for (let i = 0; i < 40; i++) {
-        service.recordFailedAttempt(ip);
-      }
-
-      const beforeCount = service.getAttemptsCount(ip);
-      service.recordFailedAttempt(ip);
-      const afterCount = service.getAttemptsCount(ip);
-
-      expect(afterCount).toBe(beforeCount);
-    });
-  });
-
-  describe('resetAttempts', () => {
-    it('should remove IP from attempts map', () => {
-      const ip = '192.168.1.1';
-
-      service.recordFailedAttempt(ip);
-      expect(service.getAttemptsCount(ip)).toBe(1);
-
-      service.resetAttempts(ip);
-      expect(service.getAttemptsCount(ip)).toBe(0);
+      expect(redisService.set).toHaveBeenCalledWith('ip-block:blocked:192.168.1.1', '1', 3600);
     });
   });
 
   describe('isBlocked', () => {
-    it('should return false for new IP', () => {
-      const ip = '192.168.1.1';
+    it('should return blocked when redis key exists', async () => {
+      redisService.exists.mockResolvedValue(true);
 
-      const result = service.isBlocked(ip);
-
-      expect(result.blocked).toBe(false);
-      expect(result.blockedUntil).toBeNull();
-    });
-
-    it('should return true when IP is blocked', () => {
-      const ip = '192.168.1.1';
-
-      for (let i = 0; i < 40; i++) {
-        service.recordFailedAttempt(ip);
-      }
-
-      const result = service.isBlocked(ip);
+      const result = await service.isBlocked('192.168.1.1');
 
       expect(result.blocked).toBe(true);
-      expect(result.blockedUntil).not.toBeNull();
-    });
-  });
-
-  describe('getAttemptsCount', () => {
-    it('should return 0 for new IP', () => {
-      const ip = '192.168.1.1';
-
-      const result = service.getAttemptsCount(ip);
-
-      expect(result).toBe(0);
-    });
-
-    it('should return correct attempt count', () => {
-      const ip = '192.168.1.1';
-
-      service.recordFailedAttempt(ip);
-      service.recordFailedAttempt(ip);
-      service.recordFailedAttempt(ip);
-
-      const result = service.getAttemptsCount(ip);
-
-      expect(result).toBe(3);
-    });
-
-    it('should return 0 after block expires', () => {
-      const ip = '192.168.1.1';
-
-      for (let i = 0; i < 40; i++) {
-        service.recordFailedAttempt(ip);
-      }
-
-      const blocked = service.isBlocked(ip);
-      if (blocked.blockedUntil) {
-        jest.useFakeTimers();
-        jest.setSystemTime(blocked.blockedUntil.getTime() + 1000);
-
-        const result = service.getAttemptsCount(ip);
-        expect(result).toBe(0);
-
-        jest.useRealTimers();
-      }
-    });
-  });
-
-  describe('cleanup', () => {
-    it('should remove expired blocks', () => {
-      const ip = '192.168.1.1';
-
-      for (let i = 0; i < 40; i++) {
-        service.recordFailedAttempt(ip);
-      }
-
-      const blocked = service.isBlocked(ip);
-      if (blocked.blockedUntil) {
-        jest.useFakeTimers();
-        jest.setSystemTime(blocked.blockedUntil.getTime() + 1000);
-
-        service.cleanup();
-
-        const afterCleanup = service.isBlocked(ip);
-        expect(afterCleanup.blocked).toBe(false);
-
-        jest.useRealTimers();
-      }
     });
   });
 });

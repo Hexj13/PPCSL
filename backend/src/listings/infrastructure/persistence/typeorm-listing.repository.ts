@@ -20,9 +20,16 @@ import {
   buildListingRoundedPriceInDefaultCurrencySql,
   buildPriceInDefaultCurrencyOrderExpression,
 } from '../../application/utils/price-sort.utils';
+import {
+  decodeSearchCursor,
+  encodeSearchCursor,
+} from '../../application/utils/search-cursor.utils';
 import { getVehicleTypeFromBodyType } from '../../domain/utils/vehicle-type.utils';
 import { Listing } from '../../entities/listing.entity';
 import { applyCitiesFilter } from '../utils/query-filters.utils';
+
+import { applyListingCardSelects, getListingCardPage } from './listing-card-query.utils';
+import { ACTIVELY_PROMOTED_SQL } from './listing-list-projection';
 
 @Injectable()
 export class TypeOrmListingRepository implements IListingRepository {
@@ -49,30 +56,39 @@ export class TypeOrmListingRepository implements IListingRepository {
     return this.repository.save(listing);
   }
 
-  async search(criteria: SearchCriteria): Promise<{ data: Listing[]; total: number }> {
+  async search(
+    criteria: SearchCriteria,
+  ): Promise<{ data: Listing[]; total: number; nextCursor?: string }> {
     const { page = 1, limit = 20, sortBy = 'created_at', sortOrder = 'DESC' } = criteria;
-    const skip = (page - 1) * limit;
     const listCategory = criteria.category ?? 'vehicle';
+    const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    const validSortFields =
+      listCategory === 'tire'
+        ? ['created_at', 'price', 'views']
+        : ['created_at', 'price', 'year', 'views'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
+    const dateSortColumn = sortField === 'created_at' ? 'last_updated_at' : sortField;
+
+    const keysetColumn =
+      sortField === 'created_at'
+        ? 'listing.last_updated_at'
+        : sortField === 'year' && listCategory !== 'tire'
+          ? 'vehicle.year'
+          : null;
+    const cursorPayload = criteria.cursor ? decodeSearchCursor(criteria.cursor) : null;
+    const useKeyset = keysetColumn !== null;
+    const skip = useKeyset && cursorPayload ? 0 : (page - 1) * limit;
 
     return this.repository.manager.transaction('REPEATABLE READ', async (manager) => {
       const scopedRepository = manager.getRepository(Listing);
 
       const baseQb = this.buildSearchQuery(criteria, scopedRepository);
-      const total = await baseQb.getCount();
+      const total =
+        criteria.knownTotal !== undefined ? criteria.knownTotal : await baseQb.getCount();
 
       const queryBuilder = baseQb.clone();
-      const validSortFields =
-        listCategory === 'tire'
-          ? ['created_at', 'price', 'views']
-          : ['created_at', 'price', 'year', 'views'];
-      const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
-      const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-      const dateSortColumn = sortField === 'created_at' ? 'last_updated_at' : sortField;
 
-      queryBuilder.addSelect(
-        `(CASE WHEN listing.is_promoted = true AND (listing.promoted_until IS NULL OR listing.promoted_until > NOW()) THEN 1 ELSE 0 END)`,
-        'actively_promoted',
-      );
+      queryBuilder.addSelect(ACTIVELY_PROMOTED_SQL, 'actively_promoted');
       queryBuilder.orderBy('actively_promoted', 'DESC');
       if (dateSortColumn === 'year' && listCategory !== 'tire') {
         queryBuilder.addOrderBy('vehicle.year', order);
@@ -97,9 +113,50 @@ export class TypeOrmListingRepository implements IListingRepository {
       }
       queryBuilder.addOrderBy('listing.id', 'ASC');
 
-      const data = await queryBuilder.skip(skip).take(limit).getMany();
-      return { data, total };
+      if (useKeyset && cursorPayload && keysetColumn) {
+        const cmp = order === 'ASC' ? '>' : '<';
+        const sortValue =
+          keysetColumn === 'listing.last_updated_at'
+            ? new Date(cursorPayload.sortValue)
+            : cursorPayload.sortValue;
+        queryBuilder.andWhere(
+          `(${ACTIVELY_PROMOTED_SQL} < :cursorPromoted
+            OR (${ACTIVELY_PROMOTED_SQL} = :cursorPromoted AND ${keysetColumn} ${cmp} :cursorSortValue)
+            OR (${ACTIVELY_PROMOTED_SQL} = :cursorPromoted AND ${keysetColumn} = :cursorSortValue AND listing.id > :cursorId))`,
+          {
+            cursorPromoted: cursorPayload.promoted,
+            cursorSortValue: sortValue,
+            cursorId: cursorPayload.id,
+          },
+        );
+      }
+
+      const fetchLimit = useKeyset ? limit + 1 : limit;
+      const data = await getListingCardPage(queryBuilder, skip, fetchLimit);
+      let nextCursor: string | undefined;
+      if (useKeyset && keysetColumn && data.length > limit) {
+        const last = data[limit - 1];
+        nextCursor = this.buildCursor(last, keysetColumn);
+        data.splice(limit);
+      }
+
+      return { data, total, nextCursor };
     });
+  }
+
+  private buildCursor(listing: Listing, keysetColumn: string): string {
+    const promoted =
+      listing.is_promoted &&
+      (listing.promoted_until === null ||
+        listing.promoted_until === undefined ||
+        new Date(listing.promoted_until).getTime() > Date.now())
+        ? 1
+        : 0;
+    const sortValue =
+      keysetColumn === 'listing.last_updated_at'
+        ? listing.last_updated_at.toISOString()
+        : ((listing.vehicle?.year ?? 0) as number);
+    return encodeSearchCursor({ promoted, sortValue, id: listing.id });
   }
 
   async countActiveByUser(userId: string): Promise<number> {
@@ -228,7 +285,7 @@ export class TypeOrmListingRepository implements IListingRepository {
       .addOrderBy('year_distance', 'ASC')
       .addOrderBy('price_distance', 'ASC')
       .addOrderBy('listing.last_updated_at', 'DESC')
-      .limit(200);
+      .limit(80);
 
     return queryBuilder.getMany();
   }
@@ -333,58 +390,7 @@ export class TypeOrmListingRepository implements IListingRepository {
     searchDto: SearchCriteria,
     repository: Repository<Listing> = this.repository,
   ) {
-    const qb = repository
-      .createQueryBuilder('listing')
-      .select([
-        'listing.id',
-        'listing.title',
-        'listing.price',
-        'listing.currency',
-        'listing.city',
-        'listing.status',
-        'listing.images',
-        'listing.cover_blur_hash',
-        'listing.urgent',
-        'listing.is_new',
-        'listing.is_promoted',
-        'listing.promoted_until',
-        'listing.views',
-        'listing.condition',
-        'listing.registration_type',
-        'listing.equipment',
-        'listing.category',
-        'listing.created_at',
-        'listing.last_updated_at',
-        'listing.slug',
-        'listing.video',
-      ])
-      .leftJoin('listing.vehicle', 'vehicle')
-      .addSelect([
-        'vehicle.id',
-        'vehicle.year',
-        'vehicle.fuel',
-        'vehicle.transmission',
-        'vehicle.mileage_km',
-        'vehicle.body_type',
-        'vehicle.engine_displ_l',
-        'vehicle.color',
-        'vehicle.doors',
-        'vehicle.drive_type',
-      ])
-      .leftJoin('vehicle.brand', 'brand')
-      .addSelect(['brand.id', 'brand.name', 'brand.logoUrl'])
-      .leftJoin('vehicle.model', 'model')
-      .addSelect(['model.id', 'model.name', 'model.vehicle_types'])
-      .leftJoin('listing.user', 'user')
-      .addSelect([
-        'user.id',
-        'user.type',
-        'user.phone',
-        'user.firstName',
-        'user.lastName',
-        'user.companyName',
-        'user.companyWebsiteUrl',
-      ])
+    const qb = applyListingCardSelects(repository.createQueryBuilder('listing'))
       .where('listing.status = :status', { status: ListingStatusEnum.Active })
       .andWhere('listing.category = :vehicleListCategory', {
         vehicleListCategory: ListingCategory.Vehicle,

@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
@@ -10,10 +9,7 @@ import { useAuthStore } from '@/lib/store';
 import { SearchFilters } from './SearchFilters';
 
 function renderWithProviders(ui: React.ReactElement) {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return render(ui);
 }
 
 jest.mock('@/lib/toast', () => ({

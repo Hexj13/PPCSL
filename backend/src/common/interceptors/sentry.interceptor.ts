@@ -17,10 +17,9 @@ export class SentryInterceptor implements NestInterceptor {
     if (body && (body.category === 'tire' || (body.tire !== undefined && body.tire !== null))) {
       scope.setTag('listingCategory', 'tire');
     }
-    if (request.user) {
+    if (request.user?.id) {
       scope.setUser({
         id: request.user.id,
-        email: request.user.email,
       });
     }
 

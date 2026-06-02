@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useApiErrorToast } from '@/hooks/useApiErrorToast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { comparisonApi, listingsApi } from '@/lib/api';
 import type { Listing } from '@/lib/api';
@@ -24,6 +25,7 @@ export function useComparePageListings(
   rehydrate: () => Promise<void>,
 ) {
   const { t } = useTranslation();
+  const showApiError = useApiErrorToast();
   const user = useAuthStore((s) => s.user);
   const removeVehicle = useComparisonStore((s) => s.removeVehicle);
   const removeTire = useComparisonStore((s) => s.removeTire);
@@ -88,7 +90,7 @@ export function useComparePageListings(
           removeVehicle(l.id);
         }
         if (removeApiFailed) {
-          toast.error(t('common.error'));
+          showApiError();
         }
         toast.warning(t('compare.removedWrongCategoryFromCompare'));
       }
@@ -108,7 +110,7 @@ export function useComparePageListings(
       }
       prevVehicleIdsRef.current = currentIds;
     },
-    [removeVehicle, t, user],
+    [removeVehicle, t, user, showApiError],
   );
 
   const syncTireListings = useCallback(
@@ -152,7 +154,7 @@ export function useComparePageListings(
           removeTire(l.id);
         }
         if (removeApiFailed) {
-          toast.error(t('common.error'));
+          showApiError();
         }
         toast.warning(t('compare.removedWrongCategoryFromCompare'));
       }
@@ -172,7 +174,7 @@ export function useComparePageListings(
       }
       prevTireIdsRef.current = currentIds;
     },
-    [removeTire, t, user],
+    [removeTire, t, user, showApiError],
   );
 
   useEffect(() => {
@@ -239,7 +241,7 @@ export function useComparePageListings(
       try {
         await comparisonApi.remove(id);
       } catch {
-        toast.error(t('common.error'));
+        showApiError();
         return;
       }
     }
@@ -261,7 +263,7 @@ export function useComparePageListings(
       try {
         await comparisonApi.remove(id);
       } catch {
-        toast.error(t('common.error'));
+        showApiError();
         return;
       }
     }
@@ -301,7 +303,7 @@ export function useComparePageListings(
         }
       }
       if (failed > 0) {
-        toast.error(t('common.error'));
+        showApiError();
       }
       if (failed === 0) {
         toast.success(t('compare.allRemoved'));
@@ -346,7 +348,7 @@ export function useComparePageListings(
         }
       }
       if (failed > 0) {
-        toast.error(t('common.error'));
+        showApiError();
       }
       if (failed === 0) {
         toast.success(t('compare.allRemoved'));

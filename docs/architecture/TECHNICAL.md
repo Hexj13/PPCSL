@@ -195,6 +195,8 @@ TWILIO_AUTH_TOKEN=your-twilio-auth-token
 TWILIO_MESSAGING_SERVICE_SID=your-twilio-messaging-service-sid
 # Optional: skip real Twilio sends outside production (codes still stored in Redis); see SMS Verification in this doc
 # SMS_OUTBOUND_DISABLED=true
+# Optional: allow fixed test SMS code in NODE_ENV=test (integration tests); forbidden in production
+# ALLOW_SMS_TEST_CODE=true
 
 # SMTP Email Configuration
 SMTP_HOST=smtp.gmail.com
@@ -345,7 +347,8 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 - **Search:** PostgreSQL Full-Text Search with extensive filtering options
 - **Smart Selection:** authenticated questionnaire that maps car-use preferences to a saved search filter
 - **Caching:** Redis for SMS codes, cache optimization (SCAN instead of KEYS), listing AI analysis generation locks and per-user hourly quotas (production; see `POST /api/listings/:id/ai-report` and `AI_REPORT_MAX_GENERATIONS_PER_HOUR`)
-- **Monitoring:** Health check endpoint (`/health`) with database and Redis connectivity checks
+- **Monitoring:** Health check endpoint (`/health`) with database and Redis connectivity checks; optional Prometheus text at `GET /metrics` (`MetricsModule`)
+- **Tracing (optional):** OpenTelemetry OTLP export when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (`OTEL_SERVICE_NAME`, default `kupito-backend`)
 - **Code Quality:** TypeScript strict mode, CI/CD automation, bundle optimization
 
 ---
@@ -575,6 +578,7 @@ Entities: `brands` and `vehicle_models` have `is_archived`, `name_normalized`, `
 ```http
 GET /                                 # API status check
 GET /health                          # Health check (database, Redis)
+GET /metrics                         # Prometheus metrics (text/plain; exclude from public ingress unless scraped internally)
 ```
 
 ---
@@ -740,6 +744,7 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 - Per phone number: at most 3 SMS sends per rolling hour (Redis); at most 3 incorrect code submissions per active code (Redis), separate counters for registration/phone-change codes vs password-reset codes
 - **Development only:** when `NODE_ENV=development`, `DISABLE_SMS_SEND_RATE_LIMIT=true` on the API skips the per-phone hourly send counter (`SmsService`). Do not use outside local development.
 - **Non-production:** when `SMS_OUTBOUND_DISABLED=true` or `SMS_OUTBOUND_DISABLED=1` and `NODE_ENV` is not `production`, the API stores SMS codes in Redis but does not call Twilio `messages.create`. The flag has no effect in production. Use for local development and Playwright runs so Twilio credentials can stay in `.env` without sending real SMS.
+- **Fixed test code (`000000`):** accepted for SMS verify endpoints when `NODE_ENV` is `development` or `stage`, or when `NODE_ENV` is `test` and `ALLOW_SMS_TEST_CODE=true` / `1`. Never enabled in production (`ALLOW_SMS_TEST_CODE` is rejected at startup). Implementation: `sms-test-code.utils.ts`.
 - Frontend: 3 attempts per code before prompting for a new SMS; up to 2 resends after the initial send (3 SMS total per hour aligned with backend)
 - Frontend: when a resend fails with API error key `errors.smsHourlyLimit`, the client sets the resend cooldown to one hour (instead of clearing it) on registration verify, password reset, and profile phone-change verify, so the UI does not allow immediate repeated resend clicks against an exhausted per-phone quota
 - Automatic cleanup of expired IP blocks (hourly cron job)

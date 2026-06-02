@@ -275,6 +275,7 @@ export class CreateListingUseCase {
       saved = await this.listingRepo.save(listing);
     }
     await this.listingCache.invalidateSearch();
+    await this.listingCache.invalidateSimilar(saved.id);
     await this.listingCache.invalidateSingle(saved.id);
     return saved;
   }
@@ -407,6 +408,7 @@ export class CreateListingUseCase {
       saved = await this.listingRepo.save(listing);
     }
     await this.listingCache.invalidateSearch();
+    await this.listingCache.invalidateSimilar(saved.id);
     await this.listingCache.invalidateSingle(saved.id);
     return saved;
   }

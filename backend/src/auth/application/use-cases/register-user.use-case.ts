@@ -37,13 +37,13 @@ export class RegisterUserUseCase {
     const normalizedPhone = this.smsService.normalizePhoneNumber(registerDto.phone);
     const existingUserByPhone = await this.usersService.findByPhone(normalizedPhone);
     if (existingUserByPhone) {
-      throw new BadRequestException('errors.phoneAlreadyExists');
+      throw new BadRequestException('errors.registrationFailed');
     }
 
     if (registerDto.email && registerDto.email.trim()) {
       const existingUserByEmail = await this.usersService.findByEmail(registerDto.email.trim());
       if (existingUserByEmail) {
-        throw new BadRequestException('errors.emailAlreadyExists');
+        throw new BadRequestException('errors.registrationFailed');
       }
     }
 

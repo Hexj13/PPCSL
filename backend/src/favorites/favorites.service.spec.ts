@@ -1,19 +1,23 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, DeleteResult } from 'typeorm';
+import { Repository } from 'typeorm';
 
-import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 import { Listing } from '../listings/entities/listing.entity';
 
+import { AddFavoriteUseCase } from './application/use-cases/add-favorite.use-case';
+import { ListFavoritesUseCase } from './application/use-cases/list-favorites.use-case';
+import { RemoveFavoriteUseCase } from './application/use-cases/remove-favorite.use-case';
 import { Favorite } from './entities/favorite.entity';
 import { FavoritesService } from './favorites.service';
 
 describe('FavoritesService', () => {
   let service: FavoritesService;
   let repository: jest.Mocked<Repository<Favorite>>;
-  let listingsRepository: jest.Mocked<Repository<Listing>>;
   let module: TestingModule;
+  let addFavoriteUseCase: { execute: jest.Mock };
+  let removeFavoriteUseCase: { execute: jest.Mock };
+  let listFavoritesUseCase: { execute: jest.Mock };
 
   const mockFavorite: Favorite = {
     id: 'favorite-1',
@@ -21,18 +25,6 @@ describe('FavoritesService', () => {
     listing_id: 'listing-1',
     created_at: new Date(),
   } as Favorite;
-
-  const mockExchangeRatesService = {
-    enrichListingsWithApproxPrice: jest.fn((listings) =>
-      Promise.resolve(
-        listings.map((l: Listing) => ({
-          ...l,
-          approxPriceDefaultCurrency: null,
-          defaultCurrencyCode: 'EUR',
-        })),
-      ),
-    ),
-  };
 
   beforeEach(async () => {
     const mockRepository = {
@@ -45,9 +37,9 @@ describe('FavoritesService', () => {
       createQueryBuilder: jest.fn(),
     };
 
-    const mockListingsRepository = {
-      findOne: jest.fn(),
-    };
+    addFavoriteUseCase = { execute: jest.fn() };
+    removeFavoriteUseCase = { execute: jest.fn() };
+    listFavoritesUseCase = { execute: jest.fn() };
 
     module = await Test.createTestingModule({
       providers: [
@@ -56,20 +48,14 @@ describe('FavoritesService', () => {
           provide: getRepositoryToken(Favorite),
           useValue: mockRepository,
         },
-        {
-          provide: getRepositoryToken(Listing),
-          useValue: mockListingsRepository,
-        },
-        {
-          provide: ExchangeRatesService,
-          useValue: mockExchangeRatesService,
-        },
+        { provide: AddFavoriteUseCase, useValue: addFavoriteUseCase },
+        { provide: RemoveFavoriteUseCase, useValue: removeFavoriteUseCase },
+        { provide: ListFavoritesUseCase, useValue: listFavoritesUseCase },
       ],
     }).compile();
 
     service = module.get<FavoritesService>(FavoritesService);
     repository = module.get(getRepositoryToken(Favorite));
-    listingsRepository = module.get(getRepositoryToken(Listing));
   });
 
   it('should be defined', () => {
@@ -77,141 +63,51 @@ describe('FavoritesService', () => {
   });
 
   describe('add', () => {
-    it('should create new favorite when not exists', async () => {
-      const mockListing = { id: 'listing-1', user_id: 'user-2' };
-      listingsRepository.findOne.mockResolvedValue(mockListing as Listing);
-      repository.findOne.mockResolvedValue(null);
-      repository.create.mockReturnValue(mockFavorite);
-      repository.save.mockResolvedValue(mockFavorite);
+    it('should delegate to AddFavoriteUseCase', async () => {
+      addFavoriteUseCase.execute.mockResolvedValue(mockFavorite);
 
       const result = await service.add('user-1', 'listing-1');
 
       expect(result).toEqual(mockFavorite);
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { user_id: 'user-1', listing_id: 'listing-1' },
-      });
-      expect(repository.create).toHaveBeenCalledWith({
-        user_id: 'user-1',
-        listing_id: 'listing-1',
-      });
-      expect(repository.save).toHaveBeenCalledWith(mockFavorite);
-    });
-
-    it('should return existing favorite when already exists', async () => {
-      const mockListing = { id: 'listing-1', user_id: 'user-2' };
-      listingsRepository.findOne.mockResolvedValue(mockListing as Listing);
-      repository.findOne.mockResolvedValue(mockFavorite);
-
-      const result = await service.add('user-1', 'listing-1');
-
-      expect(result).toEqual(mockFavorite);
-      expect(repository.create).not.toHaveBeenCalled();
-      expect(repository.save).not.toHaveBeenCalled();
+      expect(addFavoriteUseCase.execute).toHaveBeenCalledWith('user-1', 'listing-1');
     });
   });
 
   describe('remove', () => {
-    it('should remove favorite successfully', async () => {
-      const deleteResult: DeleteResult = { affected: 1, raw: [] };
-      repository.delete.mockResolvedValue(deleteResult);
+    it('should delegate to RemoveFavoriteUseCase', async () => {
+      removeFavoriteUseCase.execute.mockResolvedValue(undefined);
 
       await service.remove('user-1', 'listing-1');
 
-      expect(repository.delete).toHaveBeenCalledWith({
-        user_id: 'user-1',
-        listing_id: 'listing-1',
-      });
+      expect(removeFavoriteUseCase.execute).toHaveBeenCalledWith('user-1', 'listing-1');
     });
 
-    it('should throw NotFoundException when favorite not found', async () => {
-      const deleteResult: DeleteResult = { affected: 0, raw: [] };
-      repository.delete.mockResolvedValue(deleteResult);
+    it('should propagate NotFoundException from use case', async () => {
+      removeFavoriteUseCase.execute.mockRejectedValue(
+        new NotFoundException('errors.favoriteNotFound'),
+      );
 
       await expect(service.remove('user-1', 'non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('findAll', () => {
-    const mockQueryBuilder = {
-      leftJoinAndSelect: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      addOrderBy: jest.fn().mockReturnThis(),
-      skip: jest.fn().mockReturnThis(),
-      take: jest.fn().mockReturnThis(),
-      getManyAndCount: jest.fn(),
-    };
-
-    beforeEach(() => {
-      repository.createQueryBuilder.mockReturnValue(mockQueryBuilder as never);
-    });
-
-    it('should return paginated favorites with enriched listings', async () => {
-      const listing = { id: 'listing-1', price: 1000, currency: 'EUR' } as Listing;
-      const favoriteWithListing = { ...mockFavorite, listing } as Favorite;
-      mockQueryBuilder.getManyAndCount.mockResolvedValue([[favoriteWithListing], 1]);
-
-      const result = await service.findAll('user-1', 1, 20);
-
-      expect(result.data).toHaveLength(1);
-      expect(result.data[0].listing).toHaveProperty('approxPriceDefaultCurrency');
-      expect(result.data[0].listing).toHaveProperty('defaultCurrencyCode', 'EUR');
-      expect(result.meta).toEqual({ total: 1, page: 1, limit: 20, totalPages: 1 });
-      expect(mockExchangeRatesService.enrichListingsWithApproxPrice).toHaveBeenCalledWith([
-        listing,
-      ]);
-      expect(repository.createQueryBuilder).toHaveBeenCalledWith('favorite');
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('favorite.user_id = :userId', {
-        userId: 'user-1',
-      });
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('listing.is_promoted', 'DESC');
-      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('listing.last_updated_at', 'DESC');
-    });
-
-    it('should return empty data and meta when no favorites', async () => {
-      mockQueryBuilder.getManyAndCount.mockResolvedValue([[], 0]);
-
-      const result = await service.findAll('user-1', 1, 20);
-
-      expect(result.data).toEqual([]);
-      expect(result.meta).toEqual({ total: 0, page: 1, limit: 20, totalPages: 0 });
-    });
-
-    it('should mask price currency and approx for closed listings', async () => {
+    it('should delegate to ListFavoritesUseCase', async () => {
       const listing = {
         id: 'listing-1',
-        status: 'Closed',
-        price: 1000,
-        currency: 'MDL',
-        user: {
-          phone: '+373123',
-          email: 'seller@example.com',
-          firstName: 'A',
-          lastName: 'B',
-          companyName: 'Co',
-          companyWebsiteUrl: 'https://x.test',
-        },
-      } as Listing;
-      const favoriteWithListing = { ...mockFavorite, listing } as Favorite;
-      mockQueryBuilder.getManyAndCount.mockResolvedValue([[favoriteWithListing], 1]);
-      mockExchangeRatesService.enrichListingsWithApproxPrice.mockResolvedValueOnce([
-        {
-          ...listing,
-          approxPriceDefaultCurrency: 500,
-          defaultCurrencyCode: 'EUR',
-        } as unknown as Listing,
-      ]);
+        approxPriceDefaultCurrency: 1000,
+        defaultCurrencyCode: 'EUR',
+      } as unknown as Listing;
+      const payload = {
+        data: [{ ...mockFavorite, listing } as Favorite],
+        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      };
+      listFavoritesUseCase.execute.mockResolvedValue(payload);
 
       const result = await service.findAll('user-1', 1, 20);
 
-      const out = result.data[0].listing! as Listing & {
-        approxPriceDefaultCurrency?: number | null;
-      };
-      expect(out.price).toBeUndefined();
-      expect(out.currency).toBeUndefined();
-      expect(out.approxPriceDefaultCurrency).toBeNull();
-      expect(out.user?.phone).toBeNull();
-      expect(out.user?.email).toBeNull();
+      expect(result).toEqual(payload);
+      expect(listFavoritesUseCase.execute).toHaveBeenCalledWith('user-1', 1, 20);
     });
   });
 
@@ -264,14 +160,10 @@ describe('FavoritesService', () => {
 
   describe('checkBatch', () => {
     it('should return favorite statuses for multiple listings', async () => {
-      const mockFavorites = [{ listing_id: 'listing-1' }, { listing_id: 'listing-2' }];
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue(mockFavorites),
-      };
-      repository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      repository.find.mockResolvedValue([
+        { listing_id: 'listing-1' },
+        { listing_id: 'listing-2' },
+      ] as Favorite[]);
 
       const result = await service.checkBatch('user-1', ['listing-1', 'listing-2', 'listing-3']);
 
@@ -280,21 +172,13 @@ describe('FavoritesService', () => {
         'listing-2': true,
         'listing-3': false,
       });
-      expect(repository.createQueryBuilder).toHaveBeenCalledWith('favorite');
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('favorite.user_id = :userId', {
-        userId: 'user-1',
-      });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'favorite.listing_id IN (:...listingIds)',
-        { listingIds: ['listing-1', 'listing-2', 'listing-3'] },
-      );
     });
 
     it('should return empty object when no listing IDs provided', async () => {
       const result = await service.checkBatch('user-1', []);
 
       expect(result).toEqual({});
-      expect(repository.createQueryBuilder).not.toHaveBeenCalled();
+      expect(repository.find).not.toHaveBeenCalled();
     });
 
     it('should return empty object when listingIds is null', async () => {
@@ -304,13 +188,7 @@ describe('FavoritesService', () => {
     });
 
     it('should return all false when no favorites exist', async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      repository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      repository.find.mockResolvedValue([]);
 
       const result = await service.checkBatch('user-1', ['listing-1', 'listing-2']);
 

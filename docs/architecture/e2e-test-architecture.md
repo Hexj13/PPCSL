@@ -57,6 +57,7 @@ Layered architecture for Playwright E2E in `core/frontend/e2e`.
   - flow helpers (`auth.ts` — `loginByUi`, `listings.ts`, `listing-flow.ts`)
   - browser reset (`session.ts`)
   - step runner (`steps.ts`)
+  - search form scoping (`search-filters-form.ts`, `search-filter-panels.ts`)
   - API helpers (`utils/api/*`)
 
 ### Types
@@ -80,9 +81,7 @@ Utilities and test-data can be consumed by specs/page-objects, but must not depe
 
 ## Coverage matrix (high level)
 
-Browser: **Chromium only**. Viewports: **every spec runs on mobile and desktop** via Playwright projects (`mobile`, `mobile-serial-account`, `desktop`, `desktop-serial-account`). Mobile is listed first in config and is the preferred target when adding or fixing flows.
-
-`desktop-serial-account` depends on `mobile-serial-account` so stateful specs for the shared E2E admin never run in parallel across viewports.
+Browser: **Chromium only**. Viewports: default Playwright projects are `mobile` then `desktop`; most specs run on both. `search-filters-mobile.spec.ts` and `search-filters-desktop.spec.ts` skip the non-matching project via `test.skip`. Prefer fixing and adding flows on mobile first.
 
 | Area | Guest | Auth | Admin | P0 tag |
 | --- | --- | --- | --- | --- |
@@ -93,7 +92,7 @@ Browser: **Chromium only**. Viewports: **every spec runs on mobile and desktop**
 | Listing AI report | yes | yes | n/a | no |
 | Listing detail view | via shared prep | yes | n/a | yes (`listing-view.spec.ts`) |
 | Listing detail actions (compare) | n/a | yes | n/a | no |
-| Listing create / my listings | n/a | yes | n/a | yes |
+| Listing create / my listings / promotion | n/a | yes | n/a | yes (`promotion.spec.ts` @p0) |
 | Auth login / register | partial | yes | n/a | yes |
 | Favorites | n/a | yes | n/a | no |
 | Saved filters | n/a | yes | n/a | no |

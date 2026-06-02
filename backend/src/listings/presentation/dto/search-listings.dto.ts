@@ -672,6 +672,14 @@ export class SearchListingsDto {
   title?: string;
 
   @ApiPropertyOptional({
+    description: 'Keyset cursor for created_at sort (vehicle listings)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  cursor?: string;
+
+  @ApiPropertyOptional({
     example: 1,
     description: 'Page number',
     minimum: 1,

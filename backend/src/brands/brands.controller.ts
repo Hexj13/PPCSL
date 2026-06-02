@@ -9,13 +9,24 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
+import { AdminGuard } from '../auth/infrastructure/guards/admin.guard';
+import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
 import { I18nService } from '../common/i18n/i18n.service';
 
 import { BrandsService } from './brands.service';
+import { AddModelsToBrandDto } from './dto/add-models-to-brand.dto';
 import { GetBrandsQueryDto } from './dto/get-brands-query.dto';
 import { GetModelsBatchDto } from './dto/get-models-batch.dto';
 import { GetSearchMetadataQueryDto } from './dto/get-search-metadata-query.dto';
@@ -168,22 +179,13 @@ export class BrandsController {
   }
 
   @ApiOperation({ summary: 'Add models to brand' })
+  @ApiBearerAuth('JWT-auth')
   @ApiParam({ name: 'name', example: 'BMW', description: 'Brand name' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        models: {
-          type: 'array',
-          items: { type: 'string' },
-          example: ['3 Series', '5 Series', 'X5'],
-        },
-      },
-    },
-  })
+  @ApiBody({ type: AddModelsToBrandDto })
   @ApiResponse({ status: 201, description: 'Models added successfully' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Post('name/:name/models')
-  async addModels(@Param('name') name: string, @Body() body: { models: string[] }) {
+  async addModels(@Param('name') name: string, @Body() body: AddModelsToBrandDto) {
     return this.brandsService.addModelsToBrand(name, body.models);
   }
 }

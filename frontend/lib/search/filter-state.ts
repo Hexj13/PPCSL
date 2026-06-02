@@ -1,0 +1,53 @@
+export type ListingCategoryFilter = 'vehicle' | 'tire';
+
+export interface FilterState {
+  listing_category: ListingCategoryFilter;
+  brand_ids: string[];
+  model_ids: string[];
+  cities: string[];
+  year_gte: string;
+  year_lte: string;
+  price_gte: string;
+  price_lte: string;
+  mileage_gte: string;
+  mileage_lte: string;
+  fuels: string[];
+  transmissions: string[];
+  body_types: string[];
+  engine_displ_l_gte: string;
+  engine_displ_l_lte: string;
+  colors: string[];
+  doors: string[];
+  currency: string;
+  urgent: boolean;
+  is_new: boolean;
+  conditions: string[];
+  registration_types: string[];
+  horsepower_gte: string;
+  horsepower_lte: string;
+  drive_types: string[];
+  equipment: string[];
+  equipment_match_mode: 'full' | 'partial';
+  available_in_credit: boolean;
+  down_payment_amount_gte: string;
+  seller_type: string;
+  sortBy: string;
+  sortOrder: 'ASC' | 'DESC';
+  tire_vehicle_type: '' | 'car' | 'truck' | 'moto';
+  tire_brand_ids: string[];
+  tire_model_ids: string[];
+  tire_widths: string[];
+  tire_profiles: string[];
+  tire_diameters: string[];
+  tire_seasons: string[];
+  tire_conditions: string[];
+  tire_quantities: string[];
+  tire_studded: boolean;
+  tire_run_flat: boolean;
+  tire_reinforced_xl: boolean;
+  tire_spare_donut: boolean;
+  tire_tubeless: boolean;
+  tire_acoustic: boolean;
+}
+
+export type DefaultFiltersShape = FilterState;

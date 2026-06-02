@@ -4,24 +4,38 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import type { NextFunction, Request, Response } from 'express';
+import { json, urlencoded } from 'express';
 import helmet from 'helmet';
+import { Logger } from 'nestjs-pino';
 
+import './common/observability/tracing';
 import './common/sentry.config';
 import { AppModule } from './app.module';
 import { PrettyLogger } from './common/logger/pretty-logger';
+import { apiV1AliasMiddleware } from './common/middleware/api-v1-alias.middleware';
 import { requestIdMiddleware } from './common/middleware/request-id.middleware';
 
 async function bootstrap() {
   const isDev = process.env.NODE_ENV !== 'production';
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    logger: isDev ? new PrettyLogger() : undefined,
+    bufferLogs: true,
     rawBody: true,
   });
+  app.useLogger(isDev ? new PrettyLogger() : app.get(Logger));
 
+  app.enableShutdownHooks();
   app.set('trust proxy', true);
 
+  app.use(json({ limit: '1mb' }));
+  app.use(urlencoded({ extended: true, limit: '1mb' }));
+  app.use(
+    compression({
+      filter: (req) => !req.url?.startsWith('/uploads'),
+    }),
+  );
   app.use(cookieParser());
 
   const corsOrigins = (() => {
@@ -35,6 +49,7 @@ async function bootstrap() {
     return [process.env.FRONTEND_URL?.trim() || 'http://localhost:3000'];
   })();
 
+  app.use(apiV1AliasMiddleware);
   app.use(requestIdMiddleware);
 
   app.use(
@@ -73,7 +88,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: false,
+      forbidNonWhitelisted: true,
       transform: true,
       exceptionFactory: (errors) => {
         const messages = errors.map((error) => {

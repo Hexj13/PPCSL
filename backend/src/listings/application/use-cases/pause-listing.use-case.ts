@@ -29,6 +29,7 @@ export class PauseListingUseCase {
     listing.pause();
     const saved = await this.listingRepo.save(listing);
     await this.listingCache.invalidateSearch();
+    await this.listingCache.invalidateSimilar(listingId);
     await this.listingCache.invalidateSingle(listingId);
     logUserEvent(this.logger, {
       event: 'listing_paused',

@@ -46,6 +46,9 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [DEPLOYMENT.md](./guides/DEPLOYMENT.md) — Deploy (optional Telegram support bot)
 - [local-development.md](./guides/local-development.md) — Local development
 - [e2e-playwright-standards.md](./guides/e2e-playwright-standards.md) — Playwright E2E standards for this project
+- [frontend-data-fetching.md](./guides/frontend-data-fetching.md) — Client list/pagination hooks (no React Query in layout)
+- [frontend-api-error-handling.md](./guides/frontend-api-error-handling.md) — `X-Skip-Error-Handling`, `useApiErrorToast`
+- [react-compiler-evaluation.md](./guides/react-compiler-evaluation.md) — Opt-in React Compiler (`REACT_COMPILER=true`)
 - [search-filter-limits.md](./guides/search-filter-limits.md) — Brand/model selection limits in search
 - [quick-start-ru.md](./guides/quick-start-ru.md) — Quick start (Russian)
 - [MOBILE-APP-ru.md](./guides/MOBILE-APP-ru.md) — Android app via PWA + TWA (Bubblewrap, Google Play; Russian operators)

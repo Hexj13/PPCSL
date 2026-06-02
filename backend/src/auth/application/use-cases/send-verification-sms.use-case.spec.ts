@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { User } from '../../../users/entities/user.entity';
 import { UsersService } from '../../../users/application/users.service';
 import { PhoneService } from '../../domain/services/phone.service';
+import { AuthPhoneRateLimitService } from '../../infrastructure/services/auth-phone-rate-limit.service';
 import { SmsService } from '../../infrastructure/services/sms.service';
 
 import { SendVerificationSmsUseCase } from './send-verification-sms.use-case';
@@ -23,6 +24,10 @@ describe('SendVerificationSmsUseCase', () => {
         PhoneService,
         { provide: UsersService, useValue: usersService },
         { provide: SmsService, useValue: smsService },
+        {
+          provide: AuthPhoneRateLimitService,
+          useValue: { assertWithinLimit: jest.fn().mockResolvedValue(undefined) },
+        },
       ],
     }).compile();
 

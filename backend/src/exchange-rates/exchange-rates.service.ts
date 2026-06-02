@@ -1,36 +1,29 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 
 import * as constants from '../common/constants';
 import { RedisService } from '../common/redis.service';
 import { Listing } from '../listings/entities/listing.entity';
 
-import { ExchangeRate } from './entities/exchange-rate.entity';
+import {
+  EXCHANGE_RATE_REPOSITORY,
+  IExchangeRateRepository,
+} from './application/ports/exchange-rate.repository.port';
+import { RefreshExchangeRatesUseCase } from './application/use-cases/refresh-exchange-rates.use-case';
 
 const CACHE_PREFIX = 'exchange_rate:';
 const CACHE_TTL_SEC = 3600;
-const RETENTION_DAYS = 3;
 const BASE_CURRENCY = 'EUR';
-
-const FXRATESAPI_BASE = process.env.FXRATESAPI_BASE_URL ?? 'https://api.fxratesapi.com';
-
-interface FXRatesAPIResponse {
-  base: string;
-  date: string;
-  rates: Record<string, number>;
-  time_last_updated?: number;
-}
 
 @Injectable()
 export class ExchangeRatesService {
   private readonly logger = new Logger(ExchangeRatesService.name);
 
   constructor(
-    @InjectRepository(ExchangeRate)
-    private readonly exchangeRateRepo: Repository<ExchangeRate>,
+    @Inject(EXCHANGE_RATE_REPOSITORY)
+    private readonly exchangeRateRepo: IExchangeRateRepository,
     private readonly redisService: RedisService,
+    private readonly refreshExchangeRatesUseCase: RefreshExchangeRatesUseCase,
   ) {}
 
   async getRate(quoteCurrency: string): Promise<number | null> {
@@ -41,22 +34,14 @@ export class ExchangeRatesService {
     if (cached != null) return cached.rate;
 
     const todayUTC = new Date().toISOString().split('T')[0];
-    let rateRow = await this.exchangeRateRepo.findOne({
-      where: {
-        base_currency_code: BASE_CURRENCY,
-        quote_currency_code: quoteCurrency,
-        rate_date: new Date(todayUTC),
-      },
-    });
+    let rateRow = await this.exchangeRateRepo.findRate(
+      BASE_CURRENCY,
+      quoteCurrency,
+      new Date(todayUTC),
+    );
 
     if (!rateRow) {
-      rateRow = await this.exchangeRateRepo.findOne({
-        where: {
-          base_currency_code: BASE_CURRENCY,
-          quote_currency_code: quoteCurrency,
-        },
-        order: { rate_date: 'DESC' },
-      });
+      rateRow = await this.exchangeRateRepo.findLatestRate(BASE_CURRENCY, quoteCurrency);
     }
 
     if (!rateRow) {
@@ -161,96 +146,7 @@ export class ExchangeRatesService {
   }
 
   async doFetchRates(): Promise<void> {
-    const defaultCurrency = constants.getDefaultCurrency();
-    if (defaultCurrency !== BASE_CURRENCY) {
-      this.logger.warn(
-        `DEFAULT_CURRENCY (${defaultCurrency}) does not match FXRatesAPI base (${BASE_CURRENCY}); skipping fetch. Set DEFAULT_CURRENCY=EUR or change base currency support.`,
-      );
-      return;
-    }
-
-    const quoteCurrencies = (constants.currencies as readonly string[]).filter(
-      (c) => c !== BASE_CURRENCY,
-    );
-    if (quoteCurrencies.length === 0) return;
-
-    const apiKey = process.env.FXRATESAPI_API_KEY;
-    if (!apiKey) {
-      if (process.env.NODE_ENV !== 'test') {
-        this.logger.error('FXRATESAPI_API_KEY not set; cannot fetch exchange rates.');
-      }
-      throw new Error('FXRATESAPI_API_KEY is not set');
-    }
-    await this.doFetchRatesFromFXRatesAPI(quoteCurrencies, apiKey);
-  }
-
-  private async doFetchRatesFromFXRatesAPI(
-    quoteCurrencies: string[],
-    apiKey: string,
-  ): Promise<void> {
-    const currencies = quoteCurrencies.join(',');
-    const url = `${FXRATESAPI_BASE}/latest?api_key=${encodeURIComponent(apiKey)}&base=${BASE_CURRENCY}&currencies=${currencies}`;
-
-    let data: FXRatesAPIResponse;
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`FXRatesAPI returned ${response.status}`);
-      }
-      data = (await response.json()) as FXRatesAPIResponse;
-    } catch (err) {
-      this.logger.error(`Exchange rates fetch failed: ${err}`);
-      throw err;
-    }
-
-    if (!data.rates || Object.keys(data.rates).length === 0) {
-      this.logger.warn(
-        `FXRatesAPI returned no rates for base=${BASE_CURRENCY}, currencies=${currencies}`,
-      );
-      return;
-    }
-
-    const dateStr = data.date
-      ? String(data.date).split('T')[0]
-      : new Date().toISOString().split('T')[0];
-    const rateDate = new Date(dateStr + 'T00:00:00.000Z');
-
-    for (const [quote, rateValue] of Object.entries(data.rates)) {
-      if (!Number.isFinite(rateValue) || rateValue <= 0) continue;
-      await this.exchangeRateRepo.upsert(
-        {
-          base_currency_code: BASE_CURRENCY,
-          quote_currency_code: quote,
-          rate: String(rateValue),
-          rate_date: rateDate,
-          source: 'fxratesapi',
-        },
-        {
-          conflictPaths: ['base_currency_code', 'quote_currency_code', 'rate_date'],
-        },
-      );
-    }
-
-    await this.exchangeRateRepo.query(
-      `DELETE FROM exchange_rates
-       WHERE id IN (
-         SELECT id FROM (
-           SELECT id,
-                  ROW_NUMBER() OVER (
-                    PARTITION BY base_currency_code, quote_currency_code
-                    ORDER BY rate_date DESC
-                  ) AS rn
-           FROM exchange_rates
-         ) ranked
-         WHERE rn > $1
-       )`,
-      [RETENTION_DAYS],
-    );
-
-    await this.redisService.invalidateByPrefix(CACHE_PREFIX);
-    this.logger.log(
-      `Exchange rates updated from FXRatesAPI for ${Object.keys(data.rates).length} currencies`,
-    );
+    await this.refreshExchangeRatesUseCase.execute();
   }
 
   @Cron('30 2 * * *')

@@ -8,7 +8,14 @@ import { ParserLogChunk } from '../infrastructure/persistence/parser-log-chunk.e
 import { ParserRun } from '../infrastructure/persistence/parser-run.entity';
 import { ParserSchedule } from '../infrastructure/persistence/parser-schedule.entity';
 
+import { ParserPlpFileService } from './parser-plp-file.service';
+import { ParserRunLogWriter } from './parser-run-log-writer.service';
 import { ParsingOrchestratorService } from './parsing-orchestrator.service';
+import { ParsingPdpRunExecutor } from './parsing-pdp-run-executor.service';
+import { ParsingPlpRunExecutor } from './parsing-plp-run-executor.service';
+import { ParsingRunChildProcessHost } from './parsing-run-child-process.host';
+import { ParsingRunLifecycleService } from './parsing-run-lifecycle.service';
+import { ParsingSyncRunExecutor } from './parsing-sync-run-executor.service';
 
 function createRun(overrides: Partial<ParserRun> = {}): ParserRun {
   return {
@@ -53,6 +60,17 @@ describe('ParsingOrchestratorService recovery', () => {
     const plpStorage = { useS3: false } as PlpStorageService;
     const adminAudit = {} as AdminAuditService;
     const adminService = {} as AdminUsersService;
+    const runLogWriter = {
+      append: jest.fn().mockResolvedValue(undefined),
+      flush: jest.fn().mockResolvedValue(undefined),
+      cleanup: jest.fn(),
+    } as unknown as ParserRunLogWriter;
+    const plpFileService = {} as unknown as ParserPlpFileService;
+    const runLifecycle = {} as ParsingRunLifecycleService;
+    const childHost = {} as ParsingRunChildProcessHost;
+    const plpRunExecutor = { run: jest.fn() } as unknown as ParsingPlpRunExecutor;
+    const pdpRunExecutor = { run: jest.fn() } as unknown as ParsingPdpRunExecutor;
+    const syncRunExecutor = { run: jest.fn() } as unknown as ParsingSyncRunExecutor;
     const service = new ParsingOrchestratorService(
       runRepo,
       logChunkRepo,
@@ -61,6 +79,13 @@ describe('ParsingOrchestratorService recovery', () => {
       plpStorage,
       adminAudit,
       adminService,
+      runLogWriter,
+      plpFileService,
+      runLifecycle,
+      childHost,
+      plpRunExecutor,
+      pdpRunExecutor,
+      syncRunExecutor,
     );
     const staleRuns = [
       createRun({ id: 'run-1', status: 'in_progress', counters: { old: true } }),

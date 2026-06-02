@@ -125,7 +125,11 @@ describe('UpdateListingUseCase', () => {
         { provide: UploadService, useValue: uploadService },
         {
           provide: LISTING_CACHE,
-          useValue: { invalidateSearch: jest.fn(), invalidateSingle: jest.fn() },
+          useValue: {
+            invalidateSearch: jest.fn(),
+            invalidateSingle: jest.fn(),
+            invalidateSimilar: jest.fn(),
+          },
         },
         {
           provide: BRANDS_CACHE,

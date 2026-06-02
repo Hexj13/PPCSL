@@ -31,6 +31,7 @@ import { GetListingPhonesUseCase } from './application/use-cases/get-listing-pho
 import { GetListingVinUseCase } from './application/use-cases/get-listing-vin.use-case';
 import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion-access.use-case';
 import { GetReportUrlUseCase } from './application/use-cases/get-report-url.use-case';
+import { GetAdminPromotionsUseCase } from './application/use-cases/get-admin-promotions.use-case';
 import { GetPromotionHistoryUseCase } from './application/use-cases/get-promotion-history.use-case';
 import { GetUserListingsUseCase } from './application/use-cases/get-user-listings.use-case';
 import { HasPromotionHistoryUseCase } from './application/use-cases/has-promotion-history.use-case';
@@ -84,6 +85,7 @@ describe('ListingsService', () => {
     setSingle: jest.Mock;
     invalidateSearch: jest.Mock;
     invalidateSingle: jest.Mock;
+    invalidateSimilar: jest.Mock;
     getSimilarResults: jest.Mock;
     setSimilarResults: jest.Mock;
   };
@@ -111,6 +113,7 @@ describe('ListingsService', () => {
   let mockGetReportUrlUseCase: { execute: jest.Mock };
   let mockRefreshAllDatesUseCase: { execute: jest.Mock };
   let mockGetPromotionHistoryUseCase: { execute: jest.Mock };
+  let mockGetAdminPromotionsUseCase: { execute: jest.Mock };
   let mockHasPromotionHistoryUseCase: { execute: jest.Mock };
   let mockGetPromotionAccessUseCase: { execute: jest.Mock };
   let mockCreatePromotionHistoryUseCase: { execute: jest.Mock };
@@ -214,6 +217,7 @@ describe('ListingsService', () => {
       setSingle: jest.fn().mockResolvedValue(undefined),
       invalidateSearch: jest.fn().mockResolvedValue(undefined),
       invalidateSingle: jest.fn().mockResolvedValue(undefined),
+      invalidateSimilar: jest.fn().mockResolvedValue(undefined),
       getSimilarResults: jest.fn().mockResolvedValue(null),
       setSimilarResults: jest.fn().mockResolvedValue(undefined),
     };
@@ -238,6 +242,7 @@ describe('ListingsService', () => {
     mockGetReportUrlUseCase = { execute: jest.fn() };
     mockRefreshAllDatesUseCase = { execute: jest.fn() };
     mockGetPromotionHistoryUseCase = { execute: jest.fn() };
+    mockGetAdminPromotionsUseCase = { execute: jest.fn() };
     mockHasPromotionHistoryUseCase = { execute: jest.fn() };
     mockGetPromotionAccessUseCase = { execute: jest.fn().mockReturnValue({ canPromote: true }) };
     mockCreatePromotionHistoryUseCase = { execute: jest.fn().mockResolvedValue(undefined) };
@@ -297,6 +302,7 @@ describe('ListingsService', () => {
         { provide: GetReportUrlUseCase, useValue: mockGetReportUrlUseCase },
         { provide: RefreshAllDatesUseCase, useValue: mockRefreshAllDatesUseCase },
         { provide: GetPromotionHistoryUseCase, useValue: mockGetPromotionHistoryUseCase },
+        { provide: GetAdminPromotionsUseCase, useValue: mockGetAdminPromotionsUseCase },
         { provide: HasPromotionHistoryUseCase, useValue: mockHasPromotionHistoryUseCase },
         { provide: GetPromotionAccessUseCase, useValue: mockGetPromotionAccessUseCase },
         { provide: CreatePromotionHistoryUseCase, useValue: mockCreatePromotionHistoryUseCase },

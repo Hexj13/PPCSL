@@ -10,6 +10,7 @@ import {
   HEADER_CTA_SURFACE_CLASSES,
 } from '@/components/listing/CreateListingButton';
 import { ListingCardTireSpecs } from '@/components/listing/ListingCardBadgesAndSpecs';
+import { ListingVehicleSpecsCompact } from '@/components/listing/ListingVehicleSpecsCompact';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import { useI18n } from '@/components/providers/I18nProvider';
@@ -19,11 +20,6 @@ import { setBlurForListing, setIndexForListing } from '@/lib/blur-navigation-cac
 import type { Locale } from '@/lib/i18n-types';
 import { localizedHref } from '@/lib/localized-href';
 import {
-  formatBodyType,
-  formatDriveType,
-  formatEngineVolume,
-  formatFuel,
-  formatMileage,
   getListingDisplayTitle,
   getListingHref,
   getOptimizedImageUrl,
@@ -41,45 +37,6 @@ interface ListingManagementCardProps {
   onAction?: (_id: string, _action: 'publish' | 'pause' | 'close') => void;
   onCopyId?: (_id: string) => void;
   onPromoteClick?: (_id: string) => void;
-}
-
-function ManagementCardVehicleSpecs({
-  vehicle,
-  t,
-}: {
-  vehicle: NonNullable<Listing['vehicle']>;
-  t: (_key: string) => string;
-}) {
-  return (
-    <div className="text-sm space-y-1.5 mb-3" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-      {vehicle.engine_displ_l && (
-        <div>
-          {t('userListings.engine')}: {formatEngineVolume(vehicle.engine_displ_l)}{' '}
-          {t('listings.liters')}
-        </div>
-      )}
-      {vehicle.fuel && (
-        <div>
-          {t('userListings.fuel')}: {formatFuel(vehicle.fuel, t)}
-        </div>
-      )}
-      {vehicle.mileage_km !== null && vehicle.mileage_km !== undefined && (
-        <div>
-          {t('userListings.mileage')}: {formatMileage(vehicle.mileage_km)} {t('listings.km')}
-        </div>
-      )}
-      {vehicle.drive_type && (
-        <div>
-          {t('userListings.driveType')}: {formatDriveType(vehicle.drive_type, t)}
-        </div>
-      )}
-      {vehicle.body_type && (
-        <div>
-          {t('userListings.bodyType')}: {formatBodyType(vehicle.body_type, t)}
-        </div>
-      )}
-    </div>
-  );
 }
 
 function ManagementCardAdminIds({
@@ -237,6 +194,7 @@ function ManagementCardActionBar({
               {showPromoteMyListings && (
                 <button
                   onClick={() => onPromoteClick?.(listing.id)}
+                  data-testid={`my-listings-promote-button-${listing.id}`}
                   className={`${HEADER_CTA_PROMOTE_SURFACE_CLASSES} text-sm font-medium gap-2 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 w-full xl:w-auto h-10`}
                 >
                   <svg
@@ -285,6 +243,9 @@ function ManagementCardActionBar({
               {showPublish && (
                 <button
                   onClick={() => onAction(listing.id, 'publish')}
+                  data-testid={
+                    mode === 'my-listings' ? `my-listings-publish-button-${listing.id}` : undefined
+                  }
                   className="text-text-secondary font-medium text-sm hover-only:hover:text-text-primary transition-colors duration-200 whitespace-nowrap flex items-center justify-center gap-2 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border-2 border-primary-500/40 hover-only:hover:border-primary-500/60 bg-primary-500/20 select-none w-full xl:w-auto h-10"
                 >
                   {t('listings.publishAction')}
@@ -382,10 +343,6 @@ export function ListingManagementCard({
                 sizes="(max-width: 1024px) 100vw, 450px"
                 loading="lazy"
                 draggable={false}
-                unoptimized={
-                  optimizedImageUrl.startsWith('http://') ||
-                  optimizedImageUrl.startsWith('https://')
-                }
                 placeholder={blurDataURL ? 'blur' : undefined}
                 blurDataURL={blurDataURL}
                 onError={() => setImageError(true)}
@@ -432,7 +389,9 @@ export function ListingManagementCard({
                   </svg>
                 </div>
               </Link>
-              {listing.vehicle && <ManagementCardVehicleSpecs vehicle={listing.vehicle} t={t} />}
+              {listing.vehicle && (
+                <ListingVehicleSpecsCompact vehicle={listing.vehicle} t={t} variant="management" />
+              )}
               {isTireListing(listing) && (
                 <div className="mb-3">
                   <ListingCardTireSpecs listing={listing} t={t} />

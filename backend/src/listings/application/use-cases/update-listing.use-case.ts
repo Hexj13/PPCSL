@@ -370,6 +370,7 @@ export class UpdateListingUseCase {
 
     try {
       await this.listingCache.invalidateSearch();
+      await this.listingCache.invalidateSimilar(id);
       await this.listingCache.invalidateSingle(id);
     } catch (_: unknown) {
       void _;
@@ -586,6 +587,7 @@ export class UpdateListingUseCase {
 
     try {
       await this.listingCache.invalidateSearch();
+      await this.listingCache.invalidateSimilar(id);
       await this.listingCache.invalidateSingle(id);
       if (previousBrandId) {
         await this.brandsCache.invalidateModels(previousBrandId);

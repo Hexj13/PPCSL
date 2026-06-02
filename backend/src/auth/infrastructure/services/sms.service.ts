@@ -1,3 +1,5 @@
+import { randomInt } from 'crypto';
+
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import twilio from 'twilio';
@@ -5,6 +7,8 @@ import twilio from 'twilio';
 import { SMS_MESSAGES } from '../../../common/constants';
 import { RedisService } from '../../../common/redis.service';
 import { PhoneService } from '../../domain/services/phone.service';
+
+import { isSmsTestCodeAllowed, SMS_TEST_CODE } from './sms-test-code.utils';
 
 const SMS_PER_HOUR = 3;
 const CODE_FAIL_MAX = 3;
@@ -154,10 +158,12 @@ export class SmsService {
 
   async verifyPasswordResetCode(phoneNumber: string, code: string): Promise<boolean> {
     const nodeEnv = this.configService.get('NODE_ENV') || process.env.NODE_ENV || 'development';
-    const isStageOrDev = nodeEnv === 'stage' || nodeEnv === 'development';
-    const isTest = nodeEnv === 'test';
+    const allowTestCode = isSmsTestCodeAllowed(
+      nodeEnv,
+      this.configService.get<string>('ALLOW_SMS_TEST_CODE'),
+    );
 
-    if ((isStageOrDev || isTest) && code === '000000') {
+    if (allowTestCode && code === SMS_TEST_CODE) {
       const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
       await this.redisService.del(this.resetFailKey(normalizedPhone));
       return true;
@@ -186,12 +192,40 @@ export class SmsService {
     return false;
   }
 
+  async verifyPasswordResetCodeAndConsume(phoneNumber: string, code: string): Promise<boolean> {
+    const isValid = await this.verifyPasswordResetCode(phoneNumber, code);
+    if (!isValid) {
+      return false;
+    }
+    const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+    const redisKey = `sms:reset:${normalizedPhone}`;
+    try {
+      await this.redisService.del(redisKey);
+    } catch {
+      //
+    }
+    await this.redisService.set(`sms:reset-verified:${normalizedPhone}`, '1', CODE_TTL_SECONDS);
+    return true;
+  }
+
+  async isPasswordResetVerified(phoneNumber: string): Promise<boolean> {
+    const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+    return this.redisService.exists(`sms:reset-verified:${normalizedPhone}`);
+  }
+
+  async clearPasswordResetVerified(phoneNumber: string): Promise<void> {
+    const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+    await this.redisService.del(`sms:reset-verified:${normalizedPhone}`);
+  }
+
   async verifyCode(phoneNumber: string, code: string): Promise<boolean> {
     const nodeEnv = this.configService.get('NODE_ENV') || process.env.NODE_ENV || 'development';
-    const isStageOrDev = nodeEnv === 'stage' || nodeEnv === 'development';
-    const isTest = nodeEnv === 'test';
+    const allowTestCode = isSmsTestCodeAllowed(
+      nodeEnv,
+      this.configService.get<string>('ALLOW_SMS_TEST_CODE'),
+    );
 
-    if ((isStageOrDev || isTest) && code === '000000') {
+    if (allowTestCode && code === SMS_TEST_CODE) {
       const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
       await this.redisService.del(this.codeFailKey(normalizedPhone));
       return true;
@@ -306,6 +340,6 @@ export class SmsService {
   }
 
   private generateCode(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return randomInt(100000, 1000000).toString();
   }
 }

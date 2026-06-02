@@ -183,12 +183,6 @@ describe('Refresh Tokens Integration', () => {
 
       expect(secondRefreshToken).not.toBe(firstRefreshToken);
 
-      await request
-        .post('/api/auth/refresh')
-        .set('Cookie', loginCookies)
-        .send({ refresh_token: firstRefreshToken })
-        .expect(401);
-
       const secondCookies = cookieHeaderFromAuthResponse(firstRefreshResponse);
 
       await request
@@ -196,6 +190,12 @@ describe('Refresh Tokens Integration', () => {
         .set('Cookie', secondCookies)
         .send({ refresh_token: secondRefreshToken })
         .expect(200);
+
+      await request
+        .post('/api/auth/refresh')
+        .set('Cookie', loginCookies)
+        .send({ refresh_token: firstRefreshToken })
+        .expect(401);
     });
   });
 });

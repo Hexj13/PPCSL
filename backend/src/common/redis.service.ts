@@ -21,6 +21,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     const redisHost = this.configService.get('REDIS_HOST', 'localhost');
     const redisPort = this.configService.get('REDIS_PORT', '6379');
+    const nodeEnv =
+      this.configService.get<string>('NODE_ENV') ?? process.env.NODE_ENV ?? 'development';
+    const requireRedis = nodeEnv === 'production' && Boolean(redisHost?.trim());
 
     this.client = createClient({
       socket: {
@@ -39,8 +42,18 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await this.client.connect();
-    } catch {
-      // Ignore connection errors
+      if (requireRedis) {
+        const pong = await this.client.ping();
+        if (pong !== 'PONG') {
+          throw new Error('Redis ping failed');
+        }
+      }
+    } catch (error) {
+      if (requireRedis) {
+        throw error instanceof Error
+          ? error
+          : new Error('Redis connection is required in production');
+      }
     }
   }
 
@@ -293,5 +306,34 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       return;
     }
     await this.client.sRem(key, memberId);
+  }
+
+  async hincrBy(key: string, field: string, increment: number): Promise<number> {
+    if (!this.client?.isOpen) {
+      throw new Error('Redis client is not connected');
+    }
+    return await this.client.hIncrBy(key, field, increment);
+  }
+
+  async hgetall(key: string): Promise<Record<string, string>> {
+    if (!this.client?.isOpen) {
+      return {};
+    }
+    const raw = await this.client.hGetAll(key);
+    return raw ?? {};
+  }
+
+  async hdel(key: string, field: string): Promise<void> {
+    if (!this.client?.isOpen) {
+      return;
+    }
+    await this.client.hDel(key, field);
+  }
+
+  async hlen(key: string): Promise<number> {
+    if (!this.client?.isOpen) {
+      return 0;
+    }
+    return await this.client.hLen(key);
   }
 }

@@ -52,7 +52,11 @@ export class RegisterFormComponent {
     await this.page.getByTestId(this.testIds.registerPasswordInput).fill(password);
     await this.acceptTerms();
     await Promise.all([
-      this.page.waitForURL(/\/verify-phone\?phone=/, { timeout: 30_000 }),
+      this.page.waitForResponse(
+        (r) => r.url().includes('/api/auth/send-sms') && r.request().method() === 'POST',
+        { timeout: 45_000 },
+      ),
+      this.page.waitForURL(/\/verify-phone(\?|$)/, { timeout: 45_000 }),
       this.submitForm(),
     ]);
   }
@@ -65,7 +69,11 @@ export class RegisterFormComponent {
     await this.acceptTerms();
     await this.ensureBusinessMode(companyName);
     await Promise.all([
-      this.page.waitForURL(/\/verify-phone\?phone=/, { timeout: 30_000 }),
+      this.page.waitForResponse(
+        (r) => r.url().includes('/api/auth/send-sms') && r.request().method() === 'POST',
+        { timeout: 45_000 },
+      ),
+      this.page.waitForURL(/\/verify-phone(\?|$)/, { timeout: 45_000 }),
       this.submitForm(),
     ]);
   }

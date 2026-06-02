@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { SkeletonContainer } from '@/components/SkeletonContainer';
+import { CitiesProvider } from '@/components/listing/CitiesProvider';
 import { ListingCard } from '@/components/listing/ListingCard';
 import { ListingCardSkeleton } from '@/components/listing/ListingCardSkeleton';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -413,22 +414,24 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
                   ))}
               </SkeletonContainer>
             ) : (
-              listings.map((listing, i) => (
-                <div
-                  key={listing.id}
-                  role="listitem"
-                  className="shrink-0 w-[250px] md:w-[260px] flex"
-                >
-                  <div className="w-full h-full">
-                    <SimilarListingCard
-                      listing={listing}
-                      position={i + 1}
-                      listingId={listingId}
-                      onCardClick={handleCardClick}
-                    />
+              <CitiesProvider>
+                {listings.map((listing, i) => (
+                  <div
+                    key={listing.id}
+                    role="listitem"
+                    className="shrink-0 w-[250px] md:w-[260px] flex"
+                  >
+                    <div className="w-full h-full">
+                      <SimilarListingCard
+                        listing={listing}
+                        position={i + 1}
+                        listingId={listingId}
+                        onCardClick={handleCardClick}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </CitiesProvider>
             )}
           </div>
         </div>

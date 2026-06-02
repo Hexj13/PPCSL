@@ -15,6 +15,10 @@ jest.mock('@/lib/search', () => ({
   getParsedListingSearchParams: jest.fn(),
 }));
 
+jest.mock('@/hooks/useCities', () => ({
+  useCities: () => ({ cities: [], loading: false }),
+}));
+
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
   useSearchParams: jest.fn(),

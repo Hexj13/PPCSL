@@ -11,6 +11,7 @@ import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.ser
 import { UsersService } from '../../../users/application/users.service';
 import { ListingView } from '../../entities/listing-view.entity';
 import { Listing } from '../../entities/listing.entity';
+import { ListingViewsCounterService } from '../../infrastructure/services/listing-views-counter.service';
 import { buildListingVideoForGetListing } from '../../video/listing-video-response.util';
 import { IListingRepository, LISTING_REPOSITORY } from '../ports/listing.repository.port';
 import { maskClosedListingForPublicView } from '../utils/mask-closed-listing-for-public-view';
@@ -36,6 +37,7 @@ export class GetListingUseCase {
     private readonly listingViewsRepository: Repository<ListingView>,
     private readonly usersService: UsersService,
     private readonly exchangeRatesService: ExchangeRatesService,
+    private readonly listingViewsCounterService: ListingViewsCounterService,
   ) {}
 
   async execute(id: string, context?: GetListingContext): Promise<Listing> {
@@ -155,6 +157,7 @@ export class GetListingUseCase {
         user_id: userId,
       });
       await this.listingViewsRepository.save(view);
+      await this.listingViewsCounterService.recordPendingView(listingId);
     } else if (visitorId) {
       const existingView = await this.listingViewsRepository.findOne({
         where: { listing_id: listingId, visitor_id: visitorId },
@@ -167,6 +170,7 @@ export class GetListingUseCase {
         visitor_id: visitorId,
       });
       await this.listingViewsRepository.save(view);
+      await this.listingViewsCounterService.recordPendingView(listingId);
     }
   }
 }

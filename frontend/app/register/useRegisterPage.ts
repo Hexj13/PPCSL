@@ -4,12 +4,13 @@ import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
 import { getPasswordValidationRules, validatePassword } from '@/app/reset-password/utils';
+import { useApiErrorToast } from '@/hooks/useApiErrorToast';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { RegisterDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
-import { localStorageSetItem } from '@/lib/browser-local-storage';
+import { savePendingRegistration } from '@/lib/pending-registration';
 import { compactE164Phone, finalizePhoneFromRawInput, sanitizePhoneInput } from '@/lib/phone';
 import { getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { toast } from '@/lib/toast';
@@ -82,6 +83,7 @@ export function useRegisterPage() {
   const { push } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const showApiError = useApiErrorToast();
   const returnUrl = getReturnUrlFromSearchParams(searchParams);
   const [formData, setFormData] = useState<RegisterFormState>(initialFormState);
   const [loading, setLoading] = useState(false);
@@ -223,20 +225,18 @@ export function useRegisterPage() {
         const phoneE164 = compactE164Phone(formData.phone);
         await authApi.sendSms({ phone: phoneE164 });
         analytics.formSubmit('register', true, getFilledFields(formData));
-        localStorageSetItem(
-          'pendingRegistration',
-          JSON.stringify({ ...submitData, phone: phoneE164 }),
-        );
-        const query = new URLSearchParams({ phone: phoneE164 });
+        savePendingRegistration({ ...submitData, phone: phoneE164 });
+        const query = new URLSearchParams();
         if (returnUrl) {
           query.set('returnUrl', returnUrl);
         }
-        push(`/verify-phone?${query.toString()}`);
+        const suffix = query.toString();
+        push(suffix ? `/verify-phone?${suffix}` : '/verify-phone');
       } catch (checkError: unknown) {
         const axiosError = checkError as Parameters<typeof getRegisterSubmitErrorMessage>[0];
         const errorMessage = getRegisterSubmitErrorMessage(axiosError, t);
         analytics.formSubmit('register', false, getFilledFields(formData));
-        toast.error(errorMessage);
+        showApiError(errorMessage);
         setPhoneError(errorMessage);
       }
     } catch {

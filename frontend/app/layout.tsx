@@ -19,7 +19,6 @@ import { AuthProvider } from '@/components/providers/AuthProvider';
 import { ClientToaster } from '@/components/providers/ClientToaster';
 import { CookieConsent } from '@/components/providers/CookieConsent';
 import { I18nProvider } from '@/components/providers/I18nProvider';
-import { QueryProvider } from '@/components/providers/QueryProvider';
 import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 import { getVersionedAssetPath } from '@/lib/assets';
 import { getServerTranslations, getMetadataLocale } from '@/lib/i18n';
@@ -27,7 +26,6 @@ import { loadSiteConfig } from '@/lib/site-config';
 import { loadThemeSync } from '@/lib/theme';
 import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
 import { getCountry } from '@/lib/utils';
-import { designTokens } from '@/ui';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'], display: 'swap' });
@@ -174,84 +172,40 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <Suspense fallback={null}>
-          <QueryProvider>
-            <GoogleTagManager />
-            <GoogleTagManagerNoscript title={siteConfig.name} />
-            <GoogleAnalyticsConsent />
-            <GoogleAnalytics />
-            <OrganizationSchema />
-            <WebsiteSearchSchema />
-            <I18nProvider
-              initialLocale={initialLocale}
-              initialTranslations={getServerTranslations(initialLocale)}
-            >
-              <CookieConsent />
-              <AuthProvider>
-                <AuthGuardsShell>
-                  <ProfileSaveSuccessToast />
-                  <DeferredTelemetry />
-                  <ScrollReset />
-                  <Suspense fallback={null}>
-                    <div className="min-h-screen flex flex-col">
-                      <Suspense fallback={<HeaderFallback />}>
-                        <Header />
-                      </Suspense>
-                      <OfflineBanner />
-                      <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">
-                        <MainContentShell>{children}</MainContentShell>
-                      </main>
-                      <ConditionalFooter />
-                    </div>
-                  </Suspense>
-                  <Suspense fallback={null}>
-                    <ClientToaster
-                      position="top-right"
-                      containerStyle={{
-                        top: '80px',
-                        zIndex: designTokens.zIndex.toast,
-                      }}
-                      toastOptions={{
-                        style: {
-                          zIndex: designTokens.zIndex.toast,
-                          minWidth: '320px',
-                          maxWidth: '400px',
-                          width: '100%',
-                          background: '#FFFFFF',
-                          color: '#1B1B1B',
-                          border: '2px solid rgba(74, 154, 126, 0.4)',
-                          borderRadius: '0.75rem',
-                          padding: '16px',
-                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                        },
-                        success: {
-                          style: {
-                            background: '#FFFFFF',
-                            color: '#1B1B1B',
-                            border: '2px solid rgba(40, 167, 69, 0.6)',
-                            borderRadius: '0.75rem',
-                            padding: '16px',
-                            boxShadow:
-                              '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
-                          },
-                        },
-                        error: {
-                          style: {
-                            background: '#FFFFFF',
-                            color: '#1B1B1B',
-                            border: '2px solid rgba(220, 53, 69, 0.6)',
-                            borderRadius: '0.75rem',
-                            padding: '16px',
-                            boxShadow:
-                              '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
-                          },
-                        },
-                      }}
-                    />
-                  </Suspense>
-                </AuthGuardsShell>
-              </AuthProvider>
-            </I18nProvider>
-          </QueryProvider>
+          <GoogleTagManager />
+          <GoogleTagManagerNoscript title={siteConfig.name} />
+          <GoogleAnalyticsConsent />
+          <GoogleAnalytics />
+          <OrganizationSchema />
+          <WebsiteSearchSchema />
+          <I18nProvider
+            initialLocale={initialLocale}
+            initialTranslations={getServerTranslations(initialLocale)}
+          >
+            <CookieConsent />
+            <AuthProvider>
+              <AuthGuardsShell>
+                <ProfileSaveSuccessToast />
+                <DeferredTelemetry />
+                <ScrollReset />
+                <Suspense fallback={null}>
+                  <div className="min-h-screen flex flex-col">
+                    <Suspense fallback={<HeaderFallback />}>
+                      <Header />
+                    </Suspense>
+                    <OfflineBanner />
+                    <main className="grow container mx-auto px-3 sm:px-4 py-6 md:py-8">
+                      <MainContentShell>{children}</MainContentShell>
+                    </main>
+                    <ConditionalFooter />
+                  </div>
+                </Suspense>
+                <Suspense fallback={null}>
+                  <ClientToaster />
+                </Suspense>
+              </AuthGuardsShell>
+            </AuthProvider>
+          </I18nProvider>
         </Suspense>
       </body>
     </html>

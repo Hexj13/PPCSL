@@ -36,6 +36,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import { JwtAuthGuard } from './infrastructure/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from './infrastructure/guards/optional-jwt-auth.guard';
 import { PhoneVerifiedGuard } from './infrastructure/guards/phone-verified.guard';
+import { AuthPhoneRateLimitService } from './infrastructure/services/auth-phone-rate-limit.service';
 import { EmailService } from './infrastructure/services/email.service';
 import { GoogleTokenVerifierService } from './infrastructure/services/google-token-verifier.service';
 import { IpBlockService } from './infrastructure/services/ip-block.service';
@@ -80,6 +81,7 @@ import { AuthController } from './presentation/auth.controller';
     PhoneVerifiedGuard,
     GoogleTokenVerifierService,
     IpBlockService,
+    AuthPhoneRateLimitService,
     PasswordService,
     PhoneService,
     SmsService,

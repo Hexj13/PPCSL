@@ -40,6 +40,7 @@ describe('CloseAllUserListingsUseCase', () => {
           useValue: {
             invalidateSearch: jest.fn(async () => undefined),
             invalidateSingle: jest.fn(async () => undefined),
+            invalidateSimilar: jest.fn(async () => undefined),
           },
         },
         {

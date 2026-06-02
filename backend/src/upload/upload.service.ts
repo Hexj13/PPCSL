@@ -148,8 +148,7 @@ export class UploadService {
       }
     }
 
-    this.deleteTokenSecret =
-      this.configService.get<string>('JWT_SECRET') || 'kupito-upload-delete-fallback';
+    this.deleteTokenSecret = this.configService.get<string>('upload.deleteTokenSecret') ?? '';
 
     const cacheSizeMb = parseInt(process.env.IMAGE_CACHE_SIZE_MB || '150', 10);
     this.optimizedImageCache = new LRUCache<string, Buffer>({

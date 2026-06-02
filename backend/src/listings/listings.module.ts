@@ -15,6 +15,7 @@ import { UsersModule } from '../users/users.module';
 
 import { UserAccountDeletedListener } from './application/listeners/user-account-deleted.listener';
 import { ListingAiReportService } from './application/listing-ai-report.service';
+import { ListingPublicViewMapper } from './application/mappers/listing-public-view.mapper';
 import { LISTING_CACHE } from './application/ports/listing-cache.port';
 import { LISTING_REPOSITORY } from './application/ports/listing.repository.port';
 import { PROMOTION_HISTORY_WRITER } from './application/ports/promotion-history.port';
@@ -29,6 +30,7 @@ import { FindByVinUseCase } from './application/use-cases/find-by-vin.use-case';
 import { FindSimilarUseCase } from './application/use-cases/find-similar.use-case';
 import { GetActiveUserListingsCountUseCase } from './application/use-cases/get-active-user-listings-count.use-case';
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
+import { GetAdminPromotionsUseCase } from './application/use-cases/get-admin-promotions.use-case';
 import { GetBoardListingsUseCase } from './application/use-cases/get-board-listings.use-case';
 import { GetListingHistoryUseCase } from './application/use-cases/get-listing-history.use-case';
 import { GetListingPhonesUseCase } from './application/use-cases/get-listing-phones.use-case';
@@ -59,6 +61,7 @@ import { GeminiListingAiReportClient } from './infrastructure/gemini-listing-ai-
 import { InfocarReportUrlProvider } from './infrastructure/infocar-report-url.provider';
 import { TypeOrmPromotionHistoryWriter } from './infrastructure/persistence/promotion-history-writer';
 import { TypeOrmListingRepository } from './infrastructure/persistence/typeorm-listing.repository';
+import { ListingViewsCounterService } from './infrastructure/services/listing-views-counter.service';
 import { ListingsService } from './listings.service';
 import { ListingsController } from './presentation/listings.controller';
 import { ParseListingIdPipe } from './presentation/pipes/parse-listing-id.pipe';
@@ -97,6 +100,7 @@ import { MediaConvertService } from './video/mediaconvert.service';
   providers: [
     ParseListingIdPipe,
     ListingsService,
+    ListingPublicViewMapper,
     ListingTitleService,
     {
       provide: PromotionRulesService,
@@ -111,6 +115,7 @@ import { MediaConvertService } from './video/mediaconvert.service';
     SimilarListingsRankingService,
     TypeOrmListingRepository,
     RedisListingCache,
+    ListingViewsCounterService,
     InfocarReportUrlProvider,
     { provide: LISTING_REPOSITORY, useExisting: TypeOrmListingRepository },
     { provide: LISTING_CACHE, useExisting: RedisListingCache },
@@ -137,6 +142,7 @@ import { MediaConvertService } from './video/mediaconvert.service';
     GetReportUrlUseCase,
     RefreshAllDatesUseCase,
     GetPromotionHistoryUseCase,
+    GetAdminPromotionsUseCase,
     HasPromotionHistoryUseCase,
     GetPromotionAccessUseCase,
     CreatePromotionHistoryUseCase,
@@ -155,6 +161,7 @@ import { MediaConvertService } from './video/mediaconvert.service';
   exports: [
     ListingsService,
     SearchListingsUseCase,
+    ListingPublicViewMapper,
     LISTING_CACHE,
     TypeOrmModule,
     ListingVideoService,

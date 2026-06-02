@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { designTokens } from '@/ui';
@@ -31,12 +32,14 @@ export function BottomSheet({
 
   const titleId = useId();
   const overlayHistoryId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
   const pointerStartedOnBackdropRef = useRef(false);
   const [isRendered, setIsRendered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
   useScrollLock(isRendered);
   useHistoryBackClose(isOpen, onClose, overlayHistoryId);
+  useFocusTrap(panelRef, isRendered && isVisible);
 
   useEffect(() => {
     if (isOpen) {
@@ -91,6 +94,7 @@ export function BottomSheet({
       }}
     >
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}

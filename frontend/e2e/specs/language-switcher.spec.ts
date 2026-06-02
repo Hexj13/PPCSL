@@ -1,5 +1,6 @@
 import { expect, test } from '../fixtures/base';
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+import { visibleSearchFiltersForm } from '../utils/search-filters-form';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Language switcher', () => {
@@ -13,7 +14,7 @@ test.describe('Language switcher', () => {
         name: 'Open home with query',
         action: async () => {
           await searchHomePage.open('/?vehicleType=car');
-          await expect(page.getByTestId('search-filters-form')).toBeVisible();
+          await expect(visibleSearchFiltersForm(page)).toBeVisible();
         },
       },
     ];

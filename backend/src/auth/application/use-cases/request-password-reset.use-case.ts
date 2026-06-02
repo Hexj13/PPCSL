@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { UsersService } from '../../../users/application/users.service';
 import { PhoneService } from '../../domain/services/phone.service';
@@ -18,7 +18,7 @@ export class RequestPasswordResetUseCase {
     const user = await this.usersService.findByPhone(normalizedPhone);
 
     if (!user) {
-      throw new BadRequestException('errors.userWithPhoneNotFound');
+      return;
     }
 
     await this.smsService.sendPasswordResetCode(normalizedPhone);

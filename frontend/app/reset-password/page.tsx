@@ -7,6 +7,7 @@ import {
   type ResetPasswordErrors,
 } from '@/app/reset-password/useResetPasswordPage';
 import { getPasswordValidationRules } from '@/app/reset-password/utils';
+import { OtpCodeInput } from '@/components/common/OtpCodeInput';
 import { buildSignPageHref } from '@/lib/return-url';
 import { smsResendCooldownButtonLabel } from '@/lib/utils';
 import { LoadingButton } from '@/ui';
@@ -105,16 +106,6 @@ function ResetPasswordCodeStep({
   onBack: () => void;
   t: TranslationFn;
 }) {
-  const inputClass = `w-12 h-14 md:w-14 md:h-16 text-center text-2xl md:text-3xl font-bold bg-bg-secondary border-2 rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-    errors.code
-      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-      : 'border-primary-500/30 focus:border-primary-500'
-  } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-text'} text-primary-500`;
-  const digitStyle = {
-    caretColor: 'transparent',
-    fontFamily: "'Digital-7', monospace",
-    letterSpacing: '0.05em',
-  };
   return (
     <div className="card p-6 md:p-8">
       <div className="space-y-6">
@@ -126,37 +117,18 @@ function ResetPasswordCodeStep({
           <p className="text-sm">{t('resetPassword.enterCode')}</p>
         </div>
         <form onSubmit={onVerify} className="space-y-4">
-          <div className="flex justify-center gap-2 md:gap-3">
-            {[0, 1, 2, 3, 4, 5].map((index) => (
-              <div key={index} className="relative">
-                <input
-                  ref={(el) => {
-                    inputRefs.current[index] = el;
-                  }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={code[index] || ''}
-                  onChange={(e) => onCodeChange(index, e.target.value)}
-                  onKeyDown={(e) => onKeyDown(index, e)}
-                  onPaste={onPaste}
-                  disabled={loading}
-                  className={inputClass}
-                  style={digitStyle}
-                  autoComplete={index === 0 ? 'one-time-code' : 'off'}
-                  autoFocus={index === 0} // eslint-disable-line jsx-a11y/no-autofocus
-                />
-                {!code[index] && (
-                  <span
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-500 opacity-60 select-none text-2xl md:text-3xl font-bold"
-                    style={digitStyle}
-                  >
-                    0
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
+          <OtpCodeInput
+            code={code}
+            error={errors.code}
+            disabled={loading}
+            inputRefs={inputRefs}
+            onCodeChange={onCodeChange}
+            onKeyDown={onKeyDown}
+            onPaste={onPaste}
+            variant="digital"
+            showError={false}
+            testIdPrefix="reset-password-code-input"
+          />
           {errors.code && (
             <div className="text-center">
               <p className="text-sm text-red-400">{errors.code}</p>

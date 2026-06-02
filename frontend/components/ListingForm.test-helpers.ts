@@ -71,7 +71,31 @@ function getJestFn(): () => void {
   return g.jest?.fn ? g.jest.fn() : () => {};
 }
 
+export const mockLoadModels = jest.fn();
+
+export function setupListingFormDesktopViewport(): void {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: jest.fn().mockImplementation((query: string) => {
+      const isMdUp = /min-width:\s*768px/.test(query);
+      const isMobileSheet = /max-width:\s*767px/.test(query);
+      const matches = isMdUp || (isMobileSheet ? false : false);
+      return {
+        matches,
+        media: query,
+        onchange: null,
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      };
+    }),
+  });
+}
+
 export function setupListingFormMocks(): void {
+  mockLoadModels.mockClear();
   (useAuthStore as unknown as MockLike).mockReturnValue({
     user: { id: 'user-1' },
     isInitialized: true,
@@ -128,4 +152,12 @@ export function getIsNewCheckbox(screen: ScreenLike): HTMLElement {
 
 export function getPhotosFileInput(screen: ScreenLike): HTMLElement {
   return screen.getByTestId('listing-form-photos-input');
+}
+
+export function getFormDropdowns(): HTMLSelectElement[] {
+  return Array.from(
+    document.querySelectorAll<HTMLSelectElement>(
+      'select[data-testid="dropdown"], select[data-testid^="listing-create-"]',
+    ),
+  );
 }

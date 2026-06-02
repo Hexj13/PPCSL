@@ -399,12 +399,10 @@ export function useMyListingsPage() {
   );
 
   useEffect(() => {
-    if (user) void checkPromotionHistory();
-  }, [user, checkPromotionHistory]);
-
-  useEffect(() => {
+    if (!user) return;
+    void checkPromotionHistory();
     void loadPromotionAccess();
-  }, [loadPromotionAccess]);
+  }, [user, checkPromotionHistory, loadPromotionAccess]);
 
   const handlePromoteClick = useCallback((id: string) => {
     setSelectedListingId(id);

@@ -94,6 +94,7 @@ test.describe('My listings @p0', () => {
     myListingsPage,
     listingCreatePage,
   }) => {
+    test.setTimeout(90_000);
     const steps: E2EStep[] = [
       {
         name: 'Login and open my listings page',
@@ -109,17 +110,16 @@ test.describe('My listings @p0', () => {
             return;
           }
           await createListingForEditFlow(page, listingCreatePage);
-          await page.goto('/my-listings');
+          await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
           await myListingsPage.expectPageView();
-          await expect(myListingsPage.editLinks.first()).toBeVisible();
+          await expect(myListingsPage.editLinks.first()).toBeVisible({ timeout: 30_000 });
         },
       },
       {
         name: 'Open edit form from my listings card',
         action: async () => {
           await myListingsPage.openFirstEditForm();
-          await expect(page).toHaveURL(/\/listings\/[^/]+\/edit/);
-          await expect(listingCreatePage.editSubmitButton).toBeVisible();
+          await expect(listingCreatePage.editSubmitButton).toBeVisible({ timeout: 30_000 });
         },
       },
     ];

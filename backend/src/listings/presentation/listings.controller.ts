@@ -29,6 +29,7 @@ import { OptionalJwtAuthGuard } from '../../auth/infrastructure/guards/optional-
 import { PhoneVerifiedGuard } from '../../auth/infrastructure/guards/phone-verified.guard';
 import type { AuthenticatedRequest } from '../../common/express-augmentation';
 import { CronSecretGuard } from '../../common/guards/cron-secret.guard';
+import { parseLimitQuery, parsePageQuery } from '../../common/utils/pagination.utils';
 import { buildVisitorHash } from '../../common/utils/visitor-identity.util';
 import { ListingAiReportService } from '../application/listing-ai-report.service';
 import { ListingsService } from '../listings.service';
@@ -148,8 +149,8 @@ export class ListingsController {
     @Query('promoted') promoted?: string,
     @Query('search') search?: string,
   ) {
-    const pageNum = page && Number.isFinite(parseInt(page, 10)) ? parseInt(page, 10) : 1;
-    const limitNum = limit && Number.isFinite(parseInt(limit, 10)) ? parseInt(limit, 10) : 20;
+    const pageNum = parsePageQuery(page);
+    const limitNum = parseLimitQuery(limit, { defaultValue: 20, maxValue: 100 });
     const validStatuses = ['Active', 'Paused', 'Closed'];
     const statusFilter = status && validStatuses.includes(status) ? status : undefined;
     const promotedFilter = promoted === 'true' ? true : promoted === 'false' ? false : undefined;

@@ -9,9 +9,9 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { RegisterDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
-import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS } from '@/lib/constants';
 import { getClientLocale } from '@/lib/i18n';
+import { clearPendingRegistration, loadPendingRegistration } from '@/lib/pending-registration';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { buildSignInHref, buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
@@ -102,18 +102,9 @@ export function useVerifyPhonePage() {
       };
     }
 
-    const storedData = localStorageGetItem('pendingRegistration');
-
-    let parsedData: RegisterDto | null = null;
-    if (storedData) {
-      try {
-        parsedData = JSON.parse(storedData);
-        setFormData(parsedData);
-      } catch {
-        toast.error(t('verifyPhone.loadDataError'));
-        router.push(signTabUrl);
-        return;
-      }
+    const parsedData = loadPendingRegistration();
+    if (parsedData) {
+      setFormData(parsedData);
     }
 
     const phoneToUse = phone || parsedData?.phone;
@@ -384,7 +375,7 @@ export function useVerifyPhonePage() {
 
   const handleBack = () => {
     const mode = searchParams.get('mode');
-    localStorageRemoveItem('pendingRegistration');
+    clearPendingRegistration();
     if (mode === 'complete-profile') {
       const back = new URLSearchParams();
       back.set('mode', 'phone_required');

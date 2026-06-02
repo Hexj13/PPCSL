@@ -1,9 +1,10 @@
-import { localStorageRemoveItem, localStorageSetItem } from '@/lib/browser-local-storage';
+import { localStorageSetItem } from '@/lib/browser-local-storage';
 import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
 import { getClientLocale } from '@/lib/i18n';
+import { clearPendingRegistration } from '@/lib/pending-registration';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { sanitizeReturnUrl } from '@/lib/return-url';
 
@@ -19,7 +20,7 @@ export async function completeRegistrationAndGoToProfile(
   }
 
   if (typeof window === 'undefined') return;
-  localStorageRemoveItem('pendingRegistration');
+  clearPendingRegistration();
 
   localStorageSetItem('showRegistrationSuccess', 'true');
   if (emailVerificationSent) {

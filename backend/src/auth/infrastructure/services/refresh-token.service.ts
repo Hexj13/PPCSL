@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
 
 import { RefreshToken } from '../../entities/refresh-token.entity';
+import { hashRefreshToken } from '../utils/refresh-token-hash.utils';
 
 @Injectable()
 export class RefreshTokenService {
@@ -16,12 +17,13 @@ export class RefreshTokenService {
 
   async generateToken(userId: string): Promise<string> {
     const token = crypto.randomBytes(64).toString('hex');
+    const tokenHash = hashRefreshToken(token);
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     await this.refreshTokenRepository.save({
       user_id: userId,
-      token,
+      token: tokenHash,
       expires_at: expiresAt,
       revoked: false,
     });
@@ -30,16 +32,25 @@ export class RefreshTokenService {
   }
 
   async validateToken(token: string): Promise<RefreshToken> {
-    const refreshToken = await this.refreshTokenRepository.findOne({
-      where: { token },
+    const tokenHash = hashRefreshToken(token);
+    let refreshToken = await this.refreshTokenRepository.findOne({
+      where: { token: tokenHash },
       relations: ['user'],
     });
+
+    if (!refreshToken) {
+      refreshToken = await this.refreshTokenRepository.findOne({
+        where: { token },
+        relations: ['user'],
+      });
+    }
 
     if (!refreshToken) {
       throw new UnauthorizedException('errors.invalidRefreshToken');
     }
 
     if (refreshToken.revoked) {
+      await this.revokeAllUserTokens(refreshToken.user_id);
       throw new UnauthorizedException('errors.refreshTokenRevoked');
     }
 
@@ -51,7 +62,14 @@ export class RefreshTokenService {
   }
 
   async revokeToken(token: string): Promise<void> {
-    await this.refreshTokenRepository.update({ token }, { revoked: true });
+    const tokenHash = hashRefreshToken(token);
+    const result = await this.refreshTokenRepository.update(
+      { token: tokenHash },
+      { revoked: true },
+    );
+    if (!result.affected) {
+      await this.refreshTokenRepository.update({ token }, { revoked: true });
+    }
   }
 
   async revokeAllUserTokens(userId: string): Promise<void> {

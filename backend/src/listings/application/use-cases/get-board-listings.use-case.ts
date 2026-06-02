@@ -3,12 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
-import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
-import { maskPhoneLastDigits } from '../../../common/utils/phone-mask.util';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { UsersService } from '../../../users/application/users.service';
 import { Listing } from '../../entities/listing.entity';
-import { stripListingVideoForListResponse } from '../utils/listing-video-public.util';
+import {
+  applyListingCardSelects,
+  getListingCardPage,
+} from '../../infrastructure/persistence/listing-card-query.utils';
+import { ListingPublicViewMapper } from '../mappers/listing-public-view.mapper';
 import { buildPriceInDefaultCurrencyOrderExpression } from '../utils/price-sort.utils';
 
 @Injectable()
@@ -18,6 +20,7 @@ export class GetBoardListingsUseCase {
     private readonly listingsRepository: Repository<Listing>,
     private readonly usersService: UsersService,
     private readonly exchangeRatesService: ExchangeRatesService,
+    private readonly listingPublicViewMapper: ListingPublicViewMapper,
   ) {}
 
   async execute(
@@ -43,15 +46,9 @@ export class GetBoardListingsUseCase {
     const dateSortColumn = sortField === 'created_at' ? 'last_updated_at' : sortField;
     const skip = (page - 1) * limit;
 
-    const queryBuilder = this.listingsRepository
-      .createQueryBuilder('listing')
-      .leftJoinAndSelect('listing.vehicle', 'vehicle')
-      .leftJoinAndSelect('vehicle.brand', 'brand')
-      .leftJoinAndSelect('vehicle.model', 'model')
-      .leftJoinAndSelect('listing.tire', 'tire')
-      .leftJoinAndSelect('tire.brand', 'tireBrand')
-      .leftJoinAndSelect('tire.model', 'tireModel')
-      .leftJoinAndSelect('listing.user', 'user')
+    const queryBuilder = applyListingCardSelects(
+      this.listingsRepository.createQueryBuilder('listing'),
+    )
       .where('listing.user_id = :userId', { userId: user.id })
       .andWhere('listing.status = :status', { status: ListingStatusEnum.Active })
       .addSelect(
@@ -80,24 +77,10 @@ export class GetBoardListingsUseCase {
     }
     queryBuilder.addOrderBy('listing.id', 'ASC');
 
-    const [listings, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
-
-    const listingsWithoutPasswords = listings.map((listing) => {
-      if (listing.user) {
-        listing.user = removePasswordFromUser(listing.user) as typeof listing.user;
-        if (listing.user.phone) {
-          listing.user.phone = maskPhoneLastDigits(listing.user.phone);
-        }
-        if (listing.user.additionalPhone) {
-          listing.user.additionalPhone = maskPhoneLastDigits(listing.user.additionalPhone);
-        }
-      }
-      stripListingVideoForListResponse(listing);
-      return listing;
-    });
-
-    const enriched =
-      await this.exchangeRatesService.enrichListingsWithApproxPrice(listingsWithoutPasswords);
+    const total = await queryBuilder.getCount();
+    const listings = await getListingCardPage(queryBuilder, skip, limit);
+    const masked = this.listingPublicViewMapper.toListViews(listings);
+    const enriched = await this.exchangeRatesService.enrichListingsWithApproxPrice(masked);
 
     return {
       data: enriched,

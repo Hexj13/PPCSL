@@ -175,10 +175,10 @@ export class AuthController {
     try {
       const result = await this.authService.login(loginDto, ip, this.getRequestLocale(req));
       this.authTokenIssuer.attachLoginCookies(res, result);
-      this.ipBlockService.resetAttempts(ip);
+      await this.ipBlockService.resetAttempts(ip);
       return this.authTokenIssuer.cookieAuthJsonBody(result);
     } catch (error) {
-      this.ipBlockService.recordFailedAttempt(ip);
+      await this.ipBlockService.recordFailedAttempt(ip);
       throw error;
     }
   }
@@ -760,6 +760,7 @@ export class AuthController {
       },
     },
   })
+  @Throttle(getThrottleLimit(10, 500))
   @UseGuards(IpBlockGuard)
   @Post('verify-sms')
   async verifySms(@Request() req: AuthenticatedRequest, @Body() verifySmsDto: VerifySmsDto) {
@@ -768,11 +769,11 @@ export class AuthController {
     const isVerified = await this.smsService.verifyCode(verifySmsDto.phone, verifySmsDto.code);
 
     if (isVerified) {
-      this.ipBlockService.resetAttempts(ip);
+      await this.ipBlockService.resetAttempts(ip);
       return { success: true };
     }
 
-    this.ipBlockService.recordFailedAttempt(ip);
+    await this.ipBlockService.recordFailedAttempt(ip);
     throw new BadRequestException('errors.invalidCode');
   }
 
@@ -913,7 +914,7 @@ export class AuthController {
       await this.authService.requestPasswordReset(requestPasswordResetDto);
       return { success: true };
     } catch (error) {
-      this.ipBlockService.recordFailedAttempt(ip);
+      await this.ipBlockService.recordFailedAttempt(ip);
       throw error;
     }
   }
@@ -950,6 +951,7 @@ export class AuthController {
       },
     },
   })
+  @Throttle(getThrottleLimit(10, 500))
   @UseGuards(IpBlockGuard)
   @Post('verify-reset-code')
   async verifyResetCode(
@@ -961,11 +963,11 @@ export class AuthController {
     const result = await this.authService.verifyResetCode(verifyResetCodeDto);
 
     if (result.success) {
-      this.ipBlockService.resetAttempts(ip);
+      await this.ipBlockService.resetAttempts(ip);
       return { success: true };
     }
 
-    this.ipBlockService.recordFailedAttempt(ip);
+    await this.ipBlockService.recordFailedAttempt(ip);
     throw new BadRequestException('errors.invalidCode');
   }
 
@@ -1002,6 +1004,7 @@ export class AuthController {
       },
     },
   })
+  @Throttle(getThrottleLimit(10, 500))
   @UseGuards(IpBlockGuard)
   @Post('reset-password')
   async resetPassword(
@@ -1012,7 +1015,7 @@ export class AuthController {
 
     try {
       const user = await this.authService.resetPassword(resetPasswordDto);
-      this.ipBlockService.resetAttempts(ip);
+      await this.ipBlockService.resetAttempts(ip);
       return {
         success: true,
         user: {
@@ -1027,7 +1030,7 @@ export class AuthController {
         },
       };
     } catch (error) {
-      this.ipBlockService.recordFailedAttempt(ip);
+      await this.ipBlockService.recordFailedAttempt(ip);
       throw error;
     }
   }

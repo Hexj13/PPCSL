@@ -62,6 +62,7 @@ function createUseCase(mocks: {
   const listingCache = {
     invalidateSearch: jest.fn().mockResolvedValue(undefined),
     invalidateSingle: jest.fn().mockResolvedValue(undefined),
+    invalidateSimilar: jest.fn().mockResolvedValue(undefined),
     getSearchResults: jest.fn(),
     setSearchResults: jest.fn(),
     getSingle: jest.fn(),

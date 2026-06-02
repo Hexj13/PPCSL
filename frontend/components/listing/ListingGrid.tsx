@@ -29,6 +29,7 @@ import { buildMinimalCategorySearchUrl, getParsedListingSearchParams } from '@/l
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import { silentCatch } from '@/lib/utils';
 
+import { CitiesProvider } from './CitiesProvider';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { ListingGridCardSlot } from './ListingGridCardSlot';
 import { ListingGridPaginationFooter } from './ListingGridPaginationFooter';
@@ -253,7 +254,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         } else {
           appendDeferred = true;
           const elapsed = Date.now() - loadMoreStartedAt;
-          const remaining = Math.max(0, 1000 - elapsed);
+          const remaining = Math.max(0, 150 - elapsed);
           if (appendTimeoutRef.current) {
             clearTimeout(appendTimeoutRef.current);
           }
@@ -526,7 +527,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
           )}
 
           {!error && listings.length > 0 && (
-            <>
+            <CitiesProvider>
               <div
                 id="listings-results"
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch"
@@ -570,7 +571,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                 noMoreLabel={t('listings.noMoreListings')}
                 showNoMore={!hasMore && uniqueListings.length > 0 && !loadingMore}
               />
-            </>
+            </CitiesProvider>
           )}
         </>
       )}

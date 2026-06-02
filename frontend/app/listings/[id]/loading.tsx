@@ -1,5 +1,6 @@
-import { ListingDetailRouteSkeleton } from '@/components/listing/ListingDetailSkeleton';
+import { ListingDetailPageSkeleton } from '@/components/listing/ListingDetailSkeleton';
+import { BreadcrumbsSkeletonDecorative } from '@/components/listing/ListingPageSkeleton';
 
 export default function ListingDetailLoading() {
-  return <ListingDetailRouteSkeleton />;
+  return <ListingDetailPageSkeleton breadcrumb={<BreadcrumbsSkeletonDecorative />} />;
 }

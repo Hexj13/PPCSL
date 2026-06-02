@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   getClientLocale,
@@ -70,11 +70,12 @@ export function I18nProvider({ children, initialLocale, initialTranslations }: I
     }
   }, [pathname, locale]);
 
-  return (
-    <I18nContext.Provider value={{ locale, translations, isLoading }}>
-      {children}
-    </I18nContext.Provider>
+  const contextValue = useMemo(
+    () => ({ locale, translations, isLoading }),
+    [locale, translations, isLoading],
   );
+
+  return <I18nContext.Provider value={contextValue}>{children}</I18nContext.Provider>;
 }
 
 export function useI18n() {

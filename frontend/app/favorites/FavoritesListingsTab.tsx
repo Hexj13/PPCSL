@@ -1,5 +1,6 @@
 'use client';
 
+import { CitiesProvider } from '@/components/listing/CitiesProvider';
 import { ListingCard } from '@/components/listing/ListingCard';
 import { ListingCardSkeleton } from '@/components/listing/ListingCardSkeleton';
 import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
@@ -54,16 +55,18 @@ export function FavoritesListingsTab({
 
   return (
     <div data-testid="favorites-listings-tab">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-        {listings.map((listing) => (
-          <ListingCard
-            key={listing.id}
-            listing={listing}
-            forceFavorite={true}
-            onRemove={() => onRemoveListing(listing)}
-          />
-        ))}
-      </div>
+      <CitiesProvider>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+          {listings.map((listing) => (
+            <ListingCard
+              key={listing.id}
+              listing={listing}
+              forceFavorite={true}
+              onRemove={() => onRemoveListing(listing)}
+            />
+          ))}
+        </div>
+      </CitiesProvider>
       {loadingMore && (
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />

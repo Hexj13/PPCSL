@@ -4,6 +4,7 @@ import { logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
 import { PasswordService } from '../../domain/services/password.service';
 import { EmailService } from '../../infrastructure/services/email.service';
+import { RefreshTokenService } from '../../infrastructure/services/refresh-token.service';
 import { ChangePasswordDto } from '../../presentation/dto/change-password.dto';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class ChangePasswordUseCase {
     private usersService: UsersService,
     private passwordService: PasswordService,
     private emailService: EmailService,
+    private refreshTokenService: RefreshTokenService,
   ) {}
 
   async execute(userId: string, dto: ChangePasswordDto, requestLocale?: string): Promise<void> {
@@ -34,6 +36,7 @@ export class ChangePasswordUseCase {
 
     const hashedPassword = await this.passwordService.hash(dto.newPassword);
     await this.usersService.update(userId, { password: hashedPassword });
+    await this.refreshTokenService.revokeAllUserTokens(userId);
     if (
       user.email &&
       user.emailVerified === true &&

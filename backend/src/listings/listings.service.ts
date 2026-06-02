@@ -21,6 +21,10 @@ import { FindByVinUseCase } from './application/use-cases/find-by-vin.use-case';
 import { FindSimilarUseCase } from './application/use-cases/find-similar.use-case';
 import { GetActiveUserListingsCountUseCase } from './application/use-cases/get-active-user-listings-count.use-case';
 import { GetActiveUserListingsUseCase } from './application/use-cases/get-active-user-listings.use-case';
+import {
+  AdminPromotionsQuery,
+  GetAdminPromotionsUseCase,
+} from './application/use-cases/get-admin-promotions.use-case';
 import { GetBoardListingsUseCase } from './application/use-cases/get-board-listings.use-case';
 import { GetListingHistoryUseCase } from './application/use-cases/get-listing-history.use-case';
 import { GetListingPhonesUseCase } from './application/use-cases/get-listing-phones.use-case';
@@ -93,6 +97,7 @@ export class ListingsService {
     private readonly getReportUrlUseCase: GetReportUrlUseCase,
     private readonly refreshAllDatesUseCase: RefreshAllDatesUseCase,
     private readonly getPromotionHistoryUseCase: GetPromotionHistoryUseCase,
+    private readonly getAdminPromotionsUseCase: GetAdminPromotionsUseCase,
     private readonly hasPromotionHistoryUseCase: HasPromotionHistoryUseCase,
     private readonly getPromotionAccessUseCase: GetPromotionAccessUseCase,
     private readonly createPromotionHistoryUseCase: CreatePromotionHistoryUseCase,
@@ -353,6 +358,10 @@ export class ListingsService {
 
   async getPromotionHistory(userId: string, page: number = 1, limit: number = 50) {
     return this.getPromotionHistoryUseCase.execute(userId, page, limit);
+  }
+
+  async getAdminPromotions(query: AdminPromotionsQuery) {
+    return this.getAdminPromotionsUseCase.execute(query);
   }
 
   async hasPromotionHistory(userId: string): Promise<boolean> {
