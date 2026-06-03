@@ -122,7 +122,7 @@ export function ListingPageDescription({ rawHtml }: ListingPageDescriptionProps)
                 onClick={handleToggle}
                 aria-expanded={isExpanded}
                 aria-controls="listing-description-content"
-                className="w-full md:w-auto min-h-12 px-8 py-2 md:py-2.5 text-sm rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2 border-2 border-gray-500 bg-gray-500/10 text-text-secondary hover-only:hover:text-text-primary select-none"
+                className="w-full md:w-auto min-h-12 px-8 py-2 md:py-2.5 text-sm md:text-base rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2 border-2 border-gray-500 bg-gray-500/10 text-text-secondary hover-only:hover:text-text-primary select-none"
               >
                 {isExpanded ? (
                   <>
