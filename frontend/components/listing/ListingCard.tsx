@@ -16,6 +16,7 @@ import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStat
 import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhotoCarouselNavButtons';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
+import { applyListingCardResponsivePreload } from '@/components/listing/listing-card-image';
 import { useI18n } from '@/components/providers/I18nProvider';
 import {
   getCompareButtonClassName,
@@ -225,7 +226,7 @@ function useCardCarouselRewind(
       const nextSrc = images[nextIndex];
       if (nextSrc && nextSrc !== '/placeholder-car.jpg') {
         const preloadImg = new window.Image();
-        preloadImg.src = getOptimizedImageUrl(nextSrc, 65, 640);
+        applyListingCardResponsivePreload(preloadImg, nextSrc);
       }
     }
   }, [clearRewind, images, carouselIndex, isMobileOrTablet]);
@@ -318,6 +319,7 @@ function ListingCardComponent({
   const [imageErrors, setImageErrors] = React.useState<Set<number>>(() => new Set());
   const [isHydrated, setIsHydrated] = React.useState(false);
   const [carouselIndex, setCarouselIndex] = React.useState(0);
+  const [isCarouselBusy, setIsCarouselBusy] = React.useState(false);
   const [suppressBadgeHoverExpand, setSuppressBadgeHoverExpand] = React.useState(false);
   const carouselRef = React.useRef<ListingCardImageCarouselHandle>(null);
   const cardRef = React.useRef<HTMLDivElement>(null);
@@ -345,6 +347,10 @@ function ListingCardComponent({
     },
     [clearRewind, images.length],
   );
+
+  const handleCarouselBusyChange = useCallback((busy: boolean) => {
+    setIsCarouselBusy(busy);
+  }, []);
 
   const handleCardMouseLeaveCombined = useCallback(() => {
     setSuppressBadgeHoverExpand(false);
@@ -386,16 +392,16 @@ function ListingCardComponent({
   const favoriteAriaLabel = listingCardFavoriteAriaLabelText(isFavorite, isOwnListing, t);
 
   const goCarouselPrev = useCallback(() => {
-    if (isAutoRewinding) return;
+    if (isAutoRewinding || isCarouselBusy || carouselRef.current?.isBusy()) return;
     clearRewind();
     carouselRef.current?.goPrev();
-  }, [isAutoRewinding, clearRewind]);
+  }, [isAutoRewinding, isCarouselBusy, clearRewind]);
 
   const goCarouselNext = useCallback(() => {
-    if (isAutoRewinding) return;
+    if (isAutoRewinding || isCarouselBusy || carouselRef.current?.isBusy()) return;
     clearRewind();
     carouselRef.current?.goNext();
-  }, [isAutoRewinding, clearRewind]);
+  }, [isAutoRewinding, isCarouselBusy, clearRewind]);
 
   const handlePrevPhoto = useCallback(
     (e: React.MouseEvent) => {
@@ -553,6 +559,7 @@ function ListingCardComponent({
               imageErrors={imageErrors}
               onImageError={handleImageError}
               onIndexChange={handleCarouselIndexChange}
+              onBusyChange={handleCarouselBusyChange}
               imageAltTitle={imageAltTitle}
               priority={priority}
               blurDataURLs={resolvedImageBlurDataURLs}
@@ -579,7 +586,7 @@ function ListingCardComponent({
           {images.length > 1 && (
             <ListingPhotoCarouselNavButtons
               variant="card"
-              disabled={isAutoRewinding}
+              disabled={isAutoRewinding || isCarouselBusy}
               onPrev={handlePrevPhoto}
               onNext={handleNextPhoto}
               prevLabel={t('listings.previousPhoto')}

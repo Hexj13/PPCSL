@@ -172,7 +172,14 @@ export class SearchHomePage {
 
     const firstCardLink = this.listingCardLinks.first();
     await expect(firstCardLink).toBeVisible();
-    await firstCardLink.click();
+    const href = await firstCardLink.getAttribute('href');
+    if (!href) {
+      return false;
+    }
+    await Promise.all([
+      this.page.waitForURL(/\/listings\/[^/]+$/, { timeout: 20_000 }),
+      firstCardLink.click(),
+    ]);
     await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
     return true;
   }

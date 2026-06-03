@@ -1152,13 +1152,13 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - Automatic optimization for external images via `remotePatterns` configuration
   - Conditional `unoptimized` prop for localhost images in development
   - Proper `sizes` attribute for responsive image loading - Next.js automatically generates appropriate image sizes for mobile and desktop
-  - Optimized quality settings: 65% for listing cards (800px width), 70% for management cards (900px), 75% for detail pages (1200px)
+  - Optimized quality settings: 65% for listing cards (responsive srcset via `listing-card-image.ts`), 70% for management cards (900px), 75% for detail pages (1200px)
   - Priority loading for first 8 visible images in grid to improve LCP
   - Next.js Image component handles responsive image loading automatically via `srcSet` based on `sizes` attribute
   - Improved sizes attributes for better responsive image selection across breakpoints
 - **Image preview system:** Simplified, efficient image preview and photo viewer system
   - **Thumbnail switching:** Instant switching when images are in browser cache (thumbnails and preview use same URL)
-  - **Simple preloading:** Next image preloaded using `new window.Image()` - browser manages caching automatically
+  - **Simple preloading:** Adjacent listing-card photos preloaded with responsive `srcset`/`sizes` matching `next/image`; listing page preview uses `new window.Image()` with staggered delays — browser manages caching
   - **Loading states:** Listing page hero keeps the confirmed layer visible while a pending image loads; large spinner only during pending navigation, with `useLoadingState` show/min display delays (120ms). See `image-preview.md`.
   - **Modal viewer:** Full-screen photo viewer with keyboard navigation and swipe gestures
   - **Performance:** 80% code reduction, instant cache switching, no artificial delays

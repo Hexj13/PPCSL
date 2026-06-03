@@ -18,12 +18,10 @@ export const EquipmentFilters = dynamic(
   { ssr: false },
 );
 
-export const MobileSearchFilters = dynamic(
-  () =>
-    import('@/components/search/search-filters/mobile/MobileSearchFilters').then((m) => ({
-      default: m.MobileSearchFilters,
-    })),
-  { ssr: false },
+export const MobileSearchFilters = dynamic(() =>
+  import('@/components/search/search-filters/mobile/MobileSearchFilters').then((m) => ({
+    default: m.MobileSearchFilters,
+  })),
 );
 
 export const TireSearchFilters = dynamic(

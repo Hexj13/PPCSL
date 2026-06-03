@@ -122,6 +122,7 @@ Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | '
 
 - Equipment keys depend on `vehicleType` (car/truck/moto); see `getEquipmentKeysByVehicleType` and `vehicle-equipment.ts`.
 - Options are grouped by category (e.g. comfort, safety). Headlights (e.g. LED, xenon) and tires are mutually exclusive within their group when match mode is “full”.
+- Each checkbox uses a stable `id` (`search-equipment-${key}`) so SSR/hydration does not rely on React `useId()` for label association.
 - **Match mode:** “Full” (listing must have all selected) or “Partial” (at least one). Stored in `filters.equipment_match_mode`; sent as `equipmentMatch` in API.
 
 ---
@@ -198,7 +199,7 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 | ------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `SearchFilters.tsx`                         | Thin wrapper: `useSearchFiltersController` → `SearchFiltersForm` |
 | `search-filters/SearchFiltersForm.tsx`      | Form markup, vehicle type, tabs, desktop/mobile panels, actions, save modal |
-| `search-filters/searchFiltersDynamics.tsx`  | `dynamic()` imports for mobile/tire panels and save modal (code-split) |
+| `search-filters/searchFiltersDynamics.tsx`  | `dynamic()` imports for mobile/tire panels and save modal (code-split). Desktop `AdvancedFilters`, `EquipmentFilters`, `TireSearchFilters`, and `SaveFilterModal` use `{ ssr: false }`; `MobileSearchFilters` is SSR’d (mobile equipment panel imports `EquipmentFilters` statically inside `MobileVehicleSection`) |
 | `hooks/useSearchFiltersController.ts`       | Composes filter state, URL sync, handlers, and form props |
 | `search-filters/mobile/MobileSearchFilters.tsx` | Mobile vehicle/tire filter UI and sheets |
 | `search-filters/BasicFilters.tsx`           | Basic criteria grid + PopularBodyTypesFilter                                               |

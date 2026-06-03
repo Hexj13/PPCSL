@@ -98,41 +98,36 @@ export function ListingPageDescription({ rawHtml }: ListingPageDescriptionProps)
               className="leading-relaxed max-w-none listing-description whitespace-pre-wrap [&_a]:text-primary-900 [&_a]:underline [&_a]:transition-colors [&_a]:duration-200 hover-only:[&_a:hover]:text-primary-700"
               style={{
                 color: 'rgb(var(--text-secondary-rgb))',
-                paddingBottom: !needsExpansion ? '0' : isExpanded ? '24px' : '60px',
               }}
               dangerouslySetInnerHTML={{
                 __html: preparedHtml,
               }}
             />
+            {!isExpanded && needsExpansion && (
+              <div
+                className="absolute left-0 right-0 bottom-0 pointer-events-none"
+                style={{
+                  height: '80px',
+                  background:
+                    'linear-gradient(to top, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.65) 40px, transparent 100%)',
+                }}
+              />
+            )}
           </div>
 
-          {!isExpanded && needsExpansion && (
-            <div
-              className="absolute left-0 right-0 pointer-events-none"
-              style={{
-                bottom: '0',
-                height: '100px',
-                background:
-                  'linear-gradient(to top, rgba(var(--bg-secondary-rgb, 244, 244, 244), 0.96) 0%, rgba(var(--bg-secondary-rgb, 244, 244, 244), 0.65) 40px, transparent 100%)',
-              }}
-            />
-          )}
-
           {needsExpansion && (
-            <div
-              className={`flex justify-center ${isExpanded ? 'mt-0' : 'absolute left-0 right-0 bottom-4'}`}
-              style={{ zIndex: 10 }}
-            >
+            <div className="flex justify-center mt-6">
               <button
+                type="button"
                 onClick={handleToggle}
                 aria-expanded={isExpanded}
                 aria-controls="listing-description-content"
-                className="min-h-0 h-12 min-h-12 max-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-white select-none"
+                className="w-full md:w-auto min-h-12 px-8 py-2 md:py-2.5 text-sm rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2 border-2 border-gray-500 bg-gray-500/10 text-text-secondary hover-only:hover:text-text-primary select-none"
               >
                 {isExpanded ? (
                   <>
                     <svg
-                      className="w-4 h-4 shrink-0"
+                      className="w-5 h-5 shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -155,7 +150,7 @@ export function ListingPageDescription({ rawHtml }: ListingPageDescriptionProps)
                 ) : (
                   <>
                     <svg
-                      className="w-4 h-4 shrink-0"
+                      className="w-5 h-5 shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"

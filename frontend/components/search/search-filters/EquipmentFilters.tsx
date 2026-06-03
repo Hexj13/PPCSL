@@ -122,6 +122,7 @@ export function EquipmentFilters({
                   {col1.map((key) => (
                     <Checkbox
                       key={key}
+                      id={`search-equipment-${key}`}
                       data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
                       checked={equipment.includes(key)}
                       onChange={(checked) => handleChange(key, checked)}
@@ -134,6 +135,7 @@ export function EquipmentFilters({
                   {col2.map((key) => (
                     <Checkbox
                       key={key}
+                      id={`search-equipment-${key}`}
                       data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
                       checked={equipment.includes(key)}
                       onChange={(checked) => handleChange(key, checked)}
@@ -146,6 +148,7 @@ export function EquipmentFilters({
                   {col3.map((key) => (
                     <Checkbox
                       key={key}
+                      id={`search-equipment-${key}`}
                       data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
                       checked={equipment.includes(key)}
                       onChange={(checked) => handleChange(key, checked)}

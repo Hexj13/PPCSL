@@ -18,7 +18,7 @@ The image preview system provides a simple, fast, and efficient way for users to
 
 **Locations:**
 
-- **Listing card (homepage):** `core/frontend/components/listing/ListingCard.tsx` — 2-slot photo carousel; prev/next UI is `ListingPhotoCarouselNavButtons` (`variant="card"`). Preload next/prev in background and all remaining photos on first navigation; delayed preload of second image for mobile; reset-to-first: on desktop on hover leave, on mobile/tablet when card leaves viewport (see below)
+- **Listing card (homepage):** `core/frontend/components/listing/ListingCard.tsx` — 2-layer photo carousel (`ListingCardImageCarousel` in `ListingCardParts.tsx`); prev/next UI is `ListingPhotoCarouselNavButtons` (`variant="card"`). Adjacent photos preloaded with responsive `srcset`/`sizes` matching `next/image` (`listing-card-image.ts`); desktop hover also preloads the next photo; reset-to-first: on desktop on hover leave, on mobile/tablet when card leaves viewport (see below)
 - **Listing page:** Page state and thumbnail logic: `core/frontend/app/listings/[id]/useListingPageClient.ts`, `ListingPageClient.tsx`
 - **Listing page preview block:** `ListingPageImages.tsx` (`PreviewState`: confirmed/pending hero slots, navigation, imperative handle), `ListingPageImagesLayout.tsx` (markup; hero prev/next: `ListingPhotoCarouselNavButtons` with `variant="preview"`; **mobile** `<640px`: 3 thumbnail columns, first 3 images only—no hidden fourth tile in DOM), `ListingPageImagesPreview.tsx` (two persistent hero layers, thumbnail tiles, timing constants), `core/frontend/hooks/useListingImages.ts` — swipe, reset-to-first; hero uses **two fixed slots** (`primary` / `secondary`): pending slot loads the target in the DOM under the confirmed layer; after `next/image` `onLoad` on that layer, state promotes the pending slot to confirmed (no CSS `translate` slide—reduces iOS Safari compositor flicker). **Separate readiness:** thumbnail `onLoad` marks URL preload only; hero `onLoad` marks the index as hero-ready (`heroImageLoadedRef`). **blurhash** on first hero paint and thumbnails as before. Paths: `core/frontend/components/ListingPage/`.
 - **Photo viewer modal:** `core/frontend/components/ListingPage/ListingPageImageModal.tsx` — full-screen viewer; multi-image prev/next uses `ListingPhotoCarouselNavButtons` with `variant="modal"` (desktop-only visible arrows; labels from `listings.previousPhoto` / `listings.nextPhoto`).
@@ -91,38 +91,28 @@ The image preview system provides a simple, fast, and efficient way for users to
 
 ## Listing card photo carousel (homepage)
 
-**Components:** `core/frontend/components/listing/ListingCard.tsx` (parent), `core/frontend/components/listing/ListingCardParts.tsx` (`ListingCardImageCarousel`).
+**Components:** `core/frontend/components/listing/ListingCard.tsx` (parent), `core/frontend/components/listing/ListingCardParts.tsx` (`ListingCardImageCarousel`), `core/frontend/components/listing/listing-card-image.ts` (shared quality, `sizes`, and responsive preload srcset), `core/frontend/components/listing/useListingCardCarouselPreload.ts`.
 
 On the homepage, each listing card can show multiple photos in a carousel when the listing has more than one image.
 
 ### Behaviour
 
-- **Carousel:** When `listing.images.length > 1`, photos are shown with a **2-slot slide animation**: at rest only the current image is in the DOM; when changing photo, a second slot (target image) is added and both animate with CSS `transform: translateX(...)` and `transition` (220ms). The carousel waits until the target image is actually ready before starting the animation, so mobile devices do not flash a blank frame. When the transition ends, state returns to idle and only the new slide remains. GPU compositing hints (`backfaceVisibility`, `willChange: transform`) are used during animation for smooth rendering.
-- **Prev/Next buttons:** Two round buttons at the bottom of the image area (`bottom-3 left-3` and `bottom-3 right-3`). Shown only when there are multiple photos. While the target image is loading (preloading state), both buttons are temporarily locked (via `onBusyChange`) so each navigation completes as a single consistent step.
+- **Carousel:** When `listing.images.length > 1`, photos use a **two-slot layer model** (`primary` / `secondary`): the **confirmed** layer stays visible while the **pending** layer loads the target via `TrackedNextImage`. After `onLoad` (and `decode()` when available), the pending slot is promoted to confirmed. No horizontal CSS slide; blur placeholders are not shown on the pending target (avoids flicker). If the target is already in `loadedRef`, promotion runs on the next animation frame.
+- **Prev/Next buttons:** Two round buttons at the bottom of the image area (`bottom-3 left-3` and `bottom-3 right-3`). Shown only when there are multiple photos. **Disabled** (native `disabled`, not only opacity) while the carousel is busy (`pendingSlot !== null`, reported via `onBusyChange`) or during automatic rewind (`isAutoRewinding`). Additional clicks are ignored until idle.
 - **Button visibility:** Mobile: buttons always visible with `opacity-60`; desktop (lg+): hidden by default, appear on card hover, full opacity when hovering the button.
-- **Reset to first photo (desktop, lg+):** When the user leaves the card (mouse leave), a 10-second timer starts. If it expires and the current photo is not the first, the card calls `carouselRef.current?.goPrev()` on an interval (every 400ms) until `onIndexChange(0)` is received, then clears the interval. Re-entering the card or clicking prev/next clears the timer and interval. Visibility of the card in the viewport does not affect this behaviour.
-- **Reset to first photo (mobile/tablet, max-width 1024px):** The only trigger for the 10-second rewind is the card **leaving the viewport** (via `IntersectionObserver`). When the card goes out of view, the timer starts; when it expires, the rewind animation runs (same interval of `goPrev()` until index 0). Returning the card into view does **not** reset the timer. If the user taps prev/next while the timer is running (before rewind starts), the timer and any rewind are cancelled. Once the rewind animation has started, the prev/next buttons are disabled until the rewind finishes. The cycle is repeatable: after rewind completes, the user can swipe again, scroll the card out of view again, and the behaviour repeats.
+- **Reset to first photo (desktop, lg+):** When the user leaves the card (mouse leave), a 10-second timer starts. If it expires and the current photo is not the first, the card calls `carouselRef.current?.goPrev()` on an interval (every 400ms) until `onIndexChange(0)` is received, then clears the interval. Re-entering the card or clicking prev/next clears the timer and interval.
+- **Reset to first photo (mobile/tablet, max-width 1024px):** The only trigger for the 10-second rewind is the card **leaving the viewport** (via `IntersectionObserver`). When the card goes out of view, the timer starts; when it expires, the rewind animation runs (same interval of `goPrev()` until index 0). Returning the card into view does **not** reset the timer. If the user taps prev/next while the timer is running (before rewind starts), the timer and any rewind are cancelled. Once the rewind animation has started, the prev/next buttons are disabled until the rewind finishes.
 - **Single photo:** When there is only one image (or none), the card shows a single image and no prev/next buttons; no carousel is rendered.
 
-### Architecture: state machine in the carousel
+### Architecture: dual-slot carousel
 
-The carousel owns all transition state; the parent does not hold `currentImageIndex` or direction.
+The carousel owns transition state; the parent does not pass `currentImageIndex`.
 
-- **State machine (inside `ListingCardImageCarousel`):**
-  - `idle { index }` — one visible slide; accepts `goNext()` / `goPrev()`.
-  - `preloading { fromIndex, toIndex }` — target image not in cache; current slide (`fromIndex`) stays visible, small overlay spinner; load via `new window.Image()` then → `idle { index: toIndex }` and `onIndexChange(toIndex)`. No horizontal slide animation (instant swap once ready, aligned with listing hero / modal).
-
-- **Parent–carousel contract:**
-  - Parent passes `images`, `imageErrors`, `onImageError`, `onBusyChange`, `onIndexChange`, `imageAltTitle`, `priority`, `t`. No `currentImageIndex` or `direction` props.
-  - Parent holds a ref to the carousel and calls `ref.current?.goNext()` / `ref.current?.goPrev()` for button clicks and rewind. Buttons are disabled when `onBusyChange(busy)` is true or when an automatic rewind is in progress (`isAutoRewinding`). Parent keeps `carouselIndex` from `onIndexChange` to know when index is 0 (e.g. to stop rewind).
-  - Rewind: parent starts an interval that calls `goPrev()`; when `onIndexChange(0)` fires, parent clears the interval. On mobile/tablet the rewind is triggered by the card leaving the viewport (IntersectionObserver), and the parent does not clear the timer when the card returns into view; user tapping prev/next clears it.
-
-- **Flow:** If not `idle`, navigation is ignored. If the target is ready (cached in `loadedRef`, or placeholder/error), set `idle { index: toIndex }` immediately. Otherwise enter `preloading`, wait for `new Image()` load (or error), then `markLoaded(toIndex)` on success, set `idle { index: toIndex }`, and `onIndexChange(toIndex)`.
-
-- **Render path for index 0:** `renderSlide(0)` uses `next/image` with optional blur placeholder when `priority` applies; other indices use the same `TrackedNextImage` pipeline via `renderSlide` / `renderNativeSlide` as appropriate so rewind to the first photo does not swap element types at the boundary.
-
-- **Preloading:** (1) On each idle index, next and previous indices are preloaded in the background via `useListingCardCarouselPreload`. (2) The second image is preloaded 1.5s after mount for faster first tap on mobile. (3) On first user navigation (goNext/goPrev), all remaining photos for that card are preloaded in the background so subsequent swipes are instant. All preloaded `Image` objects are pushed to `imagesCacheRef` so the browser keeps decoded data in memory; when the image set changes, handlers are cleared and the cache is reset. All use `getOptimizedImageUrl(..., 65, 800)`.
-
+- **State (`ListingCardImageCarousel`):** `confirmedSlot`, `pendingSlot`, `slotIndices`. While `pendingSlot !== null`, navigation is ignored. Imperative handle: `goNext()`, `goPrev()`, `isBusy()`, `getIndex()`.
+- **Parent–carousel contract:** Parent passes `images`, `imageErrors`, `onImageError`, `onBusyChange`, `onIndexChange`, `imageAltTitle`, `priority`, blur hashes, `t`. Parent holds a ref and calls `goNext()` / `goPrev()` for button clicks and rewind. Parent keeps `carouselIndex` from `onIndexChange` (badges, navigation blur cache).
+- **Flow:** `navigateTo(targetIndex)` assigns the target to the idle slot as `pendingSlot`. Placeholder/error indices promote immediately. Otherwise the pending layer loads; `onLoad` calls `promotePendingSlot`. If `loadedRef` already has the index, an effect promotes on the next frame.
+- **Preloading:** `useListingCardCarouselPreload` preloads next and previous indices on each confirmed index change. Uses `applyListingCardResponsivePreload` so preload hits the same CDN URL the browser selects from `next/image` srcset (not a fixed width). Desktop card hover also preloads the next photo responsively. Preloaded `Image` objects are kept in `imagesCacheRef`; handlers cleared when the image set changes.
+- **Card image params:** Quality `65`, `sizes` `(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw`, device widths aligned with `next.config.js` `deviceSizes` — see `listing-card-image.ts`.
 - **Constants:** `RESET_TO_FIRST_DELAY_MS = 10000`, `REWIND_STEP_MS = 400` (in `ListingCard.tsx`).
 
 ---
@@ -314,6 +304,12 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
 
 ## Image Optimization
 
+### Card grid images
+
+- **Quality:** 65% (`CARD_IMAGE_QUALITY` in `listing-card-image.ts`)
+- **Responsive widths:** `next/image` + custom CDN loader; `sizes` `(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw`
+- **Preload:** Adjacent card photos use the same srcset/sizes as slides so browser cache hits on navigation
+
 ### Preview Images
 
 - **Quality:** 75%
@@ -416,7 +412,7 @@ Blur placeholders are **not** turned off by `NODE_ENV` or a separate dev-only fl
 
 ### Performance Characteristics
 
-- **Listing card (homepage):** At most 2 images in the DOM per card (primary confirmed + secondary outgoing during transition). First image can use `priority`/lazy; next/prev preloaded in background; on first navigation all remaining photos for that card are preloaded. Second image also preloaded after 1.5s for mobile. Preloaded `Image` objects are kept in `imagesCacheRef` so the browser does not evict decoded data; cache is cleared and handlers detached when the image set changes. If a requested image is not ready yet, the current photo remains on screen and a small spinner is shown instead of a flash. No flicker on transition end (stable primary slot).
+- **Listing card (homepage):** At most **two hero-style layers** per card (`primary` / `secondary`); confirmed stays visible until pending loads, then slots swap (no translate animation). Adjacent indices preloaded with responsive srcset matching slides. Buttons disabled while `pendingSlot` is set or during auto-rewind. Preloaded `Image` objects kept in `imagesCacheRef`; cache cleared when the image set changes.
 - **Preview (listing page):** At most **two hero layers** in the DOM (`primary` / `secondary`); the confirmed layer stays visible until the pending layer’s image loads, then slots swap (no translate animation). `useListingImages` preloads adjacent indices with staggered delays (next `0`, second-ahead `40ms`, third-ahead `120ms`, previous `180ms`). No bulk “preload all remaining” pass on first navigation (card carousel still does). Preloaded images are tracked in `imagesCacheRef` and cleaned up when the listing changes.
 - **Modal:** Two layers (confirmed + pending), max 2 decoded images. Spinner after 300ms if still loading. Preload next/prev/second-next with same URL as display. Preloaded `Image` objects kept in `imagesCacheRef` and cleared when the image set changes. No duplicate preload or keydown logic in the page hook.
 - **Memory:** Card, preview, and modal each keep a ref to preloaded `Image` instances (`imagesCacheRef`) so decoded data stays in memory; when the image set changes, `onload`/`onerror` are set to `null` and the cache array is reset to avoid leaks. URL/index sets (`mainImageLoadedRef`, `modalImageLoadedRef`, `loadedRef`) track which images are ready.
@@ -436,11 +432,11 @@ Blur placeholders are **not** turned off by `NODE_ENV` or a separate dev-only fl
 
 - ✅ **Listing card (homepage):**
   - Multiple photos: prev/next buttons at bottom of image; on desktop buttons appear on card hover only
-  - Buttons call carousel ref `goPrev()`/`goNext()`; sliding animation (220ms); at most 2 images in DOM during transition; no blank-frame flicker while waiting for target image or when animation ends
-  - While loading or animating, carousel reports busy via `onBusyChange` and buttons are disabled; rapid clicks are ignored until idle
-  - With 2 photos: prev/next animate in correct direction (carousel state machine owns direction)
-  - Desktop: mouse leave starts 10s timer; after 10s parent runs interval calling `goPrev()` until `onIndexChange(0)`; re-entering or clicking buttons cancels. Mobile/tablet: card leaving viewport starts 10s timer; return to view does not cancel; tapping prev/next cancels; during rewind buttons are disabled; cycle repeatable.
-  - Preload next/prev in carousel and all remaining on first navigation; delayed second-image preload for faster first tap on mobile
+  - Two persistent layers: pending image loads under confirmed; swap after `onLoad` (no horizontal slide)
+  - Current photo stays visible until target is ready; no blur flash on pending layer
+  - While `pendingSlot` is set or auto-rewind runs, carousel reports busy via `onBusyChange` and buttons are disabled (native `disabled`); rapid clicks ignored until idle
+  - Desktop: mouse leave starts 10s timer; after 10s parent runs interval calling `goPrev()` until index 0. Mobile/tablet: card leaving viewport starts timer; return to view does not cancel; tapping prev/next cancels; during rewind buttons disabled
+  - Adjacent photos preloaded with responsive srcset/sizes matching `next/image`
 
 - ✅ **Listing page preview:**
   - Multiple photos: prev/next buttons (vertically centered); same visibility rules as card
@@ -543,5 +539,5 @@ If you need to add features:
 
 ---
 
-**Last Updated:** 2026-04-16  
-**Version:** 3.14 (Blur placeholders: added to ListingManagementCard, comparison table; navigation blur cache for loading.tsx skeleton)
+**Last Updated:** 2026-06-03  
+**Version:** 3.15 (Listing card carousel: dual-slot layers, responsive preload srcset, busy/disabled nav buttons; card image quality 65 via `listing-card-image.ts`)

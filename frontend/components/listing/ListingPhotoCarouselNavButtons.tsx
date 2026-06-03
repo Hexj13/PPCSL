@@ -35,6 +35,7 @@ export function ListingPhotoCarouselNavButtons({
       <>
         <button
           type="button"
+          disabled={disabled}
           onClick={onPrev}
           aria-disabled={disabled || undefined}
           className={`${hitClass} left-3 sm:left-4 items-center justify-center`}
@@ -53,6 +54,7 @@ export function ListingPhotoCarouselNavButtons({
         </button>
         <button
           type="button"
+          disabled={disabled}
           onClick={onNext}
           aria-disabled={disabled || undefined}
           className={`${hitClass} right-3 sm:right-4 items-center justify-center`}
@@ -94,6 +96,7 @@ export function ListingPhotoCarouselNavButtons({
     <>
       <button
         type="button"
+        disabled={disabled}
         onClick={onPrev}
         aria-disabled={disabled || undefined}
         className={`${leftPositionClass} ${hitAreaClass}`}
@@ -112,6 +115,7 @@ export function ListingPhotoCarouselNavButtons({
       </button>
       <button
         type="button"
+        disabled={disabled}
         onClick={onNext}
         aria-disabled={disabled || undefined}
         className={`${rightPositionClass} ${hitAreaClass}`}

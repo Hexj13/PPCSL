@@ -55,6 +55,11 @@ export function StatusFilterButtons({
           onClick={() => onFilterChange(status)}
           active={currentFilter === status}
           badge={status !== 'All' ? counts[status] : undefined}
+          data-testid={
+            translationPrefix === 'myListings'
+              ? `my-listings-status-filter-${status.toLowerCase()}`
+              : undefined
+          }
         >
           {getLabel(status)}
         </AdminFilterButton>

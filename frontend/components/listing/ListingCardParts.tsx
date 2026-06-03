@@ -3,8 +3,12 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 import { TrackedNextImage } from '@/components/common/TrackedNextImage';
+import {
+  CARD_IMAGE_QUALITY,
+  CARD_IMAGE_SIZES,
+  getListingCardImageSrc,
+} from '@/components/listing/listing-card-image';
 import { useListingCardCarouselPreload } from '@/components/listing/useListingCardCarouselPreload';
-import { getOptimizedImageUrl } from '@/lib/utils';
 
 export function ListingCardImageArea({
   showImage,
@@ -98,13 +102,24 @@ export const ListingCardImageCarousel = React.forwardRef<
     imageErrors: Set<number>;
     onImageError: (index: number) => void;
     onIndexChange?: (index: number) => void;
+    onBusyChange?: (busy: boolean) => void;
     imageAltTitle: string;
     priority: boolean;
     blurDataURLs?: (string | undefined)[];
     t: (_key: string, _params?: Record<string, string>) => string;
   }
 >(function ListingCardImageCarousel(
-  { images, imageErrors, onImageError, onIndexChange, imageAltTitle, priority, blurDataURLs, t },
+  {
+    images,
+    imageErrors,
+    onImageError,
+    onIndexChange,
+    onBusyChange,
+    imageAltTitle,
+    priority,
+    blurDataURLs,
+    t,
+  },
   ref,
 ) {
   const [state, setState] = useState(() => createListingCardCarouselState(0));
@@ -114,13 +129,19 @@ export const ListingCardImageCarousel = React.forwardRef<
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
   const imagesSignature = images.join('\u0001');
   const onIndexChangeRef = useRef(onIndexChange);
+  const onBusyChangeRef = useRef(onBusyChange);
   onIndexChangeRef.current = onIndexChange;
+  onBusyChangeRef.current = onBusyChange;
   stateRef.current = state;
   const confirmedIndex = getConfirmedCardCarouselIndex(state);
 
   useEffect(() => {
     onIndexChangeRef.current?.(confirmedIndex);
   }, [confirmedIndex]);
+
+  useEffect(() => {
+    onBusyChangeRef.current?.(state.pendingSlot !== null);
+  }, [state.pendingSlot]);
 
   const markLoaded = useCallback((idx: number) => {
     loadedRef.current.add(idx);
@@ -240,7 +261,7 @@ export const ListingCardImageCarousel = React.forwardRef<
       const src = images[idx];
       if (!src) return null;
       if (imageErrors.has(idx)) return errorPlaceholder;
-      const imageUrl = src === '/placeholder-car.jpg' ? src : getOptimizedImageUrl(src, 65);
+      const imageUrl = src === '/placeholder-car.jpg' ? src : getListingCardImageSrc(src);
       const isFirst = priority && idx === 0;
       const b = slideBlur(idx);
       const shouldUseBlurPlaceholder = Boolean(b) && !isPending && !loadedRef.current.has(idx);
@@ -254,7 +275,8 @@ export const ListingCardImageCarousel = React.forwardRef<
             total: String(images.length),
           })}
           fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          sizes={CARD_IMAGE_SIZES}
+          quality={CARD_IMAGE_QUALITY}
           className="object-cover"
           loading={isFirst ? undefined : 'lazy'}
           priority={isFirst}

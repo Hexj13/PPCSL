@@ -2,7 +2,7 @@
 
 import { useEffect, type MutableRefObject } from 'react';
 
-import { getOptimizedImageUrl } from '@/lib/utils';
+import { applyListingCardResponsivePreload } from '@/components/listing/listing-card-image';
 
 export function bindImageReadiness(
   img: HTMLImageElement,
@@ -64,48 +64,33 @@ export function useListingCardCarouselPreload(
   useEffect(() => {
     const next = (currentIndex + 1) % images.length;
     const prev = (currentIndex - 1 + images.length) % images.length;
-    if (images[next] && images[next] !== '/placeholder-car.jpg' && !imageErrors.has(next)) {
-      if (!loadedRef.current.has(next) && !preloadingRef.current.has(next)) {
-        const url = getOptimizedImageUrl(images[next], 65, 640);
-        const img = new window.Image();
-        imagesCacheRef.current.push(img);
-        preloadingRef.current.add(next);
-        const resolveReadiness = bindImageReadiness(
-          img,
-          () => markLoaded(next),
-          () => {
-            preloadingRef.current.delete(next);
-          },
-        );
-        img.src = url;
-        if (img.complete) {
-          resolveReadiness();
-        }
+
+    const preloadIndex = (index: number) => {
+      if (!images[index] || images[index] === '/placeholder-car.jpg' || imageErrors.has(index)) {
+        return;
       }
-    }
-    if (
-      prev !== next &&
-      images[prev] &&
-      images[prev] !== '/placeholder-car.jpg' &&
-      !imageErrors.has(prev)
-    ) {
-      if (!loadedRef.current.has(prev) && !preloadingRef.current.has(prev)) {
-        const url = getOptimizedImageUrl(images[prev], 65, 640);
-        const img = new window.Image();
-        imagesCacheRef.current.push(img);
-        preloadingRef.current.add(prev);
-        const resolveReadiness = bindImageReadiness(
-          img,
-          () => markLoaded(prev),
-          () => {
-            preloadingRef.current.delete(prev);
-          },
-        );
-        img.src = url;
-        if (img.complete) {
-          resolveReadiness();
-        }
+      if (loadedRef.current.has(index) || preloadingRef.current.has(index)) {
+        return;
       }
+      const img = new window.Image();
+      imagesCacheRef.current.push(img);
+      preloadingRef.current.add(index);
+      const resolveReadiness = bindImageReadiness(
+        img,
+        () => markLoaded(index),
+        () => {
+          preloadingRef.current.delete(index);
+        },
+      );
+      applyListingCardResponsivePreload(img, images[index]);
+      if (img.complete) {
+        resolveReadiness();
+      }
+    };
+
+    preloadIndex(next);
+    if (prev !== next) {
+      preloadIndex(prev);
     }
   }, [currentIndex, images, imageErrors, markLoaded, loadedRef, preloadingRef, imagesCacheRef]);
 }

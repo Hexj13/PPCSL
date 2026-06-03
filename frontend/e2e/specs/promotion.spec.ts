@@ -15,7 +15,9 @@ async function loginAndOpenMyListings(page: Page, myListingsPage: MyListingsPage
 }
 
 async function focusActiveListingsWithPromoteAction(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Active', exact: true }).click();
+  const filter = page.getByTestId('my-listings-status-filter-active');
+  await expect(filter).toBeVisible({ timeout: 30_000 });
+  await filter.click();
   await expect
     .poll(async () => page.locator('[data-testid^="my-listings-promote-button-"]').count(), {
       timeout: 30_000,

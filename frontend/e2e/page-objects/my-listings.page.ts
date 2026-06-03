@@ -86,8 +86,14 @@ export class MyListingsPage {
     return (await this.editLinks.count()) > 0;
   }
 
+  async filterByActiveStatus(): Promise<void> {
+    const filter = this.page.getByTestId('my-listings-status-filter-active');
+    await expect(filter).toBeVisible({ timeout: 30_000 });
+    await filter.click();
+  }
+
   async openFirstEditForm(): Promise<void> {
-    await this.page.getByRole('button', { name: 'Active', exact: true }).click();
+    await this.filterByActiveStatus();
     const editLink = this.page.locator(`[data-testid^="${this.testIds.editLinkPrefix}"]`).first();
     await expect(editLink).toBeVisible({ timeout: 30_000 });
     const href = await editLink.getAttribute('href');

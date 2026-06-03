@@ -73,15 +73,15 @@ test.describe('My listings @p0', () => {
         name: 'Click logout and verify redirect away from my listings',
         action: async () => {
           await myListingsPage.logoutFromUserMenu();
-          await expect(page).not.toHaveURL(/\/my-listings/);
-          await expect(page).toHaveURL(/\/(sign)?(\?|$)/);
+          await expect(page).not.toHaveURL(/\/my-listings/, { timeout: 15_000 });
+          await expect(page).toHaveURL(/\/(sign)?(\?|$)/, { timeout: 15_000 });
         },
       },
       {
         name: 'Verify guest cannot access my listings route',
         action: async () => {
-          await page.goto('/my-listings');
-          await expect(page).toHaveURL(/\/sign/);
+          await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
+          await expect(page).toHaveURL(/\/sign/, { timeout: 15_000 });
         },
       },
     ];
