@@ -57,7 +57,7 @@ export function PromotionModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('promotion.selectPeriod')}>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4" data-testid="promotion-modal">
         {showPartnerBalanceOption ? (
           <div>
             <span className="text-primary-700 font-semibold">
@@ -79,6 +79,7 @@ export function PromotionModal({
             <button
               key={option.days}
               type="button"
+              data-testid={`promotion-period-${option.days}`}
               onClick={() => handleSelect(option.days)}
               disabled={disableStandardOptions && !isAdmin}
               className={`aspect-square min-w-0 px-4 py-3 rounded-lg border-2 transition-colors flex items-center justify-center overflow-hidden disabled:cursor-not-allowed ${
@@ -143,6 +144,7 @@ export function PromotionModal({
         <div className="flex justify-end pt-2 shrink-0">
           <button
             type="button"
+            data-testid="promotion-modal-confirm"
             onClick={handleConfirm}
             disabled={!hasSelection}
             className="w-full sm:w-auto shrink-0 min-h-[48px] h-[48px] px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed"

@@ -27,6 +27,7 @@ interface SearchFormActionsProps {
   isAvailableListingsLoading: boolean;
   buttonsContainerRef: React.RefObject<HTMLDivElement | null>;
   isInternalSearchRef?: React.MutableRefObject<boolean>;
+  selectedSortKey?: string;
   onSortChange?: (sortBy: string, sortOrder: 'ASC' | 'DESC') => void;
 }
 
@@ -42,6 +43,7 @@ export function SearchFormActions({
   isAvailableListingsLoading,
   buttonsContainerRef,
   isInternalSearchRef,
+  selectedSortKey,
   onSortChange,
 }: SearchFormActionsProps) {
   const { t } = useTranslation();
@@ -111,7 +113,11 @@ export function SearchFormActions({
               </span>
             )}
           </div>
-          <SortDropdown isInternalSearchRef={isInternalSearchRef} onSortChange={onSortChange} />
+          <SortDropdown
+            selectedSortKey={selectedSortKey}
+            isInternalSearchRef={isInternalSearchRef}
+            onSortChange={onSortChange}
+          />
         </div>
         <div className="min-w-0 relative border-t border-primary-500/20 pt-3 lg:border-t-0 lg:pt-0">
           <div ref={buttonsContainerRef} className="lg:overflow-x-auto lg:scrollbar-hide">
@@ -193,7 +199,6 @@ export function SearchFormActions({
                 type="submit"
                 loading={showSearchLoader}
                 loadingText={t('searchFilters.searching')}
-                disabled={Boolean(!hasFiltersChanged || isSyncingFromUrl)}
                 data-testid="search-submit"
                 onMouseDown={(e) => {
                   e.preventDefault();

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 import { useApiErrorToast } from '@/hooks/useApiErrorToast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { comparisonApi, listingsApi } from '@/lib/api';
 import type { Listing } from '@/lib/api';
 import { localStorageGetItem } from '@/lib/browser-local-storage';
+import { waitForCardExitAnimation } from '@/lib/card-exit-animation';
 import { publishCrossTabEvent } from '@/lib/cross-tab-events';
 import { useAuthStore, useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
@@ -34,6 +36,10 @@ export function useComparePageListings(
 
   const [vehicleListings, setVehicleListings] = useState<Listing[]>([]);
   const [tireListings, setTireListings] = useState<Listing[]>([]);
+  const [exitingVehicleIds, setExitingVehicleIds] = useState<Set<string>>(() => new Set());
+  const [exitingTireIds, setExitingTireIds] = useState<Set<string>>(() => new Set());
+  const [isClearingVehicles, setIsClearingVehicles] = useState(false);
+  const [isClearingTires, setIsClearingTires] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const prevVehicleIdsRef = useRef<string[]>([]);
   const prevTireIdsRef = useRef<string[]>([]);
@@ -237,10 +243,22 @@ export function useComparePageListings(
   ]);
 
   const handleRemoveVehicle = async (id: string) => {
+    if (exitingVehicleIds.has(id) || isClearingVehicles) return;
+
+    flushSync(() => {
+      setExitingVehicleIds((prev) => new Set(prev).add(id));
+    });
+    await waitForCardExitAnimation();
+
     if (user) {
       try {
         await comparisonApi.remove(id);
       } catch {
+        setExitingVehicleIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
         showApiError();
         return;
       }
@@ -255,14 +273,31 @@ export function useComparePageListings(
       isAuthenticated: !!user,
       at: Date.now(),
     });
+    setExitingVehicleIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
     toast.success(t('compare.removedFromComparison'));
   };
 
   const handleRemoveTire = async (id: string) => {
+    if (exitingTireIds.has(id) || isClearingTires) return;
+
+    flushSync(() => {
+      setExitingTireIds((prev) => new Set(prev).add(id));
+    });
+    await waitForCardExitAnimation();
+
     if (user) {
       try {
         await comparisonApi.remove(id);
       } catch {
+        setExitingTireIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
         showApiError();
         return;
       }
@@ -277,19 +312,30 @@ export function useComparePageListings(
       isAuthenticated: !!user,
       at: Date.now(),
     });
+    setExitingTireIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
     toast.success(t('compare.removedFromComparison'));
   };
 
   const handleClearAllVehicles = async () => {
     const ids = [...useComparisonStore.getState().vehicleComparisons];
-    if (ids.length === 0) return;
+    if (ids.length === 0 || isClearingVehicles) return;
+
+    flushSync(() => {
+      setIsClearingVehicles(true);
+      setExitingVehicleIds(new Set(ids));
+    });
+    await waitForCardExitAnimation();
+
     if (user) {
       let failed = 0;
       for (const id of ids) {
         try {
           await comparisonApi.remove(id);
           removeVehicle(id);
-          setVehicleListings((prev) => prev.filter((listing) => listing.id !== id));
           publishCrossTabEvent({
             type: 'comparison-changed',
             listingId: id,
@@ -303,38 +349,46 @@ export function useComparePageListings(
         }
       }
       if (failed > 0) {
+        setIsClearingVehicles(false);
+        setExitingVehicleIds(new Set());
         showApiError();
+        return;
       }
-      if (failed === 0) {
-        toast.success(t('compare.allRemoved'));
+    } else {
+      clearVehicleBucket();
+      for (const id of ids) {
+        publishCrossTabEvent({
+          type: 'comparison-changed',
+          listingId: id,
+          action: 'remove',
+          bucket: 'vehicle',
+          isAuthenticated: false,
+          at: Date.now(),
+        });
       }
-      return;
     }
     setVehicleListings([]);
-    clearVehicleBucket();
-    for (const id of ids) {
-      publishCrossTabEvent({
-        type: 'comparison-changed',
-        listingId: id,
-        action: 'remove',
-        bucket: 'vehicle',
-        isAuthenticated: false,
-        at: Date.now(),
-      });
-    }
+    setIsClearingVehicles(false);
+    setExitingVehicleIds(new Set());
     toast.success(t('compare.allRemoved'));
   };
 
   const handleClearAllTires = async () => {
     const ids = [...useComparisonStore.getState().tireComparisons];
-    if (ids.length === 0) return;
+    if (ids.length === 0 || isClearingTires) return;
+
+    flushSync(() => {
+      setIsClearingTires(true);
+      setExitingTireIds(new Set(ids));
+    });
+    await waitForCardExitAnimation();
+
     if (user) {
       let failed = 0;
       for (const id of ids) {
         try {
           await comparisonApi.remove(id);
           removeTire(id);
-          setTireListings((prev) => prev.filter((listing) => listing.id !== id));
           publishCrossTabEvent({
             type: 'comparison-changed',
             listingId: id,
@@ -348,31 +402,37 @@ export function useComparePageListings(
         }
       }
       if (failed > 0) {
+        setIsClearingTires(false);
+        setExitingTireIds(new Set());
         showApiError();
+        return;
       }
-      if (failed === 0) {
-        toast.success(t('compare.allRemoved'));
+    } else {
+      clearTireBucket();
+      for (const id of ids) {
+        publishCrossTabEvent({
+          type: 'comparison-changed',
+          listingId: id,
+          action: 'remove',
+          bucket: 'tire',
+          isAuthenticated: false,
+          at: Date.now(),
+        });
       }
-      return;
     }
     setTireListings([]);
-    clearTireBucket();
-    for (const id of ids) {
-      publishCrossTabEvent({
-        type: 'comparison-changed',
-        listingId: id,
-        action: 'remove',
-        bucket: 'tire',
-        isAuthenticated: false,
-        at: Date.now(),
-      });
-    }
+    setIsClearingTires(false);
+    setExitingTireIds(new Set());
     toast.success(t('compare.allRemoved'));
   };
 
   return {
     vehicleListings,
     tireListings,
+    exitingVehicleIds,
+    exitingTireIds,
+    isClearingVehicles,
+    isClearingTires,
     hasInitialized,
     handleRemoveVehicle,
     handleRemoveTire,

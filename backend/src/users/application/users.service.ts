@@ -75,15 +75,42 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({
-      where: { email, active: true },
-    });
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) {
+      return null;
+    }
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .where('LOWER(user.email) = :email', { email: normalized })
+      .andWhere('user.active = :active', { active: true })
+      .getOne();
+  }
+
+  async findByEmailAny(email: string): Promise<User | null> {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) {
+      return null;
+    }
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .where('LOWER(user.email) = :email', { email: normalized })
+      .getOne();
   }
 
   async findByGoogleId(googleId: string): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { googleId, active: true },
     });
+  }
+
+  async findByGoogleIdAny(googleId: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { googleId },
+    });
+  }
+
+  async releaseGoogleIdentity(userId: string): Promise<void> {
+    await this.usersRepository.update(userId, { googleId: null });
   }
 
   async findByPhone(phone: string): Promise<User | null> {
@@ -120,6 +147,19 @@ export class UsersService {
       throw new NotFoundException('errors.userNotFound');
     }
     return user;
+  }
+
+  async hasPasswordSet(id: string): Promise<boolean> {
+    const user = await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.id')
+      .addSelect('user.password')
+      .where('user.id = :id', { id })
+      .getOne();
+    if (!user) {
+      throw new NotFoundException('errors.userNotFound');
+    }
+    return Boolean(user.password);
   }
 
   async getActiveListingsCount(userId: string): Promise<number> {

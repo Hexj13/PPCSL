@@ -26,12 +26,16 @@ function pathWithSearch(localizedBase: string, queryBody: string): string {
 
 interface SortDropdownProps {
   basePath?: string;
+  dataTestId?: string;
+  selectedSortKey?: string;
   isInternalSearchRef?: React.MutableRefObject<boolean>;
   onSortChange?: (sortBy: string, sortOrder: 'ASC' | 'DESC') => void;
 }
 
 export function SortDropdown({
   basePath = '/',
+  dataTestId = 'search-sort-select',
+  selectedSortKey,
   isInternalSearchRef,
   onSortChange,
 }: SortDropdownProps) {
@@ -47,10 +51,12 @@ export function SortDropdown({
     setMounted(true);
   }, []);
 
-  const currentSortKey = useMemo(
-    () => resolveListingSortKey(searchParams.get('sortBy'), searchParams.get('sortOrder')),
-    [searchParams],
-  );
+  const currentSortKey = useMemo(() => {
+    if (selectedSortKey) {
+      return selectedSortKey;
+    }
+    return resolveListingSortKey(searchParams.get('sortBy'), searchParams.get('sortOrder'));
+  }, [selectedSortKey, searchParams]);
 
   const sortOptions = useMemo(() => {
     return getListingSortOptions(t);
@@ -90,6 +96,7 @@ export function SortDropdown({
   return (
     <div className="w-full sm:min-w-[200px]">
       <Dropdown
+        dataTestId={dataTestId}
         value={currentSortKey}
         buttonClassName="h-12! min-h-12! max-h-12!"
         onChange={(value) => {

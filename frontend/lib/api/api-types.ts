@@ -268,6 +268,7 @@ export interface User {
   freePromotionBalance?: number;
   partnerListingProgress?: number;
   hidePartnerPromoBanner?: boolean;
+  hasPassword?: boolean;
 }
 
 export interface RegisterResponse extends User {
@@ -458,7 +459,7 @@ export interface LoginDto {
 }
 
 export interface ChangePasswordDto {
-  currentPassword: string;
+  currentPassword?: string;
   newPassword: string;
 }
 

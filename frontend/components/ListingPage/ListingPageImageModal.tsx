@@ -81,6 +81,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
 
   return (
     <div
+      data-testid="listing-image-modal"
       className="group fixed inset-0 bg-black z-50 flex items-center justify-center p-4"
       role="button"
       tabIndex={0}
@@ -102,6 +103,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
     >
       <button
         type="button"
+        data-testid="listing-image-modal-close"
         onClick={(e) => {
           e.stopPropagation();
           onClose();

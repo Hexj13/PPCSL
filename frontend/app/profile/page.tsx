@@ -463,6 +463,7 @@ export default function ProfilePage() {
           {user.type === 'Business' && <ProfilePartnerSection user={user} t={t} />}
           <ProfilePasswordSection
             t={t}
+            hasPassword={user.hasPassword === true}
             currentPassword={currentPassword}
             newPassword={newPassword}
             onCurrentPasswordChange={setCurrentPassword}

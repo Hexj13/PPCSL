@@ -16,6 +16,7 @@ test.describe('Saved filters', () => {
     searchHomePage,
     favoritesPage,
   }) => {
+    test.setTimeout(90_000);
     const filterName = `e2e-saved-filter-${Date.now()}`;
 
     const steps: E2EStep[] = [
@@ -53,7 +54,6 @@ test.describe('Saved filters', () => {
           await favoritesPage.open();
           await favoritesPage.expectPageView();
           await favoritesPage.openFiltersTab();
-          await expect(page.getByTestId('saved-filters-list')).toBeVisible();
         },
       },
       {

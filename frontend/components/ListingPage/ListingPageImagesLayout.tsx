@@ -146,6 +146,7 @@ export function ListingPageImagesLayout({
   return (
     <div>
       <div
+        data-testid="listing-gallery-hero"
         onClick={() => {
           if (suppressPreviewClickRef.current) {
             suppressPreviewClickRef.current = false;

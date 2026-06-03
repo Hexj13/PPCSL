@@ -21,6 +21,10 @@ export class SignPage {
     this.registerForm = new RegisterFormComponent(page);
   }
 
+  private visibleAuthPage() {
+    return this.page.getByTestId(this.testIds.page).locator('visible=true').first();
+  }
+
   private async gotoWithRetry(url: string): Promise<void> {
     for (let routeAttempt = 0; routeAttempt < 3; routeAttempt += 1) {
       let lastGotoError: unknown;
@@ -44,8 +48,7 @@ export class SignPage {
         await this.page.waitForTimeout(400);
         continue;
       }
-      const ready = await this.page
-        .getByTestId(this.testIds.page)
+      const ready = await this.visibleAuthPage()
         .waitFor({ state: 'visible', timeout: 8000 })
         .then(() => true)
         .catch(() => false);
@@ -81,38 +84,43 @@ export class SignPage {
   }
 
   async expectLoginPageView(): Promise<void> {
-    await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.loginTab)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.loginPanel)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.loginForm)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.loginInput)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.loginPasswordInput)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.loginSubmit)).toBeVisible();
+    const root = this.visibleAuthPage();
+    await expect(root).toBeVisible();
+    await expect(root.getByTestId(this.testIds.loginTab)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.loginPanel)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.loginForm)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.loginInput)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.loginPasswordInput)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.loginSubmit)).toBeVisible();
   }
 
   async expectRegisterPageView(): Promise<void> {
-    await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.registerTab)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.registerPanel)).toBeVisible();
+    const root = this.visibleAuthPage();
+    await expect(root).toBeVisible();
+    await expect(root.getByTestId(this.testIds.registerTab)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.registerPanel)).toBeVisible();
     await this.registerForm.expectVisible();
   }
 
   async fillLoginCredentials(login: string, password: string): Promise<void> {
-    await this.page.getByTestId(this.testIds.loginInput).fill(login);
-    await this.page.getByTestId(this.testIds.loginPasswordInput).fill(password);
+    const root = this.visibleAuthPage();
+    await root.getByTestId(this.testIds.loginInput).fill(login);
+    await root.getByTestId(this.testIds.loginPasswordInput).fill(password);
   }
 
   async submitLogin(): Promise<void> {
-    await this.page.getByTestId(this.testIds.loginSubmit).click();
+    await this.visibleAuthPage().getByTestId(this.testIds.loginSubmit).click();
   }
 
   async submitLoginForm(): Promise<void> {
-    await this.page.getByTestId(this.testIds.loginForm).evaluate((form) => {
-      if (!(form instanceof HTMLFormElement)) {
-        throw new Error('Expected login form element');
-      }
-      form.requestSubmit();
-    });
+    await this.visibleAuthPage()
+      .getByTestId(this.testIds.loginForm)
+      .evaluate((form) => {
+        if (!(form instanceof HTMLFormElement)) {
+          throw new Error('Expected login form element');
+        }
+        form.requestSubmit();
+      });
   }
 
   async registerIndividual(phone: string, password: string): Promise<void> {

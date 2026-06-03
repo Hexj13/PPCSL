@@ -312,7 +312,12 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
   }
 
   return (
-    <section ref={sectionRef} aria-label={t('similarListings.title')} className="mt-6 md:mt-8">
+    <section
+      ref={sectionRef}
+      aria-label={t('similarListings.title')}
+      className="mt-6 md:mt-8"
+      data-testid="listing-detail-similar-listings"
+    >
       <div className="surface">
         <div className="flex items-center gap-4 mb-6">
           <h2 className="text-xl md:text-2xl font-bold text-primary-900">
@@ -326,6 +331,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
                 disabled={!canScrollLeft}
                 className="bg-bg-darker/90 hover-only:hover:bg-bg-darker border-2 border-primary-700 hover-only:hover:border-primary-900 rounded-full p-2 transition-all shadow-lg backdrop-blur-xs disabled:opacity-50 disabled:cursor-not-allowed group"
                 aria-label={t('similarListings.scrollLeft')}
+                data-testid="listing-similar-scroll-left"
               >
                 <svg
                   className="w-5 h-5 text-primary-700 lg:group-hover:text-primary-900 transition-colors"
@@ -350,6 +356,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
                 disabled={!canScrollRight}
                 className="bg-bg-darker/90 hover-only:hover:bg-bg-darker border-2 border-primary-700 hover-only:hover:border-primary-900 rounded-full p-2 transition-all shadow-lg backdrop-blur-xs disabled:opacity-50 disabled:cursor-not-allowed group"
                 aria-label={t('similarListings.scrollRight')}
+                data-testid="listing-similar-scroll-right"
               >
                 <svg
                   className="w-5 h-5 text-primary-700 lg:group-hover:text-primary-900 transition-colors"
@@ -372,6 +379,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
           <div
             ref={containerRef}
             role="list"
+            data-testid="listing-similar-carousel"
             className="flex items-stretch overflow-x-auto gap-4 scroll-smooth [&::-webkit-scrollbar]:hidden px-4 md:px-6"
             style={{
               scrollbarWidth: 'none',

@@ -160,6 +160,7 @@ export class User {
     this.lastName = null;
     this.companyName = null;
     this.companyWebsiteUrl = null;
+    this.googleId = null;
     this.active = false;
   }
 

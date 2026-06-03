@@ -93,7 +93,7 @@
     "googleEmailNotVerified": "Google account email is not verified.",
     "googleSignInFailed": "Google sign-in failed. Please try again.",
     "phoneVerificationRequired": "Verify your phone number before using this feature.",
-    "useGoogleSignIn": "This account uses Google sign-in. Use \"Continue with Google\" instead of a password.",
+    "useGoogleSignIn": "Use Google sign-in for this account.",
     "userNotActive": "User is not active",
     "termsNotAccepted": "You must accept the terms of use",
     "phoneAlreadyExists": "User with this phone number already exists",

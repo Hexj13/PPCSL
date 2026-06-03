@@ -11,7 +11,13 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExcludeEndpoint,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request as ExpressRequest, Response } from 'express';
 
@@ -23,6 +29,7 @@ import {
   AuthTokenIssuerService,
   REFRESH_TOKEN_COOKIE,
 } from '../application/services/auth-token-issuer.service';
+import { E2eCreateGoogleBusinessUserUseCase } from '../application/use-cases/e2e-create-google-business-user.use-case';
 import { IpBlockGuard } from '../infrastructure/guards/ip-block.guard';
 import { JwtAuthGuard } from '../infrastructure/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../infrastructure/guards/optional-jwt-auth.guard';
@@ -67,6 +74,7 @@ export class AuthController {
     private usersService: UsersService,
     private i18nService: I18nService,
     private authPhoneRateLimit: AuthPhoneRateLimitService,
+    private e2eCreateGoogleBusinessUserUseCase: E2eCreateGoogleBusinessUserUseCase,
   ) {}
 
   @ApiOperation({ summary: 'Register a new user' })
@@ -230,6 +238,19 @@ export class AuthController {
     const result = await this.authService.refreshTokens(
       fromCookie ?? refreshTokenDto?.refresh_token,
     );
+    this.authTokenIssuer.attachLoginCookies(res, result);
+    return this.authTokenIssuer.cookieAuthJsonBody(result);
+  }
+
+  @ApiOperation({
+    summary: 'Create Google business user without password (local/test E2E only)',
+  })
+  @ApiExcludeEndpoint()
+  @Throttle(getThrottleLimit(30, 500))
+  @HttpCode(200)
+  @Post('e2e/google-business-user')
+  async e2eGoogleBusinessUser(@Res({ passthrough: true }) res: Response) {
+    const result = await this.e2eCreateGoogleBusinessUserUseCase.execute();
     this.authTokenIssuer.attachLoginCookies(res, result);
     return this.authTokenIssuer.cookieAuthJsonBody(result);
   }
@@ -482,14 +503,14 @@ export class AuthController {
   async changePassword(
     @Request() req: AuthenticatedRequest,
     @Body() changePasswordDto: ChangePasswordDto,
-    @Res({ passthrough: true }) res: Response,
   ) {
+    const currentRefreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE] as string | undefined;
     await this.authService.changePassword(
       req.user.id,
       changePasswordDto,
       this.getRequestLocale(req),
+      currentRefreshToken,
     );
-    this.authTokenIssuer.clearAuthCookies(res);
     return { success: true };
   }
 

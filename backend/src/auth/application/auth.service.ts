@@ -126,8 +126,9 @@ export class AuthService {
     userId: string,
     dto: ChangePasswordDto,
     requestLocale?: string,
+    currentRefreshToken?: string | null,
   ): Promise<void> {
-    return this.changePasswordUseCase.execute(userId, dto, requestLocale);
+    return this.changePasswordUseCase.execute(userId, dto, requestLocale, currentRefreshToken);
   }
 
   async verifyPhone(userId: string, code: string): Promise<LoginResponse> {

@@ -24,9 +24,25 @@ The search form is split into:
 
 1. **Vehicle type selector** — Car / Truck / Moto (above tabs).
 2. **Four tabs:** Basic criteria, Additional criteria, Equipment, Popular.
-3. **Actions:** Search, Reset, Smart selection, (Save filter), Log in.
+3. **Actions:** Sort dropdown, available-count label, Search, Reset, Smart selection, (Save filter), Log in.
 
-Filter state is synced with the URL; submitting the form runs the search and updates results. See [search-title-url.md](./search-title-url.md) for brand/model slugs and [technical.md](../architecture/technical.md) for API and URL parameters.
+Filter state is held in React until the user applies search. The URL and listings grid update only when the user clicks **Search** (or submits the form with Enter in a field). If the form matches the last applied state, Search does nothing (no navigation, no listings refetch). The Search button stays enabled; it is visually highlighted when there are pending changes.
+
+See [search-title-url.md](./search-title-url.md) for brand/model slugs and [technical.md](../architecture/technical.md) for API and URL parameters.
+
+---
+
+## Search apply and sorting
+
+| Surface | Sort behaviour | When results refresh |
+| --- | --- | --- |
+| Home search form (`/`) | `SortDropdown` updates `filters.sortBy` / `filters.sortOrder` only (`selectedSortKey` from form state) | On **Search** when `hasFiltersChanged` |
+| Seller board (`/board/:slug`) | `SortDropdown` without `onSortChange`; writes `sortBy` / `sortOrder` to the URL | Immediately on sort change |
+
+- **Pending edits:** Tab fields, mobile sheets, and home sort use the same deferred-apply model as Basic/Advanced filters.
+- **Change detection:** `useFilterHandlers` compares current `FilterState` to `lastAppliedFilters` (including sort). `lastAppliedFilters` is set after a successful apply and on URL sync from external navigation.
+- **Available count:** `useAvailableListingsCount` uses current form fields (including pending sort), not only URL params.
+- **Components:** `SortDropdown.tsx` (shared); home wires `onSortChange` + `selectedSortKey` via `SearchFormActions` / `SearchFiltersForm`.
 
 ---
 
@@ -184,7 +200,7 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 
 - **Filter state:** `useSearchFilters` — holds all filter fields (brand_ids, model_ids, year_gte/lte, price_gte/lte, cities, currency, etc.).
 - **URL sync:** `useSearchFiltersSync` — reads/writes URL search params and applies initial state from URL.
-- **Handlers:** `useFilterHandlers` — change handlers, validation (year/price/mileage/engine/horsepower ranges and brand/model selection limits), submit, reset. On submit, blurs the active input so formatted values (e.g. mileage with spaces) are committed before building the URL.
+- **Handlers:** `useFilterHandlers` — change handlers, validation (year/price/mileage/engine/horsepower ranges and brand/model selection limits), submit, reset. Submit runs `applySearchWithOverrides` only when `hasFiltersChanged`; otherwise no-op. On apply, blurs the active input so formatted values (e.g. mileage with spaces) are committed before building the URL.
 - **Options:** `useFilterOptions` — brand/model options (with popular/other categories), city options, colors, doors, condition, registration type, registration yes/no, currency list.
 - **Tabs:** `useSearchTabs` — active tab, refs for indicator and scroll.
 - **Vehicle type:** `useVehicleType` — from URL or default `car`.
@@ -208,6 +224,7 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 | `search-filters/PopularFilters.tsx`         | Popular brands/models links                                                                |
 | `search-filters/SearchTabs.tsx`             | Tab buttons and indicator                                                                  |
 | `search-filters/SearchFormActions.tsx`      | Available-count display, sort dropdown, Smart selection, Save, Search, Reset, and Log in buttons |
+| `components/search/SortDropdown.tsx`        | Listing sort select; deferred on home (`onSortChange`), immediate on board |
 | `search-filters/VehicleTypeSelector.tsx`    | Car / Truck / Moto selector                                                                |
 | `search-filters/PopularBodyTypesFilter.tsx` | Body type chips under Basic filters                                                        |
 | `hooks/usePopularModels.ts`                 | Popular tab: brand/model selection, mutual exclusion, selectedItems                         |
@@ -229,8 +246,9 @@ Stable `data-testid` values used by `search-filters-mobile.spec.ts` and `search-
 | Sheet UI | `search-sheet-option-{value}`, `search-sheet-confirm` |
 | Mobile equipment / popular | `search-equipment-{key}` (mobile layout only), `search-popular-chip-{brand}-{model}` |
 | Actions | `search-submit`, `search-reset`, `search-smart-selection`, `search-save-filter` |
+| Sort (home) | `search-sort-select`, `search-sort-select-menu`, `search-sort-select-option-{index}` |
 
-See [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md) for project layout and flow completeness rules.
+E2E: `listing-sort.spec.ts` — home selects sort then `submitSearch()`; board applies sort immediately. See [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md) for project layout and flow rules.
 
 ---
 
@@ -244,4 +262,4 @@ See [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md) for pro
 
 ---
 
-**Last updated:** 2026-05-25
+**Last updated:** 2026-06-03

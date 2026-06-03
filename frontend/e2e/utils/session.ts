@@ -23,6 +23,14 @@ async function gotoRoot(page: Page): Promise<void> {
   await gotoWithDomContentLoadedRetry(page, '/');
 }
 
+export async function dismissCookieConsentIfVisible(page: Page): Promise<void> {
+  const accept = page.getByTestId('cookie-consent-accept');
+  if (await accept.isVisible().catch(() => false)) {
+    await accept.click();
+    await accept.waitFor({ state: 'hidden', timeout: 10_000 }).catch(() => undefined);
+  }
+}
+
 export async function clearBrowserState(page: Page): Promise<void> {
   await page.context().clearCookies();
   await forceDefaultCanonicalLocaleCookies(page);
@@ -32,10 +40,5 @@ export async function clearBrowserState(page: Page): Promise<void> {
     window.sessionStorage.clear();
   });
   await gotoRoot(page);
-  const accept = page.getByTestId('cookie-consent-accept');
-  try {
-    await accept.click({ timeout: 2500 });
-  } catch {
-    void 0;
-  }
+  await dismissCookieConsentIfVisible(page);
 }

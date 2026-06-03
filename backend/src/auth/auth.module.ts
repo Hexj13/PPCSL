@@ -13,6 +13,7 @@ import { CheckPhoneAvailabilityUseCase } from './application/use-cases/check-pho
 import { ConfirmEmailChangeUseCase } from './application/use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './application/use-cases/delete-account.use-case';
 import { DismissPartnerPromoBannerUseCase } from './application/use-cases/dismiss-partner-promo-banner.use-case';
+import { E2eCreateGoogleBusinessUserUseCase } from './application/use-cases/e2e-create-google-business-user.use-case';
 import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.use-case';
 import { GoogleSignInUseCase } from './application/use-cases/google-sign-in.use-case';
 import { LoginUserUseCase } from './application/use-cases/login-user.use-case';
@@ -109,6 +110,7 @@ import { AuthController } from './presentation/auth.controller';
     SendVerificationSmsUseCase,
     ChangePasswordUseCase,
     DismissPartnerPromoBannerUseCase,
+    E2eCreateGoogleBusinessUserUseCase,
   ],
   exports: [
     UsersModule,

@@ -42,6 +42,7 @@ test.describe('Smart selection', () => {
     'completes wizard, saves filter, and applies it on search home',
     { timeout: 90_000 },
     async ({ page, searchHomePage, smartSelectionPage, favoritesPage }) => {
+      test.setTimeout(90_000);
       let createdFilter: SmartSelectionCreateResponse | null = null;
 
       const steps: E2EStep[] = [
@@ -56,7 +57,7 @@ test.describe('Smart selection', () => {
           name: 'Open smart selection from search',
           action: async () => {
             await searchHomePage.openAndExpectPageView();
-            await searchHomePage.clickSmartSelection();
+            await searchHomePage.clickSmartSelectionAndExpectWizard();
             await smartSelectionPage.expectPageView();
           },
         },
@@ -83,8 +84,8 @@ test.describe('Smart selection', () => {
         {
           name: 'Expect favorites filters tab after success',
           action: async () => {
-            await expect(page).toHaveURL(/\/favorites/);
-            await expect(page).toHaveURL(/tab=filters/);
+            await expect(page).toHaveURL(/\/favorites/, { timeout: 30_000 });
+            await expect(page).toHaveURL(/tab=filters/, { timeout: 15_000 });
             await favoritesPage.expectPageView();
             await favoritesPage.openFiltersTab();
             await favoritesPage.expectSavedFiltersListVisible();

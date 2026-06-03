@@ -362,9 +362,9 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 POST /api/auth/register              # Register new user
 POST /api/auth/login                  # Login (sets httpOnly session cookies; JSON returns user only)
 POST /api/auth/refresh                # Refresh session (rotates refresh token in cookies; JSON returns user only)
-GET  /api/auth/me                     # Get current user profile
-PATCH /api/auth/profile              # Update user profile
-POST /api/auth/change-password       # Change password (JWT; current + new; throttle: 5/min per IP in production)
+GET  /api/auth/me                     # Get current user profile (includes hasPassword; password hash never returned)
+PATCH /api/auth/profile              # Update user profile (response includes hasPassword)
+POST /api/auth/change-password       # Change or set password (JWT; throttle: 5/min per IP in production)
 POST /api/auth/change-phone-request  # Request phone number change; sends SMS to new number (JWT; per-phone SMS quota in Redis)
 POST /api/auth/change-phone-verify   # Complete phone change with SMS code (JWT)
 DELETE /api/auth/profile              # Delete user account
@@ -374,9 +374,9 @@ POST /api/auth/request-password-reset # Request password reset
 POST /api/auth/reset-password         # Reset password
 ```
 
-Refresh tokens rotate on each successful refresh (the previous refresh token is revoked). Access and refresh tokens are stored in **httpOnly cookies** (`kupito_access_token`, `kupito_refresh_token`); API JSON responses do not include token fields. `POST /api/auth/change-password` and `POST /api/auth/reset-password` revoke refresh tokens and clear session cookies. Already-issued access JWTs remain valid until expiry (see [auth-jwt-invalidation-followup.md](./auth-jwt-invalidation-followup.md)). The Axios client calls `POST /api/auth/refresh` with credentials; Zustand holds the `user` snapshot only—see [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md) and [cross-tab-sync.md](../features/cross-tab-sync.md#auth-refresh-and-token-rotation).
+Refresh tokens rotate on each successful refresh (the previous refresh token is revoked). Access and refresh tokens are stored in **httpOnly cookies** (`kupito_access_token`, `kupito_refresh_token`); API JSON responses do not include token fields. `POST /api/auth/change-password` revokes all refresh tokens except the one in the current browser’s `kupito_refresh_token` cookie (other devices are logged out; session cookies are unchanged). `POST /api/auth/reset-password` revokes refresh tokens and clears session cookies. Already-issued access JWTs remain valid until expiry (see [auth-jwt-invalidation-followup.md](./auth-jwt-invalidation-followup.md)). The Axios client calls `POST /api/auth/refresh` with credentials; Zustand holds the `user` snapshot only—see [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md) and [cross-tab-sync.md](../features/cross-tab-sync.md#auth-refresh-and-token-rotation).
 
-**Profile password change (`/profile`):** The form uses **two fields only** (current + new password). There is no duplicate “confirm new password” field by product choice—to keep the UI light. The client validates length (max 100) and strength before calling `POST /api/auth/change-password`.
+**Profile password (`/profile`):** `GET /api/auth/me` exposes `hasPassword` (derived from the stored hash; the `password` column uses `select: false` in TypeORM). Accounts created via Google with no hash show **Set password** (new password only, `InfoBlock` hint); `POST /api/auth/change-password` accepts body `{ newPassword }` without `currentPassword`. After a password exists, the UI switches to **Change password** (current + new). Google Sign-In remains available; login by email or phone + password works once `hasPassword` is true. Password-only save does not require other profile fields (e.g. company website) to be valid. No separate “confirm new password” field—client validates length (max 100) and strength before submit.
 
 **Profile email input hardening (`/profile`):** The client sanitizes prefilled values before submit:
 - invalid persisted email values are normalized to empty state on load

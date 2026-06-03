@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 import type { AuthCredentials } from '../fixtures/env';
 import { SignPage } from '../page-objects/sign.page';
@@ -12,6 +12,19 @@ const ACCESS_TOKEN_COOKIE = 'kupito_access_token';
 async function hasAccessTokenCookie(page: Page): Promise<boolean> {
   const cookies = await page.context().cookies();
   return cookies.some((c) => c.name === ACCESS_TOKEN_COOKIE && Boolean(c.value?.length));
+}
+
+export async function expectAuthenticatedSession(page: Page): Promise<void> {
+  await expect.poll(async () => isAccessTokenSessionValid(page), { timeout: 20_000 }).toBe(true);
+}
+
+export async function expectLoggedOut(page: Page): Promise<void> {
+  await expect
+    .poll(async () => !(await hasAccessTokenCookie(page)), { timeout: 15_000 })
+    .toBe(true);
+  await expect
+    .poll(async () => !(await isAccessTokenSessionValid(page)), { timeout: 15_000 })
+    .toBe(true);
 }
 
 async function isAccessTokenSessionValid(page: Page): Promise<boolean> {

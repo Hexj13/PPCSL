@@ -303,13 +303,10 @@ jest.mock('./search-filters/SearchFormActions', () => {
     }) => {
       const { user } = (useAuthStore as jest.Mock)();
       const { t } = useTranslation();
-      const searchDisabled = !props.hasFiltersChanged || props.isSyncingFromUrl;
       const saveText = user ? t('searchFilters.addToFavorites') : t('searchFilters.login');
       return (
         <div data-testid="search-form-actions">
-          <button type="submit" disabled={searchDisabled}>
-            {t('searchFilters.search')}
-          </button>
+          <button type="submit">{t('searchFilters.search')}</button>
           <button type="button" onClick={props.onReset} disabled={!props.hasActiveFilters}>
             {t('searchFilters.reset')}
           </button>
@@ -457,12 +454,15 @@ describe('SearchFilters', () => {
     expect(screen.getByLabelText('Hide Additional criteria')).toBeInTheDocument();
   });
 
-  it('should handle form submission', async () => {
+  it('should handle form submission when filters changed', async () => {
     renderWithProviders(<SearchFilters />);
 
     await waitFor(() => {
       expect(brandsApi.getAll).toHaveBeenCalled();
     });
+
+    const priceInputs = screen.getAllByTitle(/Enter price.*0-999999999/i);
+    fireEvent.change(priceInputs[0], { target: { value: '10000' } });
 
     const form = screen.getByRole('form', { name: /search filters/i });
     fireEvent.submit(form);
@@ -473,6 +473,22 @@ describe('SearchFilters', () => {
       },
       { timeout: 3000 },
     );
+  });
+
+  it('should not navigate on form submission when filters unchanged', async () => {
+    renderWithProviders(<SearchFilters />);
+
+    await waitFor(() => {
+      expect(brandsApi.getAll).toHaveBeenCalled();
+    });
+
+    mockReplace.mockClear();
+
+    fireEvent.submit(screen.getByRole('form', { name: /search filters/i }));
+
+    await waitFor(() => {
+      expect(mockReplace).not.toHaveBeenCalled();
+    });
   });
 
   it('should handle reset', async () => {

@@ -19,6 +19,7 @@ Use when:
 - The page or hook maps `errorKey` / `message` to field errors or inline UI
 - A background poll should fail quietly
 - Auth refresh / `me` probes that must not spam the user
+- Google Sign-In on `/sign` (`authApi.googleSignIn` / `useGoogleAuth`) — one localized toast from the hook
 
 Do **not** use it to hide errors the user should always see unless the caller shows an alternative.
 

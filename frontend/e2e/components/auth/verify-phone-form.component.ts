@@ -10,14 +10,20 @@ export class VerifyPhoneFormComponent {
 
   async fillCode(code: string): Promise<void> {
     for (const [index, char] of code.split('').entries()) {
-      await this.page.getByTestId(`${this.testIds.codeInputPrefix}${index}`).click();
-      await this.page.keyboard.type(char, { delay: 40 });
+      const input = this.page.getByTestId(`${this.testIds.codeInputPrefix}${index}`);
+      await input.click();
+      await input.fill(char);
     }
+    const lastIndex = code.length - 1;
+    await expect(this.page.getByTestId(`${this.testIds.codeInputPrefix}${lastIndex}`)).toHaveValue(
+      code[lastIndex] ?? '',
+      { timeout: 10_000 },
+    );
   }
 
   async submit(): Promise<void> {
     const submit = this.page.getByTestId(this.testIds.submitButton);
-    await expect(submit).toBeEnabled({ timeout: 15_000 });
+    await expect.poll(async () => submit.isEnabled(), { timeout: 20_000 }).toBe(true);
     await submit.click();
   }
 }

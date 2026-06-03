@@ -11,7 +11,17 @@ import { GoogleSignInUseCase } from './google-sign-in.use-case';
 describe('GoogleSignInUseCase', () => {
   let useCase: GoogleSignInUseCase;
   let usersService: jest.Mocked<
-    Pick<UsersService, 'findByGoogleId' | 'findByEmail' | 'update' | 'create' | 'findOneById'>
+    Pick<
+      UsersService,
+      | 'findByGoogleId'
+      | 'findByGoogleIdAny'
+      | 'findByEmail'
+      | 'findByEmailAny'
+      | 'releaseGoogleIdentity'
+      | 'update'
+      | 'create'
+      | 'findOneById'
+    >
   >;
   let verifier: jest.Mocked<Pick<GoogleTokenVerifierService, 'verify'>>;
   let authTokenIssuer: jest.Mocked<Pick<AuthTokenIssuerService, 'issueLoginResponse'>>;
@@ -70,7 +80,10 @@ describe('GoogleSignInUseCase', () => {
   beforeEach(async () => {
     usersService = {
       findByGoogleId: jest.fn(),
+      findByGoogleIdAny: jest.fn(),
       findByEmail: jest.fn(),
+      findByEmailAny: jest.fn(),
+      releaseGoogleIdentity: jest.fn(),
       update: jest.fn(),
       create: jest.fn(),
       findOneById: jest.fn(),
@@ -109,6 +122,7 @@ describe('GoogleSignInUseCase', () => {
 
   it('links existing email account and returns isNewUser=false', async () => {
     usersService.findByGoogleId.mockResolvedValue(null);
+    usersService.findByGoogleIdAny.mockResolvedValue(null);
     usersService.findByEmail.mockResolvedValue(existingEmailUser);
     usersService.findOneById.mockResolvedValue({
       ...existingEmailUser,
@@ -144,7 +158,9 @@ describe('GoogleSignInUseCase', () => {
     } as User;
 
     usersService.findByGoogleId.mockResolvedValue(null);
+    usersService.findByGoogleIdAny.mockResolvedValue(null);
     usersService.findByEmail.mockResolvedValue(null);
+    usersService.findByEmailAny.mockResolvedValue(null);
     usersService.create.mockResolvedValue(createdUser);
     usersService.findOneById.mockResolvedValue(createdUser);
     authTokenIssuer.issueLoginResponse.mockResolvedValue({
@@ -177,7 +193,9 @@ describe('GoogleSignInUseCase', () => {
 
   it('throws termsNotAccepted when creating a new user without termsAccepted', async () => {
     usersService.findByGoogleId.mockResolvedValue(null);
+    usersService.findByGoogleIdAny.mockResolvedValue(null);
     usersService.findByEmail.mockResolvedValue(null);
+    usersService.findByEmailAny.mockResolvedValue(null);
 
     await expect(useCase.execute({ idToken: 'token', termsAccepted: false })).rejects.toThrow(
       new BadRequestException('errors.termsNotAccepted'),
@@ -186,12 +204,79 @@ describe('GoogleSignInUseCase', () => {
     expect(usersService.create).not.toHaveBeenCalled();
   });
 
-  it('throws userDeactivated when email account is inactive', async () => {
+  it('throws userDeactivated when admin-deactivated user matches by googleId', async () => {
     usersService.findByGoogleId.mockResolvedValue(null);
-    usersService.findByEmail.mockResolvedValue({ ...existingEmailUser, active: false } as User);
+    usersService.findByGoogleIdAny.mockResolvedValue({
+      id: 'user-inactive',
+      email: profile.email,
+      googleId: profile.sub,
+      active: false,
+      phone: '+37370123456',
+      firstName: 'Admin',
+      lastName: 'Blocked',
+      companyName: null,
+    } as User);
 
     await expect(useCase.execute({ idToken: 'token', termsAccepted: true })).rejects.toThrow(
       new UnauthorizedException('errors.userDeactivated'),
     );
+
+    expect(usersService.releaseGoogleIdentity).not.toHaveBeenCalled();
+    expect(usersService.create).not.toHaveBeenCalled();
+  });
+
+  it('throws userDeactivated when admin-deactivated user matches by email', async () => {
+    usersService.findByGoogleId.mockResolvedValue(null);
+    usersService.findByGoogleIdAny.mockResolvedValue(null);
+    usersService.findByEmail.mockResolvedValue(null);
+    usersService.findByEmailAny.mockResolvedValue({
+      ...existingEmailUser,
+      active: false,
+      googleId: null,
+    } as User);
+
+    await expect(useCase.execute({ idToken: 'token', termsAccepted: true })).rejects.toThrow(
+      new UnauthorizedException('errors.userDeactivated'),
+    );
+
+    expect(usersService.create).not.toHaveBeenCalled();
+  });
+
+  it('releases old self-deleted googleId and creates a new user', async () => {
+    const deletedUser = {
+      id: 'user-deleted',
+      email: null,
+      phone: null,
+      firstName: null,
+      lastName: null,
+      companyName: null,
+      googleId: profile.sub,
+      active: false,
+    } as User;
+
+    const createdUser = {
+      id: 'user-new',
+      email: profile.email,
+      googleId: profile.sub,
+      type: UserType.Individual,
+      phone: null,
+      phoneVerified: false,
+      active: true,
+      password: null,
+      authProvider: 'google' as const,
+    } as User;
+
+    usersService.findByGoogleId.mockResolvedValue(null);
+    usersService.findByGoogleIdAny.mockResolvedValue(deletedUser);
+    usersService.findByEmail.mockResolvedValue(null);
+    usersService.findByEmailAny.mockResolvedValue(null);
+    usersService.create.mockResolvedValue(createdUser);
+    usersService.findOneById.mockResolvedValue(createdUser);
+
+    const result = await useCase.execute({ idToken: 'token', termsAccepted: true });
+
+    expect(usersService.releaseGoogleIdentity).toHaveBeenCalledWith(deletedUser.id);
+    expect(usersService.create).toHaveBeenCalled();
+    expect(result.isNewUser).toBe(true);
   });
 });

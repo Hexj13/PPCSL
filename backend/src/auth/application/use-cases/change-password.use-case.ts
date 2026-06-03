@@ -18,25 +18,32 @@ export class ChangePasswordUseCase {
     private refreshTokenService: RefreshTokenService,
   ) {}
 
-  async execute(userId: string, dto: ChangePasswordDto, requestLocale?: string): Promise<void> {
+  async execute(
+    userId: string,
+    dto: ChangePasswordDto,
+    requestLocale?: string,
+    currentRefreshToken?: string | null,
+  ): Promise<void> {
     const user = await this.usersService.findOneByIdWithPassword(userId);
 
-    if (!user.password) {
-      throw new BadRequestException('errors.useGoogleSignIn');
-    }
+    const currentPassword = dto.currentPassword?.trim() ?? '';
 
-    const currentOk = await this.passwordService.verify(dto.currentPassword, user.password);
-    if (!currentOk) {
-      throw new BadRequestException('errors.invalidCurrentPassword');
-    }
-
-    if (dto.newPassword === dto.currentPassword) {
-      throw new BadRequestException('errors.newPasswordMustDiffer');
+    if (user.password) {
+      if (!currentPassword) {
+        throw new BadRequestException('errors.currentPasswordRequired');
+      }
+      const currentOk = await this.passwordService.verify(currentPassword, user.password);
+      if (!currentOk) {
+        throw new BadRequestException('errors.invalidCurrentPassword');
+      }
+      if (dto.newPassword === currentPassword) {
+        throw new BadRequestException('errors.newPasswordMustDiffer');
+      }
     }
 
     const hashedPassword = await this.passwordService.hash(dto.newPassword);
     await this.usersService.update(userId, { password: hashedPassword });
-    await this.refreshTokenService.revokeAllUserTokens(userId);
+    await this.refreshTokenService.revokeAllUserTokensExcept(userId, currentRefreshToken);
     if (
       user.email &&
       user.emailVerified === true &&

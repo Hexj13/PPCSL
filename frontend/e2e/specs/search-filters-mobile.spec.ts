@@ -74,6 +74,8 @@ test.describe('Search: mobile filters and sheets @p0', () => {
       ]),
     );
 
+    await searchHomePage.openAndExpectPageView();
+
     for (const sheetCase of VEHICLE_ADVANCED_SHEETS) {
       await test.step(`Advanced sheet ${sheetCase.sheetId}`, async () => {
         await mobileFilters.exerciseVehicleSheet(sheetCase);
@@ -112,6 +114,7 @@ test.describe('Search: mobile filters and sheets @p0', () => {
     page,
     searchHomePage,
   }) => {
+    test.setTimeout(120_000);
     const mobileFilters = new SearchFiltersMobileComponent(page);
 
     const steps: E2EStep[] = [
@@ -130,6 +133,12 @@ test.describe('Search: mobile filters and sheets @p0', () => {
             kind: 'multi',
             optionValue: 'Petrol',
           });
+        },
+      },
+      {
+        name: 'Verify fuel filter row shows active selection',
+        action: async () => {
+          await mobileFilters.expectFilterRowHasSelection('vehicle_fuel', 'basic');
         },
       },
       {

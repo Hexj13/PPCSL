@@ -79,6 +79,7 @@ describe('User', () => {
       expect(user.lastName).toBeNull();
       expect(user.companyName).toBeNull();
       expect(user.companyWebsiteUrl).toBeNull();
+      expect(user.googleId).toBeNull();
       expect(user.active).toBe(false);
     });
   });

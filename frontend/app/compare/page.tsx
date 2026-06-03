@@ -1,7 +1,15 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  cloneElement,
+  isValidElement,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { RESET_SEARCH_EVENT } from '@/components/layout/Header/HeaderLogo';
@@ -12,6 +20,11 @@ import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
+import {
+  cardExitMotionClass,
+  cardExitMotionStyle,
+  compareColumnExitMotionClass,
+} from '@/lib/card-exit-animation';
 import { loadComparisonFromApi } from '@/lib/comparisonMigration';
 import { subscribeToCrossTabEvents } from '@/lib/cross-tab-events';
 import type { Locale } from '@/lib/i18n-types';
@@ -78,8 +91,20 @@ function CompareEmptyBlock({
   browseLabel: string;
   dataTestId: string;
 }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   return (
-    <div className="surface text-center py-12" data-testid={dataTestId}>
+    <div
+      className={`surface text-center py-12 transition-opacity duration-300 ease-out motion-reduce:transition-none ${
+        visible ? 'opacity-100' : 'opacity-0'
+      }`}
+      data-testid={dataTestId}
+    >
       <svg
         className="w-24 h-24 mx-auto text-text-secondary mb-4"
         fill="none"
@@ -123,6 +148,8 @@ function CompareTableBlock({
   locale,
   tableTestId = 'compare-table',
   showRemoveActions = true,
+  exitingIds = new Set<string>(),
+  isClearingAll = false,
 }: {
   listings: Listing[];
   fields: ComparisonField[];
@@ -133,14 +160,35 @@ function CompareTableBlock({
   locale: Locale;
   tableTestId?: string;
   showRemoveActions?: boolean;
+  exitingIds?: Set<string>;
+  isClearingAll?: boolean;
 }) {
   const listingColClass =
     listings.length === 1 ? COMPARE_SINGLE_LISTING_COL_CLASS : COMPARE_MULTI_LISTING_COL_CLASS;
   const labelCellClass =
     'text-left py-2 px-2 max-md:px-1.5 max-md:break-words max-md:align-top md:py-4 md:px-4 text-sm md:text-base';
 
+  const isColumnExiting = (listingId: string) => isClearingAll || exitingIds.has(listingId);
+
+  const renderListingCell = (listing: Listing, field: ComparisonField) => {
+    const cell = field.renderCell(listing, t, siteConfig, locale);
+    if (
+      !isColumnExiting(listing.id) ||
+      !isValidElement<{ className?: string; style?: object }>(cell)
+    ) {
+      return cell;
+    }
+    return cloneElement(cell, {
+      className: `${cell.props.className ?? ''} ${compareColumnExitMotionClass(true)}`.trim(),
+      style: { ...cell.props.style, ...cardExitMotionStyle(true) },
+    });
+  };
+
   return (
-    <div className="surface overflow-x-auto">
+    <div
+      className={`surface overflow-x-auto ${cardExitMotionClass(isClearingAll)}`.trim()}
+      style={cardExitMotionStyle(isClearingAll)}
+    >
       <table
         className={`w-full max-md:table-fixed ${getMobileTableMinWidthClass(listings.length)} md:min-w-[800px]`}
         data-testid={tableTestId}
@@ -161,14 +209,16 @@ function CompareTableBlock({
             {listings.map((listing) => (
               <th
                 key={listing.id}
-                className={`text-center py-2 px-2 max-md:px-1.5 md:py-4 md:px-4 text-sm md:text-base text-primary-900 font-semibold max-md:min-w-0 md:min-w-[200px] ${listingColClass}`}
+                className={`text-center py-2 px-2 max-md:px-1.5 md:py-4 md:px-4 text-sm md:text-base text-primary-900 font-semibold max-md:min-w-0 md:min-w-[200px] ${listingColClass} ${compareColumnExitMotionClass(isColumnExiting(listing.id))}`.trim()}
+                style={cardExitMotionStyle(isColumnExiting(listing.id))}
               >
                 {showRemoveActions && onRemove ? (
                   <div className="flex justify-center items-center">
                     <button
                       type="button"
                       onClick={() => onRemove(listing.id)}
-                      className="p-2 text-text-secondary hover-only:hover:text-red-400 transition-colors"
+                      disabled={isColumnExiting(listing.id) || isClearingAll}
+                      className="p-2 text-text-secondary hover-only:hover:text-red-400 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                       title={t('common.removeFromComparison')}
                       data-testid={`compare-remove-${listing.id}`}
                     >
@@ -201,7 +251,7 @@ function CompareTableBlock({
               >
                 {t(field.labelKey)}
               </td>
-              {listings.map((listing) => field.renderCell(listing, t, siteConfig, locale))}
+              {listings.map((listing) => renderListingCell(listing, field))}
             </tr>
           ))}
         </tbody>
@@ -241,6 +291,10 @@ function ComparePageContent() {
   const {
     vehicleListings,
     tireListings,
+    exitingVehicleIds,
+    exitingTireIds,
+    isClearingVehicles,
+    isClearingTires,
     hasInitialized,
     handleRemoveVehicle,
     handleRemoveTire,
@@ -425,7 +479,7 @@ function ComparePageContent() {
       {tabsRow}
 
       {activeTab === 'vehicles' &&
-        (vehicleListings.length === 0 ? (
+        (vehicleListings.length === 0 && !isClearingVehicles ? (
           <CompareEmptyBlock
             heading={t('compare.noVehicles')}
             hint={t('compare.addVehiclesHint')}
@@ -439,13 +493,17 @@ function ComparePageContent() {
         ) : (
           <>
             {vehicleListings.length >= 2 && (
-              <div className="flex justify-end mb-3">
+              <div
+                className={`flex justify-end mb-3 ${cardExitMotionClass(isClearingVehicles)}`.trim()}
+                style={cardExitMotionStyle(isClearingVehicles)}
+              >
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   className="group inline-flex items-center gap-2 !text-primary-700 !border-primary-700 transition-colors hover-only:hover:!text-primary-900 hover-only:hover:!border-primary-900"
                   onClick={() => void handleClearAllVehicles()}
+                  disabled={isClearingVehicles}
                   data-testid="compare-clear-all-vehicles"
                 >
                   <TrashIcon className="w-4 h-4 shrink-0 transition-colors group-hover:text-primary-900" />
@@ -461,6 +519,8 @@ function ComparePageContent() {
               siteConfig={siteConfig}
               t={t}
               locale={locale}
+              exitingIds={exitingVehicleIds}
+              isClearingAll={isClearingVehicles}
             />
             {canCompareVehicleEquipment && (
               <div className="flex justify-center mt-6" data-testid="compare-toggle-options">
@@ -495,6 +555,8 @@ function ComparePageContent() {
                       locale={locale}
                       tableTestId="compare-options-table"
                       showRemoveActions={false}
+                      exitingIds={exitingVehicleIds}
+                      isClearingAll={isClearingVehicles}
                     />
                   </div>
                 </div>
@@ -504,7 +566,7 @@ function ComparePageContent() {
         ))}
 
       {activeTab === 'tires' &&
-        (tireListings.length === 0 ? (
+        (tireListings.length === 0 && !isClearingTires ? (
           <CompareEmptyBlock
             heading={t('compare.noTires')}
             hint={t('compare.addTiresHint')}
@@ -519,13 +581,17 @@ function ComparePageContent() {
         ) : (
           <>
             {tireListings.length >= 2 && (
-              <div className="flex justify-end mb-3">
+              <div
+                className={`flex justify-end mb-3 ${cardExitMotionClass(isClearingTires)}`.trim()}
+                style={cardExitMotionStyle(isClearingTires)}
+              >
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   className="group inline-flex items-center gap-2 !text-primary-700 !border-primary-700 transition-colors hover-only:hover:!text-primary-900 hover-only:hover:!border-primary-900"
                   onClick={() => void handleClearAllTires()}
+                  disabled={isClearingTires}
                   data-testid="compare-clear-all-tires"
                 >
                   <TrashIcon className="w-4 h-4 shrink-0 transition-colors group-hover:text-primary-900" />
@@ -541,6 +607,8 @@ function ComparePageContent() {
               siteConfig={siteConfig}
               t={t}
               locale={locale}
+              exitingIds={exitingTireIds}
+              isClearingAll={isClearingTires}
             />
           </>
         ))}

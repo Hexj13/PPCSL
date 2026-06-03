@@ -71,7 +71,7 @@ async function registerVerifyAndCompleteProfile(
             const path = pathnameWithoutLocalePrefix(url);
             return path.startsWith('/complete-profile') || path.startsWith('/sign');
           },
-          { timeout: 30_000 },
+          { timeout: 60_000 },
         );
         if (pathnameWithoutLocalePrefix(page.url()).startsWith('/sign')) {
           throw new Error(

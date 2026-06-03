@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
+import { dismissCookieConsentIfVisible } from '../../utils/session';
 import { pageUsesMobileLayout } from '../../utils/viewport';
 
 export class HeaderNavComponent {
@@ -46,6 +47,7 @@ export class HeaderNavComponent {
   }
 
   async ensureLanguageSwitcherVisible(): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
     if ((await this.languageSwitcher.count()) > 0) {
       await expect(this.languageSwitcher.first()).toBeVisible({ timeout: 10_000 });
       return;
@@ -57,6 +59,7 @@ export class HeaderNavComponent {
   }
 
   async openUserMenuForLogout(): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
     if (await pageUsesMobileLayout(this.page)) {
       await this.openMobileDrawer();
       return;
@@ -67,10 +70,25 @@ export class HeaderNavComponent {
 
   async logout(): Promise<void> {
     if (await pageUsesMobileLayout(this.page)) {
+      await dismissCookieConsentIfVisible(this.page);
       await this.page.getByTestId(this.testIds.mobileLogout).click();
       return;
     }
-    await this.page.getByTestId(this.testIds.userLogout).click();
+    await expect
+      .poll(async () => {
+        const logoutButton = this.page.getByTestId(this.testIds.userLogout);
+        if (await logoutButton.isVisible().catch(() => false)) {
+          await logoutButton.click();
+          return true;
+        }
+        const menu = this.page.getByTestId(this.testIds.userMoreMenu);
+        if (!(await menu.isVisible().catch(() => false))) {
+          await dismissCookieConsentIfVisible(this.page);
+          await this.page.getByTestId(this.testIds.userMoreToggle).click();
+        }
+        return false;
+      })
+      .toBe(true);
   }
 
   get languageSwitcherMenu() {

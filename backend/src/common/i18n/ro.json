@@ -93,7 +93,7 @@
     "googleEmailNotVerified": "Emailul din contul Google nu este verificat.",
     "googleSignInFailed": "Autentificarea Google a eșuat. Încearcă din nou.",
     "phoneVerificationRequired": "Verifică numărul de telefon înainte de a folosi această funcție.",
-    "useGoogleSignIn": "Acest cont folosește autentificarea Google. Folosește „Continuă cu Google” în loc de parolă.",
+    "useGoogleSignIn": "Pentru acest cont, folosiți autentificarea Google.",
     "userNotActive": "Utilizatorul nu este activ",
     "termsNotAccepted": "Trebuie să acceptați termenii de utilizare",
     "phoneAlreadyExists": "Utilizator cu acest număr de telefon există deja",

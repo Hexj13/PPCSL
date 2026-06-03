@@ -125,7 +125,7 @@ export default function BoardPageClient({
           {board.isPlatformPartner && <PlatformPartnerBadge elevated />}
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <SortDropdown basePath={`/board/${nameSlug}`} />
+          <SortDropdown basePath={`/board/${nameSlug}`} dataTestId="board-sort-select" />
         </div>
       </div>
 

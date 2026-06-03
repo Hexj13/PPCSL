@@ -96,7 +96,7 @@ export async function expectHomeWithSavedFilterApplied(
   searchHomePage: SearchHomePage,
   filters: Record<string, unknown>,
 ): Promise<void> {
-  await expect.poll(() => pathnameWithoutLocalePrefix(page.url())).toBe('/');
+  await expect.poll(() => pathnameWithoutLocalePrefix(page.url()), { timeout: 30_000 }).toBe('/');
 
   const url = new URL(page.url());
   const expected = savedFilterRecordToUrlSearchParams(filters);

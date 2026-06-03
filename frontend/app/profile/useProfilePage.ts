@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  getProfilePasswordChangeError,
+  isProfilePasswordChangeComplete,
+  userHasPassword,
+} from '@/app/profile/profile-password';
+import {
   EMAIL_NOTIFICATION_FIELDS,
   enableAllEmailNotifications,
   shouldAutoEnableEmailNotifications,
@@ -13,7 +18,6 @@ import {
   validateEmail,
 } from '@/app/profile/utils';
 import { validatePhone } from '@/app/register/utils';
-import { isPasswordValid, validatePassword } from '@/app/reset-password/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
@@ -58,29 +62,6 @@ function hasProfileFormChanges(
   );
 }
 
-function isProfilePasswordChangeComplete(curPw: string, neuPw: string): boolean {
-  return Boolean(curPw && neuPw) && neuPw.length <= 100 && isPasswordValid(neuPw);
-}
-
-function getProfilePasswordChangeError(
-  curPw: string,
-  neuPw: string,
-  t: (key: string) => string,
-): string | null {
-  const hasAny = Boolean(curPw || neuPw);
-  if (!hasAny || isProfilePasswordChangeComplete(curPw, neuPw)) {
-    return null;
-  }
-  if (!curPw || !neuPw) {
-    return t('profile.passwordChangeFillAllFields');
-  }
-  if (neuPw.length > 100) {
-    return t('profile.passwordChangeMaxLength');
-  }
-  const ruleError = validatePassword(neuPw, t);
-  return ruleError || null;
-}
-
 type ProfileSubmitState = {
   hasProfileChanges: boolean;
   hasEmailChange: boolean;
@@ -90,21 +71,29 @@ type ProfileSubmitState = {
   passwordComplete: boolean;
 };
 
+export type ProfileFormBaseline = ReturnType<typeof initializeFormData>;
+
 export function getProfileSubmitState(
   user: NonNullable<ReturnType<typeof useAuthStore.getState>['user']>,
   formData: UpdateProfileDto,
   emailForChange: string,
   currentPassword: string,
   newPassword: string,
+  options?: {
+    profileFormBaseline?: ProfileFormBaseline | null;
+    emailBaseline?: string | null;
+  },
 ): ProfileSubmitState {
-  const initialData = initializeFormData(user);
-  const hasProfileChanges = hasProfileFormChanges(formData, initialData);
-  const normalizedCurrentEmail = getSafeEmailValue(user.email).toLowerCase();
+  const profileCompare = options?.profileFormBaseline ?? initializeFormData(user);
+  const hasProfileChanges = hasProfileFormChanges(formData, profileCompare);
+  const normalizedCurrentEmail = (
+    options?.emailBaseline ?? getSafeEmailValue(user.email).toLowerCase()
+  ).trim();
   const normalizedNextEmail = emailForChange.trim().toLowerCase();
   const hasEmailChange = normalizedCurrentEmail !== normalizedNextEmail;
   const curPw = currentPassword.trim();
   const neuPw = newPassword.trim();
-  const passwordComplete = isProfilePasswordChangeComplete(curPw, neuPw);
+  const passwordComplete = isProfilePasswordChangeComplete(userHasPassword(user), curPw, neuPw);
   return {
     hasProfileChanges,
     hasEmailChange,
@@ -137,13 +126,11 @@ export function getAdditionalPhoneFieldError(
   return null;
 }
 
-function getProfileValidationError(
+function getProfileFieldsValidationError(
   user: NonNullable<ReturnType<typeof useAuthStore.getState>['user']>,
   formData: UpdateProfileDto,
   emailForChange: string,
   t: (key: string) => string,
-  curPw: string,
-  neuPw: string,
 ): string | null {
   if (emailForChange && !validateEmail(emailForChange)) {
     return t('profile.invalidEmail');
@@ -155,7 +142,7 @@ function getProfileValidationError(
   if (additionalPhoneErr) {
     return additionalPhoneErr;
   }
-  return getProfilePasswordChangeError(curPw, neuPw, t);
+  return null;
 }
 
 function handleProfileSubmitError(err: unknown, t: (key: string) => string): void {
@@ -200,6 +187,8 @@ export function useProfilePage() {
   const [deleting, setDeleting] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [profileFormBaseline, setProfileFormBaseline] = useState<ProfileFormBaseline | null>(null);
+  const [emailBaseline, setEmailBaseline] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
   const accountDeletedRef = useRef(false);
   const previousEmailForChangeRef = useRef(getSafeEmailValue(user?.email));
@@ -209,6 +198,19 @@ export function useProfilePage() {
 
   const canSave = useMemo(() => {
     if (!user) return false;
+    const submitState = getProfileSubmitState(
+      user,
+      formData,
+      emailForChange,
+      currentPassword,
+      newPassword,
+      { profileFormBaseline, emailBaseline },
+    );
+
+    if (submitState.passwordComplete) {
+      return true;
+    }
+
     if (emailForChange && !validateEmail(emailForChange)) return false;
     if (
       formData.companyWebsiteUrl?.trim() &&
@@ -219,16 +221,18 @@ export function useProfilePage() {
     if (getAdditionalPhoneFieldError(user, formData.additionalPhone, t)) {
       return false;
     }
-    const initialData = initializeFormData(user);
-    const hasProfileChanges = hasProfileFormChanges(formData, initialData);
-    const normalizedCurrentEmail = getSafeEmailValue(user.email).toLowerCase();
-    const normalizedNextEmail = emailForChange.trim().toLowerCase();
-    const hasEmailChange = normalizedCurrentEmail !== normalizedNextEmail;
-    const cur = currentPassword.trim();
-    const neu = newPassword.trim();
-    const passwordComplete = isProfilePasswordChangeComplete(cur, neu);
-    return hasProfileChanges || hasEmailChange || passwordComplete;
-  }, [user, formData, emailForChange, currentPassword, newPassword, t]);
+
+    return submitState.hasProfileChanges || submitState.hasEmailChange;
+  }, [
+    user,
+    formData,
+    emailForChange,
+    currentPassword,
+    newPassword,
+    profileFormBaseline,
+    emailBaseline,
+    t,
+  ]);
 
   const additionalPhoneError = useMemo(
     () => (user ? getAdditionalPhoneFieldError(user, formData.additionalPhone, t) : null),
@@ -276,7 +280,9 @@ export function useProfilePage() {
           telegram: convertToBoolean(profileUser.telegram),
         };
         setFormData(formDataToSet);
+        setProfileFormBaseline(formDataToSet);
         const nextEmailForChange = getSafeEmailValue(profileUser.email);
+        setEmailBaseline(nextEmailForChange.toLowerCase());
         previousEmailForChangeRef.current = nextEmailForChange;
         emailNotificationsInteractionLockedRef.current = Boolean(nextEmailForChange);
         setEmailForChange(nextEmailForChange);
@@ -352,19 +358,30 @@ export function useProfilePage() {
         emailForChange,
         currentPassword,
         newPassword,
+        { profileFormBaseline, emailBaseline },
       );
-      const validationError = getProfileValidationError(
-        user,
-        formData,
-        emailForChange,
-        t,
+      const passwordError = getProfilePasswordChangeError(
+        userHasPassword(user),
         submitState.curPw,
         submitState.neuPw,
+        t,
       );
-
-      if (validationError) {
-        toast.error(validationError);
+      if (passwordError) {
+        toast.error(passwordError);
         return;
+      }
+
+      if (submitState.hasProfileChanges || submitState.hasEmailChange) {
+        const profileFieldsError = getProfileFieldsValidationError(
+          user,
+          formData,
+          emailForChange,
+          t,
+        );
+        if (profileFieldsError) {
+          toast.error(profileFieldsError);
+          return;
+        }
       }
 
       if (
@@ -386,6 +403,9 @@ export function useProfilePage() {
           };
           const response = await authApi.updateProfile(profilePayload);
           setAuth(response.data);
+          const savedFormData = initializeFormData(response.data);
+          setProfileFormBaseline(savedFormData);
+          setFormData(savedFormData);
           toast.success(t('profile.updateSuccess'));
         }
         if (submitState.hasEmailChange) {
@@ -395,11 +415,16 @@ export function useProfilePage() {
           toast.success(t('profile.emailChangeLinkSent'));
         }
         if (submitState.passwordComplete) {
+          const hadPassword = userHasPassword(user);
           await authApi.changePassword({
-            currentPassword: submitState.curPw,
+            ...(hadPassword ? { currentPassword: submitState.curPw } : {}),
             newPassword: submitState.neuPw,
           });
-          toast.success(t('profile.passwordChangeSuccess'));
+          const profileResponse = await authApi.me();
+          setAuth(profileResponse.data);
+          toast.success(
+            t(hadPassword ? 'profile.passwordChangeSuccess' : 'profile.passwordSetSuccess'),
+          );
           setCurrentPassword('');
           setNewPassword('');
         }
@@ -409,7 +434,17 @@ export function useProfilePage() {
         setLoading(false);
       }
     },
-    [formData, emailForChange, user, setAuth, t, currentPassword, newPassword],
+    [
+      formData,
+      emailForChange,
+      user,
+      setAuth,
+      t,
+      currentPassword,
+      newPassword,
+      profileFormBaseline,
+      emailBaseline,
+    ],
   );
 
   const handleDeleteAccount = useCallback(async () => {

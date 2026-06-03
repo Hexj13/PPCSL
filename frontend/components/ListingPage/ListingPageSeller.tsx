@@ -94,6 +94,7 @@ function ListingPhoneRow({
   hideTitleKey,
   plainContactsMode = false,
   contactRevealNonce = 0,
+  revealButtonTestId,
 }: {
   field: 'phone' | 'additionalPhone';
   maskedDisplay: string;
@@ -105,6 +106,7 @@ function ListingPhoneRow({
   hideTitleKey: string;
   plainContactsMode?: boolean;
   contactRevealNonce?: number;
+  revealButtonTestId?: string;
 }) {
   const { t } = useTranslation();
   const [show, setShow] = useState(false);
@@ -152,6 +154,7 @@ function ListingPhoneRow({
           <a
             href={`tel:${compactE164Phone(plainStatic)}`}
             onClick={onAnalyticsPhoneClick}
+            data-testid="listing-seller-phone-link"
             className="hover-only:hover:text-primary-700 transition-colors underline"
           >
             {displayPlainStatic}
@@ -190,6 +193,7 @@ function ListingPhoneRow({
           <a
             href={`tel:${compactE164Phone(plain)}`}
             onClick={onAnalyticsPhoneClick}
+            data-testid="listing-seller-phone-link"
             className="hover-only:hover:text-primary-700 transition-colors underline"
           >
             {displayPlain}
@@ -205,6 +209,7 @@ function ListingPhoneRow({
         className={BTN_CLASS}
         title={show ? t(hideTitleKey) : t(revealTitleKey)}
         aria-label={show ? t(hideTitleKey) : t(revealTitleKey)}
+        data-testid={revealButtonTestId}
       >
         {show ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
       </button>
@@ -473,6 +478,7 @@ function ListingSellerContactsWhenOpen({
             hideTitleKey="listingDetail.hidePhone"
             plainContactsMode={plainContactsMode}
             contactRevealNonce={contactRevealNonce}
+            revealButtonTestId="listing-seller-reveal-phone"
           />
         </div>
       )}

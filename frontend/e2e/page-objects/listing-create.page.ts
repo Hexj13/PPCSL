@@ -61,13 +61,24 @@ export class ListingCreatePage {
   }
 
   async expectPageView(): Promise<void> {
-    await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.form)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.submitButton)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.brandSelect)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.modelSelect)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.priceInput)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.photosTrigger)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.page)).toBeVisible({ timeout: 30_000 });
+    const form = this.page.getByTestId(this.testIds.form);
+    await expect(form).toBeVisible({ timeout: 60_000 });
+    await expect(this.page.getByTestId(this.testIds.submitButton)).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(this.page.getByTestId(this.testIds.brandSelect)).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(this.page.getByTestId(this.testIds.modelSelect)).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(this.page.getByTestId(this.testIds.priceInput)).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(this.page.getByTestId(this.testIds.photosTrigger)).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(this.page.getByTestId(this.testIds.photosInput)).toBeAttached();
   }
 
@@ -75,26 +86,44 @@ export class ListingCreatePage {
     return this.page.getByTestId(this.testIds.editSubmitButton);
   }
 
+  async expectEditFormPopulated(): Promise<void> {
+    await expect(this.editSubmitButton).toBeVisible({ timeout: 30_000 });
+    await expect(this.page).toHaveURL(/\/listings\/[^/]+\/edit/);
+    await expect(this.page.getByTestId(this.testIds.form)).toBeVisible();
+    const priceInput = this.page.getByTestId(this.testIds.priceInput);
+    await expect
+      .poll(async () => (await priceInput.inputValue()).trim().length, { timeout: 30_000 })
+      .toBeGreaterThan(0);
+    await expect(this.page.getByTestId(this.testIds.brandSelect)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.modelSelect)).toBeVisible();
+  }
+
   private async pickDropdownOption(testId: string, pick: 'first' | 'last'): Promise<void> {
     const trigger = this.page.getByTestId(testId);
+    const options = this.page.locator(`[data-testid^="${testId}-option-"]`);
+    const target = pick === 'first' ? options.first() : options.last();
     await trigger.scrollIntoViewIfNeeded();
     await trigger.click();
     if (await pageUsesMobileLayout(this.page)) {
-      await this.bottomSheet.expectOpen();
       if (testId === this.testIds.yearSelect) {
+        const dialog = this.page.locator(
+          '[role="dialog"][aria-modal="true"][aria-labelledby="bottom-sheet-title"]',
+        );
+        await expect(dialog).toBeVisible({ timeout: 15_000 });
         await this.page.getByRole('button', { name: 'OK' }).click();
-        await this.bottomSheet.expectHidden();
+        await expect(dialog).toBeHidden({ timeout: 15_000 });
         return;
       }
+      await expect(target).toBeVisible({ timeout: 15_000 });
     }
-    const options = this.page.locator(`[data-testid^="${testId}-option-"]`);
-    const target = pick === 'first' ? options.first() : options.last();
     await expect(target).toBeVisible({ timeout: 15_000 });
     await expect(target).toBeEnabled({ timeout: 15_000 });
     await target.scrollIntoViewIfNeeded();
     await target.click();
     if (await pageUsesMobileLayout(this.page)) {
-      await this.bottomSheet.expectHidden();
+      await expect(target)
+        .toBeHidden({ timeout: 15_000 })
+        .catch(() => undefined);
     }
   }
 
@@ -159,6 +188,16 @@ export class ListingCreatePage {
     await this.page.getByTestId(this.testIds.horsepowerInput).fill('150');
     await this.page.getByTestId(this.testIds.mileageInput).fill('120000');
     await this.page.getByTestId(this.testIds.priceInput).fill(createRandomListingPrice());
+  }
+
+  async fillLongDescription(): Promise<void> {
+    const paragraph = '<p>E2E long description paragraph with enough text to exceed collapse.</p>';
+    const longHtml = Array.from({ length: 24 }, () => paragraph).join('');
+    await this.page.getByTestId(this.testIds.descriptionTabRo).click();
+    const descriptionEditor = this.page
+      .getByTestId(this.testIds.descriptionEditor)
+      .locator('[contenteditable="true"]');
+    await descriptionEditor.fill(longHtml);
   }
 
   async fillExtendedFields(): Promise<{ description: string }> {

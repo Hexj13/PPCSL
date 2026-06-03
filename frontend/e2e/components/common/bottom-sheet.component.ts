@@ -1,16 +1,28 @@
 import { expect, type Page } from '@playwright/test';
 
 export class BottomSheetComponent {
-  private readonly sheet = () =>
-    this.page.locator('[role="dialog"][aria-labelledby="bottom-sheet-title"]');
+  private sheetDialog() {
+    return this.page.locator(
+      '[role="dialog"][aria-modal="true"][aria-labelledby="bottom-sheet-title"]',
+    );
+  }
+
+  private sheetConfirm() {
+    return this.sheetDialog().getByTestId('search-sheet-confirm');
+  }
 
   constructor(private readonly page: Page) {}
 
   async expectOpen(): Promise<void> {
-    await expect(this.sheet()).toBeVisible({ timeout: 15_000 });
+    const dialog = this.sheetDialog();
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    const confirm = this.sheetConfirm();
+    if ((await confirm.count()) > 0) {
+      await expect(confirm).toBeVisible({ timeout: 15_000 });
+    }
   }
 
   async expectHidden(): Promise<void> {
-    await expect(this.sheet()).toBeHidden({ timeout: 15_000 });
+    await expect(this.sheetDialog()).toBeHidden({ timeout: 15_000 });
   }
 }

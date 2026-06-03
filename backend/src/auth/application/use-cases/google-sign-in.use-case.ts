@@ -6,6 +6,7 @@ import { handleDuplicateKeyError } from '../../../common/utils/error-handling.ut
 import { logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
 import { cleanUserData } from '../../../users/domain/utils/data-cleanup.utils';
+import { isSelfDeletedUser } from '../../../users/domain/utils/user-account-status.utils';
 import { User } from '../../../users/entities/user.entity';
 import { GoogleTokenVerifierService } from '../../infrastructure/services/google-token-verifier.service';
 import { GoogleSignInDto } from '../../presentation/dto/google-sign-in.dto';
@@ -33,11 +34,19 @@ export class GoogleSignInUseCase {
     let isNewUser = false;
 
     if (!user) {
-      const byEmail = await this.usersService.findByEmail(profile.email);
-      if (byEmail) {
-        if (!byEmail.active) {
+      const inactiveByGoogle = await this.usersService.findByGoogleIdAny(profile.sub);
+      if (inactiveByGoogle) {
+        if (isSelfDeletedUser(inactiveByGoogle)) {
+          await this.usersService.releaseGoogleIdentity(inactiveByGoogle.id);
+        } else {
           throw new UnauthorizedException('errors.userDeactivated');
         }
+      }
+    }
+
+    if (!user) {
+      const byEmail = await this.usersService.findByEmail(profile.email);
+      if (byEmail) {
         if (byEmail.googleId && byEmail.googleId !== profile.sub) {
           throw new BadRequestException('errors.googleSignInFailed');
         }
@@ -50,6 +59,17 @@ export class GoogleSignInUseCase {
         }
         await this.usersService.update(byEmail.id, patch);
         user = await this.usersService.findOneById(byEmail.id);
+      } else {
+        const inactiveByEmail = await this.usersService.findByEmailAny(profile.email);
+        if (inactiveByEmail) {
+          if (isSelfDeletedUser(inactiveByEmail)) {
+            if (inactiveByEmail.googleId) {
+              await this.usersService.releaseGoogleIdentity(inactiveByEmail.id);
+            }
+          } else {
+            throw new UnauthorizedException('errors.userDeactivated');
+          }
+        }
       }
     }
 
@@ -85,6 +105,8 @@ export class GoogleSignInUseCase {
       } catch (error) {
         handleDuplicateKeyError(error, {
           email: 'errors.emailAlreadyExists',
+          google_id: 'errors.googleSignInFailed',
+          googleId: 'errors.googleSignInFailed',
         });
         throw error;
       }

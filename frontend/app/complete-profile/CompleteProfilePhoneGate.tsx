@@ -1,23 +1,37 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect } from 'react';
 
+import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
 import { useTranslation } from '@/hooks/useTranslation';
 import { MAIN_VIEWPORT_MIN_HEIGHT_CLASS } from '@/lib/constants';
 import { getClientLocale } from '@/lib/i18n';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
-import { getReturnUrlFromSearchParams } from '@/lib/return-url';
+import { buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 
 import { PhoneRequiredStep } from './PhoneRequiredStep';
 
 export function CompleteProfilePhoneGate() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const returnUrl = getReturnUrlFromSearchParams(searchParams);
   const phoneRequiredMode = searchParams.get('mode') === 'phone_required';
+  const shouldTrapBack = Boolean(user && phoneRequiredMode && !user.phoneVerified);
+
+  const handleBackFromPhoneRequired = useCallback(() => {
+    logout();
+    router.replace(buildSignPageHref({ tab: 'login', returnUrl }));
+  }, [logout, router, returnUrl]);
+
+  useHistoryBackClose(
+    shouldTrapBack,
+    handleBackFromPhoneRequired,
+    'complete-profile-phone-required',
+  );
 
   useEffect(() => {
     if (!user) return;

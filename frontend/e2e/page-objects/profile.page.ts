@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
+import { ProfilePasswordComponent } from '../components/profile/profile-password.component';
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
 
@@ -10,7 +11,11 @@ export class ProfilePage {
     save: 'profile-save',
   } as const;
 
-  constructor(private readonly page: Page) {}
+  readonly password: ProfilePasswordComponent;
+
+  constructor(private readonly page: Page) {
+    this.password = new ProfilePasswordComponent(page);
+  }
 
   async open(): Promise<void> {
     await forceDefaultCanonicalLocaleCookies(this.page);
@@ -24,5 +29,10 @@ export class ProfilePage {
     await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.editForm)).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.save)).toBeVisible();
+  }
+
+  async expectLoaded(): Promise<void> {
+    await this.expectPageView();
+    await expect(this.page.getByTestId(this.testIds.editForm)).toBeVisible();
   }
 }

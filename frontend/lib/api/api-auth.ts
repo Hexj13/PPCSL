@@ -43,7 +43,11 @@ export const authApi = {
       headers: { ...quietAuthHeaders, 'X-Skip-Auth-Refresh': 'true' },
     }),
   refreshQuiet: (data?: RefreshTokenDto) => refreshAuthSession(data ?? {}),
-  googleSignIn: (data: GoogleSignInDto) => api.post<GoogleSignInResponse>('/api/auth/google', data),
+  googleSignIn: (data: GoogleSignInDto, config?: AxiosRequestConfig) =>
+    api.post<GoogleSignInResponse>('/api/auth/google', data, {
+      ...config,
+      headers: { ...quietAuthHeaders, ...config?.headers },
+    }),
   logout: () =>
     api.post<{ success: boolean }>('/api/auth/logout', {}, { headers: { ...quietAuthHeaders } }),
   deleteAccount: () =>

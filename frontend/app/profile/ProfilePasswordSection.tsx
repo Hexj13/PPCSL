@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { PasswordValidationRule } from '@/app/reset-password/utils';
 import { getPasswordValidationRules } from '@/app/reset-password/utils';
 import type { useTranslation } from '@/hooks/useTranslation';
+import { InfoBlock } from '@/ui';
 
 type TranslationFn = ReturnType<typeof useTranslation>['t'];
 
@@ -21,6 +22,8 @@ function PasswordInputWithToggle({
   rules,
   passwordManagerIgnore,
   readOnlyUntilFocused,
+  disabled,
+  dataTestId,
 }: {
   id: string;
   name: string;
@@ -34,9 +37,11 @@ function PasswordInputWithToggle({
   rules?: PasswordValidationRule[];
   passwordManagerIgnore?: boolean;
   readOnlyUntilFocused?: boolean;
+  disabled?: boolean;
+  dataTestId?: string;
 }) {
   const [focusUnlocked, setFocusUnlocked] = useState(false);
-  const readOnly = Boolean(readOnlyUntilFocused && !focusUnlocked);
+  const readOnly = Boolean(disabled || (readOnlyUntilFocused && !focusUnlocked));
 
   return (
     <div className="w-full min-w-0">
@@ -51,7 +56,10 @@ function PasswordInputWithToggle({
           value={value}
           maxLength={maxLength}
           readOnly={readOnly}
+          disabled={disabled}
+          data-testid={dataTestId}
           onFocus={() => {
+            if (disabled) return;
             if (readOnlyUntilFocused && !focusUnlocked) {
               queueMicrotask(() => setFocusUnlocked(true));
             }
@@ -160,12 +168,14 @@ function PasswordInputWithToggle({
 
 export function ProfilePasswordSection({
   t,
+  hasPassword,
   currentPassword,
   newPassword,
   onCurrentPasswordChange,
   onNewPasswordChange,
 }: {
   t: TranslationFn;
+  hasPassword: boolean;
   currentPassword: string;
   newPassword: string;
   onCurrentPasswordChange: (value: string) => void;
@@ -176,23 +186,34 @@ export function ProfilePasswordSection({
   const newPasswordRules = getPasswordValidationRules(newPassword, t);
 
   return (
-    <div className="card p-4 md:p-6 lg:p-8">
+    <div
+      className="card p-4 md:p-6 lg:p-8"
+      data-testid={hasPassword ? 'profile-password-change-section' : 'profile-password-set-section'}
+    >
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
-        {t('profile.passwordChangeTitle')}
+        {t(hasPassword ? 'profile.passwordChangeTitle' : 'profile.passwordSetTitle')}
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        <PasswordInputWithToggle
-          id="profile-current-password"
-          name="profile_password_existing"
-          label={t('profile.currentPasswordLabel')}
-          value={currentPassword}
-          onChange={onCurrentPasswordChange}
-          autoComplete="off"
-          readOnlyUntilFocused
-          passwordManagerIgnore
-          show={showCurrentPassword}
-          onToggle={() => setShowCurrentPassword((v) => !v)}
-        />
+      {!hasPassword ? (
+        <div data-testid="profile-password-set-hint">
+          <InfoBlock className="mb-5">{t('profile.passwordSetHint')}</InfoBlock>
+        </div>
+      ) : null}
+      <div className={hasPassword ? 'grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6' : 'max-w-md'}>
+        {hasPassword ? (
+          <PasswordInputWithToggle
+            id="profile-current-password"
+            name="profile_password_existing"
+            label={t('profile.currentPasswordLabel')}
+            value={currentPassword}
+            onChange={onCurrentPasswordChange}
+            autoComplete="off"
+            readOnlyUntilFocused
+            passwordManagerIgnore
+            show={showCurrentPassword}
+            onToggle={() => setShowCurrentPassword((v) => !v)}
+            dataTestId="profile-password-current-input"
+          />
+        ) : null}
         <PasswordInputWithToggle
           id="profile-new-password"
           name="new-password"
@@ -205,6 +226,7 @@ export function ProfilePasswordSection({
           onToggle={() => setShowNewPassword((v) => !v)}
           maxLength={100}
           rules={newPasswordRules}
+          dataTestId="profile-password-new-input"
         />
       </div>
     </div>

@@ -105,6 +105,7 @@ export function ListingPageDescription({ rawHtml }: ListingPageDescriptionProps)
             />
             {!isExpanded && needsExpansion && (
               <div
+                data-testid="listing-description-collapse-fade"
                 className="absolute left-0 right-0 bottom-0 pointer-events-none"
                 style={{
                   height: '80px',
@@ -122,6 +123,7 @@ export function ListingPageDescription({ rawHtml }: ListingPageDescriptionProps)
                 onClick={handleToggle}
                 aria-expanded={isExpanded}
                 aria-controls="listing-description-content"
+                data-testid="listing-description-toggle"
                 className="w-full md:w-auto min-h-12 px-8 py-2 md:py-2.5 text-sm md:text-base rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2 border-2 border-gray-500 bg-gray-500/10 text-text-secondary hover-only:hover:text-text-primary select-none"
               >
                 {isExpanded ? (

@@ -44,7 +44,7 @@ test.describe('Promotion @p0', () => {
         name: 'Open promotion modal and verify period options',
         action: async () => {
           await myListingsPage.openFirstPromotion();
-          await expect(myListingsPage.promotionDialog).toBeVisible();
+          await myListingsPage.expectPromotionModalWithPeriodOptions();
         },
       },
     ];

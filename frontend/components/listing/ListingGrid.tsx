@@ -44,6 +44,7 @@ import {
   saveGridState,
 } from './listing-grid-state';
 import { useListingGridRestore } from './useListingGridRestore';
+import { useListingGridScrollEffects } from './useListingGridScrollEffects';
 
 interface ListingGridProps {
   initialData?: { data: Listing[]; meta: PaginationMeta };
@@ -391,22 +392,10 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const showContent = !showSkeleton;
   const hasMore = listingGridHasMore(meta, currentPage);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || listings.length === 0 || !showContent) return;
-    const shouldScroll = sessionStorageGetItem('scrollToResultsAfterLoad');
-    if (!shouldScroll) return;
-    sessionStorageRemoveItem('scrollToResultsAfterLoad');
-    requestAnimationFrame(() => {
-      const el = document.getElementById('listings-results');
-      if (!el) return;
-      const headerEl = document.querySelector('header');
-      const measuredHeaderHeight = headerEl?.getBoundingClientRect().height ?? 0;
-      const fallbackHeaderHeight = window.innerWidth >= 1024 ? 72 : 110;
-      const headerOffset = (measuredHeaderHeight || fallbackHeaderHeight) + 60;
-      const targetTop = el.getBoundingClientRect().top + window.scrollY - headerOffset;
-      window.scrollTo({ top: targetTop, behavior: 'smooth' });
-    });
-  }, [listings, showContent]);
+  useListingGridScrollEffects({
+    listingsCount: listings.length,
+    showContent,
+  });
 
   return (
     <>

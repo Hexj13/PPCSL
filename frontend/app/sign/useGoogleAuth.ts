@@ -24,6 +24,42 @@ import { toast } from '@/lib/toast';
 const GOOGLE_SIGN_IN_INTENT_MS = 15_000;
 const GOOGLE_POPUP_CANCEL_FOCUS_MS = 400;
 
+const quietAuthRequest = {
+  headers: { 'X-Skip-Auth-Redirect': 'true', 'X-Skip-Error-Handling': 'true' },
+} as const;
+
+type GoogleSignInSubmitError = {
+  code?: string;
+  message?: string;
+  response?: {
+    data?: {
+      message?: string | string[];
+    };
+  };
+};
+
+function getGoogleSignInErrorMessage(error: unknown, t: (k: string) => string): string {
+  const err = error as GoogleSignInSubmitError;
+  const backendMessage = err.response?.data?.message;
+  const message = Array.isArray(backendMessage) ? backendMessage.join(', ') : backendMessage;
+
+  if (message) {
+    if (message.startsWith('errors.') || message.startsWith('validation.')) {
+      const translated = t(message);
+      return translated === message ? t('errors.googleSignInFailed') : translated;
+    }
+    return message;
+  }
+
+  if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+    return t('common.apiErrors.timeout');
+  }
+  if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+    return t('common.apiErrors.networkError');
+  }
+  return t('errors.googleSignInFailed');
+}
+
 declare global {
   interface Window {
     google?: {
@@ -275,8 +311,8 @@ export function useGoogleAuth(options: {
               if (tab === 'register' && preferredNewUserType) {
                 body.type = preferredNewUserType;
               }
-              const authResult = await authApi.googleSignIn(body);
-              const me = await authApi.me();
+              const authResult = await authApi.googleSignIn(body, quietAuthRequest);
+              const me = await authApi.me(quietAuthRequest);
               const syncedUser = me.data;
               if (!isMountedRef.current) return;
               await finishSessionRef.current(
@@ -285,11 +321,11 @@ export function useGoogleAuth(options: {
                 authResult.data.requiresPhoneVerification,
                 preferredNewUserType,
               );
-            } catch {
+            } catch (error: unknown) {
               await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
               if (!isMountedRef.current) return;
               resetGoogleBusyState();
-              toast.error(t('errors.googleSignInFailed'));
+              toast.error(getGoogleSignInErrorMessage(error, t));
             }
           })();
         },

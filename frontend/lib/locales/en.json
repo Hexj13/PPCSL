@@ -150,7 +150,7 @@
     "emailVerificationResendOnCooldown": "A confirmation email was already sent. You can request another one after the link in that message expires.",
     "googleSignInFailed": "Google sign-in failed. Please try again.",
     "googleEmailNotVerified": "Your Google email is not verified. Verify it in Google and try again.",
-    "useGoogleSignIn": "This account uses Google sign-in. Password login is not available."
+    "useGoogleSignIn": "Use Google sign-in for this account."
   },
   "cookieSettings": {
     "loading": "Loading...",
@@ -1207,6 +1207,10 @@
     "lastName": "Last Name",
     "lastNamePlaceholder": "Enter your last name",
     "passwordChangeTitle": "Change password",
+    "passwordSetTitle": "Set password",
+    "passwordSetHint": "Google sign-in will still work. After you set a password, you can also sign in with email or phone and this password.",
+    "passwordSetSuccess": "Password set",
+    "passwordSetFillNew": "Enter a new password",
     "currentPasswordLabel": "Current password",
     "newPasswordLabel": "New password",
     "changePasswordButton": "Change password",

@@ -3,6 +3,7 @@ import { strict as assert } from 'node:assert';
 import { expect, type Page } from '@playwright/test';
 
 import { HeaderNavComponent } from '../components/layout/header-nav.component';
+import { dismissCookieConsentIfVisible } from '../utils/session';
 
 export class MyListingsPage {
   private readonly testIds = {
@@ -26,7 +27,22 @@ export class MyListingsPage {
   }
 
   get promotionDialog() {
-    return this.page.getByRole('dialog');
+    return this.page.getByTestId('promotion-modal');
+  }
+
+  get promotionPeriodOptions() {
+    return this.page.locator('[data-testid^="promotion-period-"]');
+  }
+
+  get promotionConfirmButton() {
+    return this.page.getByTestId('promotion-modal-confirm');
+  }
+
+  async expectPromotionModalWithPeriodOptions(): Promise<void> {
+    await expect(this.promotionDialog).toBeVisible();
+    await expect(this.promotionPeriodOptions).not.toHaveCount(0);
+    await expect(this.promotionConfirmButton).toBeVisible();
+    await expect(this.promotionConfirmButton).toBeDisabled();
   }
 
   async hasPromotableListing(): Promise<boolean> {
@@ -34,6 +50,7 @@ export class MyListingsPage {
   }
 
   async openFirstPromotion(): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
     await this.promoteButtons.first().click();
   }
 

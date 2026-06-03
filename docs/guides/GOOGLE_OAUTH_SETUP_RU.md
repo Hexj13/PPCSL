@@ -27,6 +27,28 @@
 - Скрипт `https://accounts.google.com/gsi/client` подключается на странице `/sign` (вкладки вход и регистрация). Инициализация GIS (`initialize` / `renderButton`) выполняется **после** `onReady` этого скрипта (Next.js `Script`) и при наличии `NEXT_PUBLIC_GOOGLE_CLIENT_ID`; иначе кнопка не появится. До готовности кнопки показывается skeleton; при remount проверяется `window.google?.accounts?.id`.
 - После успеха GIS фронт вызывает `POST /api/auth/google` с полем `idToken`; бэкенд проверяет токен через `google-auth-library`, выставляет httpOnly cookies `kupito_access_token` и `kupito_refresh_token` (path у refresh — `/api/auth`).
 - Дальнейшие запросы API идут с `withCredentials: true`; access JWT содержит `phoneVerified`; без подтверждённого телефона пользователь перенаправляется на `/complete-profile?mode=phone_required` (middleware + клиентский guard). Для юр. лица без названия компании в профиле действует отдельный клиентский гард на `/complete-profile?mode=business_onboarding` (см. [auth-onboarding-gates.md](../features/auth-onboarding-gates.md)).
+- На вкладке **регистрации** в теле `POST /api/auth/google` передаётся выбранный `type` (`Individual` | `Business`); на вкладке входа тип не отправляется (дефолт бэкенда).
+- `POST /api/auth/google` с `/sign` идёт с заголовками `X-Skip-Error-Handling` и `X-Skip-Auth-Redirect`; ошибка показывается **одним** toast на странице (ключи `errors.*` переводятся локально). См. [frontend-api-error-handling.md](./frontend-api-error-handling.md).
+
+### Учётные записи при входе через Google
+
+`GoogleSignInUseCase` ищет пользователя по `googleId` и email (в т.ч. неактивных) с нормализацией email:
+
+| Состояние | Поведение |
+| --- | --- |
+| Активный пользователь с тем же Google или email | Вход / привязка `googleId`, выдача cookies |
+| Новый пользователь | Создание с `termsAccepted`, опциональным `type`, SMS на телефон |
+| Self-delete (`active=false`, очищены email, phone, имя, `companyName`; при удалении сброшен `googleId`) | Старая строка не блокирует: `googleId` освобождается, создаётся новый пользователь с тем же Google |
+| Деактивация админом (`active=false`, профильные поля сохранены) | `401` / `errors.userDeactivated`; повторная регистрация тем же Google **не** создаётся |
+
+Админский toggle `active` в `admin-users.service` **не** очищает `googleId` и не делает аккаунт «переиспользуемым» после self-delete.
+
+### Пароль в профиле (Google без пароля)
+
+- Новые Google-аккаунты приходят без пароля (`hasPassword: false` в `GET /api/auth/me`).
+- В `/profile` — блок **«Установка пароля»**: только новый пароль; подсказка в `InfoBlock`. После сохранения — **«Смена пароля»** (текущий + новый).
+- Вход через Google сохраняется; дополнительно доступен вход по email или телефону и паролю.
+- Попытка входа по паролю без установленного пароля → `errors.useGoogleSignIn` (см. backend locales).
 
 ## Проверка
 

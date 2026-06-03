@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
-import { expectVehicleSearchTabPanelVisible } from '../../utils/search-filter-panels';
 import { visibleSearchFiltersForm } from '../../utils/search-filters-form';
+import { dismissCookieConsentIfVisible } from '../../utils/session';
 import { BottomSheetComponent } from '../common/bottom-sheet.component';
 
 export type SearchFilterTab = 'basic' | 'advanced' | 'equipment' | 'popular';
@@ -42,11 +42,34 @@ export class SearchFiltersMobileComponent {
     return visibleSearchFiltersForm(this.page);
   }
 
+  private panelIdForTab(tab: SearchFilterTab): string {
+    if (tab === 'basic') {
+      return this.testIds.panelBasic;
+    }
+    if (tab === 'advanced') {
+      return this.testIds.panelAdvanced;
+    }
+    if (tab === 'equipment') {
+      return this.testIds.panelEquipment;
+    }
+    return this.testIds.panelPopular;
+  }
+
   private mobilePanel(testId: string) {
     return this.searchFiltersForm().locator('.md\\:hidden').getByTestId(testId);
   }
 
+  private mobilePanelForTab(tab: SearchFilterTab) {
+    return this.mobilePanel(this.panelIdForTab(tab));
+  }
+
   async selectTab(tab: SearchFilterTab): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
+    const sheetConfirm = this.page.getByTestId(this.testIds.sheetConfirm);
+    if (await sheetConfirm.isVisible().catch(() => false)) {
+      await this.page.keyboard.press('Escape');
+      await this.bottomSheet.expectHidden();
+    }
     const tabId =
       tab === 'basic'
         ? this.testIds.tabBasic
@@ -55,31 +78,39 @@ export class SearchFiltersMobileComponent {
           : tab === 'equipment'
             ? this.testIds.tabEquipment
             : this.testIds.tabPopular;
-    const panelId =
-      tab === 'basic'
-        ? this.testIds.panelBasic
-        : tab === 'advanced'
-          ? this.testIds.panelAdvanced
-          : tab === 'equipment'
-            ? this.testIds.panelEquipment
-            : this.testIds.panelPopular;
-    const tabButton = this.searchFiltersForm().getByTestId(tabId);
-    await tabButton.scrollIntoViewIfNeeded();
-    await expect(tabButton).toBeVisible();
-    await tabButton.click();
-    await expectVehicleSearchTabPanelVisible(this.page, tab);
-    const panel = this.mobilePanel(panelId);
-    await expect(panel).not.toHaveClass('hidden', { timeout: 15_000 });
-    await expect(panel).toBeVisible();
+    await expect
+      .poll(async () => {
+        const tabButton = this.searchFiltersForm().getByTestId(tabId);
+        const panel = this.mobilePanelForTab(tab);
+        if (!(await tabButton.isVisible().catch(() => false))) {
+          return false;
+        }
+        const panelClass = (await panel.getAttribute('class')) ?? '';
+        if (!panelClass.includes('hidden')) {
+          return true;
+        }
+        await tabButton.scrollIntoViewIfNeeded().catch(() => undefined);
+        await tabButton.click();
+        const nextClass = (await panel.getAttribute('class')) ?? '';
+        return !nextClass.includes('hidden');
+      })
+      .toBe(true);
+    await expect(this.mobilePanelForTab(tab)).toBeVisible({ timeout: 15_000 });
   }
 
-  async openFilterRow(sheetId: string): Promise<void> {
-    const row = this.searchFiltersForm()
-      .locator('.md\\:hidden')
-      .getByTestId(`${this.testIds.filterRowPrefix}${sheetId}`);
-    await expect(row).toBeVisible();
+  async openFilterRow(sheetId: string, tab: SearchFilterTab): Promise<void> {
+    const row = this.mobilePanelForTab(tab).getByTestId(
+      `${this.testIds.filterRowPrefix}${sheetId}`,
+    );
+    await expect(row).toBeVisible({ timeout: 15_000 });
+    await row.scrollIntoViewIfNeeded();
     await row.click();
-    await this.bottomSheet.expectOpen();
+    try {
+      await this.bottomSheet.expectOpen();
+    } catch {
+      await row.click({ force: true });
+      await this.bottomSheet.expectOpen();
+    }
   }
 
   async confirmSheet(): Promise<void> {
@@ -117,17 +148,15 @@ export class SearchFiltersMobileComponent {
     await inputs.first().fill(value);
   }
 
-  async expectFilterRowHasSelection(sheetId: string): Promise<void> {
+  async expectFilterRowHasSelection(sheetId: string, tab: SearchFilterTab): Promise<void> {
     await expect(
-      this.searchFiltersForm()
-        .locator('.md\\:hidden')
-        .getByTestId(`${this.testIds.filterRowPrefix}${sheetId}`),
+      this.mobilePanelForTab(tab).getByTestId(`${this.testIds.filterRowPrefix}${sheetId}`),
     ).toHaveAttribute('data-has-selection', 'true');
   }
 
   async exerciseVehicleSheet(sheetCase: VehicleSheetCase): Promise<void> {
     await this.selectTab(sheetCase.tab);
-    await this.openFilterRow(sheetCase.sheetId);
+    await this.openFilterRow(sheetCase.sheetId, sheetCase.tab);
 
     if (sheetCase.kind === 'multi' && sheetCase.optionValue) {
       await this.selectSheetOption(sheetCase.optionValue);
@@ -138,24 +167,21 @@ export class SearchFiltersMobileComponent {
     } else if (sheetCase.kind === 'range-input' && sheetCase.rangeInput) {
       await this.fillRangeInputs(sheetCase.rangeInput);
     } else if (sheetCase.kind === 'range-select') {
-      await expect(this.page.locator('[role="dialog"]')).toBeVisible();
+      await this.bottomSheet.expectOpen();
     }
 
     await this.confirmSheet();
 
     if (sheetCase.kind !== 'open-only') {
-      await this.expectFilterRowHasSelection(sheetCase.sheetId);
+      await this.expectFilterRowHasSelection(sheetCase.sheetId, sheetCase.tab);
     }
   }
 
   async toggleEquipmentOption(key: string): Promise<void> {
     await this.selectTab('equipment');
-    await this.searchFiltersForm()
-      .getByTestId(this.testIds.panelEquipment)
-      .scrollIntoViewIfNeeded();
-    const checkbox = this.searchFiltersForm()
-      .locator('.md\\:hidden')
-      .getByTestId(`search-equipment-${key}`);
+    const panel = this.mobilePanelForTab('equipment');
+    await panel.scrollIntoViewIfNeeded();
+    const checkbox = panel.getByTestId(`search-equipment-${key}`);
     const visualLabel = checkbox
       .locator('xpath=ancestor::div[contains(@class,"relative")]/label')
       .first();

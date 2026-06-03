@@ -15,6 +15,7 @@ export class LanguageSwitcherPage {
   }
 
   async openMenu(): Promise<void> {
+    await this.headerNav.ensureLanguageSwitcherVisible();
     await this.headerNav.languageSwitcher.first().click();
     await expect(this.headerNav.languageSwitcherMenu).toBeVisible();
   }

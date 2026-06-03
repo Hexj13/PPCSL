@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+import { dismissCookieConsentIfVisible } from '../utils/session';
 
 export class FavoritesPage {
   private readonly testIds = {
@@ -38,6 +39,8 @@ export class FavoritesPage {
 
   async openFiltersTab(): Promise<void> {
     await this.page.getByTestId(this.testIds.tabFilters).click();
+    await expect(this.page).toHaveURL(/tab=filters/, { timeout: 15_000 });
+    await this.expectSavedFiltersListVisible();
   }
 
   async openListingsTab(): Promise<void> {
@@ -84,19 +87,29 @@ export class FavoritesPage {
   }
 
   async expectSavedFiltersListVisible(): Promise<void> {
-    await expect(this.page.getByTestId('saved-filters-list')).toBeVisible();
+    await expect(this.page.getByTestId('saved-filters-list')).toBeVisible({ timeout: 30_000 });
   }
 
   async clickSavedFilterCard(filterId: string): Promise<void> {
-    await this.page.getByTestId(`saved-filter-card-${filterId}`).click();
+    await dismissCookieConsentIfVisible(this.page);
+    const card = this.page.getByTestId(`saved-filter-card-${filterId}`);
+    await expect(card).toBeVisible({ timeout: 30_000 });
+    await card.click();
+    await expect
+      .poll(() => pathnameWithoutLocalePrefix(this.page.url()), { timeout: 30_000 })
+      .toBe('/');
   }
 
   async clickSavedFilterByName(name: string): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
     const card = this.page.locator('[data-testid^="saved-filter-card-"]').filter({
       has: this.page.getByRole('heading', { name, exact: true }),
     });
-    await expect(card).toBeVisible();
+    await expect(card).toBeVisible({ timeout: 30_000 });
     await card.click();
+    await expect
+      .poll(() => pathnameWithoutLocalePrefix(this.page.url()), { timeout: 30_000 })
+      .toBe('/');
   }
 
   async clickListingCard(listingId: string): Promise<void> {

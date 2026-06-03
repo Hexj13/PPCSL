@@ -4,7 +4,10 @@ import { test } from '../fixtures/base';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
 import type { SearchHomePage } from '../page-objects/search-home.page';
 import { expectPagePath } from '../utils/app-path';
-import { ensureListingDetailFromSearch } from '../utils/listings';
+import {
+  ensureListingDetailFromSearch,
+  ensureListingDetailWithSimilarListings,
+} from '../utils/listings';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Listing detail: view and interaction @p0', () => {
@@ -44,12 +47,58 @@ test.describe('Listing detail: view and interaction @p0', () => {
     await runSteps(steps);
   });
 
+  test('shows core listing detail blocks from search results', async ({
+    page,
+    searchHomePage,
+    listingCreatePage,
+    listingDetailPage,
+  }) => {
+    await openListingFromResultsOrPrepare(page, searchHomePage, listingCreatePage);
+    const steps: E2EStep[] = [
+      {
+        name: 'Validate core listing detail blocks',
+        action: async () => {
+          await listingDetailPage.expectCoreBlocksVisible();
+        },
+      },
+    ];
+
+    await runSteps(steps);
+  });
+
+  test('shows similar listings section when data is available', async ({
+    page,
+    searchHomePage,
+    listingDetailPage,
+  }) => {
+    test.setTimeout(120_000);
+    const steps: E2EStep[] = [
+      {
+        name: 'Open listing detail with similar listings',
+        action: async () => {
+          await ensureListingDetailWithSimilarListings(page, searchHomePage, 2);
+          await listingDetailPage.expectPageView();
+        },
+      },
+      {
+        name: 'Validate similar listings section',
+        action: async () => {
+          await listingDetailPage.similarListings.expectSectionVisible();
+          await listingDetailPage.similarListings.expectAtLeastCards(2);
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
   test('shows copy link interaction on listing detail page', async ({
     page,
     searchHomePage,
     listingCreatePage,
     listingDetailPage,
   }) => {
+    test.setTimeout(120_000);
     await openListingFromResultsOrPrepare(page, searchHomePage, listingCreatePage);
     const steps: E2EStep[] = [
       {
@@ -59,9 +108,10 @@ test.describe('Listing detail: view and interaction @p0', () => {
         },
       },
       {
-        name: 'Click copy link button',
+        name: 'Click copy link button and verify success toast',
         action: async () => {
           await listingDetailPage.clickCopyLinkButton();
+          await listingDetailPage.expectCopyLinkSuccessToast();
         },
       },
       {

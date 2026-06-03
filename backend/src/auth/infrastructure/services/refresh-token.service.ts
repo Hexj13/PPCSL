@@ -76,6 +76,23 @@ export class RefreshTokenService {
     await this.refreshTokenRepository.update({ user_id: userId }, { revoked: true });
   }
 
+  async revokeAllUserTokensExcept(userId: string, keepToken?: string | null): Promise<void> {
+    const trimmed = keepToken?.trim();
+    if (!trimmed) {
+      await this.revokeAllUserTokens(userId);
+      return;
+    }
+
+    const tokenHash = hashRefreshToken(trimmed);
+    await this.refreshTokenRepository
+      .createQueryBuilder()
+      .update(RefreshToken)
+      .set({ revoked: true })
+      .where('user_id = :userId', { userId })
+      .andWhere('token NOT IN (:...keepTokens)', { keepTokens: [tokenHash, trimmed] })
+      .execute();
+  }
+
   async cleanupExpiredTokens(): Promise<void> {
     await this.refreshTokenRepository.delete({
       expires_at: LessThan(new Date()),

@@ -5,7 +5,7 @@ import { shouldRestoreHomeScrollAfterPath } from '@/lib/preserve-home-scroll';
 
 const HOME_SCROLL_MAX_AGE_MS = 5 * 60 * 1000;
 const RELOAD_SCROLL_MAX_AGE_MS = 10 * 60 * 1000;
-const ANCHOR_RESTORE_MAX_DURATION_MS = 3000;
+const ANCHOR_RESTORE_MAX_DURATION_MS = 12000;
 const SCROLL_HEIGHT_TOLERANCE_PX = 32;
 const ANCHOR_RESTORE_GAP_PX = 8;
 const DEFAULT_STICKY_HEADER_HEIGHT_PX = 72;
@@ -33,6 +33,12 @@ function restoreBodyStyle(body: HTMLElement, snapshot: BodyStyleSnapshot): void 
   body.style.top = snapshot.top;
   body.style.width = snapshot.width;
   body.style.left = snapshot.left;
+}
+
+export function clearHomeScrollRestoreSession(): void {
+  sessionStorageRemoveItem('homeScrollPosition');
+  sessionStorageRemoveItem('homeScrollListingId');
+  sessionStorageRemoveItem('homeScrollTimestamp');
 }
 
 export function readHomeScrollRestoreTarget(
@@ -73,16 +79,12 @@ export function readHomeScrollRestoreTarget(
     const savedTime = parseInt(timestamp, 10);
     if (Date.now() - savedTime < HOME_SCROLL_MAX_AGE_MS) {
       const scrollY = parseInt(savedScroll, 10);
-      sessionStorageRemoveItem('homeScrollPosition');
-      sessionStorageRemoveItem('homeScrollListingId');
-      sessionStorageRemoveItem('homeScrollTimestamp');
       if (Number.isFinite(scrollY) && scrollY > 0) {
         return { scrollY, source: 'listing_return', listingId: savedListingId ?? undefined };
       }
+      clearHomeScrollRestoreSession();
     } else {
-      sessionStorageRemoveItem('homeScrollPosition');
-      sessionStorageRemoveItem('homeScrollTimestamp');
-      sessionStorageRemoveItem('homeScrollListingId');
+      clearHomeScrollRestoreSession();
       sessionStorageRemoveItem('kupito_grid_state');
       sessionStorageRemoveItem('kupito_grid_restore_state');
     }
@@ -211,6 +213,7 @@ export function restoreHomeScrollToListingCard(listingId: string, fallbackScroll
     const card = document.querySelector(cardSelector);
     if (card) {
       anchorListingCard(card);
+      clearHomeScrollRestoreSession();
       cleanup();
       return;
     }
@@ -218,6 +221,7 @@ export function restoreHomeScrollToListingCard(listingId: string, fallbackScroll
     const anchorTarget = findListingRestoreTarget(listingId);
     if (anchorTarget) {
       anchorListingCard(anchorTarget);
+      clearHomeScrollRestoreSession();
     } else {
       scrollTowardFallbackY(fallbackScrollY);
     }
@@ -228,8 +232,10 @@ export function restoreHomeScrollToListingCard(listingId: string, fallbackScroll
       const finalTarget = findListingRestoreTarget(listingId);
       if (finalTarget) {
         anchorListingCard(finalTarget);
+        clearHomeScrollRestoreSession();
       } else if (Number.isFinite(fallbackScrollY) && fallbackScrollY > 0) {
         scrollTowardFallbackY(fallbackScrollY);
+        clearHomeScrollRestoreSession();
       }
       cleanup();
     }

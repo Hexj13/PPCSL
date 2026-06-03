@@ -78,6 +78,13 @@ Local registration flow expectation:
 - Registration E2E should cover both user types: individual and business.
 - Registration flow is complete only after `verify-phone` -> `complete-profile` (with additional data) -> home page.
 
+Google account password setup (`profile-password.spec.ts`):
+
+- Local/test API only: `POST /api/auth/e2e/google-business-user` creates a Business user with `googleId`, verified phone/email, and `password: null`, then sets auth cookies (same as login). The endpoint returns 404 in `production` and `stage`.
+- Helper: `e2e/utils/api/provision-google-user.ts` (`provisionGoogleBusinessUser(page)` via browser `fetch` to `E2E_API_URL` / `API_URL`).
+- UI selectors: `profile-password-set-section`, `profile-password-change-section`, `profile-password-new-input`, `profile-password-current-input`, `profile-password-set-hint`.
+- Covers initial password set (save enabled, `POST /api/auth/change-password`, UI switches to change-password) and login with phone + new password after logout.
+
 ## Viewport priority (mobile first)
 
 - **Priority:** automate and stabilize flows on **mobile** first, then **desktop**.
@@ -253,6 +260,7 @@ A spec must cover the user-visible outcome of the feature, not only an intermedi
 - **AI listing report:** guest redirect with `openAiReport` intent; authenticated flow waits for terminal modal state and, when `ready`, asserts report content (not only loading/unavailable shells).
 - **Compare / listing actions:** add-to-compare on detail must reach compare page with table visible, not only empty-state tabs.
 - **Search filters (mobile):** all vehicle tabs (`basic`, `advanced`, `equipment`, `popular`); each mobile bottom sheet opens, offers options, confirms with OK, and sets `data-has-selection` on the filter row; separate spec submits with a changed filter and waits for `GET /api/listings`. See `search-filters-mobile.spec.ts`.
+- **Listing sort:** on home, `selectSort` updates UI only until `submitSearch()`; assert URL `sortBy`/`sortOrder` and listings response after submit. On seller board, sort updates URL and refetches immediately. See `listing-sort.spec.ts`, `e2e/test-data/listing-sort.ts`, `BoardPage`.
 
 Prefer parsing create/save API responses for `id` and `filters` when asserting apply-on-home, so expander or backend relaxations stay aligned with what the UI applies.
 
@@ -287,7 +295,7 @@ Current suite is aligned with this standard:
 - API origin + locale cookies: `e2e/utils/api-origin.ts`, `e2e/utils/e2e-locale.ts`
 - URL assertions: `e2e/utils/app-path.ts` `pathnameWithoutLocalePrefix()` strips only configured URL locale prefixes (e.g. `ru`), not arbitrary two-letter path segments (so `/listings/...` is not mangled).
 - Saved filters quota: `e2e/utils/api/saved-filters.ts` `deleteAllSavedFiltersForSession` (used by `saved-filters.spec.ts` so `POST /api/saved-filters` does not hit the per-user cap during repeated local runs)
-- Shared test-data factories: `e2e/test-data/auth.ts`, `e2e/test-data/search-filter-sheets.ts` (mobile sheet matrix for vehicle search)
+- Shared test-data factories: `e2e/test-data/auth.ts`, `e2e/test-data/search-filter-sheets.ts` (mobile sheet matrix for vehicle search), `e2e/test-data/listing-sort.ts` (sort option index for `search-sort-select`)
 - Shared component objects:
   - `components/auth/register-form.component.ts`
   - `components/auth/verify-phone-form.component.ts`
@@ -300,7 +308,8 @@ Current suite is aligned with this standard:
   - `SignPage`
   - `VerifyPhonePage`
   - `CompleteProfilePage`
-  - `SearchHomePage`
+  - `SearchHomePage` (`selectSort`, `selectSortAndApply`, `submitSearch`)
+  - `BoardPage` (seller board sort, immediate URL apply)
   - `ListingDetailPage`
   - `ListingCreatePage`
   - `MyListingsPage`

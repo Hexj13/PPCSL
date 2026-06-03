@@ -26,6 +26,7 @@ import type { useFilterOptions } from '@/hooks/useFilterOptions';
 import type { FilterState } from '@/hooks/useSearchFilters';
 import type { useSearchTabs } from '@/hooks/useSearchTabs';
 import type { Brand, TireBrand, TireModel, VehicleModel } from '@/lib/api';
+import { resolveListingSortKey } from '@/lib/search';
 
 type FilterHandlers = ReturnType<typeof useFilterHandlers>;
 type FilterOptions = ReturnType<typeof useFilterOptions>;
@@ -311,9 +312,8 @@ export function SearchFiltersForm({
         isInternalSearchRef={isInternalSearchRef}
         availableListingsTotal={availableListingsTotal}
         isAvailableListingsLoading={showAvailableListingsLoader}
-        onSortChange={(sortBy, sortOrder) =>
-          handlers.applySearchWithOverrides({ sortBy, sortOrder })
-        }
+        selectedSortKey={resolveListingSortKey(filters.sortBy, filters.sortOrder)}
+        onSortChange={(sortBy, sortOrder) => updateMultiple({ sortBy, sortOrder })}
       />
 
       <SaveFilterModal

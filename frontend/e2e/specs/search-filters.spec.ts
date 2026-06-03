@@ -20,8 +20,9 @@ test.describe('Search: filters @p0', () => {
         },
       },
       {
-        name: 'Verify URL includes vehicleType=truck',
+        name: 'Verify truck filter is active in UI and URL',
         action: async () => {
+          await searchHomePage.expectVehicleTypePressed('truck');
           await expect(page).toHaveURL(/vehicleType=truck/);
         },
       },
@@ -63,6 +64,12 @@ test.describe('Search: filters @p0', () => {
         },
       },
       {
+        name: 'Verify car filter is active in UI',
+        action: async () => {
+          await searchHomePage.expectVehicleTypePressed('car');
+        },
+      },
+      {
         name: 'Verify URL no longer includes tire category',
         action: async () => {
           await expect(page).not.toHaveURL(/category=tire/);
@@ -97,8 +104,9 @@ test.describe('Search: filters @p0', () => {
         },
       },
       {
-        name: 'Verify URL includes vehicleType=moto',
+        name: 'Verify moto filter is active in UI and URL',
         action: async () => {
+          await searchHomePage.expectVehicleTypePressed('moto');
           await expect(page).toHaveURL(/vehicleType=moto/);
         },
       },

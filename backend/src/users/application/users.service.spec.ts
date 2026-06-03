@@ -163,14 +163,26 @@ describe('UsersService', () => {
 
   describe('findByEmail', () => {
     it('should return user by email', async () => {
-      repository.findOne.mockResolvedValue(mockUser);
+      const queryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockUser),
+      };
+      repository.createQueryBuilder.mockReturnValue(
+        queryBuilder as unknown as ReturnType<Repository<User>['createQueryBuilder']>,
+      );
 
       const result = await service.findByEmail('test@test.com');
 
       expect(result).toEqual(mockUser);
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { email: 'test@test.com', active: true },
+      expect(repository.createQueryBuilder).toHaveBeenCalledWith('user');
+      expect(queryBuilder.where).toHaveBeenCalledWith('LOWER(user.email) = :email', {
+        email: 'test@test.com',
       });
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith('user.active = :active', {
+        active: true,
+      });
+      expect(queryBuilder.getOne).toHaveBeenCalled();
     });
   });
 

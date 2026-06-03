@@ -109,9 +109,16 @@ jest.mock('@/lib/i18n', () => {
   };
 });
 
+const quietAuthRequest = {
+  headers: { 'X-Skip-Auth-Redirect': 'true', 'X-Skip-Error-Handling': 'true' },
+} as const;
+
 const minimalTranslations = {
   register: { termsRequired: 'terms' },
-  errors: { googleSignInFailed: 'fail' },
+  errors: {
+    googleSignInFailed: 'fail',
+    userAlreadyExists: 'User already exists',
+  },
   common: { loading: 'Loading' },
 } as unknown as Translations;
 
@@ -395,11 +402,14 @@ describe('useGoogleAuth', () => {
       await init.callback({ credential: 'tok' });
     });
 
-    expect(authApi.googleSignIn).toHaveBeenCalledWith({
-      idToken: 'tok',
-      termsAccepted: true,
-      type: 'Business',
-    });
+    expect(authApi.googleSignIn).toHaveBeenCalledWith(
+      {
+        idToken: 'tok',
+        termsAccepted: true,
+        type: 'Business',
+      },
+      quietAuthRequest,
+    );
     await waitFor(() => {
       const path = lastReplacePath();
       expect(
@@ -440,10 +450,13 @@ describe('useGoogleAuth', () => {
       await init.callback({ credential: 'tok' });
     });
 
-    expect(authApi.googleSignIn).toHaveBeenCalledWith({
-      idToken: 'tok',
-      termsAccepted: true,
-    });
+    expect(authApi.googleSignIn).toHaveBeenCalledWith(
+      {
+        idToken: 'tok',
+        termsAccepted: true,
+      },
+      quietAuthRequest,
+    );
     await waitFor(() => {
       const path = lastReplacePath();
       expect(path.includes('mode=phone_required')).toBe(true);
@@ -624,6 +637,35 @@ describe('useGoogleAuth', () => {
       id: '1',
       phoneVerified: true,
     });
+  });
+
+  it('shows translated backend error once when googleSignIn returns an API error key', async () => {
+    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockRejectedValueOnce({
+      response: { data: { message: 'errors.userAlreadyExists' } },
+    });
+
+    render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(window.google?.accounts?.id.initialize).toHaveBeenCalled();
+    });
+
+    const init = (window.google!.accounts!.id.initialize as jest.Mock).mock.calls[0][0] as {
+      callback: (resp: { credential: string }) => void;
+    };
+
+    await act(async () => {
+      await init.callback({ credential: 'tok' });
+    });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledTimes(1);
+    });
+    expect(toast.error).toHaveBeenCalledWith('User already exists');
   });
 
   it('clears isGoogleAuthInFlight and shows toast when googleSignIn fails', async () => {

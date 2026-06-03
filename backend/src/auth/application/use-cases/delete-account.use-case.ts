@@ -38,6 +38,7 @@ export class DeleteAccountUseCase {
       lastName: user.lastName,
       companyName: user.companyName,
       companyWebsiteUrl: user.companyWebsiteUrl,
+      googleId: user.googleId,
       active: user.active,
     });
 

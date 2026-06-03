@@ -11,6 +11,7 @@ import { I18nService } from '../../common/i18n/i18n.service';
 import type { LoginResponse } from '../application/auth.types';
 import { AuthService } from '../application/auth.service';
 import { AuthTokenIssuerService } from '../application/services/auth-token-issuer.service';
+import { E2eCreateGoogleBusinessUserUseCase } from '../application/use-cases/e2e-create-google-business-user.use-case';
 import { AuthPhoneRateLimitService } from '../infrastructure/services/auth-phone-rate-limit.service';
 import { IpBlockService } from '../infrastructure/services/ip-block.service';
 import { SmsService } from '../infrastructure/services/sms.service';
@@ -142,6 +143,10 @@ describe('AuthController', () => {
         { provide: SmsService, useValue: mockSmsService },
         { provide: UsersService, useValue: mockUsersService },
         { provide: I18nService, useValue: mockI18nService },
+        {
+          provide: E2eCreateGoogleBusinessUserUseCase,
+          useValue: { execute: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -310,12 +315,13 @@ describe('AuthController', () => {
       authService.getUserProfile.mockResolvedValue({
         ...profile,
         boardSlug: _bs ?? null,
+        hasPassword: true,
       } as Awaited<ReturnType<AuthService['getUserProfile']>>);
 
       const result = await controller.getProfile(req as unknown as AuthenticatedRequest);
 
       expect(authService.getUserProfile).toHaveBeenCalledWith('user-1');
-      expect(result).toEqual({ ...profile, boardSlug: _bs ?? null });
+      expect(result).toEqual({ ...profile, boardSlug: _bs ?? null, hasPassword: true });
     });
   });
 
@@ -736,6 +742,7 @@ describe('AuthController', () => {
         active: mockUser.active,
         preferredLocale: mockUser.preferredLocale,
         boardSlug: mockUser.board_slug,
+        hasPassword: true,
         isPlatformPartner: mockUser.isPlatformPartner,
         hidePartnerPromoBanner: mockUser.hidePartnerPromoBanner,
         freePromotionBalance: mockUser.freePromotionBalance,
@@ -761,7 +768,7 @@ describe('AuthController', () => {
         created_at: mockUser.created_at,
         listings: [],
         favorites: [],
-      });
+      } as Awaited<ReturnType<AuthService['updateProfile']>>);
 
       const result = await controller.updateProfile(
         req as unknown as AuthenticatedRequest,

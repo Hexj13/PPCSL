@@ -133,14 +133,15 @@ export class UpdateProfileUseCase {
         changedFields,
       });
     }
-    const { password: _pw, board_slug: boardSlugRaw, ...result } = updatedUser;
-    void _pw;
+    const hasPassword = await this.usersService.hasPasswordSet(userId);
+    const { board_slug: boardSlugRaw, ...result } = updatedUser;
     const boardSlug = phoneChanged
       ? await this.usersService.ensureBoardSlug(userId)
       : (boardSlugRaw ?? (await this.usersService.ensureBoardSlug(userId)));
     return {
       ...result,
       boardSlug,
+      hasPassword,
       ...(shouldSendVerificationEmail ? { emailVerificationSent } : {}),
     };
   }

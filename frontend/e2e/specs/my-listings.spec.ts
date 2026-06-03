@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
-import { loginByUi } from '../utils/auth';
+import { expectLoggedOut, loginByUi } from '../utils/auth';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
 import { LISTING_PHOTO_FILES } from '../utils/listing-flow';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
@@ -73,8 +73,8 @@ test.describe('My listings @p0', () => {
         name: 'Click logout and verify redirect away from my listings',
         action: async () => {
           await myListingsPage.logoutFromUserMenu();
+          await expectLoggedOut(page);
           await expect(page).not.toHaveURL(/\/my-listings/, { timeout: 15_000 });
-          await expect(page).toHaveURL(/\/(sign)?(\?|$)/, { timeout: 15_000 });
         },
       },
       {
@@ -119,7 +119,7 @@ test.describe('My listings @p0', () => {
         name: 'Open edit form from my listings card',
         action: async () => {
           await myListingsPage.openFirstEditForm();
-          await expect(listingCreatePage.editSubmitButton).toBeVisible({ timeout: 30_000 });
+          await listingCreatePage.expectEditFormPopulated();
         },
       },
     ];

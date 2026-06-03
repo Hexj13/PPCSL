@@ -15,7 +15,7 @@ describe('ChangePasswordUseCase', () => {
   >;
   let passwordService: jest.Mocked<Pick<PasswordService, 'verify' | 'hash'>>;
   let emailService: jest.Mocked<Pick<EmailService, 'sendPasswordChangedNotification'>>;
-  let refreshTokenService: jest.Mocked<Pick<RefreshTokenService, 'revokeAllUserTokens'>>;
+  let refreshTokenService: jest.Mocked<Pick<RefreshTokenService, 'revokeAllUserTokensExcept'>>;
 
   const userId = 'user-uuid';
   const dto: ChangePasswordDto = {
@@ -40,7 +40,7 @@ describe('ChangePasswordUseCase', () => {
       sendPasswordChangedNotification: jest.fn(),
     };
     refreshTokenService = {
-      revokeAllUserTokens: jest.fn().mockResolvedValue(undefined),
+      revokeAllUserTokensExcept: jest.fn().mockResolvedValue(undefined),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -73,10 +73,26 @@ describe('ChangePasswordUseCase', () => {
     expect(passwordService.verify).toHaveBeenCalledWith('OldPass123!', 'stored-hash');
     expect(passwordService.hash).toHaveBeenCalledWith('NewPass456!');
     expect(usersService.update).toHaveBeenCalledWith(userId, { password: 'new-hash' });
-    expect(refreshTokenService.revokeAllUserTokens).toHaveBeenCalledWith(userId);
+    expect(refreshTokenService.revokeAllUserTokensExcept).toHaveBeenCalledWith(userId, undefined);
     expect(emailService.sendPasswordChangedNotification).toHaveBeenCalledWith(
       'user@example.com',
       undefined,
+    );
+  });
+
+  it('should revoke other sessions but keep the current refresh token', async () => {
+    usersService.findOneById.mockResolvedValue({
+      id: userId,
+      password: 'stored-hash',
+    } as Awaited<ReturnType<UsersService['findOneById']>>);
+    passwordService.verify.mockResolvedValue(true);
+    passwordService.hash.mockResolvedValue('new-hash');
+
+    await useCase.execute(userId, dto, undefined, 'current-refresh-token');
+
+    expect(refreshTokenService.revokeAllUserTokensExcept).toHaveBeenCalledWith(
+      userId,
+      'current-refresh-token',
     );
   });
 
@@ -161,6 +177,23 @@ describe('ChangePasswordUseCase', () => {
 
     await expect(useCase.execute(userId, dto)).rejects.toThrow('errors.invalidCurrentPassword');
     expect(usersService.update).not.toHaveBeenCalled();
+  });
+
+  it('should set password when account has no password yet', async () => {
+    usersService.findOneById.mockResolvedValue({
+      id: userId,
+      email: 'user@example.com',
+      emailVerified: true,
+      emailNotificationSecurityAlerts: true,
+      password: null,
+    } as Awaited<ReturnType<UsersService['findOneById']>>);
+    passwordService.hash.mockResolvedValue('new-hash');
+
+    await useCase.execute(userId, { newPassword: 'NewPass456!' });
+
+    expect(passwordService.verify).not.toHaveBeenCalled();
+    expect(passwordService.hash).toHaveBeenCalledWith('NewPass456!');
+    expect(usersService.update).toHaveBeenCalledWith(userId, { password: 'new-hash' });
   });
 
   it('should throw when new password equals current password', async () => {

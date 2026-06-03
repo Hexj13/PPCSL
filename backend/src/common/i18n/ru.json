@@ -93,7 +93,7 @@
     "googleEmailNotVerified": "Email в аккаунте Google не подтверждён.",
     "googleSignInFailed": "Не удалось войти через Google. Попробуйте ещё раз.",
     "phoneVerificationRequired": "Подтвердите номер телефона, прежде чем использовать эту функцию.",
-    "useGoogleSignIn": "Этот аккаунт входит через Google. Используйте «Продолжить с Google» вместо пароля.",
+    "useGoogleSignIn": "Для этого аккаунта используйте вход через Google.",
     "userNotActive": "Пользователь не активен",
     "termsNotAccepted": "Вы должны принять условия использования",
     "phoneAlreadyExists": "Пользователь с таким номером телефона уже существует",

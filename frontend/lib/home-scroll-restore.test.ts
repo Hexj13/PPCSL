@@ -30,7 +30,7 @@ describe('readHomeScrollRestoreTarget', () => {
     const result = readHomeScrollRestoreTarget('/ro/listings/abc');
 
     expect(result).toEqual({ scrollY: 1200, source: 'listing_return' });
-    expect(window.sessionStorage.getItem('homeScrollPosition')).toBeNull();
+    expect(window.sessionStorage.getItem('homeScrollPosition')).toBe('1200');
   });
 
   it('returns listing scroll by saved listing id when previous path is unavailable', () => {

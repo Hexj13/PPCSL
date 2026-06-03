@@ -17,6 +17,7 @@ Short reference for **mandatory steps** before a signed-in user can use the mark
 - **Middleware** (Next.js): reads access JWT; if `phoneVerified` is not `true`, redirects to `/complete-profile?mode=phone_required` with optional `returnUrl`.
 - **Client:** `PhoneRequiredGuard` in root layout aligns with the same rule for client navigations.
 - **Exempt paths:** `lib/phone-verification-paths.ts` (`/sign`, `/verify-phone`, `/complete-profile`, legal pages, etc.).
+- **Browser Back on `phone_required`:** `CompleteProfilePhoneGate` traps history back (`useHistoryBackClose`). Leaving the mandatory phone step calls `logout()` and `replace` to `/sign` (with `returnUrl` when present) so the user is not left signed in without a verified phone.
 
 ## Business account without company name
 
@@ -45,6 +46,13 @@ For `complete-profile` and reserved `post-register` flows, the phone number is s
 ## API: profile `type` while phone unverified
 
 `PATCH` profile (see `UserProfilePatchService`) allows changing `type` (`Individual` | `Business`) only while `phoneVerified` is false, so the account kind can be corrected before SMS confirmation.
+
+## Profile password (Google-only accounts)
+
+- **`hasPassword`** on `GET /api/auth/me` / `PATCH /api/auth/profile` — whether the user has a password hash (not the hash itself).
+- **No password yet:** `/profile` shows set-password UI (new field only). `POST /api/auth/change-password` with `{ newPassword }` only.
+- **Password set:** standard change-password UI (current + new). Google Sign-In and email/phone + password login both work.
+- Save enables when the new password passes client rules; other profile fields (e.g. invalid company website) do not block password-only submit.
 
 ## Related docs
 

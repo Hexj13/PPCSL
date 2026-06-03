@@ -118,6 +118,47 @@ export async function findPromotableListingIdViaApi(page: Page): Promise<string 
   return match?.id ?? null;
 }
 
+export async function ensureListingDetailWithSimilarListings(
+  page: Page,
+  searchHomePage: SearchHomePage,
+  minSimilar = 2,
+): Promise<string> {
+  const { findListingIdsWithMinSimilarCount, openListingDetailById } =
+    await import('./listing-detail-helpers');
+  const { ListingDetailPage } = await import('../page-objects/listing-detail.page');
+  await searchHomePage.openAndExpectPageView();
+  const listingIds = await findListingIdsWithMinSimilarCount(page, minSimilar);
+  if (listingIds.length === 0) {
+    throw new Error(
+      `E2E needs a listing with at least ${minSimilar} similar results. Run stage seed with multiple similar vehicles.`,
+    );
+  }
+
+  for (const listingId of listingIds) {
+    const similarResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/listings/${listingId}/similar`) &&
+        response.request().method() === 'GET' &&
+        response.ok(),
+      { timeout: 45_000 },
+    );
+    await openListingDetailById(page, listingId);
+    const listingDetailPage = new ListingDetailPage(page);
+    await listingDetailPage.expectPageView();
+    await similarResponse.catch(() => undefined);
+    try {
+      await listingDetailPage.similarListings.expectAtLeastCards(minSimilar);
+      return listingId;
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error(
+    `E2E could not open a listing detail showing at least ${minSimilar} similar cards.`,
+  );
+}
+
 export async function ensureNonOwnListingDetailFromSearch(
   page: Page,
   searchHomePage: SearchHomePage,

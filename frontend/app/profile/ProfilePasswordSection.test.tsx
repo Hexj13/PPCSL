@@ -19,6 +19,7 @@ describe('ProfilePasswordSection', () => {
     render(
       <ProfilePasswordSection
         t={t}
+        hasPassword
         currentPassword=""
         newPassword=""
         onCurrentPasswordChange={jest.fn()}
@@ -33,5 +34,21 @@ describe('ProfilePasswordSection', () => {
     expect(currentPasswordInput).toHaveAttribute('data-lpignore', 'true');
     expect(newPasswordInput).toHaveAttribute('data-1p-ignore');
     expect(newPasswordInput).toHaveAttribute('data-lpignore', 'true');
+  });
+
+  it('hides current password field when account has no password', () => {
+    render(
+      <ProfilePasswordSection
+        t={t}
+        hasPassword={false}
+        currentPassword=""
+        newPassword=""
+        onCurrentPasswordChange={jest.fn()}
+        onNewPasswordChange={jest.fn()}
+      />,
+    );
+
+    expect(screen.queryByLabelText('Current password')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('New password')).toBeInTheDocument();
   });
 });

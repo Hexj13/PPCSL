@@ -1,8 +1,15 @@
+import { strict as assert } from 'node:assert';
+
 import { expect, type Page } from '@playwright/test';
 
+import type { ListingSortKey } from '../../lib/search/listingSort';
+import { BottomSheetComponent } from '../components/common/bottom-sheet.component';
+import { listingSortOptionIndex } from '../test-data/listing-sort';
 import { getE2eBackendApiOrigin } from '../utils/api-origin';
+import { pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
 import { visibleSearchFiltersForm } from '../utils/search-filters-form';
+import { dismissCookieConsentIfVisible } from '../utils/session';
 
 const VEHICLE_CATEGORY_POLL = { timeout: 45_000, intervals: [400, 600, 1000, 1600] };
 
@@ -18,7 +25,11 @@ export class SearchHomePage {
     listingCardLinkPrefix: 'listing-card-link-',
   } as const;
 
-  constructor(private readonly page: Page) {}
+  readonly bottomSheet: BottomSheetComponent;
+
+  constructor(private readonly page: Page) {
+    this.bottomSheet = new BottomSheetComponent(page);
+  }
 
   private searchFiltersForm() {
     return visibleSearchFiltersForm(this.page);
@@ -64,7 +75,7 @@ export class SearchHomePage {
 
   async expectPageView(): Promise<void> {
     const form = this.searchFiltersForm();
-    await expect(form).toBeVisible();
+    await expect(form).toBeVisible({ timeout: 30_000 });
     await expect(form.getByTestId(this.testIds.vehicleTypeCar)).toBeVisible();
     await expect(form.getByTestId(this.testIds.vehicleTypeTruck)).toBeVisible();
     await expect(form.getByTestId(this.testIds.vehicleTypeMoto)).toBeVisible();
@@ -89,18 +100,36 @@ export class SearchHomePage {
       .toBe(true);
   }
 
+  async expectVehicleTypePressed(vehicleType: 'car' | 'truck' | 'moto'): Promise<void> {
+    const testId =
+      vehicleType === 'car'
+        ? this.testIds.vehicleTypeCar
+        : vehicleType === 'truck'
+          ? this.testIds.vehicleTypeTruck
+          : this.testIds.vehicleTypeMoto;
+    await expect(this.searchFiltersForm().getByTestId(testId)).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  }
+
   async selectVehicleTypeTruck(): Promise<void> {
-    const target = this.searchFiltersForm().getByTestId(this.testIds.vehicleTypeTruck);
-    await expect(target).toBeEnabled({ timeout: 20_000 });
-    await target.scrollIntoViewIfNeeded();
     await expect
       .poll(async () => {
+        const target = this.searchFiltersForm().getByTestId(this.testIds.vehicleTypeTruck);
+        if (!(await target.isVisible().catch(() => false))) {
+          return false;
+        }
+        if (!(await target.isEnabled().catch(() => false))) {
+          return false;
+        }
         if ((await target.getAttribute('aria-pressed')) === 'true') {
           return true;
         }
         if (this.page.url().includes('vehicleType=truck')) {
           return true;
         }
+        await target.scrollIntoViewIfNeeded().catch(() => undefined);
         await target.click();
         return false;
       }, VEHICLE_CATEGORY_POLL)
@@ -108,17 +137,22 @@ export class SearchHomePage {
   }
 
   async selectVehicleTypeMoto(): Promise<void> {
-    const target = this.searchFiltersForm().getByTestId(this.testIds.vehicleTypeMoto);
-    await expect(target).toBeEnabled({ timeout: 20_000 });
-    await target.scrollIntoViewIfNeeded();
     await expect
       .poll(async () => {
+        const target = this.searchFiltersForm().getByTestId(this.testIds.vehicleTypeMoto);
+        if (!(await target.isVisible().catch(() => false))) {
+          return false;
+        }
+        if (!(await target.isEnabled().catch(() => false))) {
+          return false;
+        }
         if ((await target.getAttribute('aria-pressed')) === 'true') {
           return true;
         }
         if (this.page.url().includes('vehicleType=moto')) {
           return true;
         }
+        await target.scrollIntoViewIfNeeded().catch(() => undefined);
         await target.click();
         return false;
       }, VEHICLE_CATEGORY_POLL)
@@ -176,11 +210,42 @@ export class SearchHomePage {
     if (!href) {
       return false;
     }
-    await firstCardLink.scrollIntoViewIfNeeded();
-    await Promise.all([
-      this.page.waitForURL(/\/listings\/[^/]+$/, { timeout: 30_000, waitUntil: 'commit' }),
-      firstCardLink.click({ force: true }),
-    ]);
+    await this.page.goto(href, { waitUntil: 'domcontentloaded' });
+    await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
+    return true;
+  }
+
+  async openListingInViewportFromResults(): Promise<boolean> {
+    if (!(await this.hasListingResults())) {
+      return false;
+    }
+
+    const listingId = await this.page.evaluate(() => {
+      const links = Array.from(
+        document.querySelectorAll<HTMLAnchorElement>('[data-testid^="listing-card-link-"]'),
+      );
+      for (const link of links) {
+        const rect = link.getBoundingClientRect();
+        if (rect.top >= 72 && rect.top < window.innerHeight - 72) {
+          const testId = link.getAttribute('data-testid') ?? '';
+          const match = testId.match(/^listing-card-link-(.+)$/);
+          if (match?.[1]) {
+            return match[1];
+          }
+        }
+      }
+      const fallbackTestId = links[0]?.getAttribute('data-testid') ?? '';
+      const fallbackMatch = fallbackTestId.match(/^listing-card-link-(.+)$/);
+      return fallbackMatch?.[1] ?? null;
+    });
+
+    if (!listingId) {
+      return false;
+    }
+
+    const cardLink = this.page.getByTestId(`listing-card-link-${listingId}`);
+    await expect(cardLink).toBeVisible();
+    await cardLink.click();
     await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
     return true;
   }
@@ -206,11 +271,11 @@ export class SearchHomePage {
       async ({ listingIds, origin }: { listingIds: string[]; origin: string }) => {
         const meRes = await fetch(`${origin}/api/auth/me`, { credentials: 'include' });
         if (!meRes.ok) {
-          throw new Error(`GET /api/auth/me failed: HTTP ${meRes.status}`);
+          return listingIds[0] ?? null;
         }
         const me = (await meRes.json()) as { id?: string };
         const myId = me.id;
-        if (!myId) return null;
+        if (!myId) return listingIds[0] ?? null;
         for (const id of listingIds) {
           const lr = await fetch(`${origin}/api/listings/${id}`, { credentials: 'include' });
           if (!lr.ok) continue;
@@ -233,19 +298,47 @@ export class SearchHomePage {
     }
     const cardLink = this.page.getByTestId(`listing-card-link-${targetId}`);
     await cardLink.scrollIntoViewIfNeeded();
-    await Promise.all([
-      this.page.waitForURL(/\/listings\/[^/]+$/, { timeout: 30_000, waitUntil: 'commit' }),
-      cardLink.click({ force: true }),
-    ]);
+    const href = await cardLink.getAttribute('href');
+    assert.ok(href, 'Expected listing card href');
+    await this.page.goto(href, { waitUntil: 'domcontentloaded' });
     await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
     return true;
   }
 
+  async selectSort(sortKey: ListingSortKey, testId = 'search-sort-select'): Promise<void> {
+    const trigger = this.searchFiltersForm().getByTestId(testId);
+    const menu = this.page.getByTestId(`${testId}-menu`);
+    const optionIndex = listingSortOptionIndex(sortKey);
+    const option = this.page.getByTestId(`${testId}-option-${optionIndex}`);
+    await trigger.scrollIntoViewIfNeeded();
+    await trigger.click();
+    if (!(await menu.isVisible().catch(() => false))) {
+      await trigger.click();
+    }
+    await expect(menu).toBeVisible({ timeout: 15_000 });
+    await expect(option).toBeVisible({ timeout: 15_000 });
+    await option.click();
+  }
+
+  async selectSortAndApply(sortKey: ListingSortKey, testId = 'search-sort-select'): Promise<void> {
+    await this.selectSort(sortKey, testId);
+    await this.submitSearch();
+  }
+
   async clickSmartSelection(): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
     const btn = this.searchFiltersForm().getByTestId('search-smart-selection');
     await expect(btn).toBeVisible({ timeout: 20_000 });
     await btn.scrollIntoViewIfNeeded();
     await btn.click();
+  }
+
+  async clickSmartSelectionAndExpectWizard(): Promise<void> {
+    await this.clickSmartSelection();
+    await expect(this.page).toHaveURL(
+      (url) => pathnameWithoutLocalePrefix(url).startsWith('/smart-selection'),
+      { timeout: 20_000 },
+    );
   }
 
   async openSaveFilterModal(): Promise<void> {

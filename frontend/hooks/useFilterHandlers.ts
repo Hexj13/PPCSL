@@ -310,46 +310,6 @@ export function useFilterHandlers({
     ],
   );
 
-  const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      applySearchWithOverrides({});
-    },
-    [applySearchWithOverrides],
-  );
-
-  const handleReset = useCallback(
-    (scrollToTop: boolean = false) => {
-      clearFiltersFromStorage();
-      resetFilters();
-      setLastAppliedFilters(null);
-      const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-      if (typeof window !== 'undefined' && !scrollToTop) {
-        sessionStorageSetItem('scrollPreserved', 'true');
-      }
-      startTransition(() => {
-        const params = new URLSearchParams();
-        if (filters.listing_category === 'tire') {
-          params.set('category', 'tire');
-        } else if (vehicleType !== 'car') {
-          params.set('vehicleType', vehicleType);
-        }
-        replace(`/?${params.toString()}`, { scroll: false });
-        if (typeof window !== 'undefined') {
-          requestAnimationFrame(() => {
-            if (scrollToTop) {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            } else {
-              window.scrollTo({ top: scrollY, behavior: 'instant' });
-              sessionStorageRemoveItem('scrollPreserved');
-            }
-          });
-        }
-      });
-    },
-    [resetFilters, setLastAppliedFilters, vehicleType, replace, filters.listing_category],
-  );
-
   const hasFiltersChanged = useMemo(() => {
     if (!lastAppliedFilters) {
       return hasActiveFilters;
@@ -394,6 +354,47 @@ export function useFilterHandlers({
 
     return JSON.stringify(normalizedFilters) !== JSON.stringify(normalizedLastFilters);
   }, [filters, lastAppliedFilters, hasActiveFilters]);
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!hasFiltersChanged) return;
+      applySearchWithOverrides({});
+    },
+    [applySearchWithOverrides, hasFiltersChanged],
+  );
+
+  const handleReset = useCallback(
+    (scrollToTop: boolean = false) => {
+      clearFiltersFromStorage();
+      resetFilters();
+      setLastAppliedFilters(null);
+      const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+      if (typeof window !== 'undefined' && !scrollToTop) {
+        sessionStorageSetItem('scrollPreserved', 'true');
+      }
+      startTransition(() => {
+        const params = new URLSearchParams();
+        if (filters.listing_category === 'tire') {
+          params.set('category', 'tire');
+        } else if (vehicleType !== 'car') {
+          params.set('vehicleType', vehicleType);
+        }
+        replace(`/?${params.toString()}`, { scroll: false });
+        if (typeof window !== 'undefined') {
+          requestAnimationFrame(() => {
+            if (scrollToTop) {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+              window.scrollTo({ top: scrollY, behavior: 'instant' });
+              sessionStorageRemoveItem('scrollPreserved');
+            }
+          });
+        }
+      });
+    },
+    [resetFilters, setLastAppliedFilters, vehicleType, replace, filters.listing_category],
+  );
 
   return {
     handleChange,

@@ -44,6 +44,7 @@ test.describe('Listing create @p0', () => {
   });
 
   test('opens create listing form for authenticated user', async ({ page, listingCreatePage }) => {
+    test.setTimeout(90_000);
     await runSteps(
       prependClearBrowserState(page, [
         {

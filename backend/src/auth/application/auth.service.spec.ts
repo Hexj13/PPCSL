@@ -119,6 +119,7 @@ describe('AuthService', () => {
       create: jest.fn(),
       findOne: jest.fn(),
       findOneById: findOneByIdMock,
+      hasPasswordSet: jest.fn().mockResolvedValue(true),
       update: jest.fn(),
       ensureBoardSlug: jest.fn().mockResolvedValue('test-slug'),
     };
@@ -796,7 +797,7 @@ describe('AuthService', () => {
         whatsapp: true,
         telegram: false,
       };
-      usersService.findOneById.mockResolvedValue(fullUser as User);
+      usersService.findOneByIdWithPassword.mockResolvedValue(fullUser as User);
 
       const result = await service.getUserProfile('1');
 
@@ -805,7 +806,8 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('email');
       expect(result).toHaveProperty('type');
       expect(result).toHaveProperty('boardSlug', 'test-slug');
-      expect(usersService.findOneById).toHaveBeenCalledWith('1');
+      expect(result).toHaveProperty('hasPassword', true);
+      expect(usersService.findOneByIdWithPassword).toHaveBeenCalledWith('1');
       expect(usersService.ensureBoardSlug).toHaveBeenCalledWith('1', expect.anything());
     });
   });
