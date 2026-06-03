@@ -1,23 +1,17 @@
 import { test } from '../fixtures/base';
-import { VEHICLE_SEARCH_TABS, type SearchFilterTab } from '../test-data/search-filter-sheets';
+import { VEHICLE_SEARCH_TABS } from '../test-data/search-filter-sheets';
 import { expectVehicleSearchTabPanelVisible } from '../utils/search-filter-panels';
 import { visibleSearchFiltersForm } from '../utils/search-filters-form';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
-import { isMobileProjectName } from '../utils/viewport';
 
-const TAB_BUTTON_TEST_IDS: Record<SearchFilterTab, string> = {
+const TAB_BUTTON_TEST_IDS = {
   basic: 'search-tab-basic',
   advanced: 'search-tab-advanced',
   equipment: 'search-tab-equipment',
   popular: 'search-tab-popular',
-};
+} as const;
 
 test.describe('Search: desktop filter tabs @p0', () => {
-  test.beforeEach(({ page: _page }, testInfo) => {
-    void _page;
-    test.skip(isMobileProjectName(testInfo.project.name), 'Desktop layout only');
-  });
-
   test('switches all vehicle search tabs on desktop panels', async ({ page, searchHomePage }) => {
     const steps: E2EStep[] = [
       {

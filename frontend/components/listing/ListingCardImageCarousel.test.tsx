@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import React, { createRef } from 'react';
 
 import { ListingCardImageCarousel, type ListingCardImageCarouselHandle } from './ListingCardParts';
@@ -50,10 +50,8 @@ describe('ListingCardImageCarousel', () => {
     expect(onBusyChange).toHaveBeenLastCalledWith(true);
     expect(screen.getByTestId('carousel-layer-pending')).toBeInTheDocument();
 
-    const pendingSlide = screen.getByTestId('carousel-layer-pending').querySelector('img');
-    act(() => {
-      fireEvent.load(pendingSlide!);
-    });
+    const pendingLayer = screen.getByTestId('carousel-layer-pending');
+    fireEvent.load(within(pendingLayer).getByTestId('carousel-slide'));
 
     expect(onBusyChange).toHaveBeenLastCalledWith(false);
     expect(ref.current?.isBusy()).toBe(false);

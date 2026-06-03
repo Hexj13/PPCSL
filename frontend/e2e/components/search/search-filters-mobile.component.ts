@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
+import { expectVehicleSearchTabPanelVisible } from '../../utils/search-filter-panels';
 import { visibleSearchFiltersForm } from '../../utils/search-filters-form';
 import { BottomSheetComponent } from '../common/bottom-sheet.component';
 
@@ -66,6 +67,7 @@ export class SearchFiltersMobileComponent {
     await tabButton.scrollIntoViewIfNeeded();
     await expect(tabButton).toBeVisible();
     await tabButton.click();
+    await expectVehicleSearchTabPanelVisible(this.page, tab);
     const panel = this.mobilePanel(panelId);
     await expect(panel).not.toHaveClass('hidden', { timeout: 15_000 });
     await expect(panel).toBeVisible();

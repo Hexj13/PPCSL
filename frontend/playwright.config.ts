@@ -20,12 +20,14 @@ export default defineConfig({
       use: {
         ...devices['Pixel 7'],
       },
+      testIgnore: ['**/search-filters-desktop.spec.ts'],
     },
     {
       name: 'desktop',
       use: {
         ...devices['Desktop Chrome'],
       },
+      testIgnore: ['**/search-filters-mobile.spec.ts'],
     },
   ],
   webServer: process.env.PLAYWRIGHT_SKIP_WEBSERVER

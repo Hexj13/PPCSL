@@ -103,10 +103,10 @@ Page objects must absorb these differences (`ListingCreatePage.pickDropdownOptio
 
 | Project | Viewport | Specs |
 | --- | --- | --- |
-| **`mobile`** | `Pixel 7` | All specs in `e2e/specs` (unless skipped in-file) |
-| **`desktop`** | `Desktop Chrome` | All specs in `e2e/specs` (unless skipped in-file) |
+| **`mobile`** | `Pixel 7` | All specs except `search-filters-desktop.spec.ts` (`testIgnore` on the mobile project) |
+| **`desktop`** | `Desktop Chrome` | All specs except `search-filters-mobile.spec.ts` (`testIgnore` on the desktop project) |
 
-**Viewport-only specs** use `test.skip` in the spec file: `search-filters-mobile.spec.ts` skips non-mobile projects; `search-filters-desktop.spec.ts` skips mobile. All other specs run on both viewports.
+**Viewport-only specs** are scoped in `playwright.config.ts` with per-project `testIgnore` (not in-spec `test.skip`): `search-filters-mobile.spec.ts` runs on mobile only; `search-filters-desktop.spec.ts` runs on desktop only. All other specs run on both viewports.
 
 Specs that mutate shared E2E admin data (favorites, saved-filters, smart-selection, listing-detail-actions, sync-favorites-cross-tab, listing-create, my-listings, listing-view, search-filters, promotion) rely on isolated flows or cleanup helpers; run the full suite locally before release when changing those areas.
 

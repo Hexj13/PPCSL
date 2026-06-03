@@ -6,14 +6,8 @@ import {
   VEHICLE_SEARCH_TABS,
 } from '../test-data/search-filter-sheets';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
-import { isMobileProjectName } from '../utils/viewport';
 
 test.describe('Search: mobile filters and sheets @p0', () => {
-  test.beforeEach(({ page: _page }, testInfo) => {
-    void _page;
-    test.skip(!isMobileProjectName(testInfo.project.name), 'Mobile layout only');
-  });
-
   test('switches all vehicle search tabs', async ({ page, searchHomePage }) => {
     const mobileFilters = new SearchFiltersMobileComponent(page);
 

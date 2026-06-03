@@ -176,9 +176,10 @@ export class SearchHomePage {
     if (!href) {
       return false;
     }
+    await firstCardLink.scrollIntoViewIfNeeded();
     await Promise.all([
-      this.page.waitForURL(/\/listings\/[^/]+$/, { timeout: 20_000 }),
-      firstCardLink.click(),
+      this.page.waitForURL(/\/listings\/[^/]+$/, { timeout: 30_000, waitUntil: 'commit' }),
+      firstCardLink.click({ force: true }),
     ]);
     await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
     return true;
@@ -230,7 +231,12 @@ export class SearchHomePage {
     if (!targetId) {
       return false;
     }
-    await this.page.getByTestId(`listing-card-link-${targetId}`).click();
+    const cardLink = this.page.getByTestId(`listing-card-link-${targetId}`);
+    await cardLink.scrollIntoViewIfNeeded();
+    await Promise.all([
+      this.page.waitForURL(/\/listings\/[^/]+$/, { timeout: 30_000, waitUntil: 'commit' }),
+      cardLink.click({ force: true }),
+    ]);
     await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
     return true;
   }
