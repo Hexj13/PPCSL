@@ -38,3 +38,8 @@
 - **Middleware не видит `phoneVerified`** — на фронт-сервисе должен быть задан тот же `JWT_SECRET`, что и у Nest JWT.
 - **401 после логина** — проверить, что refresh-cookie доступен на пути `/api/auth` и что клиент не блокирует third-party cookies (для SameSite=Lax обычно достаточно same-site запросов к API).
 - **Нет кнопки Google при заданном `NEXT_PUBLIC_GOOGLE_CLIENT_ID`** — убедиться, что скрипт GIS реально загрузился (сеть / блокировщики); инициализация привязана к `onReady` скрипта. Если skeleton не исчезает, проверить блокировку `accounts.google.com` и консоль на ошибки GIS.
+- **Зависание на `https://accounts.google.com/gsi/transform`** — popup GIS не завершил обмен с сайтом; callback в приложении не вызывается, запрос `POST /api/auth/google` в Network не появляется. Проверить по шагам:
+  1. **Authorized JavaScript origins** в Google Cloud Console: точное совпадение origin страницы (`https://kupito.club`, при необходимости `https://www.kupito.club`; для локали префикс `/ru` не меняет origin).
+  2. **Заголовок COOP** на `/sign`: должен быть `Cross-Origin-Opener-Policy: same-origin-allow-popups`, не `same-origin` (строгий `same-origin` ломает связь popup ↔ страница). Проверка после деплоя: `curl -sS -I https://kupito.club/sign | grep -i cross-origin-opener-policy`
+  3. **DevTools → Network** после выбора аккаунта Google: если `POST /api/auth/google` нет — проблема до бэкенда (GIS, origins, COOP, блокировщики). Если POST есть и 401 — `GOOGLE_CLIENT_ID` на API и совпадение с `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, плюс `CORS_ORIGINS`.
+  4. Консоль на `/sign` и в popup: ошибки GIS (`origin_mismatch`, FedCM, `postMessage`).

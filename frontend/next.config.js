@@ -108,18 +108,18 @@ const nextConfig = {
           },
           {
             key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin',
+            value: 'same-origin-allow-popups',
           },
           {
             key: 'Content-Security-Policy-Report-Only',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com",
+              "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: http://localhost:4000",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://api.kupito.club https://cdn.kupito.club https://www.google-analytics.com https://*.sentry.io",
-              "frame-src 'self' https://www.googletagmanager.com",
+              "connect-src 'self' https://api.kupito.club https://cdn.kupito.club https://www.google-analytics.com https://accounts.google.com https://*.sentry.io",
+              "frame-src 'self' https://www.googletagmanager.com https://accounts.google.com",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
