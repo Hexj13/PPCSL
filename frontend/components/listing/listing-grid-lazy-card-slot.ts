@@ -1,4 +1,5 @@
 export const LISTING_GRID_CARD_LAZY_ROOT_MARGIN_PX = 280;
+export const LISTING_CARD_ANCHOR_ATTR = 'data-listing-card-anchor-id';
 
 export function listingGridCardSlotEntryIsIntersecting(entry: IntersectionObserverEntry): boolean {
   return entry.isIntersecting || entry.intersectionRatio > 0;

@@ -5,7 +5,8 @@ import { shouldRestoreHomeScrollAfterPath } from '@/lib/preserve-home-scroll';
 
 const HOME_SCROLL_MAX_AGE_MS = 5 * 60 * 1000;
 const RELOAD_SCROLL_MAX_AGE_MS = 10 * 60 * 1000;
-const ANCHOR_RESTORE_MAX_DURATION_MS = 1500;
+const ANCHOR_RESTORE_MAX_DURATION_MS = 3000;
+const SCROLL_HEIGHT_TOLERANCE_PX = 32;
 const ANCHOR_RESTORE_GAP_PX = 8;
 const DEFAULT_STICKY_HEADER_HEIGHT_PX = 72;
 
@@ -65,11 +66,13 @@ export function readHomeScrollRestoreTarget(
 
   const savedScroll = sessionStorageGetItem('homeScrollPosition');
   const timestamp = sessionStorageGetItem('homeScrollTimestamp');
-  if (savedScroll && timestamp && shouldRestoreHomeScrollAfterPath(previousPath)) {
+  const savedListingId = sessionStorageGetItem('homeScrollListingId');
+  const canRestoreListingReturn =
+    shouldRestoreHomeScrollAfterPath(previousPath) || Boolean(savedListingId);
+  if (savedScroll && timestamp && canRestoreListingReturn) {
     const savedTime = parseInt(timestamp, 10);
     if (Date.now() - savedTime < HOME_SCROLL_MAX_AGE_MS) {
       const scrollY = parseInt(savedScroll, 10);
-      const savedListingId = sessionStorageGetItem('homeScrollListingId');
       sessionStorageRemoveItem('homeScrollPosition');
       sessionStorageRemoveItem('homeScrollListingId');
       sessionStorageRemoveItem('homeScrollTimestamp');
@@ -81,6 +84,7 @@ export function readHomeScrollRestoreTarget(
       sessionStorageRemoveItem('homeScrollTimestamp');
       sessionStorageRemoveItem('homeScrollListingId');
       sessionStorageRemoveItem('kupito_grid_state');
+      sessionStorageRemoveItem('kupito_grid_restore_state');
     }
   }
 
@@ -120,12 +124,51 @@ function getStickyHeaderOffset(): number {
   return (height || DEFAULT_STICKY_HEADER_HEIGHT_PX) + ANCHOR_RESTORE_GAP_PX;
 }
 
+function escapeListingIdForSelector(listingId: string): string {
+  return typeof window.CSS !== 'undefined' && typeof window.CSS.escape === 'function'
+    ? window.CSS.escape(listingId)
+    : listingId;
+}
+
 function buildListingCardSelector(listingId: string): string {
-  const escapedId =
-    typeof window.CSS !== 'undefined' && typeof window.CSS.escape === 'function'
-      ? window.CSS.escape(listingId)
-      : listingId;
-  return `[data-testid="listing-card-${escapedId}"]`;
+  return `[data-testid="listing-card-${escapeListingIdForSelector(listingId)}"]`;
+}
+
+function buildListingCardAnchorSelector(listingId: string): string {
+  return `[data-listing-card-anchor-id="${escapeListingIdForSelector(listingId)}"]`;
+}
+
+function findListingRestoreTarget(listingId: string): Element | null {
+  return (
+    document.querySelector(buildListingCardSelector(listingId)) ??
+    document.querySelector(buildListingCardAnchorSelector(listingId))
+  );
+}
+
+function canScrollToFallbackY(fallbackScrollY: number): boolean {
+  const maxScrollY = document.documentElement.scrollHeight - window.innerHeight;
+  return maxScrollY >= fallbackScrollY - SCROLL_HEIGHT_TOLERANCE_PX;
+}
+
+function scrollTowardFallbackY(fallbackScrollY: number): void {
+  if (!Number.isFinite(fallbackScrollY) || fallbackScrollY <= 0) {
+    return;
+  }
+  if (!canScrollToFallbackY(fallbackScrollY)) {
+    return;
+  }
+  if (Math.abs(window.scrollY - fallbackScrollY) > 2) {
+    window.scrollTo({ top: fallbackScrollY, left: 0, behavior: 'instant' });
+  }
+}
+
+function anchorListingCard(card: Element): void {
+  const headerOffset = getStickyHeaderOffset();
+  const rect = card.getBoundingClientRect();
+  const desired = Math.max(0, Math.round(rect.top + window.scrollY - headerOffset));
+  if (Math.abs(window.scrollY - desired) > 1) {
+    window.scrollTo({ top: desired, left: 0, behavior: 'instant' });
+  }
 }
 
 export function restoreHomeScrollToListingCard(listingId: string, fallbackScrollY: number): void {
@@ -137,11 +180,7 @@ export function restoreHomeScrollToListingCard(listingId: string, fallbackScroll
     window.history.scrollRestoration = 'manual';
   }
 
-  if (Number.isFinite(fallbackScrollY) && fallbackScrollY > 0) {
-    window.scrollTo({ top: fallbackScrollY, left: 0, behavior: 'instant' });
-  }
-
-  const selector = buildListingCardSelector(listingId);
+  const cardSelector = buildListingCardSelector(listingId);
   const now = () =>
     typeof performance !== 'undefined' && typeof performance.now === 'function'
       ? performance.now()
@@ -169,19 +208,29 @@ export function restoreHomeScrollToListingCard(listingId: string, fallbackScroll
       return;
     }
 
-    const card = document.querySelector(selector);
+    const card = document.querySelector(cardSelector);
     if (card) {
-      const headerOffset = getStickyHeaderOffset();
-      const rect = card.getBoundingClientRect();
-      const desired = Math.max(0, Math.round(rect.top + window.scrollY - headerOffset));
-      if (Math.abs(window.scrollY - desired) > 1) {
-        window.scrollTo({ top: desired, left: 0, behavior: 'instant' });
-      }
+      anchorListingCard(card);
+      cleanup();
+      return;
+    }
+
+    const anchorTarget = findListingRestoreTarget(listingId);
+    if (anchorTarget) {
+      anchorListingCard(anchorTarget);
+    } else {
+      scrollTowardFallbackY(fallbackScrollY);
     }
 
     if (now() - start < ANCHOR_RESTORE_MAX_DURATION_MS) {
       requestAnimationFrame(step);
     } else {
+      const finalTarget = findListingRestoreTarget(listingId);
+      if (finalTarget) {
+        anchorListingCard(finalTarget);
+      } else if (Number.isFinite(fallbackScrollY) && fallbackScrollY > 0) {
+        scrollTowardFallbackY(fallbackScrollY);
+      }
       cleanup();
     }
   };

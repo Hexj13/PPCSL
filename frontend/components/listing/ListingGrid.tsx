@@ -34,52 +34,19 @@ import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { ListingGridCardSlot } from './ListingGridCardSlot';
 import { ListingGridPaginationFooter } from './ListingGridPaginationFooter';
 import { PartnerPromoBanner } from './PartnerPromoBanner';
+import {
+  buildFetchParams,
+  fetchListingsPage,
+  getRestorableGridState,
+  getVehicleTypeFromParams,
+  GRID_RESTORE_STATE_KEY,
+  GRID_STATE_KEY,
+  saveGridState,
+} from './listing-grid-state';
+import { useListingGridRestore } from './useListingGridRestore';
 
 interface ListingGridProps {
   initialData?: { data: Listing[]; meta: PaginationMeta };
-}
-
-const GRID_STATE_KEY = 'kupito_grid_state';
-
-const saveGridState = (listings: Listing[], page: number, meta: PaginationMeta | null) => {
-  if (typeof window !== 'undefined') {
-    try {
-      const state = { listings, page, meta, timestamp: Date.now() };
-      sessionStorageSetItem(GRID_STATE_KEY, JSON.stringify(state));
-    } catch {}
-  }
-};
-
-const loadGridState = (): {
-  listings: Listing[];
-  page: number;
-  meta: PaginationMeta | null;
-} | null => {
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = sessionStorageGetItem(GRID_STATE_KEY);
-      if (!stored) return null;
-      const state = JSON.parse(stored);
-      if (!state.timestamp) return null;
-      const savedTime = parseInt(state.timestamp, 10);
-      if (Date.now() - savedTime > 5 * 60 * 1000) {
-        sessionStorageRemoveItem(GRID_STATE_KEY);
-        return null;
-      }
-      return { listings: state.listings, page: state.page, meta: state.meta };
-    } catch {
-      return null;
-    }
-  }
-  return null;
-};
-
-function getVehicleTypeFromParams(searchParamsString: string): 'car' | 'truck' | 'moto' {
-  const params = new URLSearchParams(searchParamsString);
-  const vehicleTypeParam = params.get('vehicleType') as 'car' | 'truck' | 'moto' | null;
-  return vehicleTypeParam && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
-    ? vehicleTypeParam
-    : 'car';
 }
 
 function listingGridHasMore(meta: PaginationMeta | null, currentPage: number): boolean {
@@ -89,37 +56,6 @@ function listingGridHasMore(meta: PaginationMeta | null, currentPage: number): b
 function getAppendSkeletonCount(meta: PaginationMeta | null, visibleListingsCount: number): number {
   const remaining = Math.max(0, (meta?.total ?? 0) - visibleListingsCount);
   return remaining > 0 ? Math.min(remaining, LISTING_GRID_PAGE_SIZE) : LISTING_GRID_PAGE_SIZE;
-}
-
-async function fetchListingsPage(
-  params: Record<string, string | number | boolean>,
-  page: number,
-  signal?: AbortSignal,
-): Promise<{ data: Listing[]; meta: PaginationMeta }> {
-  const res = await listingsApi.getAll({ ...params, page }, signal ? { signal } : undefined);
-  return { data: res.data.data, meta: res.data.meta };
-}
-
-async function buildFetchParams(searchParamsString: string) {
-  const vehicleType = getVehicleTypeFromParams(searchParamsString);
-  const parsedParams = await getParsedListingSearchParams(searchParamsString, vehicleType);
-  const isTireCategory = parsedParams.category === 'tire';
-  const limitFromParams = Number(parsedParams.limit);
-  const hasValidLimitInSearch =
-    Number.isFinite(limitFromParams) && Number.isInteger(limitFromParams) && limitFromParams > 0;
-  let urlHasExplicitLimit = false;
-  try {
-    urlHasExplicitLimit = new URLSearchParams(searchParamsString).has('limit');
-  } catch {
-    urlHasExplicitLimit = false;
-  }
-  const effectiveLimit =
-    urlHasExplicitLimit && hasValidLimitInSearch ? limitFromParams : LISTING_GRID_PAGE_SIZE;
-  return {
-    ...parsedParams,
-    ...(!isTireCategory ? { vehicleType } : {}),
-    limit: effectiveLimit,
-  } as Record<string, string | number | boolean>;
 }
 
 function handleSearchLimitOverflowError(
@@ -172,6 +108,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const [widerCategoryHasListings, setWiderCategoryHasListings] = useState<boolean | null>(null);
   const listingsRef = useRef<Listing[]>(initialData?.data || []);
   const restoredFromStorageRef = useRef(false);
+  const returningWithSavedScrollRef = useRef(
+    typeof window !== 'undefined' && Boolean(sessionStorageGetItem('homeScrollTimestamp')),
+  );
   const { user } = useAuthStore();
   const { showBanner: showPartnerPromoBanner, dismiss: dismissPartnerPromoBanner } =
     usePartnerPromoBannerInGrid();
@@ -180,10 +119,8 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const fetchControllerRef = useRef<AbortController | null>(null);
   const appendTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gridSearchParamsEffectInitializedRef = useRef(false);
-  const skipClientFetchOnMountRef = useRef<boolean | undefined>(undefined);
-  if (skipClientFetchOnMountRef.current === undefined) {
-    skipClientFetchOnMountRef.current = initialData?.meta != null;
-  }
+  const restoreCompletedRef = useRef(false);
+  const skipClientFetchOnMountRef = useRef(initialData?.meta != null);
 
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
 
@@ -270,7 +207,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                 listingsRef.current = updated;
                 setCurrentPage(page);
                 setMeta(finalMeta);
-                saveGridState(updated, page, finalMeta);
+                saveGridState(updated, page, finalMeta, searchParamsString);
                 return updated;
               });
               setLoadingMore(false);
@@ -311,30 +248,27 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const fetchListingsRef = useRef(fetchListings);
   fetchListingsRef.current = fetchListings;
 
-  useEffect(() => {
-    if (restoredFromStorageRef.current) return;
-    restoredFromStorageRef.current = true;
-    const hasScrollTimestamp =
-      typeof window !== 'undefined' && sessionStorageGetItem('homeScrollTimestamp');
-    if (hasScrollTimestamp) {
-      const saved = loadGridState();
-      if (saved && saved.page > 1) {
-        setListings(saved.listings);
-        setMeta(saved.meta);
-        setCurrentPage(saved.page);
-        listingsRef.current = saved.listings;
-      }
-    }
-  }, []);
+  useListingGridRestore({
+    returningWithSavedScroll: returningWithSavedScrollRef.current,
+    searchParamsString,
+    checkFavorites,
+    setListings,
+    setMeta,
+    setCurrentPage,
+    setHasLoadedWithFilters,
+    listingsRef,
+    fetchControllerRef,
+    restoredFromStorageRef,
+    restoreCompletedRef,
+  });
 
   useEffect(() => {
     if (!gridSearchParamsEffectInitializedRef.current) {
       gridSearchParamsEffectInitializedRef.current = true;
       prevSearchParamsStringRef.current = searchParamsString;
-      const ts =
-        typeof window !== 'undefined' ? sessionStorageGetItem('homeScrollTimestamp') : null;
-      const saved = loadGridState();
-      const skipInitialFetch = Boolean(ts && saved && saved.page > 1);
+      const skipInitialFetch = Boolean(
+        getRestorableGridState(returningWithSavedScrollRef.current, searchParamsString),
+      );
       if (skipInitialFetch || skipClientFetchOnMountRef.current === true) {
         setHasLoadedWithFilters(true);
       } else {
@@ -348,6 +282,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       setAppendSkeletonCount(0);
       setError(null);
       sessionStorageRemoveItem(GRID_STATE_KEY);
+      sessionStorageRemoveItem(GRID_RESTORE_STATE_KEY);
       sessionStorageRemoveItem('homeScrollTimestamp');
       void fetchListingsRef.current(1, false);
     }
@@ -504,6 +439,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
                   <button
                     onClick={() => {
                       sessionStorageRemoveItem(GRID_STATE_KEY);
+                      sessionStorageRemoveItem(GRID_RESTORE_STATE_KEY);
                       sessionStorageRemoveItem('homeScrollTimestamp');
                       sessionStorageRemoveItem('scrollPreserved');
 

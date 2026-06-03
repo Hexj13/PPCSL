@@ -1,9 +1,15 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, type ComponentPropsWithoutRef } from 'react';
 
-export const ListingCardSkeleton = forwardRef<HTMLDivElement>(
-  function ListingCardSkeleton(_props, ref) {
+export const ListingCardSkeleton = forwardRef<HTMLDivElement, ComponentPropsWithoutRef<'div'>>(
+  function ListingCardSkeleton({ className, ...props }, ref) {
     return (
-      <div ref={ref} className="card overflow-hidden cursor-pointer h-full flex flex-col">
+      <div
+        ref={ref}
+        className={['card overflow-hidden cursor-pointer h-full flex flex-col', className]
+          .filter(Boolean)
+          .join(' ')}
+        {...props}
+      >
         <div
           className="relative w-full bg-bg-darker shrink-0 animate-pulse"
           style={{ aspectRatio: '16/9', minHeight: '240px' }}

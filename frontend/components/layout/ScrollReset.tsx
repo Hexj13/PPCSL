@@ -17,14 +17,6 @@ import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
 const SCROLL_TOP_ON_ENTER_PATHS = new Set(['/favorites', '/compare']);
 
-function isMobileViewport(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(max-width: 767px)').matches
-  );
-}
-
 function scrollWindowToTopInstant() {
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
@@ -65,7 +57,7 @@ function setupHomeScrollRestoration(
 
   const target = readHomeScrollRestoreTarget(previousPath);
   if (target) {
-    if (target.source === 'listing_return' && target.listingId && isMobileViewport()) {
+    if (target.source === 'listing_return' && target.listingId) {
       restoreHomeScrollToListingCard(target.listingId, target.scrollY);
     } else {
       applyHomeScrollRestore(target.scrollY);

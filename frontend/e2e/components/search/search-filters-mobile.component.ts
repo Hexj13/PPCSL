@@ -41,6 +41,10 @@ export class SearchFiltersMobileComponent {
     return visibleSearchFiltersForm(this.page);
   }
 
+  private mobilePanel(testId: string) {
+    return this.searchFiltersForm().locator('.md\\:hidden').getByTestId(testId);
+  }
+
   async selectTab(tab: SearchFilterTab): Promise<void> {
     const tabId =
       tab === 'basic'
@@ -50,7 +54,6 @@ export class SearchFiltersMobileComponent {
           : tab === 'equipment'
             ? this.testIds.tabEquipment
             : this.testIds.tabPopular;
-    await this.searchFiltersForm().getByTestId(tabId).click();
     const panelId =
       tab === 'basic'
         ? this.testIds.panelBasic
@@ -59,9 +62,13 @@ export class SearchFiltersMobileComponent {
           : tab === 'equipment'
             ? this.testIds.panelEquipment
             : this.testIds.panelPopular;
-    await expect(
-      this.searchFiltersForm().locator('.md\\:hidden').getByTestId(panelId),
-    ).toBeVisible();
+    const tabButton = this.searchFiltersForm().getByTestId(tabId);
+    await tabButton.scrollIntoViewIfNeeded();
+    await expect(tabButton).toBeVisible();
+    await tabButton.click();
+    const panel = this.mobilePanel(panelId);
+    await expect(panel).not.toHaveClass('hidden', { timeout: 15_000 });
+    await expect(panel).toBeVisible();
   }
 
   async openFilterRow(sheetId: string): Promise<void> {

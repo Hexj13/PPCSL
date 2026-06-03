@@ -67,6 +67,7 @@ export function ListingPageBreadcrumbs({ listing, className = '' }: ListingPageB
     sessionStorageRemoveItem('homeScrollPosition');
     sessionStorageRemoveItem('homeScrollTimestamp');
     sessionStorageRemoveItem('kupito_grid_state');
+    sessionStorageRemoveItem('kupito_grid_restore_state');
     sessionStorageRemoveItem('forceHomeScrollTop');
   }, []);
 

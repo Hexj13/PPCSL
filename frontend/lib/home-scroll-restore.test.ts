@@ -6,7 +6,11 @@ jest.mock('@/lib/url-locale', () => ({
 
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
-import { applyHomeScrollRestore, readHomeScrollRestoreTarget } from './home-scroll-restore';
+import {
+  applyHomeScrollRestore,
+  readHomeScrollRestoreTarget,
+  restoreHomeScrollToListingCard,
+} from './home-scroll-restore';
 
 describe('readHomeScrollRestoreTarget', () => {
   const strip = stripLocalePrefixFromPathname as jest.MockedFunction<
@@ -27,6 +31,17 @@ describe('readHomeScrollRestoreTarget', () => {
 
     expect(result).toEqual({ scrollY: 1200, source: 'listing_return' });
     expect(window.sessionStorage.getItem('homeScrollPosition')).toBeNull();
+  });
+
+  it('returns listing scroll by saved listing id when previous path is unavailable', () => {
+    window.sessionStorage.setItem('homeScrollPosition', '1200');
+    window.sessionStorage.setItem('homeScrollTimestamp', String(Date.now()));
+    window.sessionStorage.setItem('homeScrollListingId', 'abc');
+
+    const result = readHomeScrollRestoreTarget(null);
+
+    expect(result).toEqual({ scrollY: 1200, source: 'listing_return', listingId: 'abc' });
+    expect(strip).not.toHaveBeenCalled();
   });
 
   it('returns null when previous path is unrelated', () => {
@@ -75,5 +90,82 @@ describe('applyHomeScrollRestore', () => {
 
     expect(document.body.style.position).toBe('');
     expect(document.body.style.top).toBe('');
+  });
+});
+
+describe('restoreHomeScrollToListingCard', () => {
+  let rafCallbacks: FrameRequestCallback[];
+
+  beforeEach(() => {
+    window.scrollTo = jest.fn();
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 0, writable: true });
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      value: 800,
+      writable: true,
+    });
+    document.body.innerHTML = '';
+    rafCallbacks = [];
+    jest
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb: FrameRequestCallback): number => {
+        rafCallbacks.push(cb);
+        return rafCallbacks.length;
+      });
+    const header = document.createElement('header');
+    header.getBoundingClientRect = () => ({ height: 72 }) as DOMRect;
+    document.body.appendChild(header);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('anchors to the listing card when it is in the DOM', () => {
+    const card = document.createElement('article');
+    card.setAttribute('data-testid', 'listing-card-abc');
+    card.getBoundingClientRect = () => ({ top: 400, left: 0, width: 300, height: 200 }) as DOMRect;
+    document.body.appendChild(card);
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 5000,
+    });
+
+    restoreHomeScrollToListingCard('abc', 1200);
+    rafCallbacks.forEach((cb) => cb(0));
+
+    expect(window.scrollTo).toHaveBeenCalledWith(
+      expect.objectContaining({ top: expect.any(Number), behavior: 'instant' }),
+    );
+  });
+
+  it('anchors to slot anchor when the listing card is not mounted yet', () => {
+    const slot = document.createElement('div');
+    slot.setAttribute('data-listing-card-anchor-id', 'abc');
+    slot.getBoundingClientRect = () => ({ top: 400, left: 0, width: 300, height: 400 }) as DOMRect;
+    document.body.appendChild(slot);
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 5000,
+    });
+
+    restoreHomeScrollToListingCard('abc', 1200);
+    rafCallbacks.forEach((cb) => cb(0));
+
+    expect(window.scrollTo).toHaveBeenCalledWith(
+      expect.objectContaining({ top: expect.any(Number), behavior: 'instant' }),
+    );
+  });
+
+  it('does not scroll to fallbackY while the page is still too short', () => {
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 500,
+    });
+
+    restoreHomeScrollToListingCard('missing-id', 1200);
+    rafCallbacks.forEach((cb) => cb(0));
+
+    expect(window.scrollTo).not.toHaveBeenCalled();
   });
 });

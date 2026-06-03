@@ -7,6 +7,7 @@ import type { Listing } from '@/lib/api';
 import { ListingCard } from './ListingCard';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 import {
+  LISTING_CARD_ANCHOR_ATTR,
   LISTING_GRID_CARD_LAZY_ROOT_MARGIN_PX,
   listingGridCardSlotEntryIsIntersecting,
   listingGridCardSlotHasVisibleIntersection,
@@ -67,8 +68,10 @@ export function ListingGridCardSlot({ listing, index }: { listing: Listing; inde
     };
   }, [mounted, index]);
 
+  const anchorProps = { [LISTING_CARD_ANCHOR_ATTR]: listing.id };
+
   if (!mounted) {
-    return <ListingCardSkeleton ref={wrapRef} />;
+    return <ListingCardSkeleton ref={wrapRef} {...anchorProps} />;
   }
 
   return (
