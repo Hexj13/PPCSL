@@ -1,7 +1,10 @@
 'use client';
 
 import type { useListingGridCities } from '@/components/listing/CitiesProvider';
-import { ListingCardTireSpecs, ListingCardVehicleSpecs } from '@/components/listing/ListingCardParts';
+import {
+  ListingCardTireSpecs,
+  ListingCardVehicleSpecs,
+} from '@/components/listing/ListingCardParts';
 import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStatusBadge';
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
