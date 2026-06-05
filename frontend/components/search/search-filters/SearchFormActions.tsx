@@ -168,7 +168,7 @@ export function SearchFormActions({
                       />
                     </svg>
                     <span className="whitespace-nowrap text-base">
-                      {userForUi ? t('searchFilters.addToFavorites') : t('searchFilters.login')}
+                      {t('searchFilters.addToFavorites')}
                     </span>
                   </button>
                 </>

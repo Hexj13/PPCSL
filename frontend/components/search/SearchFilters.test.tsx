@@ -288,7 +288,6 @@ jest.mock('./search-filters/AdvancedFilters', () => ({
 }));
 
 jest.mock('./search-filters/SearchFormActions', () => {
-  const { useAuthStore } = require('@/lib/store');
   const { useTranslation } = require('@/hooks/useTranslation');
   return {
     SearchFormActions: (props: {
@@ -301,9 +300,8 @@ jest.mock('./search-filters/SearchFormActions', () => {
       availableListingsTotal?: number | null;
       isAvailableListingsLoading?: boolean;
     }) => {
-      const { user } = (useAuthStore as jest.Mock)();
       const { t } = useTranslation();
-      const saveText = user ? t('searchFilters.addToFavorites') : t('searchFilters.login');
+      const saveText = t('searchFilters.addToFavorites');
       return (
         <div data-testid="search-form-actions">
           <button type="submit">{t('searchFilters.search')}</button>
@@ -792,7 +790,7 @@ describe('SearchFilters', () => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const saveButton = screen.getByRole('button', { name: /log in/i });
+      const saveButton = screen.getByRole('button', { name: /add to favorites/i });
       await waitFor(() => {
         expect(saveButton).toBeDisabled();
       });
@@ -840,11 +838,11 @@ describe('SearchFilters', () => {
       });
 
       await waitFor(() => {
-        const saveButton = screen.getByText('Log in');
+        const saveButton = screen.getByText('Add to favorites');
         expect(saveButton).not.toBeDisabled();
       });
 
-      const saveButton = screen.getByText('Log in');
+      const saveButton = screen.getByText('Add to favorites');
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -880,7 +878,7 @@ describe('SearchFilters', () => {
       });
     });
 
-    it('should show correct button text for unauthenticated user', async () => {
+    it('should show save button text for unauthenticated user', async () => {
       (useAuthStore as unknown as jest.Mock).mockReturnValue({
         user: null,
         isInitialized: true,
@@ -899,7 +897,9 @@ describe('SearchFilters', () => {
         fireEvent.change(brandDropdown, { target: { value: 'brand-1' } });
       }
 
-      expect(await screen.findByText('Log in', {}, { timeout: 3000 })).toBeInTheDocument();
+      expect(
+        await screen.findByText('Add to favorites', {}, { timeout: 3000 }),
+      ).toBeInTheDocument();
     });
   });
 });

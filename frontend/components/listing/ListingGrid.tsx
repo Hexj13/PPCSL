@@ -25,6 +25,7 @@ import {
   sessionStorageSetItem,
 } from '@/lib/browser-session-storage';
 import { LISTING_GRID_PAGE_SIZE, SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY } from '@/lib/constants';
+import { clearHomeScrollRestoreSession } from '@/lib/home-scroll-restore';
 import { buildMinimalCategorySearchUrl, getParsedListingSearchParams } from '@/lib/search';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import { silentCatch } from '@/lib/utils';
@@ -284,7 +285,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       setError(null);
       sessionStorageRemoveItem(GRID_STATE_KEY);
       sessionStorageRemoveItem(GRID_RESTORE_STATE_KEY);
-      sessionStorageRemoveItem('homeScrollTimestamp');
+      clearHomeScrollRestoreSession();
       void fetchListingsRef.current(1, false);
     }
 
@@ -395,6 +396,8 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   useListingGridScrollEffects({
     listingsCount: listings.length,
     showContent,
+    isLoading: loading,
+    searchParamsString,
   });
 
   return (

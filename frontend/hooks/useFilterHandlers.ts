@@ -7,6 +7,7 @@ import { analytics } from '@/lib/analytics';
 import type { Brand, VehicleModel, City } from '@/lib/api';
 import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { MAX_SEARCH_BRAND_SELECTIONS, MAX_SEARCH_MODEL_SELECTIONS } from '@/lib/constants';
+import { clearHomeScrollRestoreSession } from '@/lib/home-scroll-restore';
 import { buildSearchQuery, clearFiltersFromStorage, saveFiltersToStorage } from '@/lib/search';
 import { buildDeferredSearchFiltersPayload } from '@/lib/search/build-deferred-search-filters-payload';
 import { toast } from '@/lib/toast';
@@ -279,6 +280,7 @@ export function useFilterHandlers({
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
       sessionStorageSetItem('scrollPreserved', 'true');
       sessionStorageSetItem('scrollToResultsAfterLoad', 'true');
+      clearHomeScrollRestoreSession();
       startTransition(() => {
         replace(newUrl, { scroll: false });
         if (typeof window !== 'undefined') {
@@ -369,6 +371,10 @@ export function useFilterHandlers({
       clearFiltersFromStorage();
       resetFilters();
       setLastAppliedFilters(null);
+      if (typeof window !== 'undefined') {
+        sessionStorageRemoveItem('scrollToResultsAfterLoad');
+        clearHomeScrollRestoreSession();
+      }
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
       if (typeof window !== 'undefined' && !scrollToTop) {
         sessionStorageSetItem('scrollPreserved', 'true');
