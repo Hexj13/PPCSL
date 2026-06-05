@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { processPendingSavedFilter } from '@/app/complete-profile/utils';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -256,10 +257,12 @@ export function useGoogleAuth(options: {
         return;
       }
       await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
+      const filterHandled = await processPendingSavedFilter(t, returnUrl);
+      if (filterHandled) return;
       const dest = (returnUrl ? sanitizeReturnUrl(returnUrl) : null) ?? '/';
       replace(buildPostAuthRedirect(dest, locale));
     },
-    [searchParams, replace, setAuth],
+    [searchParams, replace, setAuth, t],
   );
 
   useEffect(() => {

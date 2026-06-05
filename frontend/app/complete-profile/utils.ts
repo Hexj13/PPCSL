@@ -38,7 +38,7 @@ export async function processPendingSavedFilter(
     const year = now.getFullYear();
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
-    const filterName = `Филтер ${day}.${month}.${year} ${hours}:${minutes}`;
+    const filterName = `${t('common.filter')} ${day}.${month}.${year} ${hours}:${minutes}`;
     await savedFiltersApi.create(filterName, filters);
     localStorageRemoveItem('pendingSavedFilter');
     toast.success(t('login.filterSavedSuccess'));

@@ -3,12 +3,16 @@
  */
 
 const mockPathname = jest.fn(() => '/ru/sign');
+let mockSearchParams = new URLSearchParams();
+const mockLocalStorageGetItem = jest.fn(() => null as string | null);
+const mockLocalStorageRemoveItem = jest.fn();
+const mockLocationReplace = jest.fn();
 
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { I18nProvider } from '@/components/providers/I18nProvider';
-import { authApi } from '@/lib/api';
+import { authApi, savedFiltersApi } from '@/lib/api';
 import { loadTranslationsDynamic, type Translations } from '@/lib/i18n';
 import { toast } from '@/lib/toast';
 
@@ -30,8 +34,13 @@ jest.mock('@/lib/auth-submit-loader', () => ({
 }));
 
 jest.mock('next/navigation', () => ({
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => mockSearchParams,
   usePathname: () => mockPathname(),
+}));
+
+jest.mock('@/lib/browser-local-storage', () => ({
+  localStorageGetItem: (...args: unknown[]) => mockLocalStorageGetItem(...args),
+  localStorageRemoveItem: (...args: unknown[]) => mockLocalStorageRemoveItem(...args),
 }));
 
 jest.mock('@/lib/comparisonMigration', () => ({
@@ -67,6 +76,9 @@ jest.mock('@/lib/api', () => ({
       },
     })),
     me: jest.fn(async (..._args: unknown[]) => ({ data: { id: '1', phoneVerified: true } })),
+  },
+  savedFiltersApi: {
+    create: jest.fn(async () => ({})),
   },
 }));
 
@@ -119,7 +131,8 @@ const minimalTranslations = {
     googleSignInFailed: 'fail',
     userAlreadyExists: 'User already exists',
   },
-  common: { loading: 'Loading' },
+  common: { loading: 'Loading', filter: 'Filter' },
+  login: { filterSavedSuccess: 'Filter saved', filterSaveError: 'Filter save error' },
 } as unknown as Translations;
 
 function HarnessRegisterBusiness() {
@@ -190,6 +203,11 @@ describe('useGoogleAuth', () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-google-client';
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = 'true';
+    mockSearchParams = new URLSearchParams();
+    mockLocalStorageGetItem.mockReset();
+    mockLocalStorageGetItem.mockReturnValue(null);
+    mockLocalStorageRemoveItem.mockReset();
+    mockLocationReplace.mockReset();
     jest.clearAllMocks();
     (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockImplementation(async () => ({
       data: {
@@ -210,6 +228,7 @@ describe('useGoogleAuth', () => {
     delete (window as unknown as { location?: unknown }).location;
     (window as unknown as { location: Location }).location = {
       pathname: '/ru/sign',
+      replace: mockLocationReplace,
     } as Location;
     (loadTranslationsDynamic as jest.Mock).mockImplementation((locale: unknown) =>
       Promise.resolve({ ...minimalTranslations, __locale: String(locale) } as Translations),
@@ -609,6 +628,46 @@ describe('useGoogleAuth', () => {
 
     expect(authApi.googleSignIn).not.toHaveBeenCalled();
     expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('false');
+  });
+
+  it('saves pendingSavedFilter after Google login when phone is verified', async () => {
+    const pendingFilters = { brand_ids: ['brand-1'], vehicleType: 'car' };
+    mockSearchParams = new URLSearchParams('returnUrl=%2Ffavorites%3Ftab%3Dfilters');
+    mockLocalStorageGetItem.mockImplementation((key: string) => {
+      if (key === 'pendingSavedFilter') {
+        return JSON.stringify(pendingFilters);
+      }
+      return null;
+    });
+
+    render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(window.google?.accounts?.id.initialize).toHaveBeenCalled();
+    });
+
+    const init = (window.google!.accounts!.id.initialize as jest.Mock).mock.calls[0][0] as {
+      callback: (resp: { credential: string }) => void;
+    };
+
+    await act(async () => {
+      await init.callback({ credential: 'tok' });
+    });
+
+    await waitFor(() => {
+      expect(savedFiltersApi.create).toHaveBeenCalledWith(
+        expect.stringMatching(/^Filter \d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/),
+        pendingFilters,
+      );
+    });
+    expect(mockLocalStorageRemoveItem).toHaveBeenCalledWith('pendingSavedFilter');
+    expect(toast.success).toHaveBeenCalledWith('Filter saved');
+    expect(mockLocationReplace).toHaveBeenCalledWith('/ru/favorites?tab=filters');
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it('replaces route to localized home when phone is verified and returnUrl is absent', async () => {
