@@ -27,6 +27,10 @@ import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { ListingGridPaginationFooter } from './ListingGridPaginationFooter';
 import { VirtualizedListingGrid } from './VirtualizedListingGrid';
 import {
+  LISTING_CARD_APPEND_PRELOAD_COUNT,
+  prewarmListingCardCoverImages,
+} from './listing-card-image';
+import {
   buildFetchParams,
   fetchListingsPage,
   getRestorableGridState,
@@ -168,6 +172,15 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
         await checkFavorites(allNewListings.map((l) => l.id));
         if (controller.signal.aborted) return;
+
+        if (append) {
+          prewarmListingCardCoverImages(
+            allNewListings
+              .slice(0, LISTING_CARD_APPEND_PRELOAD_COUNT)
+              .map((listing) => listing.images?.[0])
+              .filter((url): url is string => Boolean(url)),
+          );
+        }
 
         if (!append) {
           startTransition(() => {

@@ -342,7 +342,7 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 ### Key Features
 
 - **Image Processing:** Automatic compression, resizing (max 1920px width), conversion to WebP format (75% quality by default)
-- **Adaptive Quality:** Different quality levels for different contexts (70% for thumbnails, 75-80% for cards and detail pages, 85% for full-size modal views)
+- **Adaptive Quality:** Different quality levels for different contexts (65% for 1080px card previews in `/uploads/thumb/`, 65% for listing cards, 75-80% for detail pages, 85% for full-size modal views)
 - **File Storage:** AWS S3 for persistent images and optional listing video (using AWS SDK v3, required for production on Render.com), AWS CloudFront CDN for fast global delivery when configured
 - **Search:** PostgreSQL Full-Text Search with extensive filtering options
 - **Smart Selection:** authenticated questionnaire that maps car-use preferences to a saved search filter
@@ -512,6 +512,10 @@ POST /api/upload/image                # Upload and optimize image
 GET  /api/upload/image/:filename      # Get optimized image version
                                      # Query params: ?quality=X&width=Y
                                      # Response: Cache-Control: public, max-age=31536000, immutable, stale-while-revalidate=604800; ETag for 304 Not Modified
+                                     # On upload, a 1080px card preview is stored at /uploads/thumb/{filename}
+                                     # Delivery cache: in-memory LRU, then persistent /uploads/optimized/{name}_{width}_{quality}.webp (S3 or disk)
+                                     # Persistent cache is written only for standard responsive widths/qualities (bounds storage on the unthrottled endpoint)
+                                     # For card requests (width ≤1080 and quality ≤65), resize sources the thumb when available instead of the full original
 POST /api/upload/video/from-url       # Ingest listing video from HTTPS URL (import JWT + optional x-import-secret); SSRF-hardened download; used by partner import CLIs
 ```
 

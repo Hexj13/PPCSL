@@ -4,9 +4,9 @@ import { getOptimizedImageUrl } from '@/lib/utils';
 export const CARD_IMAGE_QUALITY = 65;
 
 export const CARD_IMAGE_SIZES =
-  '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw';
+  '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 360px';
 
-export const CARD_IMAGE_DEVICE_WIDTHS = [640, 750, 828, 1080, 1200, 1920, 2048, 3840] as const;
+export const CARD_IMAGE_DEVICE_WIDTHS = [640, 750, 828] as const;
 
 export function getListingCardImageSrc(imageUrl: string): string {
   if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
@@ -25,6 +25,8 @@ export function buildListingCardImageSrcSet(imageUrl: string): string {
   ).join(', ');
 }
 
+export const LISTING_CARD_APPEND_PRELOAD_COUNT = 8;
+
 export function applyListingCardResponsivePreload(img: HTMLImageElement, imageUrl: string): void {
   const srcSet = buildListingCardImageSrcSet(imageUrl);
   if (!srcSet) {
@@ -39,4 +41,17 @@ export function applyListingCardResponsivePreload(img: HTMLImageElement, imageUr
     width: CARD_IMAGE_DEVICE_WIDTHS[0],
     quality: CARD_IMAGE_QUALITY,
   });
+}
+
+export function prewarmListingCardCoverImages(imageUrls: string[]): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  for (const imageUrl of imageUrls) {
+    if (!imageUrl || imageUrl === '/placeholder-car.jpg') {
+      continue;
+    }
+    const img = new window.Image();
+    applyListingCardResponsivePreload(img, imageUrl);
+  }
 }

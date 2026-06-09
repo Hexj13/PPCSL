@@ -596,6 +596,21 @@ add a second origin and behavior to your existing CloudFront distribution:
 The backend already returns `Cache-Control: public, max-age=31536000, immutable`
 for optimized images, so CloudFront will cache them for up to one year.
 
+**Listing card image storage (S3 / local disk):**
+
+- `/uploads/{uuid}.webp` — full processed upload (max 2048px)
+- `/uploads/thumb/{uuid}.webp` — 1080px card preview generated on upload (used as a cheaper resize source for card delivery)
+- `/uploads/optimized/{uuid}_{width}_{quality}.webp` — persistent on-disk/S3 cache of `GET /api/upload/image` variants, written only for standard responsive widths/qualities so the unthrottled endpoint cannot be abused to fill storage (survives deploys; deleted best-effort when the original is removed)
+
+After deploying card-image optimizations, run the thumbnail backfill once on production if many listings predate 1080px thumbs:
+
+```bash
+cd core/backend
+npx ts-node -r tsconfig-paths/register src/scripts/production/backfill-listing-card-thumbnails.ts
+```
+
+Optional S3 lifecycle rules can expire old `/uploads/optimized/` objects if storage growth needs control; originals and thumbs should be retained.
+
 **Cloudflare Cache Rule for image delivery (recommended when API is proxied through Cloudflare):**
 
 Without an explicit rule, Cloudflare often serves `GET /api/upload/image/*` as **DYNAMIC** (no edge cache), so every browser request hits the origin and competes with other API traffic. Add a Cache Rule so optimized listing images are cached at the edge.

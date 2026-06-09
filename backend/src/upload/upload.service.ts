@@ -8,11 +8,13 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   CreateMultipartUploadCommand,
   UploadPartCommand,
   CompleteMultipartUploadCommand,
   AbortMultipartUploadCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -39,8 +41,14 @@ const DETECTION_QUEUE_OVERFLOW = 20;
 const RETRY_MAX_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 500;
 const DELETE_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
-const THUMBNAIL_WIDTH = 400;
+const THUMBNAIL_WIDTH = 1080;
 const THUMBNAIL_QUALITY = 65;
+const CARD_PREVIEW_MAX_WIDTH = 1080;
+const OPTIMIZED_DELIVERY_EFFORT = 3;
+const PERSISTENT_CACHE_ALLOWED_QUALITIES = new Set([65, 68, 70, 75]);
+const PERSISTENT_CACHE_ALLOWED_WIDTHS = new Set([
+  16, 32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920, 2048, 3840,
+]);
 
 const VIDEO_PART_SIZE_BYTES = 5 * 1024 * 1024;
 const PRESIGNED_PART_TTL_SECONDS = 3600;
@@ -129,6 +137,10 @@ export class UploadService {
       const thumbDir = path.join(this.uploadDir, 'thumb');
       if (!fs.existsSync(thumbDir)) {
         fs.mkdirSync(thumbDir, { recursive: true });
+      }
+      const optimizedDir = path.join(this.uploadDir, 'optimized');
+      if (!fs.existsSync(optimizedDir)) {
+        fs.mkdirSync(optimizedDir, { recursive: true });
       }
     }
 
@@ -533,24 +545,9 @@ export class UploadService {
   }
 
   async deleteFile(filePath: string): Promise<void> {
-    if (this.useS3 && this.s3Client) {
-      const s3Key = filePath.replace(/^\//, '');
-      try {
-        const command = new DeleteObjectCommand({
-          Bucket: this.bucketName,
-          Key: s3Key,
-        });
-
-        await this.s3Client.send(command);
-      } catch (error) {
-        console.error('Error deleting file from S3:', error);
-      }
-    } else {
-      const fullPath = path.join(process.cwd(), filePath.replace(/^\//, ''));
-      if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath);
-      }
-    }
+    await this.deleteStoredObject(filePath);
+    await this.deleteStoredObject(this.getThumbnailPathForOriginal(filePath));
+    await this.deleteOptimizedVariants(filePath);
   }
 
   generateDeleteToken(userId: string, filePath: string): string {
@@ -596,6 +593,180 @@ export class UploadService {
       .digest('base64url');
   }
 
+  private getUploadBasename(filePath: string): string {
+    return path.basename(filePath.replace(/^\//, ''));
+  }
+
+  private buildOptimizedPersistentFileName(
+    filePath: string,
+    quality: number,
+    maxWidth?: number,
+  ): string {
+    const basename = this.getUploadBasename(filePath).replace(/\.webp$/i, '');
+    const widthPart = maxWidth ?? 'orig';
+    return `${basename}_${widthPart}_${quality}.webp`;
+  }
+
+  private getOptimizedPersistentPath(filePath: string, quality: number, maxWidth?: number): string {
+    return `/uploads/optimized/${this.buildOptimizedPersistentFileName(filePath, quality, maxWidth)}`;
+  }
+
+  private getThumbnailPathForOriginal(filePath: string): string {
+    return `/uploads/thumb/${this.getUploadBasename(filePath)}`;
+  }
+
+  private async imageExistsAtPath(filePath: string): Promise<boolean> {
+    const normalized = filePath.replace(/^\//, '');
+    if (this.useS3 && this.s3Client) {
+      return this.headObjectExists(normalized);
+    }
+    const fullPath = path.join(process.cwd(), normalized);
+    return fs.existsSync(fullPath);
+  }
+
+  private async readImageBufferFromPath(filePath: string): Promise<Buffer> {
+    const normalized = filePath.replace(/^\//, '');
+    if (this.useS3 && this.s3Client) {
+      try {
+        return await this.getObjectBufferByKey(normalized);
+      } catch {
+        throw new Error('File not found');
+      }
+    }
+    const fullPath = path.join(process.cwd(), normalized);
+    if (!fs.existsSync(fullPath)) {
+      throw new Error('File not found');
+    }
+    return fs.readFileSync(fullPath);
+  }
+
+  private async readPersistentOptimizedCache(persistentPath: string): Promise<Buffer | null> {
+    try {
+      return await this.readImageBufferFromPath(persistentPath);
+    } catch {
+      return null;
+    }
+  }
+
+  private async writePersistentOptimizedCache(
+    persistentPath: string,
+    buffer: Buffer,
+  ): Promise<void> {
+    const normalized = persistentPath.replace(/^\//, '');
+    if (this.useS3 && this.s3Client) {
+      try {
+        await this.putObjectBuffer(`/${normalized}`, buffer, 'image/webp');
+      } catch (error) {
+        this.logger.warn(
+          `Failed to persist optimized image ${persistentPath}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+      return;
+    }
+    const fullPath = path.join(process.cwd(), normalized);
+    const dir = path.dirname(fullPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(fullPath, buffer);
+  }
+
+  private isPersistableVariant(quality: number, maxWidth?: number): boolean {
+    if (!PERSISTENT_CACHE_ALLOWED_QUALITIES.has(quality)) {
+      return false;
+    }
+    return maxWidth === undefined || PERSISTENT_CACHE_ALLOWED_WIDTHS.has(maxWidth);
+  }
+
+  private async resolveOptimizationSourcePath(
+    filePath: string,
+    quality: number,
+    maxWidth?: number,
+  ): Promise<string> {
+    if (!maxWidth || maxWidth > CARD_PREVIEW_MAX_WIDTH || quality > THUMBNAIL_QUALITY) {
+      return filePath;
+    }
+    const thumbPath = this.getThumbnailPathForOriginal(filePath);
+    if (await this.imageExistsAtPath(thumbPath)) {
+      return thumbPath;
+    }
+    return filePath;
+  }
+
+  private async deleteStoredObject(filePath: string): Promise<void> {
+    const normalized = filePath.replace(/^\//, '');
+    if (!normalized) {
+      return;
+    }
+    if (this.useS3 && this.s3Client) {
+      try {
+        await this.s3Client.send(
+          new DeleteObjectCommand({
+            Bucket: this.bucketName,
+            Key: normalized,
+          }),
+        );
+      } catch (error) {
+        console.error('Error deleting file from S3:', error);
+      }
+      return;
+    }
+    const fullPath = path.join(process.cwd(), normalized);
+    if (fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
+    }
+  }
+
+  private async deleteOptimizedVariants(filePath: string): Promise<void> {
+    const prefix = this.getUploadBasename(filePath).replace(/\.webp$/i, '');
+    if (this.useS3 && this.s3Client) {
+      const listPrefix = `uploads/optimized/${prefix}_`;
+      try {
+        let continuationToken: string | undefined;
+        do {
+          const listResult = await this.s3Client.send(
+            new ListObjectsV2Command({
+              Bucket: this.bucketName,
+              Prefix: listPrefix,
+              ContinuationToken: continuationToken,
+            }),
+          );
+          const keys = (listResult.Contents ?? [])
+            .map((item) => item.Key)
+            .filter((key): key is string => Boolean(key));
+          if (keys.length > 0) {
+            await this.s3Client.send(
+              new DeleteObjectsCommand({
+                Bucket: this.bucketName,
+                Delete: {
+                  Objects: keys.map((Key) => ({ Key })),
+                },
+              }),
+            );
+          }
+          continuationToken = listResult.IsTruncated ? listResult.NextContinuationToken : undefined;
+        } while (continuationToken);
+      } catch (error) {
+        this.logger.warn(
+          `Failed to delete optimized variants for ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+      return;
+    }
+    if (!this.uploadDir) {
+      return;
+    }
+    const optimizedDir = path.join(this.uploadDir, 'optimized');
+    if (!fs.existsSync(optimizedDir)) {
+      return;
+    }
+    for (const file of fs.readdirSync(optimizedDir)) {
+      if (file.startsWith(`${prefix}_`)) {
+        fs.unlinkSync(path.join(optimizedDir, file));
+      }
+    }
+  }
+
   async getOptimizedImage(
     filePath: string,
     quality: number = 75,
@@ -605,40 +776,20 @@ export class UploadService {
     const cached = this.optimizedImageCache.get(cacheKey);
     if (cached) return cached;
 
-    let imageBuffer: Buffer;
-
-    if (this.useS3 && this.s3Client) {
-      const s3Key = filePath.replace(/^\//, '');
-      try {
-        const command = new GetObjectCommand({
-          Bucket: this.bucketName,
-          Key: s3Key,
-        });
-
-        const result = await this.s3Client.send(command);
-
-        if (!result.Body) {
-          throw new Error('File not found');
-        }
-
-        const stream = result.Body as Readable;
-        const chunks: Buffer[] = [];
-
-        for await (const chunk of stream) {
-          chunks.push(chunk);
-        }
-
-        imageBuffer = Buffer.concat(chunks);
-      } catch {
-        throw new Error('File not found');
+    const persistable = this.isPersistableVariant(quality, maxWidth);
+    const persistentPath = persistable
+      ? this.getOptimizedPersistentPath(filePath, quality, maxWidth)
+      : null;
+    if (persistentPath) {
+      const persistentCached = await this.readPersistentOptimizedCache(persistentPath);
+      if (persistentCached) {
+        this.optimizedImageCache.set(cacheKey, persistentCached);
+        return persistentCached;
       }
-    } else {
-      const fullPath = path.join(process.cwd(), filePath.replace(/^\//, ''));
-      if (!fs.existsSync(fullPath)) {
-        throw new Error('File not found');
-      }
-      imageBuffer = fs.readFileSync(fullPath);
     }
+
+    const sourcePath = await this.resolveOptimizationSourcePath(filePath, quality, maxWidth);
+    const imageBuffer = await this.readImageBufferFromPath(sourcePath);
 
     const image = sharp(imageBuffer);
     const metadata = await image.metadata();
@@ -652,8 +803,13 @@ export class UploadService {
       });
     }
 
-    const buffer = await processedImage.webp({ quality, effort: 4 }).toBuffer();
+    const buffer = await processedImage
+      .webp({ quality, effort: OPTIMIZED_DELIVERY_EFFORT })
+      .toBuffer();
     this.optimizedImageCache.set(cacheKey, buffer);
+    if (persistentPath) {
+      await this.writePersistentOptimizedCache(persistentPath, buffer);
+    }
 
     return buffer;
   }
