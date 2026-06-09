@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { createCoalescedCallback } from '@/lib/resize-coalesced';
 import { CarIcon, MotoIcon, TireCategoryIcon, TruckIcon } from '@/ui';
 
 type ListingCategory = 'vehicle' | 'tire';
@@ -60,10 +61,10 @@ export function VehicleTypeSelector({
       setShowVehicleFade(!isAtEnd);
     };
 
-    const handleResize = () => {
+    const handleResize = createCoalescedCallback(() => {
       updateIndicator();
       checkScrollability();
-    };
+    });
 
     const handleScroll = () => {
       updateIndicator();

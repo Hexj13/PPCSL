@@ -9,7 +9,7 @@ const SaveFilterModal = dynamic(
   { ssr: false },
 );
 import { useI18n } from '@/components/providers/I18nProvider';
-import { useLoadingState } from '@/hooks/useLoadingState';
+import { SKELETON_DEFERRED, useLoadingState } from '@/hooks/useLoadingState';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { SavedFilter } from '@/lib/api';
@@ -111,8 +111,7 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
 
   const { visible: showSavedFiltersSkeleton } = useLoadingState({
     isLoading: loading,
-    showDelay: 200,
-    minDisplayTime: 450,
+    ...SKELETON_DEFERRED,
   });
 
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());

@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { addCoalescedResizeListener } from '@/lib/resize-coalesced';
+
 export interface HintTooltipProps {
   children?: ReactNode;
   contentHtml?: string;
@@ -107,7 +109,7 @@ export function HintTooltip({
       return;
     }
     updatePortalPosition();
-    window.addEventListener('resize', updatePortalPosition);
+    const removeResizeListener = addCoalescedResizeListener(updatePortalPosition);
     const pop = popoverRef.current;
     const ro =
       pop &&
@@ -118,7 +120,7 @@ export function HintTooltip({
       ro.observe(pop);
     }
     return () => {
-      window.removeEventListener('resize', updatePortalPosition);
+      removeResizeListener();
       ro?.disconnect();
     };
   }, [isOpen, children, contentHtml, width, updatePortalPosition]);

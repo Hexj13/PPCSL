@@ -17,7 +17,7 @@ import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
 import { useFilterHandlers } from '@/hooks/useFilterHandlers';
 import { useFilterOptions } from '@/hooks/useFilterOptions';
-import { useLoadingState } from '@/hooks/useLoadingState';
+import { SKELETON_PAGE, useLoadingState } from '@/hooks/useLoadingState';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useSearchFilterFlags } from '@/hooks/useSearchFilterFlags';
 import { useSearchFilters, type FilterState } from '@/hooks/useSearchFilters';
@@ -251,9 +251,7 @@ export function useSearchFiltersController({
 
   const { visible: showAvailableListingsLoader } = useLoadingState({
     isLoading: isAvailableListingsLoading || availableListingsTotal === null,
-    showDelay: 0,
-    minDisplayTime: 1000,
-    immediate: true,
+    ...SKELETON_PAGE,
   });
 
   useSearchFiltersControllerLifecycle({

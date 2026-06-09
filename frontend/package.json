@@ -34,6 +34,7 @@
     "test:e2e:allure:generate": "allure generate allure-results --clean -o allure-report",
     "test:e2e:allure:open": "allure open allure-report",
     "test:e2e:allure": "npm run test:e2e && npm run test:e2e:allure:generate",
+    "perf:list-grid": "node scripts/perf/list-perf.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "sort-imports": "ts-node --transpile-only --compiler-options '{\"module\":\"commonjs\"}' scripts/sort-imports.ts",
     "knip": "knip",
@@ -47,6 +48,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@sentry/nextjs": "^10.40.0",
     "@tailwindcss/postcss": "^4.2.2",
+    "@tanstack/react-virtual": "^3.14.2",
     "@types/node": "^24.10.0",
     "@types/react-dom": "^19.2.3",
     "axios": "^1.7.9",
@@ -100,6 +102,7 @@
     "globals": "^17.5.0",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^29.7.0",
+    "knip": "^5.62.0",
     "playwright": "^1.58.2",
     "prettier": "^3.8.3",
     "storybook": "^10.2.13",
@@ -108,8 +111,7 @@
     "stylelint-config-tailwindcss": "^1.0.1",
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
-    "vitest": "^4.0.7",
-    "knip": "^5.62.0"
+    "vitest": "^4.0.7"
   },
   "jest": {
     "testEnvironment": "jsdom",

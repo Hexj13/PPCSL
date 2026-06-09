@@ -11,7 +11,6 @@ import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import { savedFiltersApi } from '@/lib/api';
 import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
-import { MAIN_VIEWPORT_MIN_HEIGHT_CLASS } from '@/lib/constants';
 import { localePrefixPath } from '@/lib/url-locale';
 
 import { FavoritesListingsTab } from './FavoritesListingsTab';
@@ -88,7 +87,7 @@ function FavoritesContent() {
   };
 
   if (isLoading || !isAuthorized) {
-    return <div className={`${MAIN_VIEWPORT_MIN_HEIGHT_CLASS} pb-12 md:pb-16`} aria-hidden />;
+    return <div aria-hidden />;
   }
 
   const breadcrumbExtra =
@@ -106,7 +105,7 @@ function FavoritesContent() {
     }`;
 
   return (
-    <div className={`${MAIN_VIEWPORT_MIN_HEIGHT_CLASS} pb-12 md:pb-16`}>
+    <div>
       <Breadcrumbs
         items={[
           { label: t('favorites.home'), href: localePrefixPath('/', locale) },
@@ -182,7 +181,7 @@ function FavoritesContent() {
 }
 
 function FavoritesSuspenseFallback() {
-  return <div className={`${MAIN_VIEWPORT_MIN_HEIGHT_CLASS} pb-12 md:pb-16`} aria-hidden />;
+  return <div aria-hidden />;
 }
 
 export default function FavoritesPage() {

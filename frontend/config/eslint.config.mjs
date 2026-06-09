@@ -285,6 +285,7 @@ export default [
       'allure-results/**',
       'playwright-report/**',
       'test-results/**',
+      'scripts/perf/**',
     ],
   },
   prettierConfig,

@@ -3,9 +3,11 @@
 import { CitiesProvider } from '@/components/listing/CitiesProvider';
 import { ListingCard } from '@/components/listing/ListingCard';
 import { ListingCardSkeleton } from '@/components/listing/ListingCardSkeleton';
-import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
+import { ListingGridPaginationFooter } from '@/components/listing/ListingGridPaginationFooter';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing, PaginationMeta } from '@/lib/api';
+
+const FAVORITES_SKELETON_COUNT = 4;
 
 interface FavoritesListingsTabProps {
   listings: Listing[];
@@ -32,7 +34,7 @@ export function FavoritesListingsTab({
     return (
       <div data-testid="favorites-listings-tab">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-          {[...Array(4)].map((_, i) => (
+          {Array.from({ length: FAVORITES_SKELETON_COUNT }).map((_, i) => (
             <ListingCardSkeleton key={i} />
           ))}
         </div>
@@ -56,7 +58,7 @@ export function FavoritesListingsTab({
   return (
     <div data-testid="favorites-listings-tab">
       <CitiesProvider>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch pb-6">
           {listings.map((listing) => (
             <ListingCard
               key={listing.id}
@@ -68,19 +70,20 @@ export function FavoritesListingsTab({
         </div>
       </CitiesProvider>
       {loadingMore && (
-        <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
-          <p className="mt-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-            {t('common.loading')}
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+          {Array.from({ length: FAVORITES_SKELETON_COUNT }).map((_, index) => (
+            <ListingCardSkeleton key={`append-skeleton-${currentPage + 1}-${index}`} />
+          ))}
         </div>
       )}
-      {hasMorePages && !loadingMore && <LoadMoreButton onClick={onLoadMore} />}
-      {noMorePages && !loadingMore && (
-        <div className="text-center pt-8 pb-0">
-          <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>{t('listings.noMoreListings')}</p>
-        </div>
-      )}
+      <ListingGridPaginationFooter
+        hasMore={!!hasMorePages}
+        loadingMore={loadingMore}
+        onLoadMore={onLoadMore}
+        loadMoreLabel={t('listings.showMore')}
+        noMoreLabel={t('listings.noMoreListings')}
+        showNoMore={!!noMorePages && !loadingMore}
+      />
     </div>
   );
 }

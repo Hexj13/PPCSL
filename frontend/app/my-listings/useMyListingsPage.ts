@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useCrossTabMyListingsRefetch } from '@/hooks/useCrossTabMyListingsRefetch';
 import { useListingActions } from '@/hooks/useListingActions';
-import { useLoadingState } from '@/hooks/useLoadingState';
+import { SKELETON_PAGE, useLoadingState } from '@/hooks/useLoadingState';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing, PaginationMeta, PromotionAccessStatus, PromotionHistory } from '@/lib/api';
@@ -465,9 +465,7 @@ export function useMyListingsPage() {
   const isLoadingContent = !initialListingsLoadDone && (loading || !hasLoadedRef.current);
   const { visible: showSkeleton } = useLoadingState({
     isLoading: isLoadingContent,
-    immediate: true,
-    showDelay: 0,
-    minDisplayTime: 1000,
+    ...SKELETON_PAGE,
   });
 
   const canPromote =

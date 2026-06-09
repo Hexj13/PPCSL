@@ -10,7 +10,7 @@ import { ListingManagementCard } from '@/components/listing/ListingManagementCar
 import { ListingManagementCardSkeleton } from '@/components/listing/ListingManagementCardSkeleton';
 import { LoadMoreButton } from '@/components/listing/LoadMoreButton';
 import { SortDropdown } from '@/components/search/SortDropdown';
-import { useLoadingState } from '@/hooks/useLoadingState';
+import { SKELETON_PAGE, useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { boardApi, type BoardInfo, type Listing, type PaginationMeta } from '@/lib/api';
 import { normalizeListingResponse } from '@/lib/api';
@@ -106,9 +106,7 @@ export default function BoardPageClient({
 
   const { visible: showSkeleton } = useLoadingState({
     isLoading: loading,
-    minDisplayTime: 1000,
-    immediate: true,
-    showDelay: 0,
+    ...SKELETON_PAGE,
   });
   const isOwner = user?.id === board.userId;
   const pageTitle = t('board.title', { sellerName: board.displayName });

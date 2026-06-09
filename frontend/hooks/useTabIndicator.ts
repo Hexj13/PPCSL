@@ -1,6 +1,8 @@
 import type { RefObject } from 'react';
 import { useLayoutEffect, useRef, useState } from 'react';
 
+import { addCoalescedResizeListener } from '@/lib/resize-coalesced';
+
 export function useTabIndicator<T extends string>(
   activeTab: T,
   tabRefs: Record<T, RefObject<HTMLButtonElement | null>>,
@@ -37,11 +39,12 @@ export function useTabIndicator<T extends string>(
     const timeoutIds: number[] = [];
     let resizeObserver: ResizeObserver | null = null;
     let onUpdate: (() => void) | null = null;
+    let removeResizeListener: (() => void) | null = null;
     if (container) {
       onUpdate = () => updateIndicatorRef.current();
       resizeObserver = new ResizeObserver(onUpdate);
       resizeObserver.observe(container);
-      window.addEventListener('resize', onUpdate);
+      removeResizeListener = addCoalescedResizeListener(onUpdate);
       container.addEventListener('scroll', onUpdate, { passive: true });
       timeoutIds.push(window.setTimeout(run, 150));
     } else {
@@ -55,7 +58,7 @@ export function useTabIndicator<T extends string>(
       if (resizeObserver && container) {
         resizeObserver.disconnect();
         if (onUpdate) {
-          window.removeEventListener('resize', onUpdate);
+          removeResizeListener?.();
           container.removeEventListener('scroll', onUpdate);
         }
       }

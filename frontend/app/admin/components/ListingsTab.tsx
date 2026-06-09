@@ -7,7 +7,11 @@ import { ListingManagementCard } from '@/components/listing/ListingManagementCar
 import { ListingManagementCardSkeleton } from '@/components/listing/ListingManagementCardSkeleton';
 import { StatusFilterButtons } from '@/components/listing/StatusFilterButtons';
 import { PromotionModal } from '@/components/modals/PromotionModal';
-import { useLoadingState } from '@/hooks/useLoadingState';
+import {
+  SKELETON_MIN_DISPLAY_MS,
+  SKELETON_SHOW_DELAY_MS,
+  useLoadingState,
+} from '@/hooks/useLoadingState';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { useRefreshWhenVisible } from '@/hooks/useRefreshWhenVisible';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -99,8 +103,8 @@ export function ListingsTab({ isActive, initialSearchQuery = '' }: ListingsTabPr
   const { visible: showSkeleton } = useLoadingState({
     isLoading: loading,
     immediate: false,
-    showDelay: 200,
-    minDisplayTime: 1000,
+    showDelay: SKELETON_SHOW_DELAY_MS,
+    minDisplayTime: SKELETON_MIN_DISPLAY_MS,
   });
 
   const loadStatusCounts = useCallback(async (search?: string) => {

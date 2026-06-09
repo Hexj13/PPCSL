@@ -1138,6 +1138,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 - **Centralized search parameter parsing:** Shared `lib/search/search-params.ts` module provides `buildSearchQuery()` (URL construction, base64 encoding, localStorage fallback for long query strings), `getDefaultFilters()`, URL parameter parsing via `parseSearchParams()`, base64 encoding/decoding, and slug-to-ID conversion via `createBrandResolver` / `createModelResolver`
 - **Search filters:** `SearchFilters.tsx` delegates to `useSearchFiltersController` → `search-filters/SearchFiltersForm.tsx` (composed hooks include `useSearchFiltersSync`, `useVehicleType`, `useSearchTabs`, `useFilterHandlers`, `useFilterOptions`). On the home page, `useVehicleType` derives the active vehicle category from URL query params (and `body_types` when present), not from `kupito_vehicle_type` in localStorage; listing grid and search UI stay in sync.
 - **Unified listing fetch logic:** Merged `fetchListings` and `handleLoadMore` functions into a single unified function, eliminating ~180 lines of duplicate code
+- **Virtualized results grid:** `ListingGrid` renders results through `VirtualizedListingGrid.tsx` using `@tanstack/react-virtual` (`useWindowVirtualizer`). Rows are built by `buildVirtualRows.ts` (column count from `useGridColumns` matchMedia breakpoints; one breakpoint-aligned partner banner). Only visible rows plus overscan stay in the DOM, so DOM size no longer grows with the accumulated load-more list. Scroll restore targets a row via `lib/listing-grid-scroll-bridge.ts` (`scrollToIndex`). A repeatable DOM-node/layout-shift audit lives in `scripts/perf/list-perf.mjs` (`npm run perf:list-grid`).
 - **Component memoization:** React.memo, useMemo, useCallback for preventing unnecessary re-renders
   - ListingCard wrapped in React.memo for optimal re-render performance
   - Memoized event handlers in Header, SearchFilters, and other interactive components
@@ -1153,7 +1154,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - Conditional `unoptimized` prop for localhost images in development
   - Proper `sizes` attribute for responsive image loading - Next.js automatically generates appropriate image sizes for mobile and desktop
   - Optimized quality settings: 65% for listing cards (responsive srcset via `listing-card-image.ts`), 70% for management cards (900px), 75% for detail pages (1200px)
-  - Priority loading for first 8 visible images in grid to improve LCP
+  - Priority loading for first 6 visible images in grid to improve LCP
   - Next.js Image component handles responsive image loading automatically via `srcSet` based on `sizes` attribute
   - Improved sizes attributes for better responsive image selection across breakpoints
 - **Image preview system:** Simplified, efficient image preview and photo viewer system
@@ -1607,6 +1608,12 @@ cd core/backend && npm run test -- listings.service.spec.ts
   - ListingGrid: parsed search params cache (keyed by searchParamsString + vehicleType), deferred viewItemList; ListingCard prefetch
   - MultiSelectDropdown/Dropdown: precomputed lowerLabel for options, chunked render (first 50 then rAF to full list)
   - KPI and validation: lib/performance/inp-kpi.ts (targets, observer), [inp-validation.md](../engineering/inp-validation.md) for GSC validation steps
+- **Listing grid virtualization (2026-06):**
+  - `VirtualizedListingGrid.tsx` with `@tanstack/react-virtual` (`useWindowVirtualizer`); row model in `buildVirtualRows.ts`, column breakpoints in `useGridColumns.ts`
+  - Home scroll restore after listing detail uses `lib/listing-grid-scroll-bridge.ts` (`scrollToIndex` via custom event from `home-scroll-restore.ts`)
+  - Resize handlers coalesced via `lib/resize-coalesced.ts` (search tabs, tab indicator, hint tooltips, virtualizer)
+  - LCP priority on first 6 visible cards; link prefetch on first 4
+  - Repeatable audit: `npm run perf:list-grid` → `core/frontend/.perf-audit/list-perf.json`
 - **Performance Optimizations (2025-01):**
   - Migrated initial data fetching to Server Components for improved SEO and initial page load
   - Optimized third-party scripts (Google Analytics, Google Tag Manager) with `lazyOnload` strategy

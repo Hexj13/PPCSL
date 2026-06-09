@@ -64,7 +64,7 @@ export function LoadMoreButton({
   }
 
   return (
-    <div className={`flex min-h-[88px] justify-center pt-8 pb-0 ${wrapperClassName}`}>
+    <div className={`flex justify-center py-8 ${wrapperClassName}`}>
       <button
         ref={buttonRef}
         onClick={onClick}

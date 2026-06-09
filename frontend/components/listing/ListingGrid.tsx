@@ -2,17 +2,9 @@
 
 import { isAxiosError } from 'axios';
 import { useSearchParams, usePathname } from 'next/navigation';
-import {
-  Fragment,
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-  useMemo,
-  startTransition,
-} from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo, startTransition } from 'react';
 
-import { useLoadingState } from '@/hooks/useLoadingState';
+import { SKELETON_DEFERRED, useLoadingState } from '@/hooks/useLoadingState';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { usePartnerPromoBannerInGrid } from '@/hooks/usePartnerPromoBannerInGrid';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -32,9 +24,8 @@ import { silentCatch } from '@/lib/utils';
 
 import { CitiesProvider } from './CitiesProvider';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
-import { ListingGridCardSlot } from './ListingGridCardSlot';
 import { ListingGridPaginationFooter } from './ListingGridPaginationFooter';
-import { PartnerPromoBanner } from './PartnerPromoBanner';
+import { VirtualizedListingGrid } from './VirtualizedListingGrid';
 import {
   buildFetchParams,
   fetchListingsPage,
@@ -385,9 +376,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
   const { visible: showSkeleton } = useLoadingState({
     isLoading: loading,
-    immediate: false,
-    showDelay: 200,
-    minDisplayTime: 500,
+    ...SKELETON_DEFERRED,
   });
 
   const showContent = !showSkeleton;
@@ -456,41 +445,18 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
           {!error && listings.length > 0 && (
             <CitiesProvider>
-              <div
-                id="listings-results"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch"
-                data-testid="listings-results-grid"
-              >
-                {uniqueListings.map((listing, index) => {
-                  const cardPosition = index + 1;
-
-                  return (
-                    <Fragment key={listing.id}>
-                      <ListingGridCardSlot listing={listing} index={index} />
-                      {showPartnerPromoBanner && cardPosition === 6 && (
-                        <div className="col-span-full lg:hidden">
-                          <PartnerPromoBanner onDismiss={dismissPartnerPromoBanner} />
-                        </div>
-                      )}
-                      {showPartnerPromoBanner && cardPosition === 9 && (
-                        <div className="col-span-full hidden lg:block xl:hidden">
-                          <PartnerPromoBanner onDismiss={dismissPartnerPromoBanner} />
-                        </div>
-                      )}
-                      {showPartnerPromoBanner && cardPosition === 12 && (
-                        <div className="col-span-full hidden xl:block">
-                          <PartnerPromoBanner onDismiss={dismissPartnerPromoBanner} />
-                        </div>
-                      )}
-                    </Fragment>
-                  );
-                })}
-                {loadingMore &&
-                  appendSkeletonCount > 0 &&
-                  Array.from({ length: appendSkeletonCount }).map((_, index) => (
+              <VirtualizedListingGrid
+                listings={uniqueListings}
+                showPartnerPromoBanner={showPartnerPromoBanner}
+                onDismissPartnerPromoBanner={dismissPartnerPromoBanner}
+              />
+              {loadingMore && appendSkeletonCount > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+                  {Array.from({ length: appendSkeletonCount }).map((_, index) => (
                     <ListingCardSkeleton key={`append-skeleton-${currentPage + 1}-${index}`} />
                   ))}
-              </div>
+                </div>
+              )}
               <ListingGridPaginationFooter
                 hasMore={hasMore}
                 loadingMore={loadingMore}

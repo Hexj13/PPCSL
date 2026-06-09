@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
 import { useListingData } from '@/hooks/useListingData';
-import { useLoadingState } from '@/hooks/useLoadingState';
+import { SKELETON_PAGE, useLoadingState } from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics, buildListingViewItemParams } from '@/lib/analytics';
 import type { Listing, PromotionAccessStatus } from '@/lib/api';
@@ -109,8 +109,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const isLoadingListing = listingFromApi === null && !initialListing;
   const { visible: showSkeleton } = useLoadingState({
     isLoading: isLoadingListing,
-    immediate: true,
-    minDisplayTime: 1000,
+    ...SKELETON_PAGE,
   });
 
   useEffect(() => {

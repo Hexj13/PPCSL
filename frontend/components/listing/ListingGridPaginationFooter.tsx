@@ -20,7 +20,7 @@ export function ListingGridPaginationFooter({
   showNoMore,
 }: ListingGridPaginationFooterProps) {
   return (
-    <div className="min-h-[88px]">
+    <div>
       {(hasMore || loadingMore) && (
         <LoadMoreButton onClick={onLoadMore} loading={loadingMore} disabled={loadingMore}>
           {loadMoreLabel}
@@ -28,7 +28,7 @@ export function ListingGridPaginationFooter({
       )}
 
       {showNoMore && (
-        <div className="flex justify-center pt-8 pb-0">
+        <div className="flex justify-center py-8">
           <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>{noMoreLabel}</p>
         </div>
       )}

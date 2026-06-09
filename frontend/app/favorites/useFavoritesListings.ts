@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useLoadingState } from '@/hooks/useLoadingState';
+import { SKELETON_PAGE, useLoadingState } from '@/hooks/useLoadingState';
 import type { Listing, PaginationMeta } from '@/lib/api';
 import { favoritesApi } from '@/lib/api';
 import { subscribeToCrossTabEvents } from '@/lib/cross-tab-events';
@@ -126,9 +126,7 @@ export function useFavoritesListings(user: { id: string } | null) {
   const isLoadingContent = isInitialLoading || loading;
   const { visible: showSkeleton } = useLoadingState({
     isLoading: isLoadingContent,
-    immediate: true,
-    showDelay: 0,
-    minDisplayTime: 1000,
+    ...SKELETON_PAGE,
   });
 
   useEffect(() => {

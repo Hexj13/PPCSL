@@ -15,8 +15,24 @@ interface UseLoadingStateReturn {
   afterHidden: (callback: () => void) => void;
 }
 
-const DEFAULT_SHOW_DELAY = 200;
-const DEFAULT_MIN_DISPLAY_TIME = 1000;
+export const SKELETON_SHOW_DELAY_MS = 200;
+export const SKELETON_MIN_DISPLAY_MS = 1000;
+export const SKELETON_MIN_DISPLAY_SHORT_MS = 500;
+
+export const SKELETON_DEFERRED = {
+  showDelay: SKELETON_SHOW_DELAY_MS,
+  minDisplayTime: SKELETON_MIN_DISPLAY_SHORT_MS,
+  immediate: false,
+} as const;
+
+export const SKELETON_PAGE = {
+  showDelay: 0,
+  minDisplayTime: SKELETON_MIN_DISPLAY_MS,
+  immediate: true,
+} as const;
+
+const DEFAULT_SHOW_DELAY = SKELETON_SHOW_DELAY_MS;
+const DEFAULT_MIN_DISPLAY_TIME = SKELETON_MIN_DISPLAY_MS;
 
 export function useLoadingState({
   isLoading,

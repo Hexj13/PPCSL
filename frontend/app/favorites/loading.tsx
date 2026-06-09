@@ -2,7 +2,7 @@ import { ListingCardSkeleton } from '@/components/listing/ListingCardSkeleton';
 
 export default function FavoritesLoading() {
   return (
-    <div className="min-h-[calc(100vh-200px)] pb-12 md:pb-16">
+    <div>
       <div className="flex items-center space-x-2 text-sm mb-6 animate-pulse">
         <div className="h-4 bg-primary-500/10 rounded-sm w-20" />
         <span className="text-text-secondary">/</span>

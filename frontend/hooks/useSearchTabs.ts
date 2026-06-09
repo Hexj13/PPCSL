@@ -1,6 +1,8 @@
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { createCoalescedCallback } from '@/lib/resize-coalesced';
+
 type SearchTab = 'basic' | 'advanced' | 'equipment' | 'popular';
 
 const BASIC_PARAM_KEYS = [
@@ -200,10 +202,10 @@ export function useSearchTabs({
       rafIdRef.current = 0;
     };
 
-    const handleResize = () => {
+    const handleResize = createCoalescedCallback(() => {
       updateIndicator();
       updateFade();
-    };
+    });
 
     const handleScroll = () => {
       if (rafIdRef.current === 0) {

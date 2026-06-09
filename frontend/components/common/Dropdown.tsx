@@ -14,6 +14,7 @@ import React, {
 import { createPortal } from 'react-dom';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { addCoalescedResizeListener } from '@/lib/resize-coalesced';
 
 import { DropdownMenu, DropdownTrigger } from './Dropdown.parts';
 import type { DropdownOption } from './dropdown-types';
@@ -173,10 +174,10 @@ function DropdownComponent({
     if (renderMenuInPortal) {
       updatePortalPosition();
       const scrollParent = dropdownRef.current?.closest('.overflow-y-auto, .overflow-auto');
-      window.addEventListener('resize', updatePortalPosition);
+      const removeResizeListener = addCoalescedResizeListener(updatePortalPosition);
       scrollParent?.addEventListener('scroll', updatePortalPosition, true);
       return () => {
-        window.removeEventListener('resize', updatePortalPosition);
+        removeResizeListener();
         scrollParent?.removeEventListener('scroll', updatePortalPosition, true);
       };
     }

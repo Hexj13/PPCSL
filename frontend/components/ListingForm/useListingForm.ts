@@ -18,7 +18,11 @@ import {
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
 import { useCities } from '@/hooks/useCities';
-import { useLoadingState } from '@/hooks/useLoadingState';
+import {
+  SKELETON_MIN_DISPLAY_MS,
+  SKELETON_SHOW_DELAY_MS,
+  useLoadingState,
+} from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/api';
@@ -66,8 +70,8 @@ export function useListingForm({
   const [loading, setLoading] = useState(false);
   const { afterHidden } = useLoadingState({
     isLoading: loading,
-    showDelay: 200,
-    minDisplayTime: 1000,
+    showDelay: SKELETON_SHOW_DELAY_MS,
+    minDisplayTime: SKELETON_MIN_DISPLAY_MS,
   });
   const [formData, setFormData] = useState<ListingFormData>(() => getInitialFormData(initialData));
   const [errors, setErrors] = useState<Record<string, boolean>>({});

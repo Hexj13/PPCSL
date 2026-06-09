@@ -45,6 +45,12 @@ After deploying INP optimizations, use this checklist to validate results.
 4. **Target constants**
    - See `core/frontend/lib/performance/inp-kpi.ts`: `INP_TARGET_MS` (200), `LONG_TASK_THRESHOLD_MS` (16). Use these when judging trace and tooling output.
 
+5. **Listing grid perf audit (optional, local)**
+   - With the dev server running: `cd core/frontend && npm run perf:list-grid`
+   - Env: `PLAYWRIGHT_BASE_URL` (default `http://localhost:3000`)
+   - Output: `core/frontend/.perf-audit/list-perf.json` — DOM node counts before/after load-more and layout-shift count during viewport resize (mobile + desktop)
+   - With window virtualization, `domNodes.delta` after load-more should stay bounded (visible rows + overscan), not grow linearly with accumulated listings
+
 ## Baseline Scenarios (from plan)
 
 - `filter_submit_search`

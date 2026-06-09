@@ -14,7 +14,11 @@ import {
 import { runTireListingValidation } from '@/components/ListingForm/tireListingValidation';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useCities } from '@/hooks/useCities';
-import { useLoadingState } from '@/hooks/useLoadingState';
+import {
+  SKELETON_MIN_DISPLAY_MS,
+  SKELETON_SHOW_DELAY_MS,
+  useLoadingState,
+} from '@/hooks/useLoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { Listing, TireBrand, TireModel } from '@/lib/api';
@@ -107,8 +111,8 @@ export function useTireListingForm({
   const [loading, setLoading] = useState(false);
   const { afterHidden } = useLoadingState({
     isLoading: loading,
-    showDelay: 200,
-    minDisplayTime: 1000,
+    showDelay: SKELETON_SHOW_DELAY_MS,
+    minDisplayTime: SKELETON_MIN_DISPLAY_MS,
   });
   const [formData, setFormData] = useState<TireListingFormData>(() =>
     getInitialTireListingFormData(initialData),

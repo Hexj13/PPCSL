@@ -1,6 +1,7 @@
 'use client';
 
 import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
+import { requestListingGridScrollToListing } from '@/lib/listing-grid-scroll-bridge';
 import { shouldRestoreHomeScrollAfterPath } from '@/lib/preserve-home-scroll';
 
 const HOME_SCROLL_MAX_AGE_MS = 5 * 60 * 1000;
@@ -209,6 +210,8 @@ export function restoreHomeScrollToListingCard(listingId: string, fallbackScroll
       cleanup();
       return;
     }
+
+    requestListingGridScrollToListing(listingId);
 
     const card = document.querySelector(cardSelector);
     if (card) {

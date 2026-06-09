@@ -138,6 +138,14 @@ The feature should be simple, quick to implement, and safe to change. Therefore:
 
 Preferred: `useLoadingState` returns `{ visible, afterHidden }` with `afterHidden(fn)` called after hide; or `{ visible, hiddenPromise }` and `await hiddenPromise` before toast/redirect.
 
+**1.4 Preset option bundles (implemented):**
+
+Exported from `core/frontend/hooks/useLoadingState.ts` to avoid duplicating timing at call sites:
+
+- `SKELETON_PAGE` — `immediate: true`, `showDelay: 0`, `minDisplayTime: 1000` (page-level skeletons: my listings, favorites, listing detail, search filters loader)
+- `SKELETON_DEFERRED` — `immediate: false`, `showDelay: 200`, `minDisplayTime: 500` (deferred indicators)
+- `SKELETON_SHOW_DELAY_MS` (200), `SKELETON_MIN_DISPLAY_MS` (1000), `SKELETON_MIN_DISPLAY_SHORT_MS` (500) — shared constants for custom spreads (e.g. admin tabs)
+
 **File:** `core/frontend/hooks/useLoadingState.ts`
 
 ### 2. LoadingButton component

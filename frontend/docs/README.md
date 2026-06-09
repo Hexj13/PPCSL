@@ -68,14 +68,17 @@ Frontend-specific documentation for PPCSL Next.js application.
 - `pwa/PWAInstallButtonGray` - PWA install prompt
 
 **Listings:**
-- `listing/ListingGrid` - Infinite scroll grid
+- `listing/ListingGrid` - Search results fetch + load-more; renders via `VirtualizedListingGrid` (`@tanstack/react-virtual`)
+- `listing/buildVirtualRows`, `hooks/useGridColumns` - Row model and responsive column count for the virtualizer
+- `lib/listing-grid-scroll-bridge` - Scroll restore to a listing card after back navigation from detail
 - `listing/ListingManagementCard` - Status management
 - `search/SavedFiltersList` - Saved filters with caching
+- Perf audit: `npm run perf:list-grid` (Playwright; writes `.perf-audit/list-perf.json`)
 
 **Loading States:**
 - `LoadingButton` - Button with loading state
 - `SkeletonContainer` - Skeleton with min display time
-- `useLoadingState` - Universal loading hook
+- `useLoadingState` - Universal loading hook (`SKELETON_PAGE`, `SKELETON_DEFERRED` presets)
 
 ## 📚 General Documentation
 
