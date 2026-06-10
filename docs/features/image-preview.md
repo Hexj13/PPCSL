@@ -307,7 +307,8 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
 ### Card grid images
 
 - **Quality:** 75% (`CARD_IMAGE_QUALITY` in `listing-card-image.ts`)
-- **Responsive widths:** `next/image` + custom CDN loader; `sizes` `(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 360px`; srcset device widths up to 1200px (includes 1080px)
+- **Responsive widths:** `next/image` + custom CDN loader; `sizes` `(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 360px`; browser srcset comes from global `deviceSizes` in `next.config.js` (card requests typically land on 640–1200px widths)
+- **Delivery warm-up:** On each upload (`UploadService.saveFile`), the backend pre-generates persistent `/uploads/optimized/{uuid}_{width}_75.webp` variants for widths **640, 750, 828, 1080, 1200** in the background so listing-card cover requests avoid on-the-fly `sharp` resize. Constants: `DELIVERY_WARM_WIDTHS` / `DELIVERY_WARM_QUALITY` in `core/backend/src/upload/optimized-delivery-cache.utils.ts`. Legacy listings: `npm run warm:card-variants:cover` (see `core/backend/docs/SCRIPTS.md`).
 - **Preload:** Adjacent card photos and load-more append use the same srcset/sizes as slides so browser cache hits on navigation (`prewarmListingCardCoverImages` in `listing-card-image.ts`)
 
 ### Preview Images
@@ -540,4 +541,4 @@ If you need to add features:
 ---
 
 **Last Updated:** 2026-06-10  
-**Version:** 3.16 (Listing card image quality 75 and responsive srcset widths via `listing-card-image.ts`; optimized delivery cache documented in `DEPLOYMENT.md`)
+**Version:** 3.17 (Upload-time delivery warm-up for card widths 640–1200/q75; legacy `warm:card-variants` script; in-flight dedupe in `getOptimizedImage`)

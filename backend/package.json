@@ -125,7 +125,11 @@
     "backfill:blurhash:cover": "ts-node -r tsconfig-paths/register src/scripts/tools/backfill-blurhash.ts",
     "backfill:blurhash:all": "ts-node -r tsconfig-paths/register src/scripts/tools/backfill-blurhash.ts all",
     "backfill:blurhash:cover:prod": "node dist/scripts/tools/backfill-blurhash.js",
-    "backfill:blurhash:all:prod": "node dist/scripts/tools/backfill-blurhash.js all"
+    "backfill:blurhash:all:prod": "node dist/scripts/tools/backfill-blurhash.js all",
+    "warm:card-variants:cover": "ts-node -r tsconfig-paths/register src/scripts/tools/warm-card-variants.ts",
+    "warm:card-variants:all": "ts-node -r tsconfig-paths/register src/scripts/tools/warm-card-variants.ts all",
+    "warm:card-variants:cover:prod": "node dist/scripts/tools/warm-card-variants.js",
+    "warm:card-variants:all:prod": "node dist/scripts/tools/warm-card-variants.js all"
   },
   "dependencies": {
     "@aws-sdk/client-mediaconvert": "^3.1042.0",

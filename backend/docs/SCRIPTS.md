@@ -354,6 +354,21 @@ Batches of 50, 1s pause between batches. Idempotent for the chosen criterion (`N
 
 **Local vs production UI:** Missing blur placeholders in the Next.js app on localhost usually means listing rows have null blurhash columns in the DB you hit locally—not a dev-build switch. Align data (create via the app, or backfill) or see `core/docs/features/image-preview.md` (Local development vs production).
 
+### Card delivery variant warm-up (`warm-card-variants.ts`)
+
+Requires **PostgreSQL**, **S3 credentials** (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME`), and image URLs that resolve to keys in that bucket.
+
+| npm script | Effect |
+| ---------- | ------ |
+| `npm run warm:card-variants:cover` | Active listings: for each cover (`images[0]`), ensure persistent `/uploads/optimized/{uuid}_{640\|750\|828\|1080\|1200}_75.webp` exists (skip if already present). |
+| `npm run warm:card-variants:all` | Same widths for **every** photo in each active listing (carousel + listing page). |
+| `npm run warm:card-variants:cover:prod` | Same as `cover`, compiled `dist/scripts/tools/warm-card-variants.js`. |
+| `npm run warm:card-variants:all:prod` | Same as `all`, compiled entrypoint. |
+
+Keyset pagination (newest listings first), batches of 50, 1s pause between batches. Idempotent: uses S3 `HeadObject` on each target variant before encoding. Safe to interrupt and rerun.
+
+**Render / production shell:** After deploy with `nest build`, run `warm:card-variants:cover:prod` from `core/backend` once to warm existing inventory. New uploads are warmed automatically in `UploadService.saveFile`. Plain `warm:card-variants:*` scripts need devDependencies (`ts-node`, `tsconfig-paths`).
+
 ### Admin parsing (Nest runtime)
 
 The admin **Parsing** UI triggers parser CLI pipelines via a managed child process and parser catalog entries. Configure these **backend** variables (see also `core/docs/features/admin-parsing-ru.md` and `core/docs/features/parsing-framework.md`):

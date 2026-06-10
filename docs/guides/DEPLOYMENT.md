@@ -600,8 +600,10 @@ for optimized images, so CloudFront will cache them for up to one year.
 
 - `/uploads/{uuid}.webp` — full processed upload (max 2048px); the resize source for `GET /api/upload/image`
 - `/uploads/optimized/{uuid}_{width}_{quality}.webp` — persistent on-disk/S3 cache of `GET /api/upload/image` variants, written only for standard responsive widths/qualities so the unthrottled endpoint cannot be abused to fill storage (survives deploys; deleted best-effort when the original is removed)
+- **Upload warm-up:** After each image upload, the backend asynchronously writes card-delivery variants at widths **640, 750, 828, 1080, 1200** and quality **75** (`UploadService.warmDeliveryVariants`). Partner imports use the same upload endpoint, so new photos are covered automatically.
+- **Legacy warm-up:** One-off `npm run warm:card-variants:cover:prod` (covers only) or `warm:card-variants:all:prod` (all gallery photos) from `core/backend` on Render shell after deploy; idempotent via S3 `HeadObject` before encode. See `core/backend/docs/SCRIPTS.md`.
 
-Optional S3 lifecycle rules can expire old `/uploads/optimized/` objects if storage growth needs control; originals should be retained.
+Optional S3 lifecycle rules can expire old `/uploads/optimized/` objects if storage growth needs control; originals should be retained. Expect roughly **+200–300 KB** of optimized objects per uploaded photo (five widths per file when warm-up runs on every upload).
 
 **Cloudflare Cache Rule for image delivery (recommended when API is proxied through Cloudflare):**
 
@@ -626,7 +628,7 @@ Without an explicit rule, Cloudflare often serves `GET /api/upload/image/*` as *
 curl -sI "https://api.kupito.club/api/upload/image/<uuid>.webp?quality=65&width=640"
 ```
 
-The second response should show `cf-cache-status: HIT` (after the first `MISS`/`DYNAMIC` depending on rollout). Most image traffic should then be served from the edge, reducing origin CPU and avoiding accidental overlap with API rate limits.
+The second response should show `cf-cache-status: HIT` (after the first `MISS`/`DYNAMIC` depending on rollout). If **both** requests stay `DYNAMIC`, the Cache Rule is not active yet — card delivery warm-up still removes on-the-fly resize, but every browser hit still reaches the origin until edge caching is enabled. Most image traffic should then be served from the edge, reducing origin CPU and avoiding accidental overlap with API rate limits.
 
 **CloudFront CORS for `/uploads/*` (recommended for S3 origin assets):**
 

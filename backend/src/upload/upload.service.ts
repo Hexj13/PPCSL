@@ -31,6 +31,14 @@ import sharp from 'sharp';
 
 import { handleUploadError } from '../common/utils/error-handling.utils';
 
+import {
+  DELIVERY_WARM_QUALITY,
+  DELIVERY_WARM_WIDTHS,
+  getOptimizedPersistentPath,
+  getUploadBasename,
+  isPersistableDeliveryVariant,
+} from './optimized-delivery-cache.utils';
+import { resizeAndEncodeWebp } from './optimized-delivery-image';
 import { PlateDetectorService } from './plate-detector.service';
 import { PlateMaskService } from './plate-mask.service';
 import { ProcessingSemaphore } from './processing-semaphore';
@@ -44,10 +52,6 @@ const DELETE_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const THUMBNAIL_WIDTH = 400;
 const THUMBNAIL_QUALITY = 65;
 const OPTIMIZED_DELIVERY_EFFORT = 3;
-const PERSISTENT_CACHE_ALLOWED_QUALITIES = new Set([65, 68, 70, 75]);
-const PERSISTENT_CACHE_ALLOWED_WIDTHS = new Set([
-  16, 32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920, 2048, 3840,
-]);
 
 const VIDEO_PART_SIZE_BYTES = 5 * 1024 * 1024;
 const PRESIGNED_PART_TTL_SECONDS = 3600;
@@ -90,6 +94,7 @@ export class UploadService {
   private readonly watermarkDomain: string;
   private readonly deleteTokenSecret: string;
   private readonly optimizedImageCache: LRUCache<string, Buffer>;
+  private readonly optimizedImageInflight = new Map<string, Promise<Buffer>>();
 
   private readonly imageMagicNumbers: { [key: string]: Buffer[] } = {
     'image/jpeg': [
@@ -509,6 +514,12 @@ export class UploadService {
         })(),
       ]);
 
+      void this.warmDeliveryVariants(pathResult).catch((error) => {
+        this.logger.warn(
+          `[${uploadId}] [WARM] failed for ${pathResult}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      });
+
       return { path: pathResult, thumbnailPath, blurhash, plateMaskResult };
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ServiceUnavailableException) {
@@ -592,26 +603,8 @@ export class UploadService {
       .digest('base64url');
   }
 
-  private getUploadBasename(filePath: string): string {
-    return path.basename(filePath.replace(/^\//, ''));
-  }
-
-  private buildOptimizedPersistentFileName(
-    filePath: string,
-    quality: number,
-    maxWidth?: number,
-  ): string {
-    const basename = this.getUploadBasename(filePath).replace(/\.webp$/i, '');
-    const widthPart = maxWidth ?? 'orig';
-    return `${basename}_${widthPart}_${quality}.webp`;
-  }
-
-  private getOptimizedPersistentPath(filePath: string, quality: number, maxWidth?: number): string {
-    return `/uploads/optimized/${this.buildOptimizedPersistentFileName(filePath, quality, maxWidth)}`;
-  }
-
   private getThumbnailPathForOriginal(filePath: string): string {
-    return `/uploads/thumb/${this.getUploadBasename(filePath)}`;
+    return `/uploads/thumb/${getUploadBasename(filePath)}`;
   }
 
   private async readImageBufferFromPath(filePath: string): Promise<Buffer> {
@@ -661,11 +654,95 @@ export class UploadService {
     fs.writeFileSync(fullPath, buffer);
   }
 
-  private isPersistableVariant(quality: number, maxWidth?: number): boolean {
-    if (!PERSISTENT_CACHE_ALLOWED_QUALITIES.has(quality)) {
+  private async storedObjectExists(filePath: string): Promise<boolean> {
+    const normalized = filePath.replace(/^\//, '');
+    if (!normalized) {
       return false;
     }
-    return maxWidth === undefined || PERSISTENT_CACHE_ALLOWED_WIDTHS.has(maxWidth);
+    if (this.useS3 && this.s3Client) {
+      return this.headObjectExists(normalized);
+    }
+    return fs.existsSync(path.join(process.cwd(), normalized));
+  }
+
+  private async persistentOptimizedVariantExists(
+    filePath: string,
+    quality: number,
+    maxWidth?: number,
+  ): Promise<boolean> {
+    if (!isPersistableDeliveryVariant(quality, maxWidth)) {
+      return false;
+    }
+    return this.storedObjectExists(getOptimizedPersistentPath(filePath, quality, maxWidth));
+  }
+
+  async warmDeliveryVariants(filePath: string): Promise<void> {
+    const normalizedPath = filePath.startsWith('/') ? filePath : `/${filePath}`;
+    if (!normalizedPath.startsWith('/uploads/') || normalizedPath.includes('..')) {
+      return;
+    }
+
+    let sourceBuffer: Buffer | null = null;
+    for (const width of DELIVERY_WARM_WIDTHS) {
+      const exists = await this.persistentOptimizedVariantExists(
+        normalizedPath,
+        DELIVERY_WARM_QUALITY,
+        width,
+      );
+      if (exists) {
+        continue;
+      }
+
+      if (!sourceBuffer) {
+        sourceBuffer = await this.readImageBufferFromPath(normalizedPath);
+      }
+
+      await this.optimizeAndPersistVariant(
+        normalizedPath,
+        DELIVERY_WARM_QUALITY,
+        width,
+        sourceBuffer,
+      );
+    }
+  }
+
+  private async optimizeAndPersistVariant(
+    filePath: string,
+    quality: number,
+    maxWidth?: number,
+    sourceBuffer?: Buffer,
+  ): Promise<Buffer> {
+    const cacheKey = `${filePath}:${quality}:${maxWidth ?? 'orig'}`;
+    const cached = this.optimizedImageCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const persistable = isPersistableDeliveryVariant(quality, maxWidth);
+    const persistentPath = persistable
+      ? getOptimizedPersistentPath(filePath, quality, maxWidth)
+      : null;
+    if (persistentPath) {
+      const persistentCached = await this.readPersistentOptimizedCache(persistentPath);
+      if (persistentCached) {
+        this.optimizedImageCache.set(cacheKey, persistentCached);
+        return persistentCached;
+      }
+    }
+
+    const imageBuffer = sourceBuffer ?? (await this.readImageBufferFromPath(filePath));
+    const buffer = await resizeAndEncodeWebp(
+      imageBuffer,
+      quality,
+      maxWidth,
+      OPTIMIZED_DELIVERY_EFFORT,
+    );
+    this.optimizedImageCache.set(cacheKey, buffer);
+    if (persistentPath) {
+      await this.writePersistentOptimizedCache(persistentPath, buffer);
+    }
+
+    return buffer;
   }
 
   private async deleteStoredObject(filePath: string): Promise<void> {
@@ -693,7 +770,7 @@ export class UploadService {
   }
 
   private async deleteOptimizedVariants(filePath: string): Promise<void> {
-    const prefix = this.getUploadBasename(filePath).replace(/\.webp$/i, '');
+    const prefix = getUploadBasename(filePath).replace(/\.webp$/i, '');
     if (this.useS3 && this.s3Client) {
       const listPrefix = `uploads/optimized/${prefix}_`;
       try {
@@ -749,43 +826,22 @@ export class UploadService {
   ): Promise<Buffer> {
     const cacheKey = `${filePath}:${quality}:${maxWidth ?? 'orig'}`;
     const cached = this.optimizedImageCache.get(cacheKey);
-    if (cached) return cached;
-
-    const persistable = this.isPersistableVariant(quality, maxWidth);
-    const persistentPath = persistable
-      ? this.getOptimizedPersistentPath(filePath, quality, maxWidth)
-      : null;
-    if (persistentPath) {
-      const persistentCached = await this.readPersistentOptimizedCache(persistentPath);
-      if (persistentCached) {
-        this.optimizedImageCache.set(cacheKey, persistentCached);
-        return persistentCached;
-      }
+    if (cached) {
+      return cached;
     }
 
-    const imageBuffer = await this.readImageBufferFromPath(filePath);
-
-    const image = sharp(imageBuffer);
-    const metadata = await image.metadata();
-
-    let processedImage = image;
-
-    if (maxWidth && metadata.width && metadata.width > maxWidth) {
-      processedImage = processedImage.resize(maxWidth, null, {
-        withoutEnlargement: true,
-        fit: 'inside',
-      });
+    const inflight = this.optimizedImageInflight.get(cacheKey);
+    if (inflight) {
+      return inflight;
     }
 
-    const buffer = await processedImage
-      .webp({ quality, effort: OPTIMIZED_DELIVERY_EFFORT })
-      .toBuffer();
-    this.optimizedImageCache.set(cacheKey, buffer);
-    if (persistentPath) {
-      await this.writePersistentOptimizedCache(persistentPath, buffer);
+    const promise = this.optimizeAndPersistVariant(filePath, quality, maxWidth);
+    this.optimizedImageInflight.set(cacheKey, promise);
+    try {
+      return await promise;
+    } finally {
+      this.optimizedImageInflight.delete(cacheKey);
     }
-
-    return buffer;
   }
 
   usesS3(): boolean {
