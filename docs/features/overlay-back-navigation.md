@@ -30,9 +30,9 @@ Overlays use `useScrollLock` (reference-counted `position: fixed` on `document.b
 
 ## Home scroll after Back from listing
 
-Returning from a listing detail page to `/` restores the saved feed scroll position in `useLayoutEffect` before paint (`lib/home-scroll-restore.ts`, wired from `ScrollReset.tsx`). A brief `position: fixed` offset on `document.body` avoids a one-frame flash at scroll top before `scrollTo` commits.
+Home scroll restoration is coordinated by a state machine in `lib/home-scroll-restore.ts` (`idle → pending → scrolled → correcting → done/cancelled`). `ScrollReset.tsx` reads the restore target on `/` and calls `beginHomeScrollRestore`, which performs one instant `scrollTo` in `useLayoutEffect` before paint. While restore is active, `ListingGrid` reserves the saved grid height as `minHeight` on the results container (persisted with `scrollY` as `homeReloadGridHeight`/`homeReloadViewportW`, applied only when the viewport width matches), so the footer stays in place and no skeleton flash occurs.
 
-On mobile viewports (`max-width: 767px`, single-column feed) restoration is anchor-based: the clicked card id is stored alongside the scroll position (`preserveHomeScrollPosition(listingId)`), and `restoreHomeScrollToListingCard` re-aligns that card just under the sticky header, re-correcting over a short window while images load and card heights settle. This keeps the previously opened listing pinned to the top instead of drifting to a neighbouring card. The saved pixel offset is still used as the immediate fallback and for desktop / reload / back-forward navigations.
+After the grid reports readiness (`reportGridReady` + `reportBannerDecided` from `useListingGridScrollEffects`), the coordinator runs a short correction window (max 3s, up to 12s when many listings are loaded): reload/back-forward and return from a listing detail both re-apply the exact saved `scrollY`. On listing click from home, `preserveHomeScrollPosition(listingId)` stores the pixel offset and `persistHomeReloadScrollState()` stores grid height for the min-height placeholder (SPA navigation does not fire `pagehide`). Any user interaction (wheel/touch/key/pointer) cancels the restore immediately.
 
 ## Related
 

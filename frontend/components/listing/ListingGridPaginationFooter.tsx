@@ -22,13 +22,18 @@ export function ListingGridPaginationFooter({
   return (
     <div>
       {(hasMore || loadingMore) && (
-        <LoadMoreButton onClick={onLoadMore} loading={loadingMore} disabled={loadingMore}>
+        <LoadMoreButton
+          onClick={onLoadMore}
+          loading={loadingMore}
+          disabled={loadingMore}
+          dataTestId="listings-load-more"
+        >
           {loadMoreLabel}
         </LoadMoreButton>
       )}
 
       {showNoMore && (
-        <div className="flex justify-center py-8">
+        <div className="flex justify-center pt-8">
           <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>{noMoreLabel}</p>
         </div>
       )}

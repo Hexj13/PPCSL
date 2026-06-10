@@ -2,29 +2,42 @@
 
 import { renderHook } from '@testing-library/react';
 
-import { restoreHomeScrollToListingCard } from '@/lib/home-scroll-restore';
+import {
+  applyHomeScrollRestoreWhenGridReady,
+  beginHomeScrollRestore,
+  getHomeScrollRestorePhase,
+  reportBannerDecided,
+  reportGridReady,
+  resetHomeScrollRestoreForTests,
+} from '@/lib/home-scroll-restore';
 
 import { useListingGridScrollEffects } from './useListingGridScrollEffects';
 
 jest.mock('@/lib/home-scroll-restore', () => ({
-  restoreHomeScrollToListingCard: jest.fn(),
+  ...jest.requireActual('@/lib/home-scroll-restore'),
+  reportGridReady: jest.fn(),
+  reportBannerDecided: jest.fn(),
 }));
 
-const restoreHomeScrollToListingCardMock = restoreHomeScrollToListingCard as jest.MockedFunction<
-  typeof restoreHomeScrollToListingCard
+const reportGridReadyMock = reportGridReady as jest.MockedFunction<typeof reportGridReady>;
+const reportBannerDecidedMock = reportBannerDecided as jest.MockedFunction<
+  typeof reportBannerDecided
 >;
 
 const defaultProps = {
   showContent: true,
   searchParamsString: 'brand=toyota',
+  layoutReady: true,
 };
 
 describe('useListingGridScrollEffects', () => {
   let rafCallbacks: FrameRequestCallback[];
 
   beforeEach(() => {
+    resetHomeScrollRestoreForTests();
     window.sessionStorage.clear();
-    restoreHomeScrollToListingCardMock.mockReset();
+    reportGridReadyMock.mockReset();
+    reportBannerDecidedMock.mockReset();
     window.scrollTo = jest.fn();
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 100, writable: true });
     Object.defineProperty(window, 'innerWidth', {
@@ -42,6 +55,7 @@ describe('useListingGridScrollEffects', () => {
   });
 
   afterEach(() => {
+    resetHomeScrollRestoreForTests();
     jest.restoreAllMocks();
   });
 
@@ -144,7 +158,7 @@ describe('useListingGridScrollEffects', () => {
     expect(rafCallbacks).toHaveLength(1);
     rafCallbacks.forEach((cb) => cb(0));
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 368, behavior: 'smooth' });
-    expect(restoreHomeScrollToListingCardMock).not.toHaveBeenCalled();
+    expect(reportGridReadyMock).not.toHaveBeenCalled();
   });
 
   it('does not scroll to listings-results when listings count increases without loading', () => {
@@ -167,10 +181,15 @@ describe('useListingGridScrollEffects', () => {
     expect(window.scrollTo).not.toHaveBeenCalled();
   });
 
-  it('skips listing card restore when scrollToResultsAfterLoad is set', () => {
+  it('skips home restore milestones when scrollToResultsAfterLoad is set', () => {
     window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
     window.sessionStorage.setItem('homeScrollListingId', 'listing-1');
     window.sessionStorage.setItem('homeScrollPosition', '1200');
+    beginHomeScrollRestore({
+      scrollY: 1200,
+      source: 'listing_return',
+      listingId: 'listing-1',
+    });
 
     renderHook(() =>
       useListingGridScrollEffects({
@@ -180,12 +199,57 @@ describe('useListingGridScrollEffects', () => {
       }),
     );
 
-    expect(restoreHomeScrollToListingCardMock).not.toHaveBeenCalled();
+    expect(reportGridReadyMock).not.toHaveBeenCalled();
+    expect(reportBannerDecidedMock).not.toHaveBeenCalled();
   });
 
-  it('restores listing card scroll once when search scroll flag is absent', () => {
-    window.sessionStorage.setItem('homeScrollListingId', 'listing-1');
-    window.sessionStorage.setItem('homeScrollPosition', '1200');
+  it('reports grid and banner milestones when coordinator is in scrolled phase', () => {
+    beginHomeScrollRestore({ scrollY: 180, source: 'reload_or_back_forward' });
+    applyHomeScrollRestoreWhenGridReady();
+    expect(getHomeScrollRestorePhase()).toBe('scrolled');
+
+    renderHook(() =>
+      useListingGridScrollEffects({
+        ...defaultProps,
+        listingsCount: 8,
+        isLoading: false,
+      }),
+    );
+
+    expect(reportGridReadyMock).toHaveBeenCalledWith(8);
+    expect(reportBannerDecidedMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits for layout readiness before reporting restore milestones', () => {
+    beginHomeScrollRestore({ scrollY: 180, source: 'reload_or_back_forward' });
+    applyHomeScrollRestoreWhenGridReady();
+
+    const { rerender } = renderHook(
+      ({ layoutReady }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount: 8,
+          isLoading: false,
+          layoutReady,
+        }),
+      { initialProps: { layoutReady: false } },
+    );
+
+    expect(reportGridReadyMock).not.toHaveBeenCalled();
+
+    rerender({ layoutReady: true });
+
+    expect(reportGridReadyMock).toHaveBeenCalledWith(8);
+    expect(reportBannerDecidedMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports milestones once when search scroll flag is absent', () => {
+    beginHomeScrollRestore({
+      scrollY: 1200,
+      source: 'listing_return',
+      listingId: 'listing-1',
+    });
+    applyHomeScrollRestoreWhenGridReady();
 
     const { rerender } = renderHook(
       ({ listingsCount }) =>
@@ -197,11 +261,12 @@ describe('useListingGridScrollEffects', () => {
       { initialProps: { listingsCount: 8 } },
     );
 
-    expect(restoreHomeScrollToListingCardMock).toHaveBeenCalledTimes(1);
-    expect(restoreHomeScrollToListingCardMock).toHaveBeenCalledWith('listing-1', 1200);
+    expect(reportGridReadyMock).toHaveBeenCalledTimes(1);
+    expect(reportBannerDecidedMock).toHaveBeenCalledTimes(1);
 
     rerender({ listingsCount: 16 });
 
-    expect(restoreHomeScrollToListingCardMock).toHaveBeenCalledTimes(1);
+    expect(reportGridReadyMock).toHaveBeenCalledTimes(1);
+    expect(reportBannerDecidedMock).toHaveBeenCalledTimes(1);
   });
 });

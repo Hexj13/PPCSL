@@ -41,5 +41,5 @@ export function usePartnerPromoBannerInGrid() {
     }
   }, [user, setAuth]);
 
-  return { showBanner, dismiss };
+  return { showBanner, dismiss, ready: mounted };
 }

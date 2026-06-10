@@ -1,17 +1,13 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useLayoutEffect, useRef, type MutableRefObject } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
+import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 import {
-  sessionStorageGetItem,
-  sessionStorageRemoveItem,
-  sessionStorageSetItem,
-} from '@/lib/browser-session-storage';
-import {
-  applyHomeScrollRestore,
+  beginHomeScrollRestore,
+  ensureHomeReloadScrollPersistence,
   readHomeScrollRestoreTarget,
-  restoreHomeScrollToListingCard,
 } from '@/lib/home-scroll-restore';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
@@ -34,34 +30,16 @@ function scrollListingDetailToTopIfNeeded(restPath: string): boolean {
   return false;
 }
 
-function setupHomeScrollRestoration(
-  previousPath: string | null,
-  removeHomeListenersRef: MutableRefObject<(() => void) | null>,
-) {
+function setupHomeScrollRestoration(previousPath: string | null) {
+  ensureHomeReloadScrollPersistence();
+
   if ('scrollRestoration' in window.history) {
     window.history.scrollRestoration = 'manual';
   }
 
-  const saveReloadScroll = () => {
-    sessionStorageSetItem('homeReloadScrollY', String(window.scrollY));
-    sessionStorageSetItem('homeReloadScrollTs', String(Date.now()));
-  };
-
-  window.addEventListener('pagehide', saveReloadScroll);
-  removeHomeListenersRef.current = () => {
-    window.removeEventListener('pagehide', saveReloadScroll);
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'auto';
-    }
-  };
-
   const target = readHomeScrollRestoreTarget(previousPath);
   if (target) {
-    if (target.source === 'listing_return' && target.listingId) {
-      restoreHomeScrollToListingCard(target.listingId, target.scrollY);
-    } else {
-      applyHomeScrollRestore(target.scrollY);
-    }
+    beginHomeScrollRestore(target);
   }
 }
 
@@ -84,7 +62,6 @@ function shouldSkipScrollResetForPreservedScroll(
 export function ScrollReset() {
   const pathname = usePathname();
   const previousPathRef = useRef<string | null>(null);
-  const removeHomeListenersRef = useRef<(() => void) | null>(null);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') {
@@ -94,26 +71,19 @@ export function ScrollReset() {
     const previousPath = previousPathRef.current;
     previousPathRef.current = pathname;
 
-    const cleanup = () => {
-      removeHomeListenersRef.current?.();
-      removeHomeListenersRef.current = null;
-    };
-
-    cleanup();
-
     const { restPath } = stripLocalePrefixFromPathname(pathname);
 
     if (scrollListingDetailToTopIfNeeded(restPath)) {
-      return cleanup;
+      return;
     }
 
     if (restPath === '/') {
-      setupHomeScrollRestoration(previousPath, removeHomeListenersRef);
-      return cleanup;
+      setupHomeScrollRestoration(previousPath);
+      return;
     }
 
     if (shouldSkipScrollResetForPreservedScroll(previousPath, restPath)) {
-      return cleanup;
+      return;
     }
 
     const prevRest = previousPath ? stripLocalePrefixFromPathname(previousPath).restPath : null;
@@ -121,14 +91,12 @@ export function ScrollReset() {
     if (SCROLL_TOP_ON_ENTER_PATHS.has(restPath) && prevRest !== restPath) {
       sessionStorageRemoveItem('scrollPreserved');
       scrollWindowToTopWithFollowUp();
-      return cleanup;
+      return;
     }
 
     if (previousPath && previousPath !== pathname) {
       scrollWindowToTopInstant();
     }
-
-    return cleanup;
   }, [pathname]);
 
   return null;

@@ -70,7 +70,7 @@ Frontend-specific documentation for PPCSL Next.js application.
 **Listings:**
 - `listing/ListingGrid` - Search results fetch + load-more; renders via `VirtualizedListingGrid` (`@tanstack/react-virtual`)
 - `listing/buildVirtualRows`, `hooks/useGridColumns` - Row model and responsive column count for the virtualizer
-- `lib/listing-grid-scroll-bridge` - Scroll restore to a listing card after back navigation from detail
+- `lib/home-scroll-restore` - Home scroll restore after reload or back from listing detail (exact `scrollY` + grid min-height placeholder)
 - `listing/ListingManagementCard` - Status management
 - `search/SavedFiltersList` - Saved filters with caching
 - Perf audit: `npm run perf:list-grid` (Playwright; writes `.perf-audit/list-perf.json`)

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useCallback, useEffect, useMemo, useRef, startTransition } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useListingGridCities } from '@/components/listing/CitiesProvider';
 import { ListingCardBody } from '@/components/listing/ListingCardBody';
@@ -12,7 +12,10 @@ import {
   type ListingCardImageCarouselHandle,
 } from '@/components/listing/ListingCardParts';
 import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhotoCarouselNavButtons';
-import { applyListingCardResponsivePreload } from '@/components/listing/listing-card-image';
+import {
+  applyListingCardResponsivePreload,
+  CARD_IMAGE_QUALITY,
+} from '@/components/listing/listing-card-image';
 import { useI18n } from '@/components/providers/I18nProvider';
 import {
   getCompareButtonClassName,
@@ -25,6 +28,7 @@ import type { Listing } from '@/lib/api';
 import { setBlurForListing, setIndexForListing } from '@/lib/blur-navigation-cache';
 import { decodeBlurhashOffMain, getDecodedBlurhashFromCache } from '@/lib/blurhash-worker-client';
 import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
+import { persistHomeReloadScrollState } from '@/lib/home-scroll-restore';
 import { observeElementVisibility } from '@/lib/intersection-observer-registry';
 import { prewarmListingPageHeroImage } from '@/lib/listing/listing-page-helpers';
 import { preserveHomeScrollPosition } from '@/lib/preserve-home-scroll';
@@ -272,9 +276,8 @@ function ListingCardComponent({
     setIndexForListing(listing.id, galleryIndex);
     prewarmListingPageHeroImage(listing.id, images[galleryIndex] ?? images[0]);
     if (fromHome) {
-      startTransition(() => {
-        preserveHomeScrollPosition(listing.id);
-      });
+      preserveHomeScrollPosition(listing.id);
+      persistHomeReloadScrollState();
     }
   }, [listing.id, listing.cover_blur_hash, images, carouselIndex]);
 
@@ -324,7 +327,7 @@ function ListingCardComponent({
 
   const singleImageUrl =
     images[0] && images[0] !== '/placeholder-car.jpg'
-      ? getOptimizedImageUrl(images[0], 65, 640)
+      ? getOptimizedImageUrl(images[0], CARD_IMAGE_QUALITY, 640)
       : '/placeholder-car.jpg';
   const showImage =
     images.length <= 1 &&
@@ -449,7 +452,12 @@ function ListingCardComponent({
       <div className="relative z-[1] flex h-full flex-col pointer-events-none">
         <div
           className="relative w-full bg-bg-darker shrink-0 overflow-hidden"
-          style={{ aspectRatio: '16/9', minHeight: '240px' }}
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            aspectRatio: '16/9',
+            minHeight: '240px',
+          }}
         >
           {images.length > 1 ? (
             <ListingCardImageCarousel

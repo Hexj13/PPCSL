@@ -74,8 +74,11 @@ export function buildVirtualRows(
   return { rows, listingRowIndexById };
 }
 
-export function getVirtualRowEstimateSize(row: VirtualRow): number {
-  return row.kind === 'banner' ? 320 : 620;
+export function getVirtualRowEstimateSize(row: VirtualRow, columns = 1): number {
+  if (row.kind === 'banner') {
+    return 320;
+  }
+  return columns === 1 ? 500 : 570;
 }
 
 export function getBannerVariantClassName(variant: 'mobile' | 'lg' | 'xl'): string {

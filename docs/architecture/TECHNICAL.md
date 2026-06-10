@@ -342,7 +342,7 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 ### Key Features
 
 - **Image Processing:** Automatic compression, resizing (max 1920px width), conversion to WebP format (75% quality by default)
-- **Adaptive Quality:** Different quality levels for different contexts (65% for 1080px card previews in `/uploads/thumb/`, 65% for listing cards, 75-80% for detail pages, 85% for full-size modal views)
+- **Adaptive Quality:** Different quality levels for different contexts (75% for listing cards, 75-80% for detail pages, 85% for full-size modal views)
 - **File Storage:** AWS S3 for persistent images and optional listing video (using AWS SDK v3, required for production on Render.com), AWS CloudFront CDN for fast global delivery when configured
 - **Search:** PostgreSQL Full-Text Search with extensive filtering options
 - **Smart Selection:** authenticated questionnaire that maps car-use preferences to a saved search filter
@@ -512,10 +512,8 @@ POST /api/upload/image                # Upload and optimize image
 GET  /api/upload/image/:filename      # Get optimized image version
                                      # Query params: ?quality=X&width=Y
                                      # Response: Cache-Control: public, max-age=31536000, immutable, stale-while-revalidate=604800; ETag for 304 Not Modified
-                                     # On upload, a 1080px card preview is stored at /uploads/thumb/{filename}
                                      # Delivery cache: in-memory LRU, then persistent /uploads/optimized/{name}_{width}_{quality}.webp (S3 or disk)
                                      # Persistent cache is written only for standard responsive widths/qualities (bounds storage on the unthrottled endpoint)
-                                     # For card requests (width ≤1080 and quality ≤65), resize sources the thumb when available instead of the full original
 POST /api/upload/video/from-url       # Ingest listing video from HTTPS URL (import JWT + optional x-import-secret); SSRF-hardened download; used by partner import CLIs
 ```
 
@@ -1142,7 +1140,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 - **Centralized search parameter parsing:** Shared `lib/search/search-params.ts` module provides `buildSearchQuery()` (URL construction, base64 encoding, localStorage fallback for long query strings), `getDefaultFilters()`, URL parameter parsing via `parseSearchParams()`, base64 encoding/decoding, and slug-to-ID conversion via `createBrandResolver` / `createModelResolver`
 - **Search filters:** `SearchFilters.tsx` delegates to `useSearchFiltersController` → `search-filters/SearchFiltersForm.tsx` (composed hooks include `useSearchFiltersSync`, `useVehicleType`, `useSearchTabs`, `useFilterHandlers`, `useFilterOptions`). On the home page, `useVehicleType` derives the active vehicle category from URL query params (and `body_types` when present), not from `kupito_vehicle_type` in localStorage; listing grid and search UI stay in sync.
 - **Unified listing fetch logic:** Merged `fetchListings` and `handleLoadMore` functions into a single unified function, eliminating ~180 lines of duplicate code
-- **Virtualized results grid:** `ListingGrid` renders results through `VirtualizedListingGrid.tsx` using `@tanstack/react-virtual` (`useWindowVirtualizer`). Rows are built by `buildVirtualRows.ts` (column count from `useGridColumns` matchMedia breakpoints; one breakpoint-aligned partner banner). Only visible rows plus overscan stay in the DOM, so DOM size no longer grows with the accumulated load-more list. Scroll restore targets a row via `lib/listing-grid-scroll-bridge.ts` (`scrollToIndex`). A repeatable DOM-node/layout-shift audit lives in `scripts/perf/list-perf.mjs` (`npm run perf:list-grid`).
+- **Virtualized results grid:** `ListingGrid` renders results through `VirtualizedListingGrid.tsx` using `@tanstack/react-virtual` (`useWindowVirtualizer`). SSR and the first client paint stay on a static grid for hydration safety; after mount, `listing-grid-measure.ts` reads row heights from that markup and `listing-grid-virtual-swap.ts` swaps to the virtualizer with those estimates (before user interaction). Rows are built by `buildVirtualRows.ts` (column count from `useGridColumns` matchMedia breakpoints; one breakpoint-aligned partner banner). Only visible rows plus overscan stay in the DOM, so DOM size no longer grows with the accumulated load-more list. Home scroll restore (`lib/home-scroll-restore.ts`) uses exact saved `scrollY` plus a `min-height` placeholder on `listing-grid-placeholder`; listing-return restore keeps a static grid until restore completes. A repeatable DOM-node/layout-shift audit lives in `scripts/perf/list-perf.mjs` (`npm run perf:list-grid`).
 - **Component memoization:** React.memo, useMemo, useCallback for preventing unnecessary re-renders
   - ListingCard wrapped in React.memo for optimal re-render performance
   - Memoized event handlers in Header, SearchFilters, and other interactive components
@@ -1614,7 +1612,7 @@ cd core/backend && npm run test -- listings.service.spec.ts
   - KPI and validation: lib/performance/inp-kpi.ts (targets, observer), [inp-validation.md](../engineering/inp-validation.md) for GSC validation steps
 - **Listing grid virtualization (2026-06):**
   - `VirtualizedListingGrid.tsx` with `@tanstack/react-virtual` (`useWindowVirtualizer`); row model in `buildVirtualRows.ts`, column breakpoints in `useGridColumns.ts`
-  - Home scroll restore after listing detail uses `lib/listing-grid-scroll-bridge.ts` (`scrollToIndex` via custom event from `home-scroll-restore.ts`)
+  - Home scroll restore after listing detail uses `lib/home-scroll-restore.ts` (exact saved `scrollY` + grid min-height placeholder, same path as reload restore)
   - Resize handlers coalesced via `lib/resize-coalesced.ts` (search tabs, tab indicator, hint tooltips, virtualizer)
   - LCP priority on first 6 visible cards; link prefetch on first 4
   - Repeatable audit: `npm run perf:list-grid` → `core/frontend/.perf-audit/list-perf.json`

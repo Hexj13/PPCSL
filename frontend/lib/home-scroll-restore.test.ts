@@ -7,9 +7,18 @@ jest.mock('@/lib/url-locale', () => ({
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
 import {
-  applyHomeScrollRestore,
+  applyHomeScrollRestoreWhenGridReady,
+  beginHomeScrollRestore,
+  cancelHomeScrollRestore,
+  getHomeScrollRestorePhase,
+  getPendingRestoreMinHeight,
+  persistHomeReloadScrollState,
+  readSavedGridMinHeightBeforeRestore,
   readHomeScrollRestoreTarget,
-  restoreHomeScrollToListingCard,
+  reportBannerDecided,
+  reportGridReady,
+  resetHomeScrollRestoreForTests,
+  subscribeHomeScrollRestoreState,
 } from './home-scroll-restore';
 
 describe('readHomeScrollRestoreTarget', () => {
@@ -52,51 +61,225 @@ describe('readHomeScrollRestoreTarget', () => {
     expect(readHomeScrollRestoreTarget('/ro/profile')).toBeNull();
     expect(window.sessionStorage.getItem('homeScrollPosition')).toBe('1200');
   });
+
+  it('returns reload scroll on reload without clearing listing return keys', () => {
+    const now = Date.now();
+    window.sessionStorage.setItem('homeReloadScrollY', '150');
+    window.sessionStorage.setItem('homeReloadScrollTs', String(now));
+    window.sessionStorage.setItem('homeScrollPosition', '5000');
+    window.sessionStorage.setItem('homeScrollTimestamp', String(now - 60_000));
+    window.sessionStorage.setItem('homeScrollListingId', 'stale-listing');
+
+    const originalGetEntriesByType = performance.getEntriesByType;
+    Object.defineProperty(performance, 'getEntriesByType', {
+      configurable: true,
+      value: jest.fn().mockReturnValue([{ type: 'reload' }]),
+    });
+
+    const result = readHomeScrollRestoreTarget(null);
+
+    expect(result).toEqual({ scrollY: 150, source: 'reload_or_back_forward' });
+    expect(window.sessionStorage.getItem('homeScrollListingId')).toBe('stale-listing');
+    expect(window.sessionStorage.getItem('homeScrollPosition')).toBe('5000');
+
+    Object.defineProperty(performance, 'getEntriesByType', {
+      configurable: true,
+      value: originalGetEntriesByType,
+    });
+  });
+
+  it('returns listing anchor on back_forward instead of reload scroll state', () => {
+    const now = Date.now();
+    window.sessionStorage.setItem('homeReloadScrollY', '900');
+    window.sessionStorage.setItem('homeReloadScrollTs', String(now));
+    window.sessionStorage.setItem('homeScrollPosition', '1200');
+    window.sessionStorage.setItem('homeScrollTimestamp', String(now));
+    window.sessionStorage.setItem('homeScrollListingId', 'clicked-listing');
+    strip.mockReturnValue({ locale: 'ro', restPath: '/listings/clicked-listing' });
+
+    const originalGetEntriesByType = performance.getEntriesByType;
+    Object.defineProperty(performance, 'getEntriesByType', {
+      configurable: true,
+      value: jest.fn().mockReturnValue([{ type: 'back_forward' }]),
+    });
+
+    const result = readHomeScrollRestoreTarget('/ro/listings/clicked-listing');
+
+    expect(result).toEqual({
+      scrollY: 1200,
+      source: 'listing_return',
+      listingId: 'clicked-listing',
+    });
+
+    Object.defineProperty(performance, 'getEntriesByType', {
+      configurable: true,
+      value: originalGetEntriesByType,
+    });
+  });
+
+  it('returns exact reload scroll even when anchor was saved on pagehide', () => {
+    const now = Date.now();
+    window.sessionStorage.setItem('homeReloadScrollY', '4000');
+    window.sessionStorage.setItem('homeReloadScrollTs', String(now));
+    window.sessionStorage.setItem('homeScrollPosition', '4000');
+    window.sessionStorage.setItem('homeScrollTimestamp', String(now));
+    window.sessionStorage.setItem('homeScrollListingId', 'listing-abc');
+
+    const originalGetEntriesByType = performance.getEntriesByType;
+    Object.defineProperty(performance, 'getEntriesByType', {
+      configurable: true,
+      value: jest.fn().mockReturnValue([{ type: 'reload' }]),
+    });
+
+    const result = readHomeScrollRestoreTarget(null);
+
+    expect(result).toEqual({
+      scrollY: 4000,
+      source: 'reload_or_back_forward',
+    });
+    expect(window.sessionStorage.getItem('homeReloadScrollY')).toBe('4000');
+
+    Object.defineProperty(performance, 'getEntriesByType', {
+      configurable: true,
+      value: originalGetEntriesByType,
+    });
+  });
 });
 
-describe('applyHomeScrollRestore', () => {
-  let rafCallbacks: FrameRequestCallback[];
-
+describe('persistHomeReloadScrollState', () => {
   beforeEach(() => {
+    resetHomeScrollRestoreForTests();
+    window.sessionStorage.clear();
+    document.body.innerHTML = '';
+    const header = document.createElement('header');
+    header.getBoundingClientRect = () => ({ height: 72 }) as DOMRect;
+    document.body.appendChild(header);
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 150, writable: true });
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 1280,
+      writable: true,
+    });
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { pathname: '/' },
+      writable: true,
+    });
+    (stripLocalePrefixFromPathname as jest.Mock).mockReturnValue({
+      locale: 'ro',
+      restPath: '/',
+    });
+  });
+
+  it('does not overwrite listing return keys when persisting reload scroll', () => {
+    window.sessionStorage.setItem('homeScrollListingId', 'clicked-listing');
+    window.sessionStorage.setItem('homeScrollPosition', '5000');
+    window.sessionStorage.setItem('homeScrollTimestamp', String(Date.now()));
+
+    persistHomeReloadScrollState();
+
+    expect(window.sessionStorage.getItem('homeReloadScrollY')).toBe('150');
+    expect(window.sessionStorage.getItem('homeReloadScrollTs')).toBeTruthy();
+    expect(window.sessionStorage.getItem('homeScrollListingId')).toBe('clicked-listing');
+    expect(window.sessionStorage.getItem('homeScrollPosition')).toBe('5000');
+  });
+
+  it('persists grid height and viewport width when listings-results exists', () => {
+    const grid = document.createElement('div');
+    grid.id = 'listings-results';
+    Object.defineProperty(grid, 'offsetHeight', { configurable: true, value: 2400 });
+    document.body.appendChild(grid);
+
+    const card = document.createElement('article');
+    card.setAttribute('data-testid', 'listing-card-first');
+    document.body.appendChild(card);
+
+    persistHomeReloadScrollState();
+
+    expect(window.sessionStorage.getItem('homeReloadGridHeight')).toBe('2400');
+    expect(window.sessionStorage.getItem('homeReloadViewportW')).toBe('1280');
+    expect(window.sessionStorage.getItem('homeReloadListingCount')).toBe('1');
+  });
+
+  it('does not persist while restore is in progress', () => {
     window.scrollTo = jest.fn();
-    Object.defineProperty(window, 'scrollY', { configurable: true, value: 0, writable: true });
-    document.body.style.cssText = '';
-    rafCallbacks = [];
-    jest
-      .spyOn(window, 'requestAnimationFrame')
-      .mockImplementation((cb: FrameRequestCallback): number => {
-        rafCallbacks.push(cb);
-        return rafCallbacks.length;
-      });
-  });
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 5000,
+    });
+    beginHomeScrollRestore({ scrollY: 500, source: 'reload_or_back_forward' });
+    persistHomeReloadScrollState();
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it('scrolls to the saved position synchronously', () => {
-    applyHomeScrollRestore(800);
-
-    expect(window.scrollTo).toHaveBeenCalledWith({ top: 800, left: 0, behavior: 'instant' });
-  });
-
-  it('holds position fixed until the next animation frame to avoid flash', () => {
-    applyHomeScrollRestore(800);
-
-    expect(document.body.style.position).toBe('fixed');
-    expect(document.body.style.top).toBe('-800px');
-
-    rafCallbacks.forEach((cb) => cb(0));
-
-    expect(document.body.style.position).toBe('');
-    expect(document.body.style.top).toBe('');
+    expect(window.sessionStorage.getItem('homeReloadScrollY')).toBeNull();
   });
 });
 
-describe('restoreHomeScrollToListingCard', () => {
+describe('readSavedGridMinHeightBeforeRestore', () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 1280,
+      writable: true,
+    });
+  });
+
+  it('returns saved grid height when listing return session is fresh', () => {
+    window.sessionStorage.setItem('homeScrollTimestamp', String(Date.now()));
+    window.sessionStorage.setItem('homeReloadGridHeight', '1800');
+    window.sessionStorage.setItem('homeReloadViewportW', '1280');
+
+    expect(readSavedGridMinHeightBeforeRestore(1280)).toBe(1800);
+  });
+
+  it('returns null when listing return session expired', () => {
+    window.sessionStorage.setItem('homeScrollTimestamp', String(Date.now() - 6 * 60 * 1000));
+    window.sessionStorage.setItem('homeReloadGridHeight', '1800');
+    window.sessionStorage.setItem('homeReloadViewportW', '1280');
+
+    expect(readSavedGridMinHeightBeforeRestore(1280)).toBeNull();
+  });
+});
+
+describe('getPendingRestoreMinHeight', () => {
+  beforeEach(() => {
+    resetHomeScrollRestoreForTests();
+    window.sessionStorage.clear();
+    window.scrollTo = jest.fn();
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 1280,
+      writable: true,
+    });
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 5000,
+    });
+  });
+
+  it('returns saved grid height when restore is active and viewport matches', () => {
+    window.sessionStorage.setItem('homeReloadGridHeight', '1800');
+    window.sessionStorage.setItem('homeReloadViewportW', '1280');
+    beginHomeScrollRestore({ scrollY: 900, source: 'reload_or_back_forward' });
+
+    expect(getPendingRestoreMinHeight(1280)).toBe(1800);
+  });
+
+  it('returns null when viewport width differs from saved width', () => {
+    window.sessionStorage.setItem('homeReloadGridHeight', '1800');
+    window.sessionStorage.setItem('homeReloadViewportW', '390');
+    beginHomeScrollRestore({ scrollY: 900, source: 'reload_or_back_forward' });
+
+    expect(getPendingRestoreMinHeight(1280)).toBeNull();
+  });
+});
+
+describe('home scroll restore coordinator', () => {
   let rafCallbacks: FrameRequestCallback[];
 
   beforeEach(() => {
+    resetHomeScrollRestoreForTests();
+    window.sessionStorage.clear();
     window.scrollTo = jest.fn();
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 0, writable: true });
     Object.defineProperty(window, 'innerHeight', {
@@ -112,60 +295,98 @@ describe('restoreHomeScrollToListingCard', () => {
         rafCallbacks.push(cb);
         return rafCallbacks.length;
       });
-    const header = document.createElement('header');
-    header.getBoundingClientRect = () => ({ height: 72 }) as DOMRect;
-    document.body.appendChild(header);
+    (window.scrollTo as jest.Mock).mockImplementation(({ top }: { top: number }) => {
+      Object.defineProperty(window, 'scrollY', { configurable: true, value: top, writable: true });
+    });
   });
 
   afterEach(() => {
+    resetHomeScrollRestoreForTests();
     jest.restoreAllMocks();
   });
 
-  it('anchors to the listing card when it is in the DOM', () => {
-    const card = document.createElement('article');
-    card.setAttribute('data-testid', 'listing-card-abc');
-    card.getBoundingClientRect = () => ({ top: 400, left: 0, width: 300, height: 200 }) as DOMRect;
-    document.body.appendChild(card);
+  function flushCorrectionFrames(count = 1): void {
+    for (let i = 0; i < count; i += 1) {
+      const callbacks = [...rafCallbacks];
+      rafCallbacks = [];
+      callbacks.forEach((cb) => cb(0));
+    }
+  }
+
+  it('transitions idle → scrolled on begin and finishes reload correction once', () => {
     Object.defineProperty(document.documentElement, 'scrollHeight', {
       configurable: true,
       value: 5000,
     });
 
-    restoreHomeScrollToListingCard('abc', 1200);
-    rafCallbacks.forEach((cb) => cb(0));
+    const phases: string[] = [];
+    subscribeHomeScrollRestoreState((restorePhase) => {
+      phases.push(restorePhase);
+    });
 
-    expect(window.scrollTo).toHaveBeenCalledWith(
-      expect.objectContaining({ top: expect.any(Number), behavior: 'instant' }),
-    );
+    beginHomeScrollRestore({ scrollY: 800, source: 'reload_or_back_forward' });
+    expect(getHomeScrollRestorePhase()).toBe('pending');
+    applyHomeScrollRestoreWhenGridReady();
+    expect(getHomeScrollRestorePhase()).toBe('scrolled');
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 800, left: 0, behavior: 'instant' });
+
+    reportGridReady(40);
+    reportBannerDecided();
+    flushCorrectionFrames();
+
+    expect(getHomeScrollRestorePhase()).toBe('done');
+    expect(phases).toContain('pending');
+    expect(phases).toContain('scrolled');
+    expect(phases).toContain('correcting');
+    expect(phases).toContain('done');
+    expect(window.sessionStorage.getItem('homeReloadScrollY')).toBe('800');
   });
 
-  it('anchors to slot anchor when the listing card is not mounted yet', () => {
-    const slot = document.createElement('div');
-    slot.setAttribute('data-listing-card-anchor-id', 'abc');
-    slot.getBoundingClientRect = () => ({ top: 400, left: 0, width: 300, height: 400 }) as DOMRect;
-    document.body.appendChild(slot);
+  it('restores exact scrollY on listing return like reload', () => {
     Object.defineProperty(document.documentElement, 'scrollHeight', {
       configurable: true,
       value: 5000,
     });
 
-    restoreHomeScrollToListingCard('abc', 1200);
-    rafCallbacks.forEach((cb) => cb(0));
+    const placeholder = document.createElement('div');
+    placeholder.setAttribute('data-testid', 'listing-grid-placeholder');
+    document.body.appendChild(placeholder);
+    window.sessionStorage.setItem('homeScrollTimestamp', String(Date.now()));
+    window.sessionStorage.setItem('homeReloadGridHeight', '1800');
+    window.sessionStorage.setItem('homeReloadViewportW', String(window.innerWidth));
 
-    expect(window.scrollTo).toHaveBeenCalledWith(
-      expect.objectContaining({ top: expect.any(Number), behavior: 'instant' }),
-    );
+    beginHomeScrollRestore({ scrollY: 1200, source: 'listing_return', listingId: 'abc' });
+    applyHomeScrollRestoreWhenGridReady();
+
+    expect(placeholder.style.minHeight).toBe('1800px');
+    reportGridReady(8);
+    reportBannerDecided();
+    flushCorrectionFrames();
+
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 1200, left: 0, behavior: 'instant' });
+    expect(getHomeScrollRestorePhase()).toBe('done');
   });
 
-  it('does not scroll to fallbackY while the page is still too short', () => {
+  it('cancels restore on user interaction', () => {
+    beginHomeScrollRestore({ scrollY: 800, source: 'reload_or_back_forward' });
+    cancelHomeScrollRestore();
+
+    expect(getHomeScrollRestorePhase()).toBe('cancelled');
+    reportGridReady(8);
+    reportBannerDecided();
+    flushCorrectionFrames();
+
+    expect(getHomeScrollRestorePhase()).toBe('cancelled');
+  });
+
+  it('does not add body spacer during restore', () => {
     Object.defineProperty(document.documentElement, 'scrollHeight', {
       configurable: true,
       value: 500,
     });
 
-    restoreHomeScrollToListingCard('missing-id', 1200);
-    rafCallbacks.forEach((cb) => cb(0));
+    beginHomeScrollRestore({ scrollY: 1200, source: 'reload_or_back_forward' });
 
-    expect(window.scrollTo).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-home-scroll-restore-spacer="true"]')).toBeNull();
   });
 });

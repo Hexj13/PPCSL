@@ -3,13 +3,18 @@
 import { useEffect, useRef } from 'react';
 
 import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
-import { restoreHomeScrollToListingCard } from '@/lib/home-scroll-restore';
+import {
+  getHomeScrollRestorePhase,
+  reportBannerDecided,
+  reportGridReady,
+} from '@/lib/home-scroll-restore';
 
 type UseListingGridScrollEffectsArgs = {
   listingsCount: number;
   showContent: boolean;
   isLoading: boolean;
   searchParamsString: string;
+  layoutReady: boolean;
 };
 
 export function useListingGridScrollEffects({
@@ -17,6 +22,7 @@ export function useListingGridScrollEffects({
   showContent,
   isLoading,
   searchParamsString,
+  layoutReady,
 }: UseListingGridScrollEffectsArgs) {
   const prevIsLoadingRef = useRef(isLoading);
   const hasMountedRef = useRef(false);
@@ -38,6 +44,7 @@ export function useListingGridScrollEffects({
       typeof window === 'undefined' ||
       (!loadingJustFinished && !isInitialEffect) ||
       isLoading ||
+      !layoutReady ||
       listingsCount === 0 ||
       !showContent
     ) {
@@ -57,11 +64,12 @@ export function useListingGridScrollEffects({
       const targetTop = el.getBoundingClientRect().top + window.scrollY - headerOffset;
       window.scrollTo({ top: targetTop, behavior: 'smooth' });
     });
-  }, [isLoading, listingsCount, showContent]);
+  }, [isLoading, layoutReady, listingsCount, showContent]);
 
   useEffect(() => {
     if (
       !showContent ||
+      !layoutReady ||
       listingsCount === 0 ||
       homeScrollRestoreAttemptedRef.current ||
       searchScrollHandledRef.current
@@ -71,16 +79,14 @@ export function useListingGridScrollEffects({
     if (sessionStorageGetItem('scrollToResultsAfterLoad')) {
       return;
     }
-    const listingId = sessionStorageGetItem('homeScrollListingId');
-    const scrollYRaw = sessionStorageGetItem('homeScrollPosition');
-    if (!listingId || !scrollYRaw) {
+
+    const restorePhase = getHomeScrollRestorePhase();
+    if (restorePhase !== 'scrolled' && restorePhase !== 'correcting') {
       return;
     }
-    const scrollY = parseInt(scrollYRaw, 10);
-    if (!Number.isFinite(scrollY) || scrollY <= 0) {
-      return;
-    }
+
     homeScrollRestoreAttemptedRef.current = true;
-    restoreHomeScrollToListingCard(listingId, scrollY);
-  }, [showContent, listingsCount]);
+    reportGridReady(listingsCount);
+    reportBannerDecided();
+  }, [showContent, layoutReady, listingsCount]);
 }

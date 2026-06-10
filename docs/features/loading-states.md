@@ -487,6 +487,9 @@ Define and implement a single standard:
 **After:**
 
 - Do not use `SkeletonContainer` for `loadingMore` when content already exists.
+- Append skeletons render in a sibling grid below `VirtualizedListingGrid` (`ListingGrid.tsx`), not inside the results grid — use `mt-6` on that block so content-to-skeleton spacing matches in-grid `gap-6` (1.5rem) in both static and virtualized modes.
+- The results grid is virtualized from the first client mount: SSR and the initial hydrated paint use a static CSS grid; `VirtualizedListingGrid` measures row heights from that markup (`listing-grid-measure.ts`) and swaps to `@tanstack/react-virtual` in a layout effect coordinated via `listing-grid-virtual-swap.ts` (after `ListingGrid` applies home scroll-restore layout when needed). Load-more appends always stay inside the same virtual geometry — no mid-session static→virtual threshold switch. Returning from a listing keeps a static grid through scroll restore, then skips the post-restore virtual swap for that session so restored `scrollY` stays pixel-stable.
+- In the virtualized grid, inter-row spacing uses `pb-6` on every virtual row wrapper. Keeping the old last row's measured height stable prevents a visible jump when load-more appends another page and that row stops being last.
 - Show a small inline spinner/indicator at the bottom of the list.
 - Do not apply `minDisplayTime=1000ms` to `loadingMore` if it makes the UI feel slower.
 

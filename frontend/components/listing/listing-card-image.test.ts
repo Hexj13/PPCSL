@@ -23,6 +23,6 @@ describe('listing-card-image', () => {
   it('caps desktop card sizes below full viewport width', () => {
     expect(CARD_IMAGE_SIZES).toContain('360px');
     expect(CARD_IMAGE_SIZES).not.toContain('25vw');
-    expect(CARD_IMAGE_DEVICE_WIDTHS).toEqual([640, 750, 828]);
+    expect(CARD_IMAGE_DEVICE_WIDTHS).toEqual([640, 750, 828, 1080, 1200]);
   });
 });

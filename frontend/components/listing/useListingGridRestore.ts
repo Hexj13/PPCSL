@@ -1,6 +1,12 @@
 'use client';
 
-import { startTransition, useEffect, type Dispatch, type SetStateAction } from 'react';
+import {
+  startTransition,
+  useEffect,
+  useLayoutEffect,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 
 import type { Listing, PaginationMeta } from '@/lib/api';
 import { silentCatch } from '@/lib/utils';
@@ -42,6 +48,31 @@ export function useListingGridRestore({
   restoredFromStorageRef,
   restoreCompletedRef,
 }: UseListingGridRestoreArgs) {
+  useLayoutEffect(() => {
+    if (restoredFromStorageRef.current) return;
+    const saved = getRestorableGridState(returningWithSavedScroll, searchParamsString);
+    if (!saved) {
+      restoredFromStorageRef.current = true;
+      return;
+    }
+    if (!saved.listings?.length) {
+      return;
+    }
+    restoredFromStorageRef.current = true;
+    setListings(saved.listings);
+    setMeta(saved.meta);
+    setCurrentPage(saved.page);
+    listingsRef.current = saved.listings;
+  }, [
+    returningWithSavedScroll,
+    searchParamsString,
+    setListings,
+    setMeta,
+    setCurrentPage,
+    listingsRef,
+    restoredFromStorageRef,
+  ]);
+
   useEffect(() => {
     if (restoredFromStorageRef.current) return;
     const saved = getRestorableGridState(returningWithSavedScroll, searchParamsString);
@@ -50,11 +81,6 @@ export function useListingGridRestore({
       return;
     }
     if (saved.listings?.length) {
-      restoredFromStorageRef.current = true;
-      setListings(saved.listings);
-      setMeta(saved.meta);
-      setCurrentPage(saved.page);
-      listingsRef.current = saved.listings;
       return;
     }
 

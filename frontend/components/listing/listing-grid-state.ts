@@ -8,6 +8,7 @@ import {
   sessionStorageSetItem,
 } from '@/lib/browser-session-storage';
 import { LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
+import { isReloadOrBackForwardNavigation } from '@/lib/home-scroll-restore';
 import { getParsedListingSearchParams } from '@/lib/search';
 
 export const GRID_STATE_KEY = 'kupito_grid_state';
@@ -100,6 +101,13 @@ export function getRestorableGridState(shouldRestore: boolean, searchParamsStrin
   if (!shouldRestore) return null;
   const saved = loadGridState();
   return gridStateMatchesCurrentSearch(saved, searchParamsString) ? saved : null;
+}
+
+export function shouldRestoreGridStateOnMount(searchParamsString: string): boolean {
+  if (typeof window === 'undefined') return false;
+  if (sessionStorageGetItem('homeScrollTimestamp')) return true;
+  if (!isReloadOrBackForwardNavigation()) return false;
+  return getRestorableGridState(true, searchParamsString) !== null;
 }
 
 export function getVehicleTypeFromParams(searchParamsString: string): 'car' | 'truck' | 'moto' {

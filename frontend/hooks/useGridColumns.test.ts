@@ -27,6 +27,11 @@ describe('useGridColumns', () => {
     expect(resolveGridColumns()).toBe(3);
   });
 
+  it('initializes columns from resolveGridColumns on first render', () => {
+    const { result } = renderHook(() => useGridColumns());
+    expect(result.current).toBe(resolveGridColumns());
+  });
+
   it('updates columns when breakpoint media query changes', () => {
     const listeners = new Map<string, () => void>();
     window.matchMedia = jest.fn().mockImplementation((query: string) => ({

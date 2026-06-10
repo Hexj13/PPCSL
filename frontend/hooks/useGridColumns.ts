@@ -21,7 +21,7 @@ export function resolveGridColumns(): number {
 }
 
 export function useGridColumns(): number {
-  const [columns, setColumns] = useState(1);
+  const [columns, setColumns] = useState(() => resolveGridColumns());
 
   useEffect(() => {
     const mediaQueries = COLUMN_BREAKPOINTS.map(({ query }) => window.matchMedia(query));

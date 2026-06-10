@@ -2,7 +2,15 @@
 
 import { isAxiosError } from 'axios';
 import { useSearchParams, usePathname } from 'next/navigation';
-import { useEffect, useState, useCallback, useRef, useMemo, startTransition } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  startTransition,
+} from 'react';
 
 import { SKELETON_DEFERRED, useLoadingState } from '@/hooks/useLoadingState';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
@@ -11,13 +19,18 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { analytics, listingToViewItemListEntry } from '@/lib/analytics';
 import type { Listing, PaginationMeta, SearchParams } from '@/lib/api';
 import { favoritesApi, listingsApi } from '@/lib/api';
-import {
-  sessionStorageGetItem,
-  sessionStorageRemoveItem,
-  sessionStorageSetItem,
-} from '@/lib/browser-session-storage';
+import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { LISTING_GRID_PAGE_SIZE, SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY } from '@/lib/constants';
-import { clearHomeScrollRestoreSession } from '@/lib/home-scroll-restore';
+import {
+  applyHomeScrollRestoreScrollPosition,
+  clearHomeScrollRestoreSession,
+  getHomeScrollRestorePhase,
+  getPendingRestoreMinHeight,
+  isHomeScrollRestoreInProgress,
+  prepareHomeScrollRestoreGridLayout,
+  shouldDeferVirtualSwapForHomeScrollRestore,
+  subscribeHomeScrollRestoreState,
+} from '@/lib/home-scroll-restore';
 import { buildMinimalCategorySearchUrl, getParsedListingSearchParams } from '@/lib/search';
 import { useAuthStore, useFavoritesStore } from '@/lib/store';
 import { silentCatch } from '@/lib/utils';
@@ -30,6 +43,7 @@ import {
   LISTING_CARD_APPEND_PRELOAD_COUNT,
   prewarmListingCardCoverImages,
 } from './listing-card-image';
+import { ListingGridCriticalStyles } from './listing-grid-critical-layout';
 import {
   buildFetchParams,
   fetchListingsPage,
@@ -38,7 +52,9 @@ import {
   GRID_RESTORE_STATE_KEY,
   GRID_STATE_KEY,
   saveGridState,
+  shouldRestoreGridStateOnMount,
 } from './listing-grid-state';
+import { requestListingGridVirtualSwap } from './listing-grid-virtual-swap';
 import { useListingGridRestore } from './useListingGridRestore';
 import { useListingGridScrollEffects } from './useListingGridScrollEffects';
 
@@ -105,12 +121,17 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const [widerCategoryHasListings, setWiderCategoryHasListings] = useState<boolean | null>(null);
   const listingsRef = useRef<Listing[]>(initialData?.data || []);
   const restoredFromStorageRef = useRef(false);
-  const returningWithSavedScrollRef = useRef(
-    typeof window !== 'undefined' && Boolean(sessionStorageGetItem('homeScrollTimestamp')),
-  );
+  const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
+  const returningWithSavedScrollRef = useRef<boolean | undefined>(undefined);
+  if (returningWithSavedScrollRef.current === undefined) {
+    returningWithSavedScrollRef.current = shouldRestoreGridStateOnMount(searchParamsString);
+  }
   const { user } = useAuthStore();
-  const { showBanner: showPartnerPromoBanner, dismiss: dismissPartnerPromoBanner } =
-    usePartnerPromoBannerInGrid();
+  const {
+    showBanner: showPartnerPromoBanner,
+    dismiss: dismissPartnerPromoBanner,
+    ready: partnerPromoBannerReady,
+  } = usePartnerPromoBannerInGrid();
   const { setFavorites } = useFavoritesStore();
   const prevSearchParamsStringRef = useRef<string | null>(null);
   const fetchControllerRef = useRef<AbortController | null>(null);
@@ -118,8 +139,55 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const gridSearchParamsEffectInitializedRef = useRef(false);
   const restoreCompletedRef = useRef(false);
   const skipClientFetchOnMountRef = useRef(initialData?.meta != null);
+  const [gridMinHeight, setGridMinHeight] = useState<number | undefined>(undefined);
+  const [gridVirtualEpoch, setGridVirtualEpoch] = useState(0);
+  const skipPostRestoreVirtualSwapRef = useRef(false);
 
-  const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
+  useLayoutEffect(() => {
+    const syncGridMinHeight = () => {
+      setGridMinHeight(getPendingRestoreMinHeight(window.innerWidth) ?? undefined);
+    };
+
+    const runPendingRestoreWhenGridReady = () => {
+      if (getHomeScrollRestorePhase() !== 'pending') {
+        return;
+      }
+      prepareHomeScrollRestoreGridLayout();
+      if (shouldDeferVirtualSwapForHomeScrollRestore()) {
+        skipPostRestoreVirtualSwapRef.current = true;
+        setGridVirtualEpoch((epoch) => epoch + 1);
+        return;
+      }
+      requestListingGridVirtualSwap();
+      if (document.getElementById('listings-results')) {
+        applyHomeScrollRestoreScrollPosition();
+      }
+    };
+
+    syncGridMinHeight();
+    runPendingRestoreWhenGridReady();
+
+    const unsubscribe = subscribeHomeScrollRestoreState((restorePhase) => {
+      if (restorePhase === 'pending') {
+        runPendingRestoreWhenGridReady();
+      }
+      if (
+        restorePhase === 'pending' ||
+        restorePhase === 'scrolled' ||
+        restorePhase === 'correcting'
+      ) {
+        syncGridMinHeight();
+        return;
+      }
+      setGridMinHeight(undefined);
+      if (!skipPostRestoreVirtualSwapRef.current) {
+        requestListingGridVirtualSwap();
+      }
+      skipPostRestoreVirtualSwapRef.current = false;
+    });
+
+    return unsubscribe;
+  }, []);
 
   const uniqueListings = useMemo(() => {
     const seen = new Set<string>();
@@ -170,9 +238,6 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         const allNewListings = firstRes.data;
         const finalMeta = firstRes.meta;
 
-        await checkFavorites(allNewListings.map((l) => l.id));
-        if (controller.signal.aborted) return;
-
         if (append) {
           prewarmListingCardCoverImages(
             allNewListings
@@ -181,6 +246,9 @@ export function ListingGrid({ initialData }: ListingGridProps) {
               .filter((url): url is string => Boolean(url)),
           );
         }
+
+        await checkFavorites(allNewListings.map((l) => l.id));
+        if (controller.signal.aborted) return;
 
         if (!append) {
           startTransition(() => {
@@ -255,7 +323,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   fetchListingsRef.current = fetchListings;
 
   useListingGridRestore({
-    returningWithSavedScroll: returningWithSavedScrollRef.current,
+    returningWithSavedScroll: returningWithSavedScrollRef.current ?? false,
     searchParamsString,
     checkFavorites,
     setListings,
@@ -268,12 +336,69 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     restoreCompletedRef,
   });
 
+  useLayoutEffect(() => {
+    if (uniqueListings.length === 0) {
+      return;
+    }
+
+    const returningWithSavedScroll = returningWithSavedScrollRef.current ?? false;
+    const saved = getRestorableGridState(returningWithSavedScroll, searchParamsString);
+    const awaitingPageFetch = Boolean(
+      saved && saved.page > 1 && !saved.listings?.length && !restoreCompletedRef.current,
+    );
+
+    if (awaitingPageFetch) {
+      if (getHomeScrollRestorePhase() === 'pending') {
+        prepareHomeScrollRestoreGridLayout();
+      }
+      return;
+    }
+
+    if (returningWithSavedScroll && !restoredFromStorageRef.current) {
+      return;
+    }
+
+    if (returningWithSavedScroll && saved) {
+      const expectedListingCount =
+        saved.listings?.length ??
+        Math.min(saved.page * LISTING_GRID_PAGE_SIZE, saved.meta?.total ?? Infinity);
+      if (uniqueListings.length < expectedListingCount) {
+        if (getHomeScrollRestorePhase() === 'pending') {
+          prepareHomeScrollRestoreGridLayout();
+        }
+        return;
+      }
+    }
+
+    if (shouldDeferVirtualSwapForHomeScrollRestore()) {
+      skipPostRestoreVirtualSwapRef.current = true;
+      setGridVirtualEpoch((epoch) => epoch + 1);
+      if (getHomeScrollRestorePhase() === 'pending') {
+        prepareHomeScrollRestoreGridLayout();
+      }
+      if (
+        getHomeScrollRestorePhase() === 'pending' &&
+        document.getElementById('listings-results')
+      ) {
+        applyHomeScrollRestoreScrollPosition();
+      }
+      return;
+    }
+    if (getHomeScrollRestorePhase() === 'pending') {
+      prepareHomeScrollRestoreGridLayout();
+    }
+    requestListingGridVirtualSwap();
+    if (getHomeScrollRestorePhase() === 'pending' && document.getElementById('listings-results')) {
+      applyHomeScrollRestoreScrollPosition();
+    }
+  }, [uniqueListings.length, searchParamsString]);
+
   useEffect(() => {
     if (!gridSearchParamsEffectInitializedRef.current) {
       gridSearchParamsEffectInitializedRef.current = true;
       prevSearchParamsStringRef.current = searchParamsString;
       const skipInitialFetch = Boolean(
-        getRestorableGridState(returningWithSavedScrollRef.current, searchParamsString),
+        getRestorableGridState(returningWithSavedScrollRef.current ?? false, searchParamsString),
       );
       if (skipInitialFetch || skipClientFetchOnMountRef.current === true) {
         setHasLoadedWithFilters(true);
@@ -392,96 +517,104 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     ...SKELETON_DEFERRED,
   });
 
-  const showContent = !showSkeleton;
+  const homeScrollRestoreActive = isHomeScrollRestoreInProgress();
+  const showSkeletonOverlay = showSkeleton && !homeScrollRestoreActive;
+  const showContent = !showSkeletonOverlay;
   const hasMore = listingGridHasMore(meta, currentPage);
+  const gridPlaceholderStyle = gridMinHeight ? { minHeight: gridMinHeight } : undefined;
 
   useListingGridScrollEffects({
     listingsCount: listings.length,
     showContent,
     isLoading: loading,
     searchParamsString,
+    layoutReady: partnerPromoBannerReady,
   });
 
   return (
     <>
-      {showSkeleton && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <ListingCardSkeleton key={`skeleton-${index}`} />
-          ))}
-        </div>
-      )}
+      <ListingGridCriticalStyles />
+      <div data-testid="listing-grid-placeholder" style={gridPlaceholderStyle}>
+        {showSkeletonOverlay && (
+          <div className="listing-grid-critical-responsive grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <ListingCardSkeleton key={`skeleton-${index}`} />
+            ))}
+          </div>
+        )}
 
-      {showContent && (
-        <>
-          {error && (
-            <div className="text-center py-12">
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 max-w-md mx-auto">
-                <p className="text-red-400 text-lg font-semibold mb-2">{t('common.error')}</p>
-                <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>{error}</p>
+        {showContent && (
+          <>
+            {error && (
+              <div className="text-center py-12">
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 max-w-md mx-auto">
+                  <p className="text-red-400 text-lg font-semibold mb-2">{t('common.error')}</p>
+                  <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>{error}</p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {!error && listings.length === 0 && hasLoadedWithFilters && (
-            <div className="text-center py-12" data-testid="listings-empty-state">
-              <p className="text-lg mb-6" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-                {t('listings.notFound')}
-              </p>
-              {widerCategoryHasListings === true && (
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => {
-                      sessionStorageRemoveItem(GRID_STATE_KEY);
-                      sessionStorageRemoveItem(GRID_RESTORE_STATE_KEY);
-                      sessionStorageRemoveItem('homeScrollTimestamp');
-                      sessionStorageRemoveItem('scrollPreserved');
+            {!error && listings.length === 0 && hasLoadedWithFilters && (
+              <div className="text-center py-12" data-testid="listings-empty-state">
+                <p className="text-lg mb-6" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+                  {t('listings.notFound')}
+                </p>
+                {widerCategoryHasListings === true && (
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => {
+                        sessionStorageRemoveItem(GRID_STATE_KEY);
+                        sessionStorageRemoveItem(GRID_RESTORE_STATE_KEY);
+                        sessionStorageRemoveItem('homeScrollTimestamp');
+                        sessionStorageRemoveItem('scrollPreserved');
 
-                      if (pathname === '/') {
-                        if (typeof window !== 'undefined') {
-                          window.dispatchEvent(new CustomEvent('resetFiltersFromListingGrid'));
+                        if (pathname === '/') {
+                          if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new CustomEvent('resetFiltersFromListingGrid'));
+                          }
+                        } else {
+                          window.location.href = buildMinimalCategorySearchUrl(
+                            new URLSearchParams(searchParamsString),
+                          );
                         }
-                      } else {
-                        window.location.href = buildMinimalCategorySearchUrl(
-                          new URLSearchParams(searchParamsString),
-                        );
-                      }
-                    }}
-                    className="text-primary-900 font-medium text-sm md:text-base hover-only:hover:text-primary-700 active:text-primary-700 hover-only:hover:border-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-6 py-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base cursor-pointer"
-                  >
-                    {t('listings.viewAllListings')}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                      }}
+                      className="text-primary-900 font-medium text-sm md:text-base hover-only:hover:text-primary-700 active:text-primary-700 hover-only:hover:border-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-6 py-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base cursor-pointer"
+                    >
+                      {t('listings.viewAllListings')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {!error && listings.length > 0 && (
-            <CitiesProvider>
-              <VirtualizedListingGrid
-                listings={uniqueListings}
-                showPartnerPromoBanner={showPartnerPromoBanner}
-                onDismissPartnerPromoBanner={dismissPartnerPromoBanner}
-              />
-              {loadingMore && appendSkeletonCount > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-                  {Array.from({ length: appendSkeletonCount }).map((_, index) => (
-                    <ListingCardSkeleton key={`append-skeleton-${currentPage + 1}-${index}`} />
-                  ))}
-                </div>
-              )}
-              <ListingGridPaginationFooter
-                hasMore={hasMore}
-                loadingMore={loadingMore}
-                onLoadMore={handleLoadMore}
-                loadMoreLabel={t('listings.showMore')}
-                noMoreLabel={t('listings.noMoreListings')}
-                showNoMore={!hasMore && uniqueListings.length > 0 && !loadingMore}
-              />
-            </CitiesProvider>
-          )}
-        </>
-      )}
+            {!error && listings.length > 0 && (
+              <CitiesProvider>
+                <VirtualizedListingGrid
+                  key={`${searchParamsString}-${gridVirtualEpoch}`}
+                  listings={uniqueListings}
+                  showPartnerPromoBanner={showPartnerPromoBanner}
+                  onDismissPartnerPromoBanner={dismissPartnerPromoBanner}
+                />
+                {loadingMore && appendSkeletonCount > 0 && (
+                  <div className="listing-grid-critical-responsive grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch mt-6">
+                    {Array.from({ length: appendSkeletonCount }).map((_, index) => (
+                      <ListingCardSkeleton key={`append-skeleton-${currentPage + 1}-${index}`} />
+                    ))}
+                  </div>
+                )}
+                <ListingGridPaginationFooter
+                  hasMore={hasMore}
+                  loadingMore={loadingMore}
+                  onLoadMore={handleLoadMore}
+                  loadMoreLabel={t('listings.showMore')}
+                  noMoreLabel={t('listings.noMoreListings')}
+                  showNoMore={!hasMore && uniqueListings.length > 0 && !loadingMore}
+                />
+              </CitiesProvider>
+            )}
+          </>
+        )}
+      </div>
     </>
   );
 }

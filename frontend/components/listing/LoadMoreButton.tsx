@@ -14,6 +14,7 @@ interface LoadMoreButtonProps {
   children?: ReactNode;
   wrapperClassName?: string;
   variant?: 'default' | 'inline';
+  dataTestId?: string;
 }
 
 export function LoadMoreButton({
@@ -26,6 +27,7 @@ export function LoadMoreButton({
   children,
   wrapperClassName = '',
   variant = 'default',
+  dataTestId,
 }: LoadMoreButtonProps) {
   const { t } = useTranslation();
 
@@ -57,6 +59,7 @@ export function LoadMoreButton({
         disabled={disabled || loading}
         style={style}
         className={`${buttonClasses} ${className}`}
+        data-testid={dataTestId}
       >
         {inner}
       </button>
@@ -64,13 +67,14 @@ export function LoadMoreButton({
   }
 
   return (
-    <div className={`flex justify-center py-8 ${wrapperClassName}`}>
+    <div className={`flex justify-center pt-8 ${wrapperClassName}`}>
       <button
         ref={buttonRef}
         onClick={onClick}
         disabled={disabled || loading}
         style={style}
         className={`${buttonClasses} ${className}`}
+        data-testid={dataTestId}
       >
         {inner}
       </button>

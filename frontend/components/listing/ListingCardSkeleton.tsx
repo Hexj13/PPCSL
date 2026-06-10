@@ -12,7 +12,12 @@ export const ListingCardSkeleton = forwardRef<HTMLDivElement, ComponentPropsWith
       >
         <div
           className="relative w-full bg-bg-darker shrink-0 animate-pulse"
-          style={{ aspectRatio: '16/9', minHeight: '240px' }}
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            aspectRatio: '16/9',
+            minHeight: '240px',
+          }}
         />
         <div className="p-4 md:p-5 flex-1 flex flex-col">
           <div className="h-5 bg-bg-secondary/40 rounded-sm mb-2 w-3/4 animate-pulse" />

@@ -1,22 +1,17 @@
 'use client';
 
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useGridColumns } from '@/hooks/useGridColumns';
 import type { Listing } from '@/lib/api';
 import {
-  LISTING_GRID_SCROLL_TO_LISTING_EVENT,
-  type ListingGridScrollToListingDetail,
-} from '@/lib/listing-grid-scroll-bridge';
+  applyHomeScrollRestoreScrollPosition,
+  getHomeScrollRestorePhase,
+  isHomeScrollRestoreInProgress,
+  reapplyHomeScrollRestoreScrollPosition,
+  shouldDeferVirtualSwapForHomeScrollRestore,
+} from '@/lib/home-scroll-restore';
 import { addCoalescedResizeListener } from '@/lib/resize-coalesced';
 
 import { ListingCard } from './ListingCard';
@@ -26,6 +21,17 @@ import {
   getBannerVariantClassName,
   getVirtualRowEstimateSize,
 } from './buildVirtualRows';
+import {
+  ListingGridCriticalStyles,
+  listingGridRowCriticalStyle,
+} from './listing-grid-critical-layout';
+import {
+  LISTING_GRID_ROW_GAP_PX,
+  measureStaticGridSwapMetrics,
+  resolveVirtualRowSize,
+  type StaticGridSwapMetrics,
+} from './listing-grid-measure';
+import { registerListingGridVirtualSwapListener } from './listing-grid-virtual-swap';
 
 const LISTING_GRID_LINK_PREFETCH_COUNT = 4;
 
@@ -47,61 +53,74 @@ function StaticListingGrid({
   showPartnerPromoBanner,
   onDismissPartnerPromoBanner,
 }: VirtualizedListingGridProps) {
-  return (
-    <div
-      id="listings-results"
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch"
-      data-testid="listings-results-grid"
-    >
-      {listings.map((listing, index) => {
-        const cardPosition = index + 1;
+  const columns = useGridColumns();
+  const partnerPromoPosition = showPartnerPromoBanner
+    ? columns >= 4
+      ? 12
+      : columns === 3
+        ? 9
+        : 6
+    : null;
 
-        return (
-          <Fragment key={listing.id}>
-            <ListingCard
-              listing={listing}
-              priority={index < 6}
-              linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
-            />
-            {showPartnerPromoBanner && cardPosition === 6 && (
-              <div className="col-span-full lg:hidden">
-                <PartnerPromoBanner onDismiss={onDismissPartnerPromoBanner} />
-              </div>
-            )}
-            {showPartnerPromoBanner && cardPosition === 9 && (
-              <div className="col-span-full hidden lg:block xl:hidden">
-                <PartnerPromoBanner onDismiss={onDismissPartnerPromoBanner} />
-              </div>
-            )}
-            {showPartnerPromoBanner && cardPosition === 12 && (
-              <div className="col-span-full hidden xl:block">
-                <PartnerPromoBanner onDismiss={onDismissPartnerPromoBanner} />
-              </div>
-            )}
-          </Fragment>
-        );
-      })}
-    </div>
+  return (
+    <>
+      <ListingGridCriticalStyles />
+      <div
+        id="listings-results"
+        className="listing-grid-critical-responsive grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch"
+        data-testid="listings-results-grid"
+      >
+        {listings.map((listing, index) => {
+          const cardPosition = index + 1;
+
+          return (
+            <Fragment key={listing.id}>
+              <ListingCard
+                listing={listing}
+                priority={index < 6}
+                linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
+              />
+              {partnerPromoPosition === cardPosition && (
+                <div className="col-span-full">
+                  <PartnerPromoBanner onDismiss={onDismissPartnerPromoBanner} />
+                </div>
+              )}
+            </Fragment>
+          );
+        })}
+      </div>
+    </>
   );
 }
+
+type VirtualizedListingGridContentProps = VirtualizedListingGridProps & {
+  swapMetrics: StaticGridSwapMetrics;
+};
 
 function VirtualizedListingGridContent({
   listings,
   showPartnerPromoBanner,
   onDismissPartnerPromoBanner,
-}: VirtualizedListingGridProps) {
+  swapMetrics,
+}: VirtualizedListingGridContentProps) {
   const columns = useGridColumns();
   const parentRef = useRef<HTMLDivElement>(null);
-  const [scrollMargin, setScrollMargin] = useState(0);
+  const [scrollMargin, setScrollMargin] = useState(swapMetrics.gridOffsetTop);
 
-  const { rows, listingRowIndexById } = useMemo(
+  const { rows } = useMemo(
     () => buildVirtualRows(listings, columns, { showPartnerPromoBanner }),
     [listings, columns, showPartnerPromoBanner],
   );
 
   const virtualizer = useWindowVirtualizer({
     count: rows.length,
-    estimateSize: (index) => getVirtualRowEstimateSize(rows[index]),
+    estimateSize: (index) =>
+      resolveVirtualRowSize(
+        index,
+        rows.length,
+        swapMetrics.rowHeights[index],
+        getVirtualRowEstimateSize(rows[index], columns),
+      ),
     overscan: 4,
     scrollMargin,
     getItemKey: (index) => {
@@ -123,95 +142,118 @@ function VirtualizedListingGridContent({
     return addCoalescedResizeListener(updateScrollMargin);
   }, [columns]);
 
-  const scrollToListing = useCallback(
-    (listingId: string) => {
-      const rowIndex = listingRowIndexById.get(listingId);
-      if (rowIndex === undefined) {
-        return false;
-      }
-      virtualizer.scrollToIndex(rowIndex, { align: 'start', behavior: 'instant' });
-      return true;
-    },
-    [listingRowIndexById, virtualizer],
-  );
-
-  useEffect(() => {
-    const handler = (event: Event) => {
-      const detail = (event as CustomEvent<ListingGridScrollToListingDetail>).detail;
-      const listingId = detail?.listingId;
-      if (!listingId) {
-        return;
-      }
-      scrollToListing(listingId);
-    };
-
-    window.addEventListener(LISTING_GRID_SCROLL_TO_LISTING_EVENT, handler);
-    return () => window.removeEventListener(LISTING_GRID_SCROLL_TO_LISTING_EVENT, handler);
-  }, [scrollToListing]);
-
   const gridColsClass = GRID_COLS_CLASS[columns] ?? 'grid-cols-1';
 
   return (
-    <div
-      id="listings-results"
-      ref={parentRef}
-      className="relative w-full"
-      data-testid="listings-results-grid"
-    >
+    <>
+      <ListingGridCriticalStyles />
       <div
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
+        id="listings-results"
+        ref={parentRef}
+        className="relative w-full"
+        style={{ marginBottom: -LISTING_GRID_ROW_GAP_PX }}
+        data-testid="listings-results-grid"
       >
-        {virtualizer.getVirtualItems().map((virtualRow) => {
-          const row = rows[virtualRow.index];
+        <div
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+            overflowAnchor: 'none',
+          }}
+        >
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const row = rows[virtualRow.index];
 
-          return (
-            <div
-              key={virtualRow.key}
-              data-index={virtualRow.index}
-              ref={virtualizer.measureElement}
-              className="absolute top-0 left-0 w-full pb-6"
-              style={{
-                transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
-              }}
-            >
-              {row.kind === 'banner' ? (
-                <div className={getBannerVariantClassName(row.variant)}>
-                  <PartnerPromoBanner onDismiss={onDismissPartnerPromoBanner} />
-                </div>
-              ) : (
-                <div className={`grid ${gridColsClass} gap-6 items-stretch`}>
-                  {row.items.map(({ listing, index }) => (
-                    <ListingCard
-                      key={listing.id}
-                      listing={listing}
-                      priority={index < 6}
-                      linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+            return (
+              <div
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                ref={virtualizer.measureElement}
+                className="absolute top-0 left-0 w-full pb-6"
+                style={{
+                  transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
+                  overflowAnchor: 'none',
+                }}
+              >
+                {row.kind === 'banner' ? (
+                  <div className={getBannerVariantClassName(row.variant)}>
+                    <PartnerPromoBanner onDismiss={onDismissPartnerPromoBanner} />
+                  </div>
+                ) : (
+                  <div
+                    className={`grid ${gridColsClass} gap-6 items-stretch`}
+                    style={listingGridRowCriticalStyle(columns)}
+                  >
+                    {row.items.map(({ listing, index }) => (
+                      <ListingCard
+                        key={listing.id}
+                        listing={listing}
+                        priority={index < 6}
+                        linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
 export function VirtualizedListingGrid(props: VirtualizedListingGridProps) {
-  const [virtualizationReady, setVirtualizationReady] = useState(false);
+  const columns = useGridColumns();
+  const [virtualized, setVirtualized] = useState(false);
+  const swapMetricsRef = useRef<StaticGridSwapMetrics | null>(null);
 
-  useEffect(() => {
-    setVirtualizationReady(true);
-  }, []);
+  const { rows: initialRows } = useMemo(
+    () =>
+      buildVirtualRows(props.listings, columns, {
+        showPartnerPromoBanner: props.showPartnerPromoBanner,
+      }),
+    [props.listings, columns, props.showPartnerPromoBanner],
+  );
 
-  if (!virtualizationReady) {
+  useLayoutEffect(() => {
+    const trySwap = () => {
+      if (virtualized || shouldDeferVirtualSwapForHomeScrollRestore()) {
+        return;
+      }
+      const gridEl = document.getElementById('listings-results');
+      if (!gridEl) {
+        return;
+      }
+      swapMetricsRef.current = measureStaticGridSwapMetrics(gridEl, initialRows);
+      setVirtualized(true);
+    };
+
+    return registerListingGridVirtualSwapListener(trySwap);
+  }, [virtualized, initialRows]);
+
+  useLayoutEffect(() => {
+    if (!virtualized) {
+      return;
+    }
+    if (!isHomeScrollRestoreInProgress()) {
+      return;
+    }
+    if (getHomeScrollRestorePhase() === 'pending') {
+      applyHomeScrollRestoreScrollPosition();
+      return;
+    }
+    reapplyHomeScrollRestoreScrollPosition();
+    const rafId = requestAnimationFrame(reapplyHomeScrollRestoreScrollPosition);
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, [virtualized]);
+
+  if (!virtualized || !swapMetricsRef.current) {
     return <StaticListingGrid {...props} />;
   }
 
-  return <VirtualizedListingGridContent {...props} />;
+  return <VirtualizedListingGridContent {...props} swapMetrics={swapMetricsRef.current} />;
 }

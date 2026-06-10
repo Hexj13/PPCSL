@@ -41,9 +41,8 @@ const DETECTION_QUEUE_OVERFLOW = 20;
 const RETRY_MAX_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 500;
 const DELETE_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
-const THUMBNAIL_WIDTH = 1080;
+const THUMBNAIL_WIDTH = 400;
 const THUMBNAIL_QUALITY = 65;
-const CARD_PREVIEW_MAX_WIDTH = 1080;
 const OPTIMIZED_DELIVERY_EFFORT = 3;
 const PERSISTENT_CACHE_ALLOWED_QUALITIES = new Set([65, 68, 70, 75]);
 const PERSISTENT_CACHE_ALLOWED_WIDTHS = new Set([
@@ -615,15 +614,6 @@ export class UploadService {
     return `/uploads/thumb/${this.getUploadBasename(filePath)}`;
   }
 
-  private async imageExistsAtPath(filePath: string): Promise<boolean> {
-    const normalized = filePath.replace(/^\//, '');
-    if (this.useS3 && this.s3Client) {
-      return this.headObjectExists(normalized);
-    }
-    const fullPath = path.join(process.cwd(), normalized);
-    return fs.existsSync(fullPath);
-  }
-
   private async readImageBufferFromPath(filePath: string): Promise<Buffer> {
     const normalized = filePath.replace(/^\//, '');
     if (this.useS3 && this.s3Client) {
@@ -676,21 +666,6 @@ export class UploadService {
       return false;
     }
     return maxWidth === undefined || PERSISTENT_CACHE_ALLOWED_WIDTHS.has(maxWidth);
-  }
-
-  private async resolveOptimizationSourcePath(
-    filePath: string,
-    quality: number,
-    maxWidth?: number,
-  ): Promise<string> {
-    if (!maxWidth || maxWidth > CARD_PREVIEW_MAX_WIDTH || quality > THUMBNAIL_QUALITY) {
-      return filePath;
-    }
-    const thumbPath = this.getThumbnailPathForOriginal(filePath);
-    if (await this.imageExistsAtPath(thumbPath)) {
-      return thumbPath;
-    }
-    return filePath;
   }
 
   private async deleteStoredObject(filePath: string): Promise<void> {
@@ -788,8 +763,7 @@ export class UploadService {
       }
     }
 
-    const sourcePath = await this.resolveOptimizationSourcePath(filePath, quality, maxWidth);
-    const imageBuffer = await this.readImageBufferFromPath(sourcePath);
+    const imageBuffer = await this.readImageBufferFromPath(filePath);
 
     const image = sharp(imageBuffer);
     const metadata = await image.metadata();
