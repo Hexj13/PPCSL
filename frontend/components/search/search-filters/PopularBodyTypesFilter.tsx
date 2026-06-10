@@ -205,13 +205,13 @@ export function PopularBodyTypesFilter({
             return (
               <div
                 key={`${vehicleType}-${value}`}
-                className="flex flex-col items-center gap-1 w-full min-w-0 min-h-[135px] lg:min-h-[152px] lg:shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
+                className="flex flex-col items-center gap-2 w-full min-w-0 min-h-[152px] lg:shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
               >
                 <button
                   type="button"
                   onClick={() => handleTileClick(value)}
                   className={`
-                  relative w-full h-[95px] lg:h-[110px] flex items-center justify-center p-2 rounded-lg
+                  relative w-full h-[110px] flex items-center justify-center p-2 rounded-lg
                   outline-hidden select-none ${vehicleType === 'moto' ? 'md:overflow-hidden xl:overflow-visible' : ''}
                   ${
                     isSelected
@@ -239,8 +239,7 @@ export function PopularBodyTypesFilter({
                         alt={t(`vehicleOptions.bodyType.${value}`)}
                         width={value === 'ATV' ? 260 : 180}
                         height={value === 'ATV' ? 260 : 180}
-                        style={{ width: 'auto', height: 'auto' }}
-                        className={`object-contain select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'max-w-full max-h-full scale-[1.2]' : ''} ${value === 'Minivan' ? 'scale-[1.15] mt-2' : ''} ${vehicleType === 'car' && value !== 'Convertible' && value !== 'Minivan' ? 'scale-[1.2]' : ''} ${vehicleType === 'moto' && value !== 'ATV' ? 'max-w-full max-h-full scale-[1.2]' : ''}`}
+                        className={`object-contain max-w-full max-h-full select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'scale-[1.2]' : ''} ${value === 'Minivan' ? 'scale-[1.15] mt-2' : ''} ${vehicleType === 'car' && value !== 'Convertible' && value !== 'Minivan' ? 'scale-[1.2]' : ''} ${vehicleType === 'moto' && value !== 'ATV' ? 'scale-[1.2]' : ''}`}
                         sizes={
                           value === 'ATV'
                             ? '(max-width: 768px) 260px, (max-width: 1024px) 280px, 300px'
