@@ -16,6 +16,7 @@ import {
   applyListingCardResponsivePreload,
   CARD_IMAGE_QUALITY,
 } from '@/components/listing/listing-card-image';
+import { persistListingGridReturnSnapshot } from '@/components/listing/listing-grid-return-bridge';
 import { useI18n } from '@/components/providers/I18nProvider';
 import {
   getCompareButtonClassName,
@@ -278,6 +279,7 @@ function ListingCardComponent({
     if (fromHome) {
       preserveHomeScrollPosition(listing.id);
       persistHomeReloadScrollState();
+      persistListingGridReturnSnapshot();
     }
   }, [listing.id, listing.cover_blur_hash, images, carouselIndex]);
 

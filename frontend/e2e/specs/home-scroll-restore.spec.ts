@@ -21,15 +21,18 @@ test.describe('Home scroll restore', () => {
           const hasResults = await searchHomePage.hasListingResults();
           expect(hasResults).toBe(true);
           await searchHomePage.scrollToY(900);
-          scrollBeforeListing = await searchHomePage.getWindowScrollY();
-          expect(scrollBeforeListing).toBeGreaterThan(400);
         },
       },
       {
-        name: 'Open first listing from results',
+        name: 'Open a visible listing from results',
         action: async () => {
-          const opened = await searchHomePage.openListingInViewportFromResults();
-          expect(opened).toBe(true);
+          const focused = await searchHomePage.focusListingCardForReturn();
+          if (!focused) {
+            throw new Error('Expected a visible listing card to focus');
+          }
+          scrollBeforeListing = focused.scrollY;
+          expect(scrollBeforeListing).toBeGreaterThan(400);
+          await searchHomePage.openListingById(focused.listingId);
           await listingDetailPage.expectPageView();
         },
       },
@@ -72,15 +75,18 @@ test.describe('Home scroll restore', () => {
           expect(loadedMoreTwice).toBe(true);
           await searchHomePage.expectPaginatedGridStatePersisted();
           await searchHomePage.scrollToY(1400);
-          scrollBeforeListing = await searchHomePage.getWindowScrollY();
-          expect(scrollBeforeListing).toBeGreaterThan(600);
         },
       },
       {
-        name: 'Open listing from deep results',
+        name: 'Open a visible listing from deep results',
         action: async () => {
-          const opened = await searchHomePage.openListingInViewportFromResults();
-          expect(opened).toBe(true);
+          const focused = await searchHomePage.focusListingCardForReturn();
+          if (!focused) {
+            throw new Error('Expected a visible listing card to focus');
+          }
+          scrollBeforeListing = focused.scrollY;
+          expect(scrollBeforeListing).toBeGreaterThan(600);
+          await searchHomePage.openListingById(focused.listingId);
           await listingDetailPage.expectPageView();
         },
       },

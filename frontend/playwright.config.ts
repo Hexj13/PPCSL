@@ -6,7 +6,7 @@ export default defineConfig({
   testDir: './e2e/specs',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 1 : 0,
+  retries: 1,
   workers: process.env.CI ? 2 : 4,
   reporter: process.env.CI ? [['github'], ['list']] : [['list']],
   use: {

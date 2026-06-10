@@ -69,7 +69,7 @@ Frontend-specific documentation for PPCSL Next.js application.
 
 **Listings:**
 - `listing/ListingGrid` - Search results fetch + load-more; renders via `VirtualizedListingGrid` (`@tanstack/react-virtual`)
-- `listing/buildVirtualRows`, `hooks/useGridColumns` - Row model and responsive column count for the virtualizer
+- `listing/buildVirtualRows`, `listing/listing-grid-measure.ts`, `listing/listing-grid-virtual-swap.ts`, `hooks/useGridColumns` - Row model, static→virtual swap, and responsive column count for the virtualizer
 - `lib/home-scroll-restore` - Home scroll restore after reload or back from listing detail (exact `scrollY` + grid min-height placeholder)
 - `listing/ListingManagementCard` - Status management
 - `search/SavedFiltersList` - Saved filters with caching

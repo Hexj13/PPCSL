@@ -1155,7 +1155,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - Automatic optimization for external images via `remotePatterns` configuration
   - Conditional `unoptimized` prop for localhost images in development
   - Proper `sizes` attribute for responsive image loading - Next.js automatically generates appropriate image sizes for mobile and desktop
-  - Optimized quality settings: 65% for listing cards (responsive srcset via `listing-card-image.ts`), 70% for management cards (900px), 75% for detail pages (1200px)
+  - Optimized quality settings: 75% for listing cards (responsive srcset up to 1200px via `listing-card-image.ts`), 70% for management cards (900px), 75% for detail pages (1200px)
   - Priority loading for first 6 visible images in grid to improve LCP
   - Next.js Image component handles responsive image loading automatically via `srcSet` based on `sizes` attribute
   - Improved sizes attributes for better responsive image selection across breakpoints
@@ -1612,6 +1612,7 @@ cd core/backend && npm run test -- listings.service.spec.ts
   - KPI and validation: lib/performance/inp-kpi.ts (targets, observer), [inp-validation.md](../engineering/inp-validation.md) for GSC validation steps
 - **Listing grid virtualization (2026-06):**
   - `VirtualizedListingGrid.tsx` with `@tanstack/react-virtual` (`useWindowVirtualizer`); row model in `buildVirtualRows.ts`, column breakpoints in `useGridColumns.ts`
+  - Static CSS grid on SSR/first paint; `listing-grid-measure.ts` + `listing-grid-virtual-swap.ts` swap to the virtualizer after mount (listing-return restore keeps static grid until `scrollY` is applied)
   - Home scroll restore after listing detail uses `lib/home-scroll-restore.ts` (exact saved `scrollY` + grid min-height placeholder, same path as reload restore)
   - Resize handlers coalesced via `lib/resize-coalesced.ts` (search tabs, tab indicator, hint tooltips, virtualizer)
   - LCP priority on first 6 visible cards; link prefetch on first 4

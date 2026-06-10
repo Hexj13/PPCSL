@@ -4,9 +4,11 @@ import { useEffect, useRef } from 'react';
 
 import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 import {
+  applyHomeScrollRestoreWhenGridReady,
   getHomeScrollRestorePhase,
   reportBannerDecided,
   reportGridReady,
+  subscribeHomeScrollRestoreState,
 } from '@/lib/home-scroll-restore';
 
 type UseListingGridScrollEffectsArgs = {
@@ -28,6 +30,13 @@ export function useListingGridScrollEffects({
   const hasMountedRef = useRef(false);
   const homeScrollRestoreAttemptedRef = useRef(false);
   const searchScrollHandledRef = useRef(false);
+  const showContentRef = useRef(showContent);
+  const layoutReadyRef = useRef(layoutReady);
+  const listingsCountRef = useRef(listingsCount);
+
+  showContentRef.current = showContent;
+  layoutReadyRef.current = layoutReady;
+  listingsCountRef.current = listingsCount;
 
   useEffect(() => {
     homeScrollRestoreAttemptedRef.current = false;
@@ -67,26 +76,43 @@ export function useListingGridScrollEffects({
   }, [isLoading, layoutReady, listingsCount, showContent]);
 
   useEffect(() => {
-    if (
-      !showContent ||
-      !layoutReady ||
-      listingsCount === 0 ||
-      homeScrollRestoreAttemptedRef.current ||
-      searchScrollHandledRef.current
-    ) {
-      return;
-    }
-    if (sessionStorageGetItem('scrollToResultsAfterLoad')) {
-      return;
-    }
+    const tryReportHomeScrollGridReady = () => {
+      if (
+        homeScrollRestoreAttemptedRef.current ||
+        searchScrollHandledRef.current ||
+        !showContentRef.current ||
+        !layoutReadyRef.current ||
+        listingsCountRef.current === 0 ||
+        sessionStorageGetItem('scrollToResultsAfterLoad')
+      ) {
+        return;
+      }
 
-    const restorePhase = getHomeScrollRestorePhase();
-    if (restorePhase !== 'scrolled' && restorePhase !== 'correcting') {
-      return;
-    }
+      const restorePhase = getHomeScrollRestorePhase();
+      if (restorePhase === 'pending') {
+        applyHomeScrollRestoreWhenGridReady();
+      }
 
-    homeScrollRestoreAttemptedRef.current = true;
-    reportGridReady(listingsCount);
-    reportBannerDecided();
+      const phaseAfterApply = getHomeScrollRestorePhase();
+      if (phaseAfterApply !== 'scrolled' && phaseAfterApply !== 'correcting') {
+        return;
+      }
+
+      homeScrollRestoreAttemptedRef.current = true;
+      reportGridReady(listingsCountRef.current);
+      reportBannerDecided();
+    };
+
+    tryReportHomeScrollGridReady();
+
+    return subscribeHomeScrollRestoreState((restorePhase) => {
+      if (
+        restorePhase === 'pending' ||
+        restorePhase === 'scrolled' ||
+        restorePhase === 'correcting'
+      ) {
+        tryReportHomeScrollGridReady();
+      }
+    });
   }, [showContent, layoutReady, listingsCount]);
 }

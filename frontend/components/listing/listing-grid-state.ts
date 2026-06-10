@@ -97,10 +97,31 @@ function gridStateMatchesCurrentSearch(
   return Boolean(saved && saved.page > 1 && saved.searchParamsString === searchParamsString);
 }
 
+function isListingReturnFirstPageRestore(
+  saved: NonNullable<ReturnType<typeof loadGridState>>,
+  searchParamsString: string,
+): boolean {
+  return (
+    saved.page === 1 &&
+    saved.searchParamsString === searchParamsString &&
+    Boolean(saved.listings?.length) &&
+    Boolean(sessionStorageGetItem('homeScrollListingId'))
+  );
+}
+
 export function getRestorableGridState(shouldRestore: boolean, searchParamsString: string) {
   if (!shouldRestore) return null;
   const saved = loadGridState();
-  return gridStateMatchesCurrentSearch(saved, searchParamsString) ? saved : null;
+  if (!saved || saved.searchParamsString !== searchParamsString) {
+    return null;
+  }
+  if (gridStateMatchesCurrentSearch(saved, searchParamsString)) {
+    return saved;
+  }
+  if (isListingReturnFirstPageRestore(saved, searchParamsString)) {
+    return saved;
+  }
+  return null;
 }
 
 export function shouldRestoreGridStateOnMount(searchParamsString: string): boolean {

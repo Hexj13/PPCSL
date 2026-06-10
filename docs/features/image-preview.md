@@ -112,7 +112,7 @@ The carousel owns transition state; the parent does not pass `currentImageIndex`
 - **Parent–carousel contract:** Parent passes `images`, `imageErrors`, `onImageError`, `onBusyChange`, `onIndexChange`, `imageAltTitle`, `priority`, blur hashes, `t`. Parent holds a ref and calls `goNext()` / `goPrev()` for button clicks and rewind. Parent keeps `carouselIndex` from `onIndexChange` (badges, navigation blur cache).
 - **Flow:** `navigateTo(targetIndex)` assigns the target to the idle slot as `pendingSlot`. Placeholder/error indices promote immediately. Otherwise the pending layer loads; `onLoad` calls `promotePendingSlot`. If `loadedRef` already has the index, an effect promotes on the next frame.
 - **Preloading:** `useListingCardCarouselPreload` preloads next and previous indices on each confirmed index change. Uses `applyListingCardResponsivePreload` so preload hits the same CDN URL the browser selects from `next/image` srcset (not a fixed width). Desktop card hover also preloads the next photo responsively. Preloaded `Image` objects are kept in `imagesCacheRef`; handlers cleared when the image set changes.
-- **Card image params:** Quality `65`, `sizes` `(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw`, device widths aligned with `next.config.js` `deviceSizes` — see `listing-card-image.ts`.
+- **Card image params:** Quality `75` (`CARD_IMAGE_QUALITY`), `sizes` `(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 360px`, device widths `[640, 750, 828, 1080, 1200]` via `listing-card-image.ts` and the CDN loader (`GET /api/upload/image` persistent `/uploads/optimized/` cache).
 - **Constants:** `RESET_TO_FIRST_DELAY_MS = 10000`, `REWIND_STEP_MS = 400` (in `ListingCard.tsx`).
 
 ---
@@ -306,9 +306,9 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
 
 ### Card grid images
 
-- **Quality:** 65% (`CARD_IMAGE_QUALITY` in `listing-card-image.ts`)
-- **Responsive widths:** `next/image` + custom CDN loader; `sizes` `(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw`
-- **Preload:** Adjacent card photos use the same srcset/sizes as slides so browser cache hits on navigation
+- **Quality:** 75% (`CARD_IMAGE_QUALITY` in `listing-card-image.ts`)
+- **Responsive widths:** `next/image` + custom CDN loader; `sizes` `(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 360px`; srcset device widths up to 1200px (includes 1080px)
+- **Preload:** Adjacent card photos and load-more append use the same srcset/sizes as slides so browser cache hits on navigation (`prewarmListingCardCoverImages` in `listing-card-image.ts`)
 
 ### Preview Images
 
@@ -539,5 +539,5 @@ If you need to add features:
 
 ---
 
-**Last Updated:** 2026-06-03  
-**Version:** 3.15 (Listing card carousel: dual-slot layers, responsive preload srcset, busy/disabled nav buttons; card image quality 65 via `listing-card-image.ts`)
+**Last Updated:** 2026-06-10  
+**Version:** 3.16 (Listing card image quality 75 and responsive srcset widths via `listing-card-image.ts`; optimized delivery cache documented in `DEPLOYMENT.md`)

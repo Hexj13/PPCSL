@@ -217,39 +217,86 @@ export class SearchHomePage {
     return true;
   }
 
-  async openListingInViewportFromResults(): Promise<boolean> {
+  async focusListingCardForReturn(): Promise<{ listingId: string; scrollY: number } | null> {
     if (!(await this.hasListingResults())) {
-      return false;
+      return null;
     }
 
     const listingId = await this.page.evaluate(() => {
       const links = Array.from(
         document.querySelectorAll<HTMLAnchorElement>('[data-testid^="listing-card-link-"]'),
       );
+      const viewportCenter = window.innerHeight / 2;
+      let bestId: string | null = null;
+      let bestDistance = Number.POSITIVE_INFINITY;
       for (const link of links) {
         const rect = link.getBoundingClientRect();
-        if (rect.top >= 72 && rect.top < window.innerHeight - 72) {
-          const testId = link.getAttribute('data-testid') ?? '';
-          const match = testId.match(/^listing-card-link-(.+)$/);
-          if (match?.[1]) {
-            return match[1];
-          }
+        if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
+          continue;
+        }
+        const match = link.getAttribute('data-testid')?.match(/^listing-card-link-(.+)$/);
+        if (!match?.[1]) {
+          continue;
+        }
+        const distance = Math.abs((rect.top + rect.bottom) / 2 - viewportCenter);
+        if (distance < bestDistance) {
+          bestId = match[1];
+          bestDistance = distance;
         }
       }
-      const fallbackTestId = links[0]?.getAttribute('data-testid') ?? '';
-      const fallbackMatch = fallbackTestId.match(/^listing-card-link-(.+)$/);
+      if (bestId) {
+        return bestId;
+      }
+      const fallbackMatch = links[0]
+        ?.getAttribute('data-testid')
+        ?.match(/^listing-card-link-(.+)$/);
       return fallbackMatch?.[1] ?? null;
     });
 
     if (!listingId) {
-      return false;
+      return null;
     }
 
+    await this.page.evaluate((id) => {
+      const headerHeight = document.querySelector('header')?.getBoundingClientRect().height ?? 72;
+      const anchorTop = headerHeight + 24;
+      const link = document.querySelector(`[data-testid="listing-card-link-${id}"]`);
+      if (!(link instanceof HTMLElement)) {
+        return;
+      }
+      const rect = link.getBoundingClientRect();
+      const target = Math.max(0, Math.round(window.scrollY + rect.top - anchorTop));
+      window.scrollTo({ top: target, behavior: 'instant' });
+      window.dispatchEvent(new Event('scroll'));
+    }, listingId);
+
+    const scrollY = await this.getWindowScrollY();
+    await expect
+      .poll(async () =>
+        this.page.evaluate(() => {
+          const raw = sessionStorage.getItem('homeReloadScrollY');
+          return raw ? Number.parseInt(raw, 10) : -1;
+        }),
+      )
+      .toBeGreaterThanOrEqual(scrollY - 2);
+
+    return { listingId, scrollY };
+  }
+
+  async openListingById(listingId: string): Promise<void> {
     const cardLink = this.page.getByTestId(`listing-card-link-${listingId}`);
     await expect(cardLink).toBeVisible();
-    await cardLink.click();
-    await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
-    return true;
+    await Promise.all([
+      this.page.waitForURL(/\/listings\/[^/]+$/),
+      this.page.evaluate((id) => {
+        const link = document.querySelector(`[data-testid="listing-card-link-${id}"]`);
+        if (!(link instanceof HTMLElement)) {
+          throw new Error(`Listing link not found: ${id}`);
+        }
+        link.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+        link.click();
+      }, listingId),
+    ]);
   }
 
   async openNonOwnListingFromResults(): Promise<boolean> {
