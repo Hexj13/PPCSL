@@ -83,24 +83,30 @@ export function useListingGridFetch({
 }: UseListingGridFetchArgs) {
   const fetchControllerRef = useRef<AbortController | null>(null);
   const appendTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const appendInFlightRef = useRef(false);
 
   const fetchListings = useCallback(
     async (page: number, append: boolean = false) => {
+      if (append && appendInFlightRef.current) {
+        return;
+      }
+      if (append) {
+        appendInFlightRef.current = true;
+      }
+
       fetchControllerRef.current?.abort();
       const controller = new AbortController();
       fetchControllerRef.current = controller;
 
       const params = await buildFetchParams(searchParamsString);
 
-      let loadMoreStartedAt = 0;
-      let appendDeferred = false;
       if (append) {
         setLoadingMore(true);
-        loadMoreStartedAt = Date.now();
       } else {
         setLoading(true);
         setError(null);
       }
+      let appendCommitted = false;
 
       try {
         const firstRes = await fetchListingsPage(params, page, controller.signal);
@@ -133,31 +139,20 @@ export function useListingGridFetch({
             dispatchAnalyticsForNewListings(allNewListings);
           });
         } else {
-          appendDeferred = true;
-          const elapsed = Date.now() - loadMoreStartedAt;
-          const remaining = Math.max(0, 150 - elapsed);
-          if (appendTimeoutRef.current) {
-            clearTimeout(appendTimeoutRef.current);
-          }
-          appendTimeoutRef.current = setTimeout(() => {
-            appendTimeoutRef.current = null;
-            if (controller.signal.aborted) {
-              setLoadingMore(false);
-              return;
-            }
-            startTransition(() => {
-              setListings((prev) => {
-                const updated = [...prev, ...allNewListings];
-                listingsRef.current = updated;
-                setCurrentPage(page);
-                setMeta(finalMeta);
-                saveGridState(updated, page, finalMeta, searchParamsString);
-                return updated;
-              });
-              setLoadingMore(false);
-              setAppendSkeletonCount(0);
+          appendCommitted = true;
+          startTransition(() => {
+            setListings((prev) => {
+              const updated = [...prev, ...allNewListings];
+              listingsRef.current = updated;
+              setCurrentPage(page);
+              setMeta(finalMeta);
+              saveGridState(updated, page, finalMeta, searchParamsString);
+              return updated;
             });
-          }, remaining);
+            setLoadingMore(false);
+            setAppendSkeletonCount(0);
+            appendInFlightRef.current = false;
+          });
         }
       } catch (error) {
         if (controller.signal.aborted) return;
@@ -171,12 +166,17 @@ export function useListingGridFetch({
           setHasLoadedWithFilters(true);
         }
       } finally {
-        if (!controller.signal.aborted) {
-          if (!appendDeferred) {
+        if (controller.signal.aborted) {
+          if (append) {
+            appendInFlightRef.current = false;
             setLoadingMore(false);
-            if (append) {
-              setAppendSkeletonCount(0);
-            }
+            setAppendSkeletonCount(0);
+          }
+        } else if (!appendCommitted) {
+          setLoadingMore(false);
+          if (append) {
+            appendInFlightRef.current = false;
+            setAppendSkeletonCount(0);
           }
           if (!append) {
             setLoading(false);
