@@ -65,13 +65,31 @@ describe('telegramAuthFlow helpers', () => {
     ).toEqual({ id_token: 'nested-oidc-token' });
   });
 
-  it('returns missing id_token when callback has no token', () => {
+  it('ignores interim empty auth_result payloads', () => {
     expect(
       parseTelegramAuthMessage({
         event: 'auth_result',
         result: {},
       }),
-    ).toEqual({ error: 'missing id_token' });
+    ).toBeNull();
+  });
+
+  it('parses auth_result errors nested in result', () => {
+    expect(
+      parseTelegramAuthMessage({
+        event: 'auth_result',
+        result: { error: 'access_denied' },
+      }),
+    ).toEqual({ error: 'access_denied' });
+  });
+
+  it('parses top-level id_token payloads', () => {
+    expect(
+      parseTelegramAuthMessage({
+        event: 'auth_result',
+        id_token: 'top-level-token',
+      }),
+    ).toEqual({ id_token: 'top-level-token' });
   });
 
   it('accepts oauth and same-origin message origins', () => {
@@ -107,9 +125,6 @@ describe('useTelegramAuth', () => {
     window.Telegram = {
       Login: {
         init: jest.fn(),
-        auth: jest.fn((_options, callback) => {
-          callback({ id_token: 'oidc-token' });
-        }),
       },
     };
   });
@@ -179,7 +194,8 @@ describe('useTelegramAuth', () => {
     expect(authUrl).toContain('client_id=123456789');
     expect(authUrl).toContain('nonce=server-nonce');
     expect(authUrl).toContain('lang=ru');
-    expect(authUrl).toContain(`origin=${encodeURIComponent(window.location.origin)}`);
+    expect(authUrl).toContain('scope=openid%20profile%20phone');
+    expect(authUrl).not.toContain('origin=');
 
     await act(async () => {
       window.dispatchEvent(
@@ -347,7 +363,7 @@ describe('useTelegramAuth', () => {
         new MessageEvent('message', {
           origin: 'https://oauth.telegram.org',
           source: popup as unknown as Window,
-          data: { event: 'auth_result', result: {} },
+          data: { event: 'auth_result', result: { status: 'pending' } },
         }),
       );
     });
@@ -398,6 +414,63 @@ describe('useTelegramAuth', () => {
 
     expect(authApi.telegramSignIn).not.toHaveBeenCalled();
 
+    openSpy.mockRestore();
+  });
+
+  it('prefers Telegram.Login.auth when the SDK is available', async () => {
+    const authSpy = jest.fn((_options, callback: (result: { id_token?: string }) => void) => {
+      callback({ id_token: 'sdk-token' });
+    });
+    window.Telegram = {
+      Login: {
+        init: jest.fn(),
+        auth: authSpy,
+      },
+    };
+
+    (authApi.createTelegramSignInNonce as jest.Mock).mockResolvedValue({
+      data: { nonce: 'server-nonce' },
+    });
+    (authApi.telegramSignIn as jest.Mock).mockResolvedValue({
+      data: { isNewUser: false, requiresPhoneVerification: false },
+    });
+    (authApi.me as jest.Mock).mockResolvedValue({ data: { id: 'user-1' } });
+
+    const openSpy = jest.spyOn(window, 'open');
+
+    const { result } = renderHook(() =>
+      useTelegramAuth({
+        tab: 'login',
+        telegramScriptLoaded: true,
+        locale: 'en',
+      }),
+    );
+
+    await waitFor(() => expect(result.current.isLibraryReady).toBe(true));
+
+    await act(async () => {
+      result.current.signInWithTelegram();
+    });
+
+    await waitFor(() => {
+      expect(authSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          client_id: 123456789,
+          nonce: 'server-nonce',
+          request_access: ['phone'],
+        }),
+        expect.any(Function),
+      );
+      expect(authApi.telegramSignIn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          idToken: 'sdk-token',
+          nonce: 'server-nonce',
+        }),
+        expect.any(Object),
+      );
+    });
+
+    expect(openSpy).not.toHaveBeenCalled();
     openSpy.mockRestore();
   });
 });

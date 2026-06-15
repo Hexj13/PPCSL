@@ -33,33 +33,6 @@ type TelegramSignInSubmitError = {
   };
 };
 
-declare global {
-  interface Window {
-    Telegram?: {
-      Login?: {
-        init: (
-          options: {
-            client_id: number;
-            request_access?: Array<'phone' | 'write'>;
-            lang?: string;
-            nonce?: string;
-          },
-          callback?: (result: { id_token?: string; error?: string }) => void,
-        ) => void;
-        auth: (
-          options: {
-            client_id: number;
-            request_access?: Array<'phone' | 'write'>;
-            lang?: string;
-            nonce?: string;
-          },
-          callback: (result: { id_token?: string; error?: string }) => void,
-        ) => void;
-      };
-    };
-  }
-}
-
 function getTelegramLang(locale: string): string {
   const low = locale.toLowerCase();
   if (low === 'ro' || low === 'ru') {

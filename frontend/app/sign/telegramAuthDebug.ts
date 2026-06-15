@@ -35,6 +35,11 @@ export type TelegramAuthDebugContext = {
   backendErrorKey?: string;
   elapsedMs?: number;
   telegramError?: string;
+  resultKind?: string;
+  resultKeys?: string[];
+  hasTopLevelIdToken?: boolean;
+  hasTopLevelError?: boolean;
+  hasResultError?: boolean;
 };
 
 const WARN_EVENTS = new Set<TelegramAuthDebugEvent>([
