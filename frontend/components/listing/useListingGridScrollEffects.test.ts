@@ -115,6 +115,34 @@ describe('useListingGridScrollEffects', () => {
     });
   }
 
+  it('scrolls to listings-results when content becomes visible after loading finishes', () => {
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
+    setupResultsTarget();
+
+    const { rerender } = renderHook(
+      ({ isLoading, showContent, listingsCount }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount,
+          isLoading,
+          showContent,
+        }),
+      { initialProps: { isLoading: true, showContent: false, listingsCount: 4 } },
+    );
+
+    rerender({ isLoading: false, showContent: false, listingsCount: 4 });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBe('true');
+    expect(window.scrollTo).not.toHaveBeenCalled();
+
+    rerender({ isLoading: false, showContent: true, listingsCount: 4 });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
+    expect(rafCallbacks).toHaveLength(1);
+    rafCallbacks.forEach((cb) => cb(0));
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 368, behavior: 'smooth' });
+  });
+
   it('scrolls to listings-results when loading finishes after search', () => {
     window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
     setupResultsTarget();

@@ -3,7 +3,7 @@
  */
 
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import {
   getOverlayHistoryStackSizeForTests,
@@ -54,18 +54,21 @@ jest.mock('@/lib/store', () => ({
 }));
 
 describe('CompleteProfilePhoneGate', () => {
+  let historyBack: jest.Mock;
+
   beforeEach(() => {
     jest.clearAllMocks();
     searchParamsValue = 'mode=phone_required';
     sessionStorage.clear();
     resetOverlayHistoryForTests();
+    historyBack = jest.fn();
     const pushState = jest.fn();
     Object.defineProperty(window, 'history', {
       configurable: true,
       value: {
         state: null,
         pushState,
-        back: jest.fn(),
+        back: historyBack,
       },
     });
   });
@@ -87,6 +90,19 @@ describe('CompleteProfilePhoneGate', () => {
       expect(mockLogout).toHaveBeenCalledTimes(1);
     });
     expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('/sign'));
+    expect(historyBack).not.toHaveBeenCalled();
+  });
+
+  it('logs out and redirects to sign when the back button is clicked', async () => {
+    render(<CompleteProfilePhoneGate />);
+
+    fireEvent.click(screen.getByTestId('complete-profile-phone-required-back'));
+
+    await waitFor(() => {
+      expect(mockLogout).toHaveBeenCalledTimes(1);
+    });
+    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('/sign'));
+    expect(historyBack).not.toHaveBeenCalled();
   });
 
   it('shows back for OAuth signup without source query param', () => {

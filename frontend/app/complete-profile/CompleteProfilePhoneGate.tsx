@@ -31,24 +31,29 @@ export function CompleteProfilePhoneGate() {
   const [cancelBusy, setCancelBusy] = useState(false);
   const shouldTrapBack = Boolean(user && phoneRequiredMode && !user.phoneVerified);
 
-  const exitPhoneRequired = useCallback(async () => {
-    if (cancelBusy) return;
-    setCancelBusy(true);
-    try {
-      if (isOAuthPhoneRequiredSignupFlow(source)) {
-        await cancelOAuthPhoneRequiredSignup();
+  const exitPhoneRequired = useCallback(
+    async (options?: { dismissOverlay?: () => void }) => {
+      if (cancelBusy) return;
+      options?.dismissOverlay?.();
+      setCancelBusy(true);
+      const signHref = buildSignPageHref({ tab: 'login', returnUrl });
+      try {
+        if (isOAuthPhoneRequiredSignupFlow(source)) {
+          await cancelOAuthPhoneRequiredSignup();
+        }
+        clearOAuthPhoneRequiredContext();
+        logout();
+        router.replace(signHref);
+      } finally {
+        setCancelBusy(false);
       }
-      clearOAuthPhoneRequiredContext();
-      logout();
-      router.replace(buildSignPageHref({ tab: 'login', returnUrl }));
-    } finally {
-      setCancelBusy(false);
-    }
-  }, [cancelBusy, logout, router, returnUrl, source]);
+    },
+    [cancelBusy, logout, router, returnUrl, source],
+  );
 
-  useHistoryBackClose(
+  const { dismissOverlay } = useHistoryBackClose(
     shouldTrapBack,
-    () => void exitPhoneRequired(),
+    () => void exitPhoneRequired({ dismissOverlay }),
     'complete-profile-phone-required',
   );
 
@@ -77,7 +82,7 @@ export function CompleteProfilePhoneGate() {
         <PhoneRequiredStep
           returnUrl={returnUrl}
           showOAuthCancel={isOAuthSignup}
-          onOAuthCancel={() => void exitPhoneRequired()}
+          onOAuthCancel={() => void exitPhoneRequired({ dismissOverlay })}
           oauthCancelBusy={cancelBusy}
         />
       </div>

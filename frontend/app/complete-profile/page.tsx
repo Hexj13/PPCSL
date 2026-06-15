@@ -21,7 +21,7 @@ function CompleteProfileContent() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      router.push(buildPostAuthRedirect('/sign', getClientLocale()));
+      router.replace(buildPostAuthRedirect('/sign', getClientLocale()));
     }
   }, [user, isInitialized, router]);
 
