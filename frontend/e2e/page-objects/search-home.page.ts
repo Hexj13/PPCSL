@@ -9,6 +9,7 @@ import { pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
 import { visibleSearchFiltersForm } from '../utils/search-filters-form';
 import { dismissCookieConsentIfVisible } from '../utils/session';
+import { pageUsesMobileLayout } from '../utils/viewport';
 
 import { SearchHomeScrollPage } from './search-home-scroll.page';
 
@@ -219,18 +220,16 @@ export class SearchHomePage extends SearchHomeScrollPage {
   }
 
   async openListingById(listingId: string): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
     const cardLink = this.page.getByTestId(`listing-card-link-${listingId}`);
-    await expect(cardLink).toBeVisible();
+    await expect(cardLink).toBeVisible({ timeout: 30_000 });
+    const useMobile = await pageUsesMobileLayout(this.page);
+    if (!useMobile) {
+      await cardLink.scrollIntoViewIfNeeded();
+    }
     await Promise.all([
       this.page.waitForURL(/\/listings\/[^/]+$/),
-      this.page.evaluate((id) => {
-        const link = document.querySelector(`[data-testid="listing-card-link-${id}"]`);
-        if (!(link instanceof HTMLElement)) {
-          throw new Error(`Listing link not found: ${id}`);
-        }
-        link.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
-        link.click();
-      }, listingId),
+      cardLink.click({ position: { x: 12, y: 12 } }),
     ]);
   }
 

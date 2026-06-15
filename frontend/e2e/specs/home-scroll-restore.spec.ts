@@ -44,7 +44,7 @@ test.describe('Home scroll restore', () => {
           const listingId = getCurrentListingId(page);
           await page.goBack({ waitUntil: 'domcontentloaded' });
           await searchHomePage.expectPageView();
-          await searchHomePage.expectScrollYNear(scrollBeforeListing);
+          await searchHomePage.expectScrollRestoredAfterBack(scrollBeforeListing);
           await searchHomePage.expectListingCardVisibleInViewport(listingId);
         },
       },
@@ -98,7 +98,7 @@ test.describe('Home scroll restore', () => {
           const listingId = getCurrentListingId(page);
           await page.goBack({ waitUntil: 'domcontentloaded' });
           await searchHomePage.expectPageView();
-          await searchHomePage.expectScrollYNear(scrollBeforeListing, 2, 60_000);
+          await searchHomePage.expectScrollRestoredAfterBack(scrollBeforeListing, 2, 60_000);
           await searchHomePage.expectListingCardVisibleInViewport(listingId);
         },
       },
@@ -146,8 +146,7 @@ test.describe('Home scroll restore', () => {
         name: 'Navigate back and load more on first tap',
         action: async () => {
           await page.goBack({ waitUntil: 'domcontentloaded' });
-          await searchHomePage.expectPageView();
-          await searchHomePage.expectPaginatedGridStatePersisted();
+          await searchHomePage.expectHomeAfterListingBack({ minGridPage: 2 });
           await searchHomePage.clickShowMoreOnceExpectingMoreListings();
         },
       },

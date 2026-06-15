@@ -48,3 +48,8 @@ export type GoogleSignInResponse = LoginResponse & {
   requiresPhoneVerification: boolean;
   isNewUser: boolean;
 };
+
+export type TelegramSignInResponse = LoginResponse & {
+  requiresPhoneVerification: boolean;
+  isNewUser: boolean;
+};

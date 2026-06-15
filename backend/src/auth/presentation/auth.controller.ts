@@ -29,6 +29,7 @@ import {
   AuthTokenIssuerService,
   REFRESH_TOKEN_COOKIE,
 } from '../application/services/auth-token-issuer.service';
+import { DevTelegramSignInUseCase } from '../application/use-cases/dev-telegram-sign-in.use-case';
 import { E2eCreateGoogleBusinessUserUseCase } from '../application/use-cases/e2e-create-google-business-user.use-case';
 import { IpBlockGuard } from '../infrastructure/guards/ip-block.guard';
 import { JwtAuthGuard } from '../infrastructure/guards/jwt-auth.guard';
@@ -49,6 +50,7 @@ const getSmsIpThrottle = (prodLimit: number, devLimit: number = prodLimit * 50) 
 import { ChangeEmailConfirmDto, ChangeEmailRequestDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from './dto/change-phone.dto';
+import { DevTelegramSignInDto } from './dto/dev-telegram-sign-in.dto';
 import { GoogleSignInDto } from './dto/google-sign-in.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -57,6 +59,8 @@ import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResendEmailVerificationDto } from './dto/resend-email-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
+import { TelegramSignInNonceResponseDto } from './dto/telegram-sign-in-nonce.dto';
+import { TelegramSignInDto } from './dto/telegram-sign-in.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { VerifyPhoneDto } from './dto/verify-phone.dto';
@@ -75,6 +79,7 @@ export class AuthController {
     private i18nService: I18nService,
     private authPhoneRateLimit: AuthPhoneRateLimitService,
     private e2eCreateGoogleBusinessUserUseCase: E2eCreateGoogleBusinessUserUseCase,
+    private devTelegramSignInUseCase: DevTelegramSignInUseCase,
   ) {}
 
   @ApiOperation({ summary: 'Register a new user' })
@@ -255,6 +260,22 @@ export class AuthController {
     return this.authTokenIssuer.cookieAuthJsonBody(result);
   }
 
+  @ApiOperation({ summary: 'Sign in or register with Telegram (development mock only)' })
+  @ApiExcludeEndpoint()
+  @Throttle(getThrottleLimit(30, 500))
+  @HttpCode(200)
+  @Post('dev/telegram')
+  async devTelegramSignIn(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+    @Body() dto: DevTelegramSignInDto,
+  ) {
+    const ip = this.ipBlockService.getClientIp(req);
+    const result = await this.devTelegramSignInUseCase.execute(dto, ip, this.getRequestLocale(req));
+    this.authTokenIssuer.attachLoginCookies(res, result);
+    return this.authTokenIssuer.cookieAuthJsonBody(result);
+  }
+
   @ApiOperation({ summary: 'Sign in or register with Google' })
   @Throttle(getThrottleLimit(5, 200))
   @UseGuards(IpBlockGuard)
@@ -267,6 +288,31 @@ export class AuthController {
   ) {
     const ip = this.ipBlockService.getClientIp(req);
     const result = await this.authService.googleSignIn(dto, ip, this.getRequestLocale(req));
+    this.authTokenIssuer.attachLoginCookies(res, result);
+    return this.authTokenIssuer.cookieAuthJsonBody(result);
+  }
+
+  @ApiOperation({ summary: 'Issue one-time nonce for Telegram Login OIDC' })
+  @Throttle(getThrottleLimit(10, 200))
+  @UseGuards(IpBlockGuard)
+  @HttpCode(200)
+  @Post('telegram/nonce')
+  async telegramSignInNonce(): Promise<TelegramSignInNonceResponseDto> {
+    return this.authService.createTelegramSignInNonce();
+  }
+
+  @ApiOperation({ summary: 'Sign in or register with Telegram' })
+  @Throttle(getThrottleLimit(5, 200))
+  @UseGuards(IpBlockGuard)
+  @HttpCode(200)
+  @Post('telegram')
+  async telegramSignIn(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+    @Body() dto: TelegramSignInDto,
+  ) {
+    const ip = this.ipBlockService.getClientIp(req);
+    const result = await this.authService.telegramSignIn(dto, ip, this.getRequestLocale(req));
     this.authTokenIssuer.attachLoginCookies(res, result);
     return this.authTokenIssuer.cookieAuthJsonBody(result);
   }

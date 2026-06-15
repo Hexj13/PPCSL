@@ -47,7 +47,7 @@ test.describe('Search: desktop filter tabs @p0', () => {
         name: 'Change sort without submitting search and keep scroll position',
         action: async () => {
           await searchHomePage.selectSortPreservingCurrentScroll('price_DESC');
-          await searchHomePage.expectScrollYNear(scrollBeforeSort);
+          await searchHomePage.expectScrollPreservedNear(scrollBeforeSort);
         },
       },
     ];

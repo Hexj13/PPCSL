@@ -21,10 +21,13 @@ import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import { buildVerifyPhoneSearchParams, saveVerifyPhoneContext } from '@/lib/verify-phone-context';
-import { InfoBlock, LoadingButton } from '@/ui';
+import { InfoBlock, LoadingButton, AUTH_OUTLINE_BUTTON_CLASSES } from '@/ui';
 
 type PhoneRequiredStepProps = {
   returnUrl: string | null;
+  showOAuthCancel?: boolean;
+  onOAuthCancel?: () => void;
+  oauthCancelBusy?: boolean;
 };
 
 function readInitialAccountType(
@@ -37,7 +40,12 @@ function readInitialAccountType(
   return user.type === 'Business' ? 'Business' : 'Individual';
 }
 
-export function PhoneRequiredStep({ returnUrl }: PhoneRequiredStepProps) {
+export function PhoneRequiredStep({
+  returnUrl,
+  showOAuthCancel = false,
+  onOAuthCancel,
+  oauthCancelBusy = false,
+}: PhoneRequiredStepProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -127,6 +135,7 @@ export function PhoneRequiredStep({ returnUrl }: PhoneRequiredStepProps) {
   };
 
   const submitDisabled = !phoneInput.trim();
+  const formBusy = loading || oauthCancelBusy;
 
   return (
     <div className="space-y-6" data-testid="complete-profile-phone-required">
@@ -195,14 +204,27 @@ export function PhoneRequiredStep({ returnUrl }: PhoneRequiredStepProps) {
           layout="equalWidth"
           wrapperClassName="mb-0 pb-8"
         />
-        <LoadingButton
-          type="submit"
-          loading={loading}
-          disabled={submitDisabled}
-          className="w-full close-confirm-btn flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {t('completeProfile.phoneRequiredContinue')}
-        </LoadingButton>
+        <div className="flex flex-col-reverse sm:flex-row gap-3">
+          {showOAuthCancel ? (
+            <button
+              type="button"
+              disabled={formBusy}
+              onClick={onOAuthCancel}
+              data-testid="complete-profile-phone-required-back"
+              className="close-confirm-btn w-full sm:flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {t('common.back')}
+            </button>
+          ) : null}
+          <LoadingButton
+            type="submit"
+            loading={loading}
+            disabled={submitDisabled || oauthCancelBusy}
+            className={`close-confirm-btn w-full flex items-center justify-center px-4 rounded-lg text-base ${AUTH_OUTLINE_BUTTON_CLASSES} ${showOAuthCancel ? 'sm:flex-1 shrink-0' : ''}`}
+          >
+            {t('completeProfile.phoneRequiredContinue')}
+          </LoadingButton>
+        </div>
       </form>
     </div>
   );

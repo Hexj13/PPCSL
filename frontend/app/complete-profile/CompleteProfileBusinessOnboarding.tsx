@@ -22,7 +22,7 @@ import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
-import { InfoBlock, LoadingButton } from '@/ui';
+import { InfoBlock, LoadingButton, AUTH_OUTLINE_BUTTON_CLASSES } from '@/ui';
 
 import {
   processPendingData,
@@ -337,7 +337,7 @@ export function CompleteProfileBusinessOnboarding() {
                 type="submit"
                 loading={isSubmitting}
                 disabled={!formData.companyName.trim() || hasErrors()}
-                className="close-confirm-btn w-full flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`close-confirm-btn w-full flex items-center justify-center px-4 rounded-lg text-base ${AUTH_OUTLINE_BUTTON_CLASSES}`}
                 data-testid="complete-profile-business-onboarding-save"
               >
                 {t('completeProfile.save')}

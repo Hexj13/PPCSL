@@ -4,6 +4,7 @@ import { UsersService } from '../../users/application/users.service';
 import { EmailService } from '../infrastructure/services/email.service';
 import { RefreshTokenService } from '../infrastructure/services/refresh-token.service';
 import { SmsService } from '../infrastructure/services/sms.service';
+import { TelegramOidcNonceService } from '../infrastructure/services/telegram-oidc-nonce.service';
 import { ChangeEmailConfirmDto, ChangeEmailRequestDto } from '../presentation/dto/change-email.dto';
 import { ChangePasswordDto } from '../presentation/dto/change-password.dto';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from '../presentation/dto/change-phone.dto';
@@ -12,6 +13,7 @@ import { LoginDto } from '../presentation/dto/login.dto';
 import { RegisterDto } from '../presentation/dto/register.dto';
 import { RequestPasswordResetDto } from '../presentation/dto/request-password-reset.dto';
 import { ResetPasswordDto } from '../presentation/dto/reset-password.dto';
+import { TelegramSignInDto } from '../presentation/dto/telegram-sign-in.dto';
 import { UpdateProfileDto } from '../presentation/dto/update-profile.dto';
 import { VerifyResetCodeDto } from '../presentation/dto/verify-reset-code.dto';
 
@@ -21,6 +23,7 @@ import {
   UserWithoutPassword,
   LoginResponse,
   GoogleSignInResponse,
+  TelegramSignInResponse,
 } from './auth.types';
 import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './use-cases/check-phone-availability.use-case';
@@ -38,6 +41,7 @@ import { RequestPhoneChangeUseCase } from './use-cases/request-phone-change.use-
 import { ResendEmailVerificationUseCase } from './use-cases/resend-email-verification.use-case';
 import { ResetPasswordUseCase } from './use-cases/reset-password.use-case';
 import { SendVerificationSmsUseCase } from './use-cases/send-verification-sms.use-case';
+import { TelegramSignInUseCase } from './use-cases/telegram-sign-in.use-case';
 import { UpdateProfileUseCase } from './use-cases/update-profile.use-case';
 import { VerifyEmailUseCase } from './use-cases/verify-email.use-case';
 import { VerifyPhoneChangeUseCase } from './use-cases/verify-phone-change.use-case';
@@ -50,6 +54,7 @@ export type {
   UserWithoutPassword,
   LoginResponse,
   GoogleSignInResponse,
+  TelegramSignInResponse,
 } from './auth.types';
 
 @Injectable()
@@ -80,6 +85,8 @@ export class AuthService {
     private changePasswordUseCase: ChangePasswordUseCase,
     private dismissPartnerPromoBannerUseCase: DismissPartnerPromoBannerUseCase,
     private googleSignInUseCase: GoogleSignInUseCase,
+    private telegramSignInUseCase: TelegramSignInUseCase,
+    private telegramOidcNonceService: TelegramOidcNonceService,
   ) {}
 
   async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
@@ -100,6 +107,19 @@ export class AuthService {
     requestLocale?: string,
   ): Promise<GoogleSignInResponse> {
     return this.googleSignInUseCase.execute(dto, ip, requestLocale);
+  }
+
+  async telegramSignIn(
+    dto: TelegramSignInDto,
+    ip?: string,
+    requestLocale?: string,
+  ): Promise<TelegramSignInResponse> {
+    return this.telegramSignInUseCase.execute(dto, ip, requestLocale);
+  }
+
+  async createTelegramSignInNonce(): Promise<{ nonce: string }> {
+    const nonce = await this.telegramOidcNonceService.issue();
+    return { nonce };
   }
 
   async register(

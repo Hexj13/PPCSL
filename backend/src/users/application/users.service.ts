@@ -113,6 +113,22 @@ export class UsersService {
     await this.usersRepository.update(userId, { googleId: null });
   }
 
+  async findByTelegramId(telegramId: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { telegramId, active: true },
+    });
+  }
+
+  async findByTelegramIdAny(telegramId: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { telegramId },
+    });
+  }
+
+  async releaseTelegramIdentity(userId: string): Promise<void> {
+    await this.usersRepository.update(userId, { telegramId: null, telegramUsername: null });
+  }
+
   async findByPhone(phone: string): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { phone, active: true },

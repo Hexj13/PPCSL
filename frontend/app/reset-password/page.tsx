@@ -1,21 +1,15 @@
 'use client';
 
-import Link from 'next/link';
-
 import {
   useResetPasswordPage,
   type ResetPasswordErrors,
 } from '@/app/reset-password/useResetPasswordPage';
 import { getPasswordValidationRules } from '@/app/reset-password/utils';
 import { OtpCodeInput } from '@/components/common/OtpCodeInput';
-import { buildSignPageHref } from '@/lib/return-url';
 import { smsResendCooldownButtonLabel } from '@/lib/utils';
-import { LoadingButton } from '@/ui';
+import { LoadingButton, AUTH_MODAL_CONFIRM_BUTTON_CLASSES } from '@/ui';
 
 type TranslationFn = ReturnType<typeof useResetPasswordPage>['t'];
-
-const btnPrimaryClass =
-  'w-full text-primary-700 font-medium text-sm md:text-base hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 text-lg rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none disabled:opacity-50 disabled:cursor-not-allowed';
 
 function ResetPasswordPhoneStep({
   phone,
@@ -24,6 +18,7 @@ function ResetPasswordPhoneStep({
   errors,
   loading,
   onSubmit,
+  onBack,
   t,
 }: {
   phone: string;
@@ -32,6 +27,7 @@ function ResetPasswordPhoneStep({
   errors: ResetPasswordErrors;
   loading: boolean;
   onSubmit: (e: React.FormEvent) => void;
+  onBack: () => void;
   t: TranslationFn;
 }) {
   return (
@@ -53,22 +49,25 @@ function ResetPasswordPhoneStep({
         />
         {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone}</p>}
       </div>
-      <LoadingButton
-        type="submit"
-        loading={loading}
-        loadingText={t('resetPassword.sending')}
-        className={btnPrimaryClass}
-      >
-        {t('resetPassword.sendCode')}
-      </LoadingButton>
-      <p className="mt-6 text-center text-sm text-gray-300">
-        <Link
-          href={buildSignPageHref({ tab: 'login' })}
-          className="text-primary-700 font-semibold hover-only:hover:text-primary-900 underline transition-colors"
+      <div className="flex flex-col-reverse sm:flex-row gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={loading}
+          data-testid="reset-password-back"
+          className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-gray-500/40 hover-only:hover:border-gray-500/60 bg-gray-500/20 text-text-secondary font-semibold text-base hover-only:hover:text-text-primary transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {t('resetPassword.backToLogin')}
-        </Link>
-      </p>
+          {t('common.back')}
+        </button>
+        <LoadingButton
+          type="submit"
+          loading={loading}
+          loadingText={t('resetPassword.sending')}
+          className={AUTH_MODAL_CONFIRM_BUTTON_CLASSES}
+        >
+          {t('resetPassword.sendCode')}
+        </LoadingButton>
+      </div>
     </form>
   );
 }
@@ -148,7 +147,7 @@ function ResetPasswordCodeStep({
               loading={loading}
               loadingText={t('resetPassword.verifying')}
               disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
-              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className={AUTH_MODAL_CONFIRM_BUTTON_CLASSES}
             >
               {isVerificationBlocked ? t('resetPassword.blocked') : t('resetPassword.verify')}
             </LoadingButton>
@@ -352,7 +351,7 @@ function ResetPasswordPasswordStep({
           loading={loading}
           loadingText={t('common.loading')}
           disabled={!isFormValid}
-          className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className={AUTH_MODAL_CONFIRM_BUTTON_CLASSES}
         >
           {t('resetPassword.resetButton')}
         </LoadingButton>
@@ -408,6 +407,7 @@ export default function ResetPasswordPage() {
           errors={errors}
           loading={loading}
           onSubmit={handleRequestReset}
+          onBack={handleBack}
           t={t}
         />
       )}

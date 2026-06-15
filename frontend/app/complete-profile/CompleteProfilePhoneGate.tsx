@@ -1,12 +1,18 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { cancelOAuthPhoneRequiredSignup } from '@/app/complete-profile/oauthPhoneRequiredCancel';
 import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
 import { useTranslation } from '@/hooks/useTranslation';
 import { MAIN_VIEWPORT_MIN_HEIGHT_CLASS } from '@/lib/constants';
 import { getClientLocale } from '@/lib/i18n';
+import {
+  clearOAuthPhoneRequiredContext,
+  isOAuthPhoneRequiredSignupFlow,
+  shouldShowOAuthPhoneRequiredCancel,
+} from '@/lib/oauth-phone-required-context';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
@@ -20,16 +26,29 @@ export function CompleteProfilePhoneGate() {
   const { user, logout } = useAuthStore();
   const returnUrl = getReturnUrlFromSearchParams(searchParams);
   const phoneRequiredMode = searchParams.get('mode') === 'phone_required';
+  const source = searchParams.get('source');
+  const isOAuthSignup = shouldShowOAuthPhoneRequiredCancel(source, user);
+  const [cancelBusy, setCancelBusy] = useState(false);
   const shouldTrapBack = Boolean(user && phoneRequiredMode && !user.phoneVerified);
 
-  const handleBackFromPhoneRequired = useCallback(() => {
-    logout();
-    router.replace(buildSignPageHref({ tab: 'login', returnUrl }));
-  }, [logout, router, returnUrl]);
+  const exitPhoneRequired = useCallback(async () => {
+    if (cancelBusy) return;
+    setCancelBusy(true);
+    try {
+      if (isOAuthPhoneRequiredSignupFlow(source)) {
+        await cancelOAuthPhoneRequiredSignup();
+      }
+      clearOAuthPhoneRequiredContext();
+      logout();
+      router.replace(buildSignPageHref({ tab: 'login', returnUrl }));
+    } finally {
+      setCancelBusy(false);
+    }
+  }, [cancelBusy, logout, router, returnUrl, source]);
 
   useHistoryBackClose(
     shouldTrapBack,
-    handleBackFromPhoneRequired,
+    () => void exitPhoneRequired(),
     'complete-profile-phone-required',
   );
 
@@ -37,6 +56,7 @@ export function CompleteProfilePhoneGate() {
     if (!user) return;
     if (!phoneRequiredMode) return;
     if (user.phoneVerified && typeof window !== 'undefined' && window.location) {
+      clearOAuthPhoneRequiredContext();
       window.location.href = buildPostAuthRedirect(returnUrl || '/', getClientLocale());
     }
   }, [user, phoneRequiredMode, returnUrl]);
@@ -54,7 +74,12 @@ export function CompleteProfilePhoneGate() {
         {t('completeProfile.phoneRequiredTitle')}
       </h1>
       <div className="card p-5 sm:p-6 md:p-8">
-        <PhoneRequiredStep returnUrl={returnUrl} />
+        <PhoneRequiredStep
+          returnUrl={returnUrl}
+          showOAuthCancel={isOAuthSignup}
+          onOAuthCancel={() => void exitPhoneRequired()}
+          oauthCancelBusy={cancelBusy}
+        />
       </div>
     </div>
   );

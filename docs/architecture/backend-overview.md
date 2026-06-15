@@ -53,7 +53,7 @@ New code in core domains should follow the layered layout; older modules are mig
 | Migrations | `src/migrations/*.ts`, `npm run migration:run` |
 | Cache | Redis (`common/redis.service.ts`) |
 | Search | PostgreSQL queries + FTS (see [TECHNICAL.md](./TECHNICAL.md)) |
-| Auth | JWT + Passport, refresh tokens (cookie), Google OAuth, SMS (Twilio) |
+| Auth | JWT + Passport, refresh tokens (cookie), Google OAuth, Telegram Login Widget, SMS (Twilio) |
 | Files | Local `/uploads/` in dev; **AWS S3** + optional CloudFront in production; `sharp`, blurhash |
 | Video | AWS MediaConvert + webhooks (`listings/video/`) |
 | i18n | `common/i18n/` — `ro`, `ru`, `en` JSON copied from platform `locales/backend/` via `prepare:build` |
@@ -157,6 +157,7 @@ Clear caches after catalog mutations: `npm run clear-cache:brands` (see platform
 - Refresh token: HTTP-only cookie, rotated on refresh, stored in DB; `change-password` revokes other refresh tokens (current browser session kept); `reset-password` revokes all refresh tokens and clears cookies (access JWT until expiry — see [auth-jwt-invalidation-followup.md](./auth-jwt-invalidation-followup.md))
 - Strategies: `JwtStrategy`, `LocalStrategy`; guards: `JwtAuthGuard`, `OptionalJwtAuthGuard`, `AdminGuard`, `PhoneVerifiedGuard`, `IpBlockGuard`, `CronSecretGuard` (cron jobs and `GET /metrics`)
 - Google Sign-In (`POST /api/auth/google`, GIS idToken): links active users by `googleId`/email; self-deleted accounts (`isSelfDeletedUser`, `googleId` cleared on `DELETE /api/auth/profile`) can register again with the same Google; admin-deactivated users return `errors.userDeactivated` without creating a new row. Operators: [GOOGLE_OAUTH_SETUP_RU.md](../guides/GOOGLE_OAUTH_SETUP_RU.md)
+- Telegram Sign-In (`POST /api/auth/telegram`, Login Widget HMAC): matches users by `telegram_id` only; sets `telegram: true` on registration; phone gate required. Operators: [TELEGRAM_AUTH_SETUP_RU.md](../guides/TELEGRAM_AUTH_SETUP_RU.md)
 - SMS verification, email (MJML templates in `common/email/`)
 - Global throttling: 600 req/min per IP in production (configurable per route on auth)
 

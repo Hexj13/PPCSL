@@ -70,7 +70,7 @@ export class LoginUserUseCase {
     }
 
     if (!user.password) {
-      throw new UnauthorizedException('errors.useGoogleSignIn');
+      throw new UnauthorizedException(this.getSocialSignInErrorKey(user.authProvider));
     }
 
     if (!(await this.passwordService.verify(password, user.password))) {
@@ -86,5 +86,11 @@ export class LoginUserUseCase {
     }
 
     return removePasswordFromUser(user) as UserWithoutPassword;
+  }
+
+  private getSocialSignInErrorKey(authProvider: string): string {
+    if (authProvider === 'google') return 'errors.useGoogleSignIn';
+    if (authProvider === 'telegram') return 'errors.useTelegramSignIn';
+    return 'errors.useSocialSignIn';
   }
 }

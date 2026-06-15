@@ -108,6 +108,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.client.del(key);
   }
 
+  async delAndCount(key: string): Promise<number> {
+    if (!this.client?.isOpen) {
+      return 0;
+    }
+    return await this.client.del(key);
+  }
+
   async exists(key: string): Promise<boolean> {
     if (!this.client?.isOpen) {
       return false;

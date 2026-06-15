@@ -87,8 +87,10 @@ test.describe('Smart selection', () => {
             await expect(page).toHaveURL(/\/favorites/, { timeout: 30_000 });
             await expect(page).toHaveURL(/tab=filters/, { timeout: 15_000 });
             await favoritesPage.expectPageView();
-            await favoritesPage.openFiltersTab();
-            await favoritesPage.expectSavedFiltersListVisible();
+            if (!createdFilter?.id) {
+              throw new Error('Smart selection filter was not created');
+            }
+            await favoritesPage.expectSavedFilterCardVisible(createdFilter.id);
           },
         },
         {

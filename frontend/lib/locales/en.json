@@ -150,7 +150,12 @@
     "emailVerificationResendOnCooldown": "A confirmation email was already sent. You can request another one after the link in that message expires.",
     "googleSignInFailed": "Google sign-in failed. Please try again.",
     "googleEmailNotVerified": "Your Google email is not verified. Verify it in Google and try again.",
-    "useGoogleSignIn": "Use Google sign-in for this account."
+    "useGoogleSignIn": "Use Google sign-in for this account.",
+    "telegramSignInFailed": "Telegram sign-in failed. Please try again.",
+    "telegramAuthExpired": "Telegram session expired. Please sign in again.",
+    "telegramSignInUnavailable": "Telegram sign-in is temporarily unavailable.",
+    "useTelegramSignIn": "Use Telegram sign-in for this account.",
+    "useSocialSignIn": "Use social sign-in for this account."
   },
   "cookieSettings": {
     "loading": "Loading...",
@@ -331,9 +336,12 @@
     "greeting": "Hello!",
     "dividerOr": "or",
     "continueWithGoogle": "Continue with Google",
-    "googleConsentPrefix": "By continuing with Google, you accept our ",
-    "googleConsentConjunction": " and ",
-    "googleConsentSuffix": "."
+    "continueWithTelegram": "Continue with Telegram",
+    "oauthConsentPrefix": "By continuing, you agree to our ",
+    "oauthConsentTermsLink": "Terms of Use",
+    "oauthConsentConjunction": " and ",
+    "oauthConsentPrivacyLink": "Privacy Policy",
+    "oauthConsentSuffix": "."
   },
   "resetPassword": {
     "title": "Reset Password",
@@ -2217,7 +2225,7 @@
     "phoneRequiredTitle": "Verify your phone number",
     "phoneRequiredDescription": "To continue using Kupito, confirm your phone number via SMS. This helps protect your account.",
     "phoneRequiredCurrent": "Number to verify",
-    "phoneRequiredContinue": "Send SMS code",
+    "phoneRequiredContinue": "Confirm",
     "businessOnboardingTitle": "Company details",
     "businessOnboardingInfo": "Optional fields can be filled in later in \"Profile\"."
   },

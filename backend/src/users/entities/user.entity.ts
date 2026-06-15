@@ -19,6 +19,7 @@ import { Listing } from '../../listings/entities/listing.entity';
 @Index(['active'])
 @Index(['isPlatformPartner'])
 @Index(['board_slug'], { unique: true, where: '"board_slug" IS NOT NULL' })
+@Index(['telegramId'], { unique: true, where: '"telegram_id" IS NOT NULL' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
   @Expose()
@@ -37,8 +38,14 @@ export class User {
   @Column({ type: 'varchar', nullable: true, name: 'google_id' })
   googleId: string | null;
 
+  @Column({ type: 'varchar', nullable: true, name: 'telegram_id' })
+  telegramId: string | null;
+
+  @Column({ type: 'varchar', nullable: true, name: 'telegram_username' })
+  telegramUsername: string | null;
+
   @Column({ type: 'varchar', length: 16, default: 'local', name: 'auth_provider' })
-  authProvider: 'local' | 'google';
+  authProvider: 'local' | 'google' | 'telegram';
 
   @Column({ type: 'varchar', select: false, nullable: true })
   password: string | null;
@@ -161,6 +168,8 @@ export class User {
     this.companyName = null;
     this.companyWebsiteUrl = null;
     this.googleId = null;
+    this.telegramId = null;
+    this.telegramUsername = null;
     this.active = false;
   }
 

@@ -4,7 +4,7 @@ import { OtpCodeInput } from '@/components/common/OtpCodeInput';
 import { useTranslation } from '@/hooks/useTranslation';
 import { formatPhoneForDisplay } from '@/lib/phone';
 import { smsResendCooldownButtonLabel } from '@/lib/utils';
-import { LoadingButton } from '@/ui';
+import { LoadingButton, AUTH_MODAL_CONFIRM_BUTTON_CLASSES } from '@/ui';
 
 type VerifyPhoneCodeFormProps = {
   code: string[];
@@ -90,7 +90,7 @@ export function VerifyPhoneCodeForm({
               type="submit"
               loading={isSubmitting}
               disabled={code.join('').trim().length !== 6 || isVerificationBlocked}
-              className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className={AUTH_MODAL_CONFIRM_BUTTON_CLASSES}
               data-testid="verify-phone-submit"
             >
               {isVerificationBlocked ? t('smsVerification.blocked') : t('smsVerification.verify')}

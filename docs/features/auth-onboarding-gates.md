@@ -17,7 +17,8 @@ Short reference for **mandatory steps** before a signed-in user can use the mark
 - **Middleware** (Next.js): reads access JWT; if `phoneVerified` is not `true`, redirects to `/complete-profile?mode=phone_required` with optional `returnUrl`.
 - **Client:** `PhoneRequiredGuard` in root layout aligns with the same rule for client navigations.
 - **Exempt paths:** `lib/phone-verification-paths.ts` (`/sign`, `/verify-phone`, `/complete-profile`, legal pages, etc.).
-- **Browser Back on `phone_required`:** `CompleteProfilePhoneGate` traps history back (`useHistoryBackClose`). Leaving the mandatory phone step calls `logout()` and `replace` to `/sign` (with `returnUrl` when present) so the user is not left signed in without a verified phone.
+- **Browser Back on `phone_required`:** `CompleteProfilePhoneGate` traps history back (`useHistoryBackClose`). Leaving the mandatory phone step always calls `logout()` and `replace` to `/sign` (with `returnUrl` when present) so the user is not left signed in without a verified phone. It additionally calls `DELETE /api/auth/profile` to discard the half-created account **only for an in-progress OAuth signup** — detected by `isOAuthPhoneRequiredSignupFlow`, i.e. a `source=google_register`/`source=telegram_register` query param or the saved signup session context (`oauthPhoneRequiredContext`). Existing OAuth-only users re-verifying a phone are logged out without deletion.
+- **Back on OAuth `phone_required`:** Gray **Back** on the phone gate runs the same exit path as browser back. The button is shown for OAuth signups and for existing OAuth-only users (no password); account deletion still happens only for the signup case described above.
 
 ## Business account without company name
 
@@ -54,8 +55,11 @@ For `complete-profile` and reserved `post-register` flows, the phone number is s
 - **Password set:** standard change-password UI (current + new). Google Sign-In and email/phone + password login both work.
 - Save enables when the new password passes client rules; other profile fields (e.g. invalid company website) do not block password-only submit.
 
+OAuth providers (Google, Telegram) without a password use the same set-password flow. Telegram registration sets `telegram: true` on the user profile. When Telegram OIDC returns a verified `phone_number` and it is not already used by another account, the phone gate is skipped (`phoneVerified: true`). Otherwise the user is sent to `phone_required` like Google signup.
+
 ## Related docs
 
 - Google GIS and env: [GOOGLE_OAUTH_SETUP_RU.md](../guides/GOOGLE_OAUTH_SETUP_RU.md)
+- Telegram Login (OIDC) and env: [TELEGRAM_AUTH_SETUP_RU.md](../guides/TELEGRAM_AUTH_SETUP_RU.md)
 - Cookies and JWT alignment: [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md)
 - E2E login helper: [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md) (`loginByUi` throws if mandatory profile URL is hit)

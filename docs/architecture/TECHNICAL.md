@@ -362,6 +362,8 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 POST /api/auth/register              # Register new user
 POST /api/auth/login                  # Login (sets httpOnly session cookies; JSON returns user only)
 POST /api/auth/refresh                # Refresh session (rotates refresh token in cookies; JSON returns user only)
+POST /api/auth/google                 # Google Sign-In (GIS idToken)
+POST /api/auth/telegram               # Telegram Sign-In (Login Widget payload + HMAC verification)
 GET  /api/auth/me                     # Get current user profile (includes hasPassword; password hash never returned)
 PATCH /api/auth/profile              # Update user profile (response includes hasPassword)
 POST /api/auth/change-password       # Change or set password (JWT; throttle: 5/min per IP in production)

@@ -7,6 +7,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserType } from '../../common/types';
 import { User } from '../../users/entities/user.entity';
 import { UsersService } from '../../users/application/users.service';
+import { TelegramOidcNonceService } from '../infrastructure/services/telegram-oidc-nonce.service';
 
 import { AuthService } from './auth.service';
 import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
@@ -15,6 +16,7 @@ import { ConfirmEmailChangeUseCase } from './use-cases/confirm-email-change.use-
 import { DeleteAccountUseCase } from './use-cases/delete-account.use-case';
 import { DismissPartnerPromoBannerUseCase } from './use-cases/dismiss-partner-promo-banner.use-case';
 import { GoogleSignInUseCase } from './use-cases/google-sign-in.use-case';
+import { TelegramSignInUseCase } from './use-cases/telegram-sign-in.use-case';
 import { GetUserProfileUseCase } from './use-cases/get-user-profile.use-case';
 import { LoginUserUseCase } from './use-cases/login-user.use-case';
 import { RefreshTokensUseCase } from './use-cases/refresh-tokens.use-case';
@@ -251,6 +253,14 @@ describe('AuthService', () => {
         {
           provide: GoogleSignInUseCase,
           useValue: { execute: jest.fn() },
+        },
+        {
+          provide: TelegramSignInUseCase,
+          useValue: { execute: jest.fn() },
+        },
+        {
+          provide: TelegramOidcNonceService,
+          useValue: { issue: jest.fn(), consume: jest.fn() },
         },
       ],
     }).compile();

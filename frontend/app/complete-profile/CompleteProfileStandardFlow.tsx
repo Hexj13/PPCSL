@@ -26,7 +26,7 @@ import { getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
-import { LoadingButton, InfoBlock } from '@/ui';
+import { LoadingButton, InfoBlock, AUTH_MODAL_CONFIRM_BUTTON_CLASSES } from '@/ui';
 
 import { validatePhone } from '../register/utils';
 
@@ -436,7 +436,7 @@ export function CompleteProfileStandardFlow({ user }: CompleteProfileStandardFlo
                 type="submit"
                 loading={isSubmitting}
                 disabled={!hasAnyField() || hasErrors()}
-                className="close-confirm-btn flex-1 shrink-0 flex items-center justify-center px-4 rounded-lg border-2 border-primary-600 hover-only:hover:border-primary-700 bg-primary-500/20 text-primary-800 font-semibold text-base hover-only:hover:bg-primary-500/30 transition-colors duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className={AUTH_MODAL_CONFIRM_BUTTON_CLASSES}
                 data-testid="complete-profile-save"
               >
                 {t('completeProfile.save')}

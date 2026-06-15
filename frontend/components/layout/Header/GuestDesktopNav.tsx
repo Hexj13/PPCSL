@@ -21,7 +21,7 @@ type GuestDesktopNavProps = {
 };
 
 const loginLinkClasses =
-  'text-primary-900 font-medium h-10 text-xs md:text-xs lg:text-sm xl:text-sm hover-only:hover:text-primary-700 active:text-primary-700 hover-only:hover:border-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base';
+  'text-primary-700 font-medium h-10 text-xs md:text-xs lg:text-sm xl:text-sm hover-only:hover:text-primary-900 active:text-primary-900 hover-only:hover:border-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base';
 
 export function GuestDesktopNav({
   comparisonCount,

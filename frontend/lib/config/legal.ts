@@ -21,7 +21,7 @@ const legal: LegalConfig = {
           {
             term: 'Registered User',
             definition:
-              'A user who has created a profile on the Platform by verifying their phone number and either setting a password or using Google Sign-In where offered. An email address is optional and may be added later in the profile.',
+              'A user who has created a profile on the Platform by verifying their phone number (via SMS or, where offered, via Telegram Sign-In with a verified phone from Telegram) and either setting a password or using Google Sign-In or Telegram Sign-In where offered. An email address is optional and may be added later in the profile.',
           },
           {
             term: 'Listing',
@@ -117,7 +117,7 @@ const legal: LegalConfig = {
             '• Immediately notify Kupito of any unauthorized use of your account',
             '• Verify your phone number with SMS code during registration',
             "Each user may have only one active account. It is prohibited to use another user's account or to allow another user to use your account.",
-            'Users can manage their profile, including personal information, messenger contact preferences (Viber, WhatsApp, Telegram), and email notification preferences. The phone number linked to the account is verified via SMS and can be changed through an SMS verification process; the new number must be unique and verified via SMS code. Legal entities may optionally add an additional contact phone number in their profile or during profile completion; it may be displayed in listings and is not verified via SMS.',
+            'Users can manage their profile, including personal information, messenger contact preferences (Viber, WhatsApp, Telegram), and email notification preferences. The phone number linked to the account is verified via SMS or, when signing in with Telegram and the user consents, may be taken from Telegram as a verified phone; it can be changed through an SMS verification process; the new number must be unique and verified via SMS code. Legal entities may optionally add an additional contact phone number in their profile or during profile completion; it may be displayed in listings and is not verified via SMS.',
             'To protect against abuse, the Platform applies limitations on the number of SMS code verification attempts and may apply a temporary block after repeated failed attempts.',
             'Kupito reserves the right to suspend or close an account that violates these Terms or is used in an inappropriate manner.',
           ],
@@ -288,7 +288,7 @@ const legal: LegalConfig = {
           {
             term: 'Utilizator înregistrat',
             definition:
-              'Un utilizator care a creat un profil pe Platformă prin verificarea numărului de telefon și fie setarea unei parole, fie folosind autentificarea Google, unde este disponibilă. Adresa de email este opțională și poate fi adăugată ulterior în profil.',
+              'Un utilizator care a creat un profil pe Platformă prin verificarea numărului de telefon (prin SMS sau, unde este disponibil, prin autentificarea Telegram cu număr verificat de la Telegram) și fie setarea unei parole, fie folosind autentificarea Google sau Telegram, unde este disponibilă. Adresa de email este opțională și poate fi adăugată ulterior în profil.',
           },
           {
             term: 'Anunț',
@@ -387,7 +387,7 @@ const legal: LegalConfig = {
             '• Notificați imediat Kupito despre orice utilizare neautorizată a contului dvs.',
             '• Confirmați numărul dvs. de telefon cu codul SMS în timpul înregistrării',
             'Fiecare utilizator poate avea doar un cont activ. Este interzis să folosiți contul altui utilizator sau să permiteți altui utilizator să folosească contul dvs.',
-            'Utilizatorii pot gestiona profilul lor, inclusiv informațiile personale, preferințele de contact prin mesager (Viber, WhatsApp, Telegram) și preferințele de notificare prin email. Numărul de telefon legat de cont este verificat prin SMS și poate fi schimbat printr-un proces de verificare prin SMS; noul număr trebuie să fie unic și verificat prin cod SMS. Persoanele juridice pot adăuga opțional un număr de telefon suplimentar de contact în profil sau la completarea profilului; poate fi afișat în anunțuri și nu este verificat prin SMS.',
+            'Utilizatorii pot gestiona profilul lor, inclusiv informațiile personale, preferințele de contact prin mesager (Viber, WhatsApp, Telegram) și preferințele de notificare prin email. Numărul de telefon legat de cont este verificat prin SMS sau, la autentificarea cu Telegram și cu consimțământul utilizatorului, poate fi preluat de la Telegram ca număr verificat; poate fi schimbat printr-un proces de verificare prin SMS; noul număr trebuie să fie unic și verificat prin cod SMS. Persoanele juridice pot adăuga opțional un număr de telefon suplimentar de contact în profil sau la completarea profilului; poate fi afișat în anunțuri și nu este verificat prin SMS.',
             'Pentru protecție împotriva abuzului, Platforma aplică limitări privind numărul de încercări de verificare a codului SMS și poate aplica o blocare temporară după încercări eșuate repetate.',
             'Kupito își rezervă dreptul de a suspenda sau închide un cont care încalcă acești Termeni sau este folosit într-un mod nepotrivit.',
           ],
@@ -558,7 +558,7 @@ const legal: LegalConfig = {
           {
             term: 'Зарегистрированный пользователь',
             definition:
-              'Пользователь, создавший профиль на Платформе путём подтверждения номера телефона и либо установки пароля, либо входа через Google Sign-In, где это предлагается. Адрес электронной почты необязателен и может быть добавлен позже в профиле.',
+              'Пользователь, создавший профиль на Платформе путём подтверждения номера телефона (через SMS или, где предлагается, через вход Telegram с подтверждённым номером от Telegram) и либо установки пароля, либо входа через Google Sign-In или Telegram Sign-In, где это предлагается. Адрес электронной почты необязателен и может быть добавлен позже в профиле.',
           },
           {
             term: 'Объявление',
@@ -654,7 +654,7 @@ const legal: LegalConfig = {
             '• Немедленно уведомлять Kupito о любом несанкционированном использовании вашего аккаунта',
             '• Подтверждать номер телефона с помощью SMS-кода во время регистрации',
             'Каждый пользователь может иметь только один активный аккаунт. Запрещено использовать аккаунт другого пользователя или позволять другому пользователю использовать ваш аккаунт.',
-            'Пользователи могут управлять своим профилем, включая личную информацию, настройки контакта через мессенджеры (Viber, WhatsApp, Telegram) и настройки уведомлений по электронной почте. Номер телефона, привязанный к аккаунту, подтверждается через SMS и может быть изменён через процесс проверки SMS; новый номер должен быть уникальным и подтверждённым через SMS-код. Юридические лица могут по желанию указать дополнительный контактный телефон в профиле или при заполнении профиля; он может отображаться в объявлениях и не подтверждается через SMS.',
+            'Пользователи могут управлять своим профилем, включая личную информацию, настройки контакта через мессенджеры (Viber, WhatsApp, Telegram) и настройки уведомлений по электронной почте. Номер телефона, привязанный к аккаунту, подтверждается через SMS или, при входе через Telegram и с согласия пользователя, может быть получен от Telegram как подтверждённый номер; он может быть изменён через процесс проверки SMS; новый номер должен быть уникальным и подтверждённым через SMS-код. Юридические лица могут по желанию указать дополнительный контактный телефон в профиле или при заполнении профиля; он может отображаться в объявлениях и не подтверждается через SMS.',
             'Для защиты от злоупотреблений Платформа применяет ограничения на количество попыток проверки SMS-кода и может применять временную блокировку при повторных неудачных попытках.',
             'Kupito оставляет за собой право приостановить или закрыть аккаунт, который нарушает эти Условия или используется ненадлежащим образом.',
           ],
@@ -1114,7 +1114,7 @@ const legal: LegalConfig = {
             '• Cookies funcționale: Aceste cookies permit funcționalitate îmbunătățită și personalizare',
             '• Cookies analitice: Google Analytics și Google Tag Manager folosesc cookies pentru a analiza utilizarea Platformei. Aceste cookies ne ajută să înțelegem modul în care utilizatorii folosesc Platforma',
             '10.2. Stocare locală (localStorage):',
-            '• Folosim cookie-uri httpOnly pentru tokenurile de sesiune de autentificare (acces și reîmprospătare); autentificarea Google poate încărca scriptul Google Identity Services pe pagina de autentificare când este activată',
+            '• Folosim cookie-uri httpOnly pentru tokenurile de sesiune de autentificare (acces și reîmprospătare); autentificarea Google poate încărca scriptul Google Identity Services pe pagina de autentificare când este activată; autentificarea Telegram poate încărca scriptul Telegram Login (OIDC) de la oauth.telegram.org când este activată; la consimțământul utilizatorului, numărul de telefon verificat poate fi primit de la Telegram în cadrul autentificării',
             '• Folosim localStorage pentru favorite, comparație (până la limitele menționate) și alte preferințe; pentru utilizatorii autentificați, sursa principală pentru aceste date este baza de date',
             '• Pentru oaspeți, anumite acțiuni (favorite, comparație, filtru salvat) pot fi păstrate temporar în memoria locală a browserului și migrate pe server după autentificare sau înregistrare',
             '10.3. Stocare de sesiune (sessionStorage):',
@@ -1485,7 +1485,7 @@ const legal: LegalConfig = {
             '• Functional cookies: These cookies provide enhanced functionality and personalization',
             '• Analytical cookies: Google Analytics and Google Tag Manager use cookies to analyze Platform usage. These cookies help us understand how users use the Platform',
             '10.2. Local storage (localStorage):',
-            '• We use httpOnly cookies for authentication session tokens (access and refresh); Google Sign-In may load the Google Identity Services script on the sign-in page when enabled',
+            '• We use httpOnly cookies for authentication session tokens (access and refresh); Google Sign-In may load the Google Identity Services script on the sign-in page when enabled; Telegram Sign-In may load the Telegram Login (OIDC) script from oauth.telegram.org when enabled; with user consent, a verified phone number may be received from Telegram during sign-in',
             '• We use localStorage for favorites, comparison (within the limits described), and other preferences; for signed-in users, the primary source for this data is the database',
             "• For guests, certain actions (favorites, comparison, saved filter) may be kept temporarily in the browser's local storage and migrated to the server after login or registration",
             '10.3. Session storage (sessionStorage):',
@@ -1856,7 +1856,7 @@ const legal: LegalConfig = {
             '• Функциональные cookies: Эти cookies обеспечивают расширенную функциональность и персонализацию',
             '• Аналитические cookies: Google Analytics и Google Tag Manager используют cookies для анализа использования Платформы. Эти cookies помогают нам понять, как пользователи используют Платформу',
             '10.2. Локальное хранилище (localStorage):',
-            '• Мы используем httpOnly cookie для токенов сессии (access и refresh); вход через Google Sign-In может загружать скрипт Google Identity Services на странице входа, если он включён',
+            '• Мы используем httpOnly cookie для токенов сессии (access и refresh); вход через Google Sign-In может загружать скрипт Google Identity Services на странице входа, если он включён; вход через Telegram Sign-In может загружать скрипт Telegram Login (OIDC) с oauth.telegram.org, если он включён; с согласия пользователя подтверждённый номер телефона может быть получен от Telegram при входе',
             '• Мы используем localStorage для избранного, сравнения (в указанных пределах) и других предпочтений; для авторизованных пользователей основным источником этих данных является база данных',
             '• Для гостей отдельные действия (избранное, сравнение, сохранённый фильтр) могут временно храниться в локальной памяти браузера и переноситься на сервер после входа или регистрации',
             '10.3. Хранилище сессии (sessionStorage):',

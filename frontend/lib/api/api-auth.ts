@@ -9,6 +9,10 @@ import type {
   ChangePhoneVerifyDto,
   GoogleSignInDto,
   GoogleSignInResponse,
+  TelegramSignInDto,
+  TelegramSignInNonceResponse,
+  TelegramSignInResponse,
+  DevTelegramSignInDto,
   LoginDto,
   LoginResponse,
   RefreshTokenDto,
@@ -45,6 +49,25 @@ export const authApi = {
   refreshQuiet: (data?: RefreshTokenDto) => refreshAuthSession(data ?? {}),
   googleSignIn: (data: GoogleSignInDto, config?: AxiosRequestConfig) =>
     api.post<GoogleSignInResponse>('/api/auth/google', data, {
+      ...config,
+      headers: { ...quietAuthHeaders, ...config?.headers },
+    }),
+  telegramSignIn: (data: TelegramSignInDto, config?: AxiosRequestConfig) =>
+    api.post<TelegramSignInResponse>('/api/auth/telegram', data, {
+      ...config,
+      headers: { ...quietAuthHeaders, ...config?.headers },
+    }),
+  createTelegramSignInNonce: (config?: AxiosRequestConfig) =>
+    api.post<TelegramSignInNonceResponse>(
+      '/api/auth/telegram/nonce',
+      {},
+      {
+        ...config,
+        headers: { ...quietAuthHeaders, ...config?.headers },
+      },
+    ),
+  devTelegramSignIn: (data: DevTelegramSignInDto, config?: AxiosRequestConfig) =>
+    api.post<TelegramSignInResponse>('/api/auth/dev/telegram', data, {
       ...config,
       headers: { ...quietAuthHeaders, ...config?.headers },
     }),

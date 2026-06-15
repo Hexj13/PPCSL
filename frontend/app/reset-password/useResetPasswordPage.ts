@@ -319,7 +319,9 @@ export function useResetPasswordPage() {
 
   const handleBack = useCallback(() => {
     setLoading(false);
-    if (step === 'code') {
+    if (step === 'phone') {
+      router.push(buildSignInHref());
+    } else if (step === 'code') {
       setStep('phone');
       setCode(['', '', '', '', '', '']);
       setErrors({});
@@ -332,7 +334,7 @@ export function useResetPasswordPage() {
       setConfirmPassword('');
       setErrors({});
     }
-  }, [step]);
+  }, [router, step]);
 
   const isFormValid = useMemo(() => {
     const trimmedPassword = password.trim();

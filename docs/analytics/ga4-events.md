@@ -118,13 +118,13 @@ This document describes the current state of Google Analytics 4 integration. Eve
 
 **Description:** Sign in  
 **Method:** `analytics.login(method)`  
-**Methods:** `email`, `phone`
+**Methods:** `email`, `phone`, `google`, `telegram`
 
 #### sign_up
 
 **Description:** Registration  
 **Method:** `analytics.signUp(method)`  
-**Methods:** `email`, `phone`
+**Methods:** `email`, `phone`, `google`, `telegram`
 
 ### Conversions
 

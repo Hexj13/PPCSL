@@ -37,9 +37,22 @@ export class FavoritesPage {
     await favoritesListLoaded;
   }
 
+  private waitForSavedFiltersListResponse() {
+    return this.page.waitForResponse(
+      (r) => r.url().includes('/api/saved-filters') && r.request().method() === 'GET' && r.ok(),
+      { timeout: 30_000 },
+    );
+  }
+
   async openFiltersTab(): Promise<void> {
+    const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
     await this.page.getByTestId(this.testIds.tabFilters).click();
     await expect(this.page).toHaveURL(/tab=filters/, { timeout: 15_000 });
+    try {
+      await savedFiltersLoaded;
+    } catch {
+      // tab may already be active
+    }
     await this.expectSavedFiltersListVisible();
   }
 
@@ -88,6 +101,31 @@ export class FavoritesPage {
 
   async expectSavedFiltersListVisible(): Promise<void> {
     await expect(this.page.getByTestId('saved-filters-list')).toBeVisible({ timeout: 30_000 });
+  }
+
+  async expectSavedFilterCardVisible(filterId: string): Promise<void> {
+    const card = this.page.getByTestId(`saved-filter-card-${filterId}`);
+    await expect
+      .poll(
+        async () => {
+          if (await card.isVisible()) {
+            return true;
+          }
+          if (!pathnameWithoutLocalePrefix(this.page.url()).includes('tab=filters')) {
+            return false;
+          }
+          const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
+          await this.page.reload({ waitUntil: 'domcontentloaded' });
+          try {
+            await savedFiltersLoaded;
+          } catch {
+            return false;
+          }
+          return card.isVisible();
+        },
+        { timeout: 45_000, intervals: [600, 1000, 1600, 2400] },
+      )
+      .toBe(true);
   }
 
   async clickSavedFilterCard(filterId: string): Promise<void> {

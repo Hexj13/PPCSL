@@ -28,6 +28,15 @@ const BUILD_GOOGLE_PAIR_OK = {
   },
 };
 
+const BUILD_TELEGRAM_PAIR_OK = {
+  name: "TELEGRAM_CLIENT_ID (when NEXT_PUBLIC_TELEGRAM_CLIENT_ID is set)",
+  check: () => {
+    const pub = process.env.NEXT_PUBLIC_TELEGRAM_CLIENT_ID?.trim();
+    if (!pub) return true;
+    return Boolean(process.env.TELEGRAM_CLIENT_ID?.trim());
+  },
+};
+
 const RUNTIME_REQUIRED_PRODUCTION = [
   { name: "JWT_SECRET", get: () => process.env.JWT_SECRET },
   { name: "DB_HOST", get: () => process.env.DB_HOST },
@@ -48,6 +57,7 @@ function runBuildChecks() {
       if (!v || String(v).trim() === "") missing.push(item.name);
     }
     if (!BUILD_GOOGLE_PAIR_OK.check()) missing.push(BUILD_GOOGLE_PAIR_OK.name);
+    if (!BUILD_TELEGRAM_PAIR_OK.check()) missing.push(BUILD_TELEGRAM_PAIR_OK.name);
   }
   return missing;
 }

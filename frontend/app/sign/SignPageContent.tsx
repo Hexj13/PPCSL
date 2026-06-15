@@ -8,9 +8,10 @@ import { LoginForm } from '@/app/login/LoginForm';
 import { useLoginPage } from '@/app/login/useLoginPage';
 import { RegisterPanel } from '@/app/register/RegisterPanel';
 import { useRegisterPage } from '@/app/register/useRegisterPage';
-import { GoogleSignInButton } from '@/app/sign/GoogleSignInButton';
-import { GoogleSignInButtonSkeleton } from '@/app/sign/GoogleSignInButtonSkeleton';
+import { AuthOAuthOutsideCard } from '@/app/sign/AuthOAuthOutsideCard';
+import { isTelegramDevMockEnabled } from '@/app/sign/telegramDevMock';
 import { useGoogleAuth } from '@/app/sign/useGoogleAuth';
+import { useTelegramAuth } from '@/app/sign/useTelegramAuth';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -45,8 +46,11 @@ export function SignPageContent() {
   );
 
   const [gisReady, setGisReady] = useState(false);
+  const [telegramScriptReady, setTelegramScriptReady] = useState(false);
   const gisHl = useMemo(() => gisScriptHl(locale), [locale]);
   const googleClientIdConfigured = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+  const telegramClientIdConfigured =
+    Boolean(process.env.NEXT_PUBLIC_TELEGRAM_CLIENT_ID?.trim()) || isTelegramDevMockEnabled();
 
   useEffect(() => {
     setGisReady(false);
@@ -58,22 +62,38 @@ export function SignPageContent() {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.Telegram?.Login?.auth) {
+      setTelegramScriptReady(true);
+    }
+  }, []);
+
   const registerPage = useRegisterPage();
   const googleAuth = useGoogleAuth({
     tab,
     preferredNewUserType: tab === 'register' ? registerPage.formData.type : undefined,
     gisScriptLoaded: gisReady,
   });
+  const telegramAuth = useTelegramAuth({
+    tab,
+    preferredNewUserType: tab === 'register' ? registerPage.formData.type : undefined,
+    telegramScriptLoaded: telegramScriptReady,
+    locale,
+  });
   const login = useLoginPage({
-    suppressSignedInReturnNavigation: googleAuth.isGoogleBusy,
+    suppressSignedInReturnNavigation: googleAuth.isGoogleBusy || telegramAuth.isTelegramBusy,
   });
 
   const isAlreadySignedInRedirecting =
-    login.isInitialized && !!login.user && !googleAuth.isGoogleBusy;
-  const authSubmitBusy = login.loading || isAlreadySignedInRedirecting || googleAuth.isGoogleBusy;
+    login.isInitialized && !!login.user && !googleAuth.isGoogleBusy && !telegramAuth.isTelegramBusy;
+  const authSubmitBusy =
+    login.loading ||
+    isAlreadySignedInRedirecting ||
+    googleAuth.isGoogleBusy ||
+    telegramAuth.isTelegramBusy;
   const loginSubmitBusy = login.loading || isAlreadySignedInRedirecting;
   const googleDisabled = authSubmitBusy;
-  const registerAuthBusy = googleAuth.isGoogleBusy;
+  const registerAuthBusy = googleAuth.isGoogleBusy || telegramAuth.isTelegramBusy;
 
   const handleTabClick = (next: AuthTab) => {
     if (next === tab) return;
@@ -85,6 +105,13 @@ export function SignPageContent() {
 
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16" data-testid="auth-page">
+      {telegramClientIdConfigured && !isTelegramDevMockEnabled() ? (
+        <Script
+          src="https://oauth.telegram.org/js/telegram-login.js?5"
+          strategy="afterInteractive"
+          onReady={() => setTelegramScriptReady(true)}
+        />
+      ) : null}
       {googleClientIdConfigured ? (
         <Script
           key={`gsi-client-${gisHl}`}
@@ -194,33 +221,15 @@ export function SignPageContent() {
           />
         </div>
       </div>
-      {googleClientIdConfigured ? (
-        <div
-          className="mt-6 space-y-4"
-          data-testid="auth-google-outside-card"
-          onPointerDown={googleAuth.markGoogleSignInIntent}
-        >
-          <div className="flex items-center gap-3">
-            <span className="grow h-px bg-primary-700/25" />
-            <span className="text-sm text-hint shrink-0">{t('sign.dividerOr')}</span>
-            <span className="grow h-px bg-primary-700/25" />
-          </div>
-          {!googleAuth.isButtonReady ? <GoogleSignInButtonSkeleton /> : null}
-          {gisReady ? (
-            <div
-              className={googleAuth.isButtonReady ? undefined : 'sr-only'}
-              aria-hidden={!googleAuth.isButtonReady}
-            >
-              <GoogleSignInButton
-                containerRef={googleAuth.containerRef}
-                clientIdConfigured={googleAuth.clientIdConfigured}
-                disabled={googleDisabled}
-                loading={googleAuth.isGoogleBusy}
-              />
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+      <AuthOAuthOutsideCard
+        googleClientIdConfigured={googleClientIdConfigured}
+        telegramClientIdConfigured={telegramClientIdConfigured}
+        gisReady={gisReady}
+        googleAuth={googleAuth}
+        telegramAuth={telegramAuth}
+        googleDisabled={googleDisabled}
+        authSubmitBusy={authSubmitBusy}
+      />
     </div>
   );
 }

@@ -20,7 +20,7 @@ export const faqRo: FAQConfig = {
         'Pentru a vă înregistra pe Kupito:',
         '1. Deschideți pagina de autentificare și înregistrare din colțul din dreapta sus (pe ecrane mici — din meniu), apoi selectați fila «Înregistrare»',
         '2. Selectați dacă sunteți persoană fizică sau juridică',
-        '3. Completați formularul: telefon (obligatoriu), parolă (obligatoriu), mesajere (opțional: Viber, WhatsApp, Telegram). Pentru persoana juridică — și denumirea companiei (obligatoriu)',
+        '3. Completați formularul: telefon (obligatoriu), parolă (obligatoriu), mesajere (opțional: Viber, WhatsApp, Telegram). Pentru persoana juridică — și denumirea companiei (obligatoriu). Alternativ: autentificare sau înregistrare prin Google sau Telegram pe aceeași pagină (apoi confirmarea telefonului prin SMS)',
         '4. Acceptați termenii și condițiile și trimiteți formularul',
         '5. Confirmați telefonul cu codul SMS pe care îl veți primi',
         '6. Pe pasul următor puteți completa numele, prenumele, emailul (opțional) sau să săriți și să le completați mai târziu în "Profil"',

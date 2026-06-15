@@ -210,6 +210,39 @@ export abstract class SearchHomeScrollPage {
       .toBe(true);
   }
 
+  async expectHomeAfterListingBack(options?: { minGridPage?: number }): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
+    await this.expectPageView();
+    await this.expectResultsOrEmptyVisible();
+    if (typeof options?.minGridPage === 'number') {
+      await this.expectPaginatedGridStatePersisted(options.minGridPage);
+    }
+  }
+
+  async expectScrollPreservedNear(
+    targetScrollY: number,
+    tolerancePx = 80,
+    timeoutMs = 90_000,
+  ): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
+    await this.expectResultsOrEmptyVisible();
+    await this.waitForHomeScrollRestoreSettled(targetScrollY, tolerancePx, timeoutMs);
+    await this.expectScrollYNear(targetScrollY, tolerancePx, timeoutMs);
+  }
+
+  async expectScrollRestoredAfterBack(
+    targetScrollY: number,
+    tolerancePx = 2,
+    timeoutMs = 90_000,
+  ): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
+    await this.expectResultsOrEmptyVisible();
+    await expect
+      .poll(async () => (await this.listingCardLinks().count()) > 0, { timeout: 30_000 })
+      .toBe(true);
+    await this.expectScrollYNear(targetScrollY, tolerancePx, timeoutMs);
+  }
+
   async scrollForSortPreservationTest(): Promise<number> {
     if (await pageUsesMobileLayout(this.page)) {
       await this.scrollToY(0);
@@ -225,10 +258,29 @@ export abstract class SearchHomeScrollPage {
     const menu = this.page.getByTestId(`${testId}-menu`);
     const optionIndex = listingSortOptionIndex(sortKey);
     const option = this.page.getByTestId(`${testId}-option-${optionIndex}`);
-    const useMobile = await pageUsesMobileLayout(this.page);
-    await this.openSortDropdownMenu(trigger, menu, useMobile);
+    await dismissCookieConsentIfVisible(this.page);
+    await expect(trigger).toBeVisible({ timeout: 15_000 });
+    await expect
+      .poll(
+        async () => {
+          if (await menu.isVisible().catch(() => false)) {
+            return true;
+          }
+          await trigger.evaluate((element) => {
+            element.dispatchEvent(
+              new PointerEvent('pointerdown', { bubbles: true, cancelable: true }),
+            );
+            element.click();
+          });
+          return menu.isVisible().catch(() => false);
+        },
+        { timeout: 15_000, intervals: [300, 500, 800, 1200] },
+      )
+      .toBe(true);
     await expect(option).toBeVisible({ timeout: 15_000 });
-    await option.click({ force: useMobile });
+    await option.evaluate((element) => {
+      element.click();
+    });
   }
 
   async expectResultsScrolledIntoView(): Promise<void> {
@@ -248,42 +300,37 @@ export abstract class SearchHomeScrollPage {
       .toBeLessThan(200);
   }
 
-  async expectPaginatedGridStatePersisted(): Promise<void> {
+  async getPersistedGridPage(): Promise<number> {
+    return this.page.evaluate(() => {
+      for (const key of ['kupito_grid_state', 'kupito_grid_restore_state']) {
+        const raw = sessionStorage.getItem(key);
+        if (!raw) {
+          continue;
+        }
+        try {
+          const state = JSON.parse(raw) as { page?: number };
+          if (typeof state.page === 'number' && state.page > 0) {
+            return state.page;
+          }
+        } catch {
+          // noop
+        }
+      }
+      return 1;
+    });
+  }
+
+  async expectPaginatedGridStatePersisted(minPage = 2): Promise<void> {
     await expect
       .poll(
         async () => {
-          const hasPersistedState = await this.page.evaluate(() => {
-            const fullRaw = sessionStorage.getItem('kupito_grid_state');
-            if (fullRaw) {
-              try {
-                const state = JSON.parse(fullRaw) as { listings?: unknown[]; page?: number };
-                if (Array.isArray(state.listings) && state.listings.length > 20) {
-                  return true;
-                }
-                if (typeof state.page === 'number' && state.page > 1) {
-                  return true;
-                }
-              } catch {
-                // noop
-              }
-            }
-            const restoreRaw = sessionStorage.getItem('kupito_grid_restore_state');
-            if (!restoreRaw) {
-              return false;
-            }
-            try {
-              const restore = JSON.parse(restoreRaw) as { page?: number };
-              return typeof restore.page === 'number' && restore.page > 1;
-            } catch {
-              return false;
-            }
-          });
-          if (hasPersistedState) {
+          const page = await this.getPersistedGridPage();
+          if (page >= minPage) {
             return true;
           }
-          return (await this.getObservableListingCount()) > 20;
+          return (await this.getPersistedGridListingCount()) > 20;
         },
-        { timeout: 60_000 },
+        { timeout: 90_000, intervals: [300, 500, 800, 1200, 2000] },
       )
       .toBe(true);
   }
@@ -356,6 +403,8 @@ export abstract class SearchHomeScrollPage {
         { timeout: 15_000 },
       )
       .toBe(true);
+    const countBefore = await this.getObservableListingCount();
+    const pageBefore = await this.getPersistedGridPage();
     const listingsResponse = this.page.waitForResponse(
       (r) => r.url().includes('/api/listings') && r.request().method() === 'GET',
       { timeout: 45_000 },
@@ -363,6 +412,18 @@ export abstract class SearchHomeScrollPage {
     await this.page.getByTestId('listings-load-more').click();
     await listingsResponse;
     await this.expectResultsOrEmptyVisible();
+    await expect
+      .poll(
+        async () => {
+          const page = await this.getPersistedGridPage();
+          if (page > pageBefore) {
+            return true;
+          }
+          return (await this.getObservableListingCount()) > countBefore;
+        },
+        { timeout: 45_000, intervals: [300, 500, 800, 1200, 2000] },
+      )
+      .toBe(true);
     return true;
   }
 

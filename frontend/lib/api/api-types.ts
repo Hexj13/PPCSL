@@ -451,6 +451,9 @@ export interface RegisterDto {
   companyName?: string;
   termsAccepted: boolean;
   emailNotifications?: boolean;
+  viber?: boolean;
+  whatsapp?: boolean;
+  telegram?: boolean;
 }
 
 export interface LoginDto {
@@ -610,6 +613,27 @@ export interface GoogleSignInDto {
 export interface GoogleSignInResponse extends LoginResponse {
   requiresPhoneVerification: boolean;
   isNewUser: boolean;
+}
+
+export interface TelegramSignInDto {
+  idToken: string;
+  nonce: string;
+  type?: 'Individual' | 'Business';
+  termsAccepted?: boolean;
+}
+
+export interface TelegramSignInNonceResponse {
+  nonce: string;
+}
+
+export interface TelegramSignInResponse extends LoginResponse {
+  requiresPhoneVerification: boolean;
+  isNewUser: boolean;
+}
+
+export interface DevTelegramSignInDto {
+  type?: 'Individual' | 'Business';
+  termsAccepted?: boolean;
 }
 
 export interface VerifyPhoneDto {

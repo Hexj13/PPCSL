@@ -11,6 +11,7 @@ import { I18nService } from '../../common/i18n/i18n.service';
 import type { LoginResponse } from '../application/auth.types';
 import { AuthService } from '../application/auth.service';
 import { AuthTokenIssuerService } from '../application/services/auth-token-issuer.service';
+import { DevTelegramSignInUseCase } from '../application/use-cases/dev-telegram-sign-in.use-case';
 import { E2eCreateGoogleBusinessUserUseCase } from '../application/use-cases/e2e-create-google-business-user.use-case';
 import { AuthPhoneRateLimitService } from '../infrastructure/services/auth-phone-rate-limit.service';
 import { IpBlockService } from '../infrastructure/services/ip-block.service';
@@ -45,6 +46,8 @@ describe('AuthController', () => {
     phone: '+37370123456',
     additionalPhone: null,
     googleId: null,
+    telegramId: null,
+    telegramUsername: null,
     authProvider: 'local' as const,
     firstName: 'Test',
     lastName: 'User',
@@ -145,6 +148,10 @@ describe('AuthController', () => {
         { provide: I18nService, useValue: mockI18nService },
         {
           provide: E2eCreateGoogleBusinessUserUseCase,
+          useValue: { execute: jest.fn() },
+        },
+        {
+          provide: DevTelegramSignInUseCase,
           useValue: { execute: jest.fn() },
         },
       ],
@@ -507,6 +514,8 @@ describe('AuthController', () => {
         phoneVerified: mockUser.phoneVerified,
         emailVerified: true,
         googleId: mockUser.googleId,
+        telegramId: mockUser.telegramId,
+        telegramUsername: mockUser.telegramUsername,
         authProvider: mockUser.authProvider,
         preferredLocale: mockUser.preferredLocale,
         registration_ip: mockUser.registration_ip,
@@ -659,6 +668,8 @@ describe('AuthController', () => {
         phoneVerified: mockUser.phoneVerified,
         emailVerified: mockUser.emailVerified,
         googleId: mockUser.googleId,
+        telegramId: mockUser.telegramId,
+        telegramUsername: mockUser.telegramUsername,
         authProvider: mockUser.authProvider,
         preferredLocale: mockUser.preferredLocale,
         registration_ip: mockUser.registration_ip,
@@ -759,6 +770,8 @@ describe('AuthController', () => {
         phoneVerified: mockUser.phoneVerified,
         emailVerified: mockUser.emailVerified,
         googleId: mockUser.googleId,
+        telegramId: mockUser.telegramId,
+        telegramUsername: mockUser.telegramUsername,
         authProvider: mockUser.authProvider,
         registration_ip: mockUser.registration_ip,
         last_login_ip: mockUser.last_login_ip,
@@ -901,6 +914,8 @@ describe('AuthController', () => {
         phoneVerified: true,
         emailVerified: mockUser.emailVerified,
         googleId: mockUser.googleId,
+        telegramId: mockUser.telegramId,
+        telegramUsername: mockUser.telegramUsername,
         authProvider: mockUser.authProvider,
         preferredLocale: mockUser.preferredLocale,
         registration_ip: mockUser.registration_ip,

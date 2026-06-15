@@ -381,7 +381,7 @@ export const analytics = {
     });
   },
 
-  login: (method?: 'email' | 'phone') => {
+  login: (method?: 'email' | 'phone' | 'google' | 'telegram') => {
     trackEvent('login', {
       method: method || 'email',
     });
@@ -394,7 +394,7 @@ export const analytics = {
     });
   },
 
-  signUp: (method?: 'email' | 'phone') => {
+  signUp: (method?: 'email' | 'phone' | 'google' | 'telegram') => {
     trackEvent('sign_up', {
       method: method || 'email',
     });

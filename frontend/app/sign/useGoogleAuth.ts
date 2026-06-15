@@ -3,23 +3,14 @@
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { processPendingSavedFilter } from '@/app/complete-profile/utils';
+import { finishOAuthSession } from '@/app/sign/finishOAuthSession';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { GoogleSignInDto, User } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { waitForAuthSubmitLoaderMinDisplay } from '@/lib/auth-submit-loader';
-import {
-  applyComparisonAfterAuth,
-  holdComparisonApiLoadUntilReleased,
-} from '@/lib/comparisonMigration';
-import { getClientLocale } from '@/lib/i18n';
-import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
-import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
-import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
-import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
 
 const GOOGLE_SIGN_IN_INTENT_MS = 15_000;
@@ -228,39 +219,18 @@ export function useGoogleAuth(options: {
       requiresPhoneVerification: boolean,
       preferredNewUserType?: GoogleSignInDto['type'],
     ) => {
-      let postAuthUser = syncedUser;
-      const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
-      try {
-        await syncPendingFavoritesAfterAuth(postAuthUser.id);
-        postAuthUser = await syncPartnerPromoDismissAfterAuth(postAuthUser);
-        await applyComparisonAfterAuth();
-      } finally {
-        releaseComparisonHold();
-      }
-      const returnUrl = getReturnUrlFromSearchParams(searchParams);
-      const locale = getClientLocale();
-      setAuth(postAuthUser);
-      if (requiresPhoneVerification) {
-        const safeReturn = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
-        const phoneQs = new URLSearchParams();
-        phoneQs.set('mode', 'phone_required');
-        if (isNewUser) {
-          phoneQs.set('source', 'google_register');
-          phoneQs.set('selectedType', preferredNewUserType ?? postAuthUser.type ?? 'Individual');
-        }
-        if (safeReturn) {
-          phoneQs.set('returnUrl', buildPostAuthRedirect(safeReturn, locale));
-        }
-        const path = `/complete-profile?${phoneQs.toString()}`;
-        await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
-        replace(buildPostAuthRedirect(path, locale));
-        return;
-      }
-      await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
-      const filterHandled = await processPendingSavedFilter(t, returnUrl);
-      if (filterHandled) return;
-      const dest = (returnUrl ? sanitizeReturnUrl(returnUrl) : null) ?? '/';
-      replace(buildPostAuthRedirect(dest, locale));
+      await finishOAuthSession({
+        syncedUser,
+        isNewUser,
+        requiresPhoneVerification,
+        preferredNewUserType,
+        phoneRequiredSource: 'google_register',
+        searchParams,
+        submitStartedAt: submitStartedAtRef.current,
+        setAuth,
+        replace,
+        t,
+      });
     },
     [searchParams, replace, setAuth, t],
   );
@@ -349,11 +319,10 @@ export function useGoogleAuth(options: {
     if (!ready || !clientId || !containerRef.current || !window.google?.accounts?.id) return;
     containerRef.current.innerHTML = '';
     window.google.accounts.id.renderButton(containerRef.current, {
-      type: 'standard',
+      type: 'icon',
       theme: 'outline',
+      shape: 'square',
       size: 'large',
-      text: 'continue_with',
-      width: 320,
       locale: gisUiLocale,
     });
   }, [clientId, gisUiLocale, ready]);

@@ -11,7 +11,7 @@ import { useAuthStore } from '@/lib/store';
 const HEADER_CTA_SURFACE_BASE =
   'relative inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/90 border-2 border-accent whitespace-nowrap select-none transition-all duration-200 shadow-none before:absolute before:inset-0 before:rounded-lg before:bg-accent/10 before:pointer-events-none hover-only:hover:border-accent/80';
 
-export const HEADER_CTA_SURFACE_CLASSES = `${HEADER_CTA_SURFACE_BASE} text-primary-900 hover-only:hover:text-primary-700`;
+export const HEADER_CTA_SURFACE_CLASSES = `${HEADER_CTA_SURFACE_BASE} text-primary-700 hover-only:hover:text-primary-900`;
 
 export const HEADER_CTA_PROMOTE_SURFACE_CLASSES = `${HEADER_CTA_SURFACE_BASE} text-text-secondary hover-only:hover:text-text-primary`;
 

@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { CommonModule } from '../common/common.module';
 import { UsersModule } from '../users/users.module';
 
 import { AuthService } from './application/auth.service';
@@ -12,6 +13,7 @@ import { ChangePasswordUseCase } from './application/use-cases/change-password.u
 import { CheckPhoneAvailabilityUseCase } from './application/use-cases/check-phone-availability.use-case';
 import { ConfirmEmailChangeUseCase } from './application/use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './application/use-cases/delete-account.use-case';
+import { DevTelegramSignInUseCase } from './application/use-cases/dev-telegram-sign-in.use-case';
 import { DismissPartnerPromoBannerUseCase } from './application/use-cases/dismiss-partner-promo-banner.use-case';
 import { E2eCreateGoogleBusinessUserUseCase } from './application/use-cases/e2e-create-google-business-user.use-case';
 import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.use-case';
@@ -25,6 +27,7 @@ import { RequestPhoneChangeUseCase } from './application/use-cases/request-phone
 import { ResendEmailVerificationUseCase } from './application/use-cases/resend-email-verification.use-case';
 import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
 import { SendVerificationSmsUseCase } from './application/use-cases/send-verification-sms.use-case';
+import { TelegramSignInUseCase } from './application/use-cases/telegram-sign-in.use-case';
 import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case';
 import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
 import { VerifyPhoneChangeUseCase } from './application/use-cases/verify-phone-change.use-case';
@@ -43,12 +46,15 @@ import { GoogleTokenVerifierService } from './infrastructure/services/google-tok
 import { IpBlockService } from './infrastructure/services/ip-block.service';
 import { RefreshTokenService } from './infrastructure/services/refresh-token.service';
 import { SmsService } from './infrastructure/services/sms.service';
+import { TelegramAuthVerifierService } from './infrastructure/services/telegram-auth-verifier.service';
+import { TelegramOidcNonceService } from './infrastructure/services/telegram-oidc-nonce.service';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { AuthController } from './presentation/auth.controller';
 
 @Module({
   imports: [
+    CommonModule,
     UsersModule,
     PassportModule,
     TypeOrmModule.forFeature([RefreshToken]),
@@ -81,6 +87,8 @@ import { AuthController } from './presentation/auth.controller';
     OptionalJwtAuthGuard,
     PhoneVerifiedGuard,
     GoogleTokenVerifierService,
+    TelegramAuthVerifierService,
+    TelegramOidcNonceService,
     IpBlockService,
     AuthPhoneRateLimitService,
     PasswordService,
@@ -92,6 +100,7 @@ import { AuthController } from './presentation/auth.controller';
     LoginUserUseCase,
     RefreshTokensUseCase,
     GoogleSignInUseCase,
+    TelegramSignInUseCase,
     ResetPasswordUseCase,
     DeleteAccountUseCase,
     UserProfilePatchService,
@@ -111,6 +120,7 @@ import { AuthController } from './presentation/auth.controller';
     ChangePasswordUseCase,
     DismissPartnerPromoBannerUseCase,
     E2eCreateGoogleBusinessUserUseCase,
+    DevTelegramSignInUseCase,
   ],
   exports: [
     UsersModule,

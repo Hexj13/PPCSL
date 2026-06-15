@@ -1543,3 +1543,37 @@
     animation: listing-ai-report-content-fade 0.72s ease-out both;
   }
 }
+
+.auth-oauth-button-shell iframe,
+.auth-oauth-button-shell [role='button'],
+.auth-oauth-button-shell > div {
+  border-radius: 0.25rem !important;
+  height: 40px !important;
+  max-height: 40px !important;
+}
+
+.auth-telegram-native-button-host .tg-auth-button {
+  width: 100%;
+  max-width: 320px;
+  justify-content: center;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 0.25rem;
+}
+
+.auth-google-icon-overlay {
+  cursor: pointer;
+}
+
+.auth-google-icon-overlay,
+.auth-google-icon-overlay * {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0.5rem !important;
+}
