@@ -22,6 +22,24 @@ export function normalizeSourceStatus<TItem extends BaseRegistryItem<string>>(
   return item.state === 'closed' ? 'closed' : 'active';
 }
 
+export function collectMonoMissingSnapshotMeta<TItem extends BaseRegistryItem<string>>(
+  items: TItem[],
+): { missingCandidateSourceIds: string[]; closeEstimateSourceIds: string[] } {
+  const pendingClosure = items.filter((item) => {
+    const status = normalizeSourceStatus(item);
+    if (status === 'missing_candidate') {
+      return true;
+    }
+    return status === 'closed' && item.closeOutcome === 'source_only';
+  });
+  const missingCandidateSourceIds = pendingClosure.map((item) => item.sourceListingId).sort();
+  const closeEstimateSourceIds = pendingClosure
+    .filter((item) => typeof item.kupitoListingId === 'string')
+    .map((item) => item.sourceListingId)
+    .sort();
+  return { missingCandidateSourceIds, closeEstimateSourceIds };
+}
+
 export function buildActivePlpSnapshot<TItem extends BaseRegistryItem<string>>(
   items: TItem[],
   scope?: PlpSnapshotData<TItem>['scope'],
@@ -33,6 +51,8 @@ export function buildActivePlpSnapshot<TItem extends BaseRegistryItem<string>>(
     (item) => normalizeSourceStatus(item) === 'missing_candidate',
   ).length;
   const closedItemsCount = items.filter((item) => normalizeSourceStatus(item) === 'closed').length;
+  const { missingCandidateSourceIds, closeEstimateSourceIds } =
+    collectMonoMissingSnapshotMeta(items);
 
   return {
     items: Object.fromEntries(activeItems.map((item) => [item.sourceListingId, item])) as Record<
@@ -45,6 +65,8 @@ export function buildActivePlpSnapshot<TItem extends BaseRegistryItem<string>>(
       activeItemsCount: activeItems.length,
       missingCandidatesCount,
       closedItemsCount,
+      missingCandidateSourceIds,
+      closeEstimateSourceIds,
     },
     scope,
   };

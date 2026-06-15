@@ -34,7 +34,10 @@ import {
   selectImportCandidates,
   selectRunReportItems,
 } from '../partner-import-shared/registry-lifecycle';
-import { loadSourceIdsFromPlpFile } from '../partner-import-shared/storage/load-plp-source-ids';
+import {
+  filterImportCandidatesByPlpScope,
+  loadPlpScopeFromFile,
+} from '../partner-import-shared/storage/load-plp-scope';
 import { findCipautoDuplicateBeforeCreate } from '../partner-import-shared/user-listing-dedupe/user-listing-dedupe-cipauto';
 import { loadUserVehicleListingsForDedupe } from '../partner-import-shared/user-listing-dedupe/user-listing-dedupe-load';
 import { Logger } from '../partner-import-shared/utils/logger';
@@ -446,6 +449,7 @@ async function processSingleItem(params: {
       }
       await closeSourceItem({
         item,
+        options,
         registry,
         kupitoApi,
         parsedData: parsed,
@@ -709,6 +713,7 @@ async function processSingleItem(params: {
       }
       await closeSourceItem({
         item,
+        options,
         registry,
         kupitoApi,
         warnings: item.warnings ?? [],
@@ -732,8 +737,14 @@ function getImportCandidates(items: RegistryItem[], options: ImportCommandOption
     return selected;
   }
 
-  const sourceIds = loadSourceIdsFromPlpFile(options.plpFilePath);
-  return selected.filter((item: RegistryItem) => sourceIds.has(item.sourceListingId));
+  const scope = loadPlpScopeFromFile(options.plpFilePath);
+  if (scope.legacyMissingMetaMissing) {
+    logger.warn(
+      'IMPORT',
+      `[PLP_FILE] Missing meta.missingCandidateSourceIds in ${options.plpFilePath}; closing listings that disappeared from PLP via this file is unreliable. Re-run scan or use --source-id.`,
+    );
+  }
+  return filterImportCandidatesByPlpScope(selected, scope);
 }
 
 async function runReport(options: ReportCommandOptions, env: 'local' | 'prod'): Promise<void> {
@@ -756,13 +767,14 @@ async function runReport(options: ReportCommandOptions, env: 'local' | 'prod'): 
 
 async function closeSourceItem(params: {
   item: RegistryItem;
+  options: ImportCommandOptions;
   registry: RegistryStore;
   kupitoApi?: KupitoApiClient;
   parsedData?: ParsedPdpData;
   warnings: string[];
   reason: SourceCloseReason;
 }): Promise<void> {
-  const { item, registry, kupitoApi, parsedData, warnings, reason } = params;
+  const { item, options, registry, kupitoApi, parsedData, warnings, reason } = params;
   const sourceId = item.sourceListingId;
   const commonUpdates: Partial<RegistryItem> = {
     parsedData,
@@ -774,10 +786,7 @@ async function closeSourceItem(params: {
     retryCount: item.retryCount ?? 0,
   };
 
-  if (item.kupitoListingId) {
-    if (!kupitoApi) {
-      throw new Error('Import clients are not initialized.');
-    }
+  if (options.removeClosed && item.kupitoListingId && kupitoApi) {
     const closed = await kupitoApi.closeListing(item.kupitoListingId);
     registry.markClosed(sourceId, reason, 'listing_closed', {
       ...commonUpdates,
@@ -789,7 +798,10 @@ async function closeSourceItem(params: {
   }
 
   registry.markClosed(sourceId, reason, 'source_only', commonUpdates);
-  logger.info('IMPORT', `[CLOSED][${sourceId}] no kupito listing reason=${reason}`);
+  logger.info(
+    'IMPORT',
+    `[CLOSED][${sourceId}] source-only (removeClosed=${Boolean(options.removeClosed)}) reason=${reason}`,
+  );
 }
 
 async function runAuditBrandsModels(options: AuditBrandsModelsCommandOptions): Promise<void> {
