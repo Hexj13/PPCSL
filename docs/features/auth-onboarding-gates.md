@@ -55,11 +55,11 @@ For `complete-profile` and reserved `post-register` flows, the phone number is s
 - **Password set:** standard change-password UI (current + new). Google Sign-In and email/phone + password login both work.
 - Save enables when the new password passes client rules; other profile fields (e.g. invalid company website) do not block password-only submit.
 
-OAuth providers (Google, Telegram) without a password use the same set-password flow. Telegram registration sets `telegram: true` on the user profile. When Telegram OIDC returns a verified `phone_number` and it is not already used by another account, the phone gate is skipped (`phoneVerified: true`). Otherwise the user is sent to `phone_required` like Google signup.
+OAuth providers (Google, Telegram) without a password use the same set-password flow. Telegram registration sets `telegram: true` on the user profile. The Telegram Login Widget does not return a phone number, so new Telegram users are always sent to `phone_required` like Google signup.
 
 ## Related docs
 
 - Google GIS and env: [GOOGLE_OAUTH_SETUP_RU.md](../guides/GOOGLE_OAUTH_SETUP_RU.md)
-- Telegram Login (OIDC) and env: [TELEGRAM_AUTH_SETUP_RU.md](../guides/TELEGRAM_AUTH_SETUP_RU.md)
+- Telegram Login (Login Widget) and env: [TELEGRAM_AUTH_SETUP_RU.md](../guides/TELEGRAM_AUTH_SETUP_RU.md)
 - Cookies and JWT alignment: [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md)
 - E2E login helper: [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md) (`loginByUi` throws if mandatory profile URL is hit)

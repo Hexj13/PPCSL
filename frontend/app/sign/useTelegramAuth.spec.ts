@@ -39,30 +39,40 @@ jest.mock('@/lib/toast', () => ({
 
 jest.mock('@/lib/api', () => ({
   authApi: {
-    createTelegramSignInNonce: jest.fn(),
     telegramSignIn: jest.fn(),
     devTelegramSignIn: jest.fn(),
     me: jest.fn(),
   },
 }));
 
+const widgetUser = {
+  id: 123456789,
+  first_name: 'John',
+  username: 'johndoe',
+  photo_url: 'https://t.me/photo.jpg',
+  auth_date: 1700000000,
+  hash: 'abc123def456',
+};
+
 describe('telegramAuthFlow helpers', () => {
-  it('parses string JWT result payloads', () => {
+  it('parses a Login Widget user payload', () => {
     expect(
       parseTelegramAuthMessage({
         event: 'auth_result',
-        result: 'oidc-token',
+        result: widgetUser,
       }),
-    ).toEqual({ id_token: 'oidc-token' });
+    ).toEqual({ user: widgetUser });
   });
 
-  it('parses nested id_token payloads', () => {
+  it('parses a stringified Login Widget user payload', () => {
     expect(
-      parseTelegramAuthMessage({
-        event: 'auth_result',
-        result: { id_token: 'nested-oidc-token' },
-      }),
-    ).toEqual({ id_token: 'nested-oidc-token' });
+      parseTelegramAuthMessage(
+        JSON.stringify({
+          event: 'auth_result',
+          result: widgetUser,
+        }),
+      ),
+    ).toEqual({ user: widgetUser });
   });
 
   it('ignores interim empty auth_result payloads', () => {
@@ -83,13 +93,13 @@ describe('telegramAuthFlow helpers', () => {
     ).toEqual({ error: 'access_denied' });
   });
 
-  it('parses top-level id_token payloads', () => {
+  it('reports missing user data when the payload lacks id and hash', () => {
     expect(
       parseTelegramAuthMessage({
         event: 'auth_result',
-        id_token: 'top-level-token',
+        result: { status: 'pending' },
       }),
-    ).toEqual({ id_token: 'top-level-token' });
+    ).toEqual({ error: 'missing user data' });
   });
 
   it('accepts oauth and same-origin message origins', () => {
@@ -155,18 +165,15 @@ describe('useTelegramAuth', () => {
     expect(result.current.isLibraryReady).toBe(true);
   });
 
-  it('requests nonce and signs in with id_token callback', async () => {
+  it('opens the widget popup and signs in with the Login Widget user', async () => {
     const popup = {
       closed: false,
       focus: jest.fn(),
     };
     const openSpy = jest.spyOn(window, 'open').mockImplementation(() => popup as unknown as Window);
 
-    (authApi.createTelegramSignInNonce as jest.Mock).mockResolvedValue({
-      data: { nonce: 'server-nonce' },
-    });
     (authApi.telegramSignIn as jest.Mock).mockResolvedValue({
-      data: { isNewUser: true, requiresPhoneVerification: false },
+      data: { isNewUser: true, requiresPhoneVerification: true },
     });
     (authApi.me as jest.Mock).mockResolvedValue({ data: { id: 'user-1' } });
 
@@ -185,24 +192,20 @@ describe('useTelegramAuth', () => {
       result.current.signInWithTelegram();
     });
 
-    await waitFor(() => {
-      expect(authApi.createTelegramSignInNonce).toHaveBeenCalled();
-      expect(openSpy).toHaveBeenCalled();
-    });
+    await waitFor(() => expect(openSpy).toHaveBeenCalled());
 
     const authUrl = openSpy.mock.calls[0]?.[0];
     expect(authUrl).toContain('client_id=123456789');
-    expect(authUrl).toContain('nonce=server-nonce');
     expect(authUrl).toContain('lang=ru');
-    expect(authUrl).toContain('scope=openid%20profile%20phone');
     expect(authUrl).toContain(`origin=${encodeURIComponent(window.location.origin)}`);
+    expect(authUrl).not.toContain('nonce=');
 
     await act(async () => {
       window.dispatchEvent(
         new MessageEvent('message', {
           origin: 'https://oauth.telegram.org',
           source: popup as unknown as Window,
-          data: JSON.stringify({ event: 'auth_result', result: 'oidc-token' }),
+          data: JSON.stringify({ event: 'auth_result', result: widgetUser }),
         }),
       );
     });
@@ -210,65 +213,12 @@ describe('useTelegramAuth', () => {
     await waitFor(() => {
       expect(authApi.telegramSignIn).toHaveBeenCalledWith(
         expect.objectContaining({
-          idToken: 'oidc-token',
-          nonce: 'server-nonce',
+          id: widgetUser.id,
+          hash: widgetUser.hash,
+          auth_date: widgetUser.auth_date,
+          username: widgetUser.username,
           termsAccepted: true,
           type: 'Business',
-        }),
-        expect.any(Object),
-      );
-    });
-
-    openSpy.mockRestore();
-  });
-
-  it('accepts Telegram auth_result with nested id_token', async () => {
-    const popup = {
-      closed: false,
-      focus: jest.fn(),
-    };
-    const openSpy = jest.spyOn(window, 'open').mockImplementation(() => popup as unknown as Window);
-
-    (authApi.createTelegramSignInNonce as jest.Mock).mockResolvedValue({
-      data: { nonce: 'server-nonce' },
-    });
-    (authApi.telegramSignIn as jest.Mock).mockResolvedValue({
-      data: { isNewUser: false, requiresPhoneVerification: false },
-    });
-    (authApi.me as jest.Mock).mockResolvedValue({ data: { id: 'user-1' } });
-
-    const { result } = renderHook(() =>
-      useTelegramAuth({
-        tab: 'login',
-        telegramScriptLoaded: true,
-        locale: 'en',
-      }),
-    );
-
-    await waitFor(() => expect(result.current.isLibraryReady).toBe(true));
-
-    await act(async () => {
-      result.current.signInWithTelegram();
-    });
-
-    await waitFor(() => expect(openSpy).toHaveBeenCalled());
-
-    await act(async () => {
-      window.dispatchEvent(
-        new MessageEvent('message', {
-          origin: 'https://oauth.telegram.org',
-          source: popup as unknown as Window,
-          data: { event: 'auth_result', result: { id_token: 'nested-oidc-token' } },
-        }),
-      );
-    });
-
-    await waitFor(() => {
-      expect(authApi.telegramSignIn).toHaveBeenCalledWith(
-        expect.objectContaining({
-          idToken: 'nested-oidc-token',
-          nonce: 'server-nonce',
-          termsAccepted: true,
         }),
         expect.any(Object),
       );
@@ -284,9 +234,6 @@ describe('useTelegramAuth', () => {
     };
     const openSpy = jest.spyOn(window, 'open').mockImplementation(() => popup as unknown as Window);
 
-    (authApi.createTelegramSignInNonce as jest.Mock).mockResolvedValue({
-      data: { nonce: 'server-nonce' },
-    });
     (authApi.telegramSignIn as jest.Mock).mockResolvedValue({
       data: { isNewUser: false, requiresPhoneVerification: false },
     });
@@ -313,17 +260,14 @@ describe('useTelegramAuth', () => {
         new MessageEvent('message', {
           origin: window.location.origin,
           source: popup as unknown as Window,
-          data: JSON.stringify({ event: 'auth_result', result: 'same-origin-token' }),
+          data: JSON.stringify({ event: 'auth_result', result: widgetUser }),
         }),
       );
     });
 
     await waitFor(() => {
       expect(authApi.telegramSignIn).toHaveBeenCalledWith(
-        expect.objectContaining({
-          idToken: 'same-origin-token',
-          nonce: 'server-nonce',
-        }),
+        expect.objectContaining({ id: widgetUser.id, hash: widgetUser.hash }),
         expect.any(Object),
       );
     });
@@ -331,16 +275,12 @@ describe('useTelegramAuth', () => {
     openSpy.mockRestore();
   });
 
-  it('does not call backend when auth_result has no id_token', async () => {
+  it('does not call backend when auth_result has no user data', async () => {
     const popup = {
       closed: false,
       focus: jest.fn(),
     };
     const openSpy = jest.spyOn(window, 'open').mockImplementation(() => popup as unknown as Window);
-
-    (authApi.createTelegramSignInNonce as jest.Mock).mockResolvedValue({
-      data: { nonce: 'server-nonce' },
-    });
 
     const { result } = renderHook(() =>
       useTelegramAuth({
@@ -382,10 +322,6 @@ describe('useTelegramAuth', () => {
     };
     const openSpy = jest.spyOn(window, 'open').mockImplementation(() => popup as unknown as Window);
 
-    (authApi.createTelegramSignInNonce as jest.Mock).mockResolvedValue({
-      data: { nonce: 'server-nonce' },
-    });
-
     const { result } = renderHook(() =>
       useTelegramAuth({
         tab: 'login',
@@ -407,7 +343,7 @@ describe('useTelegramAuth', () => {
         new MessageEvent('message', {
           origin: 'https://evil.example',
           source: popup as unknown as Window,
-          data: JSON.stringify({ event: 'auth_result', result: 'stolen-token' }),
+          data: JSON.stringify({ event: 'auth_result', result: widgetUser }),
         }),
       );
     });
@@ -417,7 +353,7 @@ describe('useTelegramAuth', () => {
     openSpy.mockRestore();
   });
 
-  it('opens manual popup with explicit origin even when SDK auth exists', async () => {
+  it('opens the manual popup with an explicit origin even when SDK auth exists', async () => {
     const authSpy = jest.fn();
     const popup = {
       closed: false,
@@ -431,9 +367,6 @@ describe('useTelegramAuth', () => {
     };
     const openSpy = jest.spyOn(window, 'open').mockImplementation(() => popup as unknown as Window);
 
-    (authApi.createTelegramSignInNonce as jest.Mock).mockResolvedValue({
-      data: { nonce: 'server-nonce' },
-    });
     (authApi.telegramSignIn as jest.Mock).mockResolvedValue({
       data: { isNewUser: false, requiresPhoneVerification: false },
     });
@@ -464,17 +397,14 @@ describe('useTelegramAuth', () => {
         new MessageEvent('message', {
           origin: 'https://oauth.telegram.org',
           source: popup as unknown as Window,
-          data: JSON.stringify({ event: 'auth_result', result: 'manual-token' }),
+          data: JSON.stringify({ event: 'auth_result', result: widgetUser }),
         }),
       );
     });
 
     await waitFor(() => {
       expect(authApi.telegramSignIn).toHaveBeenCalledWith(
-        expect.objectContaining({
-          idToken: 'manual-token',
-          nonce: 'server-nonce',
-        }),
+        expect.objectContaining({ id: widgetUser.id, hash: widgetUser.hash }),
         expect.any(Object),
       );
     });

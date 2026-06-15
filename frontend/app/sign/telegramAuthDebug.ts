@@ -1,9 +1,6 @@
 import * as Sentry from '@sentry/nextjs';
 
 export type TelegramAuthDebugEvent =
-  | 'nonce_requested'
-  | 'nonce_received'
-  | 'nonce_request_failed'
   | 'popup_open_attempt'
   | 'popup_opened'
   | 'popup_blocked'
@@ -11,9 +8,9 @@ export type TelegramAuthDebugEvent =
   | 'message_ignored_origin'
   | 'message_ignored_source'
   | 'message_parse_failed'
-  | 'missing_id_token'
+  | 'missing_user_data'
   | 'telegram_error'
-  | 'id_token_received'
+  | 'user_data_received'
   | 'backend_submit_started'
   | 'backend_submit_success'
   | 'backend_submit_failed'
@@ -30,25 +27,23 @@ export type TelegramAuthDebugContext = {
   messageOrigin?: string;
   messageEvent?: string;
   hasResult?: boolean;
-  hasIdToken?: boolean;
+  hasUser?: boolean;
   backendStatus?: number;
   backendErrorKey?: string;
   elapsedMs?: number;
   telegramError?: string;
   resultKind?: string;
   resultKeys?: string[];
-  hasTopLevelIdToken?: boolean;
   hasTopLevelError?: boolean;
   hasResultError?: boolean;
 };
 
 const WARN_EVENTS = new Set<TelegramAuthDebugEvent>([
-  'nonce_request_failed',
   'popup_blocked',
   'message_ignored_origin',
   'message_ignored_source',
   'message_parse_failed',
-  'missing_id_token',
+  'missing_user_data',
   'telegram_error',
   'backend_submit_failed',
   'me_sync_failed',

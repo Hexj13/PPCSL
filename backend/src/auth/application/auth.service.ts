@@ -4,7 +4,6 @@ import { UsersService } from '../../users/application/users.service';
 import { EmailService } from '../infrastructure/services/email.service';
 import { RefreshTokenService } from '../infrastructure/services/refresh-token.service';
 import { SmsService } from '../infrastructure/services/sms.service';
-import { TelegramOidcNonceService } from '../infrastructure/services/telegram-oidc-nonce.service';
 import { ChangeEmailConfirmDto, ChangeEmailRequestDto } from '../presentation/dto/change-email.dto';
 import { ChangePasswordDto } from '../presentation/dto/change-password.dto';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from '../presentation/dto/change-phone.dto';
@@ -86,7 +85,6 @@ export class AuthService {
     private dismissPartnerPromoBannerUseCase: DismissPartnerPromoBannerUseCase,
     private googleSignInUseCase: GoogleSignInUseCase,
     private telegramSignInUseCase: TelegramSignInUseCase,
-    private telegramOidcNonceService: TelegramOidcNonceService,
   ) {}
 
   async validateUser(login: string, password: string): Promise<UserWithoutPassword | null> {
@@ -116,11 +114,6 @@ export class AuthService {
     requestId?: string,
   ): Promise<TelegramSignInResponse> {
     return this.telegramSignInUseCase.execute(dto, ip, requestLocale, requestId);
-  }
-
-  async createTelegramSignInNonce(): Promise<{ nonce: string }> {
-    const nonce = await this.telegramOidcNonceService.issue();
-    return { nonce };
   }
 
   async register(

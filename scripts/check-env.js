@@ -29,11 +29,11 @@ const BUILD_GOOGLE_PAIR_OK = {
 };
 
 const BUILD_TELEGRAM_PAIR_OK = {
-  name: "TELEGRAM_CLIENT_ID (when NEXT_PUBLIC_TELEGRAM_CLIENT_ID is set)",
+  name: "TELEGRAM_BOT_TOKEN (when NEXT_PUBLIC_TELEGRAM_CLIENT_ID is set)",
   check: () => {
     const pub = process.env.NEXT_PUBLIC_TELEGRAM_CLIENT_ID?.trim();
     if (!pub) return true;
-    return Boolean(process.env.TELEGRAM_CLIENT_ID?.trim());
+    return Boolean(process.env.TELEGRAM_BOT_TOKEN?.trim());
   },
 };
 

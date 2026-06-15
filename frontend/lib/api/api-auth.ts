@@ -10,7 +10,6 @@ import type {
   GoogleSignInDto,
   GoogleSignInResponse,
   TelegramSignInDto,
-  TelegramSignInNonceResponse,
   TelegramSignInResponse,
   DevTelegramSignInDto,
   LoginDto,
@@ -57,15 +56,6 @@ export const authApi = {
       ...config,
       headers: { ...quietAuthHeaders, ...config?.headers },
     }),
-  createTelegramSignInNonce: (config?: AxiosRequestConfig) =>
-    api.post<TelegramSignInNonceResponse>(
-      '/api/auth/telegram/nonce',
-      {},
-      {
-        ...config,
-        headers: { ...quietAuthHeaders, ...config?.headers },
-      },
-    ),
   devTelegramSignIn: (data: DevTelegramSignInDto, config?: AxiosRequestConfig) =>
     api.post<TelegramSignInResponse>('/api/auth/dev/telegram', data, {
       ...config,

@@ -4,23 +4,31 @@ import {
   type TelegramAuthDebugContext,
 } from '@/app/sign/telegramAuthDebug';
 
-export type TelegramLoginAuthResult = {
-  id_token?: string;
+export type TelegramLoginWidgetUser = {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+};
+
+export type TelegramLoginResult = {
+  user?: TelegramLoginWidgetUser;
   error?: string;
 };
 
 type TelegramAuthMessageData = {
   event?: string;
   result?: unknown;
-  id_token?: unknown;
-  token?: unknown;
   error?: string;
 };
 
 export type TelegramAuthPayloadShape = {
   resultKind: string;
   resultKeys?: string[];
-  hasTopLevelIdToken: boolean;
+  hasUser: boolean;
   hasTopLevelError: boolean;
   hasResultError: boolean;
 };
@@ -36,18 +44,16 @@ declare global {
         init: (
           options: {
             client_id: number;
-            request_access?: Array<'phone' | 'write'>;
+            request_access?: Array<'write'>;
             lang?: string;
-            nonce?: string;
           },
           callback?: (result: { id_token?: string; error?: string }) => void,
         ) => void;
         auth: (
           options: {
             client_id: number;
-            request_access?: Array<'phone' | 'write'>;
+            request_access?: Array<'write'>;
             lang?: string;
-            nonce?: string;
           },
           callback: (result: { id_token?: string; error?: string }) => void,
         ) => void;
@@ -74,87 +80,108 @@ export function isTrustedTelegramMessageSource(
   return event.origin === pageOrigin;
 }
 
-export function describeTelegramAuthPayloadShape(data: unknown): TelegramAuthPayloadShape | null {
-  let message: TelegramAuthMessageData | null = null;
+function toAuthMessage(data: unknown): TelegramAuthMessageData | null {
   try {
     const parsed = typeof data === 'string' ? (JSON.parse(data) as TelegramAuthMessageData) : data;
     if (!parsed || typeof parsed !== 'object') {
       return null;
     }
-    message = parsed as TelegramAuthMessageData;
+    return parsed as TelegramAuthMessageData;
   } catch {
     return null;
   }
-
-  const result = message.result;
-  const resultKeys =
-    result && typeof result === 'object' && !Array.isArray(result)
-      ? Object.keys(result as Record<string, unknown>)
-      : undefined;
-
-  return {
-    resultKind: result === null ? 'null' : Array.isArray(result) ? 'array' : typeof result,
-    resultKeys,
-    hasTopLevelIdToken: typeof message.id_token === 'string',
-    hasTopLevelError: Boolean(message.error),
-    hasResultError:
-      Boolean(result && typeof result === 'object' && 'error' in result) &&
-      typeof (result as { error?: unknown }).error === 'string',
-  };
 }
 
-function extractIdTokenFromUnknown(value: unknown): string | null {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed || null;
-}
-
-function extractIdTokenFromResult(result: unknown): string | null {
-  const direct = extractIdTokenFromUnknown(result);
-  if (direct) {
-    return direct;
-  }
-
+function toResultObject(result: unknown): Record<string, unknown> | null {
   if (typeof result === 'string') {
     try {
-      const nested = JSON.parse(result) as Record<string, unknown>;
-      return (
-        extractIdTokenFromUnknown(nested.id_token) ??
-        extractIdTokenFromUnknown(nested.token) ??
-        null
-      );
+      const parsed = JSON.parse(result) as unknown;
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : null;
     } catch {
       return null;
     }
   }
-
   if (result && typeof result === 'object' && !Array.isArray(result)) {
-    const objectResult = result as Record<string, unknown>;
-    return (
-      extractIdTokenFromUnknown(objectResult.id_token) ??
-      extractIdTokenFromUnknown(objectResult.token) ??
-      null
-    );
+    return result as Record<string, unknown>;
+  }
+  return null;
+}
+
+export function describeTelegramAuthPayloadShape(data: unknown): TelegramAuthPayloadShape | null {
+  const message = toAuthMessage(data);
+  if (!message) {
+    return null;
   }
 
-  return null;
+  const resultObject = toResultObject(message.result);
+  const resultKeys = resultObject ? Object.keys(resultObject) : undefined;
+
+  return {
+    resultKind:
+      message.result === null
+        ? 'null'
+        : Array.isArray(message.result)
+          ? 'array'
+          : typeof message.result,
+    resultKeys,
+    hasUser: extractWidgetUser(resultObject) != null,
+    hasTopLevelError: Boolean(message.error),
+    hasResultError: Boolean(
+      resultObject && typeof resultObject.error === 'string' && resultObject.error.trim(),
+    ),
+  };
+}
+
+function extractWidgetUser(result: Record<string, unknown> | null): TelegramLoginWidgetUser | null {
+  if (!result) {
+    return null;
+  }
+  const id = result.id;
+  const hash = result.hash;
+  const authDate = result.auth_date;
+  const numericId = typeof id === 'number' ? id : typeof id === 'string' ? Number(id) : NaN;
+  const numericAuthDate =
+    typeof authDate === 'number' ? authDate : typeof authDate === 'string' ? Number(authDate) : NaN;
+  if (!Number.isFinite(numericId) || numericId <= 0) {
+    return null;
+  }
+  if (typeof hash !== 'string' || !hash.trim()) {
+    return null;
+  }
+  if (!Number.isFinite(numericAuthDate) || numericAuthDate <= 0) {
+    return null;
+  }
+
+  const user: TelegramLoginWidgetUser = {
+    id: numericId,
+    auth_date: numericAuthDate,
+    hash: hash.trim(),
+  };
+  if (typeof result.first_name === 'string') {
+    user.first_name = result.first_name;
+  }
+  if (typeof result.last_name === 'string') {
+    user.last_name = result.last_name;
+  }
+  if (typeof result.username === 'string') {
+    user.username = result.username;
+  }
+  if (typeof result.photo_url === 'string') {
+    user.photo_url = result.photo_url;
+  }
+  return user;
 }
 
 function extractErrorFromMessage(message: TelegramAuthMessageData): string | null {
   if (typeof message.error === 'string' && message.error.trim()) {
     return message.error.trim();
   }
-
-  const result = message.result;
-  if (result && typeof result === 'object' && !Array.isArray(result)) {
-    const resultError = (result as { error?: unknown }).error;
-    if (typeof resultError === 'string' && resultError.trim()) {
-      return resultError.trim();
-    }
+  const resultObject = toResultObject(message.result);
+  if (resultObject && typeof resultObject.error === 'string' && resultObject.error.trim()) {
+    return resultObject.error.trim();
   }
-
   return null;
 }
 
@@ -172,14 +199,9 @@ function isInterimAuthResult(message: TelegramAuthMessageData): boolean {
   return false;
 }
 
-export function parseTelegramAuthMessage(data: unknown): TelegramLoginAuthResult | null {
-  const parsedData =
-    typeof data === 'string' ? (JSON.parse(data) as TelegramAuthMessageData) : data;
-  if (!parsedData || typeof parsedData !== 'object') {
-    return null;
-  }
-  const message = parsedData as TelegramAuthMessageData;
-  if (message.event !== 'auth_result') {
+export function parseTelegramAuthMessage(data: unknown): TelegramLoginResult | null {
+  const message = toAuthMessage(data);
+  if (!message || message.event !== 'auth_result') {
     return null;
   }
 
@@ -188,25 +210,20 @@ export function parseTelegramAuthMessage(data: unknown): TelegramLoginAuthResult
     return { error: messageError };
   }
 
-  const idToken =
-    extractIdTokenFromUnknown(message.id_token) ??
-    extractIdTokenFromUnknown(message.token) ??
-    extractIdTokenFromResult(message.result);
-
-  if (idToken) {
-    return { id_token: idToken };
+  const user = extractWidgetUser(toResultObject(message.result));
+  if (user) {
+    return { user };
   }
 
   if (isInterimAuthResult(message)) {
     return null;
   }
 
-  return { error: 'missing id_token' };
+  return { error: 'missing user data' };
 }
 
 type OpenTelegramAuthPopupOptions = {
-  clientId: number;
-  nonce: string;
+  botId: number;
   lang: string;
   debug: Pick<TelegramAuthDebugContext, 'flowId' | 'locale' | 'tab' | 'hasPreferredType'>;
 };
@@ -232,19 +249,18 @@ function debugContext(
 }
 
 function buildTelegramAuthUrl(options: {
-  clientId: number;
-  nonce: string;
-  lang: string;
+  botId: number;
   redirectUri: string;
   origin: string;
+  lang: string;
 }): string {
   const params = [
     'response_type=post_message',
-    `client_id=${encodeURIComponent(String(options.clientId))}`,
+    `client_id=${encodeURIComponent(String(options.botId))}`,
     `redirect_uri=${encodeURIComponent(options.redirectUri)}`,
     `origin=${encodeURIComponent(options.origin)}`,
     `scope=${encodeURIComponent('openid profile phone')}`,
-    `nonce=${encodeURIComponent(options.nonce)}`,
+    `request_access=${encodeURIComponent('write')}`,
     `lang=${encodeURIComponent(options.lang)}`,
   ];
   return `${TELEGRAM_OAUTH_ORIGIN}/auth?${params.join('&')}`;
@@ -263,36 +279,36 @@ function messageShapeContext(
   return {
     resultKind: payloadShape?.resultKind,
     resultKeys: payloadShape?.resultKeys,
-    hasTopLevelIdToken: payloadShape?.hasTopLevelIdToken,
+    hasUser: payloadShape?.hasUser,
     hasTopLevelError: payloadShape?.hasTopLevelError,
     hasResultError: payloadShape?.hasResultError,
   };
 }
 
 function processManualPopupAuthResult(params: {
-  result: TelegramLoginAuthResult;
+  result: TelegramLoginResult;
   options: OpenTelegramAuthPopupOptions;
   startedAt: number;
   messageOrigin: string;
   messageEvent: string;
   payloadShape: TelegramAuthPayloadShape | null;
-  finish: (result: TelegramLoginAuthResult) => void;
+  finish: (result: TelegramLoginResult) => void;
 }): void {
   const { result, options, startedAt, messageOrigin, messageEvent, payloadShape, finish } = params;
   const shapeContext = messageShapeContext(payloadShape);
 
-  if (result.error === 'missing id_token') {
+  if (result.error === 'missing user data') {
     logTelegramAuthEvent(
-      'missing_id_token',
+      'missing_user_data',
       debugContext(options, startedAt, {
         messageOrigin,
         messageEvent,
         hasResult: true,
-        hasIdToken: false,
+        hasUser: false,
         ...shapeContext,
       }),
     );
-    finish({ error: 'missing id_token' });
+    finish({ error: 'missing user data' });
     return;
   }
 
@@ -311,11 +327,11 @@ function processManualPopupAuthResult(params: {
   }
 
   logTelegramAuthEvent(
-    'id_token_received',
+    'user_data_received',
     debugContext(options, startedAt, {
       messageOrigin,
       messageEvent,
-      hasIdToken: true,
+      hasUser: true,
       resultKind: payloadShape?.resultKind,
     }),
   );
@@ -328,7 +344,7 @@ function handleManualPopupMessage(params: {
   startedAt: number;
   pageOrigin: string;
   popup: Window | null;
-  finish: (result: TelegramLoginAuthResult) => void;
+  finish: (result: TelegramLoginResult) => void;
 }): void {
   const { event, options, startedAt, pageOrigin, popup, finish } = params;
   const payloadShape = describeTelegramAuthPayloadShape(event.data);
@@ -399,7 +415,7 @@ function handleManualPopupMessage(params: {
 
 export function openTelegramAuthPopup(
   options: OpenTelegramAuthPopupOptions,
-  callback: (result: TelegramLoginAuthResult) => void,
+  callback: (result: TelegramLoginResult) => void,
 ): void {
   const startedAt = Date.now();
   const pageOrigin = window.location.origin;
@@ -424,13 +440,12 @@ export function openTelegramAuthPopup(
 
   const popup = window.open(
     buildTelegramAuthUrl({
-      clientId: options.clientId,
-      nonce: options.nonce,
-      lang: options.lang,
+      botId: options.botId,
       redirectUri,
       origin: pageOrigin,
+      lang: options.lang,
     }),
-    'telegram_oidc_login',
+    'telegram_login',
     features,
   );
 
@@ -458,7 +473,7 @@ export function openTelegramAuthPopup(
     }
   };
 
-  const finish = (result: TelegramLoginAuthResult) => {
+  const finish = (result: TelegramLoginResult) => {
     if (completed) {
       return;
     }

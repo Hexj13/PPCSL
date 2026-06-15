@@ -13,7 +13,6 @@ import { User } from '../../../users/entities/user.entity';
 import { PhoneService } from '../../domain/services/phone.service';
 import { TelegramAuthVerifierService } from '../../infrastructure/services/telegram-auth-verifier.service';
 import type { TelegramAuthProfile } from '../../infrastructure/services/telegram-auth-verifier.service';
-import { TelegramOidcNonceService } from '../../infrastructure/services/telegram-oidc-nonce.service';
 import { TelegramSignInDto } from '../../presentation/dto/telegram-sign-in.dto';
 import { TelegramSignInResponse } from '../auth.types';
 import { AuthTokenIssuerService } from '../services/auth-token-issuer.service';
@@ -54,7 +53,6 @@ export class TelegramSignInUseCase {
   constructor(
     private readonly usersService: UsersService,
     private readonly verifier: TelegramAuthVerifierService,
-    private readonly nonceService: TelegramOidcNonceService,
     private readonly phoneService: PhoneService,
     private readonly authTokenIssuer: AuthTokenIssuerService,
   ) {}
@@ -73,19 +71,24 @@ export class TelegramSignInUseCase {
     });
 
     try {
-      const profile = await this.verifier.verify(dto.idToken, dto.nonce, requestId);
+      const profile = this.verifier.verify(
+        {
+          id: dto.id,
+          first_name: dto.first_name,
+          last_name: dto.last_name,
+          username: dto.username,
+          photo_url: dto.photo_url,
+          auth_date: dto.auth_date,
+          hash: dto.hash,
+        },
+        requestId,
+      );
       logUserEvent(this.logger, {
         event: 'telegram_token_verified',
         requestId,
         telegramIdHash: hashTelegramId(profile.id),
         hasPhoneClaim: Boolean(profile.phoneNumber),
         hasUsername: Boolean(profile.username),
-      });
-
-      await this.nonceService.consume(dto.nonce);
-      logUserEvent(this.logger, {
-        event: 'telegram_nonce_consumed',
-        requestId,
       });
 
       return await this.signInWithProfile(profile, dto, ip, requestLocale, requestId);

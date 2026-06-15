@@ -760,7 +760,7 @@ Use POST (GET returns 404). To remove: `curl -X POST "https://api.telegram.org/b
 
 **Behaviour:** POST `/api/telegram/webhook` receives Telegram updates. Replies to the user are in Romanian + Russian (one message, separator `—`). Rate limit: 20 messages per hour per user (Redis key `telegram:ratelimit:{userId}`). If `TELEGRAM_BOT_TOKEN` or `TELEGRAM_SUPPORT_CHAT_ID` are not set, the bot does nothing and the webhook still returns 200.
 
-**Telegram Sign-In (OIDC):** For Telegram Sign-In on `/sign`, add Allowed URLs in BotFather (Web Login) and set `NEXT_PUBLIC_TELEGRAM_CLIENT_ID` on the frontend and `TELEGRAM_CLIENT_ID` on the backend (same Client ID). The backend verifies OIDC `id_token` via Telegram JWKS and optional verified `phone_number`. `TELEGRAM_BOT_TOKEN` remains for the support webhook only. See [TELEGRAM_AUTH_SETUP_RU.md](./TELEGRAM_AUTH_SETUP_RU.md).
+**Telegram Sign-In (Login Widget):** For Telegram Sign-In on `/sign`, bind the site domain in BotFather (`/setdomain`) and set `NEXT_PUBLIC_TELEGRAM_CLIENT_ID` (numeric bot id) on the frontend and `TELEGRAM_BOT_TOKEN` on the backend. The backend verifies the Login Widget payload via HMAC-SHA256 with the bot token and checks `auth_date` freshness; the same `TELEGRAM_BOT_TOKEN` is reused for the support webhook. Telegram does not return a phone number, so new users always go through phone verification. See [TELEGRAM_AUTH_SETUP_RU.md](./TELEGRAM_AUTH_SETUP_RU.md).
 
 ### 3.11. Frontend Service Setup (if deployed separately)
 

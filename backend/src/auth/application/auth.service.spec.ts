@@ -7,7 +7,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserType } from '../../common/types';
 import { User } from '../../users/entities/user.entity';
 import { UsersService } from '../../users/application/users.service';
-import { TelegramOidcNonceService } from '../infrastructure/services/telegram-oidc-nonce.service';
 
 import { AuthService } from './auth.service';
 import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
@@ -257,10 +256,6 @@ describe('AuthService', () => {
         {
           provide: TelegramSignInUseCase,
           useValue: { execute: jest.fn() },
-        },
-        {
-          provide: TelegramOidcNonceService,
-          useValue: { issue: jest.fn(), consume: jest.fn() },
         },
       ],
     }).compile();

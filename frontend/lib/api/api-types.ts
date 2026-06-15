@@ -616,14 +616,15 @@ export interface GoogleSignInResponse extends LoginResponse {
 }
 
 export interface TelegramSignInDto {
-  idToken: string;
-  nonce: string;
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
   type?: 'Individual' | 'Business';
   termsAccepted?: boolean;
-}
-
-export interface TelegramSignInNonceResponse {
-  nonce: string;
 }
 
 export interface TelegramSignInResponse extends LoginResponse {

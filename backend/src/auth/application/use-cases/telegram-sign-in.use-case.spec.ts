@@ -15,7 +15,6 @@ describe('TelegramSignInUseCase', () => {
     findOneById: jest.fn(),
   };
   const verifier = { verify: jest.fn() };
-  const nonceService = { consume: jest.fn() };
   const phoneService = {
     normalize: jest.fn((phone: string) => `+${phone.replace(/\D/g, '')}`),
     isValid: jest.fn(() => true),
@@ -40,7 +39,6 @@ describe('TelegramSignInUseCase', () => {
     useCase = new TelegramSignInUseCase(
       usersService as never,
       verifier as never,
-      nonceService as never,
       phoneService as never,
       authTokenIssuer as never,
     );
@@ -125,9 +123,8 @@ describe('TelegramSignInUseCase', () => {
     );
   });
 
-  it('consumes nonce and verifies id_token on execute', async () => {
-    verifier.verify.mockResolvedValue(baseProfile);
-    nonceService.consume.mockResolvedValue(undefined);
+  it('verifies the Login Widget payload on execute', async () => {
+    verifier.verify.mockReturnValue(baseProfile);
     usersService.findByTelegramId.mockResolvedValue({
       id: 'user-1',
       phone: null,
@@ -145,12 +142,28 @@ describe('TelegramSignInUseCase', () => {
     });
 
     await useCase.execute(
-      { idToken: 'token', nonce: 'nonce-value', termsAccepted: true },
+      {
+        id: 123456789,
+        first_name: 'Test',
+        username: 'test_user',
+        auth_date: 1700000000,
+        hash: 'a'.repeat(64),
+        termsAccepted: true,
+      },
       '127.0.0.1',
       'ru',
+      'request-1',
     );
 
-    expect(verifier.verify).toHaveBeenCalledWith('token', 'nonce-value', undefined);
-    expect(nonceService.consume).toHaveBeenCalledWith('nonce-value');
+    expect(verifier.verify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 123456789,
+        first_name: 'Test',
+        username: 'test_user',
+        auth_date: 1700000000,
+        hash: 'a'.repeat(64),
+      }),
+      'request-1',
+    );
   });
 });

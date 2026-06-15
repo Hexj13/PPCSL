@@ -47,7 +47,6 @@ import { IpBlockService } from './infrastructure/services/ip-block.service';
 import { RefreshTokenService } from './infrastructure/services/refresh-token.service';
 import { SmsService } from './infrastructure/services/sms.service';
 import { TelegramAuthVerifierService } from './infrastructure/services/telegram-auth-verifier.service';
-import { TelegramOidcNonceService } from './infrastructure/services/telegram-oidc-nonce.service';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { AuthController } from './presentation/auth.controller';
@@ -88,7 +87,6 @@ import { AuthController } from './presentation/auth.controller';
     PhoneVerifiedGuard,
     GoogleTokenVerifierService,
     TelegramAuthVerifierService,
-    TelegramOidcNonceService,
     IpBlockService,
     AuthPhoneRateLimitService,
     PasswordService,

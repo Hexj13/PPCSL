@@ -1,144 +1,111 @@
-import jwt from 'jsonwebtoken';
+import { createHash, createHmac } from 'crypto';
 
 import { UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
 
 import {
-  TelegramAuthVerifierService,
-  verifyTelegramOidcIdToken,
-  createTelegramOidcSigningKeyProvider,
-  createTestTelegramOidcKeyPair,
+  verifyTelegramLoginWidgetData,
+  type TelegramLoginWidgetData,
 } from './telegram-auth-verifier.service';
 
-const CLIENT_ID = '123456789';
-const NONCE = 'test-nonce-value';
+const BOT_TOKEN = '8755909506:TEST_TOKEN_VALUE';
 
-describe('TelegramAuthVerifierService', () => {
-  const { publicKey, privateKey } = createTestTelegramOidcKeyPair();
-  const signingKeyProvider = createTelegramOidcSigningKeyProvider(publicKey);
+function signWidgetData(
+  fields: Omit<TelegramLoginWidgetData, 'hash'>,
+  botToken = BOT_TOKEN,
+): TelegramLoginWidgetData {
+  const dataCheckString = Object.entries(fields)
+    .filter(([, value]) => value !== undefined && value !== null)
+    .map(([key, value]) => `${key}=${value}`)
+    .sort()
+    .join('\n');
+  const secretKey = createHash('sha256').update(botToken).digest();
+  const hash = createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+  return { ...fields, hash };
+}
 
-  function signToken(claims: Record<string, unknown> = {}) {
-    return jwt.sign({ nonce: NONCE, id: 987654321, name: 'John Doe', ...claims }, privateKey, {
-      algorithm: 'RS256',
-      keyid: 'test-key',
-      issuer: 'https://oauth.telegram.org',
-      audience: CLIENT_ID,
-      subject: '987654321',
-      expiresIn: '1h',
+describe('verifyTelegramLoginWidgetData', () => {
+  const now = 1_700_000_000_000;
+  const authDate = Math.floor(now / 1000) - 10;
+
+  it('maps a valid Login Widget payload to a profile', () => {
+    const data = signWidgetData({
+      id: 123456789,
+      first_name: 'John',
+      last_name: 'Doe',
+      username: '@johndoe',
+      photo_url: 'https://t.me/photo.jpg',
+      auth_date: authDate,
     });
-  }
 
-  it('accepts a valid Telegram OIDC id_token', async () => {
-    const idToken = signToken({ preferred_username: '@demo_user', phone_number: '37370123456' });
-    const profile = await verifyTelegramOidcIdToken({
-      idToken,
-      expectedNonce: NONCE,
-      clientId: CLIENT_ID,
-      signingKeyProvider,
-    });
+    const profile = verifyTelegramLoginWidgetData({ data, botToken: BOT_TOKEN, now });
+
     expect(profile).toEqual({
-      id: '987654321',
+      id: '123456789',
       firstName: 'John',
       lastName: 'Doe',
-      username: 'demo_user',
-      phoneNumber: '37370123456',
+      username: 'johndoe',
+      phoneNumber: null,
     });
   });
 
-  it('rejects an invalid signature', async () => {
-    const otherKeys = createTestTelegramOidcKeyPair();
-    const idToken = jwt.sign({ nonce: NONCE, id: 1 }, otherKeys.privateKey, {
-      algorithm: 'RS256',
-      issuer: 'https://oauth.telegram.org',
-      audience: CLIENT_ID,
-      subject: '1',
-      expiresIn: '1h',
-    });
-    await expect(
-      verifyTelegramOidcIdToken({
-        idToken,
-        expectedNonce: NONCE,
-        clientId: CLIENT_ID,
-        signingKeyProvider,
+  it('rejects a payload with a tampered hash', () => {
+    const data = signWidgetData({ id: 123, first_name: 'John', auth_date: authDate });
+    const onDebug = jest.fn();
+
+    expect(() =>
+      verifyTelegramLoginWidgetData({
+        data: { ...data, first_name: 'Mallory' },
+        botToken: BOT_TOKEN,
+        now,
+        onDebug,
       }),
-    ).rejects.toThrow(UnauthorizedException);
+    ).toThrow(UnauthorizedException);
+    expect(onDebug).toHaveBeenCalledWith(expect.objectContaining({ reason: 'hash_mismatch' }));
   });
 
-  it('rejects wrong audience', async () => {
-    const idToken = signToken();
-    await expect(
-      verifyTelegramOidcIdToken({
-        idToken,
-        expectedNonce: NONCE,
-        clientId: 'other-client',
-        signingKeyProvider,
+  it('rejects a malformed hash', () => {
+    const data = signWidgetData({ id: 123, first_name: 'John', auth_date: authDate });
+
+    expect(() =>
+      verifyTelegramLoginWidgetData({
+        data: { ...data, hash: 'not-a-valid-hash' },
+        botToken: BOT_TOKEN,
+        now,
       }),
-    ).rejects.toThrow(UnauthorizedException);
+    ).toThrow(UnauthorizedException);
   });
 
-  it('rejects wrong issuer', async () => {
-    const idToken = jwt.sign({ nonce: NONCE, id: 1 }, privateKey, {
-      algorithm: 'RS256',
-      keyid: 'test-key',
-      issuer: 'https://evil.example',
-      audience: CLIENT_ID,
-      subject: '1',
-      expiresIn: '1h',
-    });
-    await expect(
-      verifyTelegramOidcIdToken({
-        idToken,
-        expectedNonce: NONCE,
-        clientId: CLIENT_ID,
-        signingKeyProvider,
-      }),
-    ).rejects.toThrow(UnauthorizedException);
+  it('rejects an expired auth_date', () => {
+    const staleAuthDate = Math.floor(now / 1000) - 90_000;
+    const data = signWidgetData({ id: 123, first_name: 'John', auth_date: staleAuthDate });
+    const onDebug = jest.fn();
+
+    expect(() =>
+      verifyTelegramLoginWidgetData({ data, botToken: BOT_TOKEN, now, onDebug }),
+    ).toThrow(UnauthorizedException);
+    expect(onDebug).toHaveBeenCalledWith(expect.objectContaining({ reason: 'auth_date_expired' }));
   });
 
-  it('rejects expired token', async () => {
-    const idToken = jwt.sign({ nonce: NONCE, id: 1 }, privateKey, {
-      algorithm: 'RS256',
-      keyid: 'test-key',
-      issuer: 'https://oauth.telegram.org',
-      audience: CLIENT_ID,
-      subject: '1',
-      expiresIn: -3600,
-    });
-    await expect(
-      verifyTelegramOidcIdToken({
-        idToken,
-        expectedNonce: NONCE,
-        clientId: CLIENT_ID,
-        signingKeyProvider,
-      }),
-    ).rejects.toThrow(UnauthorizedException);
+  it('rejects a non-numeric telegram id', () => {
+    const data = signWidgetData({ id: 'abc', first_name: 'John', auth_date: authDate });
+    const onDebug = jest.fn();
+
+    expect(() =>
+      verifyTelegramLoginWidgetData({ data, botToken: BOT_TOKEN, now, onDebug }),
+    ).toThrow(UnauthorizedException);
+    expect(onDebug).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: 'invalid_telegram_id' }),
+    );
   });
 
-  it('rejects missing or mismatched nonce', async () => {
-    const idToken = signToken();
-    await expect(
-      verifyTelegramOidcIdToken({
-        idToken,
-        expectedNonce: 'other-nonce',
-        clientId: CLIENT_ID,
-        signingKeyProvider,
-      }),
-    ).rejects.toThrow(UnauthorizedException);
-  });
+  it('rejects a payload signed with a different bot token', () => {
+    const data = signWidgetData(
+      { id: 123, first_name: 'John', auth_date: authDate },
+      'other-bot-token',
+    );
 
-  it('rejects when client id env is missing', async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TelegramAuthVerifierService,
-        {
-          provide: ConfigService,
-          useValue: { get: () => undefined },
-        },
-      ],
-    }).compile();
-    const service = module.get(TelegramAuthVerifierService);
-    const idToken = signToken();
-    await expect(service.verify(idToken, NONCE)).rejects.toThrow(UnauthorizedException);
+    expect(() => verifyTelegramLoginWidgetData({ data, botToken: BOT_TOKEN, now })).toThrow(
+      UnauthorizedException,
+    );
   });
 });

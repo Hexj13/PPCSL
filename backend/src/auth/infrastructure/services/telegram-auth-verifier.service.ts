@@ -1,8 +1,7 @@
-import { createPublicKey, generateKeyPairSync, type JsonWebKey, type KeyObject } from 'crypto';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
 
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import jwt from 'jsonwebtoken';
 
 import { logUserActionFailure } from '../../../common/utils/log-user-event';
 
@@ -14,33 +13,22 @@ export type TelegramAuthProfile = {
   phoneNumber: string | null;
 };
 
-type TelegramOidcJwtPayload = jwt.JwtPayload & {
-  id?: number;
-  name?: string;
-  preferred_username?: string;
-  picture?: string;
-  phone_number?: string;
+export type TelegramLoginWidgetData = {
+  id: number | string;
+  first_name?: string | null;
+  last_name?: string | null;
+  username?: string | null;
+  photo_url?: string | null;
+  auth_date: number | string;
+  hash: string;
 };
-
-type JwksResponse = {
-  keys: JsonWebKey[];
-};
-
-const TELEGRAM_OIDC_ISSUER = 'https://oauth.telegram.org';
-const TELEGRAM_OIDC_JWKS_URL = 'https://oauth.telegram.org/.well-known/jwks.json';
-const JWKS_CACHE_TTL_MS = 60 * 60 * 1000;
 
 export type TelegramVerifyFailReason =
-  | 'missing_client_id'
-  | 'missing_nonce'
-  | 'decode_failed'
-  | 'missing_kid'
-  | 'jwks_fetch_failed'
-  | 'jwks_key_not_found'
-  | 'jwt_verify_failed'
-  | 'audience_verify_failed'
-  | 'issuer_verify_failed'
-  | 'nonce_verify_failed'
+  | 'missing_bot_token'
+  | 'invalid_hash'
+  | 'hash_mismatch'
+  | 'invalid_auth_date'
+  | 'auth_date_expired'
   | 'invalid_telegram_id';
 
 type TelegramVerifyDebugContext = {
@@ -48,97 +36,26 @@ type TelegramVerifyDebugContext = {
   reason: TelegramVerifyFailReason;
 };
 
-export type TelegramOidcSigningKeyProvider = {
-  getSigningKey(kid?: string): Promise<string>;
-};
+const TELEGRAM_AUTH_MAX_AGE_SECONDS = 86400;
+const TELEGRAM_AUTH_CLOCK_SKEW_SECONDS = 300;
 
-function parseDisplayName(name?: string): { firstName: string | null; lastName: string | null } {
-  const trimmed = name?.trim();
-  if (!trimmed) {
-    return { firstName: null, lastName: null };
+const DATA_CHECK_FIELDS: ReadonlyArray<keyof TelegramLoginWidgetData> = [
+  'auth_date',
+  'first_name',
+  'id',
+  'last_name',
+  'photo_url',
+  'username',
+];
+
+function messageForReason(reason: TelegramVerifyFailReason): string {
+  if (reason === 'auth_date_expired') {
+    return 'errors.telegramAuthExpired';
   }
-  const parts = trimmed.split(/\s+/);
-  if (parts.length === 1) {
-    return { firstName: parts[0], lastName: null };
+  if (reason === 'missing_bot_token') {
+    return 'errors.telegramSignInUnavailable';
   }
-  return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
-}
-
-function mapPayload(payload: TelegramOidcJwtPayload): TelegramAuthProfile {
-  const telegramId =
-    payload.id != null && Number.isFinite(payload.id)
-      ? String(payload.id)
-      : String(payload.sub ?? '');
-  if (!telegramId) {
-    throw new UnauthorizedException('errors.telegramSignInFailed');
-  }
-  const { firstName, lastName } = parseDisplayName(
-    typeof payload.name === 'string' ? payload.name : undefined,
-  );
-  const username =
-    typeof payload.preferred_username === 'string'
-      ? payload.preferred_username.trim().replace(/^@/, '') || null
-      : null;
-  const phoneNumber =
-    typeof payload.phone_number === 'string' ? payload.phone_number.trim() || null : null;
-
-  return {
-    id: telegramId,
-    firstName,
-    lastName,
-    username,
-    phoneNumber,
-  };
-}
-
-function pemFromJwk(jwk: JsonWebKey): string {
-  return createPublicKey({ key: jwk, format: 'jwk' })
-    .export({ type: 'spki', format: 'pem' })
-    .toString();
-}
-
-export function createTelegramOidcSigningKeyProvider(
-  publicKey?: string | KeyObject,
-): TelegramOidcSigningKeyProvider {
-  if (publicKey) {
-    const normalizedKey =
-      typeof publicKey === 'string'
-        ? publicKey
-        : publicKey.export({ type: 'spki', format: 'pem' }).toString();
-    return {
-      async getSigningKey() {
-        return normalizedKey;
-      },
-    };
-  }
-
-  let cachedJwks: JwksResponse | null = null;
-  let cachedAt = 0;
-
-  return {
-    async getSigningKey(kid) {
-      if (!kid) {
-        throw new UnauthorizedException('errors.telegramSignInFailed');
-      }
-
-      const now = Date.now();
-      if (!cachedJwks || now - cachedAt > JWKS_CACHE_TTL_MS) {
-        const response = await fetch(TELEGRAM_OIDC_JWKS_URL);
-        if (!response.ok) {
-          throw new UnauthorizedException('errors.telegramSignInFailed');
-        }
-        cachedJwks = (await response.json()) as JwksResponse;
-        cachedAt = now;
-      }
-
-      const jwk = cachedJwks.keys.find((key) => key.kid === kid);
-      if (!jwk) {
-        throw new UnauthorizedException('errors.telegramSignInFailed');
-      }
-
-      return pemFromJwk(jwk);
-    },
-  };
+  return 'errors.telegramSignInFailed';
 }
 
 function failVerify(
@@ -147,114 +64,113 @@ function failVerify(
   requestId?: string,
 ): never {
   onDebug?.({ requestId, reason });
-  throw new UnauthorizedException('errors.telegramSignInFailed');
+  throw new UnauthorizedException(messageForReason(reason));
 }
 
-function mapJwtVerifyError(error: unknown): TelegramVerifyFailReason {
-  if (!(error instanceof Error)) {
-    return 'jwt_verify_failed';
+function normalizeName(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
   }
-  const message = error.message.toLowerCase();
-  if (message.includes('audience')) {
-    return 'audience_verify_failed';
-  }
-  if (message.includes('issuer')) {
-    return 'issuer_verify_failed';
-  }
-  return 'jwt_verify_failed';
+  return value.trim() || null;
 }
 
-export async function verifyTelegramOidcIdToken(params: {
-  idToken: string;
-  expectedNonce: string;
-  clientId: string;
-  signingKeyProvider: TelegramOidcSigningKeyProvider;
+function normalizeUsername(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  return value.trim().replace(/^@/, '') || null;
+}
+
+function buildDataCheckString(data: TelegramLoginWidgetData): string {
+  const entries: string[] = [];
+  for (const key of DATA_CHECK_FIELDS) {
+    const value = data[key];
+    if (value === undefined || value === null) {
+      continue;
+    }
+    entries.push(`${key}=${value}`);
+  }
+  return entries.sort().join('\n');
+}
+
+function safeHexEqual(computedHex: string, providedHex: string): boolean {
+  const computed = Buffer.from(computedHex, 'hex');
+  const provided = Buffer.from(providedHex, 'hex');
+  if (computed.length === 0 || computed.length !== provided.length) {
+    return false;
+  }
+  return timingSafeEqual(computed, provided);
+}
+
+export function verifyTelegramLoginWidgetData(params: {
+  data: TelegramLoginWidgetData;
+  botToken: string;
   requestId?: string;
+  now?: number;
+  maxAgeSeconds?: number;
   onDebug?: (context: TelegramVerifyDebugContext) => void;
-}): Promise<TelegramAuthProfile> {
-  const normalizedNonce = params.expectedNonce?.trim();
-  if (!normalizedNonce) {
-    failVerify('missing_nonce', params.onDebug, params.requestId);
+}): TelegramAuthProfile {
+  const { data, botToken, onDebug, requestId } = params;
+
+  const providedHash = typeof data.hash === 'string' ? data.hash.trim().toLowerCase() : '';
+  if (!/^[0-9a-f]{64}$/.test(providedHash)) {
+    failVerify('invalid_hash', onDebug, requestId);
   }
 
-  const decoded = jwt.decode(params.idToken, { complete: true });
-  if (!decoded || typeof decoded === 'string') {
-    failVerify('decode_failed', params.onDebug, params.requestId);
+  const secretKey = createHash('sha256').update(botToken).digest();
+  const computedHash = createHmac('sha256', secretKey)
+    .update(buildDataCheckString(data))
+    .digest('hex');
+  if (!safeHexEqual(computedHash, providedHash)) {
+    failVerify('hash_mismatch', onDebug, requestId);
   }
 
-  try {
-    if (!decoded.header.kid) {
-      failVerify('missing_kid', params.onDebug, params.requestId);
-    }
-
-    let signingKey: string;
-    try {
-      signingKey = await params.signingKeyProvider.getSigningKey(decoded.header.kid);
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        failVerify('jwks_key_not_found', params.onDebug, params.requestId);
-      }
-      throw error;
-    }
-
-    const payload = jwt.verify(params.idToken, signingKey, {
-      algorithms: ['RS256'],
-      audience: params.clientId,
-      issuer: TELEGRAM_OIDC_ISSUER,
-    }) as TelegramOidcJwtPayload;
-
-    if (payload.nonce !== normalizedNonce) {
-      failVerify('nonce_verify_failed', params.onDebug, params.requestId);
-    }
-
-    const profile = mapPayload(payload);
-    if (!profile.id) {
-      failVerify('invalid_telegram_id', params.onDebug, params.requestId);
-    }
-    return profile;
-  } catch (error) {
-    if (error instanceof UnauthorizedException) {
-      throw error;
-    }
-    failVerify(mapJwtVerifyError(error), params.onDebug, params.requestId);
+  const authDate = Number(data.auth_date);
+  if (!Number.isFinite(authDate) || authDate <= 0) {
+    failVerify('invalid_auth_date', onDebug, requestId);
   }
-}
 
-export function createTestTelegramOidcKeyPair() {
-  return generateKeyPairSync('rsa', {
-    modulusLength: 2048,
-    publicKeyEncoding: { type: 'spki', format: 'pem' },
-    privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
-  });
+  const nowSeconds = Math.floor((params.now ?? Date.now()) / 1000);
+  const maxAgeSeconds = params.maxAgeSeconds ?? TELEGRAM_AUTH_MAX_AGE_SECONDS;
+  const ageSeconds = nowSeconds - authDate;
+  if (ageSeconds > maxAgeSeconds || ageSeconds < -TELEGRAM_AUTH_CLOCK_SKEW_SECONDS) {
+    failVerify('auth_date_expired', onDebug, requestId);
+  }
+
+  const telegramId = String(data.id ?? '').trim();
+  if (!/^\d+$/.test(telegramId)) {
+    failVerify('invalid_telegram_id', onDebug, requestId);
+  }
+
+  return {
+    id: telegramId,
+    firstName: normalizeName(data.first_name),
+    lastName: normalizeName(data.last_name),
+    username: normalizeUsername(data.username),
+    phoneNumber: null,
+  };
 }
 
 @Injectable()
 export class TelegramAuthVerifierService {
   private readonly logger = new Logger(TelegramAuthVerifierService.name);
-  private readonly signingKeyProvider = createTelegramOidcSigningKeyProvider();
 
   constructor(private readonly configService: ConfigService) {}
 
-  async verify(
-    idToken: string,
-    expectedNonce: string,
-    requestId?: string,
-  ): Promise<TelegramAuthProfile> {
-    const clientId = this.configService.get<string>('TELEGRAM_CLIENT_ID')?.trim();
-    if (!clientId) {
+  verify(data: TelegramLoginWidgetData, requestId?: string): TelegramAuthProfile {
+    const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN')?.trim();
+    if (!botToken) {
       logUserActionFailure(this.logger, {
         event: 'telegram_verify_failed',
         requestId,
-        reason: 'missing_client_id',
+        reason: 'missing_bot_token',
       });
       throw new UnauthorizedException('errors.telegramSignInUnavailable');
     }
 
-    return verifyTelegramOidcIdToken({
-      idToken,
-      expectedNonce,
-      clientId,
-      signingKeyProvider: this.signingKeyProvider,
+    return verifyTelegramLoginWidgetData({
+      data,
+      botToken,
       requestId,
       onDebug: ({ reason }) => {
         logUserActionFailure(this.logger, {

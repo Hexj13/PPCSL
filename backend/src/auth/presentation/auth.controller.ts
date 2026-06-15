@@ -59,7 +59,6 @@ import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResendEmailVerificationDto } from './dto/resend-email-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
-import { TelegramSignInNonceResponseDto } from './dto/telegram-sign-in-nonce.dto';
 import { TelegramSignInDto } from './dto/telegram-sign-in.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
@@ -290,15 +289,6 @@ export class AuthController {
     const result = await this.authService.googleSignIn(dto, ip, this.getRequestLocale(req));
     this.authTokenIssuer.attachLoginCookies(res, result);
     return this.authTokenIssuer.cookieAuthJsonBody(result);
-  }
-
-  @ApiOperation({ summary: 'Issue one-time nonce for Telegram Login OIDC' })
-  @Throttle(getThrottleLimit(10, 200))
-  @UseGuards(IpBlockGuard)
-  @HttpCode(200)
-  @Post('telegram/nonce')
-  async telegramSignInNonce(): Promise<TelegramSignInNonceResponseDto> {
-    return this.authService.createTelegramSignInNonce();
   }
 
   @ApiOperation({ summary: 'Sign in or register with Telegram' })
