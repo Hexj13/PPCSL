@@ -1,9 +1,11 @@
+import { createHash } from 'crypto';
+
 import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 
 import * as constants from '../../../common/constants';
 import { UserType } from '../../../common/types';
 import { handleDuplicateKeyError } from '../../../common/utils/error-handling.utils';
-import { logUserEvent } from '../../../common/utils/log-user-event';
+import { logUserActionFailure, logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
 import { cleanUserData } from '../../../users/domain/utils/data-cleanup.utils';
 import { isSelfDeletedUser } from '../../../users/domain/utils/user-account-status.utils';
@@ -15,6 +17,35 @@ import { TelegramOidcNonceService } from '../../infrastructure/services/telegram
 import { TelegramSignInDto } from '../../presentation/dto/telegram-sign-in.dto';
 import { TelegramSignInResponse } from '../auth.types';
 import { AuthTokenIssuerService } from '../services/auth-token-issuer.service';
+
+function hashTelegramId(telegramId: string): string {
+  return createHash('sha256').update(telegramId).digest('hex').slice(0, 16);
+}
+
+function getErrorKey(error: unknown): string | undefined {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = (error as { response?: { message?: string } }).response;
+    if (typeof response?.message === 'string') {
+      return response.message;
+    }
+  }
+  if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
+    const response = error.getResponse();
+    if (typeof response === 'string') {
+      return response;
+    }
+    if (response && typeof response === 'object' && 'message' in response) {
+      const message = (response as { message?: string | string[] }).message;
+      if (typeof message === 'string') {
+        return message;
+      }
+      if (Array.isArray(message) && message.length > 0) {
+        return message.join(', ');
+      }
+    }
+  }
+  return undefined;
+}
 
 @Injectable()
 export class TelegramSignInUseCase {
@@ -32,10 +63,46 @@ export class TelegramSignInUseCase {
     dto: TelegramSignInDto,
     ip?: string,
     requestLocale?: string,
+    requestId?: string,
   ): Promise<TelegramSignInResponse> {
-    const profile = await this.verifier.verify(dto.idToken, dto.nonce);
-    await this.nonceService.consume(dto.nonce);
-    return this.signInWithProfile(profile, dto, ip, requestLocale);
+    logUserEvent(this.logger, {
+      event: 'telegram_signin_started',
+      requestId,
+      hasPreferredType: Boolean(dto.type),
+      termsAccepted: Boolean(dto.termsAccepted),
+    });
+
+    try {
+      const profile = await this.verifier.verify(dto.idToken, dto.nonce, requestId);
+      logUserEvent(this.logger, {
+        event: 'telegram_token_verified',
+        requestId,
+        telegramIdHash: hashTelegramId(profile.id),
+        hasPhoneClaim: Boolean(profile.phoneNumber),
+        hasUsername: Boolean(profile.username),
+      });
+
+      await this.nonceService.consume(dto.nonce);
+      logUserEvent(this.logger, {
+        event: 'telegram_nonce_consumed',
+        requestId,
+      });
+
+      return await this.signInWithProfile(profile, dto, ip, requestLocale, requestId);
+    } catch (error) {
+      logUserActionFailure(this.logger, {
+        event: 'telegram_signin_failed',
+        requestId,
+        errorKey: getErrorKey(error),
+        status:
+          error instanceof BadRequestException
+            ? 400
+            : error instanceof UnauthorizedException
+              ? 401
+              : undefined,
+      });
+      throw error;
+    }
   }
 
   async signInWithProfile(
@@ -43,8 +110,15 @@ export class TelegramSignInUseCase {
     dto: Pick<TelegramSignInDto, 'termsAccepted' | 'type'>,
     ip?: string,
     requestLocale?: string,
+    requestId?: string,
   ): Promise<TelegramSignInResponse> {
     let user = await this.usersService.findByTelegramId(profile.id);
+    logUserEvent(this.logger, {
+      event: 'telegram_user_lookup',
+      requestId,
+      telegramIdHash: hashTelegramId(profile.id),
+      isExistingUser: Boolean(user),
+    });
     let isNewUser = false;
 
     if (!user) {
@@ -63,7 +137,14 @@ export class TelegramSignInUseCase {
         throw new BadRequestException('errors.termsNotAccepted');
       }
       isNewUser = true;
-      const verifiedPhone = await this.resolveVerifiedPhoneForNewUser(profile);
+      logUserEvent(this.logger, {
+        event: 'telegram_new_user_create_started',
+        requestId,
+        telegramIdHash: hashTelegramId(profile.id),
+        hasPhoneClaim: Boolean(profile.phoneNumber),
+        hasUsername: Boolean(profile.username),
+      });
+      const verifiedPhone = await this.resolveVerifiedPhoneForNewUser(profile, requestId);
       const normalizedRequestLocale = requestLocale?.trim().toLowerCase();
       const defaultType = constants.userTypes[0] as UserType;
       const newUserData = cleanUserData({
@@ -99,6 +180,13 @@ export class TelegramSignInUseCase {
         throw error;
       }
       logUserEvent(this.logger, {
+        event: 'telegram_new_user_created',
+        requestId,
+        userId: user.id,
+        telegramIdHash: hashTelegramId(profile.id),
+        hasPhoneClaim: Boolean(profile.phoneNumber),
+      });
+      logUserEvent(this.logger, {
         event: 'user_registered',
         userId: user.id,
         userType: user.type,
@@ -106,6 +194,12 @@ export class TelegramSignInUseCase {
         hasPhone: !!user.phone,
       });
     } else {
+      logUserEvent(this.logger, {
+        event: 'telegram_existing_user_login',
+        requestId,
+        userId: user.id,
+        telegramIdHash: hashTelegramId(profile.id),
+      });
       const patch: Partial<User> = {};
       if (profile.username && profile.username !== user.telegramUsername) {
         patch.telegramUsername = profile.username;
@@ -129,6 +223,14 @@ export class TelegramSignInUseCase {
     });
     const fresh = await this.usersService.findOneById(user.id);
     const login = await this.authTokenIssuer.issueLoginResponse(fresh);
+
+    logUserEvent(this.logger, {
+      event: 'telegram_login_cookies_issued',
+      requestId,
+      userId: user.id,
+      isNewUser,
+      requiresPhoneVerification: !(fresh.phone && fresh.phoneVerified),
+    });
 
     logUserEvent(this.logger, {
       event: 'user_logged_in',
@@ -164,12 +266,25 @@ export class TelegramSignInUseCase {
 
   private async resolveVerifiedPhoneForNewUser(
     profile: TelegramAuthProfile,
+    requestId?: string,
   ): Promise<{ phone: string; phoneVerified: true } | null> {
     const verifiedPhone = this.normalizeVerifiedTelegramPhone(profile.phoneNumber);
     if (!verifiedPhone) {
       return null;
     }
-    await this.assertPhoneAvailable(verifiedPhone.phone);
+    try {
+      await this.assertPhoneAvailable(verifiedPhone.phone);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        logUserActionFailure(this.logger, {
+          event: 'telegram_phone_conflict',
+          requestId,
+          telegramIdHash: hashTelegramId(profile.id),
+          errorKey: getErrorKey(error),
+        });
+      }
+      throw error;
+    }
     return verifiedPhone;
   }
 

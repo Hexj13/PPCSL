@@ -312,7 +312,12 @@ export class AuthController {
     @Body() dto: TelegramSignInDto,
   ) {
     const ip = this.ipBlockService.getClientIp(req);
-    const result = await this.authService.telegramSignIn(dto, ip, this.getRequestLocale(req));
+    const result = await this.authService.telegramSignIn(
+      dto,
+      ip,
+      this.getRequestLocale(req),
+      req.requestId,
+    );
     this.authTokenIssuer.attachLoginCookies(res, result);
     return this.authTokenIssuer.cookieAuthJsonBody(result);
   }

@@ -4,6 +4,8 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { finishOAuthSession } from '@/app/sign/finishOAuthSession';
+import { createTelegramAuthFlowId, logTelegramAuthEvent } from '@/app/sign/telegramAuthDebug';
+import { openTelegramAuthPopup } from '@/app/sign/telegramAuthFlow';
 import { isTelegramDevMockEnabled } from '@/app/sign/telegramDevMock';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -24,26 +26,12 @@ type TelegramSignInSubmitError = {
   code?: string;
   message?: string;
   response?: {
+    status?: number;
     data?: {
       message?: string | string[];
     };
   };
 };
-
-type TelegramLoginAuthResult = {
-  id_token?: string;
-  error?: string;
-};
-
-type TelegramAuthMessageData = {
-  event?: string;
-  result?: unknown;
-  id_token?: unknown;
-  token?: unknown;
-  error?: string;
-};
-
-const TELEGRAM_OAUTH_ORIGIN = 'https://oauth.telegram.org';
 
 declare global {
   interface Window {
@@ -56,7 +44,7 @@ declare global {
             lang?: string;
             nonce?: string;
           },
-          callback?: (result: TelegramLoginAuthResult) => void,
+          callback?: (result: { id_token?: string; error?: string }) => void,
         ) => void;
         auth: (
           options: {
@@ -65,7 +53,7 @@ declare global {
             lang?: string;
             nonce?: string;
           },
-          callback: (result: TelegramLoginAuthResult) => void,
+          callback: (result: { id_token?: string; error?: string }) => void,
         ) => void;
       };
     };
@@ -102,6 +90,18 @@ function getTelegramSignInErrorMessage(error: unknown, t: (k: string) => string)
   return t('errors.telegramSignInFailed');
 }
 
+function getBackendErrorKey(error: unknown): string | undefined {
+  const err = error as TelegramSignInSubmitError;
+  const backendMessage = err.response?.data?.message;
+  if (typeof backendMessage === 'string') {
+    return backendMessage;
+  }
+  if (Array.isArray(backendMessage) && backendMessage.length > 0) {
+    return backendMessage.join(', ');
+  }
+  return err.message;
+}
+
 function parseTelegramClientId(raw: string | undefined): number | null {
   const trimmed = raw?.trim();
   if (!trimmed || !/^\d+$/.test(trimmed)) {
@@ -109,125 +109,6 @@ function parseTelegramClientId(raw: string | undefined): number | null {
   }
   const parsed = Number(trimmed);
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
-}
-
-function parseTelegramAuthMessage(data: unknown): TelegramLoginAuthResult | null {
-  const parsedData =
-    typeof data === 'string' ? (JSON.parse(data) as TelegramAuthMessageData) : data;
-  if (!parsedData || typeof parsedData !== 'object') {
-    return null;
-  }
-  const message = parsedData as TelegramAuthMessageData;
-  if (message.event !== 'auth_result') {
-    return null;
-  }
-  if (message.error) {
-    return { error: message.error };
-  }
-  const result = message.result;
-  const idToken =
-    typeof message.id_token === 'string'
-      ? message.id_token
-      : typeof message.token === 'string'
-        ? message.token
-        : typeof result === 'string'
-          ? result
-          : result && typeof result === 'object' && 'id_token' in result
-            ? (result as { id_token?: unknown }).id_token
-            : result && typeof result === 'object' && 'token' in result
-              ? (result as { token?: unknown }).token
-              : null;
-  return typeof idToken === 'string' && idToken.trim()
-    ? { id_token: idToken }
-    : { error: 'missing id_token' };
-}
-
-function openTelegramAuthPopup(
-  options: { clientId: number; nonce: string; lang: string },
-  callback: (result: TelegramLoginAuthResult) => void,
-): void {
-  const redirectUri = `${window.location.origin}${window.location.pathname}`;
-  const params = new URLSearchParams({
-    response_type: 'post_message',
-    client_id: String(options.clientId),
-    redirect_uri: redirectUri,
-    scope: 'openid profile phone',
-    origin: window.location.origin,
-    nonce: options.nonce,
-    lang: options.lang,
-  });
-
-  const width = 550;
-  const height = 650;
-  const left = Math.max(0, (window.screen.width - width) / 2);
-  const top = Math.max(0, (window.screen.height - height) / 2);
-  const features = [
-    `width=${width}`,
-    `height=${height}`,
-    `left=${left}`,
-    `top=${top}`,
-    'status=0',
-    'location=0',
-    'menubar=0',
-    'toolbar=0',
-  ].join(',');
-
-  const popup = window.open(
-    `${TELEGRAM_OAUTH_ORIGIN}/auth?${params.toString()}`,
-    'telegram_oidc_login',
-    features,
-  );
-
-  if (!popup) {
-    callback({ error: 'popup_blocked' });
-    return;
-  }
-
-  let completed = false;
-  let closeTimer: ReturnType<typeof setTimeout> | null = null;
-
-  const cleanup = () => {
-    window.removeEventListener('message', handleMessage);
-    if (closeTimer) {
-      clearTimeout(closeTimer);
-      closeTimer = null;
-    }
-  };
-
-  const finish = (result: TelegramLoginAuthResult) => {
-    if (completed) {
-      return;
-    }
-    completed = true;
-    cleanup();
-    callback(result);
-  };
-
-  function handleMessage(event: MessageEvent) {
-    if (event.origin !== TELEGRAM_OAUTH_ORIGIN || event.source !== popup) {
-      return;
-    }
-    try {
-      const result = parseTelegramAuthMessage(event.data);
-      if (result) {
-        finish(result);
-      }
-    } catch {
-      finish({ error: 'malformed_response' });
-    }
-  }
-
-  const checkClosed = () => {
-    if (popup.closed) {
-      finish({ error: 'popup_closed' });
-      return;
-    }
-    closeTimer = setTimeout(checkClosed, 200);
-  };
-
-  window.addEventListener('message', handleMessage);
-  popup.focus();
-  checkClosed();
 }
 
 export function useTelegramAuth(options: {
@@ -250,6 +131,7 @@ export function useTelegramAuth(options: {
   const isTelegramAuthInFlightRef = useRef(false);
   const telegramCallbackProcessingRef = useRef(false);
   const isMountedRef = useRef(true);
+  const flowIdRef = useRef<string | null>(null);
   const authOptionsRef = useRef({
     tab: options.tab,
     preferredNewUserType: options.preferredNewUserType,
@@ -262,10 +144,27 @@ export function useTelegramAuth(options: {
     };
   }, [options.tab, options.preferredNewUserType]);
 
+  const getDebugContext = useCallback(
+    (extra: Record<string, unknown> = {}) => {
+      const startedAt = submitStartedAtRef.current ?? Date.now();
+      return {
+        flowId: flowIdRef.current ?? 'unknown',
+        locale: options.locale,
+        tab: authOptionsRef.current.tab,
+        hasPreferredType: Boolean(authOptionsRef.current.preferredNewUserType),
+        origin: typeof window !== 'undefined' ? window.location.origin : undefined,
+        elapsedMs: Date.now() - startedAt,
+        ...extra,
+      };
+    },
+    [options.locale],
+  );
+
   const resetTelegramBusyState = useCallback(() => {
     submitStartedAtRef.current = null;
     isTelegramAuthInFlightRef.current = false;
     telegramCallbackProcessingRef.current = false;
+    flowIdRef.current = null;
     setIsTelegramAuthInFlight(false);
   }, []);
 
@@ -281,11 +180,33 @@ export function useTelegramAuth(options: {
       isTelegramAuthInFlightRef.current = true;
       setIsTelegramAuthInFlight(true);
 
+      logTelegramAuthEvent('backend_submit_started', getDebugContext());
+
       try {
         const { preferredNewUserType } = authOptionsRef.current;
         const authResult = await signIn();
-        const me = await authApi.me(quietAuthRequest);
-        const syncedUser = me.data;
+        logTelegramAuthEvent(
+          'backend_submit_success',
+          getDebugContext({
+            backendStatus: 200,
+            hasIdToken: true,
+          }),
+        );
+
+        let syncedUser;
+        try {
+          const me = await authApi.me(quietAuthRequest);
+          syncedUser = me.data;
+        } catch (error: unknown) {
+          logTelegramAuthEvent(
+            'me_sync_failed',
+            getDebugContext({
+              backendErrorKey: getBackendErrorKey(error),
+            }),
+          );
+          throw error;
+        }
+
         if (!isMountedRef.current) return;
 
         if (authResult.data.isNewUser) {
@@ -293,6 +214,8 @@ export function useTelegramAuth(options: {
         } else {
           analytics.login('telegram');
         }
+
+        logTelegramAuthEvent('finish_oauth_started', getDebugContext());
 
         await finishOAuthSession({
           syncedUser,
@@ -307,16 +230,25 @@ export function useTelegramAuth(options: {
           t,
         });
       } catch (error: unknown) {
+        const err = error as TelegramSignInSubmitError;
+        logTelegramAuthEvent(
+          'backend_submit_failed',
+          getDebugContext({
+            backendStatus: err.response?.status,
+            backendErrorKey: getBackendErrorKey(error),
+          }),
+        );
         await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
         if (!isMountedRef.current) return;
         resetTelegramBusyState();
         toast.error(getTelegramSignInErrorMessage(error, t));
       }
     },
-    [replace, resetTelegramBusyState, searchParams, setAuth, t],
+    [getDebugContext, replace, resetTelegramBusyState, searchParams, setAuth, t],
   );
 
   const signInWithDevMock = useCallback(() => {
+    flowIdRef.current = createTelegramAuthFlowId();
     void completeTelegramSignIn(() => {
       const { tab, preferredNewUserType } = authOptionsRef.current;
       const body: DevTelegramSignInDto = {
@@ -343,47 +275,68 @@ export function useTelegramAuth(options: {
         if (telegramCallbackProcessingRef.current || isTelegramAuthInFlightRef.current) {
           return;
         }
+
+        flowIdRef.current = createTelegramAuthFlowId();
         submitStartedAtRef.current = Date.now();
         isTelegramAuthInFlightRef.current = true;
         setIsTelegramAuthInFlight(true);
 
+        const { tab, preferredNewUserType } = authOptionsRef.current;
+
         try {
+          logTelegramAuthEvent('nonce_requested', getDebugContext());
+
           const nonceResponse = await authApi.createTelegramSignInNonce(quietAuthRequest);
           const nonce = nonceResponse.data.nonce;
           const lang = getTelegramLang(options.locale);
 
-          openTelegramAuthPopup({ clientId, nonce, lang }, (result) => {
-            if (!isMountedRef.current) {
-              return;
-            }
-            if (result.error || !result.id_token) {
-              resetTelegramBusyState();
-              if (result.error) {
-                toast.error(t('errors.telegramSignInFailed'));
-              }
-              return;
-            }
+          logTelegramAuthEvent('nonce_received', getDebugContext());
 
-            void completeTelegramSignIn(() => {
-              const { tab, preferredNewUserType } = authOptionsRef.current;
-              const body: TelegramSignInDto = {
-                idToken: result.id_token!,
-                nonce,
-                termsAccepted: true,
-              };
-              if (tab === 'register' && preferredNewUserType) {
-                body.type = preferredNewUserType;
+          openTelegramAuthPopup(
+            {
+              clientId,
+              nonce,
+              lang,
+              debug: {
+                flowId: flowIdRef.current!,
+                locale: options.locale,
+                tab,
+                hasPreferredType: Boolean(preferredNewUserType),
+              },
+            },
+            (result) => {
+              if (!isMountedRef.current) {
+                return;
               }
-              return authApi.telegramSignIn(body, quietAuthRequest);
-            });
-          });
+              if (result.error || !result.id_token) {
+                resetTelegramBusyState();
+                if (result.error) {
+                  toast.error(t('errors.telegramSignInFailed'));
+                }
+                return;
+              }
+
+              void completeTelegramSignIn(() => {
+                const body: TelegramSignInDto = {
+                  idToken: result.id_token!,
+                  nonce,
+                  termsAccepted: true,
+                };
+                if (tab === 'register' && preferredNewUserType) {
+                  body.type = preferredNewUserType;
+                }
+                return authApi.telegramSignIn(body, quietAuthRequest);
+              });
+            },
+          );
         } catch {
+          logTelegramAuthEvent('nonce_request_failed', getDebugContext());
           resetTelegramBusyState();
           toast.error(t('errors.telegramSignInFailed'));
         }
       })();
     },
-    [clientId, completeTelegramSignIn, options.locale, resetTelegramBusyState, t],
+    [clientId, completeTelegramSignIn, getDebugContext, options.locale, resetTelegramBusyState, t],
   );
 
   useEffect(() => {

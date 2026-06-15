@@ -113,8 +113,9 @@ export class AuthService {
     dto: TelegramSignInDto,
     ip?: string,
     requestLocale?: string,
+    requestId?: string,
   ): Promise<TelegramSignInResponse> {
-    return this.telegramSignInUseCase.execute(dto, ip, requestLocale);
+    return this.telegramSignInUseCase.execute(dto, ip, requestLocale, requestId);
   }
 
   async createTelegramSignInNonce(): Promise<{ nonce: string }> {

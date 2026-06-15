@@ -150,7 +150,7 @@ describe('TelegramSignInUseCase', () => {
       'ru',
     );
 
-    expect(verifier.verify).toHaveBeenCalledWith('token', 'nonce-value');
+    expect(verifier.verify).toHaveBeenCalledWith('token', 'nonce-value', undefined);
     expect(nonceService.consume).toHaveBeenCalledWith('nonce-value');
   });
 });

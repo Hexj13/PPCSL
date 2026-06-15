@@ -1,8 +1,10 @@
 import { createPublicKey, generateKeyPairSync, type JsonWebKey, type KeyObject } from 'crypto';
 
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
+
+import { logUserActionFailure } from '../../../common/utils/log-user-event';
 
 export type TelegramAuthProfile = {
   id: string;
@@ -27,6 +29,24 @@ type JwksResponse = {
 const TELEGRAM_OIDC_ISSUER = 'https://oauth.telegram.org';
 const TELEGRAM_OIDC_JWKS_URL = 'https://oauth.telegram.org/.well-known/jwks.json';
 const JWKS_CACHE_TTL_MS = 60 * 60 * 1000;
+
+export type TelegramVerifyFailReason =
+  | 'missing_client_id'
+  | 'missing_nonce'
+  | 'decode_failed'
+  | 'missing_kid'
+  | 'jwks_fetch_failed'
+  | 'jwks_key_not_found'
+  | 'jwt_verify_failed'
+  | 'audience_verify_failed'
+  | 'issuer_verify_failed'
+  | 'nonce_verify_failed'
+  | 'invalid_telegram_id';
+
+type TelegramVerifyDebugContext = {
+  requestId?: string;
+  reason: TelegramVerifyFailReason;
+};
 
 export type TelegramOidcSigningKeyProvider = {
   getSigningKey(kid?: string): Promise<string>;
@@ -121,24 +141,62 @@ export function createTelegramOidcSigningKeyProvider(
   };
 }
 
+function failVerify(
+  reason: TelegramVerifyFailReason,
+  onDebug?: (context: TelegramVerifyDebugContext) => void,
+  requestId?: string,
+): never {
+  onDebug?.({ requestId, reason });
+  throw new UnauthorizedException('errors.telegramSignInFailed');
+}
+
+function mapJwtVerifyError(error: unknown): TelegramVerifyFailReason {
+  if (!(error instanceof Error)) {
+    return 'jwt_verify_failed';
+  }
+  const message = error.message.toLowerCase();
+  if (message.includes('audience')) {
+    return 'audience_verify_failed';
+  }
+  if (message.includes('issuer')) {
+    return 'issuer_verify_failed';
+  }
+  return 'jwt_verify_failed';
+}
+
 export async function verifyTelegramOidcIdToken(params: {
   idToken: string;
   expectedNonce: string;
   clientId: string;
   signingKeyProvider: TelegramOidcSigningKeyProvider;
+  requestId?: string;
+  onDebug?: (context: TelegramVerifyDebugContext) => void;
 }): Promise<TelegramAuthProfile> {
   const normalizedNonce = params.expectedNonce?.trim();
   if (!normalizedNonce) {
-    throw new UnauthorizedException('errors.telegramSignInFailed');
+    failVerify('missing_nonce', params.onDebug, params.requestId);
   }
 
   const decoded = jwt.decode(params.idToken, { complete: true });
   if (!decoded || typeof decoded === 'string') {
-    throw new UnauthorizedException('errors.telegramSignInFailed');
+    failVerify('decode_failed', params.onDebug, params.requestId);
   }
 
   try {
-    const signingKey = await params.signingKeyProvider.getSigningKey(decoded.header.kid);
+    if (!decoded.header.kid) {
+      failVerify('missing_kid', params.onDebug, params.requestId);
+    }
+
+    let signingKey: string;
+    try {
+      signingKey = await params.signingKeyProvider.getSigningKey(decoded.header.kid);
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        failVerify('jwks_key_not_found', params.onDebug, params.requestId);
+      }
+      throw error;
+    }
+
     const payload = jwt.verify(params.idToken, signingKey, {
       algorithms: ['RS256'],
       audience: params.clientId,
@@ -146,15 +204,19 @@ export async function verifyTelegramOidcIdToken(params: {
     }) as TelegramOidcJwtPayload;
 
     if (payload.nonce !== normalizedNonce) {
-      throw new UnauthorizedException('errors.telegramSignInFailed');
+      failVerify('nonce_verify_failed', params.onDebug, params.requestId);
     }
 
-    return mapPayload(payload);
+    const profile = mapPayload(payload);
+    if (!profile.id) {
+      failVerify('invalid_telegram_id', params.onDebug, params.requestId);
+    }
+    return profile;
   } catch (error) {
     if (error instanceof UnauthorizedException) {
       throw error;
     }
-    throw new UnauthorizedException('errors.telegramSignInFailed');
+    failVerify(mapJwtVerifyError(error), params.onDebug, params.requestId);
   }
 }
 
@@ -168,13 +230,23 @@ export function createTestTelegramOidcKeyPair() {
 
 @Injectable()
 export class TelegramAuthVerifierService {
+  private readonly logger = new Logger(TelegramAuthVerifierService.name);
   private readonly signingKeyProvider = createTelegramOidcSigningKeyProvider();
 
   constructor(private readonly configService: ConfigService) {}
 
-  async verify(idToken: string, expectedNonce: string): Promise<TelegramAuthProfile> {
+  async verify(
+    idToken: string,
+    expectedNonce: string,
+    requestId?: string,
+  ): Promise<TelegramAuthProfile> {
     const clientId = this.configService.get<string>('TELEGRAM_CLIENT_ID')?.trim();
     if (!clientId) {
+      logUserActionFailure(this.logger, {
+        event: 'telegram_verify_failed',
+        requestId,
+        reason: 'missing_client_id',
+      });
       throw new UnauthorizedException('errors.telegramSignInUnavailable');
     }
 
@@ -183,6 +255,14 @@ export class TelegramAuthVerifierService {
       expectedNonce,
       clientId,
       signingKeyProvider: this.signingKeyProvider,
+      requestId,
+      onDebug: ({ reason }) => {
+        logUserActionFailure(this.logger, {
+          event: 'telegram_verify_failed',
+          requestId,
+          reason,
+        });
+      },
     });
   }
 }
