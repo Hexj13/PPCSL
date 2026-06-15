@@ -6,6 +6,7 @@ import { LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
 import {
   applyHomeScrollRestoreScrollPosition,
   getHomeScrollRestorePhase,
+  isHomeScrollRestoreInProgress,
   prepareHomeScrollRestoreGridLayout,
   shouldDeferVirtualSwapForHomeScrollRestore,
 } from '@/lib/home-scroll-restore';
@@ -60,8 +61,11 @@ function runDeferredVirtualSwap(
   applyPendingHomeScrollRestorePosition();
 }
 
-function runImmediateVirtualSwap(): void {
+function runImmediateVirtualSwap(skipPostRestoreVirtualSwapRef: MutableRef<boolean>): void {
   preparePendingHomeScrollRestoreLayout();
+  if (isHomeScrollRestoreInProgress()) {
+    skipPostRestoreVirtualSwapRef.current = true;
+  }
   requestListingGridVirtualSwap();
   applyPendingHomeScrollRestorePosition();
 }
@@ -111,7 +115,7 @@ export function useListingGridVirtualSwapOnListings({
       return;
     }
 
-    runImmediateVirtualSwap();
+    runImmediateVirtualSwap(skipPostRestoreVirtualSwapRef);
   }, [
     uniqueListingsLength,
     searchParamsString,

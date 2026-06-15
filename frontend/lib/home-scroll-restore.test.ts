@@ -10,6 +10,7 @@ import {
   applyHomeScrollRestoreWhenGridReady,
   beginHomeScrollRestore,
   cancelHomeScrollRestore,
+  ensureHomeReloadScrollPersistence,
   getHomeScrollRestorePhase,
   getPendingRestoreMinHeight,
   persistHomeReloadScrollState,
@@ -388,5 +389,70 @@ describe('home scroll restore coordinator', () => {
     beginHomeScrollRestore({ scrollY: 1200, source: 'reload_or_back_forward' });
 
     expect(document.querySelector('[data-home-scroll-restore-spacer="true"]')).toBeNull();
+  });
+});
+
+describe('home scroll restore user interaction cancel timing', () => {
+  beforeEach(() => {
+    resetHomeScrollRestoreForTests();
+    window.sessionStorage.clear();
+    window.scrollTo = jest.fn();
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 0, writable: true });
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      value: 800,
+      writable: true,
+    });
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 5000,
+    });
+    ensureHomeReloadScrollPersistence();
+  });
+
+  afterEach(() => {
+    resetHomeScrollRestoreForTests();
+    jest.useRealTimers();
+  });
+
+  function beginCorrectingRestore(): void {
+    beginHomeScrollRestore({ scrollY: 800, source: 'reload_or_back_forward' });
+    applyHomeScrollRestoreWhenGridReady();
+    reportGridReady(8);
+    reportBannerDecided();
+    expect(getHomeScrollRestorePhase()).toBe('correcting');
+  }
+
+  it('defers cancel on pointerdown until after click', () => {
+    jest.useFakeTimers();
+    beginCorrectingRestore();
+
+    window.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+
+    expect(getHomeScrollRestorePhase()).toBe('correcting');
+
+    window.dispatchEvent(new Event('click', { bubbles: true }));
+
+    expect(getHomeScrollRestorePhase()).toBe('correcting');
+
+    jest.runOnlyPendingTimers();
+
+    expect(getHomeScrollRestorePhase()).toBe('cancelled');
+  });
+
+  it('cancels immediately on wheel interaction', () => {
+    beginCorrectingRestore();
+
+    window.dispatchEvent(new WheelEvent('wheel', { bubbles: true }));
+
+    expect(getHomeScrollRestorePhase()).toBe('cancelled');
+  });
+
+  it('cancels immediately on touchmove interaction', () => {
+    beginCorrectingRestore();
+
+    window.dispatchEvent(new TouchEvent('touchmove', { bubbles: true }));
+
+    expect(getHomeScrollRestorePhase()).toBe('cancelled');
   });
 });

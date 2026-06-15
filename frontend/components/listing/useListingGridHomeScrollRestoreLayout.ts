@@ -7,6 +7,7 @@ import {
   getHomeScrollRestorePhase,
   getPendingRestoreMinHeight,
   prepareHomeScrollRestoreGridLayout,
+  readPendingHomeReloadScrollY,
   shouldDeferVirtualSwapForHomeScrollRestore,
   subscribeHomeScrollRestoreState,
 } from '@/lib/home-scroll-restore';
@@ -29,8 +30,8 @@ export function useListingGridHomeScrollRestoreLayout(
         return;
       }
       prepareHomeScrollRestoreGridLayout();
+      skipPostRestoreVirtualSwapRef.current = true;
       if (shouldDeferVirtualSwapForHomeScrollRestore()) {
-        skipPostRestoreVirtualSwapRef.current = true;
         setGridVirtualEpoch((epoch) => epoch + 1);
         prepareHomeScrollRestoreGridLayout();
         if (document.getElementById('listings-results')) {
@@ -59,11 +60,27 @@ export function useListingGridHomeScrollRestoreLayout(
         syncGridMinHeight();
         return;
       }
-      setGridMinHeight(undefined);
-      if (!skipPostRestoreVirtualSwapRef.current) {
-        requestListingGridVirtualSwap();
-      }
+      const skipSwap = skipPostRestoreVirtualSwapRef.current;
       skipPostRestoreVirtualSwapRef.current = false;
+      requestAnimationFrame(() => {
+        const savedReloadScrollY = readPendingHomeReloadScrollY();
+        setGridMinHeight(undefined);
+        if (!skipSwap) {
+          requestListingGridVirtualSwap();
+        }
+        if (!savedReloadScrollY) {
+          return;
+        }
+        const reapplySavedReloadScroll = () => {
+          if (Math.abs(window.scrollY - savedReloadScrollY) > 2) {
+            window.scrollTo({ top: savedReloadScrollY, left: 0, behavior: 'instant' });
+          }
+        };
+        reapplySavedReloadScroll();
+        requestAnimationFrame(reapplySavedReloadScroll);
+        window.setTimeout(reapplySavedReloadScroll, 0);
+        window.setTimeout(reapplySavedReloadScroll, 400);
+      });
     });
 
     return unsubscribe;

@@ -9,6 +9,7 @@ import {
   applyHomeScrollRestoreScrollPosition,
   getHomeScrollRestorePhase,
   isHomeScrollRestoreInProgress,
+  readPendingHomeReloadScrollY,
   reapplyHomeScrollRestoreScrollPosition,
   shouldDeferVirtualSwapForHomeScrollRestore,
 } from '@/lib/home-scroll-restore';
@@ -237,15 +238,27 @@ export function VirtualizedListingGrid(props: VirtualizedListingGridProps) {
     if (!virtualized) {
       return;
     }
-    if (!isHomeScrollRestoreInProgress()) {
-      return;
-    }
-    if (getHomeScrollRestorePhase() === 'pending') {
-      applyHomeScrollRestoreScrollPosition();
-      return;
-    }
-    reapplyHomeScrollRestoreScrollPosition();
-    const rafId = requestAnimationFrame(reapplyHomeScrollRestoreScrollPosition);
+
+    const reapplyScrollAfterVirtualSwap = () => {
+      const savedReloadScrollY = readPendingHomeReloadScrollY();
+      if (savedReloadScrollY !== null) {
+        if (Math.abs(window.scrollY - savedReloadScrollY) > 2) {
+          window.scrollTo({ top: savedReloadScrollY, left: 0, behavior: 'instant' });
+        }
+        return;
+      }
+      if (!isHomeScrollRestoreInProgress()) {
+        return;
+      }
+      if (getHomeScrollRestorePhase() === 'pending') {
+        applyHomeScrollRestoreScrollPosition();
+        return;
+      }
+      reapplyHomeScrollRestoreScrollPosition();
+    };
+
+    reapplyScrollAfterVirtualSwap();
+    const rafId = requestAnimationFrame(reapplyScrollAfterVirtualSwap);
     return () => {
       cancelAnimationFrame(rafId);
     };

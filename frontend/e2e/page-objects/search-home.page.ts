@@ -1,20 +1,20 @@
 import { strict as assert } from 'node:assert';
 
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 import type { ListingSortKey } from '../../lib/search/listingSort';
 import { BottomSheetComponent } from '../components/common/bottom-sheet.component';
-import { listingSortOptionIndex } from '../test-data/listing-sort';
 import { getE2eBackendApiOrigin } from '../utils/api-origin';
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
 import { visibleSearchFiltersForm } from '../utils/search-filters-form';
 import { dismissCookieConsentIfVisible } from '../utils/session';
-import { pageUsesMobileLayout } from '../utils/viewport';
+
+import { SearchHomeScrollPage } from './search-home-scroll.page';
 
 const VEHICLE_CATEGORY_POLL = { timeout: 45_000, intervals: [400, 600, 1000, 1600] };
 
-export class SearchHomePage {
+export class SearchHomePage extends SearchHomeScrollPage {
   private readonly testIds = {
     form: 'search-filters-form',
     vehicleTypeCar: 'search-vehicle-type-car',
@@ -28,12 +28,17 @@ export class SearchHomePage {
 
   readonly bottomSheet: BottomSheetComponent;
 
-  constructor(private readonly page: Page) {
+  constructor(page: Page) {
+    super(page);
     this.bottomSheet = new BottomSheetComponent(page);
   }
 
-  private searchFiltersForm() {
+  protected searchFiltersForm(): Locator {
     return visibleSearchFiltersForm(this.page);
+  }
+
+  protected listingCardLinks(): Locator {
+    return this.page.locator(`[data-testid^="${this.testIds.listingCardLinkPrefix}"]`);
   }
 
   async open(path = '/'): Promise<void> {
@@ -69,10 +74,6 @@ export class SearchHomePage {
 
   get emptyState() {
     return this.page.getByTestId(this.testIds.emptyState);
-  }
-
-  get listingCardLinks() {
-    return this.page.locator(`[data-testid^="${this.testIds.listingCardLinkPrefix}"]`);
   }
 
   async expectPageView(): Promise<void> {
@@ -196,7 +197,7 @@ export class SearchHomePage {
     if (await this.emptyState.isVisible()) {
       return false;
     }
-    return (await this.listingCardLinks.count()) > 0;
+    return (await this.listingCardLinks().count()) > 0;
   }
 
   async openFirstListingFromResults(): Promise<boolean> {
@@ -206,7 +207,7 @@ export class SearchHomePage {
       return false;
     }
 
-    const firstCardLink = this.listingCardLinks.first();
+    const firstCardLink = this.listingCardLinks().first();
     await expect(firstCardLink).toBeVisible();
     const href = await firstCardLink.getAttribute('href');
     if (!href) {
@@ -215,72 +216,6 @@ export class SearchHomePage {
     await this.page.goto(href, { waitUntil: 'domcontentloaded' });
     await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
     return true;
-  }
-
-  async focusListingCardForReturn(): Promise<{ listingId: string; scrollY: number } | null> {
-    if (!(await this.hasListingResults())) {
-      return null;
-    }
-
-    const listingId = await this.page.evaluate(() => {
-      const links = Array.from(
-        document.querySelectorAll<HTMLAnchorElement>('[data-testid^="listing-card-link-"]'),
-      );
-      const viewportCenter = window.innerHeight / 2;
-      let bestId: string | null = null;
-      let bestDistance = Number.POSITIVE_INFINITY;
-      for (const link of links) {
-        const rect = link.getBoundingClientRect();
-        if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
-          continue;
-        }
-        const match = link.getAttribute('data-testid')?.match(/^listing-card-link-(.+)$/);
-        if (!match?.[1]) {
-          continue;
-        }
-        const distance = Math.abs((rect.top + rect.bottom) / 2 - viewportCenter);
-        if (distance < bestDistance) {
-          bestId = match[1];
-          bestDistance = distance;
-        }
-      }
-      if (bestId) {
-        return bestId;
-      }
-      const fallbackMatch = links[0]
-        ?.getAttribute('data-testid')
-        ?.match(/^listing-card-link-(.+)$/);
-      return fallbackMatch?.[1] ?? null;
-    });
-
-    if (!listingId) {
-      return null;
-    }
-
-    await this.page.evaluate((id) => {
-      const headerHeight = document.querySelector('header')?.getBoundingClientRect().height ?? 72;
-      const anchorTop = headerHeight + 24;
-      const link = document.querySelector(`[data-testid="listing-card-link-${id}"]`);
-      if (!(link instanceof HTMLElement)) {
-        return;
-      }
-      const rect = link.getBoundingClientRect();
-      const target = Math.max(0, Math.round(window.scrollY + rect.top - anchorTop));
-      window.scrollTo({ top: target, behavior: 'instant' });
-      window.dispatchEvent(new Event('scroll'));
-    }, listingId);
-
-    const scrollY = await this.getWindowScrollY();
-    await expect
-      .poll(async () =>
-        this.page.evaluate(() => {
-          const raw = sessionStorage.getItem('homeReloadScrollY');
-          return raw ? Number.parseInt(raw, 10) : -1;
-        }),
-      )
-      .toBeGreaterThanOrEqual(scrollY - 2);
-
-    return { listingId, scrollY };
   }
 
   async openListingById(listingId: string): Promise<void> {
@@ -303,10 +238,10 @@ export class SearchHomePage {
     if (!(await this.hasListingResults())) {
       return false;
     }
-    const count = await this.listingCardLinks.count();
+    const count = await this.listingCardLinks().count();
     const ids: string[] = [];
     for (let i = 0; i < count; i += 1) {
-      const testId = await this.listingCardLinks.nth(i).getAttribute('data-testid');
+      const testId = await this.listingCardLinks().nth(i).getAttribute('data-testid');
       const m = testId?.match(/^listing-card-link-(.+)$/);
       if (m?.[1]) {
         ids.push(m[1]);
@@ -354,27 +289,6 @@ export class SearchHomePage {
     return true;
   }
 
-  async selectSort(
-    sortKey: ListingSortKey,
-    testId = 'search-sort-select',
-    options?: { scrollTrigger?: boolean },
-  ): Promise<void> {
-    const trigger = this.searchFiltersForm().getByTestId(testId);
-    const menu = this.page.getByTestId(`${testId}-menu`);
-    const optionIndex = listingSortOptionIndex(sortKey);
-    const option = this.page.getByTestId(`${testId}-option-${optionIndex}`);
-    if (options?.scrollTrigger !== false) {
-      await trigger.scrollIntoViewIfNeeded();
-    }
-    await trigger.click();
-    if (!(await menu.isVisible().catch(() => false))) {
-      await trigger.click();
-    }
-    await expect(menu).toBeVisible({ timeout: 15_000 });
-    await expect(option).toBeVisible({ timeout: 15_000 });
-    await option.click();
-  }
-
   async selectSortAndApply(sortKey: ListingSortKey, testId = 'search-sort-select'): Promise<void> {
     await this.selectSort(sortKey, testId);
     await this.submitSearch();
@@ -394,161 +308,6 @@ export class SearchHomePage {
       (url) => pathnameWithoutLocalePrefix(url).startsWith('/smart-selection'),
       { timeout: 20_000 },
     );
-  }
-
-  async getWindowScrollY(): Promise<number> {
-    return this.page.evaluate(() => window.scrollY);
-  }
-
-  async scrollToY(scrollY: number): Promise<void> {
-    await this.page.evaluate((y) => {
-      window.scrollTo({ top: y, behavior: 'instant' });
-      window.dispatchEvent(new Event('scroll'));
-    }, scrollY);
-  }
-
-  async waitForReloadScrollPersisted(minScrollY = 100): Promise<void> {
-    await expect
-      .poll(
-        async () =>
-          this.page.evaluate(() => {
-            const raw = sessionStorage.getItem('homeReloadScrollY');
-            return raw ? Number.parseInt(raw, 10) : 0;
-          }),
-        { timeout: 15_000 },
-      )
-      .toBeGreaterThanOrEqual(minScrollY);
-  }
-
-  async expectScrollYNear(
-    targetScrollY: number,
-    tolerancePx = 2,
-    timeoutMs = 45_000,
-  ): Promise<void> {
-    await expect
-      .poll(async () => Math.abs((await this.getWindowScrollY()) - targetScrollY), {
-        timeout: timeoutMs,
-      })
-      .toBeLessThanOrEqual(tolerancePx);
-  }
-
-  async scrollForSortPreservationTest(): Promise<number> {
-    if (await pageUsesMobileLayout(this.page)) {
-      await this.scrollToY(0);
-      return this.getWindowScrollY();
-    }
-    await this.scrollToY(700);
-    return this.getWindowScrollY();
-  }
-
-  async selectSortPreservingCurrentScroll(sortKey: ListingSortKey): Promise<void> {
-    const testId = 'search-sort-select';
-    const trigger = this.searchFiltersForm().getByTestId(testId);
-    const menu = this.page.getByTestId(`${testId}-menu`);
-    const optionIndex = listingSortOptionIndex(sortKey);
-    const option = this.page.getByTestId(`${testId}-option-${optionIndex}`);
-    await trigger.click({ force: true });
-    if (!(await menu.isVisible().catch(() => false))) {
-      await trigger.click({ force: true });
-    }
-    await expect(menu).toBeVisible({ timeout: 15_000 });
-    await expect(option).toBeVisible({ timeout: 15_000 });
-    await option.click({ force: true });
-  }
-
-  async expectResultsScrolledIntoView(): Promise<void> {
-    await expect
-      .poll(
-        async () =>
-          this.page.evaluate(() => {
-            const el = document.getElementById('listings-results');
-            const header = document.querySelector('header');
-            if (!el || !header) {
-              return Number.POSITIVE_INFINITY;
-            }
-            return el.getBoundingClientRect().top - header.getBoundingClientRect().bottom;
-          }),
-        { timeout: 45_000 },
-      )
-      .toBeLessThan(200);
-  }
-
-  async expectPaginatedGridStatePersisted(): Promise<void> {
-    await expect
-      .poll(
-        async () =>
-          this.page.evaluate(() => {
-            const fullRaw = sessionStorage.getItem('kupito_grid_state');
-            if (fullRaw) {
-              try {
-                const state = JSON.parse(fullRaw) as { listings?: unknown[]; page?: number };
-                if (Array.isArray(state.listings) && state.listings.length > 20) {
-                  return true;
-                }
-                if (typeof state.page === 'number' && state.page > 1) {
-                  return true;
-                }
-              } catch {
-                // noop
-              }
-            }
-            const restoreRaw = sessionStorage.getItem('kupito_grid_restore_state');
-            if (!restoreRaw) {
-              return false;
-            }
-            try {
-              const restore = JSON.parse(restoreRaw) as { page?: number };
-              return typeof restore.page === 'number' && restore.page > 1;
-            } catch {
-              return false;
-            }
-          }),
-        { timeout: 45_000 },
-      )
-      .toBe(true);
-  }
-
-  async reloadAndWaitForResults(): Promise<void> {
-    await this.page.reload({ waitUntil: 'domcontentloaded' });
-    await dismissCookieConsentIfVisible(this.page);
-    await this.expectPageView();
-    await this.expectResultsOrEmptyVisible();
-  }
-
-  async clickShowMoreIfVisible(): Promise<boolean> {
-    await dismissCookieConsentIfVisible(this.page);
-    const button = this.page.getByTestId('listings-load-more');
-    if (!(await button.isVisible().catch(() => false))) {
-      return false;
-    }
-    await button.scrollIntoViewIfNeeded();
-    const listingsResponse = this.page.waitForResponse(
-      (r) => r.url().includes('/api/listings') && r.request().method() === 'GET',
-      { timeout: 45_000 },
-    );
-    await button.click();
-    await listingsResponse;
-    await this.expectResultsOrEmptyVisible();
-    return true;
-  }
-
-  async expectListingCardVisibleInViewport(listingId: string): Promise<void> {
-    const card = this.page.getByTestId(`listing-card-${listingId}`);
-    await expect(card).toBeVisible({ timeout: 30_000 });
-    await expect
-      .poll(
-        async () =>
-          this.page.evaluate((testId) => {
-            const cardEl = document.querySelector(`[data-testid="${testId}"]`);
-            if (!cardEl) {
-              return false;
-            }
-            const rect = cardEl.getBoundingClientRect();
-            return rect.top < window.innerHeight && rect.bottom > 0;
-          }, `listing-card-${listingId}`),
-        { timeout: 45_000 },
-      )
-      .toBe(true);
   }
 
   async openSaveFilterModal(): Promise<void> {

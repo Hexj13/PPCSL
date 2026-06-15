@@ -15,6 +15,7 @@ const CORRECTION_MAX_DURATION_MS = 3000;
 const VIRTUALIZED_CORRECTION_MAX_DURATION_MS = 12000;
 const VIRTUALIZED_RESTORE_MIN_LISTINGS = LISTING_GRID_PAGE_SIZE * 2 + 1;
 const SCROLL_HEIGHT_TOLERANCE_PX = 32;
+const POINTER_CANCEL_FALLBACK_MS = 750;
 
 const HOME_RELOAD_GRID_HEIGHT_KEY = 'homeReloadGridHeight';
 const HOME_RELOAD_VIEWPORT_W_KEY = 'homeReloadViewportW';
@@ -44,6 +45,8 @@ type StateChangeListener = (phase: HomeScrollRestorePhase) => void;
 
 let homeReloadPersistenceRegistered = false;
 let homeReloadScrollSaveRaf: number | null = null;
+let deferredPointerCancelTimeoutId: ReturnType<typeof setTimeout> | null = null;
+let deferredPointerCancelClickHandler: (() => void) | null = null;
 
 let phase: HomeScrollRestorePhase = 'idle';
 let activeTarget: HomeScrollRestoreTarget | null = null;
@@ -191,10 +194,49 @@ function schedulePersistHomeReloadScrollStateIfHome(): void {
   });
 }
 
-function cancelHomeScrollRestoreOnUserInteraction(): void {
-  if (isHomeScrollRestoreInProgress()) {
-    cancelHomeScrollRestore();
+function clearDeferredPointerCancel(): void {
+  if (deferredPointerCancelTimeoutId !== null) {
+    clearTimeout(deferredPointerCancelTimeoutId);
+    deferredPointerCancelTimeoutId = null;
   }
+  if (deferredPointerCancelClickHandler !== null && typeof window !== 'undefined') {
+    window.removeEventListener('click', deferredPointerCancelClickHandler);
+    deferredPointerCancelClickHandler = null;
+  }
+}
+
+function runDeferredPointerCancel(): void {
+  clearDeferredPointerCancel();
+  cancelHomeScrollRestore();
+}
+
+function schedulePointerCancelAfterClick(): void {
+  clearDeferredPointerCancel();
+
+  deferredPointerCancelClickHandler = () => {
+    if (deferredPointerCancelTimeoutId !== null) {
+      clearTimeout(deferredPointerCancelTimeoutId);
+    }
+    deferredPointerCancelTimeoutId = setTimeout(runDeferredPointerCancel, 0);
+  };
+
+  window.addEventListener('click', deferredPointerCancelClickHandler, {
+    once: true,
+    passive: true,
+  });
+  deferredPointerCancelTimeoutId = setTimeout(runDeferredPointerCancel, POINTER_CANCEL_FALLBACK_MS);
+}
+
+function cancelHomeScrollRestoreOnUserInteraction(event: Event): void {
+  if (!isHomeScrollRestoreInProgress()) {
+    return;
+  }
+  if (event.type === 'pointerdown') {
+    schedulePointerCancelAfterClick();
+    return;
+  }
+  clearDeferredPointerCancel();
+  cancelHomeScrollRestore();
 }
 
 export function ensureHomeReloadScrollPersistence(): void {
@@ -440,6 +482,7 @@ function finishRestore(reached: boolean): void {
 }
 
 export function cancelHomeScrollRestore(): void {
+  clearDeferredPointerCancel();
   if (!isHomeScrollRestoreInProgress()) {
     return;
   }
@@ -488,7 +531,7 @@ function runCorrectionStep(): void {
       scrollToYInstant(scrollY);
       reached = Math.abs(window.scrollY - scrollY) <= 2;
     }
-    finishRestore(reached || timedOut);
+    finishRestore(reached);
     return;
   }
 
@@ -576,6 +619,7 @@ export function reportBannerDecided(): void {
 }
 
 export function resetHomeScrollRestoreForTests(): void {
+  clearDeferredPointerCancel();
   cancelHomeScrollRestore();
   cleanupCorrection();
   activeTarget = null;

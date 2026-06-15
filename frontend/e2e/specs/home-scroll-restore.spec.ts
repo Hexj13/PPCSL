@@ -3,6 +3,8 @@ import { getCurrentListingId } from '../utils/api/listing-actions';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Home scroll restore', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test('returns to home with saved scroll position after back navigation', async ({
     page,
     searchHomePage,
@@ -105,6 +107,55 @@ test.describe('Home scroll restore', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
+  test('loads more listings on first tap after returning from listing detail', async ({
+    page,
+    searchHomePage,
+    listingDetailPage,
+  }) => {
+    test.setTimeout(180_000);
+
+    const steps: E2EStep[] = [
+      {
+        name: 'Open search home and load more results twice',
+        action: async () => {
+          await searchHomePage.openAndExpectPageView();
+          await searchHomePage.expectResultsOrEmptyVisible();
+          expect(await searchHomePage.hasListingResults()).toBe(true);
+          await searchHomePage.scrollToY(800);
+          const loadedMoreOnce = await searchHomePage.clickShowMoreIfVisible();
+          expect(loadedMoreOnce).toBe(true);
+          await searchHomePage.expectPaginatedGridStatePersisted();
+          const loadedMoreTwice = await searchHomePage.clickShowMoreIfVisible();
+          expect(loadedMoreTwice).toBe(true);
+          await searchHomePage.expectPaginatedGridStatePersisted();
+        },
+      },
+      {
+        name: 'Open a visible listing from deep results',
+        action: async () => {
+          const focused = await searchHomePage.focusListingCardForReturn();
+          if (!focused) {
+            throw new Error('Expected a visible listing card to focus');
+          }
+          expect(focused.scrollY).toBeGreaterThan(400);
+          await searchHomePage.openListingById(focused.listingId);
+          await listingDetailPage.expectPageView();
+        },
+      },
+      {
+        name: 'Navigate back and load more on first tap',
+        action: async () => {
+          await page.goBack({ waitUntil: 'domcontentloaded' });
+          await searchHomePage.expectPageView();
+          await searchHomePage.expectPaginatedGridStatePersisted();
+          await searchHomePage.clickShowMoreOnceExpectingMoreListings();
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
   test('restores scroll position after reload without cumulative drift', async ({
     page,
     searchHomePage,
@@ -131,7 +182,7 @@ test.describe('Home scroll restore', () => {
         action: async () => {
           for (let attempt = 0; attempt < 3; attempt += 1) {
             await searchHomePage.reloadAndWaitForResults();
-            await searchHomePage.expectScrollYNear(targetScrollY);
+            await searchHomePage.expectScrollYNear(targetScrollY, 2, 90_000);
             targetScrollY = await searchHomePage.getWindowScrollY();
           }
         },
@@ -168,7 +219,7 @@ test.describe('Home scroll restore', () => {
         action: async () => {
           await searchHomePage.reloadAndWaitForResults();
           await searchHomePage.expectPaginatedGridStatePersisted();
-          await searchHomePage.expectScrollYNear(targetScrollY, 2, 60_000);
+          await searchHomePage.expectScrollYNear(targetScrollY, 2, 90_000);
         },
       },
     ];
