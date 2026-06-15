@@ -35,6 +35,15 @@ type TelegramLoginAuthResult = {
   error?: string;
 };
 
+type TelegramAuthMessageData = {
+  event?: string;
+  result?: string;
+  id_token?: string;
+  error?: string;
+};
+
+const TELEGRAM_OAUTH_ORIGIN = 'https://oauth.telegram.org';
+
 declare global {
   interface Window {
     Telegram?: {
@@ -99,6 +108,111 @@ function parseTelegramClientId(raw: string | undefined): number | null {
   }
   const parsed = Number(trimmed);
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function parseTelegramAuthMessage(data: unknown): TelegramLoginAuthResult | null {
+  const parsedData =
+    typeof data === 'string' ? (JSON.parse(data) as TelegramAuthMessageData) : data;
+  if (!parsedData || typeof parsedData !== 'object') {
+    return null;
+  }
+  const message = parsedData as TelegramAuthMessageData;
+  if (message.event !== 'auth_result') {
+    return null;
+  }
+  if (message.error) {
+    return { error: message.error };
+  }
+  const idToken = message.id_token ?? message.result;
+  return idToken ? { id_token: idToken } : { error: 'missing id_token' };
+}
+
+function openTelegramAuthPopup(
+  options: { clientId: number; nonce: string; lang: string },
+  callback: (result: TelegramLoginAuthResult) => void,
+): void {
+  const redirectUri = `${window.location.origin}${window.location.pathname}`;
+  const params = new URLSearchParams({
+    response_type: 'post_message',
+    client_id: String(options.clientId),
+    redirect_uri: redirectUri,
+    scope: 'openid profile phone',
+    origin: window.location.origin,
+    nonce: options.nonce,
+    lang: options.lang,
+  });
+
+  const width = 550;
+  const height = 650;
+  const left = Math.max(0, (window.screen.width - width) / 2);
+  const top = Math.max(0, (window.screen.height - height) / 2);
+  const features = [
+    `width=${width}`,
+    `height=${height}`,
+    `left=${left}`,
+    `top=${top}`,
+    'status=0',
+    'location=0',
+    'menubar=0',
+    'toolbar=0',
+  ].join(',');
+
+  const popup = window.open(
+    `${TELEGRAM_OAUTH_ORIGIN}/auth?${params.toString()}`,
+    'telegram_oidc_login',
+    features,
+  );
+
+  if (!popup) {
+    callback({ error: 'popup_blocked' });
+    return;
+  }
+
+  let completed = false;
+  let closeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const cleanup = () => {
+    window.removeEventListener('message', handleMessage);
+    if (closeTimer) {
+      clearTimeout(closeTimer);
+      closeTimer = null;
+    }
+  };
+
+  const finish = (result: TelegramLoginAuthResult) => {
+    if (completed) {
+      return;
+    }
+    completed = true;
+    cleanup();
+    callback(result);
+  };
+
+  function handleMessage(event: MessageEvent) {
+    if (event.origin !== TELEGRAM_OAUTH_ORIGIN || event.source !== popup) {
+      return;
+    }
+    try {
+      const result = parseTelegramAuthMessage(event.data);
+      if (result) {
+        finish(result);
+      }
+    } catch {
+      finish({ error: 'malformed_response' });
+    }
+  }
+
+  const checkClosed = () => {
+    if (popup.closed) {
+      finish({ error: 'popup_closed' });
+      return;
+    }
+    closeTimer = setTimeout(checkClosed, 200);
+  };
+
+  window.addEventListener('message', handleMessage);
+  popup.focus();
+  checkClosed();
 }
 
 export function useTelegramAuth(options: {
@@ -205,7 +319,7 @@ export function useTelegramAuth(options: {
       event?.preventDefault();
       event?.stopPropagation();
 
-      if (!clientId || !window.Telegram?.Login?.auth) {
+      if (!clientId) {
         toast.error(t('errors.telegramSignInFailed'));
         return;
       }
@@ -223,39 +337,31 @@ export function useTelegramAuth(options: {
           const nonce = nonceResponse.data.nonce;
           const lang = getTelegramLang(options.locale);
 
-          window.Telegram!.Login!.auth(
-            {
-              client_id: clientId,
-              request_access: ['phone'],
-              nonce,
-              lang,
-            },
-            (result) => {
-              if (!isMountedRef.current) {
-                return;
+          openTelegramAuthPopup({ clientId, nonce, lang }, (result) => {
+            if (!isMountedRef.current) {
+              return;
+            }
+            if (result.error || !result.id_token) {
+              resetTelegramBusyState();
+              if (result.error) {
+                toast.error(t('errors.telegramSignInFailed'));
               }
-              if (result.error || !result.id_token) {
-                resetTelegramBusyState();
-                if (result.error) {
-                  toast.error(t('errors.telegramSignInFailed'));
-                }
-                return;
-              }
+              return;
+            }
 
-              void completeTelegramSignIn(() => {
-                const { tab, preferredNewUserType } = authOptionsRef.current;
-                const body: TelegramSignInDto = {
-                  idToken: result.id_token!,
-                  nonce,
-                  termsAccepted: true,
-                };
-                if (tab === 'register' && preferredNewUserType) {
-                  body.type = preferredNewUserType;
-                }
-                return authApi.telegramSignIn(body, quietAuthRequest);
-              });
-            },
-          );
+            void completeTelegramSignIn(() => {
+              const { tab, preferredNewUserType } = authOptionsRef.current;
+              const body: TelegramSignInDto = {
+                idToken: result.id_token!,
+                nonce,
+                termsAccepted: true,
+              };
+              if (tab === 'register' && preferredNewUserType) {
+                body.type = preferredNewUserType;
+              }
+              return authApi.telegramSignIn(body, quietAuthRequest);
+            });
+          });
         } catch {
           resetTelegramBusyState();
           toast.error(t('errors.telegramSignInFailed'));
