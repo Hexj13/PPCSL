@@ -37,8 +37,9 @@ type TelegramLoginAuthResult = {
 
 type TelegramAuthMessageData = {
   event?: string;
-  result?: string;
-  id_token?: string;
+  result?: unknown;
+  id_token?: unknown;
+  token?: unknown;
   error?: string;
 };
 
@@ -123,8 +124,22 @@ function parseTelegramAuthMessage(data: unknown): TelegramLoginAuthResult | null
   if (message.error) {
     return { error: message.error };
   }
-  const idToken = message.id_token ?? message.result;
-  return idToken ? { id_token: idToken } : { error: 'missing id_token' };
+  const result = message.result;
+  const idToken =
+    typeof message.id_token === 'string'
+      ? message.id_token
+      : typeof message.token === 'string'
+        ? message.token
+        : typeof result === 'string'
+          ? result
+          : result && typeof result === 'object' && 'id_token' in result
+            ? (result as { id_token?: unknown }).id_token
+            : result && typeof result === 'object' && 'token' in result
+              ? (result as { token?: unknown }).token
+              : null;
+  return typeof idToken === 'string' && idToken.trim()
+    ? { id_token: idToken }
+    : { error: 'missing id_token' };
 }
 
 function openTelegramAuthPopup(

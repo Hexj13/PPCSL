@@ -141,4 +141,59 @@ describe('useTelegramAuth', () => {
 
     openSpy.mockRestore();
   });
+
+  it('accepts Telegram auth_result with nested id_token', async () => {
+    const popup = {
+      closed: false,
+      focus: jest.fn(),
+    };
+    const openSpy = jest.spyOn(window, 'open').mockImplementation(() => popup as unknown as Window);
+
+    (authApi.createTelegramSignInNonce as jest.Mock).mockResolvedValue({
+      data: { nonce: 'server-nonce' },
+    });
+    (authApi.telegramSignIn as jest.Mock).mockResolvedValue({
+      data: { isNewUser: false, requiresPhoneVerification: false },
+    });
+    (authApi.me as jest.Mock).mockResolvedValue({ data: { id: 'user-1' } });
+
+    const { result } = renderHook(() =>
+      useTelegramAuth({
+        tab: 'login',
+        telegramScriptLoaded: true,
+        locale: 'en',
+      }),
+    );
+
+    await waitFor(() => expect(result.current.isLibraryReady).toBe(true));
+
+    await act(async () => {
+      result.current.signInWithTelegram();
+    });
+
+    await waitFor(() => expect(openSpy).toHaveBeenCalled());
+
+    await act(async () => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          origin: 'https://oauth.telegram.org',
+          source: popup as unknown as Window,
+          data: { event: 'auth_result', result: { id_token: 'nested-oidc-token' } },
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(authApi.telegramSignIn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          idToken: 'nested-oidc-token',
+          nonce: 'server-nonce',
+          termsAccepted: true,
+        }),
+        expect.any(Object),
+      );
+    });
+
+    openSpy.mockRestore();
+  });
 });
