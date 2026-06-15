@@ -236,84 +236,18 @@ function buildTelegramAuthUrl(options: {
   nonce: string;
   lang: string;
   redirectUri: string;
+  origin: string;
 }): string {
   const params = [
     'response_type=post_message',
     `client_id=${encodeURIComponent(String(options.clientId))}`,
     `redirect_uri=${encodeURIComponent(options.redirectUri)}`,
+    `origin=${encodeURIComponent(options.origin)}`,
     `scope=${encodeURIComponent('openid profile phone')}`,
     `nonce=${encodeURIComponent(options.nonce)}`,
     `lang=${encodeURIComponent(options.lang)}`,
   ];
   return `${TELEGRAM_OAUTH_ORIGIN}/auth?${params.join('&')}`;
-}
-
-function finishSdkAuthResult(
-  options: OpenTelegramAuthPopupOptions,
-  startedAt: number,
-  result: { id_token?: string; error?: string },
-  callback: (result: TelegramLoginAuthResult) => void,
-): void {
-  if (result.error) {
-    const event =
-      result.error === 'popup_closed' || result.error === 'popup_blocked'
-        ? result.error
-        : 'telegram_error';
-    logTelegramAuthEvent(
-      event,
-      debugContext(options, startedAt, {
-        telegramError: result.error,
-      }),
-    );
-    callback({ error: result.error });
-    return;
-  }
-
-  if (!result.id_token?.trim()) {
-    logTelegramAuthEvent(
-      'missing_id_token',
-      debugContext(options, startedAt, {
-        hasIdToken: false,
-      }),
-    );
-    callback({ error: 'missing id_token' });
-    return;
-  }
-
-  logTelegramAuthEvent(
-    'id_token_received',
-    debugContext(options, startedAt, {
-      hasIdToken: true,
-    }),
-  );
-  callback({ id_token: result.id_token });
-}
-
-function openTelegramAuthPopupWithSdk(
-  options: OpenTelegramAuthPopupOptions,
-  startedAt: number,
-  callback: (result: TelegramLoginAuthResult) => void,
-): boolean {
-  const login = window.Telegram?.Login;
-  if (!login?.auth) {
-    return false;
-  }
-
-  logTelegramAuthEvent('popup_opened', debugContext(options, startedAt));
-
-  login.auth(
-    {
-      client_id: options.clientId,
-      nonce: options.nonce,
-      lang: options.lang,
-      request_access: ['phone'],
-    },
-    (result) => {
-      finishSdkAuthResult(options, startedAt, result, callback);
-    },
-  );
-
-  return true;
 }
 
 function getTelegramMessageEventLabel(data: unknown): string {
@@ -472,10 +406,6 @@ export function openTelegramAuthPopup(
 
   logTelegramAuthEvent('popup_open_attempt', debugContext(options, startedAt));
 
-  if (openTelegramAuthPopupWithSdk(options, startedAt, callback)) {
-    return;
-  }
-
   const redirectUri = `${pageOrigin}${window.location.pathname}`;
   const width = 550;
   const height = 650;
@@ -498,6 +428,7 @@ export function openTelegramAuthPopup(
       nonce: options.nonce,
       lang: options.lang,
       redirectUri,
+      origin: pageOrigin,
     }),
     'telegram_oidc_login',
     features,

@@ -195,7 +195,7 @@ describe('useTelegramAuth', () => {
     expect(authUrl).toContain('nonce=server-nonce');
     expect(authUrl).toContain('lang=ru');
     expect(authUrl).toContain('scope=openid%20profile%20phone');
-    expect(authUrl).not.toContain('origin=');
+    expect(authUrl).toContain(`origin=${encodeURIComponent(window.location.origin)}`);
 
     await act(async () => {
       window.dispatchEvent(
@@ -417,16 +417,19 @@ describe('useTelegramAuth', () => {
     openSpy.mockRestore();
   });
 
-  it('prefers Telegram.Login.auth when the SDK is available', async () => {
-    const authSpy = jest.fn((_options, callback: (result: { id_token?: string }) => void) => {
-      callback({ id_token: 'sdk-token' });
-    });
+  it('opens manual popup with explicit origin even when SDK auth exists', async () => {
+    const authSpy = jest.fn();
+    const popup = {
+      closed: false,
+      focus: jest.fn(),
+    };
     window.Telegram = {
       Login: {
         init: jest.fn(),
         auth: authSpy,
       },
     };
+    const openSpy = jest.spyOn(window, 'open').mockImplementation(() => popup as unknown as Window);
 
     (authApi.createTelegramSignInNonce as jest.Mock).mockResolvedValue({
       data: { nonce: 'server-nonce' },
@@ -435,8 +438,6 @@ describe('useTelegramAuth', () => {
       data: { isNewUser: false, requiresPhoneVerification: false },
     });
     (authApi.me as jest.Mock).mockResolvedValue({ data: { id: 'user-1' } });
-
-    const openSpy = jest.spyOn(window, 'open');
 
     const { result } = renderHook(() =>
       useTelegramAuth({
@@ -452,25 +453,32 @@ describe('useTelegramAuth', () => {
       result.current.signInWithTelegram();
     });
 
-    await waitFor(() => {
-      expect(authSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          client_id: 123456789,
-          nonce: 'server-nonce',
-          request_access: ['phone'],
+    await waitFor(() => expect(openSpy).toHaveBeenCalled());
+
+    const authUrl = openSpy.mock.calls[0]?.[0];
+    expect(authUrl).toContain(`origin=${encodeURIComponent(window.location.origin)}`);
+    expect(authSpy).not.toHaveBeenCalled();
+
+    await act(async () => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          origin: 'https://oauth.telegram.org',
+          source: popup as unknown as Window,
+          data: JSON.stringify({ event: 'auth_result', result: 'manual-token' }),
         }),
-        expect.any(Function),
       );
+    });
+
+    await waitFor(() => {
       expect(authApi.telegramSignIn).toHaveBeenCalledWith(
         expect.objectContaining({
-          idToken: 'sdk-token',
+          idToken: 'manual-token',
           nonce: 'server-nonce',
         }),
         expect.any(Object),
       );
     });
 
-    expect(openSpy).not.toHaveBeenCalled();
     openSpy.mockRestore();
   });
 });
