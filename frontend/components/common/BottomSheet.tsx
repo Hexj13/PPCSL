@@ -3,14 +3,20 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { BottomSheetPanel } from '@/components/common/BottomSheetPanel';
+import { useBottomSheetViewportHeight } from '@/hooks/useBottomSheetViewportHeight';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
-import { useScrollLock } from '@/hooks/useScrollLock';
 import { useTranslation } from '@/hooks/useTranslation';
+import {
+  BOTTOM_SHEET_TRANSITION_FALLBACK_MS,
+  computeBottomSheetLockMinHeightPx,
+  computeBottomSheetMaxHeightPx,
+} from '@/lib/bottom-sheet-layout';
 import { designTokens } from '@/ui';
 
 const MOBILE_SHEET_MAX_WIDTH_PX = 767;
-const CLOSE_TRANSITION_FALLBACK_MS = 380;
+const BOTTOM_SHEET_SCROLLABLE_SELECTOR = '[data-bottom-sheet-scrollable="true"]';
 
 function useMobileSheetViewport(): boolean {
   const [matches, setMatches] = useState(() => {
@@ -31,6 +37,89 @@ function useMobileSheetViewport(): boolean {
   return matches;
 }
 
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+function getBottomSheetScrollable(target: EventTarget | null, sheet: HTMLElement | null) {
+  if (!(target instanceof Element) || !sheet) {
+    return null;
+  }
+  const scrollable = target.closest(BOTTOM_SHEET_SCROLLABLE_SELECTOR);
+  if (!(scrollable instanceof HTMLElement) || !sheet.contains(scrollable)) {
+    return null;
+  }
+  return scrollable;
+}
+
+function canScroll(scrollable: HTMLElement, deltaY: number): boolean {
+  if (deltaY === 0) {
+    return true;
+  }
+  if (deltaY < 0) {
+    return scrollable.scrollTop > 0;
+  }
+  return Math.ceil(scrollable.scrollTop + scrollable.clientHeight) < scrollable.scrollHeight;
+}
+
+function preventScrollEvent(e: Event) {
+  if (e.cancelable) {
+    e.preventDefault();
+  }
+  e.stopPropagation();
+}
+
+function useBlockBackgroundScroll(enabled: boolean, sheetRef: React.RefObject<HTMLElement | null>) {
+  const touchStartYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!enabled) {
+      return undefined;
+    }
+
+    const handleWheel = (e: WheelEvent) => {
+      const scrollable = getBottomSheetScrollable(e.target, sheetRef.current);
+      if (!scrollable || !canScroll(scrollable, e.deltaY)) {
+        preventScrollEvent(e);
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartYRef.current = e.touches[0]?.clientY ?? null;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const currentY = e.touches[0]?.clientY;
+      const startY = touchStartYRef.current;
+      if (currentY === undefined || startY === null) {
+        preventScrollEvent(e);
+        return;
+      }
+
+      const deltaY = startY - currentY;
+      const scrollable = getBottomSheetScrollable(e.target, sheetRef.current);
+      if (!scrollable || !canScroll(scrollable, deltaY)) {
+        preventScrollEvent(e);
+        return;
+      }
+      touchStartYRef.current = currentY;
+    };
+
+    document.addEventListener('wheel', handleWheel, { capture: true, passive: false });
+    document.addEventListener('touchstart', handleTouchStart, { capture: true, passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { capture: true, passive: false });
+
+    return () => {
+      document.removeEventListener('wheel', handleWheel, { capture: true });
+      document.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      document.removeEventListener('touchmove', handleTouchMove, { capture: true });
+      touchStartYRef.current = null;
+    };
+  }, [enabled, sheetRef]);
+}
+
 interface BottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
@@ -38,6 +127,8 @@ interface BottomSheetProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   lockSheetHeight?: boolean;
+  dataTestId?: string;
+  mobileOnly?: boolean;
 }
 
 export function BottomSheet({
@@ -47,6 +138,8 @@ export function BottomSheet({
   children,
   footer,
   lockSheetHeight = false,
+  dataTestId,
+  mobileOnly = true,
 }: BottomSheetProps) {
   const { t } = useTranslation();
   const onCloseRef = useRef(onClose);
@@ -55,277 +148,274 @@ export function BottomSheet({
   const dragStartY = useRef<number | null>(null);
   const dragDY = useRef(0);
   const pointerStartedOnBackdropRef = useRef(false);
-  const internalClosePendingRef = useRef(false);
-  const closeFallbackTimerRef = useRef<number | null>(null);
-  const [slideReady, setSlideReady] = useState(false);
-  const [portalMounted, setPortalMounted] = useState(isOpen);
+  const notifyParentOnExitRef = useRef(false);
+  const exitInProgressRef = useRef(false);
+  const exitFallbackTimerRef = useRef<number | null>(null);
+  const [mounted, setMounted] = useState(isOpen);
+  const [visible, setVisible] = useState(false);
   const isMobileViewport = useMobileSheetViewport();
+  const wantShow = isOpen && (mobileOnly ? isMobileViewport : true);
+  const viewportHeightPx = useBottomSheetViewportHeight(
+    mounted && (mobileOnly ? isMobileViewport : true),
+  );
   const overlayHistoryId = useId();
+  const sheetActive = mounted && (mobileOnly ? isMobileViewport : true);
+  const exiting = mounted && !visible;
 
-  useScrollLock(portalMounted && isMobileViewport);
-  useFocusTrap(sheetRef, portalMounted && isMobileViewport && slideReady);
+  useFocusTrap(sheetRef, sheetActive && visible);
+  useBlockBackgroundScroll(sheetActive, sheetRef);
 
-  const clearCloseFallback = useCallback(() => {
-    if (closeFallbackTimerRef.current) {
-      clearTimeout(closeFallbackTimerRef.current);
-      closeFallbackTimerRef.current = null;
+  const clearExitFallback = useCallback(() => {
+    if (exitFallbackTimerRef.current) {
+      clearTimeout(exitFallbackTimerRef.current);
+      exitFallbackTimerRef.current = null;
     }
   }, []);
 
-  const finishCloseAnimation = useCallback(() => {
-    clearCloseFallback();
-    if (internalClosePendingRef.current) {
-      internalClosePendingRef.current = false;
-      onCloseRef.current();
-    }
-    setPortalMounted(false);
-  }, [clearCloseFallback]);
-
-  const beginClose = useCallback(() => {
-    if (!portalMounted || internalClosePendingRef.current) return;
-    internalClosePendingRef.current = true;
+  const resetDragState = useCallback(() => {
     dragDY.current = 0;
     dragStartY.current = null;
     if (sheetRef.current) {
       sheetRef.current.style.transform = '';
     }
+  }, []);
 
-    const reduced =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    setSlideReady(false);
-
-    if (reduced) {
-      requestAnimationFrame(() => {
-        finishCloseAnimation();
-      });
-      return;
+  const completeExit = useCallback(() => {
+    clearExitFallback();
+    exitInProgressRef.current = false;
+    const shouldNotifyParent = notifyParentOnExitRef.current;
+    notifyParentOnExitRef.current = false;
+    resetDragState();
+    setVisible(false);
+    setMounted(false);
+    if (shouldNotifyParent) {
+      onCloseRef.current();
     }
+  }, [clearExitFallback, resetDragState]);
 
-    clearCloseFallback();
-    closeFallbackTimerRef.current = window.setTimeout(() => {
-      closeFallbackTimerRef.current = null;
-      finishCloseAnimation();
-    }, CLOSE_TRANSITION_FALLBACK_MS);
-  }, [clearCloseFallback, finishCloseAnimation, portalMounted]);
+  const startExit = useCallback(
+    (notifyParent: boolean) => {
+      if (!mounted || exitInProgressRef.current) {
+        return;
+      }
+      exitInProgressRef.current = true;
+      notifyParentOnExitRef.current = notifyParent;
+      resetDragState();
+      setVisible(false);
 
-  useHistoryBackClose(isOpen && isMobileViewport, beginClose, overlayHistoryId);
+      if (prefersReducedMotion()) {
+        requestAnimationFrame(() => {
+          completeExit();
+        });
+        return;
+      }
+
+      clearExitFallback();
+      exitFallbackTimerRef.current = window.setTimeout(() => {
+        exitFallbackTimerRef.current = null;
+        completeExit();
+      }, BOTTOM_SHEET_TRANSITION_FALLBACK_MS);
+    },
+    [clearExitFallback, completeExit, mounted, resetDragState],
+  );
+
+  const requestCloseFromUser = useCallback(() => {
+    startExit(true);
+  }, [startExit]);
+
+  useHistoryBackClose(sheetActive, requestCloseFromUser, overlayHistoryId);
 
   const handleSheetPanelTransitionEnd = useCallback(
     (e: React.TransitionEvent<HTMLDivElement>) => {
       if (e.target !== e.currentTarget) return;
       if (e.propertyName !== 'transform') return;
-      if (slideReady) return;
-      clearCloseFallback();
-      finishCloseAnimation();
+      if (visible) return;
+      if (!exitInProgressRef.current) return;
+      clearExitFallback();
+      completeExit();
     },
-    [clearCloseFallback, finishCloseAnimation, slideReady],
+    [clearExitFallback, completeExit, visible],
   );
 
+  const handleDragPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const el = e.target as HTMLElement;
+    if (!el.closest('[data-bottom-sheet-handle]')) {
+      return;
+    }
+    dragStartY.current = e.clientY;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  const handleDragPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStartY.current === null) return;
+    const dy = e.clientY - dragStartY.current;
+    dragDY.current = Math.max(0, dy);
+    if (sheetRef.current) {
+      sheetRef.current.style.transform = `translateY(${dragDY.current}px)`;
+    }
+  }, []);
+
+  const handleDragPointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        /* noop */
+      }
+      if (dragStartY.current !== null && dragDY.current > 80) {
+        requestCloseFromUser();
+      } else if (sheetRef.current) {
+        sheetRef.current.style.transform = '';
+      }
+      dragStartY.current = null;
+      dragDY.current = 0;
+    },
+    [requestCloseFromUser],
+  );
+
+  const handleDragPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+    dragStartY.current = null;
+    dragDY.current = 0;
+    if (sheetRef.current) {
+      sheetRef.current.style.transform = '';
+    }
+  }, []);
+
   useEffect(() => {
-    if (isOpen && !isMobileViewport) {
+    if (mobileOnly && isOpen && !isMobileViewport) {
       onCloseRef.current();
     }
-  }, [isOpen, isMobileViewport]);
+  }, [isOpen, isMobileViewport, mobileOnly]);
 
   useEffect(() => {
-    if (isOpen) {
-      setPortalMounted(true);
+    if (wantShow) {
+      exitInProgressRef.current = false;
+      notifyParentOnExitRef.current = false;
+      setMounted(true);
     }
-  }, [isOpen]);
+  }, [wantShow]);
 
   useEffect(() => {
-    if (!isOpen || !isMobileViewport) return;
+    if (!mounted || !wantShow) {
+      return undefined;
+    }
+    let innerRaf = 0;
+    const outerRaf = requestAnimationFrame(() => {
+      innerRaf = requestAnimationFrame(() => setVisible(true));
+    });
+    return () => {
+      cancelAnimationFrame(outerRaf);
+      if (innerRaf) {
+        cancelAnimationFrame(innerRaf);
+      }
+    };
+  }, [mounted, wantShow]);
+
+  useEffect(() => {
+    if (wantShow || !mounted) {
+      return;
+    }
+    startExit(false);
+  }, [wantShow, mounted, startExit]);
+
+  useEffect(() => {
+    if (!mounted || (mobileOnly && !isMobileViewport)) {
+      return undefined;
+    }
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        beginClose();
+        requestCloseFromUser();
       }
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [beginClose, isOpen, isMobileViewport]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      dragDY.current = 0;
-      if (sheetRef.current) {
-        sheetRef.current.style.transform = '';
-      }
-      clearCloseFallback();
-    }
-  }, [clearCloseFallback, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setSlideReady(false);
-      return;
-    }
-    let innerRaf = 0;
-    const outerRaf = requestAnimationFrame(() => {
-      innerRaf = requestAnimationFrame(() => setSlideReady(true));
-    });
-    return () => {
-      cancelAnimationFrame(outerRaf);
-      if (innerRaf) cancelAnimationFrame(innerRaf);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen && portalMounted) {
-      clearCloseFallback();
-      closeFallbackTimerRef.current = window.setTimeout(() => {
-        closeFallbackTimerRef.current = null;
-        finishCloseAnimation();
-      }, CLOSE_TRANSITION_FALLBACK_MS);
-      return () => {
-        clearCloseFallback();
-      };
-    }
-  }, [isOpen, portalMounted, finishCloseAnimation, clearCloseFallback]);
+  }, [isMobileViewport, mobileOnly, mounted, requestCloseFromUser]);
 
   useEffect(
     () => () => {
-      clearCloseFallback();
+      clearExitFallback();
     },
-    [clearCloseFallback],
+    [clearExitFallback],
   );
 
-  if (!portalMounted) {
+  if (!mounted || (mobileOnly && !isMobileViewport) || typeof window === 'undefined') {
     return null;
   }
 
-  if (!isMobileViewport) {
-    return null;
-  }
+  const maxHeightPx =
+    viewportHeightPx > 0 ? computeBottomSheetMaxHeightPx(viewportHeightPx) : undefined;
+  const lockMinHeightPx =
+    lockSheetHeight && viewportHeightPx > 0
+      ? computeBottomSheetLockMinHeightPx(viewportHeightPx)
+      : undefined;
 
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  const closingFromProp = portalMounted && !isOpen;
+  const panelStyle: React.CSSProperties = {
+    ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px` } : {}),
+    ...(lockMinHeightPx ? { minHeight: `${lockMinHeightPx}px` } : {}),
+  };
 
   const content = (
     <div
-      className={`fixed inset-0 ${closingFromProp ? 'pointer-events-none' : 'pointer-events-auto'}`}
+      data-testid="bottom-sheet-overlay"
+      className="fixed inset-0 overscroll-none pointer-events-auto"
       style={{ zIndex: designTokens.zIndex.modal }}
       role="presentation"
     >
       <div
+        data-testid="bottom-sheet-backdrop"
         className={`absolute inset-0 bg-black/70 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out ${
-          slideReady ? 'opacity-100' : 'opacity-0'
-        } motion-reduce:opacity-100 touch-manipulation`}
+          visible ? 'opacity-100' : 'opacity-0'
+        } motion-reduce:opacity-100 touch-none`}
+        onClick={(e) => {
+          if (e.target !== e.currentTarget) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          requestCloseFromUser();
+        }}
         onPointerDown={(e) => {
+          e.preventDefault();
           e.stopPropagation();
           pointerStartedOnBackdropRef.current = e.target === e.currentTarget;
         }}
         onPointerUp={(e) => {
+          e.preventDefault();
           e.stopPropagation();
           if (e.target === e.currentTarget && pointerStartedOnBackdropRef.current) {
-            beginClose();
+            requestCloseFromUser();
           }
           pointerStartedOnBackdropRef.current = false;
         }}
       />
-      <div
+      <BottomSheetPanel
+        sheetRef={sheetRef}
+        dataTestId={dataTestId}
+        panelStyle={panelStyle}
+        exiting={exiting}
+        visible={visible}
+        title={title}
+        closeLabel={t('common.close')}
+        lockSheetHeight={lockSheetHeight}
+        footer={footer}
+        onRequestClose={requestCloseFromUser}
         onTransitionEnd={handleSheetPanelTransitionEnd}
-        className={`pointer-events-none absolute bottom-0 left-0 right-0 flex justify-center motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out will-change-transform ${
-          slideReady ? 'translate-y-0' : 'translate-y-full'
-        }`}
+        onDragPointerDown={handleDragPointerDown}
+        onDragPointerMove={handleDragPointerMove}
+        onDragPointerUp={handleDragPointerUp}
+        onDragPointerCancel={handleDragPointerCancel}
       >
-        <div
-          ref={sheetRef}
-          className={`flex min-h-0 w-full flex-col overflow-hidden rounded-t-xl bg-bg-base shadow-xl motion-safe:transition-transform motion-safe:duration-200 ${
-            closingFromProp ? 'pointer-events-none' : 'pointer-events-auto'
-          } ${
-            lockSheetHeight
-              ? 'min-h-[min(88vh,860px)] max-h-[min(92vh,900px)]'
-              : 'max-h-[min(92vh,900px)]'
-          }`}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="bottom-sheet-title"
-          onPointerDown={(e) => {
-            const el = e.target as HTMLElement;
-            if (el.closest('[data-bottom-sheet-handle]')) {
-              dragStartY.current = e.clientY;
-              try {
-                e.currentTarget.setPointerCapture(e.pointerId);
-              } catch {
-                /* noop */
-              }
-            }
-          }}
-          onPointerMove={(e) => {
-            if (dragStartY.current === null) return;
-            const dy = e.clientY - dragStartY.current;
-            dragDY.current = Math.max(0, dy);
-            if (sheetRef.current) {
-              sheetRef.current.style.transform = `translateY(${dragDY.current}px)`;
-            }
-          }}
-          onPointerUp={(e) => {
-            try {
-              e.currentTarget.releasePointerCapture(e.pointerId);
-            } catch {
-              /* noop */
-            }
-            if (dragStartY.current !== null && dragDY.current > 80) {
-              beginClose();
-            } else if (sheetRef.current) {
-              sheetRef.current.style.transform = '';
-            }
-            dragStartY.current = null;
-            dragDY.current = 0;
-          }}
-          onPointerCancel={(e) => {
-            try {
-              e.currentTarget.releasePointerCapture(e.pointerId);
-            } catch {
-              /* noop */
-            }
-            dragStartY.current = null;
-            dragDY.current = 0;
-            if (sheetRef.current) {
-              sheetRef.current.style.transform = '';
-            }
-          }}
-        >
-          <div
-            data-bottom-sheet-handle
-            className="flex shrink-0 justify-center pt-2 pb-1 cursor-grab touch-none active:cursor-grabbing"
-          >
-            <span className="h-1 w-10 rounded-full bg-primary-500/35" aria-hidden />
-          </div>
-          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-primary-500/20 px-4 pb-3">
-            <h2 id="bottom-sheet-title" className="truncate text-lg font-bold text-primary-900">
-              {title}
-            </h2>
-            <button
-              type="button"
-              onClick={() => beginClose()}
-              className="shrink-0 p-1 text-3xl leading-none text-primary-700 hover-only:hover:text-primary-900"
-              aria-label={t('common.close')}
-            >
-              ×
-            </button>
-          </div>
-          <div
-            className={
-              lockSheetHeight
-                ? 'flex min-h-0 flex-1 flex-col overflow-hidden overscroll-y-contain'
-                : 'min-h-0 shrink-0 overflow-x-hidden overscroll-y-contain pb-[max(1rem,env(safe-area-inset-bottom))]'
-            }
-          >
-            {children}
-          </div>
-          {footer ? (
-            <div className="shrink-0 border-t border-primary-500/20 bg-bg-base px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
-              {footer}
-            </div>
-          ) : null}
-        </div>
-      </div>
+        {children}
+      </BottomSheetPanel>
     </div>
   );
 

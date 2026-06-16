@@ -38,7 +38,9 @@ Applies when `user.type === 'Business'`, phone is verified, and `companyName` is
 
 ## Verify-phone → next URL
 
-After successful SMS verification in the “complete profile” flow, the client may send the user to `business_onboarding` when the selected account type is Business (query `selectedType` is carried through verify-phone). Password registration with business type already stores company name at signup, so this path mainly affects OAuth / flows without company name in DB.
+After successful SMS verification in the “complete profile” flow, the client navigates to `business_onboarding` when the selected account type is Business (query `selectedType` is carried through verify-phone). Password registration with business type already stores company name at signup, so this path mainly affects OAuth / flows without company name in DB.
+
+Post-auth steps (verify-phone success, complete-profile gates, business onboarding finish, pending saved filter) use **client-side navigation** (`router.replace` via `useLocalizedNavigation`) rather than `window.location` full reloads, so auth state in the Zustand store stays warm and intermediate blank screens are avoided. Direct visits or hard refreshes on `/complete-profile` show `CompleteProfilePageLoader` while `AuthProvider` resolves the session.
 
 ### Phone number in URL (privacy)
 

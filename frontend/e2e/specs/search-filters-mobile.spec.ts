@@ -110,6 +110,53 @@ test.describe('Search: mobile filters and sheets @p0', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
+  test('dismisses brand sheet via close button without applying selection and preserves scroll', async ({
+    page,
+    searchHomePage,
+  }) => {
+    const mobileFilters = new SearchFiltersMobileComponent(page);
+
+    await runSteps(
+      prependClearBrowserState(page, [
+        {
+          name: 'Open search home',
+          action: async () => {
+            await searchHomePage.openAndExpectPageView();
+          },
+        },
+        {
+          name: 'Scroll page before opening sheet',
+          action: async () => {
+            await mobileFilters.scrollPageBy(320);
+          },
+        },
+      ]),
+    );
+
+    const scrollBefore = await mobileFilters.capturePageScrollY();
+    await mobileFilters.selectTab('basic');
+    await mobileFilters.openFilterRow('vehicle_brand', 'basic');
+    await mobileFilters.expectSheetHeaderVisible();
+    await mobileFilters.selectFirstSheetOption();
+    await mobileFilters.dismissSheetViaCloseButton();
+    await mobileFilters.expectPageScrollStable(scrollBefore);
+    await mobileFilters.expectFilterRowHasNoSelection('vehicle_brand', 'basic');
+  });
+
+  test('dismisses fuel sheet via backdrop without applying selection', async ({
+    page,
+    searchHomePage,
+  }) => {
+    const mobileFilters = new SearchFiltersMobileComponent(page);
+
+    await searchHomePage.openAndExpectPageView();
+    await mobileFilters.selectTab('basic');
+    await mobileFilters.openFilterRow('vehicle_fuel', 'basic');
+    await mobileFilters.selectSheetOption('Petrol');
+    await mobileFilters.dismissSheetViaBackdrop();
+    await mobileFilters.expectFilterRowHasNoSelection('vehicle_fuel', 'basic');
+  });
+
   test('submits search with fuel filter and listings API response', async ({
     page,
     searchHomePage,

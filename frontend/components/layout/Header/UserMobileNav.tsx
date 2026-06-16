@@ -60,7 +60,7 @@ export function UserMobileNav({
   return (
     <div className="flex flex-col gap-4">
       {showCreateListingInDrawer && (
-        <CreateListingButton variant="mobile" onClick={onClose} className="py-3.5!" />
+        <CreateListingButton variant="mobile" drawerCta onClick={onClose} />
       )}
       <Link href={href('/my-listings')} {...linkProps}>
         <DocumentsIcon className={iconClass} />

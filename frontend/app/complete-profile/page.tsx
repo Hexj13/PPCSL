@@ -1,19 +1,18 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect } from 'react';
 
-import { MAIN_VIEWPORT_MIN_HEIGHT_CLASS } from '@/lib/constants';
-import { getClientLocale } from '@/lib/i18n';
-import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useAuthStore } from '@/lib/store';
 
 import { CompleteProfileBusinessOnboarding } from './CompleteProfileBusinessOnboarding';
+import { CompleteProfilePageLoader } from './CompleteProfilePageLoader';
 import { CompleteProfilePhoneGate } from './CompleteProfilePhoneGate';
 import { CompleteProfileStandardFlow } from './CompleteProfileStandardFlow';
 
 function CompleteProfileContent() {
-  const router = useRouter();
+  const { replace } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { user, isInitialized } = useAuthStore();
   const phoneRequiredMode = searchParams.get('mode') === 'phone_required';
@@ -21,17 +20,12 @@ function CompleteProfileContent() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      router.replace(buildPostAuthRedirect('/sign', getClientLocale()));
+      replace('/sign');
     }
-  }, [user, isInitialized, router]);
+  }, [user, isInitialized, replace]);
 
   if (!isInitialized || !user) {
-    return (
-      <div
-        className={`max-w-md mx-auto mt-6 md:mt-12 mb-16 ${MAIN_VIEWPORT_MIN_HEIGHT_CLASS}`}
-        aria-hidden
-      />
-    );
+    return <CompleteProfilePageLoader />;
   }
 
   if (businessOnboardingMode) {
@@ -46,12 +40,7 @@ function CompleteProfileContent() {
 }
 
 function CompleteProfileSuspenseFallback() {
-  return (
-    <div
-      className={`max-w-md mx-auto mt-6 md:mt-12 mb-16 ${MAIN_VIEWPORT_MIN_HEIGHT_CLASS}`}
-      aria-hidden
-    />
-  );
+  return <CompleteProfilePageLoader />;
 }
 
 export default function CompleteProfilePage() {

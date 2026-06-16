@@ -1,16 +1,18 @@
+import { authApi } from '@/lib/api';
 import { localStorageSetItem } from '@/lib/browser-local-storage';
 import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
-import { getClientLocale } from '@/lib/i18n';
 import { clearPendingRegistration } from '@/lib/pending-registration';
-import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { sanitizeReturnUrl } from '@/lib/return-url';
+import { useAuthStore } from '@/lib/store';
+import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 
 export async function completeRegistrationAndGoToProfile(
   emailVerificationSent: boolean,
-  returnUrlFromQuery?: string | null,
+  returnUrlFromQuery: string | null | undefined,
+  navigate: (restPath: string) => void,
 ): Promise<void> {
   const releaseComparisonHold = holdComparisonApiLoadUntilReleased();
   try {
@@ -26,16 +28,13 @@ export async function completeRegistrationAndGoToProfile(
   if (emailVerificationSent) {
     localStorageSetItem('showRegistrationEmailVerificationNotice', 'true');
   }
-  const locale = getClientLocale();
+  const me = await authApi.me();
+  const syncedUser = await syncPartnerPromoDismissAfterAuth(me.data);
+  useAuthStore.getState().setAuth(syncedUser);
   const safeReturnUrl = sanitizeReturnUrl(returnUrlFromQuery);
   if (safeReturnUrl) {
-    const localizedReturn = buildPostAuthRedirect(safeReturnUrl, locale);
-    const complete = buildPostAuthRedirect(
-      `/complete-profile?returnUrl=${encodeURIComponent(localizedReturn)}`,
-      locale,
-    );
-    window.location.href = complete;
+    navigate(`/complete-profile?returnUrl=${encodeURIComponent(safeReturnUrl)}`);
     return;
   }
-  window.location.href = buildPostAuthRedirect('/complete-profile', locale);
+  navigate('/complete-profile');
 }

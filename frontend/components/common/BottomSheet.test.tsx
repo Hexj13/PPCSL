@@ -9,10 +9,6 @@ jest.mock('react-dom', () => ({
   createPortal: (node: React.ReactNode) => node,
 }));
 
-jest.mock('@/hooks/useScrollLock', () => ({
-  useScrollLock: jest.fn(),
-}));
-
 jest.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({
     t: (key: string) => (key === 'common.close' ? 'Close' : key),
@@ -51,13 +47,24 @@ describe('BottomSheet', () => {
         back: jest.fn(),
       },
     });
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      writable: true,
+      value: {
+        height: 800,
+        offsetTop: 0,
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      },
+    });
   });
 
   afterEach(() => {
     resetOverlayHistoryForTests();
+    jest.useRealTimers();
   });
 
-  it('renders title and calls onClose when close is triggered', () => {
+  it('renders title and calls onClose after close button exit animation', () => {
     jest.useFakeTimers();
     const onClose = jest.fn();
     render(
@@ -68,11 +75,11 @@ describe('BottomSheet', () => {
     expect(screen.getByText('Test sheet')).toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(onClose).not.toHaveBeenCalled();
     act(() => {
       jest.advanceTimersByTime(400);
     });
-    expect(onClose).toHaveBeenCalled();
-    jest.useRealTimers();
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('closes when the user navigates back in history', () => {
@@ -91,8 +98,65 @@ describe('BottomSheet', () => {
       jest.advanceTimersByTime(400);
     });
 
-    expect(onClose).toHaveBeenCalled();
-    jest.useRealTimers();
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onClose when parent sets isOpen to false after confirm', () => {
+    jest.useFakeTimers();
+    const onClose = jest.fn();
+    const { rerender } = render(
+      <BottomSheet isOpen onClose={onClose} title="Test sheet">
+        <p>Content</p>
+      </BottomSheet>,
+    );
+    expect(screen.getByText('Test sheet')).toBeInTheDocument();
+
+    rerender(
+      <BottomSheet isOpen={false} onClose={onClose} title="Test sheet">
+        <p>Content</p>
+      </BottomSheet>,
+    );
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByText('Test sheet')).toBeInTheDocument();
+    expect(screen.getByTestId('bottom-sheet-overlay')).toHaveClass('pointer-events-auto');
+
+    act(() => {
+      jest.advanceTimersByTime(400);
+    });
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.queryByText('Test sheet')).not.toBeInTheDocument();
+  });
+
+  it('closes on Escape after exit animation', () => {
+    jest.useFakeTimers();
+    const onClose = jest.fn();
+    render(
+      <BottomSheet isOpen onClose={onClose} title="Test sheet">
+        <p>Content</p>
+      </BottomSheet>,
+    );
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(400);
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies dynamic max height from visual viewport when lockSheetHeight is enabled', () => {
+    render(
+      <BottomSheet isOpen onClose={() => {}} title="Tall sheet" lockSheetHeight>
+        <p>Content</p>
+      </BottomSheet>,
+    );
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveStyle({ maxHeight: '736px', minHeight: '704px' });
   });
 
   it('returns null when closed', () => {
@@ -104,7 +168,7 @@ describe('BottomSheet', () => {
     expect(screen.queryByText('Hidden')).not.toBeInTheDocument();
   });
 
-  it('does not render on wide viewport even when isOpen', () => {
+  it('does not render on wide viewport when mobileOnly is true', () => {
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       configurable: true,
@@ -123,6 +187,26 @@ describe('BottomSheet', () => {
       </BottomSheet>,
     );
     expect(screen.queryByText('Desktop')).not.toBeInTheDocument();
-    expect(screen.queryByText('Content')).not.toBeInTheDocument();
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('renders on wide viewport when mobileOnly is false', () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      configurable: true,
+      value: jest.fn().mockImplementation(() => ({
+        matches: false,
+        media: '',
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+    });
+    render(
+      <BottomSheet isOpen onClose={() => {}} title="Desktop sheet" mobileOnly={false}>
+        <p>Content</p>
+      </BottomSheet>,
+    );
+    expect(screen.getByText('Desktop sheet')).toBeInTheDocument();
   });
 });

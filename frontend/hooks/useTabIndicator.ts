@@ -13,6 +13,7 @@ export function useTabIndicator<T extends string>(
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const tabRefsRef = useRef(tabRefs);
   tabRefsRef.current = tabRefs;
+  const lastIndicatorStyleRef = useRef({ left: 0, width: 0 });
 
   const updateIndicatorRef = useRef<() => void>(() => {});
 
@@ -20,14 +21,16 @@ export function useTabIndicator<T extends string>(
     const run = () => {
       const activeRef = tabRefsRef.current[activeTab];
       if (activeRef?.current && containerRef?.current) {
-        const rect = activeRef.current.getBoundingClientRect();
-        const container = containerRef.current;
-        const containerRect = container.getBoundingClientRect();
-        const scrollLeft = container.scrollLeft ?? 0;
-        setIndicatorStyle({
-          left: rect.left - containerRect.left + scrollLeft,
-          width: rect.width,
-        });
+        const left = activeRef.current.offsetLeft;
+        const width = activeRef.current.offsetWidth;
+
+        if (
+          lastIndicatorStyleRef.current.left !== left ||
+          lastIndicatorStyleRef.current.width !== width
+        ) {
+          lastIndicatorStyleRef.current = { left, width };
+          setIndicatorStyle({ left, width });
+        }
       }
     };
     updateIndicatorRef.current = run;

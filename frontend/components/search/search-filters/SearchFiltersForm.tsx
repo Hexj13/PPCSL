@@ -40,6 +40,7 @@ export type SearchFiltersFormProps = {
   vehicleType: 'car' | 'moto' | 'truck';
   onVehicleTypeChange: (type: 'car' | 'moto' | 'truck') => void;
   onTireCategorySelect: () => void;
+  isCategorySwitching?: boolean;
   tabs: SearchTabsApi;
   basicTabHasActiveDot: boolean;
   hasAdvancedFiltersActive: boolean;
@@ -79,6 +80,7 @@ export function SearchFiltersForm({
   vehicleType,
   onVehicleTypeChange,
   onTireCategorySelect,
+  isCategorySwitching = false,
   tabs,
   basicTabHasActiveDot,
   hasAdvancedFiltersActive,
@@ -126,14 +128,17 @@ export function SearchFiltersForm({
             vehicleType={vehicleType}
             onVehicleTypeChange={onVehicleTypeChange}
             onTireCategorySelect={onTireCategorySelect}
+            switchingLocked={isCategorySwitching}
           />
           <SearchTabs
             variant={filters.listing_category === 'tire' ? 'tire' : 'vehicle'}
             activeTab={tabs.activeTab}
             onTabChange={(tab) => {
+              if (isCategorySwitching) return;
               tabs.setActiveTab(tab);
               tabs.scrollTabToStart(tab);
             }}
+            switchingLocked={isCategorySwitching}
             hasBasicFilters={basicTabHasActiveDot}
             hasAdvancedFiltersActive={hasAdvancedFiltersActive}
             hasEquipmentFiltersActive={hasEquipmentFiltersActive}

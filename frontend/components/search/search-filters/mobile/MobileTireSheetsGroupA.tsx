@@ -36,6 +36,7 @@ export function MobileTireSheetsGroupA(props: MobileTireSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmTireSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >
@@ -98,6 +99,7 @@ export function MobileTireSheetsGroupA(props: MobileTireSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmTireSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >
@@ -127,6 +129,7 @@ export function MobileTireSheetsGroupA(props: MobileTireSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmTireSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >
@@ -160,6 +163,7 @@ export function MobileTireSheetsGroupA(props: MobileTireSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmTireSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >
@@ -192,6 +196,7 @@ export function MobileTireSheetsGroupA(props: MobileTireSheetsProps) {
         footer={
           <button
             type="button"
+            data-testid="search-sheet-confirm"
             onClick={confirmTireSheet}
             className="btn-primary w-full py-3 rounded-lg"
           >

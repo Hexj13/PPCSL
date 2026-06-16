@@ -4,6 +4,7 @@ import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { MultiSelectOptionLeadingLogo } from '@/components/common/MultiSelectOptionLeadingLogo';
 import { useTranslation } from '@/hooks/useTranslation';
+import { BOTTOM_SHEET_LIST_SCROLL_CLASS } from '@/lib/bottom-sheet-layout';
 
 export interface MultiSelectOption {
   value: string;
@@ -88,10 +89,11 @@ export function MultiSelectSheetContent({
         </div>
       ) : null}
       <div
+        data-bottom-sheet-scrollable="true"
         className={
           fillAvailableHeight
-            ? 'flex-1 min-h-0 overflow-y-auto scrollbar-custom'
-            : 'overflow-y-auto max-h-[min(76vh,740px)] scrollbar-custom'
+            ? BOTTOM_SHEET_LIST_SCROLL_CLASS
+            : `${BOTTOM_SHEET_LIST_SCROLL_CLASS} max-h-full`
         }
       >
         {filteredOptions.length > 0 ? (

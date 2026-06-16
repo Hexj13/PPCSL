@@ -10,6 +10,12 @@ let bodyStyleSnapshot: {
   top: string;
   width: string;
   left: string;
+  overflow: string;
+  overscrollBehavior: string;
+} | null = null;
+let htmlStyleSnapshot: {
+  overflow: string;
+  overscrollBehavior: string;
 } | null = null;
 
 function restoreBodyStyles() {
@@ -19,7 +25,14 @@ function restoreBodyStyles() {
     body.style.top = bodyStyleSnapshot.top;
     body.style.width = bodyStyleSnapshot.width;
     body.style.left = bodyStyleSnapshot.left;
+    body.style.overflow = bodyStyleSnapshot.overflow;
+    body.style.overscrollBehavior = bodyStyleSnapshot.overscrollBehavior;
     bodyStyleSnapshot = null;
+  }
+  if (htmlStyleSnapshot) {
+    document.documentElement.style.overflow = htmlStyleSnapshot.overflow;
+    document.documentElement.style.overscrollBehavior = htmlStyleSnapshot.overscrollBehavior;
+    htmlStyleSnapshot = null;
   }
 }
 
@@ -32,11 +45,17 @@ function acquireScrollLock() {
       top: body.style.top,
       width: body.style.width,
       left: body.style.left,
+      overflow: body.style.overflow,
+      overscrollBehavior: body.style.overscrollBehavior,
     };
-    body.style.position = 'fixed';
-    body.style.top = `-${lockedScrollY}px`;
-    body.style.left = '0';
-    body.style.width = '100%';
+    htmlStyleSnapshot = {
+      overflow: document.documentElement.style.overflow,
+      overscrollBehavior: document.documentElement.style.overscrollBehavior,
+    };
+    body.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overscrollBehavior = 'none';
   }
   scrollLockDepth += 1;
 }
@@ -54,6 +73,15 @@ function releaseScrollLock() {
   const targetY = releaseToTopNext ? 0 : lockedScrollY;
   releaseToTopNext = false;
   window.scrollTo(0, targetY);
+  if (typeof window.requestAnimationFrame === 'function') {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (window.scrollY !== targetY) {
+          window.scrollTo(0, targetY);
+        }
+      });
+    });
+  }
 }
 
 export function prepareScrollLockReleaseToTop() {

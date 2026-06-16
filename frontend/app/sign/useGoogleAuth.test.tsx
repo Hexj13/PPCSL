@@ -666,8 +666,8 @@ describe('useGoogleAuth', () => {
     });
     expect(mockLocalStorageRemoveItem).toHaveBeenCalledWith('pendingSavedFilter');
     expect(toast.success).toHaveBeenCalledWith('Filter saved');
-    expect(mockLocationReplace).toHaveBeenCalledWith('/ru/favorites?tab=filters');
-    expect(mockReplace).not.toHaveBeenCalled();
+    expect(mockReplace).toHaveBeenCalledWith('/favorites?tab=filters');
+    expect(mockLocationReplace).not.toHaveBeenCalled();
   });
 
   it('replaces route to localized home when phone is verified and returnUrl is absent', async () => {

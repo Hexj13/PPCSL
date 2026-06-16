@@ -1,5 +1,7 @@
 'use client';
 
+import { BOTTOM_SHEET_LIST_SCROLL_CLASS } from '@/lib/bottom-sheet-layout';
+
 interface SingleSelectOption {
   value: string;
   label: string;
@@ -17,7 +19,10 @@ export function SingleSelectSheetContent({
   onChange,
 }: SingleSelectSheetContentProps) {
   return (
-    <div className="overflow-y-auto max-h-[min(76vh,740px)] scrollbar-custom">
+    <div
+      data-bottom-sheet-scrollable="true"
+      className={`${BOTTOM_SHEET_LIST_SCROLL_CLASS} max-h-full`}
+    >
       {options.map((option, index) => {
         const normalizedValue = value ?? '';
         const selected =

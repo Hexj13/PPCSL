@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { MOBILE_NAV_CTA_HEIGHT_CLASSES } from '@/components/layout/Header/mobileNavCtaClasses';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
 import { localizedHref } from '@/lib/localized-href';
@@ -23,6 +24,7 @@ export const HEADER_CTA_BUTTON_CLASSES = `${HEADER_CTA_SURFACE_CLASSES} text-xs 
 interface CreateListingButtonProps {
   variant?: 'mobile' | 'desktop';
   shortLabel?: boolean;
+  drawerCta?: boolean;
   className?: string;
   onClick?: () => void;
 }
@@ -30,6 +32,7 @@ interface CreateListingButtonProps {
 export function CreateListingButton({
   variant = 'desktop',
   shortLabel = false,
+  drawerCta = false,
   className = '',
   onClick,
 }: CreateListingButtonProps) {
@@ -47,7 +50,11 @@ export function CreateListingButton({
 
   const baseClasses = HEADER_CTA_BUTTON_CLASSES;
 
-  const variantClasses = isMobile ? 'px-3 py-2 w-full text-[14px]' : 'h-10 px-2.5 md:px-3';
+  const variantClasses = isMobile
+    ? drawerCta
+      ? `px-3 py-0 w-full text-[14px] ${MOBILE_NAV_CTA_HEIGHT_CLASSES}`
+      : 'px-3 py-2 w-full text-[14px]'
+    : 'h-10 px-2.5 md:px-3';
 
   const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';
 

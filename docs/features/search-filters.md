@@ -171,9 +171,29 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 ## Mobile layout
 
 - Below `md`, vehicle filters use `MobileSearchFilters` (bottom sheets for field editing).
-- System **Back** on Android/PWA closes the open bottom sheet first (shared overlay stack — see [overlay-back-navigation.md](./overlay-back-navigation.md)).
+- All mobile search sheets use `components/common/BottomSheet.tsx` with a unified open/close lifecycle: slide-up on open, slide-down on close, regardless of whether the user dismisses via **OK**, the header close button, backdrop tap, Escape, swipe-down, or system **Back**.
+- Confirm (**OK**) applies draft values and closes the sheet with the same exit animation; dismiss actions do not apply draft changes.
+- Sheet height is derived from `visualViewport` (not static `vh`) and respects iOS safe areas (`viewport-fit=cover`, top inset on the handle/header, bottom inset on the footer).
+- Background scroll is blocked while the sheet is open via `useBlockBackgroundScroll` (event interception), not by locking `body` overflow — this keeps the `position: sticky` page header anchored to the viewport instead of scrolling out of view. Scrolling inside the sheet list still works and the page position stays put.
+- System **Back** on Android/PWA closes the open bottom sheet first (shared overlay stack — see [overlay-back-navigation.md](./overlay-back-navigation.md)). Overlay history cleanup runs when the sheet portal unmounts, after the exit animation.
 - The same four tab panels stay mounted with CSS `hidden` on inactive tabs (values persist when switching tabs).
 - Mileage sheet inputs and summaries use thousands with spaces (same formatting helper as price).
+
+### Mobile bottom sheet QA checklist
+
+Manual verification on real devices (priority: iOS Safari, Android Chrome):
+
+| Area | Cases |
+| --- | --- |
+| Vehicle type | Car, truck, moto — basic and advanced sheets |
+| Category | Tire search sheets |
+| Tabs | Basic, advanced, equipment, popular |
+| Open/close | OK, header ×, backdrop, Escape, swipe-down, browser Back |
+| Long lists | Brand, model, city — header close button visible; list scroll stays inside sheet |
+| Scroll stability | Scroll page, open sheet, close without OK — page position unchanged |
+| Safe area | Header × and footer OK not hidden under browser chrome or home indicator |
+
+Automated coverage: `e2e/specs/search-filters-mobile.spec.ts` (sheet matrix + dismiss/scroll smoke).
 
 ---
 

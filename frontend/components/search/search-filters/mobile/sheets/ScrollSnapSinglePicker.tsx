@@ -115,6 +115,7 @@ export function ScrollSnapSinglePicker({
       />
       <div
         ref={scrollRef}
+        data-bottom-sheet-scrollable="true"
         role="listbox"
         aria-label={ariaLabel}
         className="relative z-[1] h-full max-h-full min-h-0 overflow-y-auto overscroll-y-contain scrollbar-hide snap-y snap-mandatory touch-pan-y"

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { BottomSheet } from '@/components/modals/BottomSheet';
+import { BottomSheet } from '@/components/common/BottomSheet';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export function ServiceWorkerRegistration() {
@@ -86,6 +86,7 @@ export function ServiceWorkerRegistration() {
       onClose={() => setUpdateAvailable(false)}
       title={t('pwa.updateAvailable')}
       dataTestId="pwa-update-sheet"
+      mobileOnly={false}
     >
       <div className="space-y-4 text-left text-text-primary">
         <p className="text-sm sm:text-base">{t('pwa.updateDescription')}</p>

@@ -53,7 +53,7 @@ jest.mock('@/lib/store', () => ({
   useAuthStore: () => authStoreState,
 }));
 
-const activeTypeClass = 'border border-primary-700';
+const activeTypeClass = 'border-primary-700';
 
 describe('PhoneRequiredStep', () => {
   beforeEach(() => {

@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 
 import { completeRegistrationAndGoToProfile } from '@/app/verify-phone/afterRegistration';
 import { submitVerifyPhoneWithAuthCode } from '@/app/verify-phone/verifyPhoneAuthCodeSubmit';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { RegisterDto } from '@/lib/api';
@@ -31,6 +32,7 @@ function getLoginValue(formData: RegisterDto): string | null {
 
 export function useVerifyPhonePage() {
   const router = useRouter();
+  const { replace } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { setAuth } = useAuthStore();
   const { t } = useTranslation();
@@ -264,6 +266,7 @@ export function useVerifyPhonePage() {
     await completeRegistrationAndGoToProfile(
       !!registerResponse.data.emailVerificationSent,
       returnUrl,
+      replace,
     );
   };
 
@@ -303,6 +306,7 @@ export function useVerifyPhonePage() {
         returnUrl,
         source: searchParams.get('source'),
         selectedType: searchParams.get('selectedType'),
+        navigate: replace,
         setAuth,
         setError,
         setCode,

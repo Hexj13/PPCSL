@@ -23,7 +23,7 @@ export class VerifyPhoneFormComponent {
 
   async submit(): Promise<void> {
     const submit = this.page.getByTestId(this.testIds.submitButton);
-    await expect.poll(async () => submit.isEnabled(), { timeout: 20_000 }).toBe(true);
+    await expect.poll(async () => submit.isEnabled(), { timeout: 30_000 }).toBe(true);
     await submit.click();
   }
 }

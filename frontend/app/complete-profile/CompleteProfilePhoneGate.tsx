@@ -5,22 +5,27 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { cancelOAuthPhoneRequiredSignup } from '@/app/complete-profile/oauthPhoneRequiredCancel';
 import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { MAIN_VIEWPORT_MIN_HEIGHT_CLASS } from '@/lib/constants';
-import { getClientLocale } from '@/lib/i18n';
 import {
   clearOAuthPhoneRequiredContext,
   isOAuthPhoneRequiredSignupFlow,
   shouldShowOAuthPhoneRequiredCancel,
 } from '@/lib/oauth-phone-required-context';
-import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
-import { buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
+import {
+  buildSignPageHref,
+  getReturnUrlFromSearchParams,
+  sanitizeReturnUrl,
+} from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 
+import { CompleteProfilePageLoader } from './CompleteProfilePageLoader';
 import { PhoneRequiredStep } from './PhoneRequiredStep';
 
 export function CompleteProfilePhoneGate() {
   const router = useRouter();
+  const { replace } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
   const { user, logout } = useAuthStore();
@@ -60,14 +65,15 @@ export function CompleteProfilePhoneGate() {
   useEffect(() => {
     if (!user) return;
     if (!phoneRequiredMode) return;
-    if (user.phoneVerified && typeof window !== 'undefined' && window.location) {
+    if (user.phoneVerified) {
       clearOAuthPhoneRequiredContext();
-      window.location.href = buildPostAuthRedirect(returnUrl || '/', getClientLocale());
+      const target = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
+      replace(target ?? '/');
     }
-  }, [user, phoneRequiredMode, returnUrl]);
+  }, [user, phoneRequiredMode, returnUrl, replace]);
 
   if (!user || !phoneRequiredMode || user.phoneVerified) {
-    return null;
+    return <CompleteProfilePageLoader />;
   }
 
   return (

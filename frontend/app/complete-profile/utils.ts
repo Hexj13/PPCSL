@@ -2,9 +2,7 @@ import type { UpdateProfileDto, User } from '@/lib/api';
 import { savedFiltersApi } from '@/lib/api';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
 import { applyComparisonAfterAuth } from '@/lib/comparisonMigration';
-import { getClientLocale } from '@/lib/i18n';
 import { compactE164Phone } from '@/lib/phone';
-import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
@@ -26,7 +24,8 @@ export async function processPendingComparisons(): Promise<void> {
 
 export async function processPendingSavedFilter(
   t: (key: string) => string,
-  returnUrl?: string | null,
+  returnUrl: string | null | undefined,
+  navigate: (restPath: string) => void,
 ): Promise<boolean> {
   const pendingSavedFilter = localStorageGetItem('pendingSavedFilter');
   if (!pendingSavedFilter) return false;
@@ -42,9 +41,7 @@ export async function processPendingSavedFilter(
     await savedFiltersApi.create(filterName, filters);
     localStorageRemoveItem('pendingSavedFilter');
     toast.success(t('login.filterSavedSuccess'));
-    if (typeof window !== 'undefined' && window.location) {
-      window.location.replace(buildPostAuthRedirect('/favorites?tab=filters', getClientLocale()));
-    }
+    navigate('/favorites?tab=filters');
     return true;
   } catch (error: unknown) {
     const errorMessage =
@@ -55,14 +52,12 @@ export async function processPendingSavedFilter(
     localStorageRemoveItem('pendingSavedFilter');
     const limitErrorText = t('login.filterLimitError');
     if (errorMessage === limitErrorText) {
-      if (typeof window !== 'undefined' && window.location) {
-        window.location.replace(buildPostAuthRedirect('/favorites?tab=filters', getClientLocale()));
-      }
+      navigate('/favorites?tab=filters');
       return true;
     }
     const safeReturnUrl = sanitizeReturnUrl(returnUrl);
-    if (safeReturnUrl && typeof window !== 'undefined' && window.location) {
-      window.location.replace(buildPostAuthRedirect(safeReturnUrl, getClientLocale()));
+    if (safeReturnUrl) {
+      navigate(safeReturnUrl);
       return true;
     }
   }
@@ -72,14 +67,15 @@ export async function processPendingSavedFilter(
 export async function processPendingData(
   user: User,
   t: (key: string) => string,
-  returnUrl?: string | null,
+  returnUrl: string | null | undefined,
+  navigate: (restPath: string) => void,
 ): Promise<boolean> {
   if (typeof window === 'undefined') return false;
   const syncedUser = await syncPartnerPromoDismissAfterAuth(user);
   useAuthStore.getState().setAuth(syncedUser);
   await processPendingFavorites(syncedUser.id);
   await processPendingComparisons();
-  return processPendingSavedFilter(t, returnUrl);
+  return processPendingSavedFilter(t, returnUrl, navigate);
 }
 
 export function buildUpdateData(

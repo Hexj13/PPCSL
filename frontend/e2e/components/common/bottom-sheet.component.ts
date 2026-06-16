@@ -25,4 +25,31 @@ export class BottomSheetComponent {
   async expectHidden(): Promise<void> {
     await expect(this.sheetDialog()).toBeHidden({ timeout: 15_000 });
   }
+
+  async dismissViaCloseButton(): Promise<void> {
+    await this.sheetDialog().getByTestId('bottom-sheet-close').click();
+    await this.expectHidden();
+  }
+
+  async dismissViaBackdrop(): Promise<void> {
+    const backdrop = this.page.getByTestId('bottom-sheet-backdrop');
+    await expect(backdrop).toBeVisible({ timeout: 15_000 });
+    await backdrop.click({ position: { x: 12, y: 12 } });
+    await this.expectHidden();
+  }
+
+  async dismissViaEscape(): Promise<void> {
+    await this.page.keyboard.press('Escape');
+    await this.expectHidden();
+  }
+
+  async expectHeaderVisible(): Promise<void> {
+    const closeButton = this.sheetDialog().getByTestId('bottom-sheet-close');
+    await expect(closeButton).toBeVisible({ timeout: 15_000 });
+    await expect(closeButton).toBeInViewport({ timeout: 15_000 });
+  }
+
+  async expectScrollStableAfterClose(scrollYBefore: number): Promise<void> {
+    await expect.poll(async () => this.page.evaluate(() => window.scrollY)).toBe(scrollYBefore);
+  }
 }

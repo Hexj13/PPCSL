@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 
 import { RegisterFormMessengers } from '@/app/register/RegisterFormMessengers';
+import { UserTypeSwitcher } from '@/app/register/UserTypeSwitcher';
 import { validatePhone } from '@/app/register/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { UpdateProfileDto, User } from '@/lib/api';
@@ -142,37 +143,12 @@ export function PhoneRequiredStep({
       <InfoBlock>
         <p>{t('completeProfile.phoneRequiredDescription')}</p>
       </InfoBlock>
-      <div className="mb-5">
-        <label className="block text-sm font-semibold mb-2 text-primary-900">
-          {t('register.userType')}
-        </label>
-        <div className="flex bg-bg-base rounded-lg p-1 border-2 border-primary-700/30">
-          <button
-            type="button"
-            onClick={() => setAccountType('Individual')}
-            data-testid="complete-profile-phone-required-type-individual"
-            className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all duration-200 ${
-              accountType === 'Individual'
-                ? 'bg-primary-500/10 text-primary-700 border border-primary-700'
-                : 'text-primary-900 hover-only:hover:text-primary-700'
-            }`}
-          >
-            {t('register.individual')}
-          </button>
-          <button
-            type="button"
-            onClick={() => setAccountType('Business')}
-            data-testid="complete-profile-phone-required-type-business"
-            className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all duration-200 ${
-              accountType === 'Business'
-                ? 'bg-primary-500/10 text-primary-700 border border-primary-700'
-                : 'text-primary-900 hover-only:hover:text-primary-700'
-            }`}
-          >
-            {t('register.business')}
-          </button>
-        </div>
-      </div>
+      <UserTypeSwitcher
+        value={accountType}
+        onChange={setAccountType}
+        individualTestId="complete-profile-phone-required-type-individual"
+        businessTestId="complete-profile-phone-required-type-business"
+      />
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
         <div>
           <label

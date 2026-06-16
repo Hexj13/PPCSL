@@ -14,6 +14,7 @@ import {
 import type { SearchFiltersFormProps } from '@/components/search/search-filters/SearchFiltersForm';
 import { useAvailableListingsCount } from '@/hooks/useAvailableListingsCount';
 import { useBrandsAndModels } from '@/hooks/useBrandsAndModels';
+import { useCategorySwitchLock } from '@/hooks/useCategorySwitchLock';
 import { useCities } from '@/hooks/useCities';
 import { useFilterHandlers } from '@/hooks/useFilterHandlers';
 import { useFilterOptions } from '@/hooks/useFilterOptions';
@@ -117,8 +118,10 @@ export function useSearchFiltersController({
   });
 
   const scrollTabsToStart = useCallback(() => {
-    tabs.tabsContainerRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+    tabs.tabsContainerRef.current?.scrollTo({ left: 0, behavior: 'instant' });
   }, [tabs.tabsContainerRef]);
+
+  const { isCategorySwitching, withCategorySwitchLock } = useCategorySwitchLock();
 
   const { vehicleType, setVehicleTypeWithStorage, handleVehicleTypeChange } = useVehicleType({
     searchParams,
@@ -129,14 +132,33 @@ export function useSearchFiltersController({
   });
 
   const handleTireCategorySelect = useCallback(() => {
-    setFilters(getDefaultTireFilters(currentYear) as FilterState);
-    setLastAppliedFilters(null);
-    tabs.setActiveTab('basic');
-    scrollTabsToStart();
-    startTransition(() => {
-      localizedReplace('/?category=tire', { scroll: false });
+    withCategorySwitchLock(() => {
+      setFilters(getDefaultTireFilters(currentYear) as FilterState);
+      setLastAppliedFilters(null);
+      tabs.setActiveTab('basic');
+      scrollTabsToStart();
+      startTransition(() => {
+        localizedReplace('/?category=tire', { scroll: false });
+      });
     });
-  }, [currentYear, localizedReplace, scrollTabsToStart, setFilters, setLastAppliedFilters, tabs]);
+  }, [
+    currentYear,
+    localizedReplace,
+    scrollTabsToStart,
+    setFilters,
+    setLastAppliedFilters,
+    tabs,
+    withCategorySwitchLock,
+  ]);
+
+  const onVehicleTypeChange = useCallback(
+    (type: 'car' | 'moto' | 'truck') => {
+      withCategorySwitchLock(() => {
+        handleVehicleTypeChange(type);
+      });
+    },
+    [handleVehicleTypeChange, withCategorySwitchLock],
+  );
 
   const {
     brands,
@@ -322,8 +344,9 @@ export function useSearchFiltersController({
     onFormKeyDown: handleFormKeyDown,
     filters,
     vehicleType,
-    onVehicleTypeChange: handleVehicleTypeChange,
+    onVehicleTypeChange,
     onTireCategorySelect: handleTireCategorySelect,
+    isCategorySwitching,
     tabs,
     basicTabHasActiveDot,
     hasAdvancedFiltersActive,

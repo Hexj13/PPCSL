@@ -1,9 +1,10 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { validatePhone } from '@/app/register/utils';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import type { UpdateProfileDto } from '@/lib/api';
@@ -11,19 +12,18 @@ import { authApi } from '@/lib/api';
 import { localStorageSetItem } from '@/lib/browser-local-storage';
 import { holdComparisonApiLoadUntilReleased } from '@/lib/comparisonMigration';
 import { MAIN_VIEWPORT_MIN_HEIGHT_CLASS } from '@/lib/constants';
-import { getClientLocale } from '@/lib/i18n';
 import {
   compactE164Phone,
   formatPhoneForDisplay,
   formatPhoneOnBlur,
   sanitizePhoneInput,
 } from '@/lib/phone';
-import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import { InfoBlock, LoadingButton, AUTH_OUTLINE_BUTTON_CLASSES } from '@/ui';
 
+import { CompleteProfilePageLoader } from './CompleteProfilePageLoader';
 import {
   processPendingData,
   validateCompleteProfileCompanyName,
@@ -31,7 +31,7 @@ import {
 } from './utils';
 
 export function CompleteProfileBusinessOnboarding() {
-  const router = useRouter();
+  const { replace } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { user, isInitialized, setAuth } = useAuthStore();
   const { t } = useTranslation();
@@ -68,18 +68,14 @@ export function CompleteProfileBusinessOnboarding() {
     const mode = searchParams.get('mode');
     if (mode !== 'business_onboarding') return;
     if (!user.phoneVerified || user.type !== 'Business') {
-      router.replace(buildPostAuthRedirect('/', getClientLocale()));
+      replace('/');
       return;
     }
     if (user.companyName?.trim()) {
       const safeReturn = sanitizeReturnUrl(returnUrl);
-      if (safeReturn && typeof window !== 'undefined' && window.location) {
-        window.location.href = buildPostAuthRedirect(safeReturn, getClientLocale());
-      } else if (typeof window !== 'undefined' && window.location) {
-        window.location.href = buildPostAuthRedirect('/', getClientLocale());
-      }
+      replace(safeReturn ?? '/');
     }
-  }, [isInitialized, user, searchParams, router, returnUrl]);
+  }, [isInitialized, user, searchParams, replace, returnUrl]);
 
   const handleFormFieldFocus = () => {
     if (!formStartSentRef.current) {
@@ -201,7 +197,7 @@ export function CompleteProfileBusinessOnboarding() {
       let redirected = false;
       try {
         setAuth(response.data);
-        redirected = await processPendingData(response.data, t, returnUrl);
+        redirected = await processPendingData(response.data, t, returnUrl, replace);
       } finally {
         releaseComparisonHold();
       }
@@ -211,13 +207,11 @@ export function CompleteProfileBusinessOnboarding() {
       }
       analytics.formSubmit('complete_profile', true, filledFields);
       if (returnUrl) {
-        if (typeof window !== 'undefined' && window.location) {
-          localStorageSetItem('showProfileSaveSuccess', 'true');
-          window.location.href = buildPostAuthRedirect(returnUrl, getClientLocale());
-        }
-      } else if (typeof window !== 'undefined' && window.location) {
         localStorageSetItem('showProfileSaveSuccess', 'true');
-        window.location.href = buildPostAuthRedirect('/', getClientLocale());
+        replace(returnUrl);
+      } else {
+        localStorageSetItem('showProfileSaveSuccess', 'true');
+        replace('/');
       }
     } catch {
       analytics.formSubmit('complete_profile', false, filledFields);
@@ -227,12 +221,7 @@ export function CompleteProfileBusinessOnboarding() {
   };
 
   if (!isInitialized || !user) {
-    return (
-      <div
-        className={`max-w-md mx-auto mt-6 md:mt-12 mb-16 ${MAIN_VIEWPORT_MIN_HEIGHT_CLASS}`}
-        aria-hidden
-      />
-    );
+    return <CompleteProfilePageLoader />;
   }
 
   const mode = searchParams.get('mode');
@@ -242,12 +231,7 @@ export function CompleteProfileBusinessOnboarding() {
     user.type !== 'Business' ||
     user.companyName?.trim()
   ) {
-    return (
-      <div
-        className={`max-w-md mx-auto mt-6 md:mt-12 mb-16 ${MAIN_VIEWPORT_MIN_HEIGHT_CLASS}`}
-        aria-hidden
-      />
-    );
+    return <CompleteProfilePageLoader />;
   }
 
   return (

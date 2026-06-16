@@ -113,6 +113,7 @@ The feature should be simple, quick to implement, and safe to change. Therefore:
 
 - `ListingForm.tsx:420` — `router.push()` runs right after `toast.success()` but loader may still be active
 - `verify-phone/page.tsx` — multiple redirects after load
+- `complete-profile/page.tsx` — `CompleteProfilePageLoader` (spinner + label) while auth resolves or during Suspense; avoids empty gray viewport blocks on direct visit or refresh
 - `login/page.tsx` — redirect after successful login
 
 ## Requirements

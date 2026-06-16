@@ -1,6 +1,7 @@
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { createCoalescedCallback } from '@/lib/resize-coalesced';
 
 type SearchTab = 'basic' | 'advanced' | 'equipment' | 'popular';
@@ -128,8 +129,6 @@ export function useSearchTabs({
   const advancedTabRef = useRef<HTMLButtonElement>(null);
   const equipmentTabRef = useRef<HTMLButtonElement>(null);
   const popularTabRef = useRef<HTMLButtonElement>(null);
-  const indicatorRef = useRef<HTMLDivElement>(null);
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const [showFade, setShowFade] = useState(true);
   const [fadeOpacity, setFadeOpacity] = useState(1);
@@ -137,9 +136,29 @@ export function useSearchTabs({
 
   const FADE_OUT_SCROLL_THRESHOLD = 48;
 
-  const lastIndicatorRef = useRef({ left: 0, width: 0 });
   const lastFadeRef = useRef({ show: true, opacity: 1 });
   const rafIdRef = useRef(0);
+
+  const tabRefs = useMemo(
+    () => ({
+      basic: basicTabRef,
+      advanced: advancedTabRef,
+      equipment: equipmentTabRef,
+      popular: popularTabRef,
+    }),
+    [],
+  );
+
+  const { indicatorRef, indicatorStyle } = useTabIndicator(
+    activeTab,
+    tabRefs,
+    tabsContainerRef,
+    `${mode}-${activeTab}`,
+  );
+
+  const scrollTabsToStart = useCallback(() => {
+    tabsContainerRef.current?.scrollTo({ left: 0, behavior: 'instant' });
+  }, []);
 
   const scrollTabToStart = useCallback((tab: SearchTab) => {
     const container = tabsContainerRef.current;
@@ -159,30 +178,6 @@ export function useSearchTabs({
   }, []);
 
   useEffect(() => {
-    const updateIndicator = () => {
-      const activeRef =
-        activeTab === 'basic'
-          ? basicTabRef
-          : activeTab === 'advanced'
-            ? advancedTabRef
-            : activeTab === 'equipment'
-              ? equipmentTabRef
-              : popularTabRef;
-
-      if (activeRef.current && tabsContainerRef.current) {
-        const rect = activeRef.current.getBoundingClientRect();
-        const container = tabsContainerRef.current;
-        const containerRect = container.getBoundingClientRect();
-        const scrollLeft = container.scrollLeft;
-        const left = rect.left - containerRect.left + scrollLeft;
-        const width = rect.width;
-        if (lastIndicatorRef.current.left !== left || lastIndicatorRef.current.width !== width) {
-          lastIndicatorRef.current = { left, width };
-          setIndicatorStyle({ left, width });
-        }
-      }
-    };
-
     const updateFade = () => {
       if (!tabsContainerRef.current) return;
       const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
@@ -197,15 +192,11 @@ export function useSearchTabs({
     };
 
     const runUpdates = () => {
-      updateIndicator();
       updateFade();
       rafIdRef.current = 0;
     };
 
-    const handleResize = createCoalescedCallback(() => {
-      updateIndicator();
-      updateFade();
-    });
+    const handleResize = createCoalescedCallback(updateFade);
 
     const handleScroll = () => {
       if (rafIdRef.current === 0) {
@@ -213,7 +204,6 @@ export function useSearchTabs({
       }
     };
 
-    updateIndicator();
     updateFade();
 
     const container = tabsContainerRef.current;
@@ -232,12 +222,13 @@ export function useSearchTabs({
     }
 
     return undefined;
-  }, [activeTab]);
+  }, [activeTab, mode]);
 
   return {
     activeTab,
     setActiveTab,
     scrollTabToStart,
+    scrollTabsToStart,
     basicTabRef,
     advancedTabRef,
     equipmentTabRef,

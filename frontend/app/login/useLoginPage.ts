@@ -108,7 +108,7 @@ async function processPendingSavedFilter(
 
 export function useLoginPage(options?: { suppressSignedInReturnNavigation?: boolean }) {
   const suppressExternalSignedInNav = options?.suppressSignedInReturnNavigation ?? false;
-  const { push, replace } = useLocalizedNavigation();
+  const { replace } = useLocalizedNavigation();
   const searchParams = useSearchParams();
   const { user, isInitialized, setAuth } = useAuthStore();
   const { t } = useTranslation();
@@ -124,9 +124,9 @@ export function useLoginPage(options?: { suppressSignedInReturnNavigation?: bool
       !suppressSignedInReturnNavigationRef.current &&
       !suppressExternalSignedInNav
     ) {
-      push(resolvedReturnUrl ?? '/');
+      replace(resolvedReturnUrl ?? '/');
     }
-  }, [user, isInitialized, push, resolvedReturnUrl, suppressExternalSignedInNav]);
+  }, [user, isInitialized, replace, resolvedReturnUrl, suppressExternalSignedInNav]);
 
   useEffect(() => {
     if (queryReturnUrl || typeof window === 'undefined') return;

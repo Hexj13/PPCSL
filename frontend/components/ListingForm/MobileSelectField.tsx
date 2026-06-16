@@ -7,6 +7,7 @@ import { Dropdown } from '@/components/common/Dropdown';
 import { MultiSelectOptionLeadingLogo } from '@/components/common/MultiSelectOptionLeadingLogo';
 import type { DropdownOption } from '@/components/common/dropdown-types';
 import { useTranslation } from '@/hooks/useTranslation';
+import { BOTTOM_SHEET_LIST_SCROLL_CLASS } from '@/lib/bottom-sheet-layout';
 
 import { RequiredAsterisk } from './RequiredAsterisk';
 
@@ -331,12 +332,15 @@ export function MobileSelectField({
                 placeholder={t('common.search')}
               />
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto scrollbar-custom">
+            <div data-bottom-sheet-scrollable="true" className={BOTTOM_SHEET_LIST_SCROLL_CLASS}>
               {renderOptionList()}
             </div>
           </div>
         ) : (
-          <div className="max-h-[min(76vh,740px)] overflow-y-auto scrollbar-custom">
+          <div
+            data-bottom-sheet-scrollable="true"
+            className={`${BOTTOM_SHEET_LIST_SCROLL_CLASS} max-h-full`}
+          >
             {renderOptionList()}
           </div>
         )}

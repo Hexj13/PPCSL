@@ -4,8 +4,6 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { User } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
-import { getClientLocale } from '@/lib/i18n';
-import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { sanitizeReturnUrl } from '@/lib/return-url';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { clearVerifyPhoneContext } from '@/lib/verify-phone-context';
@@ -18,6 +16,7 @@ export async function submitVerifyPhoneWithAuthCode(params: {
   returnUrl: string | null;
   source: string | null;
   selectedType: string | null;
+  navigate: (restPath: string) => void;
   setAuth: (user: User | null) => void;
   setError: (msg: string) => void;
   setCode: (c: string[]) => void;
@@ -35,6 +34,7 @@ export async function submitVerifyPhoneWithAuthCode(params: {
     returnUrl,
     source: _source,
     selectedType,
+    navigate,
     setAuth,
     setError,
     setCode,
@@ -56,23 +56,18 @@ export async function submitVerifyPhoneWithAuthCode(params: {
     if (mode === 'post-register') {
       const flag = localStorageGetItem('postRegisterEmailVerificationSent');
       localStorageRemoveItem('postRegisterEmailVerificationSent');
-      await completeRegistrationAndGoToProfile(flag === '1', returnUrl);
-    } else if (typeof window !== 'undefined' && window.location) {
+      await completeRegistrationAndGoToProfile(flag === '1', returnUrl, navigate);
+    } else {
       if (selectedType === 'Business') {
         const qs = new URLSearchParams();
         qs.set('mode', 'business_onboarding');
         if (returnUrl) {
           qs.set('returnUrl', returnUrl);
         }
-        window.location.href = buildPostAuthRedirect(
-          `/complete-profile?${qs.toString()}`,
-          getClientLocale(),
-        );
+        navigate(`/complete-profile?${qs.toString()}`);
       } else {
         const target = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
-        window.location.href = target
-          ? buildPostAuthRedirect(target, getClientLocale())
-          : buildPostAuthRedirect('/', getClientLocale());
+        navigate(target ?? '/');
       }
     }
   } catch (err: unknown) {

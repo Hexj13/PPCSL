@@ -79,6 +79,9 @@ async function registerVerifyAndCompleteProfile(
           );
         }
         await expect(page).toHaveURL(/\/complete-profile(\?|$)/, { timeout: 30_000 });
+        await expect(page.getByTestId('complete-profile-loading')).not.toBeVisible({
+          timeout: 30_000,
+        });
       },
     },
     {
@@ -127,6 +130,8 @@ async function registerVerifyAndCompleteProfile(
 }
 
 test.describe('Auth: register @p0', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(() => {
     test.setTimeout(90_000);
   });

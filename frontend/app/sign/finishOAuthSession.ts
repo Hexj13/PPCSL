@@ -74,7 +74,7 @@ export async function finishOAuthSession({
   }
 
   await waitForAuthSubmitLoaderMinDisplay(submitStartedAt);
-  const filterHandled = await processPendingSavedFilter(t, returnUrl);
+  const filterHandled = await processPendingSavedFilter(t, returnUrl, replace);
   if (filterHandled) return;
   const dest = (returnUrl ? sanitizeReturnUrl(returnUrl) : null) ?? '/';
   replace(buildPostAuthRedirect(dest, locale));

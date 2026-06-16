@@ -30,16 +30,22 @@ export class ListingDetailPage {
     this.similarListings = new ListingSimilarListingsComponent(page);
   }
 
+  private get detailPageRoot() {
+    return this.page.getByRole('main').getByTestId(this.testIds.detailPage);
+  }
+
   get copyLinkButton() {
-    return this.page.getByTestId(this.testIds.detailCopyLinkButton);
+    return this.detailPageRoot
+      .getByTestId(this.testIds.detailInfo)
+      .getByTestId(this.testIds.detailCopyLinkButton);
   }
 
   get equipmentBlock() {
-    return this.page.getByTestId(this.testIds.detailEquipment);
+    return this.detailPageRoot.getByTestId(this.testIds.detailEquipment);
   }
 
   get descriptionBlock() {
-    return this.page.getByTestId(this.testIds.detailDescription);
+    return this.detailPageRoot.getByTestId(this.testIds.detailDescription);
   }
 
   async expectPageView(): Promise<void> {
@@ -47,26 +53,28 @@ export class ListingDetailPage {
       this.page,
       (path) => /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new',
     );
+    await expect(this.detailPageRoot).toBeVisible({ timeout: 30_000 });
+    await this.copyLinkButton.scrollIntoViewIfNeeded();
     await expect(this.copyLinkButton).toBeVisible({ timeout: 30_000 });
   }
 
   async expectCoreBlocksVisible(): Promise<void> {
     await this.expectPageView();
-    await expect(this.page.getByTestId(this.testIds.detailPage)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.detailGallery)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.detailBreadcrumbs)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.detailHeader)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.detailActions)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.detailSeller)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.detailInfo)).toBeVisible();
+    const root = this.detailPageRoot;
+    await expect(root.getByTestId(this.testIds.detailGallery)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.detailBreadcrumbs)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.detailHeader)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.detailActions)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.detailSeller)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.detailInfo)).toBeVisible();
   }
 
   get contactActionButton() {
-    return this.page.getByTestId('listing-detail-action-contact');
+    return this.detailPageRoot.getByTestId('listing-detail-action-contact');
   }
 
   get galleryHero() {
-    return this.page.getByTestId('listing-gallery-hero');
+    return this.detailPageRoot.getByTestId('listing-gallery-hero');
   }
 
   get imageModal() {
@@ -82,11 +90,11 @@ export class ListingDetailPage {
   }
 
   get sellerRevealPhoneButton() {
-    return this.page.getByTestId('listing-seller-reveal-phone');
+    return this.detailPageRoot.getByTestId('listing-seller-reveal-phone');
   }
 
   get sellerPhoneLink() {
-    return this.page.getByTestId('listing-seller-phone-link');
+    return this.detailPageRoot.getByTestId('listing-seller-phone-link');
   }
 
   get descriptionCollapseFade() {
@@ -125,7 +133,7 @@ export class ListingDetailPage {
   }
 
   async expectSellerSectionInViewport(): Promise<void> {
-    await expect(this.page.getByTestId(this.testIds.detailSeller)).toBeInViewport({
+    await expect(this.detailPageRoot.getByTestId(this.testIds.detailSeller)).toBeInViewport({
       timeout: 15_000,
     });
   }
@@ -235,11 +243,11 @@ export class ListingDetailPage {
   }
 
   get compareActionButton() {
-    return this.page.getByTestId('listing-detail-action-compare');
+    return this.detailPageRoot.getByTestId('listing-detail-action-compare');
   }
 
   get favoriteActionButton() {
-    return this.page.getByTestId('listing-detail-action-favorite');
+    return this.detailPageRoot.getByTestId('listing-detail-action-favorite');
   }
 
   async clickCompareAction(): Promise<void> {
@@ -267,7 +275,7 @@ export class ListingDetailPage {
   }
 
   get aiReportActionButton() {
-    return this.page.getByTestId(this.testIds.aiReportAction);
+    return this.detailPageRoot.getByTestId(this.testIds.aiReportAction);
   }
 
   async expectAiReportActionVisible(): Promise<void> {
@@ -283,10 +291,11 @@ export class ListingDetailPage {
     equipmentLabels: string[] = [],
   ): Promise<void> {
     await this.expectCoreBlocksVisible();
-    await expect(this.page.getByTestId(this.testIds.detailCharacteristics)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.detailEquipment)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.detailConditionRegistration)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.detailDescription)).toBeVisible();
+    const root = this.detailPageRoot;
+    await expect(root.getByTestId(this.testIds.detailCharacteristics)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.detailEquipment)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.detailConditionRegistration)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.detailDescription)).toBeVisible();
 
     if (descriptionText) {
       await expect(this.descriptionBlock).toContainText(descriptionText);

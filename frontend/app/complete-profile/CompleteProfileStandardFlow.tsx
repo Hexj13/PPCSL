@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
 import { canInteractWithEmailNotifications } from '@/app/profile/utils';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
 import { authApi, type User } from '@/lib/api';
@@ -14,15 +15,13 @@ import {
 } from '@/lib/browser-local-storage';
 import { holdComparisonApiLoadUntilReleased } from '@/lib/comparisonMigration';
 import { MAIN_VIEWPORT_MIN_HEIGHT_CLASS } from '@/lib/constants';
-import { getClientLocale } from '@/lib/i18n';
 import {
   compactE164Phone,
   formatPhoneForDisplay,
   formatPhoneOnBlur,
   sanitizePhoneInput,
 } from '@/lib/phone';
-import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
-import { getReturnUrlFromSearchParams } from '@/lib/return-url';
+import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 import { toast } from '@/lib/toast';
@@ -47,6 +46,7 @@ type CompleteProfileStandardFlowProps = {
 
 export function CompleteProfileStandardFlow({ user }: CompleteProfileStandardFlowProps) {
   const searchParams = useSearchParams();
+  const { replace } = useLocalizedNavigation();
   const { t } = useTranslation();
   const { setAuth } = useAuthStore();
   const returnUrl = getReturnUrlFromSearchParams(searchParams);
@@ -333,7 +333,7 @@ export function CompleteProfileStandardFlow({ user }: CompleteProfileStandardFlo
       let redirected = false;
       try {
         setAuth(response.data);
-        redirected = await processPendingData(response.data, t, returnUrl);
+        redirected = await processPendingData(response.data, t, returnUrl, replace);
       } finally {
         releaseComparisonHold();
       }
@@ -343,13 +343,11 @@ export function CompleteProfileStandardFlow({ user }: CompleteProfileStandardFlo
       }
       analytics.formSubmit('complete_profile', true, filledFields);
       if (returnUrl) {
-        if (typeof window !== 'undefined' && window.location) {
-          localStorageSetItem('showProfileSaveSuccess', 'true');
-          window.location.href = buildPostAuthRedirect(returnUrl, getClientLocale());
-        }
-      } else if (typeof window !== 'undefined' && window.location) {
         localStorageSetItem('showProfileSaveSuccess', 'true');
-        window.location.href = buildPostAuthRedirect('/', getClientLocale());
+        replace(sanitizeReturnUrl(returnUrl) ?? '/');
+      } else {
+        localStorageSetItem('showProfileSaveSuccess', 'true');
+        replace('/');
       }
     } catch {
       analytics.formSubmit('complete_profile', false, filledFields);
@@ -362,13 +360,12 @@ export function CompleteProfileStandardFlow({ user }: CompleteProfileStandardFlo
     analytics.completeProfileSkip(getFilledFields(formData, isBusiness));
     setIsSubmitting(true);
     try {
-      const redirected = await processPendingData(user, t, returnUrl);
+      const redirected = await processPendingData(user, t, returnUrl, replace);
       if (redirected) return;
       if (returnUrl) {
-        if (typeof window !== 'undefined' && window.location)
-          window.location.href = buildPostAuthRedirect(returnUrl, getClientLocale());
-      } else if (typeof window !== 'undefined' && window.location) {
-        window.location.href = buildPostAuthRedirect('/', getClientLocale());
+        replace(sanitizeReturnUrl(returnUrl) ?? '/');
+      } else {
+        replace('/');
       }
     } finally {
       setIsSubmitting(false);

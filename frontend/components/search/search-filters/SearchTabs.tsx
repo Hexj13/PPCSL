@@ -19,7 +19,11 @@ interface SearchTabsProps {
   tabsContainerRef: React.RefObject<HTMLDivElement | null>;
   showFade: boolean;
   fadeOpacity: number;
+  switchingLocked?: boolean;
 }
+
+const tabButtonClass =
+  'px-4 py-3 text-base font-semibold transition-[background-color,border-radius,color] duration-300 relative z-10 shrink-0 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60';
 
 export function SearchTabs({
   variant = 'vehicle',
@@ -38,8 +42,14 @@ export function SearchTabs({
   tabsContainerRef,
   showFade,
   fadeOpacity,
+  switchingLocked = false,
 }: SearchTabsProps) {
   const { t } = useTranslation();
+
+  const handleTabClick = (tab: 'basic' | 'advanced' | 'equipment' | 'popular') => {
+    if (switchingLocked || activeTab === tab) return;
+    onTabChange(tab);
+  };
 
   if (variant === 'tire') {
     return (
@@ -48,14 +58,16 @@ export function SearchTabs({
           ref={tabsContainerRef}
           className="overflow-x-auto scrollbar-hide"
           suppressHydrationWarning
+          aria-busy={switchingLocked}
         >
           <div className="relative flex gap-1 min-w-max">
             <button
               ref={basicTabRef}
               type="button"
               data-testid="search-tab-basic"
-              onClick={() => activeTab !== 'basic' && onTabChange('basic')}
-              className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
+              disabled={switchingLocked}
+              onClick={() => handleTabClick('basic')}
+              className={`${tabButtonClass} ${
                 activeTab === 'basic'
                   ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
                   : 'text-primary-900 hover-only:hover:bg-primary-500/10'
@@ -71,8 +83,9 @@ export function SearchTabs({
               ref={popularTabRef}
               type="button"
               data-testid="search-tab-popular"
-              onClick={() => activeTab !== 'popular' && onTabChange('popular')}
-              className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
+              disabled={switchingLocked}
+              onClick={() => handleTabClick('popular')}
+              className={`${tabButtonClass} ${
                 activeTab === 'popular'
                   ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
                   : 'text-primary-900 hover-only:hover:bg-primary-500/10'
@@ -86,9 +99,9 @@ export function SearchTabs({
             </button>
             <div
               ref={indicatorRef}
-              className="absolute bottom-0 h-0.5 bg-primary-700 transition-all duration-300 ease-in-out"
+              className="absolute bottom-0 left-0 h-0.5 bg-primary-700 transition-[transform,width] duration-300 ease-in-out pointer-events-none will-change-transform"
               style={{
-                left: `${indicatorStyle.left}px`,
+                transform: `translate3d(${indicatorStyle.left}px, 0, 0)`,
                 width: `${indicatorStyle.width}px`,
               }}
             />
@@ -114,14 +127,16 @@ export function SearchTabs({
         ref={tabsContainerRef}
         className="overflow-x-auto scrollbar-hide"
         suppressHydrationWarning
+        aria-busy={switchingLocked}
       >
         <div className="relative flex gap-1 min-w-max">
           <button
             ref={basicTabRef}
             type="button"
             data-testid="search-tab-basic"
-            onClick={() => activeTab !== 'basic' && onTabChange('basic')}
-            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
+            disabled={switchingLocked}
+            onClick={() => handleTabClick('basic')}
+            className={`${tabButtonClass} ${
               activeTab === 'basic'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
                 : 'text-primary-900 hover-only:hover:bg-primary-500/10'
@@ -137,8 +152,9 @@ export function SearchTabs({
             ref={advancedTabRef}
             type="button"
             data-testid="search-tab-advanced"
-            onClick={() => activeTab !== 'advanced' && onTabChange('advanced')}
-            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
+            disabled={switchingLocked}
+            onClick={() => handleTabClick('advanced')}
+            className={`${tabButtonClass} ${
               activeTab === 'advanced'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
                 : 'text-primary-900 hover-only:hover:bg-primary-500/10'
@@ -154,8 +170,9 @@ export function SearchTabs({
             ref={equipmentTabRef}
             type="button"
             data-testid="search-tab-equipment"
-            onClick={() => activeTab !== 'equipment' && onTabChange('equipment')}
-            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
+            disabled={switchingLocked}
+            onClick={() => handleTabClick('equipment')}
+            className={`${tabButtonClass} ${
               activeTab === 'equipment'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
                 : 'text-primary-900 hover-only:hover:bg-primary-500/10'
@@ -171,8 +188,9 @@ export function SearchTabs({
             ref={popularTabRef}
             type="button"
             data-testid="search-tab-popular"
-            onClick={() => activeTab !== 'popular' && onTabChange('popular')}
-            className={`px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 shrink-0 whitespace-nowrap ${
+            disabled={switchingLocked}
+            onClick={() => handleTabClick('popular')}
+            className={`${tabButtonClass} ${
               activeTab === 'popular'
                 ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
                 : 'text-primary-900 hover-only:hover:bg-primary-500/10'
@@ -186,9 +204,9 @@ export function SearchTabs({
           </button>
           <div
             ref={indicatorRef}
-            className="absolute bottom-0 h-0.5 bg-primary-700 transition-all duration-300 ease-in-out"
+            className="absolute bottom-0 left-0 h-0.5 bg-primary-700 transition-[transform,width] duration-300 ease-in-out pointer-events-none will-change-transform"
             style={{
-              left: `${indicatorStyle.left}px`,
+              transform: `translate3d(${indicatorStyle.left}px, 0, 0)`,
               width: `${indicatorStyle.width}px`,
             }}
           />

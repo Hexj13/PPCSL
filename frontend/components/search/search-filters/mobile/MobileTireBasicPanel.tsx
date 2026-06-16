@@ -4,16 +4,6 @@ import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils/utils';
 import { Checkbox, CarIcon, MotoIcon, TruckIcon } from '@/ui';
 
-import {
-  SearchFilterCityIcon,
-  SearchFilterCloudIcon,
-  SearchFilterHashtagIcon,
-  SearchFilterPriceIcon,
-  SearchFilterShieldIcon,
-  SearchFilterSlidersIcon,
-  SearchFilterTireSizeIcon,
-  SearchFilterUserIcon,
-} from '../search-filter-field-icons';
 import { FIRE_EMOJI, renderSearchFilterLabelBadge } from '../searchFilterLabelBadge';
 
 import { FilterRow } from './FilterRow';
@@ -107,7 +97,6 @@ export function MobileTireBasicPanel({
 
       <FilterRow
         sheetId="tire_size"
-        leadingIcon={<SearchFilterTireSizeIcon />}
         label={t('searchFilters.tireSizeCriteria')}
         valueSummary={sizeSummary}
         onClick={() => openSheetForEdit('tire_size')}
@@ -115,7 +104,6 @@ export function MobileTireBasicPanel({
 
       <FilterRow
         sheetId="tire_price"
-        leadingIcon={<SearchFilterPriceIcon />}
         label={t('searchFilters.priceWithSearchCurrency', {
           currency: loadSiteConfigSync(getCountry()).currency,
         })}
@@ -139,7 +127,6 @@ export function MobileTireBasicPanel({
 
       <FilterRow
         sheetId="tire_tread"
-        leadingIcon={<SearchFilterCloudIcon />}
         label={t('searchFilters.tireTreadLabel')}
         valueSummary={treadSummary}
         onClick={() => openSheetForEdit('tire_tread')}
@@ -147,7 +134,6 @@ export function MobileTireBasicPanel({
 
       <FilterRow
         sheetId="tire_features"
-        leadingIcon={<SearchFilterSlidersIcon />}
         label={t('searchFilters.tireOptionsLabel')}
         valueSummary={tireFeatureSummary}
         onClick={() => openSheetForEdit('tire_features')}
@@ -155,7 +141,6 @@ export function MobileTireBasicPanel({
 
       <FilterRow
         sheetId="tire_city"
-        leadingIcon={<SearchFilterCityIcon />}
         label={t('searchFilters.city')}
         valueSummary={tireCitySummary}
         onClick={() => openSheetForEdit('tire_city')}
@@ -163,7 +148,6 @@ export function MobileTireBasicPanel({
 
       <FilterRow
         sheetId="tire_condition"
-        leadingIcon={<SearchFilterShieldIcon />}
         label={t('searchFilters.tireConditionLabel')}
         valueSummary={tireConditionSummary}
         onClick={() => openSheetForEdit('tire_condition')}
@@ -171,7 +155,6 @@ export function MobileTireBasicPanel({
 
       <FilterRow
         sheetId="tire_quantity"
-        leadingIcon={<SearchFilterHashtagIcon />}
         label={t('searchFilters.tireQuantityLabel')}
         valueSummary={quantitySummary}
         onClick={() => openSheetForEdit('tire_quantity')}
@@ -179,7 +162,6 @@ export function MobileTireBasicPanel({
 
       <FilterRow
         sheetId="tire_seller"
-        leadingIcon={<SearchFilterUserIcon />}
         label={t('searchFilters.sellerTypeLabel')}
         valueSummary={sellerSummary}
         onClick={() => openSheetForEdit('tire_seller')}

@@ -118,6 +118,34 @@ export class SearchFiltersMobileComponent {
     await this.bottomSheet.expectHidden();
   }
 
+  async dismissSheetViaCloseButton(): Promise<void> {
+    await this.bottomSheet.dismissViaCloseButton();
+  }
+
+  async dismissSheetViaBackdrop(): Promise<void> {
+    await this.bottomSheet.dismissViaBackdrop();
+  }
+
+  async dismissSheetViaEscape(): Promise<void> {
+    await this.bottomSheet.dismissViaEscape();
+  }
+
+  async expectSheetHeaderVisible(): Promise<void> {
+    await this.bottomSheet.expectHeaderVisible();
+  }
+
+  async capturePageScrollY(): Promise<number> {
+    return this.page.evaluate(() => window.scrollY);
+  }
+
+  async expectPageScrollStable(scrollYBefore: number): Promise<void> {
+    await this.bottomSheet.expectScrollStableAfterClose(scrollYBefore);
+  }
+
+  async scrollPageBy(deltaY: number): Promise<void> {
+    await this.page.evaluate((delta) => window.scrollBy(0, delta), deltaY);
+  }
+
   async selectSheetOption(optionValue: string): Promise<void> {
     const option = this.page.getByTestId(`search-sheet-option-${optionValue}`);
     await expect(option.first()).toBeVisible();
@@ -152,6 +180,12 @@ export class SearchFiltersMobileComponent {
     await expect(
       this.mobilePanelForTab(tab).getByTestId(`${this.testIds.filterRowPrefix}${sheetId}`),
     ).toHaveAttribute('data-has-selection', 'true');
+  }
+
+  async expectFilterRowHasNoSelection(sheetId: string, tab: SearchFilterTab): Promise<void> {
+    await expect(
+      this.mobilePanelForTab(tab).getByTestId(`${this.testIds.filterRowPrefix}${sheetId}`),
+    ).not.toHaveAttribute('data-has-selection', 'true');
   }
 
   async exerciseVehicleSheet(sheetCase: VehicleSheetCase): Promise<void> {
