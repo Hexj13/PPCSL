@@ -162,8 +162,12 @@ function detectSourceStatus(
   $: cheerio.CheerioAPI,
   html: string,
 ): { status: 'active' | 'closed'; reason?: string } {
+  if (hasActiveVehicleHero($, html)) {
+    return { status: 'active' };
+  }
+
   const title = $('title').text().trim();
-  const text = normalizeSourceStatusText([title, $.text(), html].filter(Boolean).join(' '));
+  const text = normalizeSourceStatusText([title, $.text()].filter(Boolean).join(' '));
 
   if (
     text.includes('vandut') ||
@@ -177,6 +181,20 @@ function detectSourceStatus(
   }
 
   return { status: 'active' };
+}
+
+function hasActiveVehicleHero($: cheerio.CheerioAPI, html: string): boolean {
+  const hasVehicleTitle = Boolean($('h1.cipauto-vehicle-title').first().text().trim());
+  const hasCurrentPrice = Boolean(
+    $('.cipauto-vehicle-price-block .current-price').first().text().trim(),
+  );
+  const hasGallery = Boolean(
+    $('#gallery-data').html()?.trim() ||
+      $('img[data-gallery-index]').length > 0 ||
+      /galleryImages"\s*:\s*\[/.test(html),
+  );
+
+  return hasVehicleTitle && hasCurrentPrice && hasGallery;
 }
 
 function normalizeSourceStatusText(value: string): string {

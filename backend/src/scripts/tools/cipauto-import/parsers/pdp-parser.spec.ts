@@ -78,6 +78,37 @@ describe('parsePdpHtml', () => {
     expect(parsed.sourceStatusReason).toBe('pdp_template');
     expect(parsed.warnings).toContain('SOURCE_CLOSED:pdp_template');
   });
+
+  it('keeps active PDP pages active when description contains sold-related words', () => {
+    const parsed = parsePdpHtml(
+      `
+        <html>
+          <head>
+            <title>Ford Kuga 2017 - 12.650€ | CipAuto.md</title>
+          </head>
+          <body>
+            <h1 class="cipauto-vehicle-title">Ford Kuga</h1>
+            <div class="cipauto-vehicle-price-block">
+              <span class="current-price">12 650€</span>
+            </div>
+            <div id="gallery-data">{"images":["https://img/1.jpg","https://img/2.jpg"]}</div>
+            <div class="cipauto-description-content">
+              Știai că Ford Kuga PHEV a fost cel mai vândut vehicul hibrid cu încărcare la priză din Europa?
+            </div>
+            <section>
+              Clientul n-a trebuit să-și facă nicio grijă.
+            </section>
+          </body>
+        </html>
+      `,
+      'https://cipauto.md/vehicul/d89011-ford-kuga/',
+    );
+
+    expect(parsed.sourceListingId).toBe('d89011-ford-kuga');
+    expect(parsed.sourceStatus).toBe('active');
+    expect(parsed.sourceStatusReason).toBeUndefined();
+    expect(parsed.warnings).not.toContain('SOURCE_CLOSED:pdp_template');
+  });
 });
 
 describe('pdp-parser', () => {
