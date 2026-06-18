@@ -282,6 +282,46 @@ describe('buildCipautoReconcilePlan', () => {
     ]);
   });
 
+  it('reopens a closed listing matched to a live car only by slug prefix', () => {
+    const live = loadLivePostIdsFromPlpSnapshot(
+      JSON.stringify({
+        items: {
+          'd89011-ford-kuga': {
+            sourcePostId: '37727',
+            canonicalUrl: 'https://cipauto.md/vehicul/d89011-ford-kuga/',
+          },
+        },
+      }),
+    );
+
+    const plan = buildCipautoReconcilePlan({
+      listings: [
+        listing({
+          id: 'closed-kuga',
+          status: 'Closed',
+          partner_listing_external_key: 'd89011-ford-kuga-2019',
+        }),
+      ],
+      livePostIds: live.postIds,
+      canonicalUrls: live.canonicalUrls,
+      aliasToPostId: live.aliasToPostId,
+      liveItems: live.items,
+      activeLimit: 1000,
+    });
+
+    expect(plan.noPostIdListings).toHaveLength(0);
+    expect(plan.staleActiveListings).toHaveLength(0);
+    expect(plan.reopenListings).toEqual([
+      {
+        listingId: 'closed-kuga',
+        postId: '37727',
+        canonicalUrl: 'https://cipauto.md/vehicul/d89011-ford-kuga/',
+      },
+    ]);
+    expect(plan.liveCoverage?.closedOnlyCovered).toBe(1);
+    expect(plan.liveCoverage?.missing).toHaveLength(0);
+  });
+
   it('plans one reopen when all live listings for a post id are closed', () => {
     const plan = buildCipautoReconcilePlan({
       listings: [

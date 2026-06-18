@@ -67,7 +67,7 @@ export interface LiveCoverage {
 
 export interface ReconcileAction {
   listingId: string;
-  postId: string;
+  postId?: string;
   canonicalUrl?: string;
 }
 
@@ -267,6 +267,23 @@ function buildListingMatchKeys(
   return keys;
 }
 
+function synthesizeLiveItems(
+  livePostIds: Set<string>,
+  canonicalUrls: Map<string, string>,
+): LivePlpItem[] {
+  return [...livePostIds].map((postId) => {
+    const canonicalUrl = canonicalUrls.get(postId);
+    const matchKeys = new Set<string>([postId]);
+    if (canonicalUrl) {
+      const normalized = normalizeAlias(canonicalUrl);
+      if (normalized) matchKeys.add(normalized);
+      const legacyPrefix = readLegacySlugPrefix(canonicalUrl);
+      if (legacyPrefix) matchKeys.add(legacyPrefix);
+    }
+    return { slug: postId, postId, canonicalUrl, matchKeys: [...matchKeys] };
+  });
+}
+
 export function computeLiveCoverage(params: {
   liveItems: LivePlpItem[];
   listings: ReconcileListingInput[];
@@ -376,49 +393,83 @@ export function buildCipautoReconcilePlan(params: {
   aliasToPostId?: Map<string, string>;
   liveItems?: LivePlpItem[];
 }): ReconcilePlan {
+  const liveItems =
+    params.liveItems && params.liveItems.length > 0
+      ? params.liveItems
+      : synthesizeLiveItems(params.livePostIds, params.canonicalUrls);
+
+  const keyToLiveId = new Map<string, string>();
+  const liveById = new Map<string, LivePlpItem>();
+  for (const liveItem of liveItems) {
+    const liveId = liveItem.postId ?? liveItem.slug;
+    if (!liveById.has(liveId)) liveById.set(liveId, liveItem);
+    for (const key of liveItem.matchKeys) {
+      if (!keyToLiveId.has(key)) keyToLiveId.set(key, liveId);
+    }
+  }
+
   const groups = new Map<string, ReconcileListingInput[]>();
   const noPostIdListings: ReconcileListingInput[] = [];
+  const staleActiveListings: ReconcileAction[] = [];
 
   for (const listing of params.listings) {
-    const postId = extractPostIdFromListing(listing, params.aliasToPostId, params.livePostIds);
-    if (!postId) {
-      noPostIdListings.push(listing);
+    let liveId: string | undefined;
+    for (const key of buildListingMatchKeys(listing, params.aliasToPostId, params.livePostIds)) {
+      const candidate = keyToLiveId.get(key);
+      if (candidate) {
+        liveId = candidate;
+        break;
+      }
+    }
+
+    if (!liveId) {
+      const fallbackPostId = extractPostIdFromListing(
+        listing,
+        params.aliasToPostId,
+        params.livePostIds,
+      );
+      if (!fallbackPostId) {
+        noPostIdListings.push(listing);
+      } else if (listing.status === ListingStatus.Active) {
+        staleActiveListings.push({ listingId: listing.id, postId: fallbackPostId });
+      }
       continue;
     }
-    const group = groups.get(postId) ?? [];
+
+    const group = groups.get(liveId) ?? [];
     group.push(listing);
-    groups.set(postId, group);
+    groups.set(liveId, group);
   }
 
   const duplicateClosures: ReconcileAction[] = [];
   const reopenListings: ReconcileAction[] = [];
   const backfills: ReconcileAction[] = [];
-  const staleActiveListings: ReconcileAction[] = [];
+  let activeCovered = 0;
+  let closedOnlyCovered = 0;
 
-  for (const [postId, group] of groups) {
-    const canonicalUrl = params.canonicalUrls.get(postId);
-    const isLive = params.livePostIds.has(postId);
+  for (const [liveId, group] of groups) {
+    const liveItem = liveById.get(liveId);
+    const postId = liveItem?.postId;
+    const canonicalUrl =
+      liveItem?.canonicalUrl ?? (postId ? params.canonicalUrls.get(postId) : undefined);
     const active = group.filter((listing) => listing.status === ListingStatus.Active);
-
-    if (!isLive) {
-      for (const listing of active) {
-        staleActiveListings.push({ listingId: listing.id, postId, canonicalUrl });
-      }
-      continue;
-    }
-
     const keeper = chooseKeeper(group);
-    const keeperNeedsBackfill =
-      keeper.partner_source_code !== PARTNER_SOURCE_CODE_CIPAUTO ||
-      keeper.partner_listing_external_key !== postId ||
-      (canonicalUrl && keeper.partner_listing_canonical_url !== canonicalUrl);
 
-    if (keeperNeedsBackfill) {
-      backfills.push({ listingId: keeper.id, postId, canonicalUrl });
+    if (postId) {
+      const keeperNeedsBackfill =
+        keeper.partner_source_code !== PARTNER_SOURCE_CODE_CIPAUTO ||
+        keeper.partner_listing_external_key !== postId ||
+        (canonicalUrl && keeper.partner_listing_canonical_url !== canonicalUrl);
+      if (keeperNeedsBackfill) {
+        backfills.push({ listingId: keeper.id, postId, canonicalUrl });
+      }
     }
 
     if (active.length === 0) {
       reopenListings.push({ listingId: keeper.id, postId, canonicalUrl });
+      closedOnlyCovered += 1;
+    } else {
+      activeCovered += 1;
     }
 
     for (const listing of group) {
@@ -426,6 +477,8 @@ export function buildCipautoReconcilePlan(params: {
       duplicateClosures.push({ listingId: listing.id, postId, canonicalUrl });
     }
   }
+
+  const missing = liveItems.filter((liveItem) => !groups.has(liveItem.postId ?? liveItem.slug));
 
   const activeNow = params.listings.filter(
     (listing) => listing.status === ListingStatus.Active,
@@ -436,14 +489,13 @@ export function buildCipautoReconcilePlan(params: {
   }).length;
   const projectedActive = activeNow - activeDuplicateClosures + reopenListings.length;
 
-  const liveCoverage = params.liveItems
-    ? computeLiveCoverage({
-        liveItems: params.liveItems,
-        listings: params.listings,
-        aliasToPostId: params.aliasToPostId,
-        livePostIds: params.livePostIds,
-      })
-    : undefined;
+  const liveCoverage: LiveCoverage = {
+    liveTotal: liveItems.length,
+    activeCovered,
+    closedOnlyCovered,
+    missing,
+    projectedActive: activeCovered + closedOnlyCovered + missing.length,
+  };
 
   return {
     livePostIds: params.livePostIds.size,
@@ -612,7 +664,7 @@ async function backfillMetadata(actions: ReconcileAction[]): Promise<number> {
     seen.add(action.listingId);
     await listingRepo.update(action.listingId, {
       partner_source_code: PARTNER_SOURCE_CODE_CIPAUTO,
-      partner_listing_external_key: action.postId,
+      ...(action.postId ? { partner_listing_external_key: action.postId } : {}),
       ...(action.canonicalUrl ? { partner_listing_canonical_url: action.canonicalUrl } : {}),
     });
     updated += 1;
