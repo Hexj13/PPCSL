@@ -109,9 +109,10 @@ function normalizeAlias(value?: string | null): string | undefined {
 export function extractPostIdFromListing(
   listing: ReconcileListingInput,
   aliasToPostId?: Map<string, string>,
+  livePostIds?: Set<string>,
 ): string | undefined {
   const key = listing.partner_listing_external_key?.trim();
-  if (key && /^\d{3,8}$/.test(key)) {
+  if (key && /^\d{3,8}$/.test(key) && (!livePostIds || livePostIds.has(key))) {
     return key;
   }
 
@@ -165,6 +166,14 @@ function readPlpItemAliases(item: unknown): string[] {
   );
 }
 
+function readLegacySlugPrefix(alias: string): string | undefined {
+  const normalized = normalizeAlias(alias);
+  if (!normalized) return undefined;
+  const pathPart = normalized.split('/').pop() ?? normalized;
+  const prefix = pathPart.split('-')[0]?.trim();
+  return prefix && /^[a-z0-9]{3,12}$/i.test(prefix) ? prefix : undefined;
+}
+
 export function loadLivePostIdsFromPlpSnapshot(rawJson: string): LivePlpPostIds {
   const parsed = JSON.parse(rawJson) as { items?: Record<string, unknown> };
   const postIds = new Set<string>();
@@ -183,6 +192,10 @@ export function loadLivePostIdsFromPlpSnapshot(rawJson: string): LivePlpPostIds 
       const normalized = normalizeAlias(alias);
       if (normalized && !aliasToPostId.has(normalized)) {
         aliasToPostId.set(normalized, postId);
+      }
+      const legacyPrefix = readLegacySlugPrefix(alias);
+      if (legacyPrefix && !aliasToPostId.has(legacyPrefix)) {
+        aliasToPostId.set(legacyPrefix, postId);
       }
     }
   }
@@ -214,7 +227,7 @@ export function buildCipautoReconcilePlan(params: {
   const noPostIdListings: ReconcileListingInput[] = [];
 
   for (const listing of params.listings) {
-    const postId = extractPostIdFromListing(listing, params.aliasToPostId);
+    const postId = extractPostIdFromListing(listing, params.aliasToPostId, params.livePostIds);
     if (!postId) {
       noPostIdListings.push(listing);
       continue;

@@ -147,7 +147,6 @@ export function BottomSheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef<number | null>(null);
   const dragDY = useRef(0);
-  const pointerStartedOnBackdropRef = useRef(false);
   const notifyParentOnExitRef = useRef(false);
   const exitInProgressRef = useRef(false);
   const exitFallbackTimerRef = useRef<number | null>(null);
@@ -370,31 +369,17 @@ export function BottomSheet({
       style={{ zIndex: designTokens.zIndex.modal }}
       role="presentation"
     >
-      <div
+      <button
+        type="button"
         data-testid="bottom-sheet-backdrop"
-        className={`absolute inset-0 bg-black/70 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out ${
+        aria-label={t('common.close')}
+        className={`absolute inset-0 border-0 p-0 cursor-default bg-black/70 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out ${
           visible ? 'opacity-100' : 'opacity-0'
         } motion-reduce:opacity-100 touch-none`}
         onClick={(e) => {
-          if (e.target !== e.currentTarget) {
-            return;
-          }
           e.preventDefault();
           e.stopPropagation();
           requestCloseFromUser();
-        }}
-        onPointerDown={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          pointerStartedOnBackdropRef.current = e.target === e.currentTarget;
-        }}
-        onPointerUp={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (e.target === e.currentTarget && pointerStartedOnBackdropRef.current) {
-            requestCloseFromUser();
-          }
-          pointerStartedOnBackdropRef.current = false;
         }}
       />
       <BottomSheetPanel

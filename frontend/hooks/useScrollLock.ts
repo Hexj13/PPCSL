@@ -10,7 +10,6 @@ let bodyStyleSnapshot: {
   top: string;
   width: string;
   left: string;
-  overflow: string;
   overscrollBehavior: string;
 } | null = null;
 let htmlStyleSnapshot: {
@@ -25,7 +24,6 @@ function restoreBodyStyles() {
     body.style.top = bodyStyleSnapshot.top;
     body.style.width = bodyStyleSnapshot.width;
     body.style.left = bodyStyleSnapshot.left;
-    body.style.overflow = bodyStyleSnapshot.overflow;
     body.style.overscrollBehavior = bodyStyleSnapshot.overscrollBehavior;
     bodyStyleSnapshot = null;
   }
@@ -45,14 +43,12 @@ function acquireScrollLock() {
       top: body.style.top,
       width: body.style.width,
       left: body.style.left,
-      overflow: body.style.overflow,
       overscrollBehavior: body.style.overscrollBehavior,
     };
     htmlStyleSnapshot = {
       overflow: document.documentElement.style.overflow,
       overscrollBehavior: document.documentElement.style.overscrollBehavior,
     };
-    body.style.overflow = 'hidden';
     body.style.overscrollBehavior = 'none';
     document.documentElement.style.overflow = 'hidden';
     document.documentElement.style.overscrollBehavior = 'none';

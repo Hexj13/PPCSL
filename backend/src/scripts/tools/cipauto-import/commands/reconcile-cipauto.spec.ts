@@ -74,6 +74,22 @@ describe('extractPostIdFromListing', () => {
       ),
     ).toBe('40473');
   });
+
+  it('does not treat non-live numeric legacy keys as source post ids', () => {
+    const aliasToPostId = new Map<string, string>([
+      ['https://cipauto.md/vehicul/004640-honda-cr-v', '40473'],
+    ]);
+    expect(
+      extractPostIdFromListing(
+        listing({
+          partner_listing_external_key: '004640',
+          partner_listing_canonical_url: 'https://cipauto.md/vehicul/004640-honda-cr-v/',
+        }),
+        aliasToPostId,
+        new Set(['40473']),
+      ),
+    ).toBe('40473');
+  });
 });
 
 describe('loadLivePostIdsFromPlpSnapshot', () => {
@@ -94,6 +110,7 @@ describe('loadLivePostIdsFromPlpSnapshot', () => {
       'https://cipauto.md/vehicul/123456-volkswagen-passat/',
     );
     expect(live.aliasToPostId.get('123456-volkswagen-passat')).toBe('47993');
+    expect(live.aliasToPostId.get('123456')).toBe('47993');
     expect(live.aliasToPostId.get('https://cipauto.md/vehicul/123456-volkswagen-passat')).toBe(
       '47993',
     );
@@ -159,6 +176,32 @@ describe('buildCipautoReconcilePlan', () => {
     });
 
     expect(plan.noPostIdListings).toHaveLength(0);
+    expect(plan.staleActiveListings).toHaveLength(0);
+    expect(plan.backfills).toEqual([
+      {
+        listingId: 'legacy-active',
+        postId: '40473',
+        canonicalUrl: 'https://cipauto.md/vehicul/004640-honda-cr-v/',
+      },
+    ]);
+  });
+
+  it('bridges numeric legacy slug prefixes before marking active listings stale', () => {
+    const plan = buildCipautoReconcilePlan({
+      listings: [
+        listing({
+          id: 'legacy-active',
+          status: 'Active',
+          partner_listing_external_key: '004640',
+          description_ro: 'Cod Produs: 00464T',
+        }),
+      ],
+      livePostIds: new Set(['40473']),
+      canonicalUrls: new Map([['40473', 'https://cipauto.md/vehicul/004640-honda-cr-v/']]),
+      aliasToPostId: new Map([['004640', '40473']]),
+      activeLimit: 1000,
+    });
+
     expect(plan.staleActiveListings).toHaveLength(0);
     expect(plan.backfills).toEqual([
       {

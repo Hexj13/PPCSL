@@ -1,5 +1,7 @@
 'use client';
 
+import { createPortal } from 'react-dom';
+
 import type { User } from '@/lib/api';
 
 import { GuestMobileNav } from './GuestMobileNav';
@@ -43,7 +45,11 @@ export function MobileNavDrawer({
 
   const motionClass = presenceClosing ? 'mobile-nav-drawer-leave' : 'mobile-nav-drawer-enter';
 
-  return (
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(
     <nav
       id={id}
       dir="ltr"
@@ -75,6 +81,7 @@ export function MobileNavDrawer({
           />
         )}
       </div>
-    </nav>
+    </nav>,
+    document.body,
   );
 }

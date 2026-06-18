@@ -74,7 +74,7 @@ describe('BottomSheet', () => {
     );
     expect(screen.getByText('Test sheet')).toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByTestId('bottom-sheet-close'));
     expect(onClose).not.toHaveBeenCalled();
     act(() => {
       jest.advanceTimersByTime(400);

@@ -128,7 +128,7 @@ export function Header() {
     <>
       {mobileMenuBackdrop}
       <header
-        className={`flex flex-col bg-bg-base shadow-lg z-50 ${isTelegramWebView ? 'relative' : 'sticky top-0'}`}
+        className={`flex flex-col bg-bg-base z-50 ${drawerMounted ? '' : 'shadow-lg'} ${isTelegramWebView ? 'relative' : 'sticky top-0'}`}
       >
         <div className="relative z-20 shrink-0 h-[72px] bg-bg-base">
           <div className="container relative mx-auto px-3 sm:px-4 h-full border-b border-primary-700">
@@ -198,26 +198,23 @@ export function Header() {
             </div>
           </div>
         </div>
-
-        <div className="relative z-10 h-0 w-full overflow-visible lg:hidden">
-          <MobileNavDrawer
-            id={MOBILE_DRAWER_ID}
-            presenceMounted={drawerMounted}
-            presenceClosing={drawerExiting}
-            user={user}
-            showSkeleton={showSkeleton}
-            showNav={showNav}
-            comparisonCount={comparisonCount}
-            isAuthPage={isAuthPage}
-            isErrorPage={isErrorPage}
-            mobileNavLinkClasses={mobileNavLinkClasses}
-            onLogout={handleLogout}
-            onClose={handleMobileMenuClose}
-            onSetReturnUrl={handleSetReturnUrl}
-            t={t}
-          />
-        </div>
       </header>
+      <MobileNavDrawer
+        id={MOBILE_DRAWER_ID}
+        presenceMounted={drawerMounted}
+        presenceClosing={drawerExiting}
+        user={user}
+        showSkeleton={showSkeleton}
+        showNav={showNav}
+        comparisonCount={comparisonCount}
+        isAuthPage={isAuthPage}
+        isErrorPage={isErrorPage}
+        mobileNavLinkClasses={mobileNavLinkClasses}
+        onLogout={handleLogout}
+        onClose={handleMobileMenuClose}
+        onSetReturnUrl={handleSetReturnUrl}
+        t={t}
+      />
     </>
   );
 }
