@@ -6,7 +6,7 @@ import { requestText } from '../../partner-import-shared/utils/http';
 import { isProbablyVideoUrl } from '../../partner-import-shared/utils/video-url';
 import type { CipautoConfig, ParsedPdpData, ParsedPdpEquipmentOption } from '../types';
 
-import { extractSourceListingId } from './plp-parser';
+import { extractCipautoPostIdFromImageUrl, extractSourceListingId } from './plp-parser';
 
 export class PdpParser {
   constructor(private readonly config: CipautoConfig) {}
@@ -74,13 +74,14 @@ export function parsePdpHtml(html: string, url: string): ParsedPdpData {
   const jsonLd = extractProductJsonLd($);
 
   const desc = readDescription($);
+  const images = readImages($, html);
   const parsed: ParsedPdpData = {
     sourceListingId,
     sourceUrl: url,
     canonicalUrl: canonicalizeUrl(url),
     sourceStatus: sourceStatus.status,
     sourceStatusReason: sourceStatus.reason,
-    sourcePostId: extractSourcePostId($),
+    sourcePostId: extractSourcePostId($, images),
     title: readTitle($, jsonLd),
     brand: readBrand($, jsonLd),
     model: readModel($, jsonLd),
@@ -94,7 +95,7 @@ export function parsePdpHtml(html: string, url: string): ParsedPdpData {
     downPaymentAmount: readDownPayment($, html),
     monthlyPayment: readMonthlyPayment($, html),
     creditPeriodMonths: readCreditPeriod($, html),
-    images: readImages($, html),
+    images,
     videoUrl: readVideoUrl($, url),
     trimRaw: readTrim($),
     equipmentOptions: readEquipmentOptions($),
@@ -607,11 +608,12 @@ function readCity(
   return undefined;
 }
 
-function extractSourcePostId($: cheerio.CheerioAPI): string | undefined {
+function extractSourcePostId($: cheerio.CheerioAPI, images: string[]): string | undefined {
   const postId = $('[data-post-id]').first().attr('data-post-id');
   if (postId?.trim()) return postId.trim();
   const vehicleId = $('[data-vehicle-id]').first().attr('data-vehicle-id');
-  return vehicleId?.trim() || undefined;
+  if (vehicleId?.trim()) return vehicleId.trim();
+  return images.map(extractCipautoPostIdFromImageUrl).find((id): id is string => Boolean(id));
 }
 
 function collectSpecs($: cheerio.CheerioAPI): string[] {

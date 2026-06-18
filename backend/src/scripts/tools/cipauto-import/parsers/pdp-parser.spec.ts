@@ -109,6 +109,31 @@ describe('parsePdpHtml', () => {
     expect(parsed.sourceStatusReason).toBeUndefined();
     expect(parsed.warnings).not.toContain('SOURCE_CLOSED:pdp_template');
   });
+
+  it('extracts stable post ID from PDP gallery image URLs', () => {
+    const parsed = parsePdpHtml(
+      `
+        <html>
+          <head>
+            <title>Ford Kuga 2017 - 12.650€ | CipAuto.md</title>
+          </head>
+          <body>
+            <h1 class="cipauto-vehicle-title">Ford Kuga</h1>
+            <div class="cipauto-vehicle-price-block">
+              <span class="current-price">12 650€</span>
+            </div>
+            <div id="gallery-data">
+              {"images":["https://cipauto.md/wp-content/uploads/2026/06/ford-kuga-48123-1.webp"]}
+            </div>
+          </body>
+        </html>
+      `,
+      'https://cipauto.md/vehicul/d89011-ford-kuga/',
+    );
+
+    expect(parsed.sourceListingId).toBe('d89011-ford-kuga');
+    expect(parsed.sourcePostId).toBe('48123');
+  });
 });
 
 describe('pdp-parser', () => {
