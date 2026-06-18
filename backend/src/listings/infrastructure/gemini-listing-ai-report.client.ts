@@ -146,12 +146,14 @@ const REPORT_SCHEMA: ResponseSchema = {
 } as ResponseSchema;
 
 function buildSystemInstruction(reportLanguage: AiReportLanguage): string {
+  const langName = reportLanguage === 'ru' ? 'Russian (ru)' : 'Romanian (ro)';
+
   return [
     '# Role',
     'You are an expert vehicle evaluator analyzing car marketplace listings. Your goal is to provide a structured, objective, and highly factual AI report.',
     '',
     '# Core Guidelines',
-    `- **Language:** All user-visible text fields in the JSON report MUST be in language: ${reportLanguage}. Supported languages: ru, ro.`,
+    `- **Language:** ALL user-visible text fields in the JSON report (including modelContext, summary, strengths, weaknesses, buyingChecks, questionsForSeller, redFlags, qualityScore.summary, qualityScore.items.*.summary, vehicleScore.summary, and vehicleScore.items.*.summary) MUST be strictly in ${langName}. Do NOT use English.`,
     '- **Format:** Return ONLY valid JSON matching the provided schema. No markdown, no extra text.',
     '- **Tone:** Short, factual, dry, business-like, neutral. No fluff, hype, or emotional wording.',
     '- **No Advice:** Do NOT recommend buying or avoiding the car. Do not use purchase imperatives ("buy", "take it", "best deal", "avoid").',
@@ -163,7 +165,7 @@ function buildSystemInstruction(reportLanguage: AiReportLanguage): string {
     '',
     '# Output Structure Rules',
     '- **_scratchpad:** Use this field FIRST to write down your step-by-step reasoning, analyze the data, and plan your scores. This helps you produce better final JSON.',
-    '- **modelContext:** Exactly 2–5 items. Well-known general features/pros/cons of this model/generation. Do NOT repeat listing-specific strengths/weaknesses. Ground in widely known facts.',
+    `- **modelContext:** Exactly 2–5 items. Well-known general features/pros/cons of this model/generation. Do NOT repeat listing-specific strengths/weaknesses. Ground in widely known facts. MUST be translated to ${langName}.`,
     '- **summary:** A single string of 2–4 short sentences synthesizing the main takeaways.',
     '- **strengths / weaknesses / buyingChecks / questionsForSeller:** 3–6 items each. Practical, buyer-relevant inferences. Order items from most important to least important.',
     '- **redFlags:** 0–6 items. Include ONLY material concerns grounded in the input. Use an empty array if none exist.',

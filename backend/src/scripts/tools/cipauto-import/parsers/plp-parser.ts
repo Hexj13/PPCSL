@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import type { AnyNode } from 'domhandler';
 
 import { requestText } from '../../partner-import-shared/utils/http';
 import { extractVehiculListingPathId } from '../../partner-import-shared/vehicul-listing-path-id';
@@ -66,8 +67,10 @@ function extractFromJsonLd($: cheerio.CheerioAPI): ParsedPlpItem[] {
           typeof card.brand === 'object' && card.brand && 'name' in card.brand
             ? String((card.brand as { name?: unknown }).name ?? '').trim()
             : undefined;
+        const sourcePostId = extractCipautoPostIdFromImageUrl(readJsonLdImageUrl(card.image));
         result.push({
           sourceListingId,
+          sourcePostId,
           url,
           canonicalUrl: canonicalizeUrl(url),
           title,
@@ -96,9 +99,11 @@ function extractFromCards($: cheerio.CheerioAPI): ParsedPlpItem[] {
     const yearRaw = $(element).find('.single-vehicle-title .year').text().trim();
     const title = [brand, model, yearRaw].filter(Boolean).join(' ').trim() || undefined;
     const priceRaw = $(element).find('.price-section .current-price').text().trim();
+    const imageUrl = readCardImageUrl($, element);
 
     items.push({
       sourceListingId,
+      sourcePostId: extractCipautoPostIdFromImageUrl(imageUrl),
       url: link,
       canonicalUrl: canonicalizeUrl(link),
       title,
@@ -118,7 +123,7 @@ function isItemList(input: unknown): input is {
     item?: {
       url?: string;
       name?: string;
-      image?: string;
+      image?: unknown;
       brand?: { name?: string };
       offers?: { price?: unknown; priceCurrency?: string };
     };
@@ -172,6 +177,47 @@ function readMaxPagesFromWindowData(html: string): number | undefined {
   if (!match) return undefined;
   const value = Number(match[1]);
   return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function readJsonLdImageUrl(value: unknown): string | undefined {
+  if (typeof value === 'string') return value.trim() || undefined;
+  if (Array.isArray(value)) {
+    return value.map(readJsonLdImageUrl).find((url): url is string => Boolean(url));
+  }
+  if (value && typeof value === 'object') {
+    const url = (value as { url?: unknown }).url;
+    return typeof url === 'string' ? url.trim() || undefined : undefined;
+  }
+  return undefined;
+}
+
+function readCardImageUrl($: cheerio.CheerioAPI, element: AnyNode): string | undefined {
+  const img = $(element).find('img.vehicle-card-img,img').first();
+  const direct =
+    img.attr('src')?.trim() ||
+    img.attr('data-src')?.trim() ||
+    img.attr('data-lazy-src')?.trim() ||
+    img.attr('data-original')?.trim();
+  if (direct) return direct;
+
+  const srcset = img.attr('srcset')?.trim() || img.attr('data-srcset')?.trim();
+  return srcset
+    ?.split(',')
+    .map((entry) => entry.trim().split(/\s+/)[0])
+    .find(Boolean);
+}
+
+export function extractCipautoPostIdFromImageUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  const source = (() => {
+    try {
+      return new URL(url).pathname;
+    } catch {
+      return url;
+    }
+  })();
+  const match = source.match(/-(\d{3,8})(?:-\d+)?\.(?:jpe?g|png|webp)$/i);
+  return match?.[1];
 }
 
 function escapeRegExp(value: string): string {

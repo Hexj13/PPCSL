@@ -10,6 +10,7 @@ import type {
 
 export interface ParsedPlpItem {
   sourceListingId: string;
+  sourcePostId?: string;
   url: string;
   canonicalUrl: string;
   title?: string;

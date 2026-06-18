@@ -104,6 +104,22 @@ export abstract class SearchHomeScrollPage {
       .toBe(true);
   }
 
+  private async dismissOpenSortMenuIfNeeded(testId = 'search-sort-select'): Promise<void> {
+    const menu = this.page.getByTestId(`${testId}-menu`);
+    if (!(await menu.isVisible().catch(() => false))) {
+      return;
+    }
+    const heading = this.page.getByRole('heading', { level: 1 }).first();
+    if (await heading.isVisible().catch(() => false)) {
+      await heading.click({ position: { x: 8, y: 8 } });
+    } else {
+      await this.searchFiltersForm().getByTestId(testId).click();
+    }
+    await expect
+      .poll(async () => !(await menu.isVisible().catch(() => false)), { timeout: 15_000 })
+      .toBe(true);
+  }
+
   async selectSort(
     sortKey: ListingSortKey,
     testId = 'search-sort-select',
@@ -121,7 +137,10 @@ export abstract class SearchHomeScrollPage {
     }
     await this.openSortDropdownMenu(trigger, menu, useMobile);
     await expect(option).toBeVisible({ timeout: 15_000 });
-    await option.click({ force: useMobile });
+    await option.evaluate((element) => {
+      (element as HTMLButtonElement).click();
+    });
+    await this.dismissOpenSortMenuIfNeeded(testId);
   }
 
   async getWindowScrollY(): Promise<number> {
@@ -279,8 +298,9 @@ export abstract class SearchHomeScrollPage {
       .toBe(true);
     await expect(option).toBeVisible({ timeout: 15_000 });
     await option.evaluate((element) => {
-      element.click();
+      (element as HTMLButtonElement).click();
     });
+    await this.dismissOpenSortMenuIfNeeded(testId);
   }
 
   async expectResultsScrolledIntoView(): Promise<void> {

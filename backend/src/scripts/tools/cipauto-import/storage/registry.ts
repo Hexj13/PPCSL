@@ -16,6 +16,15 @@ export class RegistryStore extends JsonRegistryStore<RegistryItem> {
   }
 
   findExistingPlpItem(item: ParsedPlpItem): RegistryItem | undefined {
+    if (item.sourcePostId) {
+      const bySourcePostId = this.getAll().find(
+        (candidate) => candidate.sourcePostId === item.sourcePostId,
+      );
+      if (bySourcePostId) {
+        return bySourcePostId;
+      }
+    }
+
     const bySourceId = this.getBySourceId(item.sourceListingId);
     if (bySourceId) {
       return bySourceId;
@@ -51,7 +60,7 @@ export class RegistryStore extends JsonRegistryStore<RegistryItem> {
       source: 'cipauto',
       sourceListingId: item.sourceListingId,
       discoveredAt: existing?.discoveredAt,
-      sourcePostId: existing?.sourcePostId,
+      sourcePostId: item.sourcePostId ?? existing?.sourcePostId,
       url: item.url,
       canonicalUrl: item.canonicalUrl,
       sourceStatus: 'active',
@@ -92,6 +101,7 @@ export class RegistryStore extends JsonRegistryStore<RegistryItem> {
     return {
       ...existing,
       sourceListingId: item.sourceListingId,
+      sourcePostId: item.sourcePostId ?? existing.sourcePostId,
     };
   }
 

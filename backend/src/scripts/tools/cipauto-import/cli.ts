@@ -2,7 +2,8 @@ import 'reflect-metadata';
 
 import { Command } from 'commander';
 
-import type { ListingStatus } from '../../../common/types';
+import { ListingStatus } from '../../../common/constants';
+import type { ListingStatus as ListingStatusValue } from '../../../common/types';
 import { AppDataSource } from '../../../data-source';
 import { Listing } from '../../../listings/entities/listing.entity';
 import { AuthClient } from '../partner-import-shared/api/auth-client';
@@ -63,10 +64,12 @@ import type {
   ReportCommandOptions,
   ScanCommandOptions,
   SourceCloseReason,
+  SourceStatus,
 } from './types';
 
 const program = new Command();
 const logger = new Logger(isPartnerImportDebugEnabled());
+const DEFAULT_MAX_CLOSE_RATIO = 0.2;
 let shouldStop = false;
 
 process.on('SIGINT', () => {
@@ -109,6 +112,11 @@ program
   .option('--resume')
   .option('--dry-run')
   .option('--remove-closed')
+  .option(
+    '--max-close <number>',
+    'maximum missing active Kupito listings that may be closed in one run',
+  )
+  .option('--force-close', 'override --max-close protection for trusted closure runs')
   .option('--only-failed')
   .option('--update-existing')
   .option('--source-id <value>')
@@ -135,6 +143,8 @@ program
       resume: Boolean(rawOptions.resume),
       dryRun: Boolean(rawOptions.dryRun),
       removeClosed: Boolean(rawOptions.removeClosed),
+      maxClose: rawOptions.maxClose ? Number(rawOptions.maxClose) : undefined,
+      forceClose: Boolean(rawOptions.forceClose),
       onlyFailed: Boolean(rawOptions.onlyFailed),
       updateExisting: Boolean(rawOptions.updateExisting),
       sourceId: rawOptions.sourceId ? String(rawOptions.sourceId) : undefined,
@@ -326,14 +336,24 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   }
 
   const candidates = getImportCandidates(registry.getAll(), options);
+  const closeGuard = evaluateCloseGuard(candidates, options);
+  const runnableCandidates = closeGuard.blocked
+    ? candidates.filter((item) => !isCloseCandidate(item))
+    : candidates;
   logger.info(
     'IMPORT',
-    `[START] candidates=${candidates.length} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)} checkUserDuplicatesBeforeCreate=${Boolean(options.checkUserDuplicatesBeforeCreate)} autoCreateBrands=${Boolean(options.autoCreateBrands)} autoCreateModels=${Boolean(options.autoCreateModels)}`,
+    `[START] candidates=${candidates.length} runnable=${runnableCandidates.length} closeCandidates=${closeGuard.closeCandidates} maxClose=${closeGuard.maxClose} userId=${options.userId} status=${targetStatus} dryRun=${Boolean(options.dryRun)} checkUserDuplicatesBeforeCreate=${Boolean(options.checkUserDuplicatesBeforeCreate)} autoCreateBrands=${Boolean(options.autoCreateBrands)} autoCreateModels=${Boolean(options.autoCreateModels)}`,
   );
+  if (closeGuard.blocked) {
+    logger.warn(
+      'IMPORT',
+      `[MAX_CLOSE] closeCandidates=${closeGuard.closeCandidates} exceeds maxClose=${closeGuard.maxClose}; skipped source closures for this run. Use --force-close to override.`,
+    );
+  }
 
   let processed = 0;
   try {
-    for (const item of candidates) {
+    for (const item of runnableCandidates) {
       if (shouldStop) {
         break;
       }
@@ -376,6 +396,10 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
       sourceId: options.sourceId,
       dryRun: options.dryRun,
       removeClosed: options.removeClosed,
+      maxClose: options.maxClose,
+      forceClose: options.forceClose,
+      closeGuardBlocked: closeGuard.blocked,
+      closeCandidates: closeGuard.closeCandidates,
       processed,
       checkUserDuplicatesBeforeCreate: Boolean(options.checkUserDuplicatesBeforeCreate),
       autoCreateBrands: Boolean(options.autoCreateBrands),
@@ -398,7 +422,7 @@ async function processSingleItem(params: {
   resolver?: BrandModelResolver;
   pdpParser: PdpParser;
   uploadClient?: UploadClient;
-  targetStatus: ListingStatus;
+  targetStatus: ListingStatusValue;
   loadDedupeListings?: () => Promise<Listing[]>;
 }): Promise<void> {
   const {
@@ -413,6 +437,7 @@ async function processSingleItem(params: {
     loadDedupeListings,
   } = params;
   const sourceId = item.sourceListingId;
+  const previousSourceStatus = normalizeSourceStatus(item);
   let parseSucceeded = false;
 
   try {
@@ -509,10 +534,29 @@ async function processSingleItem(params: {
           'IMPORT',
           `[PARTNER_META][${sourceId}] kupitoId=${item.kupitoListingId} url=${partnerMeta.partner_listing_canonical_url}`,
         );
+        if (shouldReopenListing(item, previousSourceStatus)) {
+          try {
+            await kupitoApi.enforceStatus(item.kupitoListingId, targetStatus);
+            logger.info(
+              'IMPORT',
+              `[REOPEN][${sourceId}] kupitoId=${item.kupitoListingId} status=${targetStatus}`,
+            );
+          } catch (error) {
+            registry.markState(sourceId, 'manual_review', {
+              warnings,
+              error: `REOPEN_FAILED:${String(error)}`,
+            });
+            logger.warn('IMPORT', `[MANUAL][${sourceId}] REOPEN_FAILED:${String(error)}`);
+            return;
+          }
+        }
       }
       registry.markState(sourceId, 'skipped', {
         warnings,
         error: undefined,
+        createdStatus: shouldReopenListing(item, previousSourceStatus)
+          ? targetStatus
+          : item.createdStatus,
       });
       logger.info(
         'IMPORT',
@@ -747,6 +791,40 @@ function getImportCandidates(items: RegistryItem[], options: ImportCommandOption
   return filterImportCandidatesByPlpScope(selected, scope);
 }
 
+export function isCloseCandidate(item: RegistryItem): boolean {
+  return normalizeSourceStatus(item) === 'missing_candidate' && Boolean(item.kupitoListingId);
+}
+
+export function evaluateCloseGuard(
+  candidates: RegistryItem[],
+  options: ImportCommandOptions,
+): { blocked: boolean; closeCandidates: number; maxClose: number } {
+  const closeCandidates = candidates.filter(isCloseCandidate).length;
+  const explicitMaxClose = Number.isFinite(options.maxClose) ? options.maxClose : undefined;
+  const maxClose =
+    explicitMaxClose ?? Math.max(1, Math.floor(candidates.length * DEFAULT_MAX_CLOSE_RATIO));
+  return {
+    blocked:
+      Boolean(options.removeClosed) &&
+      !options.forceClose &&
+      closeCandidates > maxClose &&
+      !options.sourceId,
+    closeCandidates,
+    maxClose,
+  };
+}
+
+export function shouldReopenListing(
+  item: RegistryItem,
+  previousSourceStatus: SourceStatus,
+): boolean {
+  return (
+    item.createdStatus === ListingStatus.Closed ||
+    item.closeOutcome === 'listing_closed' ||
+    previousSourceStatus === 'closed'
+  );
+}
+
 async function runReport(options: ReportCommandOptions, env: 'local' | 'prod'): Promise<void> {
   const config = resolveConfig(env);
   const reportStore = new ReportStore(config.reportsDir);
@@ -829,7 +907,9 @@ async function runAuditBrandsModels(options: AuditBrandsModelsCommandOptions): P
   );
 }
 
-program.parseAsync(process.argv).catch((error) => {
-  logger.error('CLI', String(error));
-  process.exit(1);
-});
+if (require.main === module) {
+  program.parseAsync(process.argv).catch((error) => {
+    logger.error('CLI', String(error));
+    process.exit(1);
+  });
+}

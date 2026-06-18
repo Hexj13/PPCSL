@@ -104,6 +104,7 @@
     "cipauto:report": "ts-node -r ./scripts/partner-import-cli-preload.cjs -r tsconfig-paths/register src/scripts/tools/cipauto-import/cli.ts report",
     "cipauto:seed-registry": "ts-node -r ./scripts/partner-import-cli-preload.cjs src/scripts/tools/cipauto-import/commands/seed-registry.ts",
     "cipauto:audit-stale": "ts-node -r ./scripts/partner-import-cli-preload.cjs src/scripts/tools/cipauto-import/commands/audit-stale-listings.ts",
+    "cipauto:reconcile": "ts-node -r ./scripts/partner-import-cli-preload.cjs -r tsconfig-paths/register src/scripts/tools/cipauto-import/commands/reconcile-cipauto.ts",
     "autooutlet:scan": "ts-node -r ./scripts/partner-import-cli-preload.cjs -r tsconfig-paths/register src/scripts/tools/autooutlet-import/cli.ts scan",
     "autooutlet:import": "ts-node -r ./scripts/partner-import-cli-preload.cjs -r tsconfig-paths/register src/scripts/tools/autooutlet-import/cli.ts import",
     "autooutlet:report": "ts-node -r ./scripts/partner-import-cli-preload.cjs -r tsconfig-paths/register src/scripts/tools/autooutlet-import/cli.ts report",

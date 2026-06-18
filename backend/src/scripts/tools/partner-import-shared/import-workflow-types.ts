@@ -17,6 +17,8 @@ export interface ImportCommandOptions {
   resume?: boolean;
   dryRun?: boolean;
   removeClosed?: boolean;
+  maxClose?: number;
+  forceClose?: boolean;
   onlyFailed?: boolean;
   updateExisting?: boolean;
   sourceId?: string;

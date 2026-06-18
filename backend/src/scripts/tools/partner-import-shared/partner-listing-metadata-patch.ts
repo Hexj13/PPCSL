@@ -30,7 +30,7 @@ export function buildCipautoPartnerListingMetadataPatch(
 > {
   return {
     partner_source_code: PARTNER_SOURCE_CODE_CIPAUTO,
-    partner_listing_external_key: sourceListingId,
+    partner_listing_external_key: parsed.sourcePostId ?? sourceListingId,
     partner_listing_canonical_url: resolvePartnerListingCanonicalUrl(parsed, fallbackCanonicalUrl),
   };
 }

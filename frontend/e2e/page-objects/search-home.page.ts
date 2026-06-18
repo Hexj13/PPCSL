@@ -182,10 +182,12 @@ export class SearchHomePage extends SearchHomeScrollPage {
   }
 
   async submitSearch(): Promise<void> {
+    await this.dismissOpenSortMenuIfNeeded();
     const submit = this.searchFiltersForm().getByTestId('search-submit');
     await expect(submit).toBeEnabled({ timeout: 20_000 });
     await submit.scrollIntoViewIfNeeded();
-    await submit.click();
+    const useMobile = await pageUsesMobileLayout(this.page);
+    await submit.click({ force: useMobile });
     await this.expectResultsOrEmptyVisible();
   }
 
