@@ -97,6 +97,7 @@ interface ReconcileCommandOptions {
 interface ReconcileAppliedSummary {
   closed: number;
   reopened: number;
+  released: number;
   backfilled: number;
 }
 
@@ -742,6 +743,26 @@ async function reopenListings(actions: ReconcileAction[]): Promise<number> {
   return actions.length;
 }
 
+async function releaseConflictingExternalKeys(actions: ReconcileAction[]): Promise<number> {
+  const listingRepo = AppDataSource.getRepository(Listing);
+  const seen = new Set<string>();
+  let released = 0;
+  for (const action of actions) {
+    if (!action.postId || seen.has(action.postId)) continue;
+    seen.add(action.postId);
+    const result = await listingRepo
+      .createQueryBuilder()
+      .update(Listing)
+      .set({ partner_listing_external_key: null })
+      .where('partner_source_code = :code', { code: PARTNER_SOURCE_CODE_CIPAUTO })
+      .andWhere('partner_listing_external_key = :key', { key: action.postId })
+      .andWhere('id != :keeperId', { keeperId: action.listingId })
+      .execute();
+    released += result.affected ?? 0;
+  }
+  return released;
+}
+
 async function backfillMetadata(actions: ReconcileAction[]): Promise<number> {
   if (actions.length === 0) return 0;
   const listingRepo = AppDataSource.getRepository(Listing);
@@ -919,6 +940,10 @@ async function reconcileCipauto(): Promise<void> {
   console.log('[reconcile] Applying plan...');
   const closed = await closeListings(plan.duplicateClosures.map((action) => action.listingId));
   const reopened = await reopenListings(plan.reopenListings);
+  const released = await releaseConflictingExternalKeys([
+    ...plan.backfills,
+    ...plan.reopenListings,
+  ]);
   const backfilled = await backfillMetadata([...plan.backfills, ...plan.reopenListings]);
   const reportPath = saveReconcileReport({
     startedAt,
@@ -928,10 +953,10 @@ async function reconcileCipauto(): Promise<void> {
     reportsDir: config.reportsDir,
     apply: true,
     plan,
-    applied: { closed, reopened, backfilled },
+    applied: { closed, reopened, released, backfilled },
   });
   console.log(
-    `[reconcile] Applied: closed=${closed} reopened=${reopened} backfilled=${backfilled}`,
+    `[reconcile] Applied: closed=${closed} reopened=${reopened} released=${released} backfilled=${backfilled}`,
   );
   console.log(`[reconcile] Report file=${reportPath}`);
   await invalidateRedisCache();
