@@ -190,8 +190,8 @@ function hasActiveVehicleHero($: cheerio.CheerioAPI, html: string): boolean {
   );
   const hasGallery = Boolean(
     $('#gallery-data').html()?.trim() ||
-      $('img[data-gallery-index]').length > 0 ||
-      /galleryImages"\s*:\s*\[/.test(html),
+    $('img[data-gallery-index]').length > 0 ||
+    /galleryImages"\s*:\s*\[/.test(html),
   );
 
   return hasVehicleTitle && hasCurrentPrice && hasGallery;
