@@ -42,7 +42,6 @@ export interface LivePlpItem {
   slug: string;
   postId?: string;
   canonicalUrl?: string;
-  matchKeys: string[];
   title?: string;
   brand?: string;
   model?: string;
@@ -236,52 +235,153 @@ function readPlpItemSummary(
   };
 }
 
-function buildLiveItemMatchKeys(slug: string, item: unknown, postId?: string): string[] {
-  const keys = new Set<string>();
-  if (postId) keys.add(postId);
-  for (const alias of [slug, ...readPlpItemAliases(item)]) {
-    const normalized = normalizeAlias(alias);
-    if (normalized) keys.add(normalized);
-    const legacyPrefix = readLegacySlugPrefix(alias);
-    if (legacyPrefix) keys.add(legacyPrefix);
-  }
-  return [...keys];
+interface MatchKeySets {
+  strong: Set<string>;
+  any: Set<string>;
+  brand: string;
+  model: string;
 }
 
-function buildListingMatchKeys(
-  listing: ReconcileListingInput,
-  aliasToPostId?: Map<string, string>,
-  livePostIds?: Set<string>,
-): Set<string> {
-  const keys = new Set<string>();
-  const postId = extractPostIdFromListing(listing, aliasToPostId, livePostIds);
-  if (postId) keys.add(postId);
+function normalizeBrandModel(value?: string | null): string {
+  return (value ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function firstWord(value?: string): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed.split(/\s+/)[0] : undefined;
+}
+
+function liveKeySets(item: LivePlpItem): MatchKeySets {
+  const strong = new Set<string>();
+  const any = new Set<string>();
+  const addStrong = (value?: string) => {
+    if (value) {
+      strong.add(value);
+      any.add(value);
+    }
+  };
+  const addWeak = (value?: string) => {
+    if (value) any.add(value);
+  };
+  addStrong(item.postId);
+  addStrong(normalizeAlias(item.slug));
+  addStrong(normalizeAlias(item.canonicalUrl));
+  addWeak(readLegacySlugPrefix(item.slug));
+  if (item.canonicalUrl) addWeak(readLegacySlugPrefix(item.canonicalUrl));
+  return {
+    strong,
+    any,
+    brand: normalizeBrandModel(item.brand ?? firstWord(item.title)),
+    model: normalizeBrandModel(item.model),
+  };
+}
+
+function listingKeySets(listing: ReconcileListingInput, livePostIds?: Set<string>): MatchKeySets {
+  const strong = new Set<string>();
+  const any = new Set<string>();
+  const addStrong = (value?: string) => {
+    if (value) {
+      strong.add(value);
+      any.add(value);
+    }
+  };
+  const addWeak = (value?: string) => {
+    if (value) any.add(value);
+  };
+  const key = listing.partner_listing_external_key?.trim();
+  if (key && /^\d{3,8}$/.test(key) && (!livePostIds || livePostIds.has(key))) addStrong(key);
   for (const raw of [listing.partner_listing_external_key, listing.partner_listing_canonical_url]) {
-    const normalized = normalizeAlias(raw);
-    if (normalized) keys.add(normalized);
-    if (raw) {
-      const legacyPrefix = readLegacySlugPrefix(raw);
-      if (legacyPrefix) keys.add(legacyPrefix);
+    addStrong(normalizeAlias(raw));
+    if (raw) addWeak(readLegacySlugPrefix(raw));
+  }
+  for (const image of listing.images ?? []) {
+    addStrong(extractCipautoPostIdFromImageUrl(image));
+  }
+  const codProdus = extractCodProdus(listing);
+  if (codProdus) {
+    addWeak(normalizeAlias(codProdus));
+    addWeak(readLegacySlugPrefix(codProdus));
+  }
+  return {
+    strong,
+    any,
+    brand: normalizeBrandModel(listing.vehicle?.brand?.name),
+    model: normalizeBrandModel(listing.vehicle?.model?.name),
+  };
+}
+
+export function assignListingsToLiveCars(params: {
+  listings: ReconcileListingInput[];
+  liveItems: LivePlpItem[];
+  livePostIds?: Set<string>;
+}): {
+  liveSets: MatchKeySets[];
+  assignment: Map<string, { liveIndex: number; strong: boolean }>;
+} {
+  const liveSets = params.liveItems.map(liveKeySets);
+  const strongKeyToLive = new Map<string, number>();
+  const anyKeyToLives = new Map<string, number[]>();
+  liveSets.forEach((sets, index) => {
+    for (const key of sets.strong) {
+      if (!strongKeyToLive.has(key)) strongKeyToLive.set(key, index);
+    }
+    for (const key of sets.any) {
+      const bucket = anyKeyToLives.get(key);
+      if (bucket) bucket.push(index);
+      else anyKeyToLives.set(key, [index]);
+    }
+  });
+
+  const assignment = new Map<string, { liveIndex: number; strong: boolean }>();
+  for (const listing of params.listings) {
+    const sets = listingKeySets(listing, params.livePostIds);
+    let chosen: number | undefined;
+    for (const key of sets.strong) {
+      const index = strongKeyToLive.get(key);
+      if (index !== undefined) {
+        chosen = index;
+        break;
+      }
+    }
+    if (chosen !== undefined) {
+      assignment.set(listing.id, { liveIndex: chosen, strong: true });
+      continue;
+    }
+
+    const seen = new Set<number>();
+    for (const key of sets.any) {
+      for (const index of anyKeyToLives.get(key) ?? []) {
+        if (seen.has(index)) continue;
+        seen.add(index);
+        const liveBrand = liveSets[index].brand;
+        if (!liveBrand || !sets.brand || liveBrand === sets.brand) {
+          chosen = index;
+          break;
+        }
+      }
+      if (chosen !== undefined) break;
+    }
+    if (chosen !== undefined) {
+      assignment.set(listing.id, { liveIndex: chosen, strong: false });
     }
   }
-  return keys;
+
+  return { liveSets, assignment };
 }
 
 function synthesizeLiveItems(
   livePostIds: Set<string>,
   canonicalUrls: Map<string, string>,
 ): LivePlpItem[] {
-  return [...livePostIds].map((postId) => {
-    const canonicalUrl = canonicalUrls.get(postId);
-    const matchKeys = new Set<string>([postId]);
-    if (canonicalUrl) {
-      const normalized = normalizeAlias(canonicalUrl);
-      if (normalized) matchKeys.add(normalized);
-      const legacyPrefix = readLegacySlugPrefix(canonicalUrl);
-      if (legacyPrefix) matchKeys.add(legacyPrefix);
-    }
-    return { slug: postId, postId, canonicalUrl, matchKeys: [...matchKeys] };
-  });
+  return [...livePostIds].map((postId) => ({
+    slug: postId,
+    postId,
+    canonicalUrl: canonicalUrls.get(postId),
+  }));
 }
 
 export function computeLiveCoverage(params: {
@@ -290,40 +390,35 @@ export function computeLiveCoverage(params: {
   aliasToPostId?: Map<string, string>;
   livePostIds?: Set<string>;
 }): LiveCoverage {
-  const index = new Map<string, { hasActive: boolean; hasClosed: boolean }>();
+  const { assignment } = assignListingsToLiveCars({
+    listings: params.listings,
+    liveItems: params.liveItems,
+    livePostIds: params.livePostIds,
+  });
+
+  const status = params.liveItems.map(() => ({
+    matched: false,
+    hasActive: false,
+    hasClosed: false,
+  }));
   for (const listing of params.listings) {
-    const isActive = listing.status === ListingStatus.Active;
-    for (const key of buildListingMatchKeys(listing, params.aliasToPostId, params.livePostIds)) {
-      const entry = index.get(key) ?? { hasActive: false, hasClosed: false };
-      if (isActive) entry.hasActive = true;
-      else entry.hasClosed = true;
-      index.set(key, entry);
-    }
+    const matched = assignment.get(listing.id);
+    if (!matched) continue;
+    const entry = status[matched.liveIndex];
+    entry.matched = true;
+    if (listing.status === ListingStatus.Active) entry.hasActive = true;
+    else entry.hasClosed = true;
   }
 
   let activeCovered = 0;
   let closedOnlyCovered = 0;
   const missing: LivePlpItem[] = [];
-
-  for (const liveItem of params.liveItems) {
-    let matched = false;
-    let hasActive = false;
-    let hasClosed = false;
-    for (const key of liveItem.matchKeys) {
-      const entry = index.get(key);
-      if (!entry) continue;
-      matched = true;
-      if (entry.hasActive) hasActive = true;
-      if (entry.hasClosed) hasClosed = true;
-    }
-    if (!matched) {
-      missing.push(liveItem);
-    } else if (hasActive) {
-      activeCovered += 1;
-    } else if (hasClosed) {
-      closedOnlyCovered += 1;
-    }
-  }
+  params.liveItems.forEach((item, index) => {
+    const entry = status[index];
+    if (!entry.matched) missing.push(item);
+    else if (entry.hasActive) activeCovered += 1;
+    else closedOnlyCovered += 1;
+  });
 
   return {
     liveTotal: params.liveItems.length,
@@ -348,7 +443,6 @@ export function loadLivePostIdsFromPlpSnapshot(rawJson: string): LivePlpPostIds 
       slug: itemKey,
       postId,
       canonicalUrl,
-      matchKeys: buildLiveItemMatchKeys(itemKey, item, postId),
       ...readPlpItemSummary(item),
     });
 
@@ -398,31 +492,19 @@ export function buildCipautoReconcilePlan(params: {
       ? params.liveItems
       : synthesizeLiveItems(params.livePostIds, params.canonicalUrls);
 
-  const keyToLiveId = new Map<string, string>();
-  const liveById = new Map<string, LivePlpItem>();
-  for (const liveItem of liveItems) {
-    const liveId = liveItem.postId ?? liveItem.slug;
-    if (!liveById.has(liveId)) liveById.set(liveId, liveItem);
-    for (const key of liveItem.matchKeys) {
-      if (!keyToLiveId.has(key)) keyToLiveId.set(key, liveId);
-    }
-  }
+  const { assignment } = assignListingsToLiveCars({
+    listings: params.listings,
+    liveItems,
+    livePostIds: params.livePostIds,
+  });
 
-  const groups = new Map<string, ReconcileListingInput[]>();
+  const groups = new Map<number, ReconcileListingInput[]>();
   const noPostIdListings: ReconcileListingInput[] = [];
   const staleActiveListings: ReconcileAction[] = [];
 
   for (const listing of params.listings) {
-    let liveId: string | undefined;
-    for (const key of buildListingMatchKeys(listing, params.aliasToPostId, params.livePostIds)) {
-      const candidate = keyToLiveId.get(key);
-      if (candidate) {
-        liveId = candidate;
-        break;
-      }
-    }
-
-    if (!liveId) {
+    const matched = assignment.get(listing.id);
+    if (!matched) {
       const fallbackPostId = extractPostIdFromListing(
         listing,
         params.aliasToPostId,
@@ -436,9 +518,9 @@ export function buildCipautoReconcilePlan(params: {
       continue;
     }
 
-    const group = groups.get(liveId) ?? [];
-    group.push(listing);
-    groups.set(liveId, group);
+    const group = groups.get(matched.liveIndex);
+    if (group) group.push(listing);
+    else groups.set(matched.liveIndex, [listing]);
   }
 
   const duplicateClosures: ReconcileAction[] = [];
@@ -447,13 +529,14 @@ export function buildCipautoReconcilePlan(params: {
   let activeCovered = 0;
   let closedOnlyCovered = 0;
 
-  for (const [liveId, group] of groups) {
-    const liveItem = liveById.get(liveId);
-    const postId = liveItem?.postId;
+  for (const [liveIndex, group] of groups) {
+    const liveItem = liveItems[liveIndex];
+    const postId = liveItem.postId;
     const canonicalUrl =
-      liveItem?.canonicalUrl ?? (postId ? params.canonicalUrls.get(postId) : undefined);
+      liveItem.canonicalUrl ?? (postId ? params.canonicalUrls.get(postId) : undefined);
     const active = group.filter((listing) => listing.status === ListingStatus.Active);
     const keeper = chooseKeeper(group);
+    const keeperModel = normalizeBrandModel(keeper.vehicle?.model?.name);
 
     if (postId) {
       const keeperNeedsBackfill =
@@ -474,11 +557,16 @@ export function buildCipautoReconcilePlan(params: {
 
     for (const listing of group) {
       if (listing.id === keeper.id || listing.status === ListingStatus.Closed) continue;
+      const listingModel = normalizeBrandModel(listing.vehicle?.model?.name);
+      if (keeperModel && listingModel && keeperModel !== listingModel) continue;
       duplicateClosures.push({ listingId: listing.id, postId, canonicalUrl });
     }
   }
 
-  const missing = liveItems.filter((liveItem) => !groups.has(liveItem.postId ?? liveItem.slug));
+  const missing: LivePlpItem[] = [];
+  liveItems.forEach((liveItem, index) => {
+    if (!groups.has(index)) missing.push(liveItem);
+  });
 
   const activeNow = params.listings.filter(
     (listing) => listing.status === ListingStatus.Active,

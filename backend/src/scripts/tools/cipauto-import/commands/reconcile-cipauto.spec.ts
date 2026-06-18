@@ -282,6 +282,84 @@ describe('buildCipautoReconcilePlan', () => {
     ]);
   });
 
+  it('does not group cross-brand listings that collide on a weak key', () => {
+    const live = loadLivePostIdsFromPlpSnapshot(
+      JSON.stringify({
+        items: {
+          'shared1-ds-7': {
+            sourcePostId: '18467',
+            canonicalUrl: 'https://cipauto.md/vehicul/shared1-ds-7/',
+            brand: 'DS Automobiles',
+            model: 'DS 7',
+          },
+        },
+      }),
+    );
+
+    const plan = buildCipautoReconcilePlan({
+      listings: [
+        listing({
+          id: 'ds-active',
+          status: 'Active',
+          partner_listing_external_key: 'shared1-ds-7',
+          vehicle: { brand: { name: 'DS Automobiles' }, model: { name: 'DS 7' } },
+        }),
+        listing({
+          id: 'volvo-active',
+          status: 'Active',
+          description_ro: 'Cod Produs: shared1',
+          vehicle: { brand: { name: 'Volvo' }, model: { name: 'V60' } },
+        }),
+      ],
+      livePostIds: live.postIds,
+      canonicalUrls: live.canonicalUrls,
+      aliasToPostId: live.aliasToPostId,
+      liveItems: live.items,
+      activeLimit: 1000,
+    });
+
+    expect(
+      plan.duplicateClosures.find((action) => action.listingId === 'volvo-active'),
+    ).toBeUndefined();
+    expect(plan.staleActiveListings.map((action) => action.listingId)).toContain('volvo-active');
+  });
+
+  it('recovers a listing via weak key when brands agree', () => {
+    const live = loadLivePostIdsFromPlpSnapshot(
+      JSON.stringify({
+        items: {
+          'e26881-bmw-x5': {
+            sourcePostId: '39628',
+            canonicalUrl: 'https://cipauto.md/vehicul/e26881-bmw-x5/',
+            brand: 'BMW',
+            model: 'X5',
+          },
+        },
+      }),
+    );
+
+    const plan = buildCipautoReconcilePlan({
+      listings: [
+        listing({
+          id: 'bmw-active',
+          status: 'Active',
+          partner_listing_external_key: '99999',
+          description_ro: 'Cod Produs: E26881',
+          vehicle: { brand: { name: 'BMW' }, model: { name: 'X5' } },
+        }),
+      ],
+      livePostIds: live.postIds,
+      canonicalUrls: live.canonicalUrls,
+      aliasToPostId: live.aliasToPostId,
+      liveItems: live.items,
+      activeLimit: 1000,
+    });
+
+    expect(plan.staleActiveListings).toHaveLength(0);
+    expect(plan.liveCoverage?.activeCovered).toBe(1);
+    expect(plan.liveCoverage?.missing).toHaveLength(0);
+  });
+
   it('reopens a closed listing matched to a live car only by slug prefix', () => {
     const live = loadLivePostIdsFromPlpSnapshot(
       JSON.stringify({
