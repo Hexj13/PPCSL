@@ -38,10 +38,31 @@ export interface ReconcileListingInput {
   } | null;
 }
 
+export interface LivePlpItem {
+  slug: string;
+  postId?: string;
+  canonicalUrl?: string;
+  matchKeys: string[];
+  title?: string;
+  brand?: string;
+  model?: string;
+  year?: number;
+  price?: number;
+}
+
 export interface LivePlpPostIds {
   postIds: Set<string>;
   canonicalUrls: Map<string, string>;
   aliasToPostId: Map<string, string>;
+  items: LivePlpItem[];
+}
+
+export interface LiveCoverage {
+  liveTotal: number;
+  activeCovered: number;
+  closedOnlyCovered: number;
+  missing: LivePlpItem[];
+  projectedActive: number;
 }
 
 export interface ReconcileAction {
@@ -63,6 +84,7 @@ export interface ReconcilePlan {
   projectedActive: number;
   activeLimit: number;
   activeLimitExceeded: boolean;
+  liveCoverage?: LiveCoverage;
 }
 
 interface ReconcileCommandOptions {
@@ -174,17 +196,147 @@ function readLegacySlugPrefix(alias: string): string | undefined {
   return prefix && /^[a-z0-9]{3,12}$/i.test(prefix) ? prefix : undefined;
 }
 
+function readNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value.replace(/[^\d.]/g, ''));
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function readString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function readPlpItemSummary(
+  item: unknown,
+): Pick<LivePlpItem, 'title' | 'brand' | 'model' | 'year' | 'price'> {
+  if (!item || typeof item !== 'object') return {};
+  const typed = item as {
+    title?: unknown;
+    brand?: unknown;
+    model?: unknown;
+    year?: unknown;
+    price?: unknown;
+    parsedData?: {
+      title?: unknown;
+      brand?: unknown;
+      model?: unknown;
+      year?: unknown;
+      price?: unknown;
+    };
+  };
+  return {
+    title: readString(typed.title) ?? readString(typed.parsedData?.title),
+    brand: readString(typed.brand) ?? readString(typed.parsedData?.brand),
+    model: readString(typed.model) ?? readString(typed.parsedData?.model),
+    year: readNumber(typed.year) ?? readNumber(typed.parsedData?.year),
+    price: readNumber(typed.price) ?? readNumber(typed.parsedData?.price),
+  };
+}
+
+function buildLiveItemMatchKeys(slug: string, item: unknown, postId?: string): string[] {
+  const keys = new Set<string>();
+  if (postId) keys.add(postId);
+  for (const alias of [slug, ...readPlpItemAliases(item)]) {
+    const normalized = normalizeAlias(alias);
+    if (normalized) keys.add(normalized);
+    const legacyPrefix = readLegacySlugPrefix(alias);
+    if (legacyPrefix) keys.add(legacyPrefix);
+  }
+  return [...keys];
+}
+
+function buildListingMatchKeys(
+  listing: ReconcileListingInput,
+  aliasToPostId?: Map<string, string>,
+  livePostIds?: Set<string>,
+): Set<string> {
+  const keys = new Set<string>();
+  const postId = extractPostIdFromListing(listing, aliasToPostId, livePostIds);
+  if (postId) keys.add(postId);
+  for (const raw of [listing.partner_listing_external_key, listing.partner_listing_canonical_url]) {
+    const normalized = normalizeAlias(raw);
+    if (normalized) keys.add(normalized);
+    if (raw) {
+      const legacyPrefix = readLegacySlugPrefix(raw);
+      if (legacyPrefix) keys.add(legacyPrefix);
+    }
+  }
+  return keys;
+}
+
+export function computeLiveCoverage(params: {
+  liveItems: LivePlpItem[];
+  listings: ReconcileListingInput[];
+  aliasToPostId?: Map<string, string>;
+  livePostIds?: Set<string>;
+}): LiveCoverage {
+  const index = new Map<string, { hasActive: boolean; hasClosed: boolean }>();
+  for (const listing of params.listings) {
+    const isActive = listing.status === ListingStatus.Active;
+    for (const key of buildListingMatchKeys(listing, params.aliasToPostId, params.livePostIds)) {
+      const entry = index.get(key) ?? { hasActive: false, hasClosed: false };
+      if (isActive) entry.hasActive = true;
+      else entry.hasClosed = true;
+      index.set(key, entry);
+    }
+  }
+
+  let activeCovered = 0;
+  let closedOnlyCovered = 0;
+  const missing: LivePlpItem[] = [];
+
+  for (const liveItem of params.liveItems) {
+    let matched = false;
+    let hasActive = false;
+    let hasClosed = false;
+    for (const key of liveItem.matchKeys) {
+      const entry = index.get(key);
+      if (!entry) continue;
+      matched = true;
+      if (entry.hasActive) hasActive = true;
+      if (entry.hasClosed) hasClosed = true;
+    }
+    if (!matched) {
+      missing.push(liveItem);
+    } else if (hasActive) {
+      activeCovered += 1;
+    } else if (hasClosed) {
+      closedOnlyCovered += 1;
+    }
+  }
+
+  return {
+    liveTotal: params.liveItems.length,
+    activeCovered,
+    closedOnlyCovered,
+    missing,
+    projectedActive: activeCovered + closedOnlyCovered + missing.length,
+  };
+}
+
 export function loadLivePostIdsFromPlpSnapshot(rawJson: string): LivePlpPostIds {
   const parsed = JSON.parse(rawJson) as { items?: Record<string, unknown> };
   const postIds = new Set<string>();
   const canonicalUrls = new Map<string, string>();
   const aliasToPostId = new Map<string, string>();
+  const items: LivePlpItem[] = [];
 
   for (const [itemKey, item] of Object.entries(parsed.items ?? {})) {
     const postId = readPostIdFromPlpItem(item);
+    const canonicalUrl = readCanonicalUrlFromPlpItem(item);
+    items.push({
+      slug: itemKey,
+      postId,
+      canonicalUrl,
+      matchKeys: buildLiveItemMatchKeys(itemKey, item, postId),
+      ...readPlpItemSummary(item),
+    });
+
     if (!postId) continue;
     postIds.add(postId);
-    const canonicalUrl = readCanonicalUrlFromPlpItem(item);
     if (canonicalUrl && !canonicalUrls.has(postId)) {
       canonicalUrls.set(postId, canonicalUrl);
     }
@@ -200,7 +352,7 @@ export function loadLivePostIdsFromPlpSnapshot(rawJson: string): LivePlpPostIds 
     }
   }
 
-  return { postIds, canonicalUrls, aliasToPostId };
+  return { postIds, canonicalUrls, aliasToPostId, items };
 }
 
 function chooseKeeper(listings: ReconcileListingInput[]): ReconcileListingInput {
@@ -222,6 +374,7 @@ export function buildCipautoReconcilePlan(params: {
   canonicalUrls: Map<string, string>;
   activeLimit: number;
   aliasToPostId?: Map<string, string>;
+  liveItems?: LivePlpItem[];
 }): ReconcilePlan {
   const groups = new Map<string, ReconcileListingInput[]>();
   const noPostIdListings: ReconcileListingInput[] = [];
@@ -283,6 +436,15 @@ export function buildCipautoReconcilePlan(params: {
   }).length;
   const projectedActive = activeNow - activeDuplicateClosures + reopenListings.length;
 
+  const liveCoverage = params.liveItems
+    ? computeLiveCoverage({
+        liveItems: params.liveItems,
+        listings: params.listings,
+        aliasToPostId: params.aliasToPostId,
+        livePostIds: params.livePostIds,
+      })
+    : undefined;
+
   return {
     livePostIds: params.livePostIds.size,
     totalListings: params.listings.length,
@@ -296,6 +458,7 @@ export function buildCipautoReconcilePlan(params: {
     projectedActive,
     activeLimit: params.activeLimit,
     activeLimitExceeded: projectedActive > params.activeLimit,
+    liveCoverage,
   };
 }
 
@@ -499,6 +662,8 @@ function printPlan(plan: ReconcilePlan, listings: ReconcileListingInput[]): void
     );
   }
 
+  printLiveCoverage(plan.liveCoverage);
+
   printActions('REOPEN', plan.reopenListings, listings);
   printActions('CLOSE DUPLICATES', plan.duplicateClosures, listings);
   printActions('BACKFILL', plan.backfills, listings);
@@ -508,6 +673,34 @@ function printPlan(plan: ReconcilePlan, listings: ReconcileListingInput[]): void
     console.log(`=== NO POST ID (${plan.noPostIdListings.length}) ===`);
     for (const listing of plan.noPostIdListings) {
       console.log(`  ${formatListing(listing)}`);
+    }
+    console.log('');
+  }
+}
+
+function formatLiveItem(item: LivePlpItem): string {
+  const vehicle =
+    item.title || [item.brand, item.model, item.year].filter(Boolean).join(' ') || item.slug;
+  const url = item.canonicalUrl || `https://cipauto.md/vehicul/${item.slug}/`;
+  const price = item.price ? `€${item.price}` : '€?';
+  const pid = item.postId ? item.postId.padEnd(8) : '--'.padEnd(8);
+  return `${pid}  ${price.padEnd(9)}  ${vehicle}  ${url}`;
+}
+
+function printLiveCoverage(coverage?: LiveCoverage): void {
+  if (!coverage) return;
+  console.log('=== LIVE COVERAGE (cipauto -> Kupito) ===');
+  console.log(`  Live cipauto cars:        ${coverage.liveTotal}`);
+  console.log(`  Active on Kupito:         ${coverage.activeCovered}`);
+  console.log(`  Closed only (reopen):     ${coverage.closedOnlyCovered}`);
+  console.log(`  Missing (need import):    ${coverage.missing.length}`);
+  console.log(`  Projected after full run: ${coverage.projectedActive}`);
+  console.log('');
+
+  if (coverage.missing.length > 0) {
+    console.log(`=== MISSING ON KUPITO (${coverage.missing.length}) ===`);
+    for (const item of coverage.missing) {
+      console.log(`  ${formatLiveItem(item)}`);
     }
     console.log('');
   }
@@ -562,6 +755,7 @@ async function reconcileCipauto(): Promise<void> {
     canonicalUrls: live.canonicalUrls,
     activeLimit: getListingLimit(user),
     aliasToPostId: live.aliasToPostId,
+    liveItems: live.items,
   });
 
   printPlan(plan, listings);

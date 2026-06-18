@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import {
   buildCipautoReconcilePlan,
+  computeLiveCoverage,
   extractPostIdFromListing,
   loadLivePostIdsFromPlpSnapshot,
   type ReconcileListingInput,
@@ -114,6 +115,75 @@ describe('loadLivePostIdsFromPlpSnapshot', () => {
     expect(live.aliasToPostId.get('https://cipauto.md/vehicul/123456-volkswagen-passat')).toBe(
       '47993',
     );
+  });
+});
+
+describe('computeLiveCoverage', () => {
+  const snapshot = JSON.stringify({
+    items: {
+      '123456-volkswagen-passat': {
+        sourcePostId: '47993',
+        canonicalUrl: 'https://cipauto.md/vehicul/123456-volkswagen-passat/',
+        brand: 'Volkswagen',
+        model: 'Passat',
+        year: 2019,
+        price: 15000,
+      },
+      '222222-bmw-x5': {
+        sourcePostId: '50000',
+        canonicalUrl: 'https://cipauto.md/vehicul/222222-bmw-x5/',
+      },
+      '333333-audi-a4': {
+        sourcePostId: '60000',
+        canonicalUrl: 'https://cipauto.md/vehicul/333333-audi-a4/',
+        brand: 'Audi',
+        model: 'A4',
+      },
+      '444444-kia-rio': {
+        canonicalUrl: 'https://cipauto.md/vehicul/444444-kia-rio/',
+      },
+    },
+  });
+
+  it('classifies live cars into active, closed-only and missing buckets', () => {
+    const live = loadLivePostIdsFromPlpSnapshot(snapshot);
+    const coverage = computeLiveCoverage({
+      liveItems: live.items,
+      livePostIds: live.postIds,
+      aliasToPostId: live.aliasToPostId,
+      listings: [
+        listing({ id: 'active-vw', status: 'Active', partner_listing_external_key: '47993' }),
+        listing({ id: 'closed-bmw', status: 'Closed', partner_listing_external_key: '50000' }),
+      ],
+    });
+
+    expect(coverage.liveTotal).toBe(4);
+    expect(coverage.activeCovered).toBe(1);
+    expect(coverage.closedOnlyCovered).toBe(1);
+    expect(coverage.missing.map((item) => item.slug).sort()).toEqual([
+      '333333-audi-a4',
+      '444444-kia-rio',
+    ]);
+    expect(coverage.projectedActive).toBe(4);
+  });
+
+  it('does not flag an unmapped live car as missing when a listing matches by slug prefix', () => {
+    const live = loadLivePostIdsFromPlpSnapshot(snapshot);
+    const coverage = computeLiveCoverage({
+      liveItems: live.items,
+      livePostIds: live.postIds,
+      aliasToPostId: live.aliasToPostId,
+      listings: [
+        listing({
+          id: 'active-kia',
+          status: 'Active',
+          partner_listing_external_key: '444444-kia-rio',
+        }),
+      ],
+    });
+
+    expect(coverage.missing.map((item) => item.slug)).not.toContain('444444-kia-rio');
+    expect(coverage.activeCovered).toBe(1);
   });
 });
 
