@@ -7,9 +7,11 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { isSignRoutePathname } from '@/components/layout/header-flow-paths';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
-import { buildSignPageHref } from '@/lib/return-url';
+import { buildSignInHref, buildSignPageHref } from '@/lib/return-url';
 
-import { ScaleIcon } from './icons';
+import { HeaderListingsNavLink } from './HeaderListingsNavLink';
+import { DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES } from './desktopNavLinkClasses';
+import { DESKTOP_HEADER_OUTLINE_LINK_CLASSES } from './desktopOutlineLinkClasses';
 
 type GuestDesktopNavProps = {
   comparisonCount: number;
@@ -19,9 +21,6 @@ type GuestDesktopNavProps = {
   onSetReturnUrl: (url: string) => void;
   t: (key: string) => string;
 };
-
-const loginLinkClasses =
-  'text-primary-700 font-medium h-10 text-xs md:text-xs lg:text-sm xl:text-sm hover-only:hover:text-primary-900 active:text-primary-900 hover-only:hover:border-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 md:px-2.5 lg:px-2.5 xl:px-3 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base';
 
 export function GuestDesktopNav({
   comparisonCount,
@@ -53,20 +52,36 @@ export function GuestDesktopNav({
 
   return (
     <>
+      <HeaderListingsNavLink
+        className={navLinkClasses}
+        labelClassName={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES}
+        t={t}
+      />
+      <Link href={buildSignInHref('/favorites')} className={navLinkClasses}>
+        <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
+          {t('header.favorites')}
+        </span>
+      </Link>
       <Link href={href('/compare')} className={navLinkClasses}>
-        <ScaleIcon />
-        <span suppressHydrationWarning>{t('header.compare')}</span>
+        <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
+          {t('header.compare')}
+        </span>
         {comparisonCount > 0 && (
           <span className="ml-2 min-w-[1.25rem] rounded-full border border-primary-300 bg-primary-500 px-2 py-0.5 text-xs text-white text-center">
             {comparisonCount > 99 ? '99+' : comparisonCount}
           </span>
         )}
       </Link>
+      <Link href={href('/partners')} className={navLinkClasses}>
+        <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
+          {t('header.forBusiness')}
+        </span>
+      </Link>
       <div className="h-6 w-px bg-primary-700/30 mx-1 shrink-0" aria-hidden />
       <Link
         href={buildSignPageHref({ tab: 'login' })}
         onClick={handleSignClick}
-        className={loginLinkClasses}
+        className={DESKTOP_HEADER_OUTLINE_LINK_CLASSES}
       >
         <span suppressHydrationWarning>{t('header.loginAndRegister')}</span>
       </Link>

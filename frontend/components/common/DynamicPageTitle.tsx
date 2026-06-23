@@ -6,8 +6,14 @@ import { useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { brandsApi, tiresApi } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
-import { loadSiteConfigSync } from '@/lib/site-config';
-import { createSlug, getCountry, slugMatches, slugToName } from '@/lib/utils';
+import {
+  buildHomeBrandTitle,
+  buildHomeCategoryTitle,
+  createSlug,
+  slugMatches,
+  slugToName,
+  type HomePageCategory,
+} from '@/lib/utils';
 
 const decodeArray = (encoded: string): string[] => {
   if (!encoded) return [];
@@ -23,21 +29,18 @@ const decodeArray = (encoded: string): string[] => {
   }
 };
 
-function getFallbackTitle(
+function resolveBrandValueFromSlugs(
   brandParam: string | null,
   modelParam: string | null,
-  vehicleTypeLabel: string,
-  baseTitle: string,
-): string {
-  if (!brandParam && !modelParam) {
-    return vehicleTypeLabel ? `${vehicleTypeLabel} | ${baseTitle}` : baseTitle;
-  }
+): string | null {
+  if (!brandParam && !modelParam) return null;
   const brandSlugs = brandParam ? brandParam.split(',').map((s) => s.trim().toLowerCase()) : [];
   const modelSlugs = modelParam ? modelParam.split(',').map((s) => s.trim().toLowerCase()) : [];
   const foundBrands = brandSlugs
     .map((slug) => POPULAR_BRANDS.find((b) => b.toLowerCase() === slug || createSlug(b) === slug))
     .filter((name): name is string => name !== undefined);
-  if (foundBrands.length === 0) return baseTitle;
+  if (foundBrands.length === 0) return null;
+
   if (modelSlugs.length > 0 && foundBrands.length > 0) {
     const foundModels: string[] = [];
     foundBrands.forEach((brandName) => {
@@ -52,22 +55,50 @@ function getFallbackTitle(
         if (model) foundModels.push(`${brandName} ${model}`);
       });
     });
-    if (foundModels.length > 0) {
-      const title = vehicleTypeLabel
-        ? `${foundModels.join(', ')} | ${vehicleTypeLabel}`
-        : foundModels.join(', ');
-      return `${title} | ${baseTitle}`;
-    }
+    if (foundModels.length > 0) return foundModels.join(', ');
     if (foundBrands.length === 1) {
-      const title = vehicleTypeLabel
-        ? `${foundBrands[0]} ${modelSlugs.map((s) => slugToName(s)).join(', ')} | ${vehicleTypeLabel}`
-        : `${foundBrands[0]} ${modelSlugs.map((s) => slugToName(s)).join(', ')}`;
-      return `${title} | ${baseTitle}`;
+      return `${foundBrands[0]} ${modelSlugs.map((s) => slugToName(s)).join(', ')}`;
     }
   }
-  const brandsTitle = foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
-  const title = vehicleTypeLabel ? `${brandsTitle} | ${vehicleTypeLabel}` : brandsTitle;
-  return `${title} | ${baseTitle}`;
+
+  return foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
+}
+
+function resolveBodyTypeValue(
+  bodyTypesParam: string,
+  hasEncodedArrays: boolean,
+  t: (_key: string) => string,
+): string | null {
+  const bodyTypes = hasEncodedArrays
+    ? decodeArray(bodyTypesParam)
+    : bodyTypesParam
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+  if (bodyTypes.length === 0) return null;
+  const bodyTypeLabels = bodyTypes
+    .map((bt) => {
+      try {
+        return t(`vehicleOptions.bodyType.${bt}`);
+      } catch {
+        return null;
+      }
+    })
+    .filter((label): label is string => Boolean(label));
+  if (bodyTypeLabels.length === 0) return null;
+  return bodyTypeLabels.join(', ');
+}
+
+function setDocumentTitleFromValue(
+  t: (_key: string) => string,
+  category: HomePageCategory,
+  value: string | null,
+) {
+  if (value) {
+    document.title = buildHomeBrandTitle(t, value);
+    return;
+  }
+  document.title = buildHomeCategoryTitle(t, category);
 }
 
 export function DynamicPageTitle() {
@@ -76,26 +107,29 @@ export function DynamicPageTitle() {
 
   useEffect(() => {
     const categoryParam = searchParams.get('category');
-    if (categoryParam === 'tire') {
-      const tiresBaseTitle = t('metadata.site.tiresDefaultTitle');
-      const siteName = loadSiteConfigSync(getCountry()).name;
+    const isTireCategory = categoryParam === 'tire';
+    const vehicleTypeParam = searchParams.get('vehicleType');
+    const vehicleType: 'car' | 'truck' | 'moto' =
+      typeof vehicleTypeParam === 'string' && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
+        ? (vehicleTypeParam as 'car' | 'truck' | 'moto')
+        : 'car';
+    const homeCategory: HomePageCategory = isTireCategory ? 'tire' : vehicleType;
+
+    if (isTireCategory) {
       const tireBrandIds = searchParams.get('tire_brand_ids');
       const tireModelIds = searchParams.get('tire_model_ids');
-      const withSite = (segment: string) => `${segment} | ${siteName}`;
-      document.title = withSite(tiresBaseTitle);
+      setDocumentTitleFromValue(t, homeCategory, null);
       tiresApi
         .getSearchMetadata({
           tire_brand_ids: tireBrandIds ?? undefined,
           tire_model_ids: tireModelIds ?? undefined,
         })
         .then((res) => {
-          const title = res.data.title ?? tiresBaseTitle;
-          const segment =
-            title === tiresBaseTitle ? tiresBaseTitle : `${title} | ${tiresBaseTitle}`;
-          document.title = withSite(segment);
+          const value = res.data.title ?? null;
+          setDocumentTitleFromValue(t, homeCategory, value);
         })
         .catch(() => {
-          document.title = withSite(tiresBaseTitle);
+          setDocumentTitleFromValue(t, homeCategory, null);
         });
       return;
     }
@@ -103,81 +137,36 @@ export function DynamicPageTitle() {
     const brandParam = searchParams.get('brand');
     const modelParam = searchParams.get('model');
     const bodyTypesParam = searchParams.get('body_types');
-    const vehicleTypeParam = searchParams.get('vehicleType');
     const hasEncodedArrays = searchParams.get('_e') === '1';
 
-    const vehicleType =
-      typeof vehicleTypeParam === 'string' && ['car', 'truck', 'moto'].includes(vehicleTypeParam)
-        ? vehicleTypeParam
-        : 'car';
-
-    const getVehicleTypeLabel = (type: string): string => {
-      try {
-        const key = `listings.vehicleTypeFull.${type}`;
-        const value = t(key);
-        return value === key ? '' : value;
-      } catch {
-        return '';
-      }
-    };
-
-    const vehicleTypeLabel = getVehicleTypeLabel(vehicleType);
-    const baseTitle = t('metadata.site.defaultTitle');
-
     if (bodyTypesParam && !brandParam && !modelParam) {
-      const bodyTypes = hasEncodedArrays
-        ? decodeArray(bodyTypesParam)
-        : bodyTypesParam
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean);
-      if (bodyTypes.length > 0) {
-        const bodyTypeLabels = bodyTypes
-          .map((bt) => {
-            try {
-              return t(`vehicleOptions.bodyType.${bt}`);
-            } catch {
-              return null;
-            }
-          })
-          .filter((label): label is string => Boolean(label));
-        if (bodyTypeLabels.length > 0) {
-          const title = vehicleTypeLabel
-            ? `${bodyTypeLabels.join(', ')} | ${vehicleTypeLabel}`
-            : bodyTypeLabels.join(', ');
-          document.title = `${title} | ${baseTitle}`;
-          return;
-        }
+      const bodyValue = resolveBodyTypeValue(bodyTypesParam, hasEncodedArrays, t);
+      if (bodyValue) {
+        setDocumentTitleFromValue(t, homeCategory, bodyValue);
+        return;
       }
     }
 
     if (!brandParam && !modelParam) {
-      document.title = vehicleTypeLabel ? `${vehicleTypeLabel} | ${baseTitle}` : baseTitle;
+      setDocumentTitleFromValue(t, homeCategory, null);
       return;
     }
 
-    const vehicleTypeForApi = vehicleType as 'car' | 'truck' | 'moto' | undefined;
-
-    document.title = getFallbackTitle(brandParam, modelParam, vehicleTypeLabel, baseTitle);
+    const fallbackValue = resolveBrandValueFromSlugs(brandParam, modelParam);
+    setDocumentTitleFromValue(t, homeCategory, fallbackValue);
 
     brandsApi
       .getSearchMetadata({
         brand: brandParam ?? undefined,
         model: modelParam ?? undefined,
-        vehicleType: vehicleTypeForApi,
+        vehicleType,
       })
       .then((res) => {
-        if (res.data.title) {
-          const title = vehicleTypeLabel
-            ? `${res.data.title} | ${vehicleTypeLabel}`
-            : res.data.title;
-          document.title = `${title} | ${baseTitle}`;
-        } else {
-          document.title = getFallbackTitle(brandParam, modelParam, vehicleTypeLabel, baseTitle);
-        }
+        const value = res.data.title ?? fallbackValue;
+        setDocumentTitleFromValue(t, homeCategory, value);
       })
       .catch(() => {
-        document.title = getFallbackTitle(brandParam, modelParam, vehicleTypeLabel, baseTitle);
+        setDocumentTitleFromValue(t, homeCategory, fallbackValue);
       });
   }, [searchParams, t]);
 

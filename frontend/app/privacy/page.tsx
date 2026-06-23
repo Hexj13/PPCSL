@@ -34,7 +34,7 @@ export default function PrivacyPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto pt-10 md:pt-14">
+    <div className="max-w-4xl mx-auto pt-4 md:pt-6">
       <div className="mb-8">
         <h1 className="text-4xl md:text-5xl font-extrabold text-primary-900">
           {normalizeText(currentPrivacy.title)}

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
 
 import type { Listing } from '@/lib/api';
+import { fetchCities } from '@/lib/api';
 import {
   getMetadataLocale,
   getServerTranslations,
@@ -34,6 +35,7 @@ import {
   isVinMasked,
   extractListingIdFromRouteParam,
   toSafeJsonLdHtml,
+  buildListingSeoTitle,
 } from '@/lib/utils';
 
 import ListingPageClient from './ListingPageClient';
@@ -405,8 +407,9 @@ export async function generateMetadata({
   }
 
   const tFn = getTFromTranslations(t);
+  const cities = await fetchCities();
   const displayTitle = getListingDisplayTitle(listing, tFn) || listing.title;
-  const title = `${displayTitle} | Kupito`;
+  const seoTitle = buildListingSeoTitle(listing, tFn, locale, cities) || displayTitle;
   const descriptionLocale = localeToDescriptionLocale(locale);
   const description = buildListingOgDescription(
     listing,
@@ -431,7 +434,7 @@ export async function generateMetadata({
     : { canonical };
 
   return {
-    title,
+    title: { absolute: seoTitle },
     description,
     keywords: [
       listing.title,
@@ -456,7 +459,7 @@ export async function generateMetadata({
     openGraph: {
       type: 'website',
       url: canonical,
-      title,
+      title: seoTitle,
       description,
       images: [
         {
@@ -471,7 +474,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: seoTitle,
       description,
       images: [{ url: ogImage, alt: ogImageAlt }],
     },

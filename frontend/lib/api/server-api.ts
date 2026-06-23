@@ -4,7 +4,7 @@ import { LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
 import type { Locale } from '@/lib/i18n-types';
 import { createBrandResolver, createModelResolver, parseSearchParams } from '@/lib/search';
 
-import type { Listing, PaginationMeta, Brand, VehicleModel } from './api';
+import type { Listing, PaginationMeta, Brand, VehicleModel, City } from './api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -117,6 +117,18 @@ export const fetchModelsByBrands = cache(
     }
   },
 );
+
+export const fetchCities = cache(async (): Promise<City[]> => {
+  try {
+    const response = await fetch(`${API_URL}/api/cities`, {
+      next: { revalidate: 3600 },
+    });
+    if (!response.ok) return [];
+    return response.json();
+  } catch {
+    return [];
+  }
+});
 
 export const getListings = cache(
   async (

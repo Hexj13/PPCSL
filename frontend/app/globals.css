@@ -968,6 +968,58 @@
   min-height: 12rem !important;
 }
 
+@layer utilities {
+  @media (min-width: 1024px) {
+    .header-desktop-nav-link-label,
+    .footer-desktop-nav-link-label {
+      position: relative;
+      display: inline-block;
+    }
+
+    .header-desktop-nav-link-label::after,
+    .footer-desktop-nav-link-label::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 1px;
+      background-color: currentcolor;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+  }
+}
+
+@utility header-desktop-nav-link {
+  @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+    &:hover .header-desktop-nav-link-label::after {
+      transform: scaleX(1);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    &:focus-visible .header-desktop-nav-link-label::after {
+      transform: scaleX(1);
+    }
+  }
+}
+
+@utility footer-desktop-nav-link {
+  @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+    &:hover .footer-desktop-nav-link-label::after {
+      transform: scaleX(1);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    &:focus-visible .footer-desktop-nav-link-label::after {
+      transform: scaleX(1);
+    }
+  }
+}
+
 @utility header-language-switcher {
   & .input-field.dropdown-button {
     height: 40px !important;

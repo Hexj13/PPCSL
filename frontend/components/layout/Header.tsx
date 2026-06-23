@@ -174,7 +174,6 @@ export function Header() {
                   showNav={showNav}
                   comparisonCount={comparisonCount}
                   navLinkClasses={navLinkClasses}
-                  onLogout={handleLogout}
                   t={t}
                 />
                 {showNav && user && (
@@ -191,6 +190,7 @@ export function Header() {
                   navLinkClasses={navLinkClasses}
                   isAuthPage={isAuthPage}
                   isErrorPage={isErrorPage}
+                  onLogout={handleLogout}
                   onSetReturnUrl={handleSetReturnUrl}
                   t={t}
                 />

@@ -37,7 +37,7 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto pt-10 md:pt-14">
+    <div className="max-w-4xl mx-auto pt-4 md:pt-6">
       <h1 className="text-4xl md:text-5xl font-extrabold mb-8 text-primary-900">
         {t('faq.title')}
       </h1>

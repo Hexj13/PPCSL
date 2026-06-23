@@ -16,7 +16,6 @@ jest.mock('next/navigation', () => ({
 }));
 
 import { I18nProvider } from '@/components/providers/I18nProvider';
-import type { User } from '@/lib/api';
 import type { Translations } from '@/lib/i18n';
 
 import { UserDesktopNavLinks } from './UserDesktopNav';
@@ -30,21 +29,19 @@ function Tree({ children }: { children: ReactNode }) {
 }
 
 describe('UserDesktopNavLinks', () => {
-  const user = { type: 'Individual' } as User;
-
   it('uses /ru-prefixed hrefs when locale is ru', () => {
     render(
       <Tree>
         <UserDesktopNavLinks
-          user={user}
           comparisonCount={0}
           navLinkClasses="x"
-          onLogout={jest.fn()}
+          userType="Business"
           t={(k) => k}
         />
       </Tree>,
     );
 
+    expect(screen.getByRole('link', { name: 'header.listings' })).toHaveAttribute('href', '/ru');
     expect(screen.getByRole('link', { name: 'header.myListings' })).toHaveAttribute(
       'href',
       '/ru/my-listings',
@@ -57,5 +54,24 @@ describe('UserDesktopNavLinks', () => {
       'href',
       '/ru/compare',
     );
+    expect(screen.getByRole('link', { name: 'header.forBusiness' })).toHaveAttribute(
+      'href',
+      '/ru/partners',
+    );
+  });
+
+  it('hides the for-business link for individual users', () => {
+    render(
+      <Tree>
+        <UserDesktopNavLinks
+          comparisonCount={0}
+          navLinkClasses="x"
+          userType="Individual"
+          t={(k) => k}
+        />
+      </Tree>,
+    );
+
+    expect(screen.queryByRole('link', { name: 'header.forBusiness' })).toBeNull();
   });
 });

@@ -57,7 +57,7 @@ export function ListingGridView({
   return (
     <>
       <ListingGridCriticalStyles />
-      <div data-testid="listing-grid-placeholder" style={gridPlaceholderStyle}>
+      <div id="home-listings" data-testid="listing-grid-placeholder" style={gridPlaceholderStyle}>
         {showSkeletonOverlay && (
           <div className="listing-grid-critical-responsive grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
             {Array.from({ length: 8 }).map((_, index) => (

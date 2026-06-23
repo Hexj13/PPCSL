@@ -107,6 +107,7 @@ export function useListingGridFetch({
         setError(null);
       }
       let appendCommitted = false;
+      let replaceCommitted = false;
 
       try {
         const firstRes = await fetchListingsPage(params, page, controller.signal);
@@ -127,10 +128,12 @@ export function useListingGridFetch({
         if (controller.signal.aborted) return;
 
         if (!append) {
+          replaceCommitted = true;
           startTransition(() => {
             setListings(allNewListings);
             listingsRef.current = allNewListings;
             setCurrentPage(1);
+            setLoading(false);
             setLoadingMore(false);
             setAppendSkeletonCount(0);
             setMeta(finalMeta);
@@ -179,10 +182,12 @@ export function useListingGridFetch({
             setAppendSkeletonCount(0);
           }
           if (!append) {
-            setLoading(false);
-          }
-          if (!append && typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('searchComplete'));
+            if (!replaceCommitted) {
+              setLoading(false);
+            }
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('searchComplete'));
+            }
           }
         }
       }

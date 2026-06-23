@@ -2,7 +2,7 @@ interface NavigatorStandalone extends Navigator {
   standalone?: boolean;
 }
 
-const INSTALLED_DISPLAY_MODES = ['standalone', 'fullscreen'] as const;
+const INSTALLED_DISPLAY_MODES = ['standalone'] as const;
 
 export function isInstalledWebApp(): boolean {
   if (typeof window === 'undefined') {

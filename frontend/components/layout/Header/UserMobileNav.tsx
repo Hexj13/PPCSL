@@ -15,9 +15,7 @@ import { prepareScrollLockReleaseToTop } from '@/hooks/useScrollLock';
 import type { User } from '@/lib/api';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
-import { DocumentsIcon, HeartIcon, ScaleIcon, ShieldIcon, UserIcon, LogoutIcon } from './icons';
-
-const iconClass = 'w-4 h-4';
+import { HeaderListingsNavLink } from './HeaderListingsNavLink';
 
 type UserMobileNavProps = {
   user: User;
@@ -59,11 +57,15 @@ export function UserMobileNav({
 
   return (
     <div className="flex flex-col gap-4">
+      <HeaderListingsNavLink
+        className={mobileNavLinkClasses}
+        onNavigate={() => handleNavClick()}
+        t={t}
+      />
       {showCreateListingInDrawer && (
         <CreateListingButton variant="mobile" drawerCta onClick={onClose} />
       )}
       <Link href={href('/my-listings')} {...linkProps}>
-        <DocumentsIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.myListings')}</span>
       </Link>
       <Link
@@ -71,7 +73,6 @@ export function UserMobileNav({
         className={mobileNavLinkClasses}
         onClick={() => handleNavClick('/favorites')}
       >
-        <HeartIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.favorites')}</span>
       </Link>
       <Link
@@ -79,7 +80,6 @@ export function UserMobileNav({
         className={mobileNavLinkClasses}
         onClick={() => handleNavClick('/compare')}
       >
-        <ScaleIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.compare')}</span>
         {comparisonCount > 0 && (
           <span className="ml-2 min-w-[1.25rem] px-2 py-0.5 rounded-full bg-primary-500 border border-primary-300 text-white text-xs text-center">
@@ -87,13 +87,20 @@ export function UserMobileNav({
           </span>
         )}
       </Link>
+      {user.type !== 'Individual' && (
+        <Link
+          href={href('/partners')}
+          className={mobileNavLinkClasses}
+          onClick={() => handleNavClick('/partners')}
+        >
+          <span suppressHydrationWarning>{t('header.forBusiness')}</span>
+        </Link>
+      )}
       <Link href={href('/profile')} {...linkProps}>
-        <UserIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.profile')}</span>
       </Link>
       {user.type === 'Admin' && (
         <Link href={href('/admin')} {...linkProps}>
-          <ShieldIcon className={iconClass} />
           <span suppressHydrationWarning>{t('header.admin')}</span>
         </Link>
       )}
@@ -103,11 +110,10 @@ export function UserMobileNav({
         className={mobileNavLinkClasses}
         data-testid="header-mobile-logout"
       >
-        <LogoutIcon className={iconClass} />
         <span suppressHydrationWarning>{t('header.logout')}</span>
       </button>
       {showLang && (
-        <div className="w-full">
+        <div className="w-full border-t border-primary-700 pt-4">
           <LanguageSwitcher variant="mobile" context="header" />
         </div>
       )}

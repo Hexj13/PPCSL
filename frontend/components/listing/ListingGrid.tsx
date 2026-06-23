@@ -3,7 +3,11 @@
 import { useSearchParams, usePathname } from 'next/navigation';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { SKELETON_DEFERRED, useLoadingState } from '@/hooks/useLoadingState';
+import {
+  SKELETON_MIN_DISPLAY_SHORT_MS,
+  SKELETON_SHOW_DELAY_MS,
+  useLoadingState,
+} from '@/hooks/useLoadingState';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { usePartnerPromoBannerInGrid } from '@/hooks/usePartnerPromoBannerInGrid';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -182,9 +186,12 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     await fetchListings(currentPage + 1, true);
   }, [loadingMore, meta, currentPage, uniqueListings.length, fetchListings]);
 
+  const isFreshQueryLoad = loading && !hasLoadedWithFilters;
   const { visible: showSkeleton } = useLoadingState({
     isLoading: loading,
-    ...SKELETON_DEFERRED,
+    showDelay: isFreshQueryLoad ? 0 : SKELETON_SHOW_DELAY_MS,
+    minDisplayTime: SKELETON_MIN_DISPLAY_SHORT_MS,
+    immediate: isFreshQueryLoad,
   });
 
   const homeScrollRestoreActive = isHomeScrollRestoreInProgress();

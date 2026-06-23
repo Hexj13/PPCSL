@@ -59,11 +59,11 @@ describe('isInstalledWebApp', () => {
     expect(shouldOpenLinkInNewTab()).toBe(false);
   });
 
-  it('returns true when display-mode is fullscreen', () => {
+  it('returns false when display-mode is fullscreen (browser fullscreen, not an installed app)', () => {
     mockMatchMedia({ '(display-mode: fullscreen)': true });
 
-    expect(isInstalledWebApp()).toBe(true);
-    expect(shouldOpenLinkInNewTab()).toBe(false);
+    expect(isInstalledWebApp()).toBe(false);
+    expect(shouldOpenLinkInNewTab()).toBe(true);
   });
 
   it('returns true when referrer is android-app (TWA fallback)', () => {

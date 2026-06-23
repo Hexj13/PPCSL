@@ -186,7 +186,7 @@ export function buildHomeMetadata(
   site: { url: string; name: string; locale: string },
 ): Metadata {
   return {
-    title: fullTitle,
+    title: { absolute: fullTitle },
     description,
     keywords: [title, ...t.metadata.site.keywords],
     robots: hasNonIndexableParams

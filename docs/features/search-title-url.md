@@ -19,7 +19,8 @@ tags:
 When selecting a brand and model in search filters:
 
 1. URL is formed with `brand` and `model` parameters (slugs without diacritics)
-2. Page title is formed with full names from database (with diacritics)
+2. The search title value is formed with full names from the database (with diacritics)
+3. The browser title wraps that value in the localized SEO template
 
 ---
 
@@ -114,10 +115,16 @@ createSlug('ë-C4'); // → 'e-c4'
 
 ### 4. Title Display (Frontend)
 
-Frontend receives title from API and displays it:
+Frontend receives the title value from the API and displays it through the localized home SEO template:
 
 ```html
-<title>Citroën C-Elysée | Kupito</title>
+<title>Купить Citroën C-Elysée в Молдове на Kupito.club</title>
+```
+
+For category-only searches, the title uses the category template instead, for example:
+
+```html
+<title>Kupito.club: купить, продать или обменять мото в Молдове</title>
 ```
 
 ### 5. Data Flow Diagram
@@ -174,8 +181,8 @@ Frontend receives title from API and displays it:
 │                           FRONTEND                               │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  9. Receive response and display:                               │
-│     <title>Citroën C-Elysée | Kupito</title>                    │
+│  9. Receive response and display with SEO template:             │
+│     <title>Купить Citroën C-Elysée в Молдове на Kupito.club</title> │
 │                                                                  │
 │     Dropdown shows the same:                                    │
 │     Brand: Citroën                                              │
@@ -354,7 +361,8 @@ Check URL:
 /?brand=citroen&model=c-elysee
 ```
 
-Expected title: "Citroën C-Elysée"
+Expected title value: "Citroën C-Elysée"
+Expected browser title in Russian: "Купить Citroën C-Elysée в Молдове на Kupito.club"
 
 ---
 
@@ -399,11 +407,13 @@ Script automatically:
 
 ## Test Scenarios
 
-| URL                                          | Expected Title                |
-| -------------------------------------------- | ----------------------------- |
-| `/?brand=citroen`                            | Citroën                       |
-| `/?brand=citroen&model=c-elysee`             | Citroën C-Elysée              |
-| `/?brand=citroen&model=e-c4`                 | Citroën ë-C4                  |
-| `/?brand=bmw&model=x5`                       | BMW X5                        |
-| `/?brand=mercedes-benz&model=e-class`        | Mercedes-Benz E-Class         |
-| `/?brand=bmw,mercedes-benz&model=x5,e-class` | BMW X5, Mercedes-Benz E-Class |
+| URL                                          | Expected title value          | Expected Russian browser title                                      |
+| -------------------------------------------- | ----------------------------- | ------------------------------------------------------------------- |
+| `/`                                          | category: car                 | Kupito.club: купить, продать или обменять авто в Молдове            |
+| `/?vehicleType=moto`                         | category: moto                | Kupito.club: купить, продать или обменять мото в Молдове            |
+| `/?brand=citroen`                            | Citroën                       | Купить Citroën в Молдове на Kupito.club                             |
+| `/?brand=citroen&model=c-elysee`             | Citroën C-Elysée              | Купить Citroën C-Elysée в Молдове на Kupito.club                    |
+| `/?brand=citroen&model=e-c4`                 | Citroën ë-C4                  | Купить Citroën ë-C4 в Молдове на Kupito.club                        |
+| `/?brand=bmw&model=x5`                       | BMW X5                        | Купить BMW X5 в Молдове на Kupito.club                              |
+| `/?brand=mercedes-benz&model=e-class`        | Mercedes-Benz E-Class         | Купить Mercedes-Benz E-Class в Молдове на Kupito.club               |
+| `/?brand=bmw,mercedes-benz&model=x5,e-class` | BMW X5, Mercedes-Benz E-Class | Купить BMW X5, Mercedes-Benz E-Class в Молдове на Kupito.club       |

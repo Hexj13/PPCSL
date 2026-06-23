@@ -18,16 +18,15 @@ import {
 } from '@/lib/cross-tab-listing-detail-publish';
 import { buildListingEquipmentDisplay } from '@/lib/options';
 import { buildSignInHref } from '@/lib/return-url';
-import { loadSiteConfigSync } from '@/lib/site-config';
 import { useAuthStore, useFavoritesStore, useComparisonStore } from '@/lib/store';
 import { toast } from '@/lib/toast';
 import {
   getCityName,
-  getCountry,
   getListingDisplayTitle,
   getListingHref,
   getTireModelDisplayLabel,
   isTireListing,
+  buildListingSeoTitle,
 } from '@/lib/utils';
 
 import { applyListingPromotionSelection } from './applyListingPromotionSelection';
@@ -51,7 +50,7 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const { add: addFavorite, remove: removeFavorite } = useFavoritesStore();
   const { t } = useTranslation();
   const { locale } = useI18n();
-  const { cities } = useCities();
+  const { cities, loading: citiesLoading } = useCities();
   const addVehicle = useComparisonStore((s) => s.addVehicle);
   const removeVehicle = useComparisonStore((s) => s.removeVehicle);
   const addTire = useComparisonStore((s) => s.addTire);
@@ -164,10 +163,12 @@ export function useListingPageClient(listingId: string, initialListing: Listing 
   const canPromote =
     (promotionAccess?.canPromote ?? false) || (promotionAccess?.isPartner ?? false);
   const displayTitle = listing ? getListingDisplayTitle(listing, t) : '';
+  const seoTitle = listing ? buildListingSeoTitle(listing, t, locale, cities) : '';
   useEffect(() => {
-    if (!displayTitle) return;
-    document.title = `${displayTitle} | ${loadSiteConfigSync(getCountry()).name}`;
-  }, [displayTitle]);
+    if (!seoTitle) return;
+    if (citiesLoading) return;
+    document.title = seoTitle;
+  }, [seoTitle, citiesLoading]);
 
   const handleToggleFavorite = useCallback(async () => {
     if (!user) {

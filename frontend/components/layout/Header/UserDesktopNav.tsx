@@ -9,61 +9,77 @@ import { CreateListingButton } from '@/components/listing/CreateListingButton';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import type { User } from '@/lib/api';
 
-import { HeaderMoreDropdown } from './HeaderMoreDropdown';
-import { DocumentsIcon, HeartIcon, ScaleIcon } from './icons';
+import { HeaderListingsNavLink } from './HeaderListingsNavLink';
+import { HeaderProfileDropdown } from './HeaderProfileDropdown';
+import { DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES } from './desktopNavLinkClasses';
 
 type UserDesktopNavLinksProps = {
-  user: User;
   comparisonCount: number;
   navLinkClasses: string;
-  onLogout: () => void;
+  userType: User['type'];
   t: (key: string) => string;
 };
 
 export function UserDesktopNavLinks({
-  user,
   comparisonCount,
   navLinkClasses,
-  onLogout,
+  userType,
   t,
 }: UserDesktopNavLinksProps) {
   const { href } = useLocalizedNavigation();
   return (
     <>
+      <HeaderListingsNavLink
+        className={navLinkClasses}
+        labelClassName={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES}
+        t={t}
+      />
       <Link href={href('/my-listings')} className={navLinkClasses}>
-        <DocumentsIcon />
-        <span suppressHydrationWarning>{t('header.myListings')}</span>
+        <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
+          {t('header.myListings')}
+        </span>
       </Link>
       <Link href={href('/favorites')} className={navLinkClasses}>
-        <HeartIcon />
-        <span suppressHydrationWarning>{t('header.favorites')}</span>
+        <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
+          {t('header.favorites')}
+        </span>
       </Link>
-      <Link href={href('/compare')} className={`${navLinkClasses} hidden xl:flex`}>
-        <ScaleIcon />
-        <span suppressHydrationWarning>{t('header.compare')}</span>
+      <Link href={href('/compare')} className={navLinkClasses}>
+        <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
+          {t('header.compare')}
+        </span>
         {comparisonCount > 0 && (
           <span className="ml-2 min-w-[1.25rem] rounded-full border border-primary-300 bg-primary-500 px-2 py-0.5 text-xs text-white text-center">
             {comparisonCount > 99 ? '99+' : comparisonCount}
           </span>
         )}
       </Link>
-      <HeaderMoreDropdown
-        user={user}
-        comparisonCount={comparisonCount}
-        navLinkClasses={navLinkClasses}
-        onLogout={onLogout}
-        t={t}
-      />
+      {userType !== 'Individual' && (
+        <Link href={href('/partners')} className={navLinkClasses}>
+          <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
+            {t('header.forBusiness')}
+          </span>
+        </Link>
+      )}
     </>
   );
 }
 
 type UserDesktopNavActionsProps = {
+  user: User;
   isAuthPage: boolean;
   isErrorPage: boolean;
+  onLogout: () => void;
+  t: (key: string) => string;
 };
 
-export function UserDesktopNavActions({ isAuthPage, isErrorPage }: UserDesktopNavActionsProps) {
+export function UserDesktopNavActions({
+  user,
+  isAuthPage,
+  isErrorPage,
+  onLogout,
+  t,
+}: UserDesktopNavActionsProps) {
   const pathname = usePathname();
   const showLang = (!isAuthPage && !isErrorPage) || (isSignRoutePathname(pathname) && !isErrorPage);
 
@@ -76,6 +92,7 @@ export function UserDesktopNavActions({ isAuthPage, isErrorPage }: UserDesktopNa
           <LanguageSwitcher variant="desktop" context="header" />
         </>
       )}
+      <HeaderProfileDropdown user={user} onLogout={onLogout} t={t} />
     </>
   );
 }

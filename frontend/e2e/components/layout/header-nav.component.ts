@@ -8,8 +8,8 @@ export class HeaderNavComponent {
     mobileMenuToggle: 'header-mobile-menu-toggle',
     mobileDrawer: 'header-mobile-drawer',
     mobileLogout: 'header-mobile-logout',
-    userMoreToggle: 'header-user-more-toggle',
-    userMoreMenu: 'header-user-more-menu',
+    userProfileToggle: 'header-profile-toggle',
+    userProfileMenu: 'header-profile-menu',
     userLogout: 'header-user-logout',
     languageSwitcher: 'language-switcher',
     languageSwitcherMenu: 'language-switcher-menu',
@@ -64,8 +64,8 @@ export class HeaderNavComponent {
       await this.openMobileDrawer();
       return;
     }
-    await this.page.getByTestId(this.testIds.userMoreToggle).click();
-    await expect(this.page.getByTestId(this.testIds.userMoreMenu)).toBeVisible();
+    await this.page.getByTestId(this.testIds.userProfileToggle).click();
+    await expect(this.page.getByTestId(this.testIds.userProfileMenu)).toBeVisible();
   }
 
   async logout(): Promise<void> {
@@ -81,10 +81,10 @@ export class HeaderNavComponent {
           await logoutButton.click();
           return true;
         }
-        const menu = this.page.getByTestId(this.testIds.userMoreMenu);
+        const menu = this.page.getByTestId(this.testIds.userProfileMenu);
         if (!(await menu.isVisible().catch(() => false))) {
           await dismissCookieConsentIfVisible(this.page);
-          await this.page.getByTestId(this.testIds.userMoreToggle).click();
+          await this.page.getByTestId(this.testIds.userProfileToggle).click();
         }
         return false;
       })

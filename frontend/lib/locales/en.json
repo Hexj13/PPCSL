@@ -2,6 +2,10 @@
   "footer": {
     "copyright": "© 2025-2026 Kupito.club. All rights reserved.",
     "tagline": "Platform for posting car sale listings in Moldova",
+    "navTitle": "Navigation",
+    "infoTitle": "Information",
+    "legalTitle": "Legal",
+    "about": "Kupito.club is a platform for buying and selling cars in Moldova. Post listings for free and find the right car by make, price, and year.",
     "partnersTitle": "Our Partners",
     "faq": "Frequently Asked Questions",
     "partners": "For partners",
@@ -18,7 +22,9 @@
     "addListingShort": "Add",
     "myListings": "My Listings",
     "myListingsShort": "My",
+    "listings": "Listings",
     "favorites": "Favorites",
+    "forBusiness": "For Business",
     "compare": "Compare",
     "profile": "Profile",
     "admin": "Admin",
@@ -38,10 +44,26 @@
     "title": "Cars in Moldova",
     "titleWithBrand": "{brand} in Moldova",
     "titleWithBrandModel": "{brand} {model} in Moldova",
-    "subtitle": "Buy or sell a car on",
-    "subtitleBold": "Kupito!",
+    "titleByCategory": {
+      "car": "Cars in Moldova",
+      "truck": "Commercial vehicles in Moldova",
+      "moto": "Motorcycles in Moldova",
+      "tire": "Tires and wheels in Moldova"
+    },
+    "heroCategory": {
+      "car": "a car",
+      "truck": "a commercial vehicle",
+      "moto": "a motorcycle",
+      "tire": "tires and wheels"
+    },
+    "subtitle": "Buy or sell {category} on",
+    "subtitleBold": "Kupito.club!",
     "subtitle2": "Post an ad",
     "subtitle3": "for free.",
+    "descriptionIntro": "This platform is designed for buying and selling cars in Moldova without unnecessary friction.",
+    "descriptionDetails": "Kupito.club helps sellers publish listings quickly and helps buyers find the right car by brand, price, year, and other important criteria. We bring private listings and dealer offers together in a convenient search experience, making the path from interest to a call as short as possible.",
+    "descriptionExpand": "Expand",
+    "descriptionCollapse": "Collapse",
     "popularSearches": "Popular Searches"
   },
   "listingsPage": {
@@ -2051,126 +2073,131 @@
   },
   "partners": {
     "title": "For partners",
-    "intro": "We invite companies to partner with Kupito. Below is a short summary of the program: how to join, what you get and how to leave.",
+    "intro": "Kupito works with car dealers and other automotive businesses that regularly publish up-to-date listings and need an additional sales channel. The partner program helps automate listing publication, improve listing visibility, and present your company on the platform in a more structured way.",
     "howToBecome": {
-      "title": "How to become a partner",
+      "title": "Joining the partner program",
       "items": [
-        "Write to us via the Contacts page and briefly describe your business.",
-        "Only accounts registered on the platform as legal entities can take part.",
-        "We will reply and, if needed, help set up automatic listing sync with your website or other platforms."
+        "Contact us through the Contacts page and briefly describe your company, operating model, and approximate listing volume.",
+        "Participation is available to accounts registered on the platform as legal entities.",
+        "After your request, we will clarify the cooperation details and, if needed, help configure automatic listing synchronization with your website or other platforms."
       ]
     },
     "benefits": {
-      "title": "What partnership gives you",
+      "title": "Opportunities for partners",
       "items": [
-        "Automatic listing synchronization with your website or other platforms, with no manual duplication.",
-        "Free promotion bonuses: one credit for every 20 of your new listings. Status and balance are shown in your profile.",
-        "On My Listings you spend the balance yourself by turning on free promotion for any listing you choose.",
-        "A partner badge on your listing pages and on your public listings board.",
-        "Your logo and link in the Kupito footer."
+        "Automatic listing synchronization with your website or other platforms, with no manual data duplication.",
+        "Free promotion bonuses for regular publication: every 20 new listings adds 1 free promotion to the profile balance, which can be used to promote selected listings.",
+        "A partner label on listing pages and on the seller's public listing board.",
+        "Placement of your company logo and link in the Kupito footer.",
+        "A more convenient channel for keeping an up-to-date vehicle catalog on the platform."
       ]
     },
     "whoCan": {
-      "title": "Who can become a partner",
+      "title": "Who the program is for",
       "items": [
-        "Only users registered on the platform as a legal entity (when you sign up, choose registration on behalf of a company, not as an individual).",
-        "Private sellers do not take part in the program."
+        "Car dealers, showrooms, importers, and other companies that regularly publish vehicle listings.",
+        "Companies must use a legal entity account; private sellers can continue using the standard platform terms.",
+        "At this stage, participation in the partner program is provided free of charge."
       ]
     },
     "howToLeave": {
-      "title": "How to end the partnership",
+      "title": "Changes to cooperation terms",
       "items": [
-        "Contact us via the Contacts page and say you want to end the partnership.",
-        "We remove partner status, take you out of the footer and clear the accumulated free promotions.",
-        "Full conditions on status and bonuses are in the Terms of Service."
+        "If the cooperation format needs to be changed or completed, contact us through the Contacts page.",
+        "We will agree on the next steps and update the partner status, footer placement, and available promotion bonuses carefully.",
+        "Detailed conditions for partner status and bonuses are governed by the Terms of Service and by individual agreements when they are arranged separately."
       ]
     },
     "obligations": {
-      "title": "Expectations and recommendations",
+      "title": "Mutual expectations",
       "items": [
-        "Partnership does not add financial or legal duties beyond what is described in the service and the Terms.",
-        "We appreciate mentions of Kupito on your websites and social media, and referrals from you when a customer wants to sell a car but you are not buying it."
+        "Partnership is based on accurate listing information, timely data updates, and respectful communication with platform users.",
+        "We welcome mentions of Kupito on partner websites and social media, as well as referrals to customers who may benefit from listing a vehicle on the platform."
       ]
     },
     "contactCta": "Contact us"
   },
   "investors": {
     "title": "For investors",
-    "intro": "Kupito.club is a platform for car sale listings, focused on simplicity, automation, and scale.",
+    "intro": "Kupito.club is building a technology platform for automotive listings, focused on a convenient user experience, listing automation, and the ability to scale into new markets.",
     "about": {
       "title": "About the project",
       "paragraphs": [
-        "The project is built on the idea that the maturity of a car-classifieds market tracks the level of a country’s economy and IT market. Mature countries tend to have convenient, product-led platforms, while in less developed markets the experience is often dated and clunky.",
-        "Kupito.club addresses this by building a universal core that lets a modern listing platform be launched in any country in a matter of days."
+        "In many markets, the experience of searching for and publishing vehicle listings remains fragmented: users lack a convenient interface, clear information, and modern tools for working with listings.",
+        "Kupito.club is designed as a reusable product and technical foundation that can be adapted to local markets, languages, listing rules, partner integrations, and demand patterns."
       ]
     },
     "done": {
       "title": "What we have so far",
       "items": [
-        "A live platform in Moldova as a test market",
-        "A listing system with a modern user interface",
-        "Initial partners, including car dealers",
-        "Automatic listing synchronization",
-        "Early traffic and first users"
+        "A live platform in Moldova as the first market for product validation",
+        "A modern interface for searching, viewing, and managing listings",
+        "Initial partners from the automotive market",
+        "Automatic listing synchronization with external sources",
+        "Early users, traffic, and practical product feedback"
       ]
     },
     "product": {
       "title": "Product",
-      "lead": "Kupito.club offers:",
+      "lead": "The platform brings together the main journeys for buyers, sellers, and partners:",
       "items": [
         "Free listing publication",
         "Easy search and comparison of listings",
         "Saving listings to favorites",
         "Saving search filters",
         "The option to get short AI-generated informational summaries for eligible vehicle listings (signed-in users; subject to availability and limits)",
-        "A seller listing board with all of one seller’s listings on a single page",
-        "Automatic synchronization with external sites",
+        "A public seller board with all listings from one seller on a single page",
+        "Automatic listing synchronization for partners",
         "A mobile-first interface, PWA installation, and an Android app on Google Play (TWA)"
       ]
     },
     "businessModel": {
       "title": "Business model",
-      "lead": "Main revenue sources:",
+      "lead": "Potential monetization areas:",
       "items": [
         "Paid listing promotion",
-        "On-platform advertising",
-        "Premium subscriptions with more features",
-        "B2B tools for dealers"
+        "Advertising placements and partner integrations",
+        "Premium features for active users",
+        "B2B tools for dealers and professional sellers"
       ]
     },
     "vision": {
       "title": "Vision",
       "paragraphs": [
-        "Build universal infrastructure for car listings that can be rolled out and adapted to any market quickly."
+        "Our goal is to build modern infrastructure for automotive listings that can be developed consistently in a local market and then adapted to other countries with similar needs."
       ]
     },
     "strategy": {
       "title": "Growth strategy",
       "items": [
-        "Validating the model in Moldova",
-        "Scaling marketing",
-        "Growing the partner network of dealers",
-        "Expanding to new markets"
+        "Strengthening the product and user journeys in Moldova",
+        "Gradually scaling marketing and organic acquisition",
+        "Growing the partner network of dealers and professional sellers",
+        "Preparing a repeatable launch model for new markets"
       ]
     },
     "scaling": {
       "title": "Scaling",
-      "lead": "After the model is validated, we plan launches in other countries with similar market conditions:",
+      "lead": "After the product and commercial model are validated, launches may be considered in markets with similar demand patterns and similar issues in the automotive listings segment:",
       "items": ["Eastern Europe", "Balkans", "Latin America", "Africa", "Asia"]
     },
     "whyNow": {
       "title": "Why now",
       "items": [
-        "The car-listings market remains fragmented",
-        "Many countries still lack a modern product",
-        "We can move fast on niche leadership through launch speed and product quality"
+        "In many countries, the automotive listings market remains insufficiently convenient and technology-driven",
+        "Users increasingly expect a mobile interface, fast search, and higher-quality vehicle information",
+        "Car dealers and professional sellers need tools for automating publication and keeping catalogs up to date"
       ]
     },
     "offer": {
       "title": "Investment offer",
-      "lead": "We are raising funds to:",
-      "items": ["Scale marketing", "Accelerate product development", "Enter new markets"],
-      "footer": "We are open to discuss partnership terms and can share more details on request."
+      "lead": "We are open to investment and strategic partnerships to:",
+      "items": [
+        "Accelerate product development and analytical tools",
+        "Expand marketing and the partner network",
+        "Prepare the platform for launches in new markets"
+      ],
+      "footer": "We are ready to discuss cooperation format, current metrics, and the next stages of project development on request."
     },
     "contactCta": "Contact us"
   },
@@ -2277,6 +2304,14 @@
       "tiresHomePageDescriptionWithBrand": "{brand} tires on Kupito! Selection and prices for {brand} tires in Moldova.",
       "tiresHomePageDescriptionWithBrandModel": "{brand} {model} tires on Kupito! Selection and prices for {brand} {model} in Moldova.",
       "organizationDescription": "Buy or sell a car on Kupito! Post your ad for free. Platform for buying and selling cars online in Moldova. Car listings Moldova.",
+      "homeTitleTemplate": "Kupito.club: buy, sell or exchange {category} in Moldova",
+      "homeBrandTitleTemplate": "Buy {value} in Moldova on Kupito.club",
+      "categoryTitle": {
+        "car": "cars",
+        "truck": "commercial vehicles",
+        "moto": "motorcycles",
+        "tire": "tires and wheels"
+      },
       "keywords": [
         "cars Moldova",
         "buy cars online",
@@ -2325,16 +2360,16 @@
     },
     "partners": {
       "title": "For partners - Kupito",
-      "description": "Learn about the Kupito platform partner program: automatic listing sync, free promotion balance, a public partner label and footer exposure. For legal entities.",
+      "description": "Kupito partner program for automotive businesses: listing synchronization, additional visibility, and structured company presence on the platform.",
       "ogTitle": "For partners - Kupito",
-      "ogDescription": "Information for partners: how to apply, what you get, who is eligible, and how to end cooperation.",
+      "ogDescription": "Kupito partner program for car dealers and automotive businesses: participation requirements, opportunities, and cooperation format.",
       "ogAlt": "Kupito - For partners"
     },
     "investors": {
       "title": "For investors - Kupito",
-      "description": "Kupito.club: car-listings platform, core for fast rollouts, business model, strategy. This page is not intended to be indexed by search engines.",
+      "description": "Kupito.club: technology platform for automotive listings, product development, business model, and scaling strategy.",
       "ogTitle": "For investors - Kupito",
-      "ogDescription": "Overview of the Kupito product, business model, and strategy. Contact us to discuss partnership.",
+      "ogDescription": "Investor overview of Kupito: product, current progress, business model, growth strategy, and cooperation opportunities.",
       "ogAlt": "Kupito - For investors"
     },
     "contacts": {
@@ -2384,6 +2419,12 @@
       "notFoundTitle": "Listing not found",
       "notFoundDescription": "The listing does not exist or is not available.",
       "defaultDescription": "Buy or sell a car on Kupito! Post a listing for free.",
+      "titlePrefix": "Buy",
+      "powerUnit": "hp",
+      "inCity": "in",
+      "yearFormat": "{year}",
+      "pricePrefix": "priced at",
+      "siteSuffix": "on Kupito.club",
       "ogAltVehicle": "{brand} {model} {year} — for sale in {city}",
       "ogAltTire": "{title} — for sale in {city}",
       "keywords": {

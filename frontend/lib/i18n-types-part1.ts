@@ -2,6 +2,11 @@ export interface TranslationsPart1 {
   footer: {
     copyright: string;
     tagline: string;
+    navTitle: string;
+    infoTitle: string;
+    legalTitle: string;
+    about: string;
+    partnersTitle: string;
     faq: string;
     partners: string;
     investors: string;
@@ -9,14 +14,19 @@ export interface TranslationsPart1 {
     privacy: string;
     cookieSettings: string;
     contacts: string;
+    partnerImportSalesDescription: string;
+    partnerInfocarDescription: string;
   };
   header: {
     addListing: string;
     addListingShort: string;
     myListings: string;
     myListingsShort: string;
+    listings: string;
     favorites: string;
+    forBusiness: string;
     compare: string;
+    profile: string;
     admin: string;
     logout: string;
     logoutShort: string;
@@ -26,15 +36,23 @@ export interface TranslationsPart1 {
     loginShort: string;
     register: string;
     loginAndRegister: string;
+    brandName: string;
+    toggleMenu: string;
   };
   home: {
     title: string;
     titleWithBrand: string;
     titleWithBrandModel: string;
+    titleByCategory: { car: string; truck: string; moto: string; tire: string };
+    heroCategory: { car: string; truck: string; moto: string; tire: string };
     subtitle: string;
     subtitleBold: string;
     subtitle2: string;
     subtitle3: string;
+    descriptionIntro: string;
+    descriptionDetails: string;
+    descriptionExpand: string;
+    descriptionCollapse: string;
   };
   listingsPage: {
     title: string;

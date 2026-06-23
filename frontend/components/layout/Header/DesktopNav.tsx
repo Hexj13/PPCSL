@@ -28,11 +28,10 @@ export function DesktopNavMenuArea({
   showNav,
   comparisonCount,
   navLinkClasses,
-  onLogout,
   t,
 }: Pick<
   DesktopNavProps,
-  'user' | 'showSkeleton' | 'showNav' | 'comparisonCount' | 'navLinkClasses' | 'onLogout' | 't'
+  'user' | 'showSkeleton' | 'showNav' | 'comparisonCount' | 'navLinkClasses' | 't'
 >) {
   if (!showNav) return null;
 
@@ -45,10 +44,9 @@ export function DesktopNavMenuArea({
     <div className="hidden lg:flex gap-2 xl:gap-4 items-center min-w-0 shrink-0">
       {showUserLinks && user && (
         <UserDesktopNavLinks
-          user={user}
           comparisonCount={comparisonCount}
           navLinkClasses={navLinkClasses}
-          onLogout={onLogout}
+          userType={user.type}
           t={t}
         />
       )}
@@ -65,6 +63,7 @@ export function DesktopNavActions({
   navLinkClasses,
   isAuthPage,
   isErrorPage,
+  onLogout,
   onSetReturnUrl,
   t,
 }: Pick<
@@ -76,6 +75,7 @@ export function DesktopNavActions({
   | 'navLinkClasses'
   | 'isAuthPage'
   | 'isErrorPage'
+  | 'onLogout'
   | 'onSetReturnUrl'
   | 't'
 >) {
@@ -90,7 +90,13 @@ export function DesktopNavActions({
       {showSkeleton ? (
         <NavSkeleton variant={actionsSkeletonVariant} />
       ) : user ? (
-        <UserDesktopNavActions isAuthPage={isAuthPage} isErrorPage={isErrorPage} />
+        <UserDesktopNavActions
+          user={user}
+          isAuthPage={isAuthPage}
+          isErrorPage={isErrorPage}
+          onLogout={onLogout}
+          t={t}
+        />
       ) : (
         <GuestDesktopNav
           comparisonCount={comparisonCount}

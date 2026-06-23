@@ -507,6 +507,9 @@ export interface TranslationsPart2 {
       tiresHomePageDescriptionWithBrand: string;
       tiresHomePageDescriptionWithBrandModel: string;
       organizationDescription: string;
+      homeTitleTemplate: string;
+      homeBrandTitleTemplate: string;
+      categoryTitle: { car: string; truck: string; moto: string; tire: string };
       keywords: string[];
     };
     faq: {
@@ -557,6 +560,12 @@ export interface TranslationsPart2 {
       notFoundTitle: string;
       notFoundDescription: string;
       defaultDescription: string;
+      titlePrefix: string;
+      powerUnit: string;
+      inCity: string;
+      yearFormat: string;
+      pricePrefix: string;
+      siteSuffix: string;
       ogAltVehicle: string;
       ogAltTire: string;
       keywords: { cars: string; buyCar: string; carsForSale: string; moldova: string };

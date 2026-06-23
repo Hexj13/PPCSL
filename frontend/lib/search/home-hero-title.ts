@@ -1,7 +1,7 @@
 import { fetchSearchMetadata } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
 import type { Translations } from '@/lib/i18n';
-import { createSlug, slugToName } from '@/lib/utils';
+import { createSlug, slugToName, type HomePageCategory } from '@/lib/utils';
 
 import { isIndexableVehicleTypeParam } from './home-page-indexable-params';
 
@@ -11,33 +11,39 @@ function resolveModelDisplayName(brandKey: string, modelSlug: string): string {
   return models.find((m) => createSlug(m) === slug.toLowerCase()) || slugToName(slug);
 }
 
+function getHomePageCategory(
+  isTireCategory: boolean,
+  vehicleType: 'car' | 'truck' | 'moto',
+): HomePageCategory {
+  if (isTireCategory) return 'tire';
+  return vehicleType;
+}
+
 export async function getHomeHeroTitle(
   params: Record<string, string | string[] | undefined>,
   t: Translations,
 ): Promise<string> {
   const category = typeof params.category === 'string' ? params.category : null;
-  if (category === 'tire') {
-    return t.home.title;
-  }
+  const isTireCategory = category === 'tire';
+  const vehicleType = (
+    isIndexableVehicleTypeParam(params.vehicleType) ? params.vehicleType : 'car'
+  ) as 'car' | 'truck' | 'moto';
+  const homeCategory = getHomePageCategory(isTireCategory, vehicleType);
 
   const brand = typeof params.brand === 'string' ? params.brand : null;
   const model = typeof params.model === 'string' ? params.model : null;
 
   if (!brand?.trim() || brand.includes(',')) {
-    return t.home.title;
+    return t.home.titleByCategory[homeCategory];
   }
   if (model?.includes(',')) {
-    return t.home.title;
+    return t.home.titleByCategory[homeCategory];
   }
-
-  const vehicleType = (
-    isIndexableVehicleTypeParam(params.vehicleType) ? params.vehicleType : 'car'
-  ) as 'car' | 'truck' | 'moto';
 
   const metadataFromApi = await fetchSearchMetadata({
     brand,
     model: model?.trim() ? model : undefined,
-    vehicleType,
+    vehicleType: isTireCategory ? 'car' : vehicleType,
   });
 
   const displayBrand =

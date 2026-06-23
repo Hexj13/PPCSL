@@ -1,4 +1,7 @@
 import {
+  buildHomeBrandTitle,
+  buildHomeCategoryTitle,
+  buildListingSeoTitle,
   formatAdminTableDateTime,
   formatBodyType,
   formatDate,
@@ -9,6 +12,7 @@ import {
   formatMileage,
   formatPrice,
   formatTransmission,
+  getCityNamePlain,
   getListingDisplayTitle,
   getTireModelDisplayLabel,
   horsepowerToKw,
@@ -48,6 +52,27 @@ const mockT = (key: string): string => {
     'vehicleOptions.fuel.MHEV': 'Hybrid (MHEV)',
     'vehicleOptions.fuel.PHEV': 'Hybrid (PHEV)',
     'vehicleOptions.fuel.LPG': 'LPG',
+  };
+  return translations[key] || key;
+};
+
+const seoMockT = (key: string): string => {
+  const translations: Record<string, string> = {
+    'metadata.listing.titlePrefix': 'Buy',
+    'metadata.listing.powerUnit': 'hp',
+    'metadata.listing.inCity': 'in',
+    'metadata.listing.yearFormat': '{year}',
+    'metadata.listing.pricePrefix': 'priced at',
+    'metadata.listing.siteSuffix': 'on Kupito.club',
+    'metadata.site.homeTitleTemplate': 'Kupito.club: buy, sell or exchange {category} in Moldova',
+    'metadata.site.homeBrandTitleTemplate': 'Buy {value} in Moldova on Kupito.club',
+    'metadata.site.categoryTitle.car': 'cars',
+    'metadata.site.categoryTitle.truck': 'commercial vehicles',
+    'metadata.site.categoryTitle.moto': 'motorcycles',
+    'metadata.site.categoryTitle.tire': 'tires and wheels',
+    'vehicleOptions.transmission.Automatic': 'Automatic',
+    'vehicleOptions.fuel.Diesel': 'Diesel',
+    'vehicleOptions.bodyType.Minivan': 'Minivan',
   };
   return translations[key] || key;
 };
@@ -377,6 +402,163 @@ describe('utils', () => {
     it('should round the result', () => {
       expect(kwToHorsepower(1)).toBe(1);
       expect(kwToHorsepower(7)).toBe(10);
+    });
+  });
+
+  describe('getCityNamePlain', () => {
+    const cities = [{ name: 'Chișinău', nameEn: 'Chisinau', nameRu: 'Кишинёв' }];
+
+    it('should return Russian name without parentheses for ru locale', () => {
+      expect(getCityNamePlain('Chisinau', 'ru', cities)).toBe('Кишинёв');
+    });
+
+    it('should return Romanian name for ro locale', () => {
+      expect(getCityNamePlain('Chisinau', 'ro', cities)).toBe('Chișinău');
+    });
+
+    it('should return English name for en locale', () => {
+      expect(getCityNamePlain('Chisinau', 'en', cities)).toBe('Chisinau');
+    });
+  });
+
+  describe('buildHomeCategoryTitle', () => {
+    it('should build category title from template', () => {
+      expect(buildHomeCategoryTitle(seoMockT, 'car')).toBe(
+        'Kupito.club: buy, sell or exchange cars in Moldova',
+      );
+    });
+  });
+
+  describe('buildHomeBrandTitle', () => {
+    it('should build brand title from template', () => {
+      expect(buildHomeBrandTitle(seoMockT, 'BMW')).toBe('Buy BMW in Moldova on Kupito.club');
+    });
+  });
+
+  describe('buildListingSeoTitle', () => {
+    it('should build full vehicle SEO title with all fields', () => {
+      const listing = {
+        id: '1',
+        title: 'Hyundai Grand Starex',
+        city: 'Chisinau',
+        price: 2000,
+        currency: 'EUR',
+        horsepower: 145,
+        vehicle: {
+          id: 'v1',
+          brand_id: 'b1',
+          model_id: 'm1',
+          year: 2011,
+          engine_displ_l: 2.5,
+          fuel: 'Diesel',
+          transmission: 'Automatic',
+          drive_type: 'FWD',
+          body_type: 'Minivan',
+          brand: { id: 'b1', name: 'Hyundai' },
+          model: { id: 'm1', name: 'Grand Starex I', vehicle_type: 'car' },
+        },
+      } as Parameters<typeof buildListingSeoTitle>[0];
+      const cities = [{ name: 'Chișinău', nameEn: 'Chisinau', nameRu: 'Кишинёв' }];
+      const title = buildListingSeoTitle(listing, seoMockT, 'en', cities);
+      expect(title).toContain('Buy Hyundai Grand Starex I 2.5 (145 hp) diesel automatic');
+      expect(title).toContain('in Chisinau');
+      expect(title).toContain('minivan 2011 priced at 2 000 EUR');
+      expect(title).toContain('on Kupito.club');
+    });
+
+    it('should normalize engine volume from padded decimal string', () => {
+      const listing = {
+        id: '1',
+        title: 'Toyota RAV4',
+        city: 'Chisinau',
+        price: 27290,
+        currency: 'EUR',
+        horsepower: 218,
+        vehicle: {
+          id: 'v1',
+          brand_id: 'b1',
+          model_id: 'm1',
+          year: 2021,
+          engine_displ_l: '2.500' as unknown as number,
+          fuel: 'Hybrid',
+          transmission: 'Automatic',
+          drive_type: 'AWD',
+          body_type: 'SUV',
+          brand: { id: 'b1', name: 'Toyota' },
+          model: { id: 'm1', name: 'RAV4', vehicle_type: 'car' },
+        },
+      } as Parameters<typeof buildListingSeoTitle>[0];
+      const title = buildListingSeoTitle(listing, seoMockT, 'en');
+      expect(title).toContain('Toyota RAV4 2.5 (218 hp)');
+      expect(title).not.toContain('2.500');
+    });
+
+    it('should keep significant decimals for moto engine volume', () => {
+      const listing = {
+        id: '1',
+        title: 'Honda CBR',
+        city: 'Chisinau',
+        price: 5000,
+        currency: 'EUR',
+        horsepower: 90,
+        vehicle: {
+          id: 'v1',
+          brand_id: 'b1',
+          model_id: 'm1',
+          year: 2019,
+          engine_displ_l: '0.876' as unknown as number,
+          fuel: 'Petrol',
+          transmission: 'Manual',
+          brand: { id: 'b1', name: 'Honda' },
+          model: { id: 'm1', name: 'CBR', vehicle_type: 'moto' },
+        },
+      } as Parameters<typeof buildListingSeoTitle>[0];
+      const title = buildListingSeoTitle(listing, seoMockT, 'en');
+      expect(title).toContain('Honda CBR 0.876 (90 hp)');
+    });
+
+    it('should drop trailing zeros for whole engine volume', () => {
+      const listing = {
+        id: '1',
+        title: 'BMW 320',
+        city: 'Chisinau',
+        vehicle: {
+          id: 'v1',
+          brand_id: 'b1',
+          model_id: 'm1',
+          year: 2020,
+          engine_displ_l: '2.000' as unknown as number,
+          brand: { id: 'b1', name: 'BMW' },
+          model: { id: 'm1', name: '320', vehicle_type: 'car' },
+        },
+      } as Parameters<typeof buildListingSeoTitle>[0];
+      const title = buildListingSeoTitle(listing, seoMockT, 'en');
+      expect(title).toContain('BMW 320 2 ');
+      expect(title).not.toContain('2.000');
+      expect(title).not.toContain('2.0 ');
+    });
+
+    it('should omit missing optional segments', () => {
+      const listing = {
+        id: '1',
+        title: 'BMW 320',
+        city: 'Chisinau',
+        vehicle: {
+          id: 'v1',
+          brand_id: 'b1',
+          model_id: 'm1',
+          year: 2020,
+          drive_type: 'FWD',
+          body_type: 'Sedan',
+          brand: { id: 'b1', name: 'BMW' },
+          model: { id: 'm1', name: '320', vehicle_type: 'car' },
+        },
+      } as Parameters<typeof buildListingSeoTitle>[0];
+      const title = buildListingSeoTitle(listing, seoMockT, 'en');
+      expect(title).not.toContain('hp');
+      expect(title).not.toContain('priced at');
+      expect(title).toContain('Buy BMW 320');
+      expect(title).toContain('on Kupito.club');
     });
   });
 });

@@ -960,17 +960,18 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 - **Twitter Cards** (`summary_large_image`) with title, description, and image
 - **Canonical URLs** for all pages
 - **Dynamic meta tags for listings** (`/listings/[id]`):
-  - Title generated from vehicle info (brand + model + year)
+  - Browser title generated from listing details: brand, model, engine volume, horsepower, fuel, transmission, city, body type, year, price, and site suffix when available
   - Description from listing content (first 160 characters, HTML stripped)
   - Image from listing's main photo or fallback to default OG image
   - URL: `https://your-domain.com/listings/{id}`
 - **Static meta tags for key pages**:
-  - Homepage (`/`): Static OG tags with platform description
+  - Homepage (`/`): Category-aware SEO titles and dynamic search titles for brand, model, body type, and tire filters
   - Auth pages (`/sign` with optional `?tab=register` for the registration tab, `/reset-password`): Page-specific descriptions; legacy `/login` and `/register` URLs redirect to `/sign`
   - Legal and info pages (`/terms`, `/privacy`, `/faq`, `/contacts`): Content-specific descriptions
 - **Meta description length**: All descriptions are optimized to 110-160 characters (Open Graph recommendation)
 - **H1 tags**: All pages have proper `<h1>` tags:
   - Listing pages: Dynamic H1 from vehicle info (brand + model + year) with fallback
+  - Homepage: Dynamic H1 for selected brand/model, with category-specific fallback for cars, trucks, moto, and tires
   - Other pages: Page-specific H1 tags
 
 #### Structured Data (Schema.org)

@@ -42,7 +42,7 @@ export default function CookieSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-3xl mx-auto pt-10 md:pt-14">
+      <div className="max-w-3xl mx-auto pt-4 md:pt-6">
         <div className="surface p-8 text-center">
           <p className="text-text-secondary">{t('common.loading')}</p>
         </div>
@@ -51,7 +51,7 @@ export default function CookieSettingsPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto pt-10 md:pt-14">
+    <div className="max-w-3xl mx-auto pt-4 md:pt-6">
       <div className="mb-8">
         <h1 className="text-4xl md:text-5xl font-extrabold text-primary-900 mb-4">
           {t('cookieSettings.title')}

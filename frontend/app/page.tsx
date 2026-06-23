@@ -39,7 +39,15 @@ import {
   hreflangLanguagesFromRoCanonical,
   isLanguageSwitcherEnabled,
 } from '@/lib/url-locale';
-import { createSlug, getCountry, slugMatches, slugToName } from '@/lib/utils';
+import {
+  buildHomeBrandTitle,
+  buildHomeCategoryTitle,
+  createSlug,
+  getCountry,
+  slugMatches,
+  slugToName,
+  type HomePageCategory,
+} from '@/lib/utils';
 
 export const revalidate = 30;
 
@@ -94,10 +102,9 @@ function getBodyTypesTitle(
   return withVehicleTypeSuffix(bodyTypeTitle, vehicleTypeLabel);
 }
 
-async function resolveTitleWithBrandsApi(
+async function resolveTitleValueWithBrandsApi(
   brandSlugs: string[],
   modelSlugs: string[],
-  vehicleTypeLabel: string,
   defaultTitle: string,
 ): Promise<string> {
   const allBrands = await fetchBrands();
@@ -161,19 +168,18 @@ async function resolveTitleWithBrandsApi(
       });
 
       if (parts.length > 0) {
-        return withVehicleTypeSuffix(parts.join(', '), vehicleTypeLabel);
+        return parts.join(', ');
       }
     }
   }
 
   const brandsTitle = foundBrands.length === 1 ? foundBrands[0] : foundBrands.join(', ');
-  return withVehicleTypeSuffix(brandsTitle, vehicleTypeLabel);
+  return brandsTitle;
 }
 
-function resolveTitleWithPopularBrands(
+function resolveTitleValueWithPopularBrands(
   brandSlugs: string[],
   modelSlugs: string[],
-  vehicleTypeLabel: string,
   defaultTitle: string,
 ): string {
   const popularBrands = brandSlugs
@@ -198,19 +204,23 @@ function resolveTitleWithPopularBrands(
     });
 
     if (foundModels.length > 0) {
-      return withVehicleTypeSuffix(foundModels.join(', '), vehicleTypeLabel);
+      return foundModels.join(', ');
     }
 
     if (popularBrands.length === 1 && modelSlugs.length > 0) {
-      const slugBasedTitle = `${popularBrands[0]} ${modelSlugs.map((s) => slugToName(s)).join(', ')}`;
-      return withVehicleTypeSuffix(slugBasedTitle, vehicleTypeLabel);
+      return `${popularBrands[0]} ${modelSlugs.map((s) => slugToName(s)).join(', ')}`;
     }
   }
 
   const popularBrandsTitle =
     popularBrands.length === 1 ? popularBrands[0] : popularBrands.join(', ');
-  return withVehicleTypeSuffix(popularBrandsTitle, vehicleTypeLabel);
+  return popularBrandsTitle;
 }
+
+type ResolvedHomeTitle = {
+  title: string;
+  value: string | null;
+};
 
 async function getTitleFromParams(
   brandParam: string | string[] | undefined,
@@ -219,7 +229,7 @@ async function getTitleFromParams(
   vehicleTypeParam: string | string[] | undefined,
   defaultTitle: string,
   translations: Translations,
-): Promise<string> {
+): Promise<ResolvedHomeTitle> {
   const brand = typeof brandParam === 'string' ? brandParam : undefined;
   const model = typeof modelParam === 'string' ? modelParam : undefined;
   const bodyTypes = typeof bodyTypesParam === 'string' ? bodyTypesParam : undefined;
@@ -233,12 +243,20 @@ async function getTitleFromParams(
     getTranslationValue(translations, key) === key ? '' : getTranslationValue(translations, key);
 
   if (bodyTypes && !brand && !model) {
-    const bodyTitle = getBodyTypesTitle(bodyTypes, vehicleTypeLabel, translations);
-    if (bodyTitle) return bodyTitle;
+    const bodyTitleValue = getBodyTypesTitle(bodyTypes, '', translations);
+    if (bodyTitleValue) {
+      return {
+        title: withVehicleTypeSuffix(bodyTitleValue, vehicleTypeLabel),
+        value: bodyTitleValue,
+      };
+    }
   }
 
   if (!brand && !model) {
-    return vehicleTypeLabel ? vehicleTypeLabel : defaultTitle;
+    return {
+      title: vehicleTypeLabel ? vehicleTypeLabel : defaultTitle,
+      value: null,
+    };
   }
 
   const brandSlugs = brand
@@ -255,10 +273,47 @@ async function getTitleFromParams(
     : [];
 
   try {
-    return await resolveTitleWithBrandsApi(brandSlugs, modelSlugs, vehicleTypeLabel, defaultTitle);
+    const value = await resolveTitleValueWithBrandsApi(brandSlugs, modelSlugs, '');
+    if (value) {
+      return {
+        title: withVehicleTypeSuffix(value, vehicleTypeLabel),
+        value,
+      };
+    }
   } catch {
-    return resolveTitleWithPopularBrands(brandSlugs, modelSlugs, vehicleTypeLabel, defaultTitle);
+    const value = resolveTitleValueWithPopularBrands(brandSlugs, modelSlugs, '');
+    if (value) {
+      return {
+        title: withVehicleTypeSuffix(value, vehicleTypeLabel),
+        value,
+      };
+    }
   }
+
+  return {
+    title: defaultTitle,
+    value: null,
+  };
+}
+
+function buildFullHomeSeoTitle(
+  translations: Translations,
+  category: HomePageCategory,
+  value: string | null,
+): string {
+  const tFn = (key: string) => getTranslationValue(translations, key);
+  if (value) {
+    return buildHomeBrandTitle(tFn, value);
+  }
+  return buildHomeCategoryTitle(tFn, category);
+}
+
+function getHomePageCategory(
+  isTireCategory: boolean,
+  vehicleType: 'car' | 'truck' | 'moto',
+): HomePageCategory {
+  if (isTireCategory) return 'tire';
+  return vehicleType;
 }
 
 export async function generateMetadata({
@@ -289,9 +344,9 @@ export async function generateMetadata({
       locale,
     });
     const title = tireMeta.title ?? tiresBaseTitle;
-    const tireTitleSegment =
-      title === tiresBaseTitle ? tiresBaseTitle : `${title} | ${tiresBaseTitle}`;
-    const fullTitle = `${tireTitleSegment} | ${siteConfig.name}`;
+    const homeCategory: HomePageCategory = 'tire';
+    const titleValue = tireMeta.title ?? null;
+    const fullTitle = buildFullHomeSeoTitle(t, homeCategory, titleValue);
     const description = tireMeta.description ?? t.metadata.site.tiresHomePageDescription;
     const { urlSuffix, canonicalUrl, canonicalParams } = buildHomeMetaUrls(
       siteUrl,
@@ -343,18 +398,20 @@ export async function generateMetadata({
     model: typeof modelParam === 'string' ? modelParam : undefined,
     vehicleType,
   });
-  const title =
-    metadataFromApi.title ??
-    (await getTitleFromParams(
-      brandParam,
-      modelParam,
-      bodyTypesParam,
-      vehicleTypeParam,
-      baseTitle,
-      t,
-    ));
-  const vehicleTitleSegment = title === baseTitle ? baseTitle : `${title} | ${baseTitle}`;
-  const fullTitle = `${vehicleTitleSegment} | ${siteConfig.name}`;
+  const resolvedTitle = metadataFromApi.title
+    ? { title: metadataFromApi.title, value: metadataFromApi.title }
+    : await getTitleFromParams(
+        brandParam,
+        modelParam,
+        bodyTypesParam,
+        vehicleTypeParam,
+        baseTitle,
+        t,
+      );
+  const title = resolvedTitle.title;
+  const homeCategory = getHomePageCategory(false, vehicleType);
+  const titleValue = resolvedTitle.value;
+  const fullTitle = buildFullHomeSeoTitle(t, homeCategory, titleValue);
 
   const description = getHomeMetaDescription(
     metadataFromApi,
@@ -439,6 +496,10 @@ async function HomeContent({
   const vehicleTypeForBrands = (
     isIndexableVehicleTypeParam(vehicleTypeParam) ? vehicleTypeParam : 'car'
   ) as 'car' | 'truck' | 'moto';
+  const homeCategory = getHomePageCategory(category === 'tire', vehicleTypeForBrands);
+  const heroCategoryWord = t.home.heroCategory[homeCategory];
+  const subtitleWithCategory = t.home.subtitle.replaceAll('{category}', heroCategoryWord);
+  const subtitle2WithCategory = t.home.subtitle2.replaceAll('{category}', heroCategoryWord);
   const initialBrands = await fetchBrands(vehicleTypeForBrands);
 
   return (
@@ -449,10 +510,14 @@ async function HomeContent({
       <DynamicPageTitleWrapper />
       <HomeHero
         title={heroTitle}
-        subtitle={t.home.subtitle}
+        subtitle={subtitleWithCategory}
         subtitleBold={t.home.subtitleBold}
-        subtitle2={t.home.subtitle2}
+        subtitle2={subtitle2WithCategory}
         subtitle3={t.home.subtitle3}
+        descriptionIntro={t.home.descriptionIntro}
+        descriptionDetails={t.home.descriptionDetails}
+        expandLabel={t.home.descriptionExpand}
+        collapseLabel={t.home.descriptionCollapse}
       />
       <SearchFiltersWrapper initialBrands={initialBrands} />
       <ListingGrid initialData={initialData} />

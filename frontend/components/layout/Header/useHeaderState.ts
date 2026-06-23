@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useState, useCallback, startTransition, useEffect } from 'react';
 
+import { DESKTOP_HEADER_NAV_LINK_CLASSES } from '@/components/layout/Header/desktopNavLinkClasses';
 import {
   isAuthRequiredPathname,
   isAuthRoutePathname,
@@ -54,8 +55,7 @@ export function useHeaderState() {
     }
   }, []);
 
-  const navLinkClasses =
-    'text-primary-900 font-medium text-sm hover-only:hover:text-primary-700 active:text-primary-700 transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 rounded-sm select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base';
+  const navLinkClasses = DESKTOP_HEADER_NAV_LINK_CLASSES;
 
   const mobileNavLinkClasses =
     'text-primary-900 text-[14px] font-medium hover-only:hover:text-primary-700 active:text-primary-700 transition-colors duration-200 py-2 pl-4 flex items-center gap-2 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base';

@@ -86,7 +86,7 @@ function highlightKeywords(text: string, keywords: string[]): ReactNode {
 }
 
 export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGrayProps) {
-  const { canInstall, isInstalled, isAndroid, isIOS, isMobile, isReady, install } = usePWAInstall();
+  const { isInstalled, isAndroid, isIOS, isMobile, isReady, install } = usePWAInstall();
   const { t } = useTranslation();
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'ios' | 'android'>('ios');
@@ -100,7 +100,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
     setIsMounted(true);
   }, []);
 
-  const shouldShow = isMounted && isReady && !isInstalled && (canInstall || hasAndroidStoreUrl);
+  const shouldShow = isMounted && isReady && !isInstalled;
   const highlightKeywordsList = [
     'Safari',
     'iPhone',
@@ -141,12 +141,12 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
   };
 
   return (
-    <div suppressHydrationWarning>
+    <div className={fullWidth ? 'w-full' : undefined} suppressHydrationWarning>
       {isMounted && shouldShow && (
-        <div className={fullWidth ? 'w-full' : 'flex justify-center items-center'}>
+        <div className={fullWidth ? 'mb-6 w-full' : 'mb-6 flex items-center justify-center'}>
           <button
             onClick={handleInstall}
-            className={`h-12 md:h-auto text-white font-medium text-sm md:text-base hover-only:hover:text-primary-100 active:text-primary-500 transition-all duration-200 whitespace-nowrap flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none ${fullWidth ? 'w-full justify-center' : ''}`}
+            className={`text-white font-semibold text-sm hover-only:hover:text-primary-100 active:text-primary-500 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border-2 border-primary-300 active:border-primary-500 select-none ${fullWidth ? 'w-full' : ''}`}
             aria-label={t('pwa.mobileApp')}
           >
             <svg

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Dropdown } from '@/components/common/Dropdown';
+import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import type { Translations } from '@/lib/i18n-types';
 
 const SECTION_IDS = [
@@ -66,6 +67,7 @@ const languageIcon = (
 );
 
 export function InvestorsPageClient({ initialInvestors }: { initialInvestors: InvestorsBundle }) {
+  const { href } = useLocalizedNavigation();
   const cache = useRef<Map<InvestorsPageLocale, InvestorsBundle>>(
     new Map([['en', initialInvestors]]),
   );
@@ -115,7 +117,7 @@ export function InvestorsPageClient({ initialInvestors }: { initialInvestors: In
   );
 
   return (
-    <div className="max-w-4xl mx-auto pt-10 md:pt-14">
+    <div className="max-w-4xl mx-auto pt-4 md:pt-6">
       <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-primary-900">{content.title}</h1>
       <div className="mb-8 inline-flex max-w-full">
         <Dropdown
@@ -182,7 +184,7 @@ export function InvestorsPageClient({ initialInvestors }: { initialInvestors: In
       })}
       <div className="mt-[24px] pt-[24px] border-t border-primary-500/20 flex justify-center text-center">
         <Link
-          href="/contacts"
+          href={href('/contacts')}
           className="inline-flex min-h-12 px-8 py-2 md:py-2.5 text-base rounded-lg font-medium transition-all duration-200 items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none"
         >
           {content.contactCta}

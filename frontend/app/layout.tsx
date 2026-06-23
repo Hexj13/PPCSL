@@ -38,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const t = getServerTranslations(metadataLocale);
 
-  const defaultTitle = `${siteConfig.name} - ${t.metadata.site.defaultTitle}`;
+  const defaultTitle = siteConfig.name;
   const defaultDescription = t.metadata.site.defaultDescription;
   const faviconIcoUrl = getVersionedAssetPath('/favicon.ico', siteConfig.assetVersion);
   const favicon192Url = getVersionedAssetPath('/favicon-192.png', siteConfig.assetVersion);
