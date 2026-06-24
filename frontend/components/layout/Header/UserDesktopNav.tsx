@@ -10,6 +10,7 @@ import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import type { User } from '@/lib/api';
 
 import { HeaderListingsNavLink } from './HeaderListingsNavLink';
+import { HeaderMoreDropdown } from './HeaderMoreDropdown';
 import { HeaderProfileDropdown } from './HeaderProfileDropdown';
 import { DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES } from './desktopNavLinkClasses';
 
@@ -39,12 +40,12 @@ export function UserDesktopNavLinks({
           {t('header.myListings')}
         </span>
       </Link>
-      <Link href={href('/favorites')} className={navLinkClasses}>
+      <Link href={href('/favorites')} className={`${navLinkClasses} lg:hidden xl:flex`}>
         <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
           {t('header.favorites')}
         </span>
       </Link>
-      <Link href={href('/compare')} className={navLinkClasses}>
+      <Link href={href('/compare')} className={`${navLinkClasses} lg:hidden xl:flex`}>
         <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
           {t('header.compare')}
         </span>
@@ -55,12 +56,20 @@ export function UserDesktopNavLinks({
         )}
       </Link>
       {userType !== 'Individual' && (
-        <Link href={href('/partners')} className={navLinkClasses}>
+        <Link href={href('/partners')} className={`${navLinkClasses} lg:hidden xl:flex`}>
           <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
             {t('header.forBusiness')}
           </span>
         </Link>
       )}
+      <HeaderMoreDropdown
+        favoritesHref={href('/favorites')}
+        compareHref={href('/compare')}
+        partnersHref={userType !== 'Individual' ? href('/partners') : undefined}
+        comparisonCount={comparisonCount}
+        navLinkClasses={navLinkClasses}
+        t={t}
+      />
     </>
   );
 }

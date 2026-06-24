@@ -10,6 +10,7 @@ import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { buildSignInHref, buildSignPageHref } from '@/lib/return-url';
 
 import { HeaderListingsNavLink } from './HeaderListingsNavLink';
+import { HeaderMoreDropdown } from './HeaderMoreDropdown';
 import { DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES } from './desktopNavLinkClasses';
 import { DESKTOP_HEADER_OUTLINE_LINK_CLASSES } from './desktopOutlineLinkClasses';
 
@@ -57,12 +58,12 @@ export function GuestDesktopNav({
         labelClassName={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES}
         t={t}
       />
-      <Link href={buildSignInHref('/favorites')} className={navLinkClasses}>
+      <Link href={buildSignInHref('/favorites')} className={`${navLinkClasses} lg:hidden xl:flex`}>
         <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
           {t('header.favorites')}
         </span>
       </Link>
-      <Link href={href('/compare')} className={navLinkClasses}>
+      <Link href={href('/compare')} className={`${navLinkClasses} lg:hidden xl:flex`}>
         <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
           {t('header.compare')}
         </span>
@@ -72,11 +73,19 @@ export function GuestDesktopNav({
           </span>
         )}
       </Link>
-      <Link href={href('/partners')} className={navLinkClasses}>
+      <Link href={href('/partners')} className={`${navLinkClasses} lg:hidden xl:flex`}>
         <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
           {t('header.forBusiness')}
         </span>
       </Link>
+      <HeaderMoreDropdown
+        favoritesHref={buildSignInHref('/favorites')}
+        compareHref={href('/compare')}
+        partnersHref={href('/partners')}
+        comparisonCount={comparisonCount}
+        navLinkClasses={navLinkClasses}
+        t={t}
+      />
       <div className="h-6 w-px bg-primary-700/30 mx-1 shrink-0" aria-hidden />
       <Link
         href={buildSignPageHref({ tab: 'login' })}
