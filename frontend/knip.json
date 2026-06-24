@@ -5,7 +5,7 @@
     "next.config.js",
     "instrumentation.ts",
     "instrumentation-client.ts",
-    "middleware.ts"
+    "proxy.ts"
   ],
   "ignoreExportsUsedInFile": true,
   "project": ["**/*.{ts,tsx}"],

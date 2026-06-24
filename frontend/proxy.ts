@@ -198,7 +198,7 @@ async function enforcePhoneVerifiedCookie(
   return NextResponse.redirect(url, 307);
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const routing = getRouting();
 

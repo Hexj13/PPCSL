@@ -7,28 +7,17 @@ import { useListingActions } from '@/hooks/useListingActions';
 import { SKELETON_PAGE, useLoadingState } from '@/hooks/useLoadingState';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import type {
-  Listing,
-  MyListingsStatusCounts,
-  PaginationMeta,
-  PromotionAccessStatus,
-  PromotionHistory,
-} from '@/lib/api';
+import type { Listing, MyListingsStatusCounts, PaginationMeta } from '@/lib/api';
 import { listingsApi, normalizeListingResponse } from '@/lib/api';
 import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 import { silentCatch } from '@/lib/utils';
 
+import { useMyListingsPromotion } from './useMyListingsPromotion';
 import { useMyListingsRefreshCooldownTimer } from './useMyListingsRefreshCooldownTimer';
 import { useMyListingsUpdatedToast } from './useMyListingsUpdatedToast';
 
 type StatusFilter = 'All' | 'Active' | 'Paused' | 'Closed';
 type PromotedFilter = 'All' | 'Promoted' | 'NotPromoted';
-type PromotionHistoryMeta = {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-};
 
 function toApiStatus(status?: string) {
   return status && status !== 'All' ? status : undefined;
@@ -73,33 +62,6 @@ function preloadListingPages(listings: Listing[]) {
     .catch(silentCatch('MyListings.prefetch'));
 }
 
-async function fetchPromotionAccess(): Promise<PromotionAccessStatus> {
-  try {
-    const res = await listingsApi.getPromotionAccess();
-    return res.data;
-  } catch {
-    return {
-      access: 'disabled',
-      enabled: false,
-      isAdmin: false,
-      canPromote: false,
-      isPartner: false,
-      freePromotionBalance: 0,
-      partnerListingProgress: 0,
-      listingsUntilNextFreePromotion: null,
-    };
-  }
-}
-
-async function fetchPromotionHistoryAvailability() {
-  try {
-    const res = await listingsApi.hasPromotionHistory();
-    return res.data.hasHistory;
-  } catch {
-    return false;
-  }
-}
-
 async function fetchHasActiveListingsOverall() {
   try {
     const res = await listingsApi.getMy(1, 1, 'Active');
@@ -139,17 +101,6 @@ export function useMyListingsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
   const [listingToClose, setListingToClose] = useState<string | null>(null);
-  const [promotionModalOpen, setPromotionModalOpen] = useState(false);
-  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
-  const [promotionHistoryModalOpen, setPromotionHistoryModalOpen] = useState(false);
-  const [hasPromotionHistory, setHasPromotionHistory] = useState(false);
-  const [promotionHistory, setPromotionHistory] = useState<PromotionHistory[]>([]);
-  const [promotionHistoryPage, setPromotionHistoryPage] = useState(1);
-  const [promotionHistoryMeta, setPromotionHistoryMeta] = useState<PromotionHistoryMeta | null>(
-    null,
-  );
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [promotionAccess, setPromotionAccess] = useState<PromotionAccessStatus | null>(null);
   const [hasActiveListingsOverall, setHasActiveListingsOverall] = useState(false);
   const [hasAnyListingsOverall, setHasAnyListingsOverall] = useState(false);
   const loadingRef = useRef(false);
@@ -252,17 +203,13 @@ export function useMyListingsPage() {
     setHasAnyListingsOverall(await fetchHasAnyListingsOverall());
   }, []);
 
-  const loadPromotionAccess = useCallback(async () => {
-    setPromotionAccess(await fetchPromotionAccess());
-  }, []);
-
   const listingActions = useListingActions(
     {
       refreshCooldownMs: meta?.refreshCooldownMs ?? 0,
       lastRefreshAt: meta?.last_listing_refresh_at ?? null,
       timeUntilRefresh,
       setTimeUntilRefresh,
-      canPromote: (promotionAccess?.canPromote ?? false) || (promotionAccess?.isPartner ?? false),
+      canPromote: false,
       userId: user?.id,
       statusFilter,
       promotedFilter,
@@ -275,6 +222,8 @@ export function useMyListingsPage() {
       refetchStatusCounts,
     },
   );
+
+  const promotion = useMyListingsPromotion(user, listingActions);
 
   const statusFilterRef = useRef(statusFilter);
   const promotedFilterRef = useRef(promotedFilter);
@@ -410,56 +359,6 @@ export function useMyListingsPage() {
     }
   }, [listingActions]);
 
-  const checkPromotionHistory = useCallback(async () => {
-    setHasPromotionHistory(await fetchPromotionHistoryAvailability());
-  }, []);
-
-  const loadPromotionHistory = useCallback(
-    async (page: number = 1) => {
-      setLoadingHistory(true);
-      try {
-        const res = await listingsApi.getPromotionHistory(page, 50);
-        setPromotionHistory(res.data.data);
-        setPromotionHistoryMeta(res.data.meta);
-        setPromotionHistoryPage(page);
-      } catch {
-        const { toast } = await import('@/lib/toast');
-        toast.error(t('promotion.history.loadError'));
-      } finally {
-        setLoadingHistory(false);
-      }
-    },
-    [t],
-  );
-
-  useEffect(() => {
-    if (!user) return;
-    void checkPromotionHistory();
-    void loadPromotionAccess();
-  }, [user, checkPromotionHistory, loadPromotionAccess]);
-
-  const handlePromoteClick = useCallback((id: string) => {
-    setSelectedListingId(id);
-    setPromotionModalOpen(true);
-  }, []);
-
-  const handlePromotionSelect = useCallback(
-    async (days: number | null) => {
-      if (!selectedListingId) return;
-      await listingActions.togglePromotion(
-        selectedListingId,
-        true,
-        days,
-        days === null ? 'partner_balance' : 'default',
-      );
-      await loadPromotionAccess();
-      await checkPromotionHistory();
-      setPromotionModalOpen(false);
-      setSelectedListingId(null);
-    },
-    [selectedListingId, listingActions, loadPromotionAccess, checkPromotionHistory],
-  );
-
   const formattedTime = useMemo(
     () =>
       timeUntilRefresh === null || timeUntilRefresh <= 0
@@ -509,9 +408,6 @@ export function useMyListingsPage() {
     ...SKELETON_PAGE,
   });
 
-  const canPromote =
-    (promotionAccess?.canPromote ?? false) || (promotionAccess?.isPartner ?? false);
-
   return {
     user,
     isLoading,
@@ -530,35 +426,20 @@ export function useMyListingsPage() {
     timeUntilRefresh,
     formattedTime,
     hasActiveListingsOverall,
-    canPromote,
-    promotionAccess,
-    hasPromotionHistory,
     isCloseConfirmOpen,
     listingToClose,
     setIsCloseConfirmOpen,
     setListingToClose,
-    promotionModalOpen,
-    setPromotionModalOpen,
-    selectedListingId,
-    setSelectedListingId,
-    promotionHistoryModalOpen,
-    setPromotionHistoryModalOpen,
-    promotionHistory,
-    promotionHistoryMeta,
-    promotionHistoryPage,
-    loadingHistory,
-    loadPromotionHistory,
     handleStatusFilterChange,
     handlePromotedFilterToggle,
     handleAction,
     handleCloseConfirm,
     handleRefreshDates,
     handleLoadMore,
-    handlePromoteClick,
-    handlePromotionSelect,
     listingActions,
     promotedFilter,
     searchQuery,
     setSearchQuery,
+    ...promotion,
   };
 }
