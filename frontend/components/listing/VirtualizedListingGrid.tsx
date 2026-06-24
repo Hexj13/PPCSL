@@ -171,8 +171,9 @@ function VirtualizedListingGridContent({
                 key={virtualRow.key}
                 data-index={virtualRow.index}
                 ref={virtualizer.measureElement}
-                className="absolute top-0 left-0 w-full pb-6"
+                className="absolute top-0 left-0 w-full"
                 style={{
+                  paddingBottom: LISTING_GRID_ROW_GAP_PX,
                   transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
                   overflowAnchor: 'none',
                 }}
