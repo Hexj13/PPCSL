@@ -57,14 +57,14 @@ export function UserMobileNav({
 
   return (
     <div className="flex flex-col gap-4">
+      {showCreateListingInDrawer && (
+        <CreateListingButton variant="mobile" drawerCta onClick={onClose} />
+      )}
       <HeaderListingsNavLink
         className={mobileNavLinkClasses}
         onNavigate={() => handleNavClick()}
         t={t}
       />
-      {showCreateListingInDrawer && (
-        <CreateListingButton variant="mobile" drawerCta onClick={onClose} />
-      )}
       <Link href={href('/my-listings')} {...linkProps}>
         <span suppressHydrationWarning>{t('header.myListings')}</span>
       </Link>

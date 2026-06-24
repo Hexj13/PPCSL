@@ -43,7 +43,7 @@ export function HeaderProfileDropdown({ user, onLogout, t }: HeaderProfileDropdo
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary-700 bg-bg-darker text-text-secondary transition-colors duration-200 hover-only:hover:bg-dark-200 active:bg-dark-300 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base"
+        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-primary-700 bg-bg-darker text-text-secondary transition-colors duration-200 hover-only:hover:bg-primary-500/10 hover-only:hover:text-primary-700 active:bg-primary-500/20 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base"
         aria-label={t('header.profile')}
         aria-expanded={isOpen}
         aria-haspopup="true"

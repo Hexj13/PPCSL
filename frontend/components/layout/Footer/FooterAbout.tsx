@@ -10,6 +10,8 @@ import { getVersionedAssetPath } from '@/lib/assets';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 
+import { FooterSocialLinks } from './FooterSocialLinks';
+
 export function FooterAbout() {
   const { t } = useTranslation();
   const { href } = useLocalizedNavigation();
@@ -18,6 +20,11 @@ export function FooterAbout() {
 
   return (
     <div className="flex flex-col items-start gap-4 sm:col-span-2 lg:max-w-xs lg:shrink-0">
+      <PWAInstallButtonGray fullWidth />
+      <FooterSocialLinks socialLinks={siteConfig.socialLinks} />
+      <p className="text-sm leading-relaxed text-white/80" suppressHydrationWarning>
+        {t('footer.about')}
+      </p>
       <Link
         href={href('/')}
         className="inline-flex transition-opacity duration-200 hover-only:hover:opacity-90"
@@ -31,10 +38,6 @@ export function FooterAbout() {
           className="h-9 w-auto brightness-0 invert"
         />
       </Link>
-      <p className="text-sm leading-relaxed text-white/80" suppressHydrationWarning>
-        {t('footer.about')}
-      </p>
-      <PWAInstallButtonGray fullWidth />
     </div>
   );
 }

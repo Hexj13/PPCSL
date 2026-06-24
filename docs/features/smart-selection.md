@@ -78,7 +78,7 @@ The backend maps answers to a regular saved filter. The output always targets ve
 - mileage preset and low-mileage/reliability priorities -> `mileage_lte`
 - comfort/safety/family/equipment priorities -> `equipment`
 
-If the first filter is too narrow, the backend progressively relaxes it until it finds at least `MIN_SMART_SELECTION_RESULTS` listings or exhausts all expansion steps. Expansion can switch equipment matching to partial, widen budget by 10% when the user allowed flexible budget, relax mileage/year, drop equipment, and expand body/fuel/transmission sets.
+If the first filter is too narrow, the backend progressively relaxes it until it finds at least `MIN_SMART_SELECTION_RESULTS` listings or exhausts all expansion steps. Expansion can switch equipment matching to partial, widen budget by 10% when the user allowed flexible budget, relax mileage/year, drop equipment, and expand inferred body/fuel/transmission sets. Explicit user choices for body type, fuel, and strict transmission are preserved even when fewer than `MIN_SMART_SELECTION_RESULTS` listings remain.
 
 ---
 
@@ -105,4 +105,4 @@ Smart Selection stores the resulting saved search filter in the existing saved f
 
 ---
 
-**Last updated:** 2026-05-25
+**Last updated:** 2026-06-24

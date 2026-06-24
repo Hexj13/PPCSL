@@ -6,13 +6,11 @@ import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
 import { ExternalLinkIcon } from '@/ui';
 
-const WHATSAPP_URL = 'https://wa.me/message/R3V326NKFJFGH1';
-const TELEGRAM_BOT_URL = 'https://t.me/kupitoclub_bot';
-
 export default function ContactsPage() {
   const { t } = useTranslation();
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
+  const socialLinks = siteConfig.socialLinks;
 
   const items = [
     {
@@ -22,20 +20,28 @@ export default function ContactsPage() {
       value: siteConfig.supportEmail,
       copyText: siteConfig.supportEmail,
     },
-    {
-      key: 'telegram' as const,
-      href: TELEGRAM_BOT_URL,
-      labelKey: 'contacts.telegram' as const,
-      value: '@kupitoclub_bot',
-      copyText: TELEGRAM_BOT_URL,
-    },
-    {
-      key: 'whatsapp' as const,
-      href: WHATSAPP_URL,
-      labelKey: 'contacts.whatsapp' as const,
-      value: t('contacts.whatsappValue'),
-      copyText: WHATSAPP_URL,
-    },
+    ...(socialLinks?.telegram
+      ? [
+          {
+            key: 'telegram' as const,
+            href: socialLinks.telegram,
+            labelKey: 'contacts.telegram' as const,
+            value: '@kupitoclub_bot',
+            copyText: socialLinks.telegram,
+          },
+        ]
+      : []),
+    ...(socialLinks?.whatsapp
+      ? [
+          {
+            key: 'whatsapp' as const,
+            href: socialLinks.whatsapp,
+            labelKey: 'contacts.whatsapp' as const,
+            value: t('contacts.whatsappValue'),
+            copyText: socialLinks.whatsapp,
+          },
+        ]
+      : []),
   ];
 
   return (

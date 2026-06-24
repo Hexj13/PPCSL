@@ -1,9 +1,28 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page, type Response } from '@playwright/test';
 
 import type { ListingSortKey } from '../../lib/search/listingSort';
 import { listingSortOptionIndex } from '../test-data/listing-sort';
 import { dismissCookieConsentIfVisible } from '../utils/session';
 import { pageUsesMobileLayout } from '../utils/viewport';
+
+const LOAD_MORE_ASSERT_POLL = {
+  timeout: 90_000,
+  intervals: [300, 500, 800, 1200, 2000],
+} as const;
+
+function isListingsPageGetResponse(response: Response, expectedPage: number): boolean {
+  if (!response.url().includes('/api/listings') || response.request().method() !== 'GET') {
+    return false;
+  }
+  try {
+    const url = new URL(response.url());
+    const pageParam = url.searchParams.get('page');
+    const page = pageParam ? Number.parseInt(pageParam, 10) : 1;
+    return page === expectedPage && response.ok();
+  } catch {
+    return false;
+  }
+}
 
 export abstract class SearchHomeScrollPage {
   constructor(protected readonly page: Page) {}
@@ -425,24 +444,26 @@ export abstract class SearchHomeScrollPage {
       .toBe(true);
     const countBefore = await this.getObservableListingCount();
     const pageBefore = await this.getPersistedGridPage();
+    const expectedPage = pageBefore + 1;
     const listingsResponse = this.page.waitForResponse(
-      (r) => r.url().includes('/api/listings') && r.request().method() === 'GET',
-      { timeout: 45_000 },
+      (response) => isListingsPageGetResponse(response, expectedPage),
+      { timeout: 60_000 },
     );
     await this.page.getByTestId('listings-load-more').click();
-    await listingsResponse;
+    const response = await listingsResponse;
+    if (!response.ok()) {
+      const body = await response.text().catch(() => '');
+      throw new Error(`Load more listings failed: HTTP ${response.status()} ${body}`);
+    }
     await this.expectResultsOrEmptyVisible();
     await expect
-      .poll(
-        async () => {
-          const page = await this.getPersistedGridPage();
-          if (page > pageBefore) {
-            return true;
-          }
-          return (await this.getObservableListingCount()) > countBefore;
-        },
-        { timeout: 45_000, intervals: [300, 500, 800, 1200, 2000] },
-      )
+      .poll(async () => {
+        const page = await this.getPersistedGridPage();
+        if (page >= expectedPage) {
+          return true;
+        }
+        return (await this.getObservableListingCount()) > countBefore;
+      }, LOAD_MORE_ASSERT_POLL)
       .toBe(true);
     return true;
   }
@@ -466,14 +487,20 @@ export abstract class SearchHomeScrollPage {
       )
       .toBe(true);
     const countBefore = await this.getObservableListingCount();
+    const pageBefore = await this.getPersistedGridPage();
+    const expectedPage = pageBefore + 1;
     const listingsResponse = this.page.waitForResponse(
-      (r) => r.url().includes('/api/listings') && r.request().method() === 'GET',
-      { timeout: 45_000 },
+      (response) => isListingsPageGetResponse(response, expectedPage),
+      { timeout: 60_000 },
     );
     await this.page.getByTestId('listings-load-more').click({ force: false });
-    await listingsResponse;
+    const response = await listingsResponse;
+    if (!response.ok()) {
+      const body = await response.text().catch(() => '');
+      throw new Error(`Load more listings failed: HTTP ${response.status()} ${body}`);
+    }
     await expect
-      .poll(async () => this.getObservableListingCount(), { timeout: 45_000 })
+      .poll(async () => this.getObservableListingCount(), LOAD_MORE_ASSERT_POLL)
       .toBeGreaterThan(countBefore);
     await this.expectResultsOrEmptyVisible();
   }

@@ -32,4 +32,8 @@ export class VerifyPhonePage {
   async submit(): Promise<void> {
     await this.form.submit();
   }
+
+  async submitRegistrationVerification(): Promise<void> {
+    await this.form.submitRegistrationVerification();
+  }
 }

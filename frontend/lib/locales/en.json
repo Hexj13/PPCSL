@@ -1,7 +1,6 @@
 {
   "footer": {
     "copyright": "© 2025-2026 Kupito.club. All rights reserved.",
-    "tagline": "Platform for posting car sale listings in Moldova",
     "navTitle": "Navigation",
     "infoTitle": "Information",
     "legalTitle": "Legal",
@@ -15,7 +14,8 @@
     "cookieSettings": "Cookie Settings",
     "contacts": "Contacts",
     "partnerImportSalesDescription": "Car import and sales",
-    "partnerInfocarDescription": "Vehicle history reports"
+    "partnerInfocarDescription": "Vehicle history reports",
+    "tiktok": "Kupito.club on TikTok"
   },
   "header": {
     "addListing": "Add Listing",

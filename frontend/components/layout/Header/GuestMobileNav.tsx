@@ -58,14 +58,6 @@ export function GuestMobileNav({
 
   return (
     <div className="flex flex-col gap-4">
-      <HeaderListingsNavLink
-        className={mobileNavLinkClasses}
-        onNavigate={() => {
-          prepareScrollLockReleaseToTop();
-          onClose();
-        }}
-        t={t}
-      />
       <CreateListingButton variant="mobile" drawerCta onClick={onClose} />
       <Link
         href={buildSignPageHref({ tab: 'login' })}
@@ -75,6 +67,14 @@ export function GuestMobileNav({
         <span suppressHydrationWarning>{t('header.loginAndRegister')}</span>
       </Link>
       <div className="flex flex-col gap-4 border-t border-primary-700 pt-4">
+        <HeaderListingsNavLink
+          className={mobileNavLinkClasses}
+          onNavigate={() => {
+            prepareScrollLockReleaseToTop();
+            onClose();
+          }}
+          t={t}
+        />
         <Link
           href={buildSignInHref('/favorites')}
           onClick={() => {

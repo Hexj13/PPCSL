@@ -7,7 +7,8 @@ import type { SignPage } from '../page-objects/sign.page';
 import type { VerifyPhonePage } from '../page-objects/verify-phone.page';
 import { createRegisterProfileData, type RegisterUserType } from '../test-data/auth';
 import { buildAvailableMdPhone } from '../utils/api/auth';
-import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+import { expectPagePath } from '../utils/app-path';
+import { expectAuthenticatedSession } from '../utils/auth';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 const VALID_PASSWORD = 'StrongPass1!';
@@ -60,24 +61,16 @@ async function registerVerifyAndCompleteProfile(
       name: 'Fill local SMS code and submit verification',
       action: async () => {
         await verifyPhonePage.fillCode(LOCAL_SMS_CODE);
-        await verifyPhonePage.submit();
+        await verifyPhonePage.submitRegistrationVerification();
       },
     },
     {
       name: 'Verify redirect to complete-profile page',
       action: async () => {
-        await page.waitForURL(
-          (url) => {
-            const path = pathnameWithoutLocalePrefix(url);
-            return path.startsWith('/complete-profile') || path.startsWith('/sign');
-          },
-          { timeout: 60_000 },
-        );
-        if (pathnameWithoutLocalePrefix(page.url()).startsWith('/sign')) {
-          throw new Error(
-            'Phone verification did not establish a session (check API SMS bypass 000000 in development and auth cookies).',
-          );
-        }
+        await expectPagePath(page, (path) => path.startsWith('/complete-profile'), {
+          timeout: 30_000,
+        });
+        await expectAuthenticatedSession(page);
         await expect(page).toHaveURL(/\/complete-profile(\?|$)/, { timeout: 30_000 });
         await expect(page.getByTestId('complete-profile-loading')).not.toBeVisible({
           timeout: 30_000,

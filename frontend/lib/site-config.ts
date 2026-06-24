@@ -20,6 +20,12 @@ export interface MobileAppConfig {
   androidPackageName?: string;
 }
 
+export interface SocialLinksConfig {
+  tiktok?: string | null;
+  telegram?: string | null;
+  whatsapp?: string | null;
+}
+
 export interface SiteConfig {
   country: string;
   name: string;
@@ -33,6 +39,7 @@ export interface SiteConfig {
   localeRouting?: LocaleRoutingConfig;
   assetVersion?: string;
   mobileApp?: MobileAppConfig;
+  socialLinks?: SocialLinksConfig;
   footerPartnerLogoSurfaceDefault?: 'light' | 'transparent';
   footerPartners?: Array<{
     name: string;

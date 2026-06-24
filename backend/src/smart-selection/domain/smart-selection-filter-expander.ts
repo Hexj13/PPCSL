@@ -79,6 +79,14 @@ function canRelaxTransmission(answers: SmartSelectionAnswers): boolean {
   return answers.transmission !== 'automatic_only' && answers.transmission !== 'manual_only';
 }
 
+function hasExplicitBodyTypes(answers: SmartSelectionAnswers): boolean {
+  return answers.bodyTypes.some((bodyType) => bodyType !== 'auto_pick');
+}
+
+function hasExplicitFuels(answers: SmartSelectionAnswers): boolean {
+  return answers.fuels.some((fuel) => fuel !== 'any' && fuel !== 'auto_pick');
+}
+
 function requiresDriveType(answers: SmartSelectionAnswers): boolean {
   return answers.drivingMode === 'rural_bad_roads' || answers.purposes.includes('active_offroad');
 }
@@ -142,19 +150,23 @@ function buildExpansionSteps(answers: SmartSelectionAnswers): ExpansionStep[] {
     },
   });
 
-  steps.push({
-    id: 'expand_body_types',
-    apply: (f) => {
-      f.body_types = [...CAR_BODY_TYPES];
-    },
-  });
+  if (!hasExplicitBodyTypes(answers)) {
+    steps.push({
+      id: 'expand_body_types',
+      apply: (f) => {
+        f.body_types = [...CAR_BODY_TYPES];
+      },
+    });
+  }
 
-  steps.push({
-    id: 'expand_fuels',
-    apply: (f) => {
-      f.fuels = [...CAR_FUELS];
-    },
-  });
+  if (!hasExplicitFuels(answers)) {
+    steps.push({
+      id: 'expand_fuels',
+      apply: (f) => {
+        f.fuels = [...CAR_FUELS];
+      },
+    });
+  }
 
   if (!requiresDriveType(answers)) {
     steps.push({

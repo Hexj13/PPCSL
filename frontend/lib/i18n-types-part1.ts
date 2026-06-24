@@ -1,7 +1,6 @@
 export interface TranslationsPart1 {
   footer: {
     copyright: string;
-    tagline: string;
     navTitle: string;
     infoTitle: string;
     legalTitle: string;
