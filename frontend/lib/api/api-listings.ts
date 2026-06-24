@@ -7,6 +7,7 @@ import type {
   StagedListingVideoStatusResponse,
   StagedListingVideoUploadInitResponse,
   ListingVideoUploadInitResponse,
+  MyListingsStatusCounts,
   PaginationMeta,
   PromotionAccessStatus,
   PromotionHistory,
@@ -83,6 +84,16 @@ export const listingsApi = {
     }
     const query = params.toString();
     return api.get<{ data: Listing[]; meta: PaginationMeta }>(`/api/listings/my?${query}`);
+  },
+  getMyStatusCounts: (search?: string) => {
+    const params = new URLSearchParams();
+    if (search && search.trim()) {
+      params.set('search', search.trim());
+    }
+    const query = params.toString();
+    return api.get<MyListingsStatusCounts>(
+      query ? `/api/listings/my/status-counts?${query}` : '/api/listings/my/status-counts',
+    );
   },
   refreshDates: () => api.post<{ updated: number }>('/api/listings/refresh-dates'),
   togglePromotion: (

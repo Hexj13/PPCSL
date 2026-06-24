@@ -94,6 +94,61 @@ export class ListingsController {
     return this.listingsService.findAll(searchDto);
   }
 
+  @ApiOperation({ summary: 'Get current user listings status counts' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search by brand or model name',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Status counts for current user listings',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            Active: { type: 'number' },
+            Paused: { type: 'number' },
+            Closed: { type: 'number' },
+            Promoted: { type: 'number' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number', example: 401 },
+            message: { type: 'string' },
+            timestamp: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @Get('my/status-counts')
+  @UseGuards(JwtAuthGuard)
+  getMyListingsStatusCounts(
+    @Request() req: AuthenticatedRequest,
+    @Query('search') search?: string,
+  ) {
+    const searchQuery = search?.trim();
+    return this.listingsService.getUserListingsStatusCounts(
+      req.user.id,
+      searchQuery && searchQuery.length > 0 ? searchQuery : undefined,
+    );
+  }
+
   @ApiOperation({ summary: 'Get current user listings' })
   @ApiBearerAuth('JWT-auth')
   @ApiResponse({

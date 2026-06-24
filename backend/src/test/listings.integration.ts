@@ -12,6 +12,7 @@ describe('Listings API Integration Tests', () => {
   let testPhone: string;
   let listingId: string;
   let brandId: string;
+  let brandName: string;
   let modelId: string;
 
   beforeAll(async () => {
@@ -51,6 +52,7 @@ describe('Listings API Integration Tests', () => {
 
     if (brands.length > 0) {
       brandId = brands[0].id;
+      brandName = brands[0].name;
       const modelsResponse = await request.get(`/api/brands/${brandId}/models`).expect(200);
       const models = modelsResponse.body;
 
@@ -173,12 +175,112 @@ describe('Listings API Integration Tests', () => {
       expect(response.body).toHaveProperty('description', updateData.description);
     });
 
+    it('should update listing with frontend-like payload without create-only fields', async () => {
+      if (!listingId || !brandId || !modelId) {
+        return;
+      }
+
+      const listingResponse = await request.get(`/api/listings/${listingId}`).expect(200);
+      const listing = listingResponse.body;
+      const vehicle = listing.vehicle;
+
+      const updateData = {
+        price: 16000,
+        currency: listing.currency || 'EUR',
+        city: listing.city,
+        negotiable: listing.negotiable ?? false,
+        available_in_credit: false,
+        description_ro: 'Updated from integration test',
+        images: listing.images,
+        urgent: false,
+        is_new: false,
+        ...(listing.vin ? { vin: listing.vin } : {}),
+        ...(listing.condition ? { condition: listing.condition } : {}),
+        ...(listing.registration_type ? { registration_type: listing.registration_type } : {}),
+        ...(listing.horsepower != null ? { horsepower: listing.horsepower } : {}),
+        vehicle: {
+          brand_id: brandId,
+          model_id: modelId,
+          year: vehicle.year,
+          body_type: vehicle.body_type,
+          ...(vehicle.engine_displ_l != null
+            ? { engine_displ_l: Number(vehicle.engine_displ_l) }
+            : {}),
+          ...(vehicle.mileage_km != null ? { mileage_km: vehicle.mileage_km } : {}),
+          ...(vehicle.fuel ? { fuel: vehicle.fuel } : {}),
+          ...(vehicle.transmission ? { transmission: vehicle.transmission } : {}),
+          ...(vehicle.drive_type ? { drive_type: vehicle.drive_type } : {}),
+        },
+      };
+
+      const response = await request
+        .patch(`/api/listings/${listingId}`)
+        .set('Cookie', authToken)
+        .send(updateData)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('id', listingId);
+      expect(Number(response.body.price)).toBe(updateData.price);
+      expect(response.body).toHaveProperty('description_ro', updateData.description_ro);
+    });
+
+    it('should reject PATCH with create-only status field', async () => {
+      if (!listingId) {
+        return;
+      }
+
+      const response = await request
+        .patch(`/api/listings/${listingId}`)
+        .set('Cookie', authToken)
+        .send({ price: 17000, status: 'Active' })
+        .expect(400);
+
+      expect(response.body).toHaveProperty('message');
+    });
+
     it('should return 401 without authentication', async () => {
       if (!listingId) {
         return;
       }
 
       await request.patch(`/api/listings/${listingId}`).send({ price: 15000 }).expect(401);
+    });
+  });
+
+  describe('GET /api/listings/my/status-counts', () => {
+    it('should return current user status counts and match OpenAPI schema', async () => {
+      const response = await request
+        .get('/api/listings/my/status-counts')
+        .set('Cookie', authToken)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('Active');
+      expect(response.body).toHaveProperty('Paused');
+      expect(response.body).toHaveProperty('Closed');
+      expect(response.body).toHaveProperty('Promoted');
+      expect(Number(response.body.Active)).toBeGreaterThanOrEqual(listingId ? 1 : 0);
+      expect(response).toSatisfyApiSpec();
+    });
+
+    it('should apply search query to status counts', async () => {
+      if (!brandName) {
+        return;
+      }
+
+      const response = await request
+        .get(`/api/listings/my/status-counts?search=${encodeURIComponent(brandName)}`)
+        .set('Cookie', authToken)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('Active');
+      expect(Number(response.body.Active)).toBeGreaterThanOrEqual(listingId ? 1 : 0);
+      expect(response).toSatisfyApiSpec();
+    });
+
+    it('should return 401 without authentication', async () => {
+      const response = await request.get('/api/listings/my/status-counts').expect(401);
+
+      expect(response).toSatisfyApiSpec();
     });
   });
 

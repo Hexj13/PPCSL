@@ -670,7 +670,42 @@ describe('useGoogleAuth', () => {
     expect(mockLocationReplace).not.toHaveBeenCalled();
   });
 
-  it('replaces route to localized home when phone is verified and returnUrl is absent', async () => {
+  it('redirects new Google users without phone verification to complete-profile', async () => {
+    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockResolvedValueOnce({
+      data: {
+        isNewUser: true,
+        requiresPhoneVerification: false,
+        user: { id: '1' },
+      },
+    });
+    (authApi.me as unknown as AuthMeFnMock).mockResolvedValue({
+      data: { id: '1', phoneVerified: true, type: 'Individual' },
+    });
+
+    render(
+      <Tree>
+        <HarnessRegisterBusiness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(window.google?.accounts?.id.initialize).toHaveBeenCalled();
+    });
+
+    const init = (window.google!.accounts!.id.initialize as jest.Mock).mock.calls[0][0] as {
+      callback: (resp: { credential: string }) => void;
+    };
+
+    await act(async () => {
+      await init.callback({ credential: 'tok' });
+    });
+
+    await waitFor(() => {
+      expect(lastReplacePath()).toBe('/ru/complete-profile');
+    });
+  });
+
+  it('replaces route to localized home when existing user signs in and returnUrl is absent', async () => {
     render(
       <Tree>
         <Harness />

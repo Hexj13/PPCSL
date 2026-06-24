@@ -415,6 +415,9 @@ export type UpdateListingDto = Omit<
   | 'equipment'
   | 'vehicle'
   | 'tire'
+  | 'status'
+  | 'assignedUserId'
+  | 'stagedVideoToken'
 > & {
   vin?: string | null;
   description?: string | null;
@@ -464,6 +467,13 @@ export interface LoginDto {
 export interface ChangePasswordDto {
   currentPassword?: string;
   newPassword: string;
+}
+
+export interface MyListingsStatusCounts {
+  Active: number;
+  Paused: number;
+  Closed: number;
+  Promoted: number;
 }
 
 export interface PaginationMeta {

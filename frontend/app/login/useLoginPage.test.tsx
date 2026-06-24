@@ -168,4 +168,14 @@ describe('useLoginPage post-auth navigation', () => {
       expect(lastReplacePath().includes('mode=phone_required')).toBe(true);
     });
   });
+
+  it('does not auto-redirect when suppressSignedInReturnNavigation is true', async () => {
+    authStoreState.user = { id: 'user-1', phoneVerified: true };
+
+    renderHook(() => useLoginPage({ suppressSignedInReturnNavigation: true }));
+
+    await waitFor(() => {
+      expect(mockReplace).not.toHaveBeenCalled();
+    });
+  });
 });

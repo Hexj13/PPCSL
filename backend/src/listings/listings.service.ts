@@ -33,6 +33,7 @@ import { GetListingUseCase } from './application/use-cases/get-listing.use-case'
 import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion-access.use-case';
 import { GetPromotionHistoryUseCase } from './application/use-cases/get-promotion-history.use-case';
 import { GetReportUrlUseCase } from './application/use-cases/get-report-url.use-case';
+import { GetUserListingsStatusCountsUseCase } from './application/use-cases/get-user-listings-status-counts.use-case';
 import { GetUserListingsUseCase } from './application/use-cases/get-user-listings.use-case';
 import { HasPromotionHistoryUseCase } from './application/use-cases/has-promotion-history.use-case';
 import { PauseListingUseCase } from './application/use-cases/pause-listing.use-case';
@@ -87,6 +88,7 @@ export class ListingsService {
     private readonly togglePromotionUseCase: TogglePromotionUseCase,
     private readonly findSimilarUseCase: FindSimilarUseCase,
     private readonly getUserListingsUseCase: GetUserListingsUseCase,
+    private readonly getUserListingsStatusCountsUseCase: GetUserListingsStatusCountsUseCase,
     private readonly getActiveUserListingsUseCase: GetActiveUserListingsUseCase,
     private readonly getActiveUserListingsCountUseCase: GetActiveUserListingsCountUseCase,
     private readonly getBoardListingsUseCase: GetBoardListingsUseCase,
@@ -263,6 +265,10 @@ export class ListingsService {
     search?: string,
   ) {
     return this.getUserListingsUseCase.execute(userId, page, limit, status, promoted, search);
+  }
+
+  async getUserListingsStatusCounts(userId: string, search?: string) {
+    return this.getUserListingsStatusCountsUseCase.execute(userId, search);
   }
 
   async getActiveUserListings(userId: string, page = 1, limit = 20): Promise<Listing[]> {

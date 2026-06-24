@@ -40,6 +40,22 @@ export class ListingDetailPage {
       .getByTestId(this.testIds.detailCopyLinkButton);
   }
 
+  private async expectCopyLinkButtonVisible(): Promise<void> {
+    await expect
+      .poll(
+        async () => {
+          const button = this.copyLinkButton;
+          if (!(await button.isVisible().catch(() => false))) {
+            return false;
+          }
+          await button.scrollIntoViewIfNeeded().catch(() => undefined);
+          return button.isVisible().catch(() => false);
+        },
+        { timeout: 30_000 },
+      )
+      .toBe(true);
+  }
+
   get equipmentBlock() {
     return this.detailPageRoot.getByTestId(this.testIds.detailEquipment);
   }
@@ -54,8 +70,7 @@ export class ListingDetailPage {
       (path) => /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new',
     );
     await expect(this.detailPageRoot).toBeVisible({ timeout: 30_000 });
-    await this.copyLinkButton.scrollIntoViewIfNeeded();
-    await expect(this.copyLinkButton).toBeVisible({ timeout: 30_000 });
+    await this.expectCopyLinkButtonVisible();
   }
 
   async expectCoreBlocksVisible(): Promise<void> {

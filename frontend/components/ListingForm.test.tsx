@@ -378,6 +378,10 @@ describe('ListingForm', () => {
             throw new Error(`Validation failed: ${errorMessages.join(', ')}`);
           }
           expect(updateSpy).toHaveBeenCalled();
+          const updatePayload = updateSpy.mock.calls[0][1] as Record<string, unknown>;
+          expect(updatePayload).not.toHaveProperty('status');
+          expect(updatePayload).not.toHaveProperty('assignedUserId');
+          expect(updatePayload).not.toHaveProperty('stagedVideoToken');
         },
         { timeout: 15000 },
       );

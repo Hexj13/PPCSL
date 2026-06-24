@@ -267,4 +267,14 @@ export class ListingCreatePage {
   async submitCreateForm(): Promise<void> {
     await this.page.getByTestId(this.testIds.submitButton).click();
   }
+
+  async updateEditPrice(price: string): Promise<void> {
+    const priceInput = this.page.getByTestId(this.testIds.priceInput);
+    await priceInput.fill(price);
+    await expect(priceInput).toHaveValue(price);
+  }
+
+  async submitEditForm(): Promise<void> {
+    await this.editSubmitButton.click();
+  }
 }

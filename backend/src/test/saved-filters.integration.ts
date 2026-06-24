@@ -141,11 +141,12 @@ describe('Saved Filters API Integration Tests', () => {
       const response = await request
         .post('/api/saved-filters')
         .set('Cookie', authToken)
+        .set('Accept-Language', 'en')
         .send(filterData)
         .expect(400);
 
       expect(response).toSatisfyApiSpec();
-      expect(response.body.message).toBe('Filters object contains invalid keys or values');
+      expect(response.body.message).toBe('Validation failed. Please check the entered data.');
     });
 
     it('should return 400 when name exceeds 100 characters', async () => {

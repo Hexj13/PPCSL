@@ -56,6 +56,7 @@ describe('ListingsController', () => {
     const mockListingsService = {
       findAll: jest.fn(),
       getUserListings: jest.fn(),
+      getUserListingsStatusCounts: jest.fn(),
       getActiveUserListings: jest.fn(),
       getActiveUserListingsCount: jest.fn(),
       findByVin: jest.fn(),
@@ -248,6 +249,33 @@ describe('ListingsController', () => {
         undefined,
         undefined,
       );
+    });
+  });
+
+  describe('getMyListingsStatusCounts', () => {
+    it('should return status counts for current user', async () => {
+      const req = { user: mockUser };
+      const mockCounts = { Active: 5, Paused: 2, Closed: 1, Promoted: 3 };
+
+      service.getUserListingsStatusCounts.mockResolvedValue(mockCounts);
+
+      const result = await controller.getMyListingsStatusCounts(
+        req as unknown as AuthenticatedRequest,
+      );
+
+      expect(service.getUserListingsStatusCounts).toHaveBeenCalledWith('user-1', undefined);
+      expect(result).toEqual(mockCounts);
+    });
+
+    it('should pass search to service', async () => {
+      const req = { user: mockUser };
+      const mockCounts = { Active: 1, Paused: 0, Closed: 0, Promoted: 0 };
+
+      service.getUserListingsStatusCounts.mockResolvedValue(mockCounts);
+
+      await controller.getMyListingsStatusCounts(req as unknown as AuthenticatedRequest, 'bmw');
+
+      expect(service.getUserListingsStatusCounts).toHaveBeenCalledWith('user-1', 'bmw');
     });
   });
 

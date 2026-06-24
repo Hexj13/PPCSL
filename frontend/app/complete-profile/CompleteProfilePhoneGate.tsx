@@ -7,6 +7,7 @@ import { cancelOAuthPhoneRequiredSignup } from '@/app/complete-profile/oauthPhon
 import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
+import { buildStandardCompleteProfileHref } from '@/lib/complete-profile-navigation';
 import { MAIN_VIEWPORT_MIN_HEIGHT_CLASS } from '@/lib/constants';
 import {
   clearOAuthPhoneRequiredContext,
@@ -43,7 +44,7 @@ export function CompleteProfilePhoneGate() {
       setCancelBusy(true);
       const signHref = buildSignPageHref({ tab: 'login', returnUrl });
       try {
-        if (isOAuthPhoneRequiredSignupFlow(source)) {
+        if (isOAuthPhoneRequiredSignupFlow()) {
           await cancelOAuthPhoneRequiredSignup();
         }
         clearOAuthPhoneRequiredContext();
@@ -53,7 +54,7 @@ export function CompleteProfilePhoneGate() {
         setCancelBusy(false);
       }
     },
-    [cancelBusy, logout, router, returnUrl, source],
+    [cancelBusy, logout, router, returnUrl],
   );
 
   const { dismissOverlay } = useHistoryBackClose(
@@ -65,11 +66,15 @@ export function CompleteProfilePhoneGate() {
   useEffect(() => {
     if (!user) return;
     if (!phoneRequiredMode) return;
-    if (user.phoneVerified) {
-      clearOAuthPhoneRequiredContext();
-      const target = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
-      replace(target ?? '/');
+    if (!user.phoneVerified) return;
+    const isSignupFlow = isOAuthPhoneRequiredSignupFlow();
+    clearOAuthPhoneRequiredContext();
+    if (isSignupFlow) {
+      replace(buildStandardCompleteProfileHref(returnUrl));
+      return;
     }
+    const target = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
+    replace(target ?? '/');
   }, [user, phoneRequiredMode, returnUrl, replace]);
 
   if (!user || !phoneRequiredMode || user.phoneVerified) {

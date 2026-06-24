@@ -30,8 +30,9 @@ export function useCrossTabMyListingsRefetch(params: {
     promoted?: boolean,
     search?: string,
   ) => Promise<void>;
-  refetchAllForCount: () => Promise<void>;
+  refetchStatusCounts: () => Promise<void>;
   refetchHasActiveListingsOverall: () => Promise<void>;
+  refetchHasAnyListingsOverall: () => Promise<void>;
   statusFilter: StatusFilter;
   promotedFilter: PromotedFilter;
   searchQuery: string;
@@ -40,8 +41,9 @@ export function useCrossTabMyListingsRefetch(params: {
     user,
     hasLoadedRef,
     fetchListings,
-    refetchAllForCount,
+    refetchStatusCounts,
     refetchHasActiveListingsOverall,
+    refetchHasAnyListingsOverall,
     statusFilter,
     promotedFilter,
     searchQuery,
@@ -51,21 +53,23 @@ export function useCrossTabMyListingsRefetch(params: {
     if (!user) return;
     const unsub = subscribeToCrossTabEvents((ev) => {
       if (ev.type !== 'listing-status-changed') return;
-      hasLoadedRef.current = false;
+      hasLoadedRef.current = true;
       const apiStatus = toApiStatus(statusFilter);
       const apiPromoted = toPromotedBoolean(promotedFilter);
       const q = toApiSearch(searchQuery);
       void fetchListings(1, false, 20, apiStatus, apiPromoted, q);
-      void refetchAllForCount();
+      void refetchStatusCounts();
       void refetchHasActiveListingsOverall();
+      void refetchHasAnyListingsOverall();
     });
     return unsub;
   }, [
     user,
     hasLoadedRef,
     fetchListings,
-    refetchAllForCount,
+    refetchStatusCounts,
     refetchHasActiveListingsOverall,
+    refetchHasAnyListingsOverall,
     statusFilter,
     promotedFilter,
     searchQuery,

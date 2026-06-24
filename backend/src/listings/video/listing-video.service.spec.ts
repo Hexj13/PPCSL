@@ -240,6 +240,12 @@ describe('ListingVideoService', () => {
       } as unknown as Job;
     }
 
+    function jobWithoutOutputFilePaths(): Job {
+      return {
+        OutputGroupDetails: [{ OutputDetails: [{}] }],
+      } as unknown as Job;
+    }
+
     beforeEach(() => {
       listingRepo = {
         findOne: jest.fn(async (): Promise<Listing | null> => null),
@@ -364,6 +370,41 @@ describe('ListingVideoService', () => {
       expect(savedListing.video?.sizeBytes).toBe(1234);
       expect(uploadService.headObjectContentLength).toHaveBeenCalledWith(
         'listings/lid-1/video/out.mp4',
+      );
+    });
+
+    it('COMPLETE publishes listing video from expected MP4 when job output paths are missing', async () => {
+      listingRepo.findOne.mockImplementation(
+        async () =>
+          ({
+            id: 'lid-1',
+            status: 'Active',
+            video: {
+              status: 'processing' as const,
+              jobId: 'job-x',
+              inputKey: '/video-input/lid-1/session-1/source.mp4',
+              outputPrefix: 'listings/lid-1/video/session-1/',
+            },
+          }) as Listing,
+      );
+      mediaConvert.getJob.mockImplementation(async () => jobWithoutOutputFilePaths());
+      uploadService.headObjectContentLength.mockImplementation(async (key: unknown) =>
+        key === 'listings/lid-1/video/session-1/source_mp4.mp4' ? 1234 : null,
+      );
+
+      await service.handleMediaConvertJobEvent({
+        jobId: 'job-x',
+        status: 'COMPLETE',
+        userMetadata: { listingId: 'lid-1' },
+      });
+
+      const savedListing = listingRepo.save.mock.calls[0]?.[0] as Listing;
+      expect(savedListing.video?.status).toBe('published');
+      expect(savedListing.video?.mp4Key).toBe('/listings/lid-1/video/session-1/source_mp4.mp4');
+      expect(savedListing.video?.webmKey).toBeNull();
+      expect(savedListing.video?.sizeBytes).toBe(1234);
+      expect(uploadService.headObjectContentLength).toHaveBeenCalledWith(
+        'listings/lid-1/video/session-1/source_mp4.mp4',
       );
     });
   });

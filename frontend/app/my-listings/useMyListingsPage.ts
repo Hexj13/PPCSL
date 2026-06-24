@@ -7,7 +7,13 @@ import { useListingActions } from '@/hooks/useListingActions';
 import { SKELETON_PAGE, useLoadingState } from '@/hooks/useLoadingState';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import type { Listing, PaginationMeta, PromotionAccessStatus, PromotionHistory } from '@/lib/api';
+import type {
+  Listing,
+  MyListingsStatusCounts,
+  PaginationMeta,
+  PromotionAccessStatus,
+  PromotionHistory,
+} from '@/lib/api';
 import { listingsApi, normalizeListingResponse } from '@/lib/api';
 import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 import { silentCatch } from '@/lib/utils';
@@ -42,27 +48,18 @@ function toPromotedBoolean(filter: PromotedFilter) {
   return undefined;
 }
 
-function extractListings(data: unknown): Listing[] {
-  if (Array.isArray(data)) return data;
-  if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
-    return data.data as Listing[];
-  }
-  return [];
-}
-
 function mergeUniqueListings(prev: Listing[], next: Listing[]) {
   const existingIds = new Set(prev.map((listing) => listing.id));
   const unique = next.filter((listing) => !existingIds.has(listing.id));
   return [...prev, ...unique];
 }
 
-function getStatusCounts(source: Listing[]) {
-  return {
-    Active: source.filter((listing) => listing.status === 'Active').length,
-    Paused: source.filter((listing) => listing.status === 'Paused').length,
-    Closed: source.filter((listing) => listing.status === 'Closed').length,
-  };
-}
+const EMPTY_STATUS_COUNTS: MyListingsStatusCounts = {
+  Active: 0,
+  Paused: 0,
+  Closed: 0,
+  Promoted: 0,
+};
 
 function preloadListingPages(listings: Listing[]) {
   if (!('caches' in window) || listings.length === 0) return;
@@ -113,11 +110,21 @@ async function fetchHasActiveListingsOverall() {
   }
 }
 
+async function fetchHasAnyListingsOverall() {
+  try {
+    const res = await listingsApi.getMyStatusCounts();
+    const counts = res.data;
+    return counts.Active + counts.Paused + counts.Closed > 0;
+  } catch {
+    return false;
+  }
+}
+
 export function useMyListingsPage() {
   const { user, isLoading, isAuthorized } = useRequireAuth();
   const { t } = useTranslation();
   const [listings, setListings] = useState<Listing[]>([]);
-  const [allListingsForCount, setAllListingsForCount] = useState<Listing[]>([]);
+  const [statusCounts, setStatusCounts] = useState<MyListingsStatusCounts>(EMPTY_STATUS_COUNTS);
   const countsGenerationRef = useRef(0);
   const [loading, setLoading] = useState(false);
   const [listingsRefreshing, setListingsRefreshing] = useState(false);
@@ -144,6 +151,7 @@ export function useMyListingsPage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [promotionAccess, setPromotionAccess] = useState<PromotionAccessStatus | null>(null);
   const [hasActiveListingsOverall, setHasActiveListingsOverall] = useState(false);
+  const [hasAnyListingsOverall, setHasAnyListingsOverall] = useState(false);
   const loadingRef = useRef(false);
   const loadingMoreRef = useRef(false);
   const hasLoadedRef = useRef(false);
@@ -223,18 +231,25 @@ export function useMyListingsPage() {
     [],
   );
 
-  const refetchAllForCount = useCallback(async () => {
+  const refetchStatusCounts = useCallback(async () => {
     const generation = ++countsGenerationRef.current;
     try {
       const q = toApiSearch(searchQuery);
-      const res = await listingsApi.getMy(1, 1000, undefined, undefined, q);
+      const res = await listingsApi.getMyStatusCounts(q);
       if (countsGenerationRef.current !== generation) return;
-      setAllListingsForCount(extractListings(res.data));
+      setStatusCounts(res.data);
+      if (!q) {
+        setHasAnyListingsOverall(res.data.Active + res.data.Paused + res.data.Closed > 0);
+      }
     } catch {}
   }, [searchQuery]);
 
   const refetchHasActiveListingsOverall = useCallback(async () => {
     setHasActiveListingsOverall(await fetchHasActiveListingsOverall());
+  }, []);
+
+  const refetchHasAnyListingsOverall = useCallback(async () => {
+    setHasAnyListingsOverall(await fetchHasAnyListingsOverall());
   }, []);
 
   const loadPromotionAccess = useCallback(async () => {
@@ -255,10 +270,9 @@ export function useMyListingsPage() {
     },
     {
       setListings,
-      setAllListingsForCount,
       listingsRef,
       fetchListings,
-      refetchAllForCount,
+      refetchStatusCounts,
     },
   );
 
@@ -279,34 +293,47 @@ export function useMyListingsPage() {
       const apiPromoted = toPromotedBoolean(promotedFilterRef.current);
       setCurrentPage(1);
       void fetchListings(1, false, 20, apiStatus, apiPromoted, q || undefined).then(() => {
-        void refetchAllForCount();
+        void refetchStatusCounts();
       });
     }, 400);
     return () => clearTimeout(timer);
-  }, [searchQuery, isAuthorized, fetchListings, refetchAllForCount]);
+  }, [searchQuery, isAuthorized, fetchListings, refetchStatusCounts]);
 
   useEffect(() => {
     if (!isAuthorized || !user) return;
     const shouldRefresh = sessionStorageGetItem('refreshMyListings');
     if (shouldRefresh === 'true') {
       sessionStorageRemoveItem('refreshMyListings');
-      hasLoadedRef.current = false;
+      hasLoadedRef.current = true;
+      void fetchListings(1, false);
+      void refetchStatusCounts();
+      void refetchHasActiveListingsOverall();
+      void refetchHasAnyListingsOverall();
+      return;
     }
     if (!hasLoadedRef.current) {
       hasLoadedRef.current = true;
       void fetchListings(1, false);
-      void refetchAllForCount();
+      void refetchStatusCounts();
       void refetchHasActiveListingsOverall();
+      void refetchHasAnyListingsOverall();
     }
-  }, [user, isAuthorized, fetchListings, refetchAllForCount, refetchHasActiveListingsOverall]);
+  }, [
+    user,
+    isAuthorized,
+    fetchListings,
+    refetchStatusCounts,
+    refetchHasActiveListingsOverall,
+    refetchHasAnyListingsOverall,
+  ]);
 
   useEffect(() => {
     const check = () => {
       if (sessionStorageGetItem('refreshMyListings') === 'true' && user) {
         sessionStorageRemoveItem('refreshMyListings');
-        hasLoadedRef.current = false;
+        hasLoadedRef.current = true;
         void fetchListings(1, false);
-        void refetchAllForCount();
+        void refetchStatusCounts();
         void refetchHasActiveListingsOverall();
       }
     };
@@ -320,14 +347,21 @@ export function useMyListingsPage() {
       window.removeEventListener('focus', check);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [user, fetchListings, refetchAllForCount, refetchHasActiveListingsOverall]);
+  }, [
+    user,
+    fetchListings,
+    refetchStatusCounts,
+    refetchHasActiveListingsOverall,
+    refetchHasAnyListingsOverall,
+  ]);
 
   useCrossTabMyListingsRefetch({
     user,
     hasLoadedRef,
     fetchListings,
-    refetchAllForCount,
+    refetchStatusCounts,
     refetchHasActiveListingsOverall,
+    refetchHasAnyListingsOverall,
     statusFilter,
     promotedFilter,
     searchQuery,
@@ -460,7 +494,14 @@ export function useMyListingsPage() {
     );
   }, [fetchListings, promotedFilter, statusFilter, searchQuery]);
 
-  const statusCounts = useMemo(() => getStatusCounts(allListingsForCount), [allListingsForCount]);
+  const filterStatusCounts = useMemo(
+    () => ({
+      Active: statusCounts.Active,
+      Paused: statusCounts.Paused,
+      Closed: statusCounts.Closed,
+    }),
+    [statusCounts],
+  );
 
   const isLoadingContent = !initialListingsLoadDone && (loading || !hasLoadedRef.current);
   const { visible: showSkeleton } = useLoadingState({
@@ -479,8 +520,9 @@ export function useMyListingsPage() {
     showSkeleton,
     listingsRefreshing,
     statusFilter,
-    statusCounts,
-    allListingsForCount,
+    statusCounts: filterStatusCounts,
+    promotedCount: statusCounts.Promoted,
+    hasAnyListingsOverall,
     meta,
     currentPage,
     loadingMore,

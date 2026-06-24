@@ -81,7 +81,8 @@ export function SignPageContent() {
     locale,
   });
   const login = useLoginPage({
-    suppressSignedInReturnNavigation: googleAuth.isGoogleBusy || telegramAuth.isTelegramBusy,
+    suppressSignedInReturnNavigation:
+      googleAuth.isGoogleBusy || telegramAuth.isTelegramBusy || registerPage.loading,
   });
 
   const isAlreadySignedInRedirecting =

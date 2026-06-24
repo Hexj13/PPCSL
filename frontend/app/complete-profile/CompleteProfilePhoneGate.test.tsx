@@ -5,6 +5,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
+import { saveOAuthPhoneRequiredContext } from '@/lib/oauth-phone-required-context';
 import {
   getOverlayHistoryStackSizeForTests,
   resetOverlayHistoryForTests,
@@ -14,13 +15,29 @@ import {
 import { CompleteProfilePhoneGate } from './CompleteProfilePhoneGate';
 
 const mockReplace = jest.fn();
+const mockRouterReplace = jest.fn();
 const mockLogout = jest.fn();
 const mockDeleteAccount = jest.fn().mockResolvedValue({ data: { success: true } });
 let searchParamsValue = 'mode=phone_required';
+let mockUser = {
+  id: 'user-1',
+  email: 'user@example.com',
+  type: 'Individual' as const,
+  phoneVerified: false,
+  hasPassword: false,
+};
 
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: mockReplace, push: jest.fn() }),
+  useRouter: () => ({ replace: mockRouterReplace, push: jest.fn() }),
   useSearchParams: () => new URLSearchParams(searchParamsValue),
+}));
+
+jest.mock('@/hooks/useLocalizedNavigation', () => ({
+  useLocalizedNavigation: () => ({
+    replace: mockReplace,
+    push: jest.fn(),
+    href: (path: string) => path,
+  }),
 }));
 
 jest.mock('@/hooks/useTranslation', () => ({
@@ -42,13 +59,7 @@ jest.mock('@/lib/api', () => ({
 
 jest.mock('@/lib/store', () => ({
   useAuthStore: () => ({
-    user: {
-      id: 'user-1',
-      email: 'user@example.com',
-      type: 'Individual',
-      phoneVerified: false,
-      hasPassword: false,
-    },
+    user: mockUser,
     logout: mockLogout,
   }),
 }));
@@ -59,6 +70,13 @@ describe('CompleteProfilePhoneGate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     searchParamsValue = 'mode=phone_required';
+    mockUser = {
+      id: 'user-1',
+      email: 'user@example.com',
+      type: 'Individual',
+      phoneVerified: false,
+      hasPassword: false,
+    };
     sessionStorage.clear();
     resetOverlayHistoryForTests();
     historyBack = jest.fn();
@@ -89,7 +107,7 @@ describe('CompleteProfilePhoneGate', () => {
     await waitFor(() => {
       expect(mockLogout).toHaveBeenCalledTimes(1);
     });
-    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('/sign'));
+    expect(mockRouterReplace).toHaveBeenCalledWith(expect.stringContaining('/sign'));
     expect(historyBack).not.toHaveBeenCalled();
   });
 
@@ -101,7 +119,7 @@ describe('CompleteProfilePhoneGate', () => {
     await waitFor(() => {
       expect(mockLogout).toHaveBeenCalledTimes(1);
     });
-    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('/sign'));
+    expect(mockRouterReplace).toHaveBeenCalledWith(expect.stringContaining('/sign'));
     expect(historyBack).not.toHaveBeenCalled();
   });
 
@@ -123,8 +141,23 @@ describe('CompleteProfilePhoneGate', () => {
     expect(mockDeleteAccount).not.toHaveBeenCalled();
   });
 
-  it('deletes the half-created account when the signup source is present', async () => {
+  it('does not delete the account when only the signup source query is present', async () => {
     searchParamsValue = 'mode=phone_required&source=telegram_register';
+    render(<CompleteProfilePhoneGate />);
+
+    await act(async () => {
+      triggerOverlayPopStateForTests();
+    });
+
+    await waitFor(() => {
+      expect(mockLogout).toHaveBeenCalledTimes(1);
+    });
+    expect(mockDeleteAccount).not.toHaveBeenCalled();
+  });
+
+  it('deletes the half-created account when the signup context is present', async () => {
+    searchParamsValue = 'mode=phone_required&source=telegram_register';
+    saveOAuthPhoneRequiredContext({ source: 'telegram_register' });
     render(<CompleteProfilePhoneGate />);
 
     await act(async () => {
@@ -135,5 +168,57 @@ describe('CompleteProfilePhoneGate', () => {
       expect(mockDeleteAccount).toHaveBeenCalledTimes(1);
     });
     expect(mockLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it('redirects OAuth signup users with verified phone to complete-profile', async () => {
+    searchParamsValue = 'mode=phone_required&source=google_register&returnUrl=%2Ffavorites';
+    mockUser = {
+      id: 'user-1',
+      email: 'user@example.com',
+      type: 'Individual',
+      phoneVerified: true,
+      hasPassword: false,
+    };
+    saveOAuthPhoneRequiredContext({ source: 'google_register' });
+
+    render(<CompleteProfilePhoneGate />);
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/complete-profile?returnUrl=%2Ffavorites');
+    });
+  });
+
+  it('redirects OAuth signup users with verified phone from session context to complete-profile', async () => {
+    searchParamsValue = 'mode=phone_required&returnUrl=%2Ffavorites';
+    mockUser = {
+      id: 'user-1',
+      email: 'user@example.com',
+      type: 'Individual',
+      phoneVerified: true,
+      hasPassword: false,
+    };
+    saveOAuthPhoneRequiredContext({ source: 'google_register' });
+
+    render(<CompleteProfilePhoneGate />);
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/complete-profile?returnUrl=%2Ffavorites');
+    });
+  });
+
+  it('redirects existing users with verified phone to home when returnUrl is absent', async () => {
+    mockUser = {
+      id: 'user-1',
+      email: 'user@example.com',
+      type: 'Individual',
+      phoneVerified: true,
+      hasPassword: true,
+    };
+
+    render(<CompleteProfilePhoneGate />);
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/');
+    });
   });
 });

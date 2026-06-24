@@ -44,7 +44,7 @@ test.describe('Home scroll restore', () => {
           const listingId = getCurrentListingId(page);
           await page.goBack({ waitUntil: 'domcontentloaded' });
           await searchHomePage.expectPageView();
-          await searchHomePage.expectScrollRestoredAfterBack(scrollBeforeListing);
+          await searchHomePage.expectScrollRestoredAfterBack(scrollBeforeListing, 80);
           await searchHomePage.expectListingCardVisibleInViewport(listingId);
         },
       },

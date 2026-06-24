@@ -5,6 +5,16 @@ import type { BodyType } from '@/lib/types';
 
 import type { ListingFormData } from './listingFormTypes';
 
+const CREATE_ONLY_LISTING_FIELDS = ['status', 'assignedUserId', 'stagedVideoToken'] as const;
+
+export function stripCreateOnlyListingFields(payload: CreateListingDto): UpdateListingDto {
+  const updatePayload = { ...payload } as UpdateListingDto & Record<string, unknown>;
+  for (const field of CREATE_ONLY_LISTING_FIELDS) {
+    delete updatePayload[field];
+  }
+  return updatePayload;
+}
+
 export function applyEditNullables(
   payload: CreateListingDto,
   formData: ListingFormData,
@@ -30,7 +40,7 @@ export function applyEditNullables(
   }
   if (!formData.available_in_credit || formData.down_payment_amount.trim() === '')
     updatePayload.down_payment_amount = null;
-  return updatePayload;
+  return stripCreateOnlyListingFields(updatePayload as CreateListingDto);
 }
 
 export function getFilledFields(formData: ListingFormData): Record<string, boolean> {

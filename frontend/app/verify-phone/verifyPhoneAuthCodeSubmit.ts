@@ -4,7 +4,10 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { User } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { localStorageGetItem, localStorageRemoveItem } from '@/lib/browser-local-storage';
-import { sanitizeReturnUrl } from '@/lib/return-url';
+import {
+  buildBusinessOnboardingHref,
+  buildStandardCompleteProfileHref,
+} from '@/lib/complete-profile-navigation';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { clearVerifyPhoneContext } from '@/lib/verify-phone-context';
 
@@ -59,15 +62,9 @@ export async function submitVerifyPhoneWithAuthCode(params: {
       await completeRegistrationAndGoToProfile(flag === '1', returnUrl, navigate);
     } else {
       if (selectedType === 'Business') {
-        const qs = new URLSearchParams();
-        qs.set('mode', 'business_onboarding');
-        if (returnUrl) {
-          qs.set('returnUrl', returnUrl);
-        }
-        navigate(`/complete-profile?${qs.toString()}`);
+        navigate(buildBusinessOnboardingHref(returnUrl));
       } else {
-        const target = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
-        navigate(target ?? '/');
+        navigate(buildStandardCompleteProfileHref(returnUrl));
       }
     }
   } catch (err: unknown) {

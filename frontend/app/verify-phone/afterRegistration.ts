@@ -4,6 +4,7 @@ import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
+import { buildStandardCompleteProfileHref } from '@/lib/complete-profile-navigation';
 import { clearPendingRegistration } from '@/lib/pending-registration';
 import { sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
@@ -31,10 +32,5 @@ export async function completeRegistrationAndGoToProfile(
   const me = await authApi.me();
   const syncedUser = await syncPartnerPromoDismissAfterAuth(me.data);
   useAuthStore.getState().setAuth(syncedUser);
-  const safeReturnUrl = sanitizeReturnUrl(returnUrlFromQuery);
-  if (safeReturnUrl) {
-    navigate(`/complete-profile?returnUrl=${encodeURIComponent(safeReturnUrl)}`);
-    return;
-  }
-  navigate('/complete-profile');
+  navigate(buildStandardCompleteProfileHref(sanitizeReturnUrl(returnUrlFromQuery)));
 }

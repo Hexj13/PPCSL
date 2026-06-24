@@ -105,10 +105,10 @@ describe('submitVerifyPhoneWithAuthCode', () => {
       toastError: jest.fn(),
     });
 
-    expect(navigate).toHaveBeenCalledWith('/favorites');
+    expect(navigate).toHaveBeenCalledWith('/complete-profile?returnUrl=%2Ffavorites');
   });
 
-  it('navigates to home after SMS for Individual without returnUrl', async () => {
+  it('navigates to complete-profile after SMS for Individual without returnUrl', async () => {
     await submitVerifyPhoneWithAuthCode({
       code: '123456',
       mode: 'complete-profile',
@@ -128,7 +128,7 @@ describe('submitVerifyPhoneWithAuthCode', () => {
       toastError: jest.fn(),
     });
 
-    expect(navigate).toHaveBeenCalledWith('/');
+    expect(navigate).toHaveBeenCalledWith('/complete-profile');
   });
 
   it('does not navigate when SMS verification is blocked by max attempts', async () => {

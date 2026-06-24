@@ -201,9 +201,10 @@ function MyListingsModals({
 function MyListingsListSection({
   t,
   listings,
-  allListingsForCount,
+  hasAnyListingsOverall,
   statusFilter,
   statusCounts,
+  promotedCount,
   promotedFilter,
   searchQuery,
   meta,
@@ -220,9 +221,10 @@ function MyListingsListSection({
   ContentProps,
   | 't'
   | 'listings'
-  | 'allListingsForCount'
+  | 'hasAnyListingsOverall'
   | 'statusFilter'
   | 'statusCounts'
+  | 'promotedCount'
   | 'promotedFilter'
   | 'searchQuery'
   | 'meta'
@@ -236,11 +238,10 @@ function MyListingsListSection({
   | 'handleLoadMore'
   | 'handlePromoteClick'
 >) {
-  const hasAnyListings = allListingsForCount.length > 0 || listings.length > 0;
+  const hasAnyListings = hasAnyListingsOverall || listings.length > 0;
   const hasActiveFilters =
     searchQuery.trim().length > 0 || statusFilter !== 'All' || promotedFilter !== 'All';
   const showFilters = hasAnyListings || hasActiveFilters;
-  const promotedCount = allListingsForCount.filter((l) => l.is_promoted === true).length;
   const emptyMessage = getMyListingsEmptyMessage(t, searchQuery, statusFilter, promotedFilter);
   const hasListings = listings.length > 0;
   const showLoadMore =
@@ -310,7 +311,8 @@ function MyListingsContent(props: ContentProps) {
     listings,
     statusFilter,
     statusCounts,
-    allListingsForCount,
+    promotedCount,
+    hasAnyListingsOverall,
     meta,
     currentPage,
     loadingMore,
@@ -355,6 +357,7 @@ function MyListingsContent(props: ContentProps) {
   const showBoardLink = Boolean(user?.boardSlug);
   const showPromotionHistory = (hasPromotionHistory || promotionAccess?.isPartner) && canPromote;
   const showCreateLink = !hasActiveListingsOverall;
+  const showSearch = hasAnyListingsOverall || searchQuery.trim().length > 0;
   const refreshButtonRef = useRef<HTMLButtonElement | null>(null);
   const [refreshButtonMinWidth, setRefreshButtonMinWidth] = useState<number | null>(null);
   const refreshButtonLockKey = `${isRefreshing}-${Boolean(timeUntilRefresh && timeUntilRefresh > 0)}-${hasActiveListingsOverall}`;
@@ -511,22 +514,25 @@ function MyListingsContent(props: ContentProps) {
         </div>
       </div>
       <div className="min-w-0 relative border-t border-primary-500/20 pt-4">
-        <div className="mb-4">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('myListings.searchByBrandModelPlaceholder')}
-            className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
-          />
-        </div>
+        {showSearch && (
+          <div className="mb-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('myListings.searchByBrandModelPlaceholder')}
+              className="w-full px-4 py-2.5 md:py-3 rounded-lg bg-bg-secondary border-2 border-primary-700 text-text-primary placeholder:text-text-secondary focus:outline-hidden focus:border-primary-900 transition-all duration-200 h-[48px] md:h-[52px] text-sm md:text-base"
+            />
+          </div>
+        )}
 
         <MyListingsListSection
           t={t}
           listings={listings}
-          allListingsForCount={allListingsForCount}
+          hasAnyListingsOverall={hasAnyListingsOverall}
           statusFilter={statusFilter}
           statusCounts={statusCounts}
+          promotedCount={promotedCount}
           promotedFilter={promotedFilter}
           searchQuery={searchQuery}
           meta={meta}

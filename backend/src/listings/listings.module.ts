@@ -39,6 +39,7 @@ import { GetListingUseCase } from './application/use-cases/get-listing.use-case'
 import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion-access.use-case';
 import { GetPromotionHistoryUseCase } from './application/use-cases/get-promotion-history.use-case';
 import { GetReportUrlUseCase } from './application/use-cases/get-report-url.use-case';
+import { GetUserListingsStatusCountsUseCase } from './application/use-cases/get-user-listings-status-counts.use-case';
 import { GetUserListingsUseCase } from './application/use-cases/get-user-listings.use-case';
 import { HasPromotionHistoryUseCase } from './application/use-cases/has-promotion-history.use-case';
 import { PauseListingUseCase } from './application/use-cases/pause-listing.use-case';
@@ -132,6 +133,7 @@ import { MediaConvertService } from './video/mediaconvert.service';
     GetListingUseCase,
     UpdateListingUseCase,
     GetUserListingsUseCase,
+    GetUserListingsStatusCountsUseCase,
     GetActiveUserListingsUseCase,
     GetActiveUserListingsCountUseCase,
     GetBoardListingsUseCase,

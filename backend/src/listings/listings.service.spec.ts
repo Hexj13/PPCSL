@@ -33,6 +33,7 @@ import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion
 import { GetReportUrlUseCase } from './application/use-cases/get-report-url.use-case';
 import { GetAdminPromotionsUseCase } from './application/use-cases/get-admin-promotions.use-case';
 import { GetPromotionHistoryUseCase } from './application/use-cases/get-promotion-history.use-case';
+import { GetUserListingsStatusCountsUseCase } from './application/use-cases/get-user-listings-status-counts.use-case';
 import { GetUserListingsUseCase } from './application/use-cases/get-user-listings.use-case';
 import { HasPromotionHistoryUseCase } from './application/use-cases/has-promotion-history.use-case';
 import { PauseListingUseCase } from './application/use-cases/pause-listing.use-case';
@@ -103,6 +104,7 @@ describe('ListingsService', () => {
   let mockTogglePromotionUseCase: { execute: jest.Mock };
   let mockFindSimilarUseCase: { execute: jest.Mock };
   let mockGetUserListingsUseCase: { execute: jest.Mock };
+  let mockGetUserListingsStatusCountsUseCase: { execute: jest.Mock };
   let mockGetActiveUserListingsUseCase: { execute: jest.Mock };
   let mockGetActiveUserListingsCountUseCase: { execute: jest.Mock };
   let mockGetBoardListingsUseCase: { execute: jest.Mock };
@@ -232,6 +234,7 @@ describe('ListingsService', () => {
     mockTogglePromotionUseCase = { execute: jest.fn() };
     mockFindSimilarUseCase = { execute: jest.fn().mockResolvedValue([]) };
     mockGetUserListingsUseCase = { execute: jest.fn() };
+    mockGetUserListingsStatusCountsUseCase = { execute: jest.fn() };
     mockGetActiveUserListingsUseCase = { execute: jest.fn() };
     mockGetActiveUserListingsCountUseCase = { execute: jest.fn() };
     mockGetBoardListingsUseCase = { execute: jest.fn() };
@@ -289,6 +292,10 @@ describe('ListingsService', () => {
         { provide: TogglePromotionUseCase, useValue: mockTogglePromotionUseCase },
         { provide: FindSimilarUseCase, useValue: mockFindSimilarUseCase },
         { provide: GetUserListingsUseCase, useValue: mockGetUserListingsUseCase },
+        {
+          provide: GetUserListingsStatusCountsUseCase,
+          useValue: mockGetUserListingsStatusCountsUseCase,
+        },
         { provide: GetActiveUserListingsUseCase, useValue: mockGetActiveUserListingsUseCase },
         {
           provide: GetActiveUserListingsCountUseCase,
@@ -384,6 +391,18 @@ describe('ListingsService', () => {
 
       expect(result).toBe(3);
       expect(mockListingRepo.countActiveByUser).toHaveBeenCalledWith('user-1');
+    });
+  });
+
+  describe('getUserListingsStatusCounts', () => {
+    it('should delegate to use case', async () => {
+      const mockCounts = { Active: 4, Paused: 2, Closed: 1, Promoted: 1 };
+      mockGetUserListingsStatusCountsUseCase.execute.mockResolvedValue(mockCounts);
+
+      const result = await service.getUserListingsStatusCounts('user-1', 'bmw');
+
+      expect(mockGetUserListingsStatusCountsUseCase.execute).toHaveBeenCalledWith('user-1', 'bmw');
+      expect(result).toEqual(mockCounts);
     });
   });
 

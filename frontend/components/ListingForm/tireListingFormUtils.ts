@@ -10,6 +10,7 @@ import type { Currency } from '@/lib/types';
 import { ListingStatusEnum } from '@/lib/types';
 import { getCountry } from '@/lib/utils';
 
+import { stripCreateOnlyListingFields } from './submitHelpers';
 import { TIRE_SPEED_INDEX_OPTS } from './tireListingFormConstants';
 import type { TireListingFormData } from './tireListingFormTypes';
 
@@ -169,7 +170,7 @@ export function buildTireUpdatePayload(formData: TireListingFormData): UpdateLis
   };
   if (!formData.description_ro.trim()) update.description_ro = null;
   if (!formData.description_ru.trim()) update.description_ru = null;
-  return update;
+  return stripCreateOnlyListingFields(update as CreateListingDto);
 }
 
 export function getTireFilledFields(formData: TireListingFormData): Record<string, boolean> {

@@ -1183,6 +1183,14 @@ export class ListingVideoService {
       if (key.toLowerCase().endsWith('.jpg') || key.toLowerCase().endsWith('.jpeg')) jpgKey = key;
     }
 
+    if (!mp4Key && listing.video?.outputPrefix) {
+      const expectedMp4Key = `${listing.video.outputPrefix.replace(/\/$/, '')}/source_mp4.mp4`;
+      const expectedSize = await this.uploadService.headObjectContentLength(expectedMp4Key);
+      if (expectedSize !== null) {
+        mp4Key = expectedMp4Key;
+      }
+    }
+
     if (!mp4Key) {
       listing.video = {
         ...(listing.video || { status: 'failed' }),

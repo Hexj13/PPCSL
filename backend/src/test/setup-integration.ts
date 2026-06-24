@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, INestApplication, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
@@ -39,8 +39,21 @@ export async function createTestApp(): Promise<INestApplication> {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: false,
+      forbidNonWhitelisted: true,
       transform: true,
+      exceptionFactory: (errors) => {
+        const messages = errors.map((error) => {
+          const constraints = Object.values(error.constraints || {});
+          return constraints
+            .map((c) =>
+              c.startsWith('validation.') || c.startsWith('errors.')
+                ? c
+                : 'errors.validationFailed',
+            )
+            .join('; ');
+        });
+        return new BadRequestException(messages.join('; '));
+      },
     }),
   );
 

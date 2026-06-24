@@ -391,11 +391,12 @@ Refresh tokens rotate on each successful refresh (the previous refresh token is 
 GET    /api/listings                  # List listings (with filters); embedded `user.phone` / `user.additionalPhone` are last-three-digits masked for public payloads (same rules as single listing when contact fields are present)
 GET    /api/listings/:id              # Get listing details (supports includeFullVin=1 for Admin). Non-owner/non-admin: masked 17-char VIN; seller phones last-three-digits masked
 POST   /api/listings                  # Create listing
-PATCH  /api/listings/:id              # Update listing (owner: non-closed only; Admin can edit any status)
+PATCH  /api/listings/:id              # Update listing (owner: non-closed only; Admin can edit any status; create-only fields such as status, assignedUserId, stagedVideoToken are not accepted)
 POST   /api/listings/:id/publish      # Activate listing
 POST   /api/listings/:id/pause        # Pause listing
 POST   /api/listings/:id/close        # Close listing
 GET    /api/listings/my               # Get user's listings; query: page, limit, status (Active|Paused|Closed), promoted (true|false), search (brand/model text); meta: last_listing_refresh_at, refreshCooldownMs for 48h timer
+GET    /api/listings/my/status-counts # Get current user's listing counts; query: search (brand/model text); returns Active, Paused, Closed, Promoted
 GET    /api/listings/vin/:vin         # Find listings by VIN
 GET    /api/listings/:id/vin          # Get full VIN (JWT required; up to 20 different listings per rolling hour per user in Redis; repeat same listing in the hour does not consume quota; query action=reveal|copy)
 GET    /api/listings/:id/phones       # Full seller phone numbers (optional JWT). Anonymous: visitor id sha256(ip|user-agent); up to 5 different listings/hour. Authenticated: up to 20 different listings/hour. Listing owner and Admin skip rate limits. One call returns both numbers; repeat same listing in the hour does not consume quota

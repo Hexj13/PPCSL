@@ -20,7 +20,6 @@ export interface ListingActionsConfig {
 
 export interface ListingActionsCallbacks {
   setListings: React.Dispatch<React.SetStateAction<Listing[]>>;
-  setAllListingsForCount: React.Dispatch<React.SetStateAction<Listing[]>>;
   listingsRef: React.MutableRefObject<Listing[]>;
   fetchListings: (
     _page: number,
@@ -30,7 +29,7 @@ export interface ListingActionsCallbacks {
     _promoted?: boolean,
     _search?: string,
   ) => Promise<void>;
-  refetchAllForCount: () => Promise<void>;
+  refetchStatusCounts: () => Promise<void>;
 }
 
 export function useListingActions(
@@ -47,8 +46,7 @@ export function useListingActions(
     promotedFilter,
     searchQuery,
   } = config;
-  const { setListings, setAllListingsForCount, listingsRef, fetchListings, refetchAllForCount } =
-    callbacks;
+  const { setListings, listingsRef, fetchListings, refetchStatusCounts } = callbacks;
 
   const updateListingInState = useCallback(
     (id: string, patch: Partial<Listing>) => {
@@ -59,16 +57,9 @@ export function useListingActions(
         listingsRef.current = updated;
         return updated;
       });
-      setAllListingsForCount((prevAll) => {
-        const found = prevAll.find((l) => l.id === id);
-        if (found) {
-          return prevAll.map((listing) => (listing.id === id ? { ...listing, ...patch } : listing));
-        }
-        void refetchAllForCount();
-        return prevAll;
-      });
+      void refetchStatusCounts();
     },
-    [setListings, setAllListingsForCount, listingsRef, refetchAllForCount],
+    [setListings, listingsRef, refetchStatusCounts],
   );
 
   const replaceListingInState = useCallback(
@@ -78,16 +69,9 @@ export function useListingActions(
         listingsRef.current = updated;
         return updated;
       });
-      setAllListingsForCount((prevAll) => {
-        const found = prevAll.find((l) => l.id === id);
-        if (found) {
-          return prevAll.map((l) => (l.id === id ? listing : l));
-        }
-        void refetchAllForCount();
-        return prevAll;
-      });
+      void refetchStatusCounts();
     },
-    [setListings, setAllListingsForCount, listingsRef, refetchAllForCount],
+    [setListings, listingsRef, refetchStatusCounts],
   );
 
   const publishListing = useCallback(
@@ -192,7 +176,7 @@ export function useListingActions(
       localStorageSetItem(`lastRefreshDate_${userId}`, Date.now().toString());
       if (refreshCooldownMs > 0) setTimeUntilRefresh(refreshCooldownMs);
       await fetchListings(1, false, 20, apiStatus, apiPromoted, searchQuery);
-      void refetchAllForCount();
+      void refetchStatusCounts();
     } catch (error: unknown) {
       const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 400) {
@@ -210,7 +194,7 @@ export function useListingActions(
     refreshCooldownMs,
     setTimeUntilRefresh,
     fetchListings,
-    refetchAllForCount,
+    refetchStatusCounts,
     t,
   ]);
 
@@ -229,7 +213,7 @@ export function useListingActions(
         await listingsApi.togglePromotion(id, isPromoted, days, source);
         toast.success(t('listings.promotionEnabled'));
         await fetchListings(1, false, 20, apiStatus, apiPromoted, searchQuery);
-        void refetchAllForCount();
+        void refetchStatusCounts();
       } catch (error: unknown) {
         const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
         const backendMessage = axiosError.response?.data?.message;
@@ -242,7 +226,7 @@ export function useListingActions(
         }
       }
     },
-    [fetchListings, refetchAllForCount, statusFilter, promotedFilter, searchQuery, t],
+    [fetchListings, refetchStatusCounts, statusFilter, promotedFilter, searchQuery, t],
   );
 
   const formatTimeRemaining = useCallback((ms: number): string => {

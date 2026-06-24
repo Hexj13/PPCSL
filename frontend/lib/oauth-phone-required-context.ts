@@ -39,15 +39,12 @@ export function shouldShowOAuthPhoneRequiredCancel(
   urlSource: string | null,
   user: Pick<User, 'hasPassword' | 'phoneVerified'> | null | undefined,
 ): boolean {
-  if (isOAuthPhoneRequiredSignupFlow(urlSource)) {
+  if (isOAuthSignupSource(urlSource) || isOAuthPhoneRequiredSignupFlow()) {
     return true;
   }
   return user?.phoneVerified === false && user.hasPassword !== true;
 }
 
-export function isOAuthPhoneRequiredSignupFlow(urlSource: string | null): boolean {
-  if (isOAuthSignupSource(urlSource)) {
-    return true;
-  }
+export function isOAuthPhoneRequiredSignupFlow(): boolean {
   return isOAuthSignupSource(loadOAuthPhoneRequiredContext()?.source ?? null);
 }

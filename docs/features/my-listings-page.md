@@ -13,13 +13,13 @@ tags:
 ## Data sources
 
 - **Visible list + pagination**: `GET /api/listings/my` with `status`, optional `promoted`, `search`, `page`, `limit`. Implemented in `useMyListingsPage` → `fetchListings`.
-- **Badge counts** (Active / Paused / Closed and promoted count on the filter row): separate bulk fetch `getMy(1, 1000, …)` with **no** `status` and **no** `promoted`, only the current **search** query. Same dataset drives `statusCounts` and `promotedCount` in UI so toggling “Promoted” on the list does not change other badges.
+- **Badge counts** (Active / Paused / Closed and promoted count on the filter row): `GET /api/listings/my/status-counts` with optional current `search`. It returns `Active`, `Paused`, `Closed`, and `Promoted`; status and promoted filters on the visible list do not change badge counts.
 - **Top actions** (e.g. refresh listing dates button): availability uses **`hasActiveListingsOverall`** — whether the user has any **Active** listing in the account (`getMy(1, 1, 'Active')`), not the filtered list.
 
 ## Filters vs listing actions
 
 - Filters and search affect **listing feed only**.
-- Card actions (publish / pause / close / promote) use shared hooks; optimistic patches update both the visible list and the badge bulk dataset when the listing is present there.
+- Card actions (publish / pause / close / promote) use shared hooks; optimistic patches update the visible list and refetch status counts after listing state changes.
 
 ## Loading UX
 
@@ -28,4 +28,4 @@ tags:
 
 ## Limits
 
-- Badge aggregation loads up to **1000** rows for the current search. Users with more matches may see approximate badge totals until a dedicated counts API exists.
+- Badge counts are exact for the current search because aggregation is server-side and no longer limited to the first 1000 listings.

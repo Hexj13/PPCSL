@@ -7,6 +7,10 @@ import {
   applyComparisonAfterAuth,
   holdComparisonApiLoadUntilReleased,
 } from '@/lib/comparisonMigration';
+import {
+  buildCompleteProfileHref,
+  buildStandardCompleteProfileHref,
+} from '@/lib/complete-profile-navigation';
 import { getClientLocale } from '@/lib/i18n';
 import { saveOAuthPhoneRequiredContext } from '@/lib/oauth-phone-required-context';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
@@ -57,23 +61,28 @@ export async function finishOAuthSession({
 
   if (requiresPhoneVerification) {
     const safeReturn = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
-    const phoneQs = new URLSearchParams();
-    phoneQs.set('mode', 'phone_required');
+    const extraParams: Record<string, string> = {};
     if (isNewUser) {
-      phoneQs.set('source', phoneRequiredSource);
-      phoneQs.set('selectedType', preferredNewUserType ?? postAuthUser.type ?? 'Individual');
+      extraParams.source = phoneRequiredSource;
+      extraParams.selectedType = preferredNewUserType ?? postAuthUser.type ?? 'Individual';
       saveOAuthPhoneRequiredContext({ source: phoneRequiredSource });
     }
-    if (safeReturn) {
-      phoneQs.set('returnUrl', buildPostAuthRedirect(safeReturn, locale));
-    }
-    const path = `/complete-profile?${phoneQs.toString()}`;
+    const path = buildCompleteProfileHref({
+      mode: 'phone_required',
+      returnUrl: safeReturn ? buildPostAuthRedirect(safeReturn, locale) : null,
+      extraParams: Object.keys(extraParams).length > 0 ? extraParams : undefined,
+    });
     await waitForAuthSubmitLoaderMinDisplay(submitStartedAt);
     replace(buildPostAuthRedirect(path, locale));
     return;
   }
 
   await waitForAuthSubmitLoaderMinDisplay(submitStartedAt);
+  if (isNewUser) {
+    const safeReturn = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
+    replace(buildPostAuthRedirect(buildStandardCompleteProfileHref(safeReturn), locale));
+    return;
+  }
   const filterHandled = await processPendingSavedFilter(t, returnUrl, replace);
   if (filterHandled) return;
   const dest = (returnUrl ? sanitizeReturnUrl(returnUrl) : null) ?? '/';

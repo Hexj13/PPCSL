@@ -37,17 +37,17 @@ describe('oauth-phone-required-context', () => {
   });
 
   describe('isOAuthPhoneRequiredSignupFlow', () => {
-    it('detects an active signup flow from the URL source', () => {
-      expect(isOAuthPhoneRequiredSignupFlow('telegram_register')).toBe(true);
+    it('does not trust an active signup flow from the URL source', () => {
+      expect(isOAuthPhoneRequiredSignupFlow()).toBe(false);
     });
 
     it('detects an active signup flow from the stored session context', () => {
       saveOAuthPhoneRequiredContext({ source: 'google_register' });
-      expect(isOAuthPhoneRequiredSignupFlow(null)).toBe(true);
+      expect(isOAuthPhoneRequiredSignupFlow()).toBe(true);
     });
 
     it('returns false when there is no positive signup signal', () => {
-      expect(isOAuthPhoneRequiredSignupFlow(null)).toBe(false);
+      expect(isOAuthPhoneRequiredSignupFlow()).toBe(false);
     });
   });
 });

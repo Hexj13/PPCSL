@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
+import { createRandomListingPrice } from '../test-data/listings';
 import { expectLoggedOut, loginByUi } from '../utils/auth';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
 import { LISTING_PHOTO_FILES } from '../utils/listing-flow';
@@ -120,6 +121,52 @@ test.describe('My listings @p0', () => {
         action: async () => {
           await myListingsPage.openFirstEditForm();
           await listingCreatePage.expectEditFormPopulated();
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
+  test('saves listing edit changes from my listings card', async ({
+    page,
+    myListingsPage,
+    listingCreatePage,
+  }) => {
+    test.setTimeout(120_000);
+    const steps: E2EStep[] = [
+      {
+        name: 'Login and open my listings page',
+        action: async () => {
+          await loginAndOpenMyListings(page);
+          await myListingsPage.expectPageView();
+        },
+      },
+      {
+        name: 'Ensure at least one editable listing exists',
+        action: async () => {
+          if (await myListingsPage.hasEditableListing()) {
+            return;
+          }
+          await createListingForEditFlow(page, listingCreatePage);
+          await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
+          await myListingsPage.expectPageView();
+          await expect(myListingsPage.editLinks.first()).toBeVisible({ timeout: 30_000 });
+        },
+      },
+      {
+        name: 'Open edit form from my listings card',
+        action: async () => {
+          await myListingsPage.openFirstEditForm();
+          await listingCreatePage.expectEditFormPopulated();
+        },
+      },
+      {
+        name: 'Update price and save listing changes',
+        action: async () => {
+          await listingCreatePage.updateEditPrice(createRandomListingPrice());
+          await listingCreatePage.submitEditForm();
+          await expect(page).toHaveURL(/\/my-listings/, { timeout: 30_000 });
         },
       },
     ];
