@@ -21,7 +21,6 @@ export function FooterAbout() {
   return (
     <div className="flex flex-col items-start gap-4 sm:col-span-2 lg:max-w-xs lg:shrink-0">
       <PWAInstallButtonGray fullWidth />
-      <FooterSocialLinks socialLinks={siteConfig.socialLinks} />
       <p className="text-sm leading-relaxed text-white/80" suppressHydrationWarning>
         {t('footer.about')}
       </p>
@@ -38,6 +37,7 @@ export function FooterAbout() {
           className="h-9 w-auto brightness-0 invert"
         />
       </Link>
+      <FooterSocialLinks socialLinks={siteConfig.socialLinks} />
     </div>
   );
 }
