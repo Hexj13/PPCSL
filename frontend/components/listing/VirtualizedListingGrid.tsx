@@ -122,6 +122,7 @@ function VirtualizedListingGridContent({
         swapMetrics.rowHeights[index],
         getVirtualRowEstimateSize(rows[index], columns),
       ),
+    gap: LISTING_GRID_ROW_GAP_PX,
     overscan: 4,
     scrollMargin,
     getItemKey: (index) => {
@@ -145,6 +146,9 @@ function VirtualizedListingGridContent({
 
   const gridColsClass = GRID_COLS_CLASS[columns] ?? 'grid-cols-1';
 
+  const virtualRows = virtualizer.getVirtualItems();
+  const windowOffset = (virtualRows[0]?.start ?? 0) - virtualizer.options.scrollMargin;
+
   return (
     <>
       <ListingGridCriticalStyles />
@@ -152,7 +156,6 @@ function VirtualizedListingGridContent({
         id="listings-results"
         ref={parentRef}
         className="relative w-full"
-        style={{ marginBottom: -LISTING_GRID_ROW_GAP_PX }}
         data-testid="listings-results-grid"
       >
         <div
@@ -163,43 +166,52 @@ function VirtualizedListingGridContent({
             overflowAnchor: 'none',
           }}
         >
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const row = rows[virtualRow.index];
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: `translateY(${windowOffset}px)`,
+              display: 'flex',
+              flexDirection: 'column',
+              rowGap: `${LISTING_GRID_ROW_GAP_PX}px`,
+              overflowAnchor: 'none',
+            }}
+          >
+            {virtualRows.map((virtualRow) => {
+              const row = rows[virtualRow.index];
 
-            return (
-              <div
-                key={virtualRow.key}
-                data-index={virtualRow.index}
-                ref={virtualizer.measureElement}
-                className="absolute top-0 left-0 w-full"
-                style={{
-                  paddingBottom: LISTING_GRID_ROW_GAP_PX,
-                  transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
-                  overflowAnchor: 'none',
-                }}
-              >
-                {row.kind === 'banner' ? (
-                  <div className={getBannerVariantClassName(row.variant)}>
-                    <PartnerPromoBanner onDismiss={onDismissPartnerPromoBanner} />
-                  </div>
-                ) : (
-                  <div
-                    className={`grid ${gridColsClass} gap-6 items-stretch`}
-                    style={listingGridRowCriticalStyle(columns)}
-                  >
-                    {row.items.map(({ listing, index }) => (
-                      <ListingCard
-                        key={listing.id}
-                        listing={listing}
-                        priority={index < 6}
-                        linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
+                  className="w-full"
+                >
+                  {row.kind === 'banner' ? (
+                    <div className={getBannerVariantClassName(row.variant)}>
+                      <PartnerPromoBanner onDismiss={onDismissPartnerPromoBanner} />
+                    </div>
+                  ) : (
+                    <div
+                      className={`grid ${gridColsClass} gap-6 items-stretch`}
+                      style={listingGridRowCriticalStyle(columns)}
+                    >
+                      {row.items.map(({ listing, index }) => (
+                        <ListingCard
+                          key={listing.id}
+                          listing={listing}
+                          priority={index < 6}
+                          linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </>

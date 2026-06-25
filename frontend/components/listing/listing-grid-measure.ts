@@ -13,8 +13,7 @@ export function resolveVirtualRowSize(
   contentHeight: number | undefined,
   fallbackHeight: number,
 ): number {
-  const height = contentHeight ?? fallbackHeight;
-  return height + LISTING_GRID_ROW_GAP_PX;
+  return contentHeight ?? fallbackHeight;
 }
 
 export function measureStaticRowHeights(

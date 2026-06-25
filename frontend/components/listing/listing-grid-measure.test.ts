@@ -4,11 +4,7 @@ import type { Listing } from '@/lib/api';
 import { Currency } from '@/lib/constants';
 
 import { buildVirtualRows } from './buildVirtualRows';
-import {
-  LISTING_GRID_ROW_GAP_PX,
-  measureStaticRowHeights,
-  resolveVirtualRowSize,
-} from './listing-grid-measure';
+import { measureStaticRowHeights, resolveVirtualRowSize } from './listing-grid-measure';
 
 function createListing(id: string): Listing {
   return {
@@ -61,11 +57,11 @@ describe('measureStaticRowHeights', () => {
     expect(measureStaticRowHeights(grid, rows)).toEqual([400, 400, 400]);
   });
 
-  it('adds row gap to keep row size stable across pagination', () => {
-    expect(resolveVirtualRowSize(0, 3, 400, 500)).toBe(400 + LISTING_GRID_ROW_GAP_PX);
-    expect(resolveVirtualRowSize(2, 3, 400, 500)).toBe(400 + LISTING_GRID_ROW_GAP_PX);
-    expect(resolveVirtualRowSize(0, 2, undefined, 500)).toBe(500 + LISTING_GRID_ROW_GAP_PX);
-    expect(resolveVirtualRowSize(1, 2, 400, 500)).toBe(400 + LISTING_GRID_ROW_GAP_PX);
+  it('returns raw content height without gap so the virtualizer owns row spacing', () => {
+    expect(resolveVirtualRowSize(0, 3, 400, 500)).toBe(400);
+    expect(resolveVirtualRowSize(2, 3, 400, 500)).toBe(400);
+    expect(resolveVirtualRowSize(0, 2, undefined, 500)).toBe(500);
+    expect(resolveVirtualRowSize(1, 2, 400, 500)).toBe(400);
   });
 
   it('returns undefined when card element is missing', () => {
