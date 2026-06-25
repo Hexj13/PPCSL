@@ -155,13 +155,11 @@ test.describe('Home scroll restore', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('restores scroll position after reload without cumulative drift', async ({
+  test('returns to top after reload without restoring scroll position', async ({
     page,
     searchHomePage,
   }) => {
     test.setTimeout(120_000);
-
-    let targetScrollY = 0;
 
     const steps: E2EStep[] = [
       {
@@ -171,18 +169,16 @@ test.describe('Home scroll restore', () => {
           await searchHomePage.expectResultsOrEmptyVisible();
           expect(await searchHomePage.hasListingResults()).toBe(true);
           await searchHomePage.scrollToY(1200);
-          await searchHomePage.waitForReloadScrollPersisted(400);
-          targetScrollY = await searchHomePage.getWindowScrollY();
-          expect(targetScrollY).toBeGreaterThan(400);
+          const scrollY = await searchHomePage.getWindowScrollY();
+          expect(scrollY).toBeGreaterThan(400);
         },
       },
       {
-        name: 'Reload three times and keep scroll position stable',
+        name: 'Reload three times and keep scroll at top',
         action: async () => {
           for (let attempt = 0; attempt < 3; attempt += 1) {
             await searchHomePage.reloadAndWaitForResults();
-            await searchHomePage.expectScrollYNear(targetScrollY, 2, 90_000);
-            targetScrollY = await searchHomePage.getWindowScrollY();
+            await searchHomePage.expectScrollYNear(0, 2, 90_000);
           }
         },
       },
@@ -191,14 +187,12 @@ test.describe('Home scroll restore', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('restores scroll position after load-more and reload', async ({ page, searchHomePage }) => {
+  test('returns to top after load-more and reload', async ({ page, searchHomePage }) => {
     test.setTimeout(180_000);
-
-    let targetScrollY = 0;
 
     const steps: E2EStep[] = [
       {
-        name: 'Open search home and load more results twice when available',
+        name: 'Open search home and load more results when available',
         action: async () => {
           await searchHomePage.openAndExpectPageView();
           await searchHomePage.expectResultsOrEmptyVisible();
@@ -208,17 +202,15 @@ test.describe('Home scroll restore', () => {
           expect(loadedMore).toBe(true);
           await searchHomePage.expectPaginatedGridStatePersisted();
           await searchHomePage.scrollToY(1000);
-          await searchHomePage.waitForReloadScrollPersisted(300);
-          targetScrollY = await searchHomePage.getWindowScrollY();
-          expect(targetScrollY).toBeGreaterThan(300);
+          const scrollY = await searchHomePage.getWindowScrollY();
+          expect(scrollY).toBeGreaterThan(300);
         },
       },
       {
-        name: 'Reload and expect near-identical scroll position',
+        name: 'Reload and expect scroll at top',
         action: async () => {
           await searchHomePage.reloadAndWaitForResults();
-          await searchHomePage.expectPaginatedGridStatePersisted();
-          await searchHomePage.expectScrollYNear(targetScrollY, 2, 90_000);
+          await searchHomePage.expectScrollYNear(0, 2, 90_000);
         },
       },
     ];

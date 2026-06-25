@@ -91,14 +91,6 @@ export abstract class SearchHomeScrollPage {
     }, listingId);
 
     const scrollY = await this.getWindowScrollY();
-    await expect
-      .poll(async () =>
-        this.page.evaluate(() => {
-          const raw = sessionStorage.getItem('homeReloadScrollY');
-          return raw ? Number.parseInt(raw, 10) : -1;
-        }),
-      )
-      .toBeGreaterThanOrEqual(scrollY - 2);
 
     return { listingId, scrollY };
   }
@@ -173,19 +165,28 @@ export abstract class SearchHomeScrollPage {
     }, scrollY);
   }
 
-  async waitForReloadScrollPersisted(minScrollY = 100): Promise<void> {
+  async waitForHomeScrollRestoreSettled(
+    targetScrollY?: number,
+    tolerancePx = 32,
+    timeoutMs = 60_000,
+  ): Promise<void> {
     await expect
       .poll(
-        async () =>
-          this.page.evaluate(() => {
-            const raw = sessionStorage.getItem('homeReloadScrollY');
-            return raw ? Number.parseInt(raw, 10) : 0;
-          }),
-        { timeout: 15_000 },
+        async () => {
+          const currentY = await this.getWindowScrollY();
+          if (
+            typeof targetScrollY !== 'number' ||
+            !Number.isFinite(targetScrollY) ||
+            targetScrollY <= 0
+          ) {
+            return true;
+          }
+          return Math.abs(currentY - targetScrollY) <= tolerancePx;
+        },
+        { timeout: timeoutMs },
       )
-      .toBeGreaterThanOrEqual(minScrollY);
+      .toBe(true);
   }
-
   async expectScrollYNear(
     targetScrollY: number,
     tolerancePx = 2,
@@ -218,32 +219,6 @@ export abstract class SearchHomeScrollPage {
           return stableNearTargetPolls >= 3;
         },
         { timeout: timeoutMs, intervals: [300, 500, 800, 1200, 2000] },
-      )
-      .toBe(true);
-  }
-
-  async waitForHomeScrollRestoreSettled(
-    targetScrollY?: number,
-    tolerancePx = 32,
-    timeoutMs = 60_000,
-  ): Promise<void> {
-    await expect
-      .poll(
-        async () => {
-          const [currentY, savedReloadY] = await this.page.evaluate(() => {
-            const raw = sessionStorage.getItem('homeReloadScrollY');
-            return [window.scrollY, raw ? Number.parseInt(raw, 10) : 0] as const;
-          });
-          const expectedY =
-            typeof targetScrollY === 'number' && Number.isFinite(targetScrollY) && targetScrollY > 0
-              ? targetScrollY
-              : savedReloadY;
-          if (!Number.isFinite(expectedY) || expectedY <= 0) {
-            return true;
-          }
-          return Math.abs(currentY - expectedY) <= tolerancePx;
-        },
-        { timeout: timeoutMs },
       )
       .toBe(true);
   }

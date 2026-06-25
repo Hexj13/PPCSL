@@ -1,31 +1,19 @@
 'use client';
 
-import {
-  sessionStorageGetItem,
-  sessionStorageRemoveItem,
-  sessionStorageSetItem,
-} from '@/lib/browser-session-storage';
+import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 import { LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
 import { shouldRestoreHomeScrollAfterPath } from '@/lib/preserve-home-scroll';
-import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
 const HOME_SCROLL_MAX_AGE_MS = 5 * 60 * 1000;
-const RELOAD_SCROLL_MAX_AGE_MS = 10 * 60 * 1000;
 const CORRECTION_MAX_DURATION_MS = 3000;
 const VIRTUALIZED_CORRECTION_MAX_DURATION_MS = 12000;
 const VIRTUALIZED_RESTORE_MIN_LISTINGS = LISTING_GRID_PAGE_SIZE * 2 + 1;
 const SCROLL_HEIGHT_TOLERANCE_PX = 32;
 const POINTER_CANCEL_FALLBACK_MS = 750;
 
-const HOME_RELOAD_GRID_HEIGHT_KEY = 'homeReloadGridHeight';
-const HOME_RELOAD_VIEWPORT_W_KEY = 'homeReloadViewportW';
-const HOME_RELOAD_LISTING_COUNT_KEY = 'homeReloadListingCount';
 const GRID_STATE_KEY = 'kupito_grid_state';
-const LISTING_GRID_PLACEHOLDER_SELECTOR = '[data-testid="listing-grid-placeholder"]';
 
-const LISTING_CARD_TEST_ID_PREFIX = 'listing-card-';
-
-export type HomeScrollRestoreSource = 'listing_return' | 'reload_or_back_forward';
+export type HomeScrollRestoreSource = 'listing_return';
 
 export type HomeScrollRestorePhase =
   | 'idle'
@@ -43,8 +31,7 @@ export type HomeScrollRestoreTarget = {
 
 type StateChangeListener = (phase: HomeScrollRestorePhase) => void;
 
-let homeReloadPersistenceRegistered = false;
-let homeReloadScrollSaveRaf: number | null = null;
+let interactionListenersRegistered = false;
 let deferredPointerCancelTimeoutId: ReturnType<typeof setTimeout> | null = null;
 let deferredPointerCancelClickHandler: (() => void) | null = null;
 
@@ -89,53 +76,13 @@ export function isHomeScrollRestoreActive(): boolean {
 }
 
 export function shouldDeferVirtualSwapForHomeScrollRestore(): boolean {
-  return isHomeScrollRestoreInProgress() && activeTarget?.source === 'listing_return';
+  return isHomeScrollRestoreInProgress();
 }
 
 export function clearHomeScrollRestoreSession(): void {
   sessionStorageRemoveItem('homeScrollPosition');
   sessionStorageRemoveItem('homeScrollListingId');
   sessionStorageRemoveItem('homeScrollTimestamp');
-}
-
-export function clearHomeReloadScrollKeys(): void {
-  sessionStorageRemoveItem('homeReloadScrollY');
-  sessionStorageRemoveItem('homeReloadScrollTs');
-  sessionStorageRemoveItem(HOME_RELOAD_GRID_HEIGHT_KEY);
-  sessionStorageRemoveItem(HOME_RELOAD_VIEWPORT_W_KEY);
-  sessionStorageRemoveItem(HOME_RELOAD_LISTING_COUNT_KEY);
-}
-
-function isHomePathname(): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-  try {
-    const { restPath } = stripLocalePrefixFromPathname(window.location.pathname);
-    return restPath === '/';
-  } catch {
-    return false;
-  }
-}
-
-function canPersistReloadScrollState(): boolean {
-  return phase === 'idle' || phase === 'done' || phase === 'cancelled';
-}
-
-function countListingCardsInDom(): number {
-  if (typeof document === 'undefined') {
-    return 0;
-  }
-  let count = 0;
-  const cards = document.querySelectorAll<HTMLElement>('[data-testid^="listing-card-"]');
-  for (const el of cards) {
-    const testId = el.getAttribute('data-testid');
-    if (!testId || testId.includes('-link-') || !testId.startsWith(LISTING_CARD_TEST_ID_PREFIX)) {
-      continue;
-    }
-    count += 1;
-  }
-  return count;
 }
 
 function readPersistedGridListingCount(): number {
@@ -150,48 +97,7 @@ function readPersistedGridListingCount(): number {
       // noop
     }
   }
-  return countListingCardsInDom();
-}
-
-function persistHomeReloadScrollPosition(): void {
-  sessionStorageSetItem('homeReloadScrollY', String(window.scrollY));
-  sessionStorageSetItem('homeReloadScrollTs', String(Date.now()));
-}
-
-export function persistHomeReloadScrollState(): void {
-  if (typeof window === 'undefined' || !canPersistReloadScrollState()) {
-    return;
-  }
-  persistHomeReloadScrollPosition();
-  const gridEl = document.getElementById('listings-results');
-  if (gridEl && gridEl.offsetHeight > 0) {
-    sessionStorageSetItem(HOME_RELOAD_GRID_HEIGHT_KEY, String(gridEl.offsetHeight));
-  }
-  sessionStorageSetItem(HOME_RELOAD_VIEWPORT_W_KEY, String(window.innerWidth));
-  const listingCount = readPersistedGridListingCount();
-  if (listingCount > 0) {
-    sessionStorageSetItem(HOME_RELOAD_LISTING_COUNT_KEY, String(listingCount));
-  }
-}
-
-function persistHomeReloadScrollStateIfHome(): void {
-  if (!isHomePathname() || !canPersistReloadScrollState()) {
-    return;
-  }
-  persistHomeReloadScrollState();
-}
-
-function schedulePersistHomeReloadScrollStateIfHome(): void {
-  if (homeReloadScrollSaveRaf !== null || !isHomePathname()) {
-    return;
-  }
-  homeReloadScrollSaveRaf = requestAnimationFrame(() => {
-    homeReloadScrollSaveRaf = null;
-    if (!isHomePathname() || !canPersistReloadScrollState()) {
-      return;
-    }
-    persistHomeReloadScrollPosition();
-  });
+  return 0;
 }
 
 function clearDeferredPointerCancel(): void {
@@ -239,86 +145,17 @@ function cancelHomeScrollRestoreOnUserInteraction(event: Event): void {
   cancelHomeScrollRestore();
 }
 
-export function ensureHomeReloadScrollPersistence(): void {
-  if (typeof window === 'undefined' || homeReloadPersistenceRegistered) {
+export function ensureHomeScrollRestoreInteractionListeners(): void {
+  if (typeof window === 'undefined' || interactionListenersRegistered) {
     return;
   }
-  homeReloadPersistenceRegistered = true;
-  window.addEventListener('pagehide', persistHomeReloadScrollStateIfHome);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      persistHomeReloadScrollStateIfHome();
-    }
-  });
-  window.addEventListener('scroll', schedulePersistHomeReloadScrollStateIfHome, { passive: true });
+  interactionListenersRegistered = true;
   window.addEventListener('wheel', cancelHomeScrollRestoreOnUserInteraction, { passive: true });
   window.addEventListener('touchmove', cancelHomeScrollRestoreOnUserInteraction, { passive: true });
   window.addEventListener('pointerdown', cancelHomeScrollRestoreOnUserInteraction, {
     passive: true,
   });
   window.addEventListener('keydown', cancelHomeScrollRestoreOnUserInteraction);
-}
-
-export function readPendingHomeReloadScrollY(): number | null {
-  const savedReloadY = sessionStorageGetItem('homeReloadScrollY');
-  const reloadTs = sessionStorageGetItem('homeReloadScrollTs');
-  if (!savedReloadY || !reloadTs) {
-    return null;
-  }
-  const savedTime = parseInt(reloadTs, 10);
-  if (!Number.isFinite(savedTime) || Date.now() - savedTime > RELOAD_SCROLL_MAX_AGE_MS) {
-    return null;
-  }
-  const scrollY = parseInt(savedReloadY, 10);
-  return Number.isFinite(scrollY) && scrollY > 0 ? scrollY : null;
-}
-
-function readPersistedGridMinHeight(viewportW: number): number | null {
-  const savedViewportW = parseInt(sessionStorageGetItem(HOME_RELOAD_VIEWPORT_W_KEY) ?? '', 10);
-  const savedGridHeight = parseInt(sessionStorageGetItem(HOME_RELOAD_GRID_HEIGHT_KEY) ?? '', 10);
-  if (!Number.isFinite(savedGridHeight) || savedGridHeight <= 0) {
-    return null;
-  }
-  if (Number.isFinite(savedViewportW) && savedViewportW > 0 && savedViewportW !== viewportW) {
-    return null;
-  }
-  return savedGridHeight;
-}
-
-export function readSavedGridMinHeightBeforeRestore(viewportW: number): number | null {
-  const listingReturnTs = sessionStorageGetItem('homeScrollTimestamp');
-  if (listingReturnTs) {
-    const savedTime = parseInt(listingReturnTs, 10);
-    if (Number.isFinite(savedTime) && Date.now() - savedTime < HOME_SCROLL_MAX_AGE_MS) {
-      return readPersistedGridMinHeight(viewportW);
-    }
-  }
-  const reloadTs = sessionStorageGetItem('homeReloadScrollTs');
-  if (reloadTs) {
-    const savedTime = parseInt(reloadTs, 10);
-    if (Number.isFinite(savedTime) && Date.now() - savedTime < RELOAD_SCROLL_MAX_AGE_MS) {
-      return readPersistedGridMinHeight(viewportW);
-    }
-  }
-  return null;
-}
-
-export function getPendingRestoreMinHeight(viewportW: number): number | null {
-  if (!isHomeScrollRestoreInProgress()) {
-    return null;
-  }
-  return readPersistedGridMinHeight(viewportW);
-}
-
-export function isReloadOrBackForwardNavigation(): boolean {
-  try {
-    const navEntry = performance.getEntriesByType('navigation')[0] as
-      | PerformanceNavigationTiming
-      | undefined;
-    return navEntry?.type === 'reload' || navEntry?.type === 'back_forward';
-  } catch {
-    return false;
-  }
 }
 
 export function isReloadNavigation(): boolean {
@@ -332,25 +169,16 @@ export function isReloadNavigation(): boolean {
   }
 }
 
-function isBackForwardNavigation(): boolean {
-  try {
-    const navEntry = performance.getEntriesByType('navigation')[0] as
-      | PerformanceNavigationTiming
-      | undefined;
-    return navEntry?.type === 'back_forward';
-  } catch {
-    return false;
-  }
-}
-
 function readListingReturnScrollTarget(
   previousPath: string | null,
+  allowSavedListingIdFallback = true,
 ): HomeScrollRestoreTarget | null {
   const savedScroll = sessionStorageGetItem('homeScrollPosition');
   const timestamp = sessionStorageGetItem('homeScrollTimestamp');
   const savedListingId = sessionStorageGetItem('homeScrollListingId');
   const canRestoreListingReturn =
-    shouldRestoreHomeScrollAfterPath(previousPath) || Boolean(savedListingId);
+    shouldRestoreHomeScrollAfterPath(previousPath) ||
+    (allowSavedListingIdFallback && Boolean(savedListingId));
   if (!savedScroll || !timestamp || !canRestoreListingReturn) {
     return null;
   }
@@ -369,79 +197,27 @@ function readListingReturnScrollTarget(
   return { scrollY, source: 'listing_return', listingId: savedListingId ?? undefined };
 }
 
-function readReloadScrollTarget(): HomeScrollRestoreTarget | null {
-  const savedReloadY = sessionStorageGetItem('homeReloadScrollY');
-  const reloadTs = sessionStorageGetItem('homeReloadScrollTs');
-  if (!savedReloadY || !reloadTs) {
-    return null;
-  }
-  const savedTime = parseInt(reloadTs, 10);
-  const reloadStateAgeMs = Number.isFinite(savedTime) ? Date.now() - savedTime : Infinity;
-  if (reloadStateAgeMs >= RELOAD_SCROLL_MAX_AGE_MS) {
-    clearHomeReloadScrollKeys();
-    return null;
-  }
-  const scrollY = parseInt(savedReloadY, 10);
-  if (!Number.isFinite(scrollY) || scrollY <= 0) {
-    clearHomeReloadScrollKeys();
-    return null;
-  }
-  return { scrollY, source: 'reload_or_back_forward' };
-}
-
 export function readHomeScrollRestoreTarget(
   previousPath: string | null,
 ): HomeScrollRestoreTarget | null {
   try {
-    if (isBackForwardNavigation()) {
-      const listingReturn = readListingReturnScrollTarget(previousPath);
-      if (listingReturn) {
-        return listingReturn;
-      }
-      const reloadTarget = readReloadScrollTarget();
-      if (reloadTarget) {
-        return reloadTarget;
-      }
+    const isReload = isReloadNavigation();
+    const listingReturn = readListingReturnScrollTarget(previousPath, !isReload);
+    if (listingReturn) {
+      return listingReturn;
     }
-
-    if (isReloadNavigation()) {
-      const reloadTarget = readReloadScrollTarget();
-      if (reloadTarget) {
-        return reloadTarget;
-      }
-    }
-
-    if (!isReloadNavigation() && !isBackForwardNavigation()) {
-      const listingReturn = readListingReturnScrollTarget(previousPath);
-      if (listingReturn) {
-        return listingReturn;
-      }
+    if (isReload) {
       return null;
     }
+    return null;
   } catch {
-    // noop
+    return null;
   }
-
-  return null;
 }
 
 function canScrollToY(scrollY: number): boolean {
   const maxScrollY = document.documentElement.scrollHeight - window.innerHeight;
   return maxScrollY >= scrollY - SCROLL_HEIGHT_TOLERANCE_PX;
-}
-
-function applyGridMinHeightPlaceholder(): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-  const height = readSavedGridMinHeightBeforeRestore(window.innerWidth);
-  if (!height) {
-    return;
-  }
-  const placeholder = document.querySelector(LISTING_GRID_PLACEHOLDER_SELECTOR);
-  if (placeholder instanceof HTMLElement) {
-    placeholder.style.minHeight = `${height}px`;
-  }
 }
 
 function scrollToYInstant(scrollY: number): void {
@@ -467,16 +243,12 @@ function cleanupCorrection(): void {
 
 function finishRestore(reached: boolean): void {
   cleanupCorrection();
-  const target = activeTarget;
   activeTarget = null;
   gridReady = false;
   bannerDecided = false;
   reportedListingsCount = 0;
   setPhase('done');
-  if (reached && target?.source === 'reload_or_back_forward') {
-    persistHomeReloadScrollState();
-  }
-  if (reached && target?.source === 'listing_return') {
+  if (reached) {
     clearHomeScrollRestoreSession();
   }
 }
@@ -501,11 +273,7 @@ function correctionNow(): number {
 }
 
 function getCorrectionMaxDurationMs(): number {
-  const savedCount = parseInt(sessionStorageGetItem(HOME_RELOAD_LISTING_COUNT_KEY) ?? '', 10);
-  const listingCount = Math.max(
-    Number.isFinite(savedCount) ? savedCount : 0,
-    reportedListingsCount,
-  );
+  const listingCount = Math.max(readPersistedGridListingCount(), reportedListingsCount);
   if (listingCount >= VIRTUALIZED_RESTORE_MIN_LISTINGS) {
     return VIRTUALIZED_CORRECTION_MAX_DURATION_MS;
   }
@@ -572,13 +340,6 @@ export function beginHomeScrollRestore(target: HomeScrollRestoreTarget): void {
   setPhase('pending');
 }
 
-export function prepareHomeScrollRestoreGridLayout(): void {
-  if (phase !== 'pending' || !activeTarget) {
-    return;
-  }
-  applyGridMinHeightPlaceholder();
-}
-
 export function applyHomeScrollRestoreScrollPosition(): void {
   if (phase !== 'pending' || !activeTarget) {
     return;
@@ -595,7 +356,6 @@ export function reapplyHomeScrollRestoreScrollPosition(): void {
 }
 
 export function applyHomeScrollRestoreWhenGridReady(): void {
-  prepareHomeScrollRestoreGridLayout();
   applyHomeScrollRestoreScrollPosition();
 }
 

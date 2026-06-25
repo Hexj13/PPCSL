@@ -29,7 +29,6 @@ import type { Listing } from '@/lib/api';
 import { setBlurForListing, setIndexForListing } from '@/lib/blur-navigation-cache';
 import { decodeBlurhashOffMain, getDecodedBlurhashFromCache } from '@/lib/blurhash-worker-client';
 import { CARD_EXIT_ANIMATION_MS } from '@/lib/constants';
-import { persistHomeReloadScrollState } from '@/lib/home-scroll-restore';
 import { observeElementVisibility } from '@/lib/intersection-observer-registry';
 import { prewarmListingPageHeroImage } from '@/lib/listing/listing-page-helpers';
 import { preserveHomeScrollPosition } from '@/lib/preserve-home-scroll';
@@ -278,7 +277,6 @@ function ListingCardComponent({
     prewarmListingPageHeroImage(listing.id, images[galleryIndex] ?? images[0]);
     if (fromHome) {
       preserveHomeScrollPosition(listing.id);
-      persistHomeReloadScrollState();
       persistListingGridReturnSnapshot();
     }
   }, [listing.id, listing.cover_blur_hash, images, carouselIndex]);

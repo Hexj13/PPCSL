@@ -7,7 +7,6 @@ import {
   applyHomeScrollRestoreScrollPosition,
   getHomeScrollRestorePhase,
   isHomeScrollRestoreInProgress,
-  prepareHomeScrollRestoreGridLayout,
   shouldDeferVirtualSwapForHomeScrollRestore,
 } from '@/lib/home-scroll-restore';
 
@@ -15,12 +14,6 @@ import { getRestorableGridState } from './listing-grid-state';
 import { requestListingGridVirtualSwap } from './listing-grid-virtual-swap';
 
 type MutableRef<T> = { current: T };
-
-function preparePendingHomeScrollRestoreLayout(): void {
-  if (getHomeScrollRestorePhase() === 'pending') {
-    prepareHomeScrollRestoreGridLayout();
-  }
-}
 
 function applyPendingHomeScrollRestorePosition(): void {
   if (getHomeScrollRestorePhase() === 'pending' && document.getElementById('listings-results')) {
@@ -57,12 +50,10 @@ function runDeferredVirtualSwap(
 ): void {
   skipPostRestoreVirtualSwapRef.current = true;
   setGridVirtualEpoch((epoch) => epoch + 1);
-  preparePendingHomeScrollRestoreLayout();
   applyPendingHomeScrollRestorePosition();
 }
 
 function runImmediateVirtualSwap(skipPostRestoreVirtualSwapRef: MutableRef<boolean>): void {
-  preparePendingHomeScrollRestoreLayout();
   if (isHomeScrollRestoreInProgress()) {
     skipPostRestoreVirtualSwapRef.current = true;
   }
@@ -97,7 +88,6 @@ export function useListingGridVirtualSwapOnListings({
     const saved = getRestorableGridState(returningWithSavedScroll, searchParamsString);
 
     if (shouldAwaitRestoredPageFetch(saved, restoreCompletedRef)) {
-      preparePendingHomeScrollRestoreLayout();
       return;
     }
 
@@ -106,7 +96,6 @@ export function useListingGridVirtualSwapOnListings({
     }
 
     if (shouldAwaitRestoredListingCount(returningWithSavedScroll, saved, uniqueListingsLength)) {
-      preparePendingHomeScrollRestoreLayout();
       return;
     }
 

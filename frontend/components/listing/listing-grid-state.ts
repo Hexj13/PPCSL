@@ -8,11 +8,12 @@ import {
   sessionStorageSetItem,
 } from '@/lib/browser-session-storage';
 import { LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
-import { isReloadOrBackForwardNavigation } from '@/lib/home-scroll-restore';
+import { shouldRestoreHomeScrollAfterPath } from '@/lib/preserve-home-scroll';
 import { getParsedListingSearchParams } from '@/lib/search';
 
 export const GRID_STATE_KEY = 'kupito_grid_state';
 export const GRID_RESTORE_STATE_KEY = 'kupito_grid_restore_state';
+const HOME_SCROLL_LAST_REST_PATH_KEY = 'homeScrollLastRestPath';
 
 const GRID_STATE_MAX_AGE_MS = 5 * 60 * 1000;
 
@@ -126,8 +127,13 @@ export function getRestorableGridState(shouldRestore: boolean, searchParamsStrin
 
 export function shouldRestoreGridStateOnMount(searchParamsString: string): boolean {
   if (typeof window === 'undefined') return false;
-  if (sessionStorageGetItem('homeScrollTimestamp')) return true;
-  if (!isReloadOrBackForwardNavigation()) return false;
+  const previousRestPath = sessionStorageGetItem(HOME_SCROLL_LAST_REST_PATH_KEY);
+  if (!shouldRestoreHomeScrollAfterPath(previousRestPath)) {
+    return false;
+  }
+  if (!sessionStorageGetItem('homeScrollTimestamp')) {
+    return false;
+  }
   return getRestorableGridState(true, searchParamsString) !== null;
 }
 

@@ -68,13 +68,8 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const { setFavorites } = useFavoritesStore();
   const restoreCompletedRef = useRef(false);
   const skipClientFetchOnMountRef = useRef(initialData?.meta != null);
-  const [gridMinHeight, setGridMinHeight] = useState<number | undefined>(undefined);
   const [gridVirtualEpoch, setGridVirtualEpoch] = useState(0);
-
-  const skipPostRestoreVirtualSwapRef = useListingGridHomeScrollRestoreLayout(
-    setGridMinHeight,
-    setGridVirtualEpoch,
-  );
+  const skipPostRestoreVirtualSwapRef = useListingGridHomeScrollRestoreLayout(setGridVirtualEpoch);
 
   const uniqueListings = useMemo(() => {
     const seen = new Set<string>();
@@ -198,7 +193,6 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const showSkeletonOverlay = showSkeleton && !homeScrollRestoreActive;
   const showContent = !showSkeletonOverlay;
   const hasMore = listingGridHasMore(meta, currentPage);
-  const gridPlaceholderStyle = gridMinHeight ? { minHeight: gridMinHeight } : undefined;
 
   useListingGridScrollEffects({
     listingsCount: listings.length,
@@ -210,7 +204,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
   return (
     <ListingGridView
-      gridPlaceholderStyle={gridPlaceholderStyle}
+      gridPlaceholderStyle={undefined}
       showSkeletonOverlay={showSkeletonOverlay}
       showContent={showContent}
       error={error}

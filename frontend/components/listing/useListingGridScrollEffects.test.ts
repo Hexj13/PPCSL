@@ -232,7 +232,7 @@ describe('useListingGridScrollEffects', () => {
   });
 
   it('reports grid and banner milestones when coordinator is in scrolled phase', () => {
-    beginHomeScrollRestore({ scrollY: 180, source: 'reload_or_back_forward' });
+    beginHomeScrollRestore({ scrollY: 180, source: 'listing_return' });
     applyHomeScrollRestoreWhenGridReady();
     expect(getHomeScrollRestorePhase()).toBe('scrolled');
 
@@ -249,7 +249,7 @@ describe('useListingGridScrollEffects', () => {
   });
 
   it('waits for layout readiness before reporting restore milestones', () => {
-    beginHomeScrollRestore({ scrollY: 180, source: 'reload_or_back_forward' });
+    beginHomeScrollRestore({ scrollY: 180, source: 'listing_return' });
     applyHomeScrollRestoreWhenGridReady();
 
     const { rerender } = renderHook(

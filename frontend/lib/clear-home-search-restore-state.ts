@@ -9,10 +9,9 @@ export function clearHomeSearchRestoreState(): void {
   clearFiltersFromStorage();
   sessionStorageRemoveItem('homeScrollPosition');
   sessionStorageRemoveItem('homeScrollTimestamp');
+  sessionStorageRemoveItem('homeScrollLastRestPath');
   sessionStorageRemoveItem(GRID_STATE_KEY);
   sessionStorageRemoveItem(GRID_RESTORE_STATE_KEY);
   sessionStorageRemoveItem('scrollPreserved');
   sessionStorageRemoveItem('scrollToResultsAfterLoad');
-  sessionStorageRemoveItem('homeReloadScrollY');
-  sessionStorageRemoveItem('homeReloadScrollTs');
 }

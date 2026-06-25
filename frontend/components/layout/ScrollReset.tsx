@@ -3,15 +3,21 @@
 import { usePathname } from 'next/navigation';
 import { useLayoutEffect, useRef } from 'react';
 
-import { sessionStorageGetItem, sessionStorageRemoveItem } from '@/lib/browser-session-storage';
+import {
+  sessionStorageGetItem,
+  sessionStorageRemoveItem,
+  sessionStorageSetItem,
+} from '@/lib/browser-session-storage';
 import {
   beginHomeScrollRestore,
-  ensureHomeReloadScrollPersistence,
+  clearHomeScrollRestoreSession,
+  ensureHomeScrollRestoreInteractionListeners,
   readHomeScrollRestoreTarget,
 } from '@/lib/home-scroll-restore';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
 const SCROLL_TOP_ON_ENTER_PATHS = new Set(['/favorites', '/compare']);
+const LAST_REST_PATH_KEY = 'homeScrollLastRestPath';
 
 function scrollWindowToTopInstant() {
   window.scrollTo({ top: 0, behavior: 'instant' });
@@ -31,7 +37,7 @@ function scrollListingDetailToTopIfNeeded(restPath: string): boolean {
 }
 
 function setupHomeScrollRestoration(previousPath: string | null) {
-  ensureHomeReloadScrollPersistence();
+  ensureHomeScrollRestoreInteractionListeners();
 
   if ('scrollRestoration' in window.history) {
     window.history.scrollRestoration = 'manual';
@@ -40,7 +46,13 @@ function setupHomeScrollRestoration(previousPath: string | null) {
   const target = readHomeScrollRestoreTarget(previousPath);
   if (target) {
     beginHomeScrollRestore(target);
+    return;
   }
+
+  clearHomeScrollRestoreSession();
+  sessionStorageRemoveItem('kupito_grid_state');
+  sessionStorageRemoveItem('kupito_grid_restore_state');
+  scrollWindowToTopWithFollowUp();
 }
 
 function shouldSkipScrollResetForPreservedScroll(
@@ -72,17 +84,23 @@ export function ScrollReset() {
     previousPathRef.current = pathname;
 
     const { restPath } = stripLocalePrefixFromPathname(pathname);
+    const rememberCurrentPath = () => {
+      sessionStorageSetItem(LAST_REST_PATH_KEY, restPath);
+    };
 
     if (scrollListingDetailToTopIfNeeded(restPath)) {
+      rememberCurrentPath();
       return;
     }
 
     if (restPath === '/') {
       setupHomeScrollRestoration(previousPath);
+      rememberCurrentPath();
       return;
     }
 
     if (shouldSkipScrollResetForPreservedScroll(previousPath, restPath)) {
+      rememberCurrentPath();
       return;
     }
 
@@ -91,12 +109,14 @@ export function ScrollReset() {
     if (SCROLL_TOP_ON_ENTER_PATHS.has(restPath) && prevRest !== restPath) {
       sessionStorageRemoveItem('scrollPreserved');
       scrollWindowToTopWithFollowUp();
+      rememberCurrentPath();
       return;
     }
 
     if (previousPath && previousPath !== pathname) {
       scrollWindowToTopInstant();
     }
+    rememberCurrentPath();
   }, [pathname]);
 
   return null;
