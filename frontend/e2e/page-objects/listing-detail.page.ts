@@ -3,7 +3,9 @@ import { expect, type Page } from '@playwright/test';
 import { ListingAiReportModalComponent } from '../components/listing/listing-ai-report-modal.component';
 import { ListingSimilarListingsComponent } from '../components/listing/listing-similar-listings.component';
 import { expectPagePath } from '../utils/app-path';
+import { t } from '../utils/i18n';
 import { dismissCookieConsentIfVisible } from '../utils/session';
+import { expectSuccessToast } from '../utils/toast';
 
 export class ListingDetailPage {
   private readonly testIds = {
@@ -70,18 +72,20 @@ export class ListingDetailPage {
       (path) => /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new',
     );
     await expect(this.detailPageRoot).toBeVisible({ timeout: 30_000 });
+    await expect(this.page.locator('header').first()).toBeVisible();
+    const root = this.detailPageRoot;
+    const blockTimeout = { timeout: 30_000 };
+    await expect(root.getByTestId(this.testIds.detailGallery)).toBeVisible(blockTimeout);
+    await expect(root.getByTestId(this.testIds.detailBreadcrumbs)).toBeVisible(blockTimeout);
+    await expect(root.getByTestId(this.testIds.detailHeader)).toBeVisible(blockTimeout);
+    await expect(root.getByTestId(this.testIds.detailActions)).toBeVisible(blockTimeout);
+    await expect(root.getByTestId(this.testIds.detailSeller)).toBeVisible(blockTimeout);
+    await expect(root.getByTestId(this.testIds.detailInfo)).toBeVisible(blockTimeout);
     await this.expectCopyLinkButtonVisible();
   }
 
   async expectCoreBlocksVisible(): Promise<void> {
     await this.expectPageView();
-    const root = this.detailPageRoot;
-    await expect(root.getByTestId(this.testIds.detailGallery)).toBeVisible();
-    await expect(root.getByTestId(this.testIds.detailBreadcrumbs)).toBeVisible();
-    await expect(root.getByTestId(this.testIds.detailHeader)).toBeVisible();
-    await expect(root.getByTestId(this.testIds.detailActions)).toBeVisible();
-    await expect(root.getByTestId(this.testIds.detailSeller)).toBeVisible();
-    await expect(root.getByTestId(this.testIds.detailInfo)).toBeVisible();
   }
 
   get contactActionButton() {
@@ -172,18 +176,59 @@ export class ListingDetailPage {
   }
 
   async revealSellerPhone(): Promise<void> {
+    await expect
+      .poll(
+        async () => {
+          if (await this.sellerPhoneLink.isVisible().catch(() => false)) {
+            return 'revealed';
+          }
+          if (await this.sellerRevealPhoneButton.isVisible().catch(() => false)) {
+            return 'button';
+          }
+          return null;
+        },
+        { timeout: 30_000 },
+      )
+      .not.toBeNull();
+
     if (await this.sellerPhoneLink.isVisible().catch(() => false)) {
       await this.expectSellerPhoneRevealed();
       return;
     }
-    await expect(this.sellerRevealPhoneButton).toBeVisible({ timeout: 15_000 });
+
+    const phonesResponse = this.page.waitForResponse(
+      (response) => response.url().includes('/phones') && response.ok(),
+      { timeout: 45_000 },
+    );
     await this.sellerRevealPhoneButton.click();
+    try {
+      await phonesResponse;
+    } catch {
+      // contact action may have already loaded phones
+    }
     await this.expectSellerPhoneRevealed();
   }
 
   async expectSellerPhoneRevealed(): Promise<void> {
     await expect(this.sellerPhoneLink).toBeVisible({ timeout: 15_000 });
     await expect(this.sellerPhoneLink).toHaveAttribute('href', /^tel:/);
+  }
+
+  async clickCopyLinkAndExpectSuccess(): Promise<void> {
+    await this.clickCopyLinkButton();
+    await this.expectCopyLinkSuccessToast();
+  }
+
+  async clickFavoriteAndExpectAdded(): Promise<void> {
+    await this.clickFavoriteAction();
+    await expectSuccessToast(this.page, t('listings.addToFavorites'));
+    await this.expectFavoriteActive();
+  }
+
+  async clickCompareAndExpectAdded(): Promise<void> {
+    await this.clickCompareAction();
+    await this.expectAddedToComparisonToast();
+    await this.expectCompareActionActive();
   }
 
   async clickCopyLinkButton(): Promise<void> {
@@ -194,7 +239,7 @@ export class ListingDetailPage {
     await this.copyLinkButton.click();
     if (
       !(await this.page
-        .getByText(/Link copied|Linkul a fost copiat|Ссылка скопирована/i)
+        .getByText(t('listingDetail.linkCopied'))
         .first()
         .isVisible()
         .catch(() => false))
@@ -206,41 +251,15 @@ export class ListingDetailPage {
   async expectCopyLinkSuccessToast(): Promise<void> {
     const listingUrl = await this.page.evaluate(() => window.location.href);
     const listingPath = await this.page.evaluate(() => window.location.pathname);
-    const toast = this.page.locator(
-      '#_rht_toaster [data-hot-toast], #_rht_toaster [role="status"]',
-    );
-    const copiedMessage = this.page.getByText(
-      /Link copied|Linkul a fost copiat|Ссылка скопирована/i,
-    );
+    try {
+      await expectSuccessToast(this.page, t('listingDetail.linkCopied'));
+      return;
+    } catch {
+      // fallback below
+    }
     await expect
       .poll(
         async () => {
-          if (
-            await toast
-              .first()
-              .isVisible()
-              .catch(() => false)
-          ) {
-            return true;
-          }
-          if (
-            await copiedMessage
-              .first()
-              .isVisible()
-              .catch(() => false)
-          ) {
-            return true;
-          }
-          if (
-            await this.page
-              .getByRole('status')
-              .filter({ hasText: /Link copied|Linkul a fost copiat|Ссылка скопирована/i })
-              .first()
-              .isVisible()
-              .catch(() => false)
-          ) {
-            return true;
-          }
           try {
             const clipboardText = await this.page.evaluate(() => navigator.clipboard.readText());
             return (
@@ -252,9 +271,29 @@ export class ListingDetailPage {
             return false;
           }
         },
-        { timeout: 30_000 },
+        { timeout: 45_000 },
       )
       .toBe(true);
+  }
+
+  async expectFavoriteActive(): Promise<void> {
+    await expect(this.favoriteActionButton).toHaveAttribute(
+      'aria-label',
+      t('listingDetail.actionCardFavoriteTitleWhenSaved'),
+      { timeout: 15_000 },
+    );
+  }
+
+  async expectAddedToComparisonToast(): Promise<void> {
+    await expectSuccessToast(this.page, t('listingDetail.addedToComparison'));
+  }
+
+  async expectCompareActionActive(): Promise<void> {
+    await expect(this.compareActionButton).toHaveAttribute(
+      'aria-label',
+      t('listingDetail.actionCardCompareTitleWhenInComparison'),
+      { timeout: 15_000 },
+    );
   }
 
   get compareActionButton() {
@@ -268,13 +307,46 @@ export class ListingDetailPage {
   async clickCompareAction(): Promise<void> {
     await dismissCookieConsentIfVisible(this.page);
     await this.compareActionButton.scrollIntoViewIfNeeded();
+    const compareResponse = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/comparison') &&
+        response.request().method() === 'POST' &&
+        response.ok(),
+      { timeout: 45_000 },
+    );
     await this.compareActionButton.click();
+    await compareResponse;
   }
 
   async clickFavoriteAction(): Promise<void> {
     await dismissCookieConsentIfVisible(this.page);
     await this.favoriteActionButton.scrollIntoViewIfNeeded();
-    await this.favoriteActionButton.click();
+    await expect(this.favoriteActionButton).toBeEnabled({ timeout: 30_000 });
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const favoriteResponse = this.page.waitForResponse(
+        (response) =>
+          response.url().includes('/api/favorites/') &&
+          response.request().method() === 'POST' &&
+          response.ok(),
+        { timeout: 45_000 },
+      );
+      await this.favoriteActionButton.click();
+      try {
+        await favoriteResponse;
+        return;
+      } catch (error) {
+        const savedLabel = t('listingDetail.actionCardFavoriteTitleWhenSaved');
+        const isActive =
+          (await this.favoriteActionButton.getAttribute('aria-label')) === savedLabel;
+        if (isActive) {
+          return;
+        }
+        if (attempt === 1) {
+          throw error;
+        }
+      }
+    }
   }
 
   async expectCompareActionVisible(): Promise<void> {

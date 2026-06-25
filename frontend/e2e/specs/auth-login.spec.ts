@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
-import { loginByUi } from '../utils/auth';
+import { expectPagePath } from '../utils/app-path';
+import { expectAuthenticatedSession, loginByUi } from '../utils/auth';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Auth: login @p0', () => {
@@ -18,13 +19,13 @@ test.describe('Auth: login @p0', () => {
       {
         name: 'Submit empty login form',
         action: async () => {
-          await signPage.submitLogin();
+          await signPage.submitLoginExpectingNoNavigation();
         },
       },
       {
         name: 'Verify user stays on sign page',
         action: async () => {
-          await expect(page).toHaveURL(/\/sign/);
+          await signPage.expectLoginPageView();
         },
       },
     ];
@@ -32,7 +33,7 @@ test.describe('Auth: login @p0', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('allows successful login with valid credentials', async ({ page }) => {
+  test('allows successful login with valid credentials', async ({ page, searchHomePage }) => {
     const credentials = requireAuthCredentials();
     await runSteps(
       prependClearBrowserState(page, [
@@ -40,6 +41,14 @@ test.describe('Auth: login @p0', () => {
           name: 'Login with valid user credentials',
           action: async () => {
             await loginByUi(page, credentials);
+          },
+        },
+        {
+          name: 'Validate home page view and authenticated session',
+          action: async () => {
+            await expectPagePath(page, (path) => path === '/');
+            await searchHomePage.expectPageView();
+            await expectAuthenticatedSession(page);
           },
         },
       ]),
@@ -63,6 +72,7 @@ test.describe('Auth: login @p0', () => {
           await page.getByTestId('auth-tab-register').click();
           await expect(page).toHaveURL(new RegExp(`returnUrl=${encodeURIComponent(returnPath)}`));
           await expect(page).toHaveURL(/[?&]tab=register/);
+          await signPage.expectRegisterPageView();
         },
       },
     ];
@@ -82,13 +92,13 @@ test.describe('Auth: login @p0', () => {
         name: 'Submit wrong password',
         action: async () => {
           await signPage.fillLoginCredentials(credentials.login, `${credentials.password}wrong`);
-          await signPage.submitLogin();
+          await signPage.submitLoginAndExpectInvalid('errors.invalidLoginCredentials');
         },
       },
       {
         name: 'Verify user remains on sign page',
         action: async () => {
-          await expect(page).toHaveURL(/\/sign/);
+          await signPage.expectLoginPageView();
         },
       },
     ];

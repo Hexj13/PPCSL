@@ -26,6 +26,7 @@ export class ProfilePage {
     await expect(this.page).toHaveURL((url) =>
       pathnameWithoutLocalePrefix(url).startsWith('/profile'),
     );
+    await expect(this.page.locator('header').first()).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.editForm)).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.save)).toBeVisible();
@@ -33,6 +34,5 @@ export class ProfilePage {
 
   async expectLoaded(): Promise<void> {
     await this.expectPageView();
-    await expect(this.page.getByTestId(this.testIds.editForm)).toBeVisible();
   }
 }

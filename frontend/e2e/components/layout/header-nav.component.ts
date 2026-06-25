@@ -1,5 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
+import { expectPagePath } from '../../utils/app-path';
+import { expectLoggedOut } from '../../utils/auth';
 import { dismissCookieConsentIfVisible } from '../../utils/session';
 import { pageUsesMobileLayout } from '../../utils/viewport';
 
@@ -68,7 +70,19 @@ export class HeaderNavComponent {
     await expect(this.page.getByTestId(this.testIds.userProfileMenu)).toBeVisible();
   }
 
-  async logout(): Promise<void> {
+  async logoutAndExpectSignedOut(searchHomePage?: {
+    expectHomeReady(): Promise<void>;
+  }): Promise<void> {
+    await this.openUserMenuForLogout();
+    await this.performLogoutClick();
+    await expectLoggedOut(this.page);
+    await expectPagePath(this.page, (path) => path === '/', { timeout: 30_000 });
+    if (searchHomePage) {
+      await searchHomePage.expectHomeReady();
+    }
+  }
+
+  private async performLogoutClick(): Promise<void> {
     if (await pageUsesMobileLayout(this.page)) {
       await dismissCookieConsentIfVisible(this.page);
       await this.page.getByTestId(this.testIds.mobileLogout).click();

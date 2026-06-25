@@ -59,21 +59,7 @@ export async function loginByUi(page: Page, credentials: AuthCredentials): Promi
   const signPage = new SignPage(page);
   await signPage.openLoginAndExpectPageView();
   await signPage.fillLoginCredentials(credentials.login, credentials.password);
-  const responsePromise = page.waitForResponse(
-    (response) =>
-      response.url().includes('/api/auth/login') && response.request().method() === 'POST',
-    { timeout: 30_000 },
-  );
-  await signPage.submitLoginForm();
-  const response = await responsePromise;
-  if (!response.ok()) {
-    const body = await response.text().catch(() => '');
-    throw new Error(`Login failed: HTTP ${response.status()} ${body}`);
-  }
-  await page.waitForURL((url) => !pathnameWithoutLocalePrefix(url).startsWith('/sign'), {
-    timeout: 30_000,
-    waitUntil: 'domcontentloaded',
-  });
+  await signPage.submitLoginAndExpectSuccess();
   if (pathnameWithoutLocalePrefix(page.url()).startsWith('/sign')) {
     throw new Error('Expected to leave sign-in route after login');
   }

@@ -1,4 +1,4 @@
-import { test } from '../fixtures/base';
+import { expect, test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import {
   clearComparisonViaBrowserApi,
@@ -57,9 +57,11 @@ test.describe('Listing detail actions', () => {
       {
         name: 'Add listing to compare',
         action: async () => {
+          const detailUrl = page.url();
           await listingDetailPage.expectCompareActionVisible();
-          await listingDetailPage.clickCompareAction();
+          await listingDetailPage.clickCompareAndExpectAdded();
           await waitUntilComparisonInIdsApi(page, listingId);
+          await expect(page).toHaveURL(detailUrl);
         },
       },
       {
@@ -68,6 +70,7 @@ test.describe('Listing detail actions', () => {
           await comparePage.open();
           await comparePage.expectPageView();
           await comparePage.expectTableVisible();
+          await comparePage.expectListingInTable(listingId);
         },
       },
     ];

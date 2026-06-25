@@ -27,7 +27,7 @@ tags:
 3. [SCRIPTS.md](../../backend/docs/SCRIPTS.md)
 4. [e2e-playwright-standards.md](./e2e-playwright-standards.md)
 5. [e2e-test-architecture.md](../architecture/e2e-test-architecture.md)
-6. [frontend e2e entrypoint](../../frontend/docs/e2e-playwright.md)
+6. [playwright.config.ts](../../frontend/playwright.config.ts) — projects, `testIgnore`, reporters
 7. [backend integration tests](../../backend/docs/TESTING.md)
 8. [linting.md](../engineering/linting.md)
 

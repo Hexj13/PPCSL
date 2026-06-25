@@ -26,7 +26,7 @@ export function UsersTab(props: UsersTabProps) {
       : [];
 
   return (
-    <div>
+    <div data-testid="admin-users-tab-content">
       <UsersTabFiltersBar
         tabsContainerRef={s.tabsContainerRef}
         individualTabRef={s.individualTabRef}

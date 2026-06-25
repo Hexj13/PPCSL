@@ -24,7 +24,7 @@ test.describe('Guest marketplace guards', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('redirects invalid public board slug to home', async ({ page }) => {
+  test('redirects invalid public board slug to home', async ({ page, searchHomePage }) => {
     const steps: E2EStep[] = [
       {
         name: 'Open invalid board slug',
@@ -36,6 +36,8 @@ test.describe('Guest marketplace guards', () => {
         name: 'Expect home route',
         action: async () => {
           await expectPagePath(page, (path) => path === '/');
+          await searchHomePage.expectPageView();
+          await searchHomePage.expectResultsOrEmptyVisible();
         },
       },
     ];

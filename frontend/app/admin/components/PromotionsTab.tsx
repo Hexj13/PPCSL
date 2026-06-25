@@ -88,9 +88,10 @@ export function PromotionsTab({ isActive }: PromotionsTabProps) {
   });
 
   return (
-    <div>
+    <div data-testid="admin-promotions-tab-content">
       <div className="mb-4 md:mb-6 flex flex-col gap-4">
         <AdminSearchInput
+          data-testid="admin-promotions-search"
           value={filters.searchQuery}
           onChange={(e) =>
             setFilters((prev) => ({
@@ -137,6 +138,7 @@ export function PromotionsTab({ isActive }: PromotionsTabProps) {
             : t('admin.promotionsTab.noPromotions')
         }
         emptyClassName="py-8"
+        emptyTestId="admin-promotions-empty"
       >
         <>
           <div className="mb-3 md:mb-4 text-sm md:text-base text-primary-900">
@@ -144,7 +146,10 @@ export function PromotionsTab({ isActive }: PromotionsTabProps) {
             <span className="font-semibold text-primary-900">{meta?.total || 0}</span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse [&_tbody_tr:nth-child(even)]:bg-primary-500/5">
+            <table
+              className="w-full border-collapse [&_tbody_tr:nth-child(even)]:bg-primary-500/5"
+              data-testid="admin-promotions-table"
+            >
               <thead>
                 <tr className="border-b border-primary-700/30">
                   <th className="text-center py-3 px-4 text-sm font-semibold text-primary-900">

@@ -5,6 +5,7 @@ import {
   VEHICLE_BASIC_SHEETS,
   VEHICLE_SEARCH_TABS,
 } from '../test-data/search-filter-sheets';
+import { expectVehicleSearchTabPanelVisible } from '../utils/search-filter-panels';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Search: mobile filters and sheets @p0', () => {
@@ -24,6 +25,8 @@ test.describe('Search: mobile filters and sheets @p0', () => {
           for (const tab of VEHICLE_SEARCH_TABS) {
             await mobileFilters.selectTab(tab);
           }
+          const lastTab = VEHICLE_SEARCH_TABS[VEHICLE_SEARCH_TABS.length - 1];
+          await expectVehicleSearchTabPanelVisible(page, lastTab);
         },
       },
     ];
@@ -74,8 +77,6 @@ test.describe('Search: mobile filters and sheets @p0', () => {
       ]),
     );
 
-    await searchHomePage.openAndExpectPageView();
-
     for (const sheetCase of VEHICLE_ADVANCED_SHEETS) {
       await test.step(`Advanced sheet ${sheetCase.sheetId}`, async () => {
         await mobileFilters.exerciseVehicleSheet(sheetCase);
@@ -103,6 +104,7 @@ test.describe('Search: mobile filters and sheets @p0', () => {
         name: 'Select first popular model chip',
         action: async () => {
           await mobileFilters.selectFirstPopularChip();
+          await mobileFilters.expectFirstPopularChipSelected();
         },
       },
     ];
@@ -149,12 +151,26 @@ test.describe('Search: mobile filters and sheets @p0', () => {
   }) => {
     const mobileFilters = new SearchFiltersMobileComponent(page);
 
-    await searchHomePage.openAndExpectPageView();
-    await mobileFilters.selectTab('basic');
-    await mobileFilters.openFilterRow('vehicle_fuel', 'basic');
-    await mobileFilters.selectSheetOption('Petrol');
-    await mobileFilters.dismissSheetViaBackdrop();
-    await mobileFilters.expectFilterRowHasNoSelection('vehicle_fuel', 'basic');
+    const steps: E2EStep[] = [
+      {
+        name: 'Open search home',
+        action: async () => {
+          await searchHomePage.openAndExpectPageView();
+        },
+      },
+      {
+        name: 'Dismiss fuel sheet via backdrop without applying selection',
+        action: async () => {
+          await mobileFilters.selectTab('basic');
+          await mobileFilters.openFilterRow('vehicle_fuel', 'basic');
+          await mobileFilters.selectSheetOption('Petrol');
+          await mobileFilters.dismissSheetViaBackdrop();
+          await mobileFilters.expectFilterRowHasNoSelection('vehicle_fuel', 'basic');
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
   });
 
   test('submits search with fuel filter and listings API response', async ({
@@ -204,6 +220,7 @@ test.describe('Search: mobile filters and sheets @p0', () => {
         name: 'Verify URL includes fuels param and results render',
         action: async () => {
           await expect(page).toHaveURL(/fuels=Petrol/);
+          await searchHomePage.expectPageView();
           await searchHomePage.expectResultsOrEmptyVisible();
         },
       },

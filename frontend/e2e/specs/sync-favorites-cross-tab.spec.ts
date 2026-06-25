@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures/base';
+import { test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import { FavoritesPage } from '../page-objects/favorites.page';
 import { ListingDetailPage } from '../page-objects/listing-detail.page';
@@ -50,17 +50,15 @@ test.describe('Cross-tab favorites sync', () => {
       await favoritesPageB.expectPageView();
       await favoritesPageB.openListingsTab();
       await favoritesPageB.expectListingsTabVisible();
-      await expect(pageB.getByTestId(`listing-card-${listingId}`)).toBeHidden();
+      await favoritesPageB.expectListingCardHidden(listingId);
 
       await pageA.reload({ waitUntil: 'load' });
       await listingDetailPage.expectPageView();
       await listingDetailPage.expectFavoriteActionVisible();
       await listingDetailPage.expectFavoriteActionReady();
-      await listingDetailPage.clickFavoriteAction();
+      await listingDetailPage.clickFavoriteAndExpectAdded();
       await waitUntilFavoriteInIdsApi(pageA, listingId);
-      await expect(pageB.getByTestId(`listing-card-${listingId}`)).toBeVisible({
-        timeout: 25_000,
-      });
+      await favoritesPageB.expectListingCardVisible(listingId);
     } finally {
       await context.close();
     }

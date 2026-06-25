@@ -110,8 +110,7 @@ test.describe('Listing detail: view and interaction @p0', () => {
       {
         name: 'Click copy link button and verify success toast',
         action: async () => {
-          await listingDetailPage.clickCopyLinkButton();
-          await listingDetailPage.expectCopyLinkSuccessToast();
+          await listingDetailPage.clickCopyLinkAndExpectSuccess();
         },
       },
       {

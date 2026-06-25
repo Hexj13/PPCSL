@@ -4,7 +4,7 @@ import { expect, test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
 import { createRandomListingPrice } from '../test-data/listings';
-import { expectLoggedOut, loginByUi } from '../utils/auth';
+import { loginByUi } from '../utils/auth';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
 import { LISTING_PHOTO_FILES } from '../utils/listing-flow';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
@@ -18,12 +18,12 @@ async function loginAndOpenMyListings(page: Page): Promise<void> {
 async function createListingForEditFlow(
   page: Page,
   listingCreatePage: ListingCreatePage,
+  listingDetailPage: { expectPageView(): Promise<void> },
 ): Promise<void> {
   await listingCreatePage.openAndExpectPageView();
   await listingCreatePage.fillRequiredFields();
   await listingCreatePage.uploadPhotos(LISTING_PHOTO_FILES);
-  await listingCreatePage.submitCreateForm();
-  await expect(page).toHaveURL(/\/listings\/[^/]+$/, { timeout: 30_000 });
+  await listingCreatePage.submitCreateAndExpectDetail(listingDetailPage);
 }
 
 test.describe('My listings @p0', () => {
@@ -41,12 +41,6 @@ test.describe('My listings @p0', () => {
           await myListingsPage.expectPageView();
         },
       },
-      {
-        name: 'Verify route stays on my listings',
-        action: async () => {
-          await expect(page).toHaveURL(/\/my-listings/);
-        },
-      },
     ];
 
     await runSteps(prependClearBrowserState(page, steps));
@@ -55,6 +49,8 @@ test.describe('My listings @p0', () => {
   test('logs out and redirects guest user away from my listings', async ({
     page,
     myListingsPage,
+    searchHomePage,
+    signPage,
   }) => {
     const steps: E2EStep[] = [
       {
@@ -65,16 +61,9 @@ test.describe('My listings @p0', () => {
         },
       },
       {
-        name: 'Open user menu',
+        name: 'Logout and verify signed-out home view',
         action: async () => {
-          await myListingsPage.openUserMenu();
-        },
-      },
-      {
-        name: 'Click logout and verify redirect away from my listings',
-        action: async () => {
-          await myListingsPage.logoutFromUserMenu();
-          await expectLoggedOut(page);
+          await myListingsPage.headerNav.logoutAndExpectSignedOut(searchHomePage);
           await expect(page).not.toHaveURL(/\/my-listings/, { timeout: 15_000 });
         },
       },
@@ -82,7 +71,7 @@ test.describe('My listings @p0', () => {
         name: 'Verify guest cannot access my listings route',
         action: async () => {
           await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
-          await expect(page).toHaveURL(/\/sign/, { timeout: 15_000 });
+          await signPage.expectLoginPageView();
         },
       },
     ];
@@ -94,6 +83,7 @@ test.describe('My listings @p0', () => {
     page,
     myListingsPage,
     listingCreatePage,
+    listingDetailPage,
   }) => {
     test.setTimeout(90_000);
     const steps: E2EStep[] = [
@@ -110,7 +100,7 @@ test.describe('My listings @p0', () => {
           if (await myListingsPage.hasEditableListing()) {
             return;
           }
-          await createListingForEditFlow(page, listingCreatePage);
+          await createListingForEditFlow(page, listingCreatePage, listingDetailPage);
           await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
           await myListingsPage.expectPageView();
           await expect(myListingsPage.editLinks.first()).toBeVisible({ timeout: 30_000 });
@@ -132,6 +122,7 @@ test.describe('My listings @p0', () => {
     page,
     myListingsPage,
     listingCreatePage,
+    listingDetailPage,
   }) => {
     test.setTimeout(120_000);
     const steps: E2EStep[] = [
@@ -148,7 +139,7 @@ test.describe('My listings @p0', () => {
           if (await myListingsPage.hasEditableListing()) {
             return;
           }
-          await createListingForEditFlow(page, listingCreatePage);
+          await createListingForEditFlow(page, listingCreatePage, listingDetailPage);
           await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
           await myListingsPage.expectPageView();
           await expect(myListingsPage.editLinks.first()).toBeVisible({ timeout: 30_000 });
@@ -164,9 +155,16 @@ test.describe('My listings @p0', () => {
       {
         name: 'Update price and save listing changes',
         action: async () => {
-          await listingCreatePage.updateEditPrice(createRandomListingPrice());
+          const listingIdMatch = page.url().match(/\/listings\/([^/]+)\/edit/);
+          const listingId = listingIdMatch?.[1];
+          if (!listingId) {
+            throw new Error('Expected listing id in edit URL');
+          }
+          const newPrice = createRandomListingPrice();
+          await listingCreatePage.updateEditPrice(newPrice);
           await listingCreatePage.submitEditForm();
-          await expect(page).toHaveURL(/\/my-listings/, { timeout: 30_000 });
+          await listingCreatePage.expectEditSavedOnMyListings(myListingsPage);
+          await myListingsPage.expectListingPriceOnCard(listingId, newPrice);
         },
       },
     ];

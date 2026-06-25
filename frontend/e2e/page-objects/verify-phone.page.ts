@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 import { VerifyPhoneFormComponent } from '../components/auth/verify-phone-form.component';
+import { expectPagePath } from '../utils/app-path';
 
 export class VerifyPhonePage {
   private readonly testIds = {
@@ -18,6 +19,8 @@ export class VerifyPhonePage {
   }
 
   async expectPageView(): Promise<void> {
+    await expectPagePath(this.page, (path) => path.startsWith('/verify-phone'));
+    await expect(this.page.locator('header').first()).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.form)).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.firstCodeInput)).toBeVisible();

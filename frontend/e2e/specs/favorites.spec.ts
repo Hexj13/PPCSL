@@ -9,8 +9,10 @@ import {
   waitUntilFavoriteNotInIdsApi,
 } from '../utils/api/wait-favorite-api';
 import { loginByUi } from '../utils/auth';
+import { t } from '../utils/i18n';
 import { ensureNonOwnListingDetailFromSearch } from '../utils/listings';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
+import { expectSuccessToast } from '../utils/toast';
 
 test.describe('Favorites', () => {
   test('adds listing to favorites from detail page', async ({
@@ -54,6 +56,8 @@ test.describe('Favorites', () => {
           await listingDetailPage.expectFavoriteActionVisible();
           await listingDetailPage.expectFavoriteActionReady();
           await listingDetailPage.clickFavoriteAction();
+          await expectSuccessToast(page, t('listings.addToFavorites'));
+          await listingDetailPage.expectFavoriteActive();
           await waitUntilFavoriteInIdsApi(page, listingId);
         },
       },
@@ -75,8 +79,7 @@ test.describe('Favorites', () => {
       {
         name: 'Open listing detail from favorites card',
         action: async () => {
-          await favoritesPage.clickListingCard(listingId);
-          await listingDetailPage.expectPageView();
+          await favoritesPage.clickListingCard(listingId, listingDetailPage);
         },
       },
     ];

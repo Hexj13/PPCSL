@@ -25,6 +25,7 @@ test.describe('Listing detail similar listings scroll', () => {
         action: async () => {
           await listingDetailPage.similarListings.scrollCarouselBy(280);
           await listingDetailPage.similarListings.expectCarouselScrolled(50);
+          await listingDetailPage.expectPageView();
         },
       },
     ];

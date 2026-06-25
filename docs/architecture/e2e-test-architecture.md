@@ -81,24 +81,26 @@ Utilities and test-data can be consumed by specs/page-objects, but must not depe
 
 ## Coverage matrix (high level)
 
-Browser: **Chromium only**. Viewports: default Playwright projects are `mobile` then `desktop`; most specs run on both. `search-filters-mobile.spec.ts` and `search-filters-desktop.spec.ts` skip the non-matching project via `test.skip`. Prefer fixing and adding flows on mobile first.
+Browser: **Chromium only**. Viewports: default Playwright projects are `mobile` then `desktop`; most specs run on both. `search-filters-mobile.spec.ts` and `search-filters-desktop.spec.ts` are scoped per project via `testIgnore` in `playwright.config.ts` (not in-spec `test.skip`). Prefer fixing and adding flows on mobile first.
 
 | Area | Guest | Auth | Admin | P0 tag |
 | --- | --- | --- | --- | --- |
 | Search filters (shared) | yes | yes | n/a | yes (`search-filters.spec.ts`) |
-| Search filters (mobile sheets) | yes | yes | n/a | yes (`search-filters-mobile.spec.ts`, mobile projects only) |
-| Search filters (desktop tabs) | yes | yes | n/a | yes (`search-filters-desktop.spec.ts`, desktop projects only) |
+| Search filters (mobile sheets) | yes | yes | n/a | yes (`search-filters-mobile.spec.ts`, mobile project only) |
+| Search filters (desktop tabs) | yes | yes | n/a | yes (`search-filters-desktop.spec.ts`, desktop project only) |
+| Search home scroll restore | yes | n/a | n/a | yes (`search-home-scroll.spec.ts`; extended serial coverage in `home-scroll-restore.spec.ts`) |
 | Smart selection | yes | yes | n/a | no |
 | Listing AI report | yes | yes | n/a | no |
 | Listing detail view | via shared prep | yes | n/a | yes (`listing-view.spec.ts`) |
 | Listing detail actions (compare) | n/a | yes | n/a | no |
-| Listing create / my listings / promotion | n/a | yes | n/a | yes (`promotion.spec.ts` @p0) |
-| Auth login / register | partial | yes | n/a | yes |
+| Listing similar carousel | yes | n/a | n/a | no (`listing-similar-scroll.spec.ts`) |
+| Listing create / my listings / promotion | n/a | yes | n/a | yes (`listing-create.spec.ts`, `my-listings.spec.ts`, `promotion.spec.ts`) |
+| Auth login / register | partial | yes | n/a | yes (`auth-login.spec.ts`, `auth-registration.spec.ts`) |
 | Favorites | n/a | yes | n/a | no |
 | Saved filters | n/a | yes | n/a | no |
 | Compare empty states | yes | n/a | n/a | no |
 | Profile | n/a | yes | n/a | no |
-| Admin read-only tabs | n/a | yes (admin user) | yes | no |
+| Admin read-only tabs | n/a | yes (admin user) | yes | no (`admin.spec.ts`; users/promotions tab content test IDs) |
 | Static / legal / partners / offline | yes | n/a | n/a | no |
 | Guest route guards | yes | n/a | n/a | no |
 | Language switcher | yes | n/a | n/a | no |

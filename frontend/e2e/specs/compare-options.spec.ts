@@ -10,13 +10,18 @@ test.describe('Compare options comparison', () => {
     comparePage,
   }) => {
     test.setTimeout(120_000);
+    let listingId = '';
 
     const steps: E2EStep[] = [
       {
         name: 'Login and prepare comparison with equipment listings',
         action: async () => {
           await loginByUi(page, requireAuthCredentials());
-          await ensureComparisonWithEquipmentListings(page, 2);
+          const listingIds = await ensureComparisonWithEquipmentListings(page, 2);
+          listingId = listingIds[0] ?? '';
+          if (!listingId) {
+            throw new Error('Expected at least one listing id for compare options flow');
+          }
         },
       },
       {
@@ -25,9 +30,11 @@ test.describe('Compare options comparison', () => {
           await comparePage.open();
           await comparePage.expectPageView();
           await comparePage.expectTableVisible();
+          await comparePage.expectListingInTable(listingId);
           await comparePage.expectOptionsToggleVisible();
           await comparePage.showOptionsComparison();
           await comparePage.hideOptionsComparison();
+          await comparePage.expectTableVisible();
         },
       },
     ];

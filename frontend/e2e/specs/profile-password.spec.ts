@@ -1,9 +1,10 @@
 import { HeaderNavComponent } from '../components/layout/header-nav.component';
 import { test } from '../fixtures/base';
 import { provisionGoogleBusinessUser } from '../utils/api/provision-google-user';
-import { pathnameWithoutLocalePrefix } from '../utils/app-path';
-import { loginByUi } from '../utils/auth';
+import { expectAuthenticatedSession, loginByUi } from '../utils/auth';
+import { t } from '../utils/i18n';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
+import { expectSuccessToast } from '../utils/toast';
 
 const NEW_PASSWORD = 'E2eGoogle1!';
 
@@ -35,6 +36,8 @@ test.describe('Profile password (Google account)', () => {
           await profilePage.password.fillNewPassword(NEW_PASSWORD);
           await profilePage.password.expectSaveEnabled();
           await profilePage.password.submitPasswordSave();
+          await expectSuccessToast(page, t('profile.passwordSetSuccess'));
+          await profilePage.expectPageView();
           await profilePage.password.expectChangePasswordView();
           await profilePage.password.expectSaveDisabled();
         },
@@ -47,6 +50,7 @@ test.describe('Profile password (Google account)', () => {
   test('allows login with phone and password after initial password is set', async ({
     page,
     profilePage,
+    searchHomePage,
   }) => {
     let phone = '';
     const headerNav = new HeaderNavComponent(page);
@@ -64,31 +68,30 @@ test.describe('Profile password (Google account)', () => {
           await profilePage.password.fillNewPassword(NEW_PASSWORD);
           await profilePage.password.expectSaveEnabled();
           await profilePage.password.submitPasswordSave();
+          await expectSuccessToast(page, t('profile.passwordSetSuccess'));
+          await profilePage.expectPageView();
           await profilePage.password.expectChangePasswordView();
         },
       },
       {
         name: 'Log out from user menu',
         action: async () => {
-          await headerNav.openUserMenuForLogout();
-          await headerNav.logout();
-          await page.waitForURL((url) => pathnameWithoutLocalePrefix(url) === '/', {
-            timeout: 30_000,
-            waitUntil: 'domcontentloaded',
-          });
+          await headerNav.logoutAndExpectSignedOut(searchHomePage);
         },
       },
       {
         name: 'Log in with phone and new password',
         action: async () => {
           await loginByUi(page, { login: phone, password: NEW_PASSWORD });
+          await searchHomePage.expectHomeReady();
+          await expectAuthenticatedSession(page);
         },
       },
       {
         name: 'Open profile and validate change-password view',
         action: async () => {
           await profilePage.open();
-          await profilePage.expectLoaded();
+          await profilePage.expectPageView();
           await profilePage.password.scrollIntoView();
           await profilePage.password.expectChangePasswordView();
         },

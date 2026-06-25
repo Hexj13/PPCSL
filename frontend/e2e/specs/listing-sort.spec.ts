@@ -27,6 +27,7 @@ test.describe('Listing sort', () => {
           await listingsResponse;
           await expect(page).toHaveURL(/sortBy=price/);
           await expect(page).toHaveURL(/sortOrder=ASC/);
+          await searchHomePage.expectPageView();
           await searchHomePage.expectResultsOrEmptyVisible();
         },
       },
@@ -50,17 +51,10 @@ test.describe('Listing sort', () => {
           const boardPage = new BoardPage(page, boardSlug);
           await boardPage.open();
           await boardPage.expectPageView();
-          await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
-          const boardListingsResponse = page.waitForResponse(
-            (r) =>
-              r.url().includes(`/api/board/${boardSlug}/listings`) &&
-              r.request().method() === 'GET',
-            { timeout: 45_000 },
-          );
-          await boardPage.selectSort('price_DESC');
-          await boardListingsResponse;
+          await boardPage.selectSortAndWaitForListings('price_DESC');
           await expect(page).toHaveURL(/sortBy=price/);
           await expect(page).toHaveURL(/sortOrder=DESC/);
+          await boardPage.expectPageView();
         },
       },
     ];

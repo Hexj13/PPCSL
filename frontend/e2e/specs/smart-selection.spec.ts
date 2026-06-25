@@ -65,18 +65,7 @@ test.describe('Smart selection', () => {
           name: 'Submit smart selection answers',
           action: async () => {
             await completeSmartSelectionWizard(smartSelectionPage);
-            const [createResponse] = await Promise.all([
-              page.waitForResponse(
-                (r) => r.url().includes('/api/smart-selection') && r.request().method() === 'POST',
-                { timeout: 45_000 },
-              ),
-              smartSelectionPage.clickSubmit(),
-            ]);
-            expect(
-              createResponse.ok(),
-              `POST /api/smart-selection failed: HTTP ${createResponse.status()}`,
-            ).toBe(true);
-            createdFilter = (await createResponse.json()) as SmartSelectionCreateResponse;
+            createdFilter = await smartSelectionPage.submitAndExpectSaved();
             expect(createdFilter.id).toBeTruthy();
             expect(createdFilter.filters?.vehicleType).toBe('car');
           },
@@ -84,8 +73,6 @@ test.describe('Smart selection', () => {
         {
           name: 'Expect favorites filters tab after success',
           action: async () => {
-            await expect(page).toHaveURL(/\/favorites/, { timeout: 30_000 });
-            await expect(page).toHaveURL(/tab=filters/, { timeout: 15_000 });
             await favoritesPage.expectPageView();
             if (!createdFilter?.id) {
               throw new Error('Smart selection filter was not created');

@@ -42,6 +42,7 @@ interface AdminTableStateProps {
   loadingText: string;
   emptyText: string;
   emptyClassName?: string;
+  emptyTestId?: string;
   children: ReactNode;
 }
 
@@ -80,13 +81,18 @@ export function AdminTableState({
   loadingText,
   emptyText,
   emptyClassName,
+  emptyTestId,
   children,
 }: AdminTableStateProps) {
   if (loading) {
     return <div className="py-8 text-center text-text-secondary">{loadingText}</div>;
   }
   if (isEmpty) {
-    return <EmptyState message={emptyText} className={emptyClassName ?? 'py-10 md:py-12'} />;
+    return (
+      <div data-testid={emptyTestId}>
+        <EmptyState message={emptyText} className={emptyClassName ?? 'py-10 md:py-12'} />
+      </div>
+    );
   }
   return <>{children}</>;
 }

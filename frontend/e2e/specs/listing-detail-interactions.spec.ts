@@ -19,7 +19,7 @@ test.describe('Listing detail interactions', () => {
         name: 'Open listing detail from search',
         action: async () => {
           await searchHomePage.openAndExpectPageView();
-          const opened = await searchHomePage.openFirstListingFromResults();
+          const opened = await searchHomePage.openFirstListingByClick();
           expect(opened).toBe(true);
           await listingDetailPage.expectPageView();
         },
@@ -29,6 +29,7 @@ test.describe('Listing detail interactions', () => {
         action: async () => {
           await listingDetailPage.openGalleryModal();
           await listingDetailPage.closeGalleryModal();
+          await listingDetailPage.expectPageView();
         },
       },
     ];
@@ -46,7 +47,7 @@ test.describe('Listing detail interactions', () => {
         name: 'Open non-own listing detail',
         action: async () => {
           await searchHomePage.openAndExpectPageView();
-          const opened = await searchHomePage.openFirstListingFromResults();
+          const opened = await searchHomePage.openFirstListingByClick();
           if (!opened) {
             throw new Error('E2E needs a listing on search home for contact flow.');
           }
@@ -60,6 +61,7 @@ test.describe('Listing detail interactions', () => {
           await listingDetailPage.clickContactSeller();
           await listingDetailPage.expectSellerSectionInViewport();
           await listingDetailPage.revealSellerPhone();
+          await listingDetailPage.expectPageView();
         },
       },
     ];
@@ -89,6 +91,7 @@ test.describe('Listing detail interactions', () => {
           await listingDetailPage.expectDescriptionToggleVisible();
           await listingDetailPage.expandDescription();
           await listingDetailPage.collapseDescription();
+          await listingDetailPage.expectPageView();
         },
       },
     ];
@@ -112,15 +115,13 @@ test.describe('Listing detail interactions', () => {
         },
       },
       {
-        name: 'Reveal seller phone when contact card is available',
+        name: 'Reveal seller phone from contact action',
         action: async () => {
-          if (await listingDetailPage.contactActionButton.isVisible()) {
-            await listingDetailPage.clickContactSeller();
-            await listingDetailPage.expectSellerSectionInViewport();
-          }
-          if (await listingDetailPage.sellerRevealPhoneButton.isVisible()) {
-            await listingDetailPage.revealSellerPhone();
-          }
+          await expect(listingDetailPage.contactActionButton).toBeVisible({ timeout: 15_000 });
+          await listingDetailPage.clickContactSeller();
+          await listingDetailPage.expectSellerSectionInViewport();
+          await listingDetailPage.revealSellerPhone();
+          await listingDetailPage.expectPageView();
         },
       },
     ];

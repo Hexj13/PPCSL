@@ -53,9 +53,10 @@ export function UsersTabTable({
       isEmpty={users.length === 0}
       loadingText={t('common.loading')}
       emptyText={t('admin.usersTab.noUsers')}
+      emptyTestId="admin-users-empty"
     >
       <>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-testid="admin-users-table">
           <table className="w-full border-collapse [&_tbody_tr:nth-child(even)]:bg-primary-500/5">
             <thead>
               <tr className="border-b border-primary-700/30">

@@ -112,15 +112,34 @@ function displayWithCount(message: string, count: number): string {
   return count > 1 ? `${message} (${count})` : message;
 }
 
+function mergeToastClassName(existing: string | undefined, marker: string): string {
+  if (!existing) {
+    return marker;
+  }
+  if (existing.includes(marker)) {
+    return existing;
+  }
+  return `${existing} ${marker}`;
+}
+
+function withToastMarkerClass(opts: ToastOptions | undefined, marker: string): ToastOptions {
+  return {
+    ...opts,
+    className: mergeToastClassName(opts?.className, marker),
+  };
+}
+
 function createDedupedHandler(type: DedupeType) {
   const duration = DEFAULT_DURATION_MS[type];
   const clearAfter = DEDUPE_CLEAR_MS[type];
 
   const invoke = (msg: Renderable, opts?: ToastOptions) => {
-    if (type === 'blank') return hotToast(msg, opts);
+    if (type === 'blank') {
+      return hotToast(msg, withToastMarkerClass(opts, 'kupito-toast'));
+    }
     if (type === 'warning') {
       return hotToast(msg, {
-        ...opts,
+        ...withToastMarkerClass(opts, 'kupito-toast kupito-toast--warning'),
         icon: opts?.icon !== undefined ? opts.icon : TOAST_WARNING_ICON,
         style: { ...WARNING_TOAST_STYLE, ...opts?.style },
         duration: opts?.duration ?? duration,
@@ -128,12 +147,12 @@ function createDedupedHandler(type: DedupeType) {
     }
     if (type === 'error') {
       return hotToast.error(msg, {
-        ...opts,
+        ...withToastMarkerClass(opts, 'kupito-toast kupito-toast--error'),
         icon: opts?.icon !== undefined ? opts.icon : TOAST_ERROR_ICON,
       });
     }
     return hotToast.success(msg, {
-      ...opts,
+      ...withToastMarkerClass(opts, 'kupito-toast kupito-toast--success'),
       icon: opts?.icon !== undefined ? opts.icon : TOAST_SUCCESS_ICON,
     });
   };

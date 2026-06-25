@@ -46,8 +46,10 @@ test.describe('Search: desktop filter tabs @p0', () => {
       {
         name: 'Change sort without submitting search and keep scroll position',
         action: async () => {
+          const urlBeforeSort = page.url();
           await searchHomePage.selectSortPreservingCurrentScroll('price_DESC');
           await searchHomePage.expectScrollPreservedNear(scrollBeforeSort);
+          await expect(page).toHaveURL(urlBeforeSort);
         },
       },
     ];

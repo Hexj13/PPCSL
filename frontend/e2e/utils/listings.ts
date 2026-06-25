@@ -3,10 +3,15 @@ import { strict as assert } from 'node:assert';
 import type { Page } from '@playwright/test';
 
 import type { ListingCreatePage } from '../page-objects/listing-create.page';
+import { ListingDetailPage } from '../page-objects/listing-detail.page';
 import type { SearchHomePage } from '../page-objects/search-home.page';
 
 import { getE2eBackendApiOrigin } from './api-origin';
 import { forceDefaultCanonicalLocaleCookies } from './e2e-locale';
+import {
+  findListingIdsWithMinSimilarCount,
+  openListingDetailById,
+} from './listing-detail-helpers';
 import { createListingForViewScenario } from './listing-flow';
 
 async function findNonOwnListingIdFromApi(page: Page): Promise<string | null> {
@@ -102,6 +107,56 @@ type MyListingRow = {
   is_promoted?: boolean;
 };
 
+type MyListingsStatusCounts = {
+  Promoted?: number;
+};
+
+const DEFAULT_MAX_PROMOTIONS_PER_USER = 10;
+
+function parseMyListingsRows(body: {
+  data?: MyListingRow[] | { data?: MyListingRow[] };
+}): MyListingRow[] {
+  return Array.isArray(body.data)
+    ? body.data
+    : body.data && typeof body.data === 'object' && Array.isArray(body.data.data)
+      ? body.data.data
+      : [];
+}
+
+export async function ensurePromotionQuotaViaApi(
+  page: Page,
+  maxPromotions: number = DEFAULT_MAX_PROMOTIONS_PER_USER,
+): Promise<void> {
+  const apiOrigin = getE2eBackendApiOrigin();
+  const countsRes = await page.request.get(`${apiOrigin}/api/listings/my/status-counts`);
+  assert.ok(countsRes.ok(), `GET status-counts failed: HTTP ${countsRes.status()}`);
+  const counts = (await countsRes.json()) as MyListingsStatusCounts;
+  const promotedCount = counts.Promoted ?? 0;
+  if (promotedCount < maxPromotions) {
+    return;
+  }
+
+  const listRes = await page.request.get(
+    `${apiOrigin}/api/listings/my?limit=1&status=Active&promoted=true`,
+  );
+  assert.ok(listRes.ok(), `GET promoted listings failed: HTTP ${listRes.status()}`);
+  const rows = parseMyListingsRows(
+    (await listRes.json()) as {
+      data?: MyListingRow[] | { data?: MyListingRow[] };
+    },
+  );
+  const listingId = rows[0]?.id;
+  assert.ok(listingId, 'Expected at least one promoted listing to free promotion quota');
+
+  const unpromoteRes = await page.request.patch(`${apiOrigin}/api/listings/${listingId}/promote`, {
+    data: { is_promoted: false },
+  });
+  assert.ok(
+    unpromoteRes.ok(),
+    `Failed to unpromote listing ${listingId}: HTTP ${unpromoteRes.status()}`,
+  );
+}
+
 export async function findPromotableListingIdViaApi(page: Page): Promise<string | null> {
   const apiOrigin = getE2eBackendApiOrigin();
   const response = await page.request.get(`${apiOrigin}/api/listings/my?limit=50&status=Active`);
@@ -109,11 +164,7 @@ export async function findPromotableListingIdViaApi(page: Page): Promise<string 
     return null;
   }
   const body = (await response.json()) as { data?: MyListingRow[] | { data?: MyListingRow[] } };
-  const rows = Array.isArray(body.data)
-    ? body.data
-    : body.data && typeof body.data === 'object' && Array.isArray(body.data.data)
-      ? body.data.data
-      : [];
+  const rows = parseMyListingsRows(body);
   const match = rows.find((row) => row.status === 'Active' && row.is_promoted === false);
   return match?.id ?? null;
 }
@@ -123,9 +174,6 @@ export async function ensureListingDetailWithSimilarListings(
   searchHomePage: SearchHomePage,
   minSimilar = 2,
 ): Promise<string> {
-  const { findListingIdsWithMinSimilarCount, openListingDetailById } =
-    await import('./listing-detail-helpers');
-  const { ListingDetailPage } = await import('../page-objects/listing-detail.page');
   await searchHomePage.openAndExpectPageView();
   const listingIds = await findListingIdsWithMinSimilarCount(page, minSimilar);
   if (listingIds.length === 0) {

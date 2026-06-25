@@ -2,8 +2,10 @@ import { expect, test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import { deleteAllSavedFiltersForSession } from '../utils/api/saved-filters';
 import { loginByUi } from '../utils/auth';
+import { t } from '../utils/i18n';
 import { expectHomeWithSavedFilterApplied } from '../utils/saved-filter-url';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
+import { expectSuccessToast } from '../utils/toast';
 
 const TRUCK_FILTER_PARAMS = {
   vehicleType: 'truck',
@@ -36,7 +38,7 @@ test.describe('Saved filters', () => {
         name: 'Apply truck vehicle type filter',
         action: async () => {
           await searchHomePage.openAndExpectPageView('/?vehicleType=truck&urgent=true');
-          await expect(page).toHaveURL(/vehicleType=truck/);
+          await searchHomePage.expectUrlParam('vehicleType', 'truck');
           await searchHomePage.expectResultsOrEmptyVisible();
         },
       },
@@ -46,6 +48,7 @@ test.describe('Saved filters', () => {
           await searchHomePage.openSaveFilterModal();
           await searchHomePage.expectSaveFilterModalVisible();
           await searchHomePage.submitSaveFilterWithName(filterName);
+          await expectSuccessToast(page, t('saveFilter.filterSaved'));
         },
       },
       {

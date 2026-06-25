@@ -233,6 +233,15 @@ export class SearchFiltersMobileComponent {
     await chip.click();
   }
 
+  async expectFirstPopularChipSelected(): Promise<void> {
+    const chip = this.searchFiltersForm()
+      .locator('.md\\:hidden')
+      .locator('[data-testid^="search-popular-chip-"]')
+      .first();
+    await expect(chip).toHaveClass(/border-primary-900/);
+    await expect(chip).toHaveClass(/bg-primary-500\/10/);
+  }
+
   async expectSubmitEnabled(): Promise<void> {
     await expect(this.searchFiltersForm().getByTestId(this.testIds.submit)).toBeEnabled({
       timeout: 20_000,

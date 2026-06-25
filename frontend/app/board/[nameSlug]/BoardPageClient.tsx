@@ -112,7 +112,7 @@ export default function BoardPageClient({
   const pageTitle = t('board.title', { sellerName: board.displayName });
 
   return (
-    <div className="min-h-[calc(100vh-200px)]">
+    <div className="min-h-[calc(100vh-200px)]" data-testid="board-page">
       <Breadcrumbs
         items={[{ label: t('board.home'), href: '/' }, { label: pageTitle }]}
         className="mb-6"
@@ -141,11 +141,15 @@ export default function BoardPageClient({
         </div>
       )}
 
-      {!showSkeleton && listings.length === 0 && <EmptyState message={t('board.noListings')} />}
+      {!showSkeleton && listings.length === 0 && (
+        <div data-testid="board-empty">
+          <EmptyState message={t('board.noListings')} />
+        </div>
+      )}
 
       {!showSkeleton && listings.length > 0 && (
         <>
-          <div className="space-y-4">
+          <div className="space-y-4" data-testid="board-results-list">
             {listings.map((listing) => (
               <ListingManagementCard key={listing.id} listing={listing} mode="board" />
             ))}

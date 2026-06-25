@@ -4,8 +4,10 @@ import { requireAuthCredentials } from '../fixtures/env';
 import { deleteAllSavedFiltersForSession } from '../utils/api/saved-filters';
 import { getE2eBackendApiOrigin } from '../utils/api-origin';
 import { expectAuthenticatedSession, loginByUi } from '../utils/auth';
+import { t } from '../utils/i18n';
 import { completeSmartSelectionWizard } from '../utils/smart-selection-flow';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
+import { expectErrorToast } from '../utils/toast';
 
 test.describe('Smart selection edge cases', () => {
   test.describe.configure({ mode: 'serial' });
@@ -39,7 +41,11 @@ test.describe('Smart selection edge cases', () => {
         action: async () => {
           await searchHomePage.openAndExpectPageView();
           await searchHomePage.clickSmartSelection();
-          await expect(page.getByRole('alert')).toBeVisible({ timeout: 15_000 });
+          await expectErrorToast(
+            page,
+            t('searchFilters.smartSelectionFilterLimitError', { max: MAX_SAVED_FILTERS }),
+          );
+          await searchHomePage.expectPageView();
         },
       },
     ];
@@ -79,7 +85,8 @@ test.describe('Smart selection edge cases', () => {
           });
           await completeSmartSelectionWizard(smartSelectionPage);
           await smartSelectionPage.clickSubmit();
-          await expect(page.getByRole('alert')).toBeVisible({ timeout: 20_000 });
+          await expectErrorToast(page, t('common.apiErrors.serverError'));
+          await smartSelectionPage.expectPageView();
         },
       },
     ];

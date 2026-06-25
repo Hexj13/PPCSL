@@ -158,6 +158,24 @@ Each spec must follow these rules:
 - Reusable runtime scenario data should live in `e2e/test-data`.
 - Specs should consume factory helpers instead of duplicating generation logic.
 
+## User-path assertion contract
+
+After every meaningful user action (submit, save, delete, toggle, navigate), assert all axes that apply to the flow:
+
+1. **Network / mutation completed** — for create, update, promote, save-filter, favorite, compare: `waitForResponse(<mutation> OK)` before destination checks.
+2. **Navigation or query state** — `toHaveURL` / `waitForURL`, or unchanged URL when the page must not navigate.
+3. **Destination content rendered** — strong `expectPageView()` on the target page object: header + primary blocks + results grid, empty state, table, or list as the scenario requires.
+4. **Toast / notification** — when the app shows feedback: `expectSuccessToast` / `expectErrorToast` / `expectWarningToast` from `e2e/utils/toast.ts`, optionally matching text from `e2e/utils/i18n.ts` (`t('listings.changesSaved')` for UI copy; `tb('errors.invalidLoginCredentials')` when the API returns backend-translated messages). Toast nodes use stable marker classes (`kupito-toast--success`, `--error`, `--warning`) from `lib/toast.ts`.
+
+Avoid:
+
+- Clicking without waiting for the mutation or navigation to finish.
+- Asserting only `toHaveURL` after a save/submit flow.
+- Conditional `if (visible)` branches that skip assertions when an element is missing.
+- `body` visible as proof that a page rendered.
+
+Example reference: `listing-view.spec.ts` (copy link — toast + URL + page view), `my-listings.spec.ts` (edit save — API + my-listings view + success toast + updated card).
+
 ## Step typing
 
 - Shared step shape: `E2EStep` in `e2e/types/e2e-step.ts` (re-exported from `e2e/utils/steps.ts`).
@@ -186,6 +204,7 @@ Examples:
 - `listing-create-brand-select`
 - `auth-login-submit`
 - `listing-detail-copy-link`
+- `admin-users-tab-content`, `admin-users-table`, `admin-promotions-tab-content`
 
 ### Dynamic collections and generated IDs
 
@@ -260,6 +279,8 @@ A spec must cover the user-visible outcome of the feature, not only an intermedi
 - **AI listing report:** guest redirect with `openAiReport` intent; authenticated flow waits for terminal modal state and, when `ready`, asserts report content (not only loading/unavailable shells).
 - **Compare / listing actions:** add-to-compare on detail must reach compare page with table visible, not only empty-state tabs.
 - **Search filters (mobile):** all vehicle tabs (`basic`, `advanced`, `equipment`, `popular`); each mobile bottom sheet opens, offers options, confirms with OK, and sets `data-has-selection` on the filter row; separate spec submits with a changed filter and waits for `GET /api/listings`. See `search-filters-mobile.spec.ts`.
+- **Search home scroll:** `search-home-scroll.spec.ts` (@p0) — focus a card, open listing detail via click, `goBack`, assert scroll near the focused card and card still in viewport; extended serial cases in `home-scroll-restore.spec.ts`.
+- **Promotion:** confirm waits for `PATCH /api/listings/:id/promote` (assert `response.ok()`). When the shared E2E admin already has `MAX_PROMOTIONS_PER_USER` active promotions, call `ensurePromotionQuotaViaApi` in `e2e/utils/listings.ts` before opening the modal (unpromotes one active listing via API).
 - **Listing sort:** on home, `selectSort` updates UI only until `submitSearch()`; assert URL `sortBy`/`sortOrder` and listings response after submit. On seller board, sort updates URL and refetches immediately. See `listing-sort.spec.ts`, `e2e/test-data/listing-sort.ts`, `BoardPage`.
 
 Prefer parsing create/save API responses for `id` and `filters` when asserting apply-on-home, so expander or backend relaxations stay aligned with what the UI applies.
@@ -272,11 +293,16 @@ Prefer parsing create/save API responses for `id` and `filters` when asserting a
 
 P0 is the minimum E2E subset that protects release readiness for the primary marketplace flow. P0 scenarios run on **both** mobile and desktop projects when tagged.
 
-- Search home page opens and filter interactions work for core vehicle types (`search-filters.spec.ts` @p0).
-- Listing detail page opens from search results and key detail blocks are visible.
-- Login flow is stable for valid credentials and unauthenticated access stays guarded.
-- Registration flow reaches home through `verify-phone` and `complete-profile`.
-- Listing creation flow covers guest guard and successful authenticated publish.
+| Area | Spec(s) |
+| --- | --- |
+| Search filters (shared + viewport sheets/tabs) | `search-filters.spec.ts`, `search-filters-mobile.spec.ts`, `search-filters-desktop.spec.ts` |
+| Search home scroll restore | `search-home-scroll.spec.ts` |
+| Listing detail view | `listing-view.spec.ts` |
+| Auth login | `auth-login.spec.ts` |
+| Auth registration (individual + business → home) | `auth-registration.spec.ts` (`e2e/utils/registration-flow.ts`) |
+| Listing create | `listing-create.spec.ts` |
+| My listings | `my-listings.spec.ts` |
+| Promotion | `promotion.spec.ts` (uses `ensurePromotionQuotaViaApi` before confirm) |
 
 Tag P0 scenarios with `@p0` in the `test.describe` title. Run `npm run test:e2e:p0` to execute only tagged tests (all viewport projects that match the grep).
 
@@ -290,8 +316,9 @@ Current suite is aligned with this standard:
 - Browser reset helper: `e2e/utils/session.ts` (no `beforeEach` UI hooks)
 - Shared step runner: `e2e/utils/steps.ts` (`prependClearBrowserState`, `runSteps`); `clearBrowserState` restores default locale cookies (`ro`) before navigating home so i18n does not leave a duplicate hidden search form in the DOM
 - Search form locators: `e2e/utils/search-filters-form.ts` (`visibleSearchFiltersForm` — scopes to `[data-testid="search-filters-form"]:visible`)
-- API helpers: `e2e/utils/api/auth.ts`, `e2e/utils/api/check-phone.ts`, `e2e/utils/api/listing-actions.ts`, `e2e/utils/api/saved-filters.ts`, `e2e/utils/api/wait-favorite-api.ts`
-- Shared auth/listing helpers: `e2e/utils/auth.ts`, `e2e/utils/listings.ts`, `e2e/utils/listing-flow.ts`
+- API helpers: `e2e/utils/api/auth.ts`, `e2e/utils/api/check-phone.ts`, `e2e/utils/api/listing-actions.ts`, `e2e/utils/api/saved-filters.ts`, `e2e/utils/api/wait-favorite-api.ts`, `e2e/utils/api/provision-google-user.ts`
+- Shared auth/listing helpers: `e2e/utils/auth.ts` (`loginByUi` → `SignPage.submitLoginAndExpectSuccess`; `logoutAndExpectSignedOut`), `e2e/utils/listings.ts` (`ensurePromotionQuotaViaApi`, `findPromotableListingIdViaApi`), `e2e/utils/listing-flow.ts`, `e2e/utils/registration-flow.ts`, `e2e/utils/static-page.ts`
+- Toast + i18n assertions: `e2e/utils/toast.ts`, `e2e/utils/i18n.ts` (`t` / `tb` read copied `lib/locales/ro.json` and backend ro locale)
 - API origin + locale cookies: `e2e/utils/api-origin.ts`, `e2e/utils/e2e-locale.ts`
 - URL assertions: `e2e/utils/app-path.ts` `pathnameWithoutLocalePrefix()` strips only configured URL locale prefixes (e.g. `ru`), not arbitrary two-letter path segments (so `/listings/...` is not mangled).
 - Saved filters quota: `e2e/utils/api/saved-filters.ts` `deleteAllSavedFiltersForSession` (used by `saved-filters.spec.ts` so `POST /api/saved-filters` does not hit the per-user cap during repeated local runs)

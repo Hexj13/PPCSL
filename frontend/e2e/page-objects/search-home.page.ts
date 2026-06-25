@@ -4,8 +4,9 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 import type { ListingSortKey } from '../../lib/search/listingSort';
 import { BottomSheetComponent } from '../components/common/bottom-sheet.component';
+import { HeaderNavComponent } from '../components/layout/header-nav.component';
 import { getE2eBackendApiOrigin } from '../utils/api-origin';
-import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+import { expectPagePath, pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
 import { visibleSearchFiltersForm } from '../utils/search-filters-form';
 import { dismissCookieConsentIfVisible } from '../utils/session';
@@ -28,10 +29,12 @@ export class SearchHomePage extends SearchHomeScrollPage {
   } as const;
 
   readonly bottomSheet: BottomSheetComponent;
+  readonly headerNav: HeaderNavComponent;
 
   constructor(page: Page) {
     super(page);
     this.bottomSheet = new BottomSheetComponent(page);
+    this.headerNav = new HeaderNavComponent(page);
   }
 
   protected searchFiltersForm(): Locator {
@@ -78,6 +81,8 @@ export class SearchHomePage extends SearchHomeScrollPage {
   }
 
   async expectPageView(): Promise<void> {
+    await expectPagePath(this.page, (path) => path === '/');
+    await expect(this.page.locator('header').first()).toBeVisible({ timeout: 30_000 });
     const form = this.searchFiltersForm();
     await expect(form).toBeVisible({ timeout: 30_000 });
     await expect(form.getByTestId(this.testIds.vehicleTypeCar)).toBeVisible();
@@ -86,7 +91,13 @@ export class SearchHomePage extends SearchHomeScrollPage {
     await expect(form.getByTestId(this.testIds.listingCategoryTire)).toBeVisible();
   }
 
+  async expectHomeReady(): Promise<void> {
+    await this.expectPageView();
+    await this.expectResultsOrEmptyVisible();
+  }
+
   async selectVehicleTypeCar(): Promise<void> {
+    const listingsResponse = this.waitForListingsResponse();
     const target = this.searchFiltersForm().getByTestId(this.testIds.vehicleTypeCar);
     await expect(target).toBeEnabled({ timeout: 20_000 });
     await target.scrollIntoViewIfNeeded();
@@ -102,6 +113,12 @@ export class SearchHomePage extends SearchHomeScrollPage {
         return false;
       }, VEHICLE_CATEGORY_POLL)
       .toBe(true);
+    try {
+      await listingsResponse;
+    } catch {
+      // selection may not refetch when already active
+    }
+    await this.expectResultsOrEmptyVisible();
   }
 
   async expectVehicleTypePressed(vehicleType: 'car' | 'truck' | 'moto'): Promise<void> {
@@ -118,6 +135,7 @@ export class SearchHomePage extends SearchHomeScrollPage {
   }
 
   async selectVehicleTypeTruck(): Promise<void> {
+    const listingsResponse = this.waitForListingsResponse();
     await expect
       .poll(async () => {
         const target = this.searchFiltersForm().getByTestId(this.testIds.vehicleTypeTruck);
@@ -138,9 +156,16 @@ export class SearchHomePage extends SearchHomeScrollPage {
         return false;
       }, VEHICLE_CATEGORY_POLL)
       .toBe(true);
+    try {
+      await listingsResponse;
+    } catch {
+      // selection may not refetch when already active
+    }
+    await this.expectResultsOrEmptyVisible();
   }
 
   async selectVehicleTypeMoto(): Promise<void> {
+    const listingsResponse = this.waitForListingsResponse();
     await expect
       .poll(async () => {
         const target = this.searchFiltersForm().getByTestId(this.testIds.vehicleTypeMoto);
@@ -161,12 +186,19 @@ export class SearchHomePage extends SearchHomeScrollPage {
         return false;
       }, VEHICLE_CATEGORY_POLL)
       .toBe(true);
+    try {
+      await listingsResponse;
+    } catch {
+      // selection may not refetch when already active
+    }
+    await this.expectResultsOrEmptyVisible();
   }
 
   async selectListingCategoryTire(): Promise<void> {
     const target = this.searchFiltersForm().getByTestId(this.testIds.listingCategoryTire);
     await expect(target).toBeEnabled({ timeout: 20_000 });
     await target.scrollIntoViewIfNeeded();
+    const listingsResponse = this.waitForListingsResponse();
     await expect
       .poll(async () => {
         if ((await target.getAttribute('aria-pressed')) === 'true') {
@@ -179,6 +211,12 @@ export class SearchHomePage extends SearchHomeScrollPage {
         return false;
       }, VEHICLE_CATEGORY_POLL)
       .toBe(true);
+    try {
+      await listingsResponse;
+    } catch {
+      // selection may not refetch when already active
+    }
+    await this.expectResultsOrEmptyVisible();
   }
 
   async submitSearch(): Promise<void> {
@@ -187,8 +225,24 @@ export class SearchHomePage extends SearchHomeScrollPage {
     await expect(submit).toBeEnabled({ timeout: 20_000 });
     await submit.scrollIntoViewIfNeeded();
     const useMobile = await pageUsesMobileLayout(this.page);
+    const listingsResponse = this.waitForListingsResponse();
     await submit.click({ force: useMobile });
+    try {
+      await listingsResponse;
+    } catch {
+      // results may already be loaded
+    }
     await this.expectResultsOrEmptyVisible();
+  }
+
+  waitForListingsResponse() {
+    return this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/listings') &&
+        response.request().method() === 'GET' &&
+        response.ok(),
+      { timeout: 45_000 },
+    );
   }
 
   async expectResultsOrEmptyVisible(): Promise<void> {
@@ -201,6 +255,29 @@ export class SearchHomePage extends SearchHomeScrollPage {
       return false;
     }
     return (await this.listingCardLinks().count()) > 0;
+  }
+
+  async expectUrlParam(name: string, value: string): Promise<void> {
+    const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    await expect(this.page).toHaveURL(new RegExp(`[?&]${name}=${escapedValue}(?:&|$)`));
+  }
+
+  async openFirstListingByClick(): Promise<boolean> {
+    const hasResults = await this.hasListingResults();
+    if (!hasResults) {
+      await expect(this.emptyState).toBeVisible();
+      return false;
+    }
+
+    const firstCardLink = this.listingCardLinks().first();
+    await expect(firstCardLink).toBeVisible();
+    const testId = await firstCardLink.getAttribute('data-testid');
+    const match = testId?.match(/^listing-card-link-(.+)$/);
+    if (!match?.[1]) {
+      return false;
+    }
+    await this.openListingById(match[1]);
+    return true;
   }
 
   async openFirstListingFromResults(): Promise<boolean> {

@@ -1,6 +1,10 @@
 import { expect, type Page } from '@playwright/test';
 
 import { RegisterFormComponent } from '../components/auth/register-form.component';
+import { pathnameWithoutLocalePrefix } from '../utils/app-path';
+import { t, tb } from '../utils/i18n';
+import { dismissCookieConsentIfVisible } from '../utils/session';
+import { expectErrorToast } from '../utils/toast';
 
 export class SignPage {
   private readonly testIds = {
@@ -84,6 +88,9 @@ export class SignPage {
   }
 
   async expectLoginPageView(): Promise<void> {
+    await expect(this.page).toHaveURL((url) =>
+      pathnameWithoutLocalePrefix(url).startsWith('/sign'),
+    );
     const root = this.visibleAuthPage();
     await expect(root).toBeVisible();
     await expect(root.getByTestId(this.testIds.loginTab)).toBeVisible();
@@ -95,6 +102,13 @@ export class SignPage {
   }
 
   async expectRegisterPageView(): Promise<void> {
+    await expect(this.page).toHaveURL((url) => {
+      const path = pathnameWithoutLocalePrefix(url);
+      return (
+        path.startsWith('/sign') &&
+        (path.includes('tab=register') || url.search.includes('tab=register'))
+      );
+    });
     const root = this.visibleAuthPage();
     await expect(root).toBeVisible();
     await expect(root.getByTestId(this.testIds.registerTab)).toBeVisible();
@@ -108,8 +122,74 @@ export class SignPage {
     await root.getByTestId(this.testIds.loginPasswordInput).fill(password);
   }
 
+  async expectPageView(): Promise<void> {
+    const path = pathnameWithoutLocalePrefix(this.page.url());
+    const isRegister =
+      path.includes('tab=register') ||
+      new URL(this.page.url()).searchParams.get('tab') === 'register';
+    if (isRegister) {
+      await this.expectRegisterPageView();
+      return;
+    }
+    await this.expectLoginPageView();
+  }
+
   async submitLogin(): Promise<void> {
     await this.visibleAuthPage().getByTestId(this.testIds.loginSubmit).click();
+  }
+
+  async submitLoginAndExpectSuccess(): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/login') && response.request().method() === 'POST',
+      { timeout: 30_000 },
+    );
+    await this.submitLoginForm();
+    const response = await responsePromise;
+    if (!response.ok()) {
+      const body = await response.text().catch(() => '');
+      throw new Error(`Login failed: HTTP ${response.status()} ${body}`);
+    }
+    await this.page.waitForURL((url) => !pathnameWithoutLocalePrefix(url).startsWith('/sign'), {
+      timeout: 30_000,
+      waitUntil: 'domcontentloaded',
+    });
+  }
+
+  async submitLoginAndExpectInvalid(messageKey: string): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
+    const loginResponse = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/login') && response.request().method() === 'POST',
+      { timeout: 30_000 },
+    );
+    await this.submitLogin();
+    const response = await loginResponse;
+    expect(response.ok()).toBe(false);
+    await expectErrorToast(this.page, tb(messageKey));
+    await expect(this.page).toHaveURL(/\/sign/);
+    await this.expectLoginPageView();
+  }
+
+  async submitLoginExpectingNoNavigation(): Promise<void> {
+    await this.submitLogin();
+    await expect(this.page).toHaveURL(/\/sign/);
+    await this.expectLoginPageView();
+    const root = this.visibleAuthPage();
+    await expect(root.getByText(t('login.emailOrPhoneRequired'))).toBeVisible();
+    await expect(root.getByText(t('login.passwordRequired'))).toBeVisible();
+  }
+
+  async submitLoginAndExpectStayOnSignPage(): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/login') && response.request().method() === 'POST',
+      { timeout: 30_000 },
+    );
+    await this.submitLogin();
+    await responsePromise;
+    await expect(this.page).toHaveURL(/\/sign/);
+    await this.expectLoginPageView();
   }
 
   async submitLoginForm(): Promise<void> {

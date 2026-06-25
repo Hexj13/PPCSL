@@ -2,10 +2,7 @@ import { expect, test } from '../fixtures/base';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Search: filters @p0', () => {
-  test('changes vehicle type filter to truck and submits search', async ({
-    page,
-    searchHomePage,
-  }) => {
+  test('applies truck vehicle type filter and refetches', async ({ page, searchHomePage }) => {
     const steps: E2EStep[] = [
       {
         name: 'Open search page and validate page view',
@@ -23,7 +20,8 @@ test.describe('Search: filters @p0', () => {
         name: 'Verify truck filter is active in UI and URL',
         action: async () => {
           await searchHomePage.expectVehicleTypePressed('truck');
-          await expect(page).toHaveURL(/vehicleType=truck/);
+          await searchHomePage.expectUrlParam('vehicleType', 'truck');
+          await searchHomePage.expectPageView();
         },
       },
       {
@@ -79,6 +77,8 @@ test.describe('Search: filters @p0', () => {
         name: 'Verify URL points to root state',
         action: async () => {
           await expect(page).toHaveURL(/\/(\?|$)/);
+          await searchHomePage.expectPageView();
+          await searchHomePage.expectResultsOrEmptyVisible();
         },
       },
     ];
@@ -86,10 +86,7 @@ test.describe('Search: filters @p0', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('changes vehicle type filter to moto and submits search', async ({
-    page,
-    searchHomePage,
-  }) => {
+  test('applies moto vehicle type filter and refetches', async ({ page, searchHomePage }) => {
     const steps: E2EStep[] = [
       {
         name: 'Open search page and validate page view',
@@ -107,7 +104,8 @@ test.describe('Search: filters @p0', () => {
         name: 'Verify moto filter is active in UI and URL',
         action: async () => {
           await searchHomePage.expectVehicleTypePressed('moto');
-          await expect(page).toHaveURL(/vehicleType=moto/);
+          await searchHomePage.expectUrlParam('vehicleType', 'moto');
+          await searchHomePage.expectPageView();
         },
       },
       {

@@ -1,4 +1,6 @@
-import { expect, test } from '../fixtures/base';
+import { test } from '../fixtures/base';
+import { gotoWithDomContentLoadedRetry } from '../utils/session';
+import { expectStaticPageView } from '../utils/static-page';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Partners page smoke', () => {
@@ -7,8 +9,8 @@ test.describe('Partners page smoke', () => {
       {
         name: 'Open partners page',
         action: async () => {
-          await page.goto('/partners', { waitUntil: 'load' });
-          await expect(page.locator('body')).toBeVisible();
+          await gotoWithDomContentLoadedRetry(page, '/partners');
+          await expectStaticPageView(page, '/partners');
         },
       },
     ];

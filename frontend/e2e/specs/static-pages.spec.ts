@@ -1,5 +1,6 @@
-import { expect, test } from '../fixtures/base';
+import { test } from '../fixtures/base';
 import { gotoWithDomContentLoadedRetry } from '../utils/session';
+import { expectStaticPageView } from '../utils/static-page';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 const STATIC_ROUTES = [
@@ -21,7 +22,7 @@ test.describe('Static pages smoke', () => {
           name: `Navigate to ${route}`,
           action: async () => {
             await gotoWithDomContentLoadedRetry(page, route);
-            await expect(page.locator('body')).toBeVisible();
+            await expectStaticPageView(page, route);
           },
         },
       ];

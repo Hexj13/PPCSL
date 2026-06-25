@@ -57,13 +57,50 @@ export class FavoritesPage {
   }
 
   async openListingsTab(): Promise<void> {
+    const favoritesListLoaded = this.waitForFavoritesListResponse();
     await this.page.getByTestId(this.testIds.tabListings).click();
+    await expect(this.page).not.toHaveURL(/tab=filters/, { timeout: 15_000 });
+    try {
+      await favoritesListLoaded;
+    } catch {
+      // tab may already be active
+    }
+    await this.expectListingsTabContentVisible();
   }
 
   async expectPageView(): Promise<void> {
     await expect(this.page).toHaveURL((url) =>
       pathnameWithoutLocalePrefix(url).startsWith('/favorites'),
     );
+    await expect(this.page.locator('header').first()).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.tabListings)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.tabFilters)).toBeVisible();
+    await this.expectActiveTabContentVisible();
+  }
+
+  async expectListingsTabContentVisible(): Promise<void> {
+    await expect(this.page.getByTestId(this.testIds.listingsTab)).toBeVisible();
+    await expect
+      .poll(
+        async () => {
+          const empty = this.page.getByTestId(this.testIds.listingsEmpty);
+          if (await empty.isVisible().catch(() => false)) {
+            return true;
+          }
+          return (await this.page.locator('[data-testid^="listing-card-"]').count()) > 0;
+        },
+        { timeout: 45_000 },
+      )
+      .toBe(true);
+  }
+
+  async expectActiveTabContentVisible(): Promise<void> {
+    const url = new URL(this.page.url());
+    if (url.searchParams.get('tab') === 'filters') {
+      await this.expectSavedFiltersListVisible();
+      return;
+    }
+    await this.expectListingsTabContentVisible();
   }
 
   async expectListingsEmptyVisible(): Promise<void> {
@@ -72,6 +109,12 @@ export class FavoritesPage {
 
   async expectListingsTabVisible(): Promise<void> {
     await expect(this.page.getByTestId(this.testIds.listingsTab)).toBeVisible();
+  }
+
+  async expectListingCardHidden(listingId: string): Promise<void> {
+    await expect(this.page.getByTestId(`listing-card-${listingId}`)).toBeHidden({
+      timeout: 25_000,
+    });
   }
 
   async expectListingCardVisible(listingId: string): Promise<void> {
@@ -100,7 +143,28 @@ export class FavoritesPage {
   }
 
   async expectSavedFiltersListVisible(): Promise<void> {
-    await expect(this.page.getByTestId('saved-filters-list')).toBeVisible({ timeout: 30_000 });
+    const list = this.page.getByTestId('saved-filters-list');
+    await expect
+      .poll(
+        async () => {
+          if (await list.isVisible().catch(() => false)) {
+            return true;
+          }
+          if (!pathnameWithoutLocalePrefix(this.page.url()).includes('tab=filters')) {
+            return false;
+          }
+          const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
+          await this.page.reload({ waitUntil: 'domcontentloaded' });
+          try {
+            await savedFiltersLoaded;
+          } catch {
+            return false;
+          }
+          return list.isVisible().catch(() => false);
+        },
+        { timeout: 45_000, intervals: [600, 1000, 1600, 2400] },
+      )
+      .toBe(true);
   }
 
   async expectSavedFilterCardVisible(filterId: string): Promise<void> {
@@ -150,8 +214,16 @@ export class FavoritesPage {
       .toBe('/');
   }
 
-  async clickListingCard(listingId: string): Promise<void> {
-    await this.page.getByTestId(`listing-card-link-${listingId}`).click();
-    await expect(this.page).toHaveURL(/\/listings\/[^/]+$/, { timeout: 20_000 });
+  async clickListingCard(
+    listingId: string,
+    listingDetailPage: {
+      expectPageView(): Promise<void>;
+    },
+  ): Promise<void> {
+    await Promise.all([
+      this.page.waitForURL(/\/listings\/[^/]+$/, { timeout: 20_000 }),
+      this.page.getByTestId(`listing-card-link-${listingId}`).click(),
+    ]);
+    await listingDetailPage.expectPageView();
   }
 }

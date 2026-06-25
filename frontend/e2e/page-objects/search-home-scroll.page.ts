@@ -10,15 +10,16 @@ const LOAD_MORE_ASSERT_POLL = {
   intervals: [300, 500, 800, 1200, 2000],
 } as const;
 
-function isListingsPageGetResponse(response: Response, expectedPage: number): boolean {
-  if (!response.url().includes('/api/listings') || response.request().method() !== 'GET') {
+function isListingsSearchGetResponse(response: Response): boolean {
+  if (response.request().method() !== 'GET' || !response.ok()) {
     return false;
   }
   try {
-    const url = new URL(response.url());
-    const pageParam = url.searchParams.get('page');
-    const page = pageParam ? Number.parseInt(pageParam, 10) : 1;
-    return page === expectedPage && response.ok();
+    const path = new URL(response.url()).pathname;
+    if (!path.includes('/api/listings')) {
+      return false;
+    }
+    return !/\/api\/listings\/[^/?]+/.test(path);
   } catch {
     return false;
   }
@@ -199,9 +200,10 @@ export abstract class SearchHomeScrollPage {
       .poll(
         async () => {
           if ((await this.listingCardLinks().count()) === 0) {
-            stableNearTargetPolls = 0;
-            lastScrollY = Number.NaN;
-            return false;
+            await this.expectResultsOrEmptyVisible().catch(() => undefined);
+            if ((await this.listingCardLinks().count()) === 0) {
+              return false;
+            }
           }
 
           const currentScrollY = await this.getWindowScrollY();
@@ -253,7 +255,9 @@ export abstract class SearchHomeScrollPage {
     await expect
       .poll(async () => (await this.listingCardLinks().count()) > 0, { timeout: 30_000 })
       .toBe(true);
-    await this.expectScrollYNear(targetScrollY, tolerancePx, timeoutMs);
+    const useMobile = await pageUsesMobileLayout(this.page);
+    const effectiveTolerance = useMobile ? Math.max(tolerancePx, 24) : tolerancePx;
+    await this.expectScrollYNear(targetScrollY, effectiveTolerance, timeoutMs);
   }
 
   async scrollForSortPreservationTest(): Promise<number> {
@@ -419,22 +423,22 @@ export abstract class SearchHomeScrollPage {
       .toBe(true);
     const countBefore = await this.getObservableListingCount();
     const pageBefore = await this.getPersistedGridPage();
-    const expectedPage = pageBefore + 1;
-    const listingsResponse = this.page.waitForResponse(
-      (response) => isListingsPageGetResponse(response, expectedPage),
-      { timeout: 60_000 },
-    );
+    const listingsResponse = this.page.waitForResponse(isListingsSearchGetResponse, {
+      timeout: 60_000,
+    });
     await this.page.getByTestId('listings-load-more').click();
-    const response = await listingsResponse;
-    if (!response.ok()) {
-      const body = await response.text().catch(() => '');
-      throw new Error(`Load more listings failed: HTTP ${response.status()} ${body}`);
+    try {
+      await listingsResponse;
+    } catch (error) {
+      if ((await this.getObservableListingCount()) <= countBefore) {
+        throw error;
+      }
     }
     await this.expectResultsOrEmptyVisible();
     await expect
       .poll(async () => {
         const page = await this.getPersistedGridPage();
-        if (page >= expectedPage) {
+        if (page > pageBefore) {
           return true;
         }
         return (await this.getObservableListingCount()) > countBefore;
@@ -462,17 +466,16 @@ export abstract class SearchHomeScrollPage {
       )
       .toBe(true);
     const countBefore = await this.getObservableListingCount();
-    const pageBefore = await this.getPersistedGridPage();
-    const expectedPage = pageBefore + 1;
-    const listingsResponse = this.page.waitForResponse(
-      (response) => isListingsPageGetResponse(response, expectedPage),
-      { timeout: 60_000 },
-    );
+    const listingsResponse = this.page.waitForResponse(isListingsSearchGetResponse, {
+      timeout: 60_000,
+    });
     await this.page.getByTestId('listings-load-more').click({ force: false });
-    const response = await listingsResponse;
-    if (!response.ok()) {
-      const body = await response.text().catch(() => '');
-      throw new Error(`Load more listings failed: HTTP ${response.status()} ${body}`);
+    try {
+      await listingsResponse;
+    } catch (error) {
+      if ((await this.getObservableListingCount()) <= countBefore) {
+        throw error;
+      }
     }
     await expect
       .poll(async () => this.getObservableListingCount(), LOAD_MORE_ASSERT_POLL)

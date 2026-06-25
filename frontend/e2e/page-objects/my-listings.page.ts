@@ -2,8 +2,11 @@ import { strict as assert } from 'node:assert';
 
 import { expect, type Page } from '@playwright/test';
 
+import { formatPrice } from '../../lib/utils/utils';
 import { HeaderNavComponent } from '../components/layout/header-nav.component';
+import { t } from '../utils/i18n';
 import { dismissCookieConsentIfVisible } from '../utils/session';
+import { expectSuccessToast } from '../utils/toast';
 
 export class MyListingsPage {
   private readonly testIds = {
@@ -54,6 +57,75 @@ export class MyListingsPage {
     await this.promoteButtons.first().click();
   }
 
+  async selectFirstPromotionPeriod(): Promise<void> {
+    await expect(this.promotionPeriodOptions.first()).toBeVisible({ timeout: 15_000 });
+    await this.promotionPeriodOptions.first().click();
+    await expect(this.promotionConfirmButton).toBeEnabled({ timeout: 15_000 });
+  }
+
+  async confirmPromotion(): Promise<void> {
+    const promoteResponse = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/listings/') &&
+        response.url().includes('/promote') &&
+        response.request().method() === 'PATCH',
+      { timeout: 45_000 },
+    );
+    await this.promotionConfirmButton.click();
+    const response = await promoteResponse;
+    expect(
+      response.ok(),
+      `PATCH promote failed: HTTP ${response.status()} ${await response.text().catch(() => '')}`,
+    ).toBe(true);
+  }
+
+  async expectPromotionModalHidden(): Promise<void> {
+    await expect(this.promotionDialog).toBeHidden({ timeout: 20_000 });
+  }
+
+  async expectListingPromoted(listingId: string): Promise<void> {
+    const card = this.page.getByTestId(`my-listings-card-${listingId}`);
+    await expect(card).toBeVisible({ timeout: 30_000 });
+    await expect(card.getByText(t('listings.promoted'), { exact: true })).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(this.promoteButtonForListing(listingId)).toBeHidden({ timeout: 30_000 });
+  }
+
+  async expectPromotionSuccessToast(): Promise<void> {
+    await expectSuccessToast(this.page, t('listings.promotionEnabled'));
+  }
+
+  cardForListing(listingId: string) {
+    return this.page.getByTestId(`my-listings-card-${listingId}`);
+  }
+
+  async expectListingPriceOnCard(listingId: string, price: string): Promise<void> {
+    const formattedPrice = formatPrice(Number(price));
+    let reloaded = false;
+    await expect
+      .poll(
+        async () => {
+          const card = this.cardForListing(listingId);
+          if (!(await card.isVisible().catch(() => false))) {
+            return false;
+          }
+          const text = await card.textContent();
+          if (text?.includes(formattedPrice)) {
+            return true;
+          }
+          if (!reloaded) {
+            reloaded = true;
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.expectPageView();
+          }
+          return false;
+        },
+        { timeout: 45_000 },
+      )
+      .toBe(true);
+  }
+
   promoteButtonForListing(listingId: string) {
     return this.page.getByTestId(`${this.testIds.promoteButtonPrefix}${listingId}`);
   }
@@ -80,23 +152,56 @@ export class MyListingsPage {
     await expect(card).toBeVisible({ timeout: 30_000 });
     await card.scrollIntoViewIfNeeded();
     const publishButton = this.publishButtonForListing(listingId);
-    if (await publishButton.isVisible().catch(() => false)) {
-      await publishButton.click();
-      await expect(publishButton).toBeHidden({ timeout: 30_000 });
-    }
+    await expect(publishButton).toBeVisible({ timeout: 30_000 });
+    const publishResponse = this.page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/listings/${listingId}/publish`) &&
+        response.request().method() === 'POST' &&
+        response.ok(),
+      { timeout: 45_000 },
+    );
+    await publishButton.click();
+    await publishResponse;
+    await expectSuccessToast(this.page, t('listings.published'));
+    await expect(publishButton).toBeHidden({ timeout: 30_000 });
+    await this.expectPageView();
+  }
+
+  async confirmPromotionAndExpectSuccess(listingId: string): Promise<void> {
+    await this.selectFirstPromotionPeriod();
+    await this.confirmPromotion();
+    await this.expectPromotionModalHidden();
+    await this.expectPromotionSuccessToast();
+    await this.expectListingPromoted(listingId);
+    await this.expectPageView();
   }
 
   async expectPageView(): Promise<void> {
     await expect(this.page).toHaveURL(/\/my-listings/);
     await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
-  }
-
-  async openUserMenu(): Promise<void> {
-    await this.headerNav.openUserMenuForLogout();
-  }
-
-  async logoutFromUserMenu(): Promise<void> {
-    await this.headerNav.logout();
+    await expect(this.page.locator('header')).toBeVisible();
+    await expect
+      .poll(
+        async () => {
+          const loading = await this.page
+            .locator('.animate-pulse')
+            .first()
+            .isVisible()
+            .catch(() => false);
+          if (loading) {
+            return false;
+          }
+          const hasFilter = await this.page
+            .getByTestId('my-listings-status-filter-active')
+            .isVisible()
+            .catch(() => false);
+          const hasCard =
+            (await this.page.locator('[data-testid^="my-listings-card-"]').count()) > 0;
+          return hasFilter || hasCard;
+        },
+        { timeout: 45_000 },
+      )
+      .toBe(true);
   }
 
   async hasEditableListing(): Promise<boolean> {

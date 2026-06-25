@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures/base';
+import { test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import { loginByUi } from '../utils/auth';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
@@ -17,9 +17,9 @@ test.describe('Admin', () => {
 
     await runSteps(prependClearBrowserState(page, steps));
 
-    await expect(page.getByTestId('admin-page')).toBeVisible({ timeout: 12_000 });
+    await adminPage.expectPageView();
 
     await adminPage.openPromotionsTab();
-    await expect(page.getByTestId('admin-tab-promotions')).toBeVisible();
+    await adminPage.expectPromotionsTabContentVisible();
   });
 });

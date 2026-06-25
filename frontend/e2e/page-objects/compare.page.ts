@@ -25,15 +25,47 @@ export class ComparePage {
     await expect(this.page).toHaveURL((url) =>
       pathnameWithoutLocalePrefix(url).startsWith('/compare'),
     );
-    await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.page)).toBeVisible({ timeout: 30_000 });
+    await expect(this.page.locator('header').first()).toBeVisible();
+    await expect(this.page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.tabVehicles)).toBeVisible();
+    await expect(this.page.getByTestId(this.testIds.tabTires)).toBeVisible();
+    await this.expectActiveCompareContentVisible();
+  }
+
+  async expectActiveCompareContentVisible(): Promise<void> {
+    await expect
+      .poll(
+        async () => {
+          const isTiresTab = new URL(this.page.url()).searchParams.get('tab') === 'tires';
+          const table = this.page.getByTestId(this.testIds.table);
+          const emptyVehicles = this.page.getByTestId(this.testIds.emptyVehicles);
+          const emptyTires = this.page.getByTestId(this.testIds.emptyTires);
+          if (isTiresTab) {
+            return (
+              (await table.isVisible().catch(() => false)) ||
+              (await emptyTires.isVisible().catch(() => false))
+            );
+          }
+          return (
+            (await table.isVisible().catch(() => false)) ||
+            (await emptyVehicles.isVisible().catch(() => false))
+          );
+        },
+        { timeout: 45_000 },
+      )
+      .toBe(true);
   }
 
   async openTiresTab(): Promise<void> {
     await this.page.getByTestId(this.testIds.tabTires).click();
+    await expect(this.page).toHaveURL(/tab=tires/, { timeout: 15_000 });
+    await this.expectActiveCompareContentVisible();
   }
 
   async openVehiclesTab(): Promise<void> {
     await this.page.getByTestId(this.testIds.tabVehicles).click();
+    await this.expectActiveCompareContentVisible();
   }
 
   async expectVehiclesEmptyVisible(): Promise<void> {
@@ -46,6 +78,12 @@ export class ComparePage {
 
   async expectTableVisible(): Promise<void> {
     await expect(this.page.getByTestId(this.testIds.table)).toBeVisible();
+  }
+
+  async expectListingInTable(listingId: string): Promise<void> {
+    await expect(this.page.getByTestId(`compare-remove-${listingId}`)).toBeVisible({
+      timeout: 30_000,
+    });
   }
 
   get optionsToggleButton() {

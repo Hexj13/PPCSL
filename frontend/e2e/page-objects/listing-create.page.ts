@@ -4,7 +4,10 @@ import { expect, type Page } from '@playwright/test';
 
 import { BottomSheetComponent } from '../components/common/bottom-sheet.component';
 import { createRandomListingPrice } from '../test-data/listings';
+import { expectPagePath } from '../utils/app-path';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
+import { t } from '../utils/i18n';
+import { expectSuccessToast } from '../utils/toast';
 import { pageUsesMobileLayout } from '../utils/viewport';
 
 export class ListingCreatePage {
@@ -61,6 +64,7 @@ export class ListingCreatePage {
   }
 
   async expectPageView(): Promise<void> {
+    await expectPagePath(this.page, (path) => path === '/listings/new');
     await expect(this.page.getByTestId(this.testIds.page)).toBeVisible({ timeout: 30_000 });
     const form = this.page.getByTestId(this.testIds.form);
     await expect(form).toBeVisible({ timeout: 60_000 });
@@ -265,7 +269,37 @@ export class ListingCreatePage {
   }
 
   async submitCreateForm(): Promise<void> {
+    const createResponse = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/listings') &&
+        response.request().method() === 'POST' &&
+        response.ok(),
+      { timeout: 60_000 },
+    );
     await this.page.getByTestId(this.testIds.submitButton).click();
+    await createResponse;
+  }
+
+  async submitCreateAndExpectDetail(listingDetailPage: {
+    expectPageView(): Promise<void>;
+  }): Promise<string> {
+    const createResponse = this.page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/listings') &&
+        response.request().method() === 'POST' &&
+        response.ok(),
+      { timeout: 60_000 },
+    );
+    await this.page.getByTestId(this.testIds.submitButton).click();
+    const response = await createResponse;
+    const payload = (await response.json()) as { id?: string };
+    await expectPagePath(
+      this.page,
+      (path) => /^\/listings\/[^/]+$/.test(path) && path !== '/listings/new',
+      { timeout: 30_000 },
+    );
+    await listingDetailPage.expectPageView();
+    return payload.id ?? '';
   }
 
   async updateEditPrice(price: string): Promise<void> {
@@ -275,6 +309,22 @@ export class ListingCreatePage {
   }
 
   async submitEditForm(): Promise<void> {
+    const updateResponse = this.page.waitForResponse(
+      (response) =>
+        /\/api\/listings\/[^/]+$/.test(response.url()) &&
+        response.request().method() === 'PATCH' &&
+        response.ok(),
+      { timeout: 60_000 },
+    );
     await this.editSubmitButton.click();
+    await updateResponse;
+  }
+
+  async expectEditSavedOnMyListings(myListingsPage: {
+    expectPageView(): Promise<void>;
+  }): Promise<void> {
+    await expect(this.page).toHaveURL(/\/my-listings/, { timeout: 30_000 });
+    await myListingsPage.expectPageView();
+    await expectSuccessToast(this.page, t('listings.changesSaved'));
   }
 }
