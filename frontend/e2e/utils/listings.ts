@@ -8,10 +8,7 @@ import type { SearchHomePage } from '../page-objects/search-home.page';
 
 import { getE2eBackendApiOrigin } from './api-origin';
 import { forceDefaultCanonicalLocaleCookies } from './e2e-locale';
-import {
-  findListingIdsWithMinSimilarCount,
-  openListingDetailById,
-} from './listing-detail-helpers';
+import { findListingIdsWithMinSimilarCount, openListingDetailById } from './listing-detail-helpers';
 import { createListingForViewScenario } from './listing-flow';
 
 async function findNonOwnListingIdFromApi(page: Page): Promise<string | null> {
