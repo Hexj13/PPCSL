@@ -139,6 +139,7 @@ export function SpecsGrid({
           </label>
           <input
             type="text"
+            inputMode="numeric"
             required
             min="0"
             max="9999999"

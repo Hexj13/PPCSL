@@ -300,16 +300,39 @@ export class SearchHomePage extends SearchHomeScrollPage {
 
   async openListingById(listingId: string): Promise<void> {
     await dismissCookieConsentIfVisible(this.page);
-    const cardLink = this.page.getByTestId(`listing-card-link-${listingId}`);
-    await expect(cardLink).toBeVisible({ timeout: 30_000 });
-    const useMobile = await pageUsesMobileLayout(this.page);
-    if (!useMobile) {
-      await cardLink.scrollIntoViewIfNeeded();
-    }
-    await Promise.all([
-      this.page.waitForURL(/\/listings\/[^/]+$/),
-      cardLink.click({ position: { x: 12, y: 12 } }),
-    ]);
+    const listingUrl = /\/listings\/[^/]+$/;
+    await expect
+      .poll(
+        async () => {
+          if (listingUrl.test(new URL(this.page.url()).pathname)) {
+            return true;
+          }
+          const cardLink = this.page.getByTestId(`listing-card-link-${listingId}`);
+          if (!(await cardLink.isVisible().catch(() => false))) {
+            return false;
+          }
+          await cardLink.scrollIntoViewIfNeeded().catch(() => undefined);
+          const box = await cardLink.boundingBox();
+          const position = box
+            ? {
+                x: Math.min(Math.max(16, box.width * 0.35), Math.max(16, box.width - 16)),
+                y: Math.min(Math.max(200, box.height * 0.72), Math.max(200, box.height - 16)),
+              }
+            : { x: 24, y: 220 };
+          await cardLink.click({ position });
+          try {
+            await this.page.waitForURL(listingUrl, {
+              timeout: 8_000,
+              waitUntil: 'domcontentloaded',
+            });
+          } catch {
+            // retry below
+          }
+          return listingUrl.test(new URL(this.page.url()).pathname);
+        },
+        { timeout: 45_000, intervals: [300, 500, 800, 1200, 2000] },
+      )
+      .toBe(true);
   }
 
   async openNonOwnListingFromResults(): Promise<boolean> {

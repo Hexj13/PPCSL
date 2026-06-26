@@ -21,10 +21,12 @@ test.describe('Search home scroll restore @p0', () => {
           if (!(await searchHomePage.hasListingResults())) {
             throw new Error('E2E needs listing results on search home for scroll restore flow.');
           }
+          await searchHomePage.scrollToY(900);
           const focus = await searchHomePage.focusListingCardForReturn();
           expect(focus).not.toBeNull();
           listingId = focus!.listingId;
           targetScrollY = focus!.scrollY;
+          expect(targetScrollY).toBeGreaterThan(400);
         },
       },
       {
@@ -40,7 +42,7 @@ test.describe('Search home scroll restore @p0', () => {
           await page.goBack({ waitUntil: 'domcontentloaded' });
           await searchHomePage.expectHomeAfterListingBack();
           if (targetScrollY > 0) {
-            await searchHomePage.expectScrollRestoredAfterBack(targetScrollY);
+            await searchHomePage.expectScrollRestoredAfterBack(targetScrollY, 80);
           }
           await searchHomePage.expectListingCardVisibleInViewport(listingId);
         },
@@ -97,7 +99,7 @@ test.describe('Search home scroll restore @p0', () => {
         name: 'Expect scroll and focused card after paginated restore',
         action: async () => {
           if (scrollY > 0) {
-            await searchHomePage.expectScrollRestoredAfterBack(scrollY);
+            await searchHomePage.expectScrollRestoredAfterBack(scrollY, 80);
           }
           await searchHomePage.expectListingCardVisibleInViewport(listingId);
         },

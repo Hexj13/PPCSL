@@ -227,6 +227,7 @@ export function BasicFilters({
           <div className="flex">
             <input
               type="text"
+              inputMode="numeric"
               value={formattedPriceGte}
               onChange={(e) => onPriceChange('price_gte', e.target.value)}
               onBlur={(e) => onPriceBlur('price_gte', e.target.value.replace(/\s/g, ''))}
@@ -237,6 +238,7 @@ export function BasicFilters({
             />
             <input
               type="text"
+              inputMode="numeric"
               value={formattedPriceLte}
               onChange={(e) => onPriceChange('price_lte', e.target.value)}
               onBlur={(e) => onPriceBlur('price_lte', e.target.value.replace(/\s/g, ''))}
@@ -286,6 +288,7 @@ export function BasicFilters({
           <div className="flex">
             <input
               type="text"
+              inputMode="numeric"
               value={formattedMileageGte}
               onChange={(e) => {
                 const value = e.target.value.replace(/[^0-9]/g, '');
@@ -302,6 +305,7 @@ export function BasicFilters({
             />
             <input
               type="text"
+              inputMode="numeric"
               value={formattedMileageLte}
               onChange={(e) => {
                 const value = e.target.value.replace(/[^0-9]/g, '');

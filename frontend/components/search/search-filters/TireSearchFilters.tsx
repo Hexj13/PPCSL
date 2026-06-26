@@ -301,6 +301,7 @@ export function TireSearchFilters({
           <div className="flex">
             <input
               type="text"
+              inputMode="numeric"
               value={formattedPriceGte}
               onChange={(e) => onPriceChange('price_gte', e.target.value)}
               onBlur={(e) => onPriceBlur('price_gte', e.target.value.replace(/\s/g, ''))}
@@ -311,6 +312,7 @@ export function TireSearchFilters({
             />
             <input
               type="text"
+              inputMode="numeric"
               value={formattedPriceLte}
               onChange={(e) => onPriceChange('price_lte', e.target.value)}
               onBlur={(e) => onPriceBlur('price_lte', e.target.value.replace(/\s/g, ''))}

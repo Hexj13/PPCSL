@@ -44,6 +44,7 @@ export function PriceAndLocationSection({
           <div className="flex flex-row flex-nowrap gap-2">
             <input
               type="text"
+              inputMode="numeric"
               required
               min="0"
               max="999999999"
@@ -125,6 +126,7 @@ export function PriceAndLocationSection({
           </label>
           <input
             type="text"
+            inputMode="numeric"
             min="0"
             max="999999999"
             value={formData.down_payment_amount}

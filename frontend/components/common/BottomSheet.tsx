@@ -20,6 +20,8 @@ import { designTokens } from '@/ui';
 
 const MOBILE_SHEET_MAX_WIDTH_PX = 767;
 const BOTTOM_SHEET_SCROLLABLE_SELECTOR = '[data-bottom-sheet-scrollable="true"]';
+const BOTTOM_SHEET_BACKDROP_ENTER_EASING_CLASS = 'motion-safe:ease-[cubic-bezier(0.32,0.72,0,1)]';
+const BOTTOM_SHEET_BACKDROP_EXIT_EASING_CLASS = 'motion-safe:ease-[cubic-bezier(0.4,0,0.2,1)]';
 
 function useMobileSheetViewport(): boolean {
   const [matches, setMatches] = useState(() => {
@@ -79,8 +81,9 @@ function getBottomSheetLayout(
   lockSheetHeight: boolean,
   lockedViewportRect: BottomSheetViewportRect | null,
 ): {
-  keyboardInsetBottomPx: number;
+  keyboardSkirtStyle: React.CSSProperties | null;
   nextLockedViewportRect: BottomSheetViewportRect | null;
+  panelAnchorStyle: React.CSSProperties;
   panelStyle: React.CSSProperties;
   overlayStyle: React.CSSProperties;
 } {
@@ -104,8 +107,14 @@ function getBottomSheetLayout(
         : undefined;
 
     return {
-      keyboardInsetBottomPx: 0,
+      keyboardSkirtStyle: null,
       nextLockedViewportRect,
+      panelAnchorStyle: {
+        height: layoutViewportRect.height,
+        left: layoutViewportRect.offsetLeft,
+        top: layoutViewportRect.offsetTop,
+        width: layoutViewportRect.width,
+      },
       panelStyle: {
         ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px`, height: `${maxHeightPx}px` } : {}),
         ...(lockMinHeightPx ? { minHeight: `${lockMinHeightPx}px` } : {}),
@@ -121,16 +130,30 @@ function getBottomSheetLayout(
   }
 
   return {
-    keyboardInsetBottomPx: viewportRect.keyboardInsetBottom,
+    keyboardSkirtStyle:
+      viewportRect.keyboardInsetBottom > 0
+        ? {
+            height: viewportRect.keyboardInsetBottom,
+            left: viewportRect.offsetLeft,
+            top: viewportRect.offsetTop + viewportRect.height,
+            width: viewportRect.width,
+          }
+        : null,
     nextLockedViewportRect: null,
-    panelStyle: {
-      ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px` } : {}),
-    },
-    overlayStyle: {
+    panelAnchorStyle: {
       height: viewportRect.height,
       left: viewportRect.offsetLeft,
       top: viewportRect.offsetTop,
       width: viewportRect.width,
+    },
+    panelStyle: {
+      ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px` } : {}),
+    },
+    overlayStyle: {
+      height: viewportRect.layoutHeight,
+      left: 0,
+      top: 0,
+      width: viewportRect.layoutWidth,
       zIndex: designTokens.zIndex.modal,
     },
   };
@@ -422,9 +445,12 @@ export function BottomSheet({
     return null;
   }
 
-  const { keyboardInsetBottomPx, nextLockedViewportRect, panelStyle, overlayStyle } =
+  const { keyboardSkirtStyle, nextLockedViewportRect, panelAnchorStyle, panelStyle, overlayStyle } =
     getBottomSheetLayout(viewportRect, lockSheetHeight, lockedViewportRectRef.current);
   lockedViewportRectRef.current = nextLockedViewportRect;
+  const backdropEasingClass = visible
+    ? BOTTOM_SHEET_BACKDROP_ENTER_EASING_CLASS
+    : BOTTOM_SHEET_BACKDROP_EXIT_EASING_CLASS;
 
   const content = (
     <div
@@ -437,7 +463,7 @@ export function BottomSheet({
         type="button"
         data-testid="bottom-sheet-backdrop"
         aria-label={t('common.close')}
-        className={`absolute inset-0 border-0 p-0 cursor-default bg-black/70 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out ${
+        className={`absolute inset-0 border-0 p-0 cursor-default bg-black/70 motion-safe:transition-opacity motion-safe:duration-300 ${backdropEasingClass} ${
           visible ? 'opacity-100' : 'opacity-0'
         } motion-reduce:opacity-100 touch-none`}
         onClick={(e) => {
@@ -446,16 +472,24 @@ export function BottomSheet({
           requestCloseFromUser();
         }}
       />
+      {keyboardSkirtStyle ? (
+        <div
+          data-testid="bottom-sheet-keyboard-spacer"
+          className="pointer-events-auto absolute bg-bg-base"
+          style={keyboardSkirtStyle}
+          aria-hidden="true"
+        />
+      ) : null}
       <BottomSheetPanel
         sheetRef={sheetRef}
         dataTestId={dataTestId}
+        anchorStyle={panelAnchorStyle}
         panelStyle={panelStyle}
         exiting={exiting}
         visible={visible}
         title={title}
         closeLabel={t('common.close')}
         lockSheetHeight={lockSheetHeight}
-        keyboardInsetBottomPx={keyboardInsetBottomPx}
         footer={footer}
         onRequestClose={requestCloseFromUser}
         onTransitionEnd={handleSheetPanelTransitionEnd}

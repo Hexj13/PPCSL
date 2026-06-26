@@ -408,42 +408,35 @@ export abstract class SearchHomeScrollPage {
     if (!(await button.isVisible().catch(() => false))) {
       return false;
     }
-    await expect
-      .poll(
-        async () => {
-          const loadMoreButton = this.page.getByTestId('listings-load-more');
-          if (!(await loadMoreButton.isVisible().catch(() => false))) {
-            return false;
-          }
-          await loadMoreButton.scrollIntoViewIfNeeded();
-          return true;
-        },
-        { timeout: 15_000 },
-      )
-      .toBe(true);
     const countBefore = await this.getObservableListingCount();
     const pageBefore = await this.getPersistedGridPage();
-    const listingsResponse = this.page.waitForResponse(isListingsSearchGetResponse, {
-      timeout: 60_000,
-    });
-    await this.page.getByTestId('listings-load-more').click();
-    try {
-      await listingsResponse;
-    } catch (error) {
-      if ((await this.getObservableListingCount()) <= countBefore) {
-        throw error;
-      }
-    }
-    await this.expectResultsOrEmptyVisible();
     await expect
       .poll(async () => {
         const page = await this.getPersistedGridPage();
         if (page > pageBefore) {
           return true;
         }
-        return (await this.getObservableListingCount()) > countBefore;
+        if ((await this.getObservableListingCount()) > countBefore) {
+          return true;
+        }
+        const loadMoreButton = this.page.getByTestId('listings-load-more');
+        if (!(await loadMoreButton.isVisible().catch(() => false))) {
+          return false;
+        }
+        await loadMoreButton.scrollIntoViewIfNeeded().catch(() => undefined);
+        const listingsResponse = this.page.waitForResponse(isListingsSearchGetResponse, {
+          timeout: 20_000,
+        });
+        await loadMoreButton.click();
+        try {
+          await listingsResponse;
+        } catch {
+          // counts checked on next poll
+        }
+        return false;
       }, LOAD_MORE_ASSERT_POLL)
       .toBe(true);
+    await this.expectResultsOrEmptyVisible();
     return true;
   }
 

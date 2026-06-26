@@ -231,10 +231,37 @@ export class ListingDetailPage {
     await this.expectCompareActionActive();
   }
 
+  private async ensureClipboardReadyForCopyLink(): Promise<void> {
+    await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+    await this.page.evaluate(() => {
+      const storageKey = '__e2e_clipboard';
+      const writeText = async (text: string) => {
+        sessionStorage.setItem(storageKey, text);
+        try {
+          await Promise.race([
+            navigator.clipboard.writeText(text),
+            new Promise<void>((resolve) => {
+              setTimeout(resolve, 500);
+            }),
+          ]);
+        } catch {
+          // noop
+        }
+      };
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText,
+          readText: async () => sessionStorage.getItem(storageKey) ?? '',
+        },
+        configurable: true,
+      });
+    });
+  }
+
   async clickCopyLinkButton(): Promise<void> {
     await dismissCookieConsentIfVisible(this.page);
-    await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-    await this.copyLinkButton.scrollIntoViewIfNeeded();
+    await this.ensureClipboardReadyForCopyLink();
+    await this.expectCopyLinkButtonVisible();
     await expect(this.copyLinkButton).toBeEnabled({ timeout: 15_000 });
     await this.copyLinkButton.click();
     if (
@@ -260,16 +287,22 @@ export class ListingDetailPage {
     await expect
       .poll(
         async () => {
-          try {
-            const clipboardText = await this.page.evaluate(() => navigator.clipboard.readText());
-            return (
-              clipboardText.includes(listingPath) ||
-              clipboardText === listingUrl ||
-              clipboardText.replace(/\/$/, '') === listingUrl.replace(/\/$/, '')
-            );
-          } catch {
-            return false;
-          }
+          const clipboardText = await this.page.evaluate(() => {
+            const stored = sessionStorage.getItem('__e2e_clipboard');
+            if (stored) {
+              return stored;
+            }
+            try {
+              return navigator.clipboard.readText();
+            } catch {
+              return '';
+            }
+          });
+          return (
+            clipboardText.includes(listingPath) ||
+            clipboardText === listingUrl ||
+            clipboardText.replace(/\/$/, '') === listingUrl.replace(/\/$/, '')
+          );
         },
         { timeout: 45_000 },
       )

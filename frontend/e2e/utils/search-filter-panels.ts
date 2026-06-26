@@ -37,22 +37,27 @@ export async function expectVehicleSearchTabPanelVisible(
   tab: SearchFilterTab,
 ): Promise<void> {
   const mobile = await pageUsesMobileLayout(page);
-  const form = visibleSearchFiltersForm(page);
-  const tabButton = form.getByTestId(TAB_BUTTON_TEST_IDS[tab]);
-  const panel = panelLocator(page, tab, mobile);
-  await tabButton.scrollIntoViewIfNeeded();
-  await expect(tabButton).toBeVisible();
+  const tabTestId = TAB_BUTTON_TEST_IDS[tab];
   await expect
     .poll(
       async () => {
+        const form = visibleSearchFiltersForm(page);
+        const tabButton = form.getByTestId(tabTestId);
+        const panel = panelLocator(page, tab, mobile);
+        if (!(await tabButton.isVisible().catch(() => false))) {
+          return false;
+        }
         if (await panel.isVisible().catch(() => false)) {
           return true;
         }
+        await tabButton.scrollIntoViewIfNeeded().catch(() => undefined);
         await tabButton.click();
         return panel.isVisible().catch(() => false);
       },
-      { timeout: 15_000 },
+      { timeout: 15_000, intervals: [300, 500, 800, 1200] },
     )
     .toBe(true);
-  await expect(panel).toBeVisible({ timeout: 15_000 });
+  const form = visibleSearchFiltersForm(page);
+  await expect(panelLocator(page, tab, mobile)).toBeVisible({ timeout: 15_000 });
+  await expect(form.getByTestId(tabTestId)).toBeVisible();
 }

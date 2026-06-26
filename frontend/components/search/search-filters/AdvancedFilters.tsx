@@ -165,6 +165,7 @@ export function AdvancedFilters({
           <div className="flex">
             <input
               type="text"
+              inputMode="decimal"
               value={filters.engine_displ_l_gte}
               onChange={(e) => {
                 const sanitized = sanitizeEngineInput(e.target.value);
@@ -178,6 +179,7 @@ export function AdvancedFilters({
             />
             <input
               type="text"
+              inputMode="decimal"
               value={filters.engine_displ_l_lte}
               onChange={(e) => {
                 const sanitized = sanitizeEngineInput(e.target.value);
@@ -202,6 +204,7 @@ export function AdvancedFilters({
           <div className="flex">
             <input
               type="text"
+              inputMode="numeric"
               value={filters.horsepower_gte}
               onChange={(e) => {
                 const sanitized = sanitizeHorsepowerInput(e.target.value);
@@ -215,6 +218,7 @@ export function AdvancedFilters({
             />
             <input
               type="text"
+              inputMode="numeric"
               value={filters.horsepower_lte}
               onChange={(e) => {
                 const sanitized = sanitizeHorsepowerInput(e.target.value);

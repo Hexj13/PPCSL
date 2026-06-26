@@ -4,6 +4,7 @@ import { HeaderNavComponent } from '../components/layout/header-nav.component';
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { t } from '../utils/i18n';
 import { visibleSearchFiltersForm } from '../utils/search-filters-form';
+import { dismissCookieConsentIfVisible } from '../utils/session';
 
 import type { SearchHomePage } from './search-home.page';
 
@@ -20,6 +21,7 @@ export class LanguageSwitcherPage {
   }
 
   async openMenu(): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
     await this.headerNav.ensureLanguageSwitcherVisible();
     await this.headerNav.languageSwitcher.first().click();
     await expect(this.headerNav.languageSwitcherMenu).toBeVisible();

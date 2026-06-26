@@ -54,6 +54,7 @@ export function TirePriceAndLocationSection({
           <div className="flex flex-row flex-nowrap gap-2">
             <input
               type="text"
+              inputMode="numeric"
               required
               min="0"
               max="999999999"

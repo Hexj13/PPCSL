@@ -212,7 +212,7 @@ describe('BottomSheet', () => {
     expect(searchInput).toHaveFocus();
   });
 
-  it('pins the unlocked overlay to the visual viewport and covers the keyboard gap with a white skirt', async () => {
+  it('pins the unlocked sheet to the visual viewport and blocks the keyboard gap', async () => {
     render(
       <BottomSheet isOpen onClose={() => {}} title="Input sheet">
         <input aria-label="Mileage from" inputMode="numeric" type="text" />
@@ -221,6 +221,7 @@ describe('BottomSheet', () => {
 
     const dialog = screen.getByRole('dialog');
     const overlay = screen.getByTestId('bottom-sheet-overlay');
+    const panelAnchor = screen.getByTestId('bottom-sheet-panel-anchor');
 
     expect(dialog).toHaveStyle({ maxHeight: '736px' });
     expect(dialog).not.toHaveStyle({ height: '736px' });
@@ -246,6 +247,12 @@ describe('BottomSheet', () => {
 
     await waitFor(() => {
       expect(overlay).toHaveStyle({
+        height: '800px',
+        left: '0px',
+        top: '0px',
+        width: '390px',
+      });
+      expect(panelAnchor).toHaveStyle({
         height: '420px',
         left: '6px',
         top: '180px',
@@ -254,6 +261,9 @@ describe('BottomSheet', () => {
       expect(dialog).toHaveStyle({ maxHeight: '386px' });
       expect(screen.getByTestId('bottom-sheet-keyboard-spacer')).toHaveStyle({
         height: '200px',
+        left: '6px',
+        top: '600px',
+        width: '378px',
       });
     });
     expect(dialog).not.toHaveStyle({ height: '386px' });
@@ -268,6 +278,7 @@ describe('BottomSheet', () => {
 
     const dialog = screen.getByRole('dialog');
     const overlay = screen.getByTestId('bottom-sheet-overlay');
+    const panelAnchor = screen.getByTestId('bottom-sheet-panel-anchor');
     expect(dialog).toHaveStyle({ maxHeight: '736px' });
     expect(dialog).not.toHaveStyle({ height: '736px' });
     expect(dialog).not.toHaveStyle({ minHeight: '704px' });
@@ -279,13 +290,69 @@ describe('BottomSheet', () => {
     fireEvent.resize(window);
 
     await waitFor(() => {
-      expect(overlay).toHaveStyle({ height: '420px', top: '0px' });
+      expect(overlay).toHaveStyle({ height: '800px', top: '0px' });
+      expect(panelAnchor).toHaveStyle({ height: '420px', top: '0px' });
       expect(dialog).toHaveStyle({ maxHeight: '386px' });
       expect(screen.getByTestId('bottom-sheet-keyboard-spacer')).toHaveStyle({
         height: '380px',
+        top: '420px',
       });
     });
     expect(dialog).not.toHaveStyle({ minHeight: '370px' });
+  });
+
+  it('keeps the unlocked sheet stable during a transient keyboard-close viewport frame', async () => {
+    jest.useFakeTimers();
+    render(
+      <BottomSheet isOpen onClose={() => {}} title="Mileage sheet">
+        <input aria-label="Mileage from" inputMode="numeric" type="text" />
+        <input aria-label="Mileage to" inputMode="numeric" type="text" />
+      </BottomSheet>,
+    );
+
+    const dialog = screen.getByRole('dialog');
+    const panelAnchor = screen.getByTestId('bottom-sheet-panel-anchor');
+
+    Object.defineProperty(window.visualViewport, 'height', {
+      configurable: true,
+      value: 420,
+    });
+    fireEvent.resize(window);
+
+    act(() => {
+      jest.advanceTimersByTime(16);
+    });
+
+    await waitFor(() => {
+      expect(panelAnchor).toHaveStyle({ height: '420px' });
+      expect(dialog).toHaveStyle({ maxHeight: '386px' });
+    });
+
+    Object.defineProperty(window.visualViewport, 'height', {
+      configurable: true,
+      value: 800,
+    });
+    fireEvent.resize(window);
+
+    act(() => {
+      jest.advanceTimersByTime(16);
+    });
+
+    expect(panelAnchor).toHaveStyle({ height: '420px' });
+    expect(dialog).toHaveStyle({ maxHeight: '386px' });
+
+    Object.defineProperty(window.visualViewport, 'height', {
+      configurable: true,
+      value: 420,
+    });
+    fireEvent.resize(window);
+
+    act(() => {
+      jest.advanceTimersByTime(160);
+    });
+
+    expect(panelAnchor).toHaveStyle({ height: '420px' });
+    expect(dialog).toHaveStyle({ maxHeight: '386px' });
   });
 
   it('returns null when closed', () => {

@@ -63,6 +63,7 @@ export function SpecsGridPowertrain({
         </label>
         <input
           type="text"
+          inputMode="decimal"
           required={!isElectric}
           step="0.1"
           min="0"
@@ -119,6 +120,7 @@ export function SpecsGridPowertrain({
         </label>
         <input
           type="text"
+          inputMode="numeric"
           required
           min="1"
           max="9999"
@@ -152,6 +154,7 @@ export function SpecsGridPowertrain({
         </label>
         <input
           type="text"
+          inputMode="numeric"
           required
           min="1"
           max="9999"

@@ -7,6 +7,8 @@ type LayoutViewportSize = {
   width: number;
 };
 
+const KEYBOARD_CLOSE_STABILIZATION_MS = 120;
+
 export interface BottomSheetViewportRect {
   height: number;
   keyboardInsetBottom: number;
@@ -26,6 +28,17 @@ const EMPTY_VIEWPORT_RECT: BottomSheetViewportRect = {
   offsetTop: 0,
   width: 0,
 };
+
+function isTransientKeyboardClose(
+  previousRect: BottomSheetViewportRect,
+  nextRect: BottomSheetViewportRect,
+): boolean {
+  return (
+    previousRect.keyboardInsetBottom > 0 &&
+    nextRect.keyboardInsetBottom === 0 &&
+    nextRect.height > previousRect.height
+  );
+}
 
 function readViewportRect(previousLayoutSize?: LayoutViewportSize): BottomSheetViewportRect {
   if (typeof window === 'undefined') {
@@ -63,13 +76,42 @@ function readViewportRect(previousLayoutSize?: LayoutViewportSize): BottomSheetV
 
 export function useBottomSheetViewportRect(enabled: boolean): BottomSheetViewportRect {
   const [rect, setRect] = useState(() => (enabled ? readViewportRect() : EMPTY_VIEWPORT_RECT));
+  const rectRef = useRef(rect);
+  const keyboardCloseTimerRef = useRef<number | null>(null);
   const layoutViewportSizeRef = useRef<LayoutViewportSize>({
     height: rect.layoutHeight,
     width: rect.layoutWidth,
   });
 
   useEffect(() => {
+    const clearKeyboardCloseTimer = () => {
+      if (keyboardCloseTimerRef.current) {
+        clearTimeout(keyboardCloseTimerRef.current);
+        keyboardCloseTimerRef.current = null;
+      }
+    };
+
+    const applyRect = (nextRect: BottomSheetViewportRect) => {
+      const previousRect = rectRef.current;
+
+      if (isTransientKeyboardClose(previousRect, nextRect)) {
+        clearKeyboardCloseTimer();
+        keyboardCloseTimerRef.current = window.setTimeout(() => {
+          keyboardCloseTimerRef.current = null;
+          rectRef.current = nextRect;
+          setRect(nextRect);
+        }, KEYBOARD_CLOSE_STABILIZATION_MS);
+        return;
+      }
+
+      clearKeyboardCloseTimer();
+      rectRef.current = nextRect;
+      setRect(nextRect);
+    };
+
     if (!enabled) {
+      clearKeyboardCloseTimer();
+      rectRef.current = EMPTY_VIEWPORT_RECT;
       layoutViewportSizeRef.current = { height: 0, width: 0 };
       setRect(EMPTY_VIEWPORT_RECT);
       return undefined;
@@ -91,11 +133,11 @@ export function useBottomSheetViewportRect(enabled: boolean): BottomSheetViewpor
       }
       rafId = requestAnimationFrame(() => {
         rafId = 0;
-        setRect(readAndStoreRect());
+        applyRect(readAndStoreRect());
       });
     };
 
-    setRect(readAndStoreRect());
+    applyRect(readAndStoreRect());
     viewport?.addEventListener('resize', scheduleUpdate);
     viewport?.addEventListener('scroll', scheduleUpdate);
     window.addEventListener('resize', scheduleUpdate);
@@ -104,6 +146,7 @@ export function useBottomSheetViewportRect(enabled: boolean): BottomSheetViewpor
       if (rafId) {
         cancelAnimationFrame(rafId);
       }
+      clearKeyboardCloseTimer();
       viewport?.removeEventListener('resize', scheduleUpdate);
       viewport?.removeEventListener('scroll', scheduleUpdate);
       window.removeEventListener('resize', scheduleUpdate);
