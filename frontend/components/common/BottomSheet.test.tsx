@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { resetOverlayHistoryForTests, triggerOverlayPopStateForTests } from '@/lib/overlay-history';
 
@@ -46,6 +46,16 @@ describe('BottomSheet', () => {
         pushState,
         back: jest.fn(),
       },
+    });
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      writable: true,
+      value: 800,
+    });
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 390,
     });
     Object.defineProperty(window, 'visualViewport', {
       configurable: true,
@@ -161,7 +171,7 @@ describe('BottomSheet', () => {
     expect(dialog).toHaveStyle({ height: '736px', maxHeight: '736px', minHeight: '704px' });
   });
 
-  it('keeps locked height stable when visual viewport shrinks after search focus', () => {
+  it('keeps locked height stable when visual viewport shrinks after search focus', async () => {
     render(
       <BottomSheet isOpen onClose={() => {}} title="Search sheet" lockSheetHeight>
         <div className="flex min-h-0 flex-1 flex-col">
@@ -186,15 +196,23 @@ describe('BottomSheet', () => {
       configurable: true,
       value: 420,
     });
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      writable: true,
+      value: 420,
+    });
     fireEvent.resize(window);
 
-    expect(dialog).toHaveStyle({ height: '736px', maxHeight: '736px', minHeight: '704px' });
+    await waitFor(() => {
+      expect(dialog).toHaveStyle({ height: '736px', maxHeight: '736px', minHeight: '704px' });
+    });
     expect(overlay).toHaveStyle({ height: '800px', top: '0px' });
+    expect(screen.queryByTestId('bottom-sheet-keyboard-spacer')).not.toBeInTheDocument();
     expect(dialog).toContainElement(searchInput);
     expect(searchInput).toHaveFocus();
   });
 
-  it('positions unlocked overlay within the visual viewport when the keyboard shifts it', () => {
+  it('keeps unlocked overlay on the layout viewport and extends the sheet to the keyboard', async () => {
     render(
       <BottomSheet isOpen onClose={() => {}} title="Input sheet">
         <input aria-label="Mileage from" inputMode="numeric" type="text" />
@@ -226,17 +244,23 @@ describe('BottomSheet', () => {
     });
     fireEvent.resize(window);
 
-    expect(overlay).toHaveStyle({
-      height: '420px',
-      left: '6px',
-      top: '180px',
-      width: '378px',
+    await waitFor(() => {
+      expect(overlay).toHaveStyle({
+        height: '800px',
+        left: '0px',
+        top: '0px',
+        width: '390px',
+      });
+      expect(screen.getByTestId('bottom-sheet-panel-anchor')).toHaveStyle({ bottom: '200px' });
+      expect(dialog).toHaveStyle({ maxHeight: '586px' });
+      expect(screen.getByTestId('bottom-sheet-keyboard-spacer')).toHaveStyle({
+        height: '200px',
+      });
     });
-    expect(dialog).toHaveStyle({ maxHeight: '386px' });
-    expect(dialog).not.toHaveStyle({ height: '386px' });
+    expect(dialog).not.toHaveStyle({ height: '586px' });
   });
 
-  it('updates unlocked height when visual viewport changes', () => {
+  it('adds keyboard spacer when unlocked visual viewport changes', async () => {
     render(
       <BottomSheet isOpen onClose={() => {}} title="Adaptive sheet">
         <p>Content</p>
@@ -254,7 +278,12 @@ describe('BottomSheet', () => {
     });
     fireEvent.resize(window);
 
-    expect(dialog).toHaveStyle({ maxHeight: '386px' });
+    await waitFor(() => {
+      expect(dialog).toHaveStyle({ maxHeight: '766px' });
+      expect(screen.getByTestId('bottom-sheet-keyboard-spacer')).toHaveStyle({
+        height: '380px',
+      });
+    });
     expect(dialog).not.toHaveStyle({ minHeight: '370px' });
   });
 

@@ -79,6 +79,7 @@ function getBottomSheetLayout(
   lockSheetHeight: boolean,
   lockedViewportRect: BottomSheetViewportRect | null,
 ): {
+  keyboardInsetBottomPx: number;
   nextLockedViewportRect: BottomSheetViewportRect | null;
   panelStyle: React.CSSProperties;
   overlayStyle: React.CSSProperties;
@@ -99,19 +100,22 @@ function getBottomSheetLayout(
     lockSheetHeight && layoutViewportRect.height > 0
       ? computeBottomSheetLockMinHeightPx(layoutViewportRect.height)
       : undefined;
+  const keyboardInsetBottomPx = lockSheetHeight ? 0 : viewportRect.keyboardInsetBottom;
+  const sheetMaxHeightPx = maxHeightPx ? maxHeightPx + keyboardInsetBottomPx : undefined;
 
   return {
+    keyboardInsetBottomPx,
     nextLockedViewportRect: lockSheetHeight ? nextLockedViewportRect : null,
     panelStyle: {
-      ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px` } : {}),
+      ...(sheetMaxHeightPx ? { maxHeight: `${sheetMaxHeightPx}px` } : {}),
       ...(lockSheetHeight && maxHeightPx ? { height: `${maxHeightPx}px` } : {}),
       ...(lockMinHeightPx ? { minHeight: `${lockMinHeightPx}px` } : {}),
     },
     overlayStyle: {
-      height: layoutViewportRect.height,
-      left: layoutViewportRect.offsetLeft,
-      top: layoutViewportRect.offsetTop,
-      width: layoutViewportRect.width,
+      height: viewportRect.layoutHeight,
+      left: 0,
+      top: 0,
+      width: viewportRect.layoutWidth,
       zIndex: designTokens.zIndex.modal,
     },
   };
@@ -403,11 +407,8 @@ export function BottomSheet({
     return null;
   }
 
-  const { nextLockedViewportRect, panelStyle, overlayStyle } = getBottomSheetLayout(
-    viewportRect,
-    lockSheetHeight,
-    lockedViewportRectRef.current,
-  );
+  const { keyboardInsetBottomPx, nextLockedViewportRect, panelStyle, overlayStyle } =
+    getBottomSheetLayout(viewportRect, lockSheetHeight, lockedViewportRectRef.current);
   lockedViewportRectRef.current = nextLockedViewportRect;
 
   const content = (
@@ -439,6 +440,7 @@ export function BottomSheet({
         title={title}
         closeLabel={t('common.close')}
         lockSheetHeight={lockSheetHeight}
+        keyboardInsetBottomPx={keyboardInsetBottomPx}
         footer={footer}
         onRequestClose={requestCloseFromUser}
         onTransitionEnd={handleSheetPanelTransitionEnd}
