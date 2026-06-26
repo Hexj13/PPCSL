@@ -89,7 +89,8 @@ export function useGoogleAuth(options: {
   const setAuth = useAuthStore((state) => state.setAuth);
   const gisUiLocale = useMemo(() => gisButtonLocale(appLocale), [appLocale]);
   const searchParams = useSearchParams();
-  const [ready, setReady] = useState(false);
+  const [canRenderButton, setCanRenderButton] = useState(false);
+  const [isButtonReady, setIsButtonReady] = useState(false);
   const [isGoogleAuthInFlight, setIsGoogleAuthInFlight] = useState(false);
   const [isGooglePopupPending, setIsGooglePopupPending] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -140,6 +141,7 @@ export function useGoogleAuth(options: {
   }, []);
 
   const markGoogleSignInIntent = useCallback(() => {
+    if (!isButtonReady) return;
     if (isGoogleAuthInFlightRef.current) return;
     googleSignInIntentRef.current = true;
     if (googleSignInIntentTimerRef.current) {
@@ -149,7 +151,7 @@ export function useGoogleAuth(options: {
       googleSignInIntentRef.current = false;
       googleSignInIntentTimerRef.current = null;
     }, GOOGLE_SIGN_IN_INTENT_MS);
-  }, []);
+  }, [isButtonReady]);
 
   const resetGoogleBusyState = useCallback(() => {
     clearCancelPopupPendingTimer();
@@ -175,7 +177,7 @@ export function useGoogleAuth(options: {
   }, [isGoogleAuthInFlight]);
 
   useEffect(() => {
-    if (!ready || typeof window === 'undefined') return;
+    if (!isButtonReady || typeof window === 'undefined') return;
 
     const onWindowBlur = () => {
       if (isGoogleAuthInFlightRef.current) return;
@@ -210,7 +212,7 @@ export function useGoogleAuth(options: {
       window.removeEventListener('blur', onWindowBlur);
       window.removeEventListener('focus', onWindowFocus);
     };
-  }, [ready, clearCancelPopupPendingTimer, resetGoogleBusyState]);
+  }, [isButtonReady, clearCancelPopupPendingTimer, resetGoogleBusyState]);
 
   const finishSession = useCallback(
     async (
@@ -241,15 +243,18 @@ export function useGoogleAuth(options: {
 
   useEffect(() => {
     if (!clientId || typeof window === 'undefined') {
-      setReady(false);
+      setCanRenderButton(false);
+      setIsButtonReady(false);
       return;
     }
     if (!gisScriptLoaded) {
-      setReady(false);
+      setCanRenderButton(false);
+      setIsButtonReady(false);
       return;
     }
     if (!window.google?.accounts?.id) {
-      setReady(false);
+      setCanRenderButton(false);
+      setIsButtonReady(false);
       return;
     }
     if (!gisInitializedRef.current) {
@@ -305,7 +310,7 @@ export function useGoogleAuth(options: {
       });
       gisInitializedRef.current = true;
     }
-    setReady(true);
+    setCanRenderButton(true);
   }, [
     clientId,
     gisScriptLoaded,
@@ -315,28 +320,63 @@ export function useGoogleAuth(options: {
     t,
   ]);
 
-  const renderButton = useCallback(() => {
-    if (!ready || !clientId || !containerRef.current || !window.google?.accounts?.id) return;
-    containerRef.current.innerHTML = '';
-    window.google.accounts.id.renderButton(containerRef.current, {
+  useEffect(() => {
+    if (
+      !canRenderButton ||
+      !clientId ||
+      typeof window === 'undefined' ||
+      !containerRef.current ||
+      !window.google?.accounts?.id
+    ) {
+      setIsButtonReady(false);
+      return;
+    }
+
+    const container = containerRef.current;
+    let cancelled = false;
+    const updateButtonReady = () => {
+      if (!cancelled && isMountedRef.current) {
+        setIsButtonReady(container.childElementCount > 0);
+      }
+    };
+
+    container.innerHTML = '';
+    setIsButtonReady(false);
+    window.google.accounts.id.renderButton(container, {
       type: 'icon',
       theme: 'outline',
       shape: 'square',
       size: 'large',
       locale: gisUiLocale,
     });
-  }, [clientId, gisUiLocale, ready]);
+    updateButtonReady();
 
-  useEffect(() => {
-    renderButton();
-  }, [renderButton]);
+    if (container.childElementCount > 0 || typeof MutationObserver === 'undefined') {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const observer = new MutationObserver(() => {
+      if (container.childElementCount > 0) {
+        updateButtonReady();
+        observer.disconnect();
+      }
+    });
+    observer.observe(container, { childList: true });
+
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
+  }, [canRenderButton, clientId, gisUiLocale]);
 
   return {
     containerRef,
     clientIdConfigured: Boolean(clientId),
     isGoogleAuthInFlight,
     isGoogleBusy,
-    isButtonReady: ready,
+    isButtonReady,
     markGoogleSignInIntent,
   };
 }

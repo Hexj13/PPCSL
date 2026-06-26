@@ -89,7 +89,9 @@ describe('SignPageContent', () => {
     scriptMountCount = 0;
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-google-client';
     const initialize = jest.fn();
-    const renderButton = jest.fn();
+    const renderButton = jest.fn((parent: HTMLElement) => {
+      parent.appendChild(document.createElement('iframe'));
+    });
     window.google = {
       accounts: {
         id: {

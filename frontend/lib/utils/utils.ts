@@ -185,8 +185,15 @@ export function formatEngineVolume(volume: number): string {
   return formatted.replace(/\.?0+$/, '');
 }
 
+export function formatThousandsWithSpaces(value: string): string {
+  if (!value) return '';
+  const numericValue = value.replace(/\s/g, '');
+  if (!numericValue) return '';
+  return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
 export function formatMileage(mileage: number): string {
-  return mileage.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return formatThousandsWithSpaces(mileage.toString());
 }
 
 export function formatViewsCompact(views: number): string {

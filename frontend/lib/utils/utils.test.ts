@@ -11,6 +11,7 @@ import {
   formatFuel,
   formatMileage,
   formatPrice,
+  formatThousandsWithSpaces,
   formatTransmission,
   getCityNamePlain,
   getListingDisplayTitle,
@@ -161,6 +162,15 @@ describe('utils', () => {
       expect(formatEngineVolume(0.65)).toBe('0.65');
       expect(formatEngineVolume(1.5)).toBe('1.5');
       expect(formatEngineVolume(1.5)).toBe('1.5');
+    });
+  });
+
+  describe('formatThousandsWithSpaces', () => {
+    it('should format integer strings with spaces', () => {
+      expect(formatThousandsWithSpaces('50000')).toBe('50 000');
+      expect(formatThousandsWithSpaces('1234567')).toBe('1 234 567');
+      expect(formatThousandsWithSpaces('100')).toBe('100');
+      expect(formatThousandsWithSpaces('')).toBe('');
     });
   });
 

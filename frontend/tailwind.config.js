@@ -25,7 +25,7 @@ module.exports = {
   },
   plugins: [
     function ({ addVariant }) {
-      addVariant('hover-only', '@media (hover: hover)');
+      addVariant('hover-only', '@media (hover: hover) and (pointer: fine)');
     },
   ],
 };

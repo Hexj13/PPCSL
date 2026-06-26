@@ -69,59 +69,76 @@ export function ScrollSnapDualPicker({
   const [fromHighlightIdx, setFromHighlightIdx] = useState(fromSelectedIdx);
   const [toHighlightIdx, setToHighlightIdx] = useState(toSelectedIdx);
 
-  useLayoutEffect(() => {
-    const el = fromScrollRef.current;
-    if (!el) return;
-    const idx = indexForValue(items, fromValue);
+  const markFromProgrammaticScroll = useCallback(() => {
     programmaticFromRef.current = true;
-    el.scrollTop = scrollTopForIndex(idx);
-    setFromHighlightIdx(idx);
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         programmaticFromRef.current = false;
       });
     });
-  }, [fromValue, items]);
+  }, []);
 
-  useLayoutEffect(() => {
-    const el = toScrollRef.current;
-    if (!el) return;
-    const idx = indexForValue(items, toValue);
+  const markToProgrammaticScroll = useCallback(() => {
     programmaticToRef.current = true;
-    el.scrollTop = scrollTopForIndex(idx);
-    setToHighlightIdx(idx);
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         programmaticToRef.current = false;
       });
     });
-  }, [toValue, items]);
+  }, []);
+
+  useLayoutEffect(() => {
+    const el = fromScrollRef.current;
+    if (!el) return;
+    const idx = indexForValue(items, fromValue);
+    markFromProgrammaticScroll();
+    el.scrollTop = scrollTopForIndex(idx);
+    setFromHighlightIdx(idx);
+  }, [fromValue, items, markFromProgrammaticScroll]);
+
+  useLayoutEffect(() => {
+    const el = toScrollRef.current;
+    if (!el) return;
+    const idx = indexForValue(items, toValue);
+    markToProgrammaticScroll();
+    el.scrollTop = scrollTopForIndex(idx);
+    setToHighlightIdx(idx);
+  }, [toValue, items, markToProgrammaticScroll]);
 
   const finalizeFromScroll = useCallback(() => {
     const el = fromScrollRef.current;
     if (!el || programmaticFromRef.current) return;
     const idx = indexFromScrollTop(el.scrollTop, maxIdx);
-    el.scrollTop = scrollTopForIndex(idx);
+    const snappedScrollTop = scrollTopForIndex(idx);
+    if (el.scrollTop !== snappedScrollTop) {
+      markFromProgrammaticScroll();
+      el.scrollTop = snappedScrollTop;
+    }
     setFromHighlightIdx(idx);
     const next = items[idx].value;
     if (next !== fromValue) {
       onFromChange(next);
     }
-  }, [fromValue, items, maxIdx, onFromChange]);
+  }, [fromValue, items, markFromProgrammaticScroll, maxIdx, onFromChange]);
 
   const finalizeToScroll = useCallback(() => {
     const el = toScrollRef.current;
     if (!el || programmaticToRef.current) return;
     const idx = indexFromScrollTop(el.scrollTop, maxIdx);
-    el.scrollTop = scrollTopForIndex(idx);
+    const snappedScrollTop = scrollTopForIndex(idx);
+    if (el.scrollTop !== snappedScrollTop) {
+      markToProgrammaticScroll();
+      el.scrollTop = snappedScrollTop;
+    }
     setToHighlightIdx(idx);
     const next = items[idx].value;
     if (next !== toValue) {
       onToChange(next);
     }
-  }, [items, maxIdx, onToChange, toValue]);
+  }, [items, markToProgrammaticScroll, maxIdx, onToChange, toValue]);
 
   const scheduleFromFinalize = useCallback(() => {
+    if (programmaticFromRef.current) return;
     if (fromDebounceRef.current) clearTimeout(fromDebounceRef.current);
     fromDebounceRef.current = setTimeout(() => {
       fromDebounceRef.current = null;
@@ -130,6 +147,7 @@ export function ScrollSnapDualPicker({
   }, [finalizeFromScroll]);
 
   const scheduleToFinalize = useCallback(() => {
+    if (programmaticToRef.current) return;
     if (toDebounceRef.current) clearTimeout(toDebounceRef.current);
     toDebounceRef.current = setTimeout(() => {
       toDebounceRef.current = null;
@@ -138,6 +156,7 @@ export function ScrollSnapDualPicker({
   }, [finalizeToScroll]);
 
   const handleFromScroll = useCallback(() => {
+    if (programmaticFromRef.current) return;
     const el = fromScrollRef.current;
     if (el) {
       setFromHighlightIdx(indexFromScrollTop(el.scrollTop, maxIdx));
@@ -146,6 +165,7 @@ export function ScrollSnapDualPicker({
   }, [maxIdx, scheduleFromFinalize]);
 
   const handleToScroll = useCallback(() => {
+    if (programmaticToRef.current) return;
     const el = toScrollRef.current;
     if (el) {
       setToHighlightIdx(indexFromScrollTop(el.scrollTop, maxIdx));
@@ -171,6 +191,7 @@ export function ScrollSnapDualPicker({
     scrollRef: React.RefObject<HTMLDivElement | null>,
     highlightIdx: number,
     onScroll: () => void,
+    markProgrammaticScroll: () => void,
     onPick: (_item: LabeledValue, index: number) => void,
   ) => (
     <div className={columnShellClass} style={columnShellStyle}>
@@ -205,6 +226,7 @@ export function ScrollSnapDualPicker({
               onClick={() => {
                 const el = scrollRef.current;
                 if (!el) return;
+                markProgrammaticScroll();
                 el.scrollTop = scrollTopForIndex(index);
                 onPick(item, index);
               }}
@@ -235,17 +257,31 @@ export function ScrollSnapDualPicker({
       ) : null}
       <div className="flex flex-row items-center gap-x-2">
         <div className="min-h-0 min-w-0 flex-1 basis-0">
-          {renderWheel(fromLabel, fromScrollRef, fromHighlightIdx, handleFromScroll, (item) => {
-            if (item.value !== fromValue) onFromChange(item.value);
-          })}
+          {renderWheel(
+            fromLabel,
+            fromScrollRef,
+            fromHighlightIdx,
+            handleFromScroll,
+            markFromProgrammaticScroll,
+            (item) => {
+              if (item.value !== fromValue) onFromChange(item.value);
+            },
+          )}
         </div>
         <span className="shrink-0 select-none self-center text-center text-base font-semibold text-primary-700">
           {rangeDash}
         </span>
         <div className="min-h-0 min-w-0 flex-1 basis-0">
-          {renderWheel(toLabel, toScrollRef, toHighlightIdx, handleToScroll, (item) => {
-            if (item.value !== toValue) onToChange(item.value);
-          })}
+          {renderWheel(
+            toLabel,
+            toScrollRef,
+            toHighlightIdx,
+            handleToScroll,
+            markToProgrammaticScroll,
+            (item) => {
+              if (item.value !== toValue) onToChange(item.value);
+            },
+          )}
         </div>
       </div>
     </div>

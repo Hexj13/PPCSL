@@ -23,6 +23,6 @@ describe('comparisonFields equipment helpers', () => {
     expect(
       hasVehicleEquipmentToCompare([listingWithEquipment, listingWithoutSelectedEquipment]),
     ).toBe(true);
-    expect(hasVehicleEquipmentToCompare([listingWithoutSelectedEquipment])).toBe(false);
+    expect(hasVehicleEquipmentToCompare([listingWithoutSelectedEquipment])).toBe(true);
   });
 });

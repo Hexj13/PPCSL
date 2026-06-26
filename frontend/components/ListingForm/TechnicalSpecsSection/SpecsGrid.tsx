@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import {
   BodyTypeIcon,
   DriveTypeIcon,
@@ -7,6 +9,7 @@ import {
   SearchFilterTransmissionIcon,
 } from '@/components/search/search-filters/search-filter-field-icons';
 import { getBodyTypeOptions, getDriveTypeOptions, getTransmissionOptions } from '@/lib/options';
+import { formatThousandsWithSpaces } from '@/lib/utils';
 
 import { MobileSelectField } from '../MobileSelectField';
 import { RequiredAsterisk } from '../RequiredAsterisk';
@@ -24,6 +27,10 @@ export function SpecsGrid({
   handleWheel,
 }: ListingFormSectionProps) {
   const isElectric = formData.vehicle.fuel === 'Electric';
+  const formattedMileage = useMemo(
+    () => formatThousandsWithSpaces(formData.vehicle.mileage_km),
+    [formData.vehicle.mileage_km],
+  );
   return (
     <div className="border-t border-primary-700/30 pt-6 mb-6">
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
@@ -135,12 +142,12 @@ export function SpecsGrid({
             required
             min="0"
             max="9999999"
-            value={formData.vehicle.mileage_km}
+            value={formattedMileage}
             data-testid="listing-form-mileage"
             onChange={(e) => {
               clearError('vehicle.mileage_km');
               const value = e.target.value.replace(/[^0-9]/g, '');
-              if (value === '' || (parseInt(value) >= 0 && parseInt(value) <= 9999999)) {
+              if (value === '' || (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 9999999)) {
                 setFormData((prev) => ({
                   ...prev,
                   vehicle: { ...prev.vehicle, mileage_km: value },
@@ -148,7 +155,7 @@ export function SpecsGrid({
               }
             }}
             onBlur={(e) => {
-              const value = e.target.value.trim();
+              const value = e.target.value.replace(/\s/g, '').trim();
               if (value && /^0+$/.test(value)) {
                 setFormData((prev) => ({
                   ...prev,

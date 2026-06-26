@@ -1,6 +1,7 @@
 import type { Listing } from '@/lib/api';
 
 import {
+  getApplicableEquipmentKeysUnion,
   getEquipmentCompareCellLabel,
   getEquipmentCompareCellState,
   getSelectedEquipmentKeysUnion,
@@ -14,6 +15,7 @@ const mockT = (key: string): string => {
     'common.rangeDash': '—',
     'compare.notAvailable': 'N/A',
     'vehicleOptions.equipment.abs': 'ABS',
+    'vehicleOptions.equipment.air_conditioning': 'Air conditioning',
     'vehicleOptions.equipment.navigation': 'Navigation',
     'vehicleOptions.equipment.panoramic_roof': 'Panoramic roof',
     'vehicleOptions.equipment.heated_grips': 'Heated grips',
@@ -54,21 +56,31 @@ function createVehicleListing(
 }
 
 describe('vehicle equipment comparison fields', () => {
-  it('returns empty fields when no listing has equipment', () => {
+  it('returns applicable equipment fields when no listing has selected equipment', () => {
     const listings = [createVehicleListing('1', []), createVehicleListing('2', [])];
-    expect(hasVehicleEquipmentToCompare(listings)).toBe(false);
-    expect(getVehicleEquipmentComparisonFieldsForListings(listings, mockT)).toEqual([]);
+    const fieldKeys = getVehicleEquipmentComparisonFieldsForListings(listings, mockT).map(
+      (field) => field.key,
+    );
+
+    expect(hasVehicleEquipmentToCompare(listings)).toBe(true);
+    expect(fieldKeys.length).toBeGreaterThan(0);
+    expect(fieldKeys).toEqual(
+      expect.arrayContaining(['equipment-abs', 'equipment-air_conditioning']),
+    );
   });
 
-  it('builds union of equipment keys present in any compared listing', () => {
+  it('keeps selected equipment union separate from applicable comparison rows', () => {
     const listings = [
       createVehicleListing('1', ['abs', 'navigation']),
       createVehicleListing('2', ['navigation']),
     ];
     expect(getSelectedEquipmentKeysUnion(listings).sort()).toEqual(['abs', 'navigation']);
+    expect(getApplicableEquipmentKeysUnion(listings)).toEqual(
+      expect.arrayContaining(['abs', 'air_conditioning', 'navigation']),
+    );
     expect(
       getVehicleEquipmentComparisonFieldsForListings(listings, mockT).map((field) => field.key),
-    ).toEqual(['equipment-abs', 'equipment-navigation']);
+    ).toEqual(expect.arrayContaining(['equipment-abs', 'equipment-air_conditioning']));
   });
 
   it('marks selected applicable equipment as yes', () => {
@@ -103,14 +115,18 @@ describe('vehicle equipment comparison fields', () => {
     expect(getEquipmentCompareCellLabel(withoutAbs, 'abs', mockT)).toBe('—');
   });
 
-  it('omits rows when every compared listing is N/A for that option', () => {
+  it('omits rows that are not applicable to any compared listing type', () => {
     const listings = [
       createVehicleListing('1', ['heated_grips'], 'car'),
       createVehicleListing('2', ['heated_grips'], 'car'),
       createVehicleListing('3', ['heated_grips'], 'car'),
     ];
+    const fieldKeys = getVehicleEquipmentComparisonFieldsForListings(listings, mockT).map(
+      (field) => field.key,
+    );
 
-    expect(hasVehicleEquipmentToCompare(listings)).toBe(false);
-    expect(getVehicleEquipmentComparisonFieldsForListings(listings, mockT)).toEqual([]);
+    expect(hasVehicleEquipmentToCompare(listings)).toBe(true);
+    expect(fieldKeys).toEqual(expect.arrayContaining(['equipment-abs']));
+    expect(fieldKeys).not.toContain('equipment-heated_grips');
   });
 });

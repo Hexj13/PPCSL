@@ -262,7 +262,7 @@ describe('ListingForm', () => {
 
       await waitFor(() => {
         expect(screen.getByDisplayValue('150')).toBeInTheDocument();
-        expect(screen.getByDisplayValue('50000')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('50 000')).toBeInTheDocument();
         expect(screen.getByDisplayValue('Test description')).toBeInTheDocument();
       });
     });
@@ -866,11 +866,11 @@ describe('ListingForm', () => {
         />,
       );
 
-      const mileageInput = await screen.findByDisplayValue('50000');
+      const mileageInput = await screen.findByDisplayValue('50 000');
       fireEvent.change(mileageInput, { target: { value: '60000' } });
 
       await waitFor(() => {
-        expect(screen.getByDisplayValue('60000')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('60 000')).toBeInTheDocument();
       });
     });
 
@@ -1096,6 +1096,45 @@ describe('ListingForm', () => {
         ) as HTMLInputElement;
         expect(updatedCheckbox).toBeChecked();
       });
+    });
+
+    it('should collapse equipment category groups by default after the first group', async () => {
+      const onSuccess = jest.fn();
+      render(<ListingForm mode="create" onSuccess={onSuccess} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('listing-form-price')).toBeInTheDocument();
+      });
+
+      const comfortToggle = await screen.findByTestId(
+        'listing-form-equipment-category-comfort-toggle',
+      );
+      const multimediaToggle = await screen.findByTestId(
+        'listing-form-equipment-category-multimedia-toggle',
+      );
+      const tiresToggle = await screen.findByTestId('listing-form-equipment-category-tires-toggle');
+      const otherToggle = await screen.findByTestId('listing-form-equipment-category-other-toggle');
+      const comfortContent = screen.getByTestId('listing-form-equipment-category-comfort-content');
+      const multimediaContent = screen.getByTestId(
+        'listing-form-equipment-category-multimedia-content',
+      );
+
+      expect(comfortToggle).toHaveAttribute('aria-expanded', 'true');
+      expect(multimediaToggle).toHaveAttribute('aria-expanded', 'false');
+      expect(comfortContent).toHaveClass('grid-rows-[1fr]');
+      expect(multimediaContent).toHaveClass('grid-rows-[0fr]');
+      expect(tiresToggle).toHaveClass('border-b');
+      expect(otherToggle).not.toHaveClass('border-b');
+
+      fireEvent.click(multimediaToggle);
+
+      expect(multimediaToggle).toHaveAttribute('aria-expanded', 'true');
+      expect(multimediaContent).toHaveClass('grid-rows-[1fr]');
+
+      fireEvent.click(comfortToggle);
+
+      expect(comfortToggle).toHaveAttribute('aria-expanded', 'false');
+      expect(comfortContent).toHaveClass('grid-rows-[0fr]');
     });
 
     it('should pre-fill equipment checkboxes in edit mode', async () => {

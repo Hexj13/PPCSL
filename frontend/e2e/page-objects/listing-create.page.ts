@@ -109,25 +109,34 @@ export class ListingCreatePage {
     await trigger.scrollIntoViewIfNeeded();
     await trigger.click();
     if (await pageUsesMobileLayout(this.page)) {
+      const dialog = this.page.locator(
+        '[role="dialog"][aria-modal="true"][aria-labelledby="bottom-sheet-title"]',
+      );
       if (testId === this.testIds.yearSelect) {
-        const dialog = this.page.locator(
-          '[role="dialog"][aria-modal="true"][aria-labelledby="bottom-sheet-title"]',
-        );
         await expect(dialog).toBeVisible({ timeout: 15_000 });
-        await this.page.getByRole('button', { name: 'OK' }).click();
+        await dialog.locator('button.btn-primary').click();
         await expect(dialog).toBeHidden({ timeout: 15_000 });
         return;
       }
       await expect(target).toBeVisible({ timeout: 15_000 });
     }
     await expect(target).toBeVisible({ timeout: 15_000 });
+    if ((await pageUsesMobileLayout(this.page)) && (await target.isDisabled())) {
+      await this.page.locator(`[data-testid^="${testId}-option-"]:not([disabled])`).first().click();
+    }
     await expect(target).toBeEnabled({ timeout: 15_000 });
     await target.scrollIntoViewIfNeeded();
+    const targetLabel = (await target.innerText()).trim();
     await target.click();
     if (await pageUsesMobileLayout(this.page)) {
-      await expect(target)
-        .toBeHidden({ timeout: 15_000 })
-        .catch(() => undefined);
+      const dialog = this.page.locator(
+        '[role="dialog"][aria-modal="true"][aria-labelledby="bottom-sheet-title"]',
+      );
+      await dialog.locator('button.btn-primary').click();
+      await expect(dialog).toBeHidden({ timeout: 15_000 });
+      if (targetLabel) {
+        await expect(trigger).toContainText(targetLabel, { timeout: 15_000 });
+      }
     }
   }
 
@@ -185,7 +194,7 @@ export class ListingCreatePage {
     await this.selectFirstDropdownOption(this.testIds.driveTypeSelect);
     await this.selectFirstDropdownOption(this.testIds.bodyTypeSelect);
     await this.selectFirstDropdownOption(this.testIds.conditionSelect);
-    await this.selectFirstDropdownOption(this.testIds.registrationTypeSelect);
+    await this.selectLastDropdownOption(this.testIds.registrationTypeSelect);
     await this.selectLastDropdownOption(this.testIds.statusSelect);
     await this.selectFirstDropdownOption(this.testIds.citySelect);
     await this.page.getByTestId(this.testIds.engineDisplacementInput).fill('2.0');
@@ -215,7 +224,7 @@ export class ListingCreatePage {
     await this.selectFirstDropdownOption(this.testIds.driveTypeSelect);
     await this.selectFirstDropdownOption(this.testIds.bodyTypeSelect);
     await this.selectFirstDropdownOption(this.testIds.conditionSelect);
-    await this.selectFirstDropdownOption(this.testIds.registrationTypeSelect);
+    await this.selectLastDropdownOption(this.testIds.registrationTypeSelect);
     await this.selectLastDropdownOption(this.testIds.statusSelect);
     await this.page.getByTestId(this.testIds.engineDisplacementInput).fill('2.5');
     await this.page.getByTestId(this.testIds.horsepowerInput).fill('190');

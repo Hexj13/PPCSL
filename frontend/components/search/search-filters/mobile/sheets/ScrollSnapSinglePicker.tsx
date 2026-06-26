@@ -48,33 +48,42 @@ export function ScrollSnapSinglePicker({
   const selectedIdx = items.length === 0 ? 0 : indexForValue(items, value);
   const [highlightIdx, setHighlightIdx] = useState(selectedIdx);
 
-  useLayoutEffect(() => {
-    const el = scrollRef.current;
-    if (!el || items.length === 0) return;
-    const idx = indexForValue(items, value);
+  const markProgrammaticScroll = useCallback(() => {
     programmaticRef.current = true;
-    el.scrollTop = scrollTopForIndex(idx);
-    setHighlightIdx(idx);
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         programmaticRef.current = false;
       });
     });
-  }, [value, items]);
+  }, []);
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el || items.length === 0) return;
+    const idx = indexForValue(items, value);
+    markProgrammaticScroll();
+    el.scrollTop = scrollTopForIndex(idx);
+    setHighlightIdx(idx);
+  }, [value, items, markProgrammaticScroll]);
 
   const finalizeScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el || programmaticRef.current || items.length === 0) return;
     const idx = indexFromScrollTop(el.scrollTop, maxIdx);
-    el.scrollTop = scrollTopForIndex(idx);
+    const snappedScrollTop = scrollTopForIndex(idx);
+    if (el.scrollTop !== snappedScrollTop) {
+      markProgrammaticScroll();
+      el.scrollTop = snappedScrollTop;
+    }
     setHighlightIdx(idx);
     const next = items[idx].value;
     if (next !== value) {
       onChange(next);
     }
-  }, [items, maxIdx, onChange, value]);
+  }, [items, markProgrammaticScroll, maxIdx, onChange, value]);
 
   const scheduleFinalize = useCallback(() => {
+    if (programmaticRef.current) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       debounceRef.current = null;
@@ -83,6 +92,7 @@ export function ScrollSnapSinglePicker({
   }, [finalizeScroll]);
 
   const handleScroll = useCallback(() => {
+    if (programmaticRef.current) return;
     const el = scrollRef.current;
     if (el) {
       setHighlightIdx(indexFromScrollTop(el.scrollTop, maxIdx));
@@ -139,6 +149,7 @@ export function ScrollSnapSinglePicker({
               onClick={() => {
                 const el = scrollRef.current;
                 if (!el) return;
+                markProgrammaticScroll();
                 el.scrollTop = scrollTopForIndex(index);
                 if (item.value !== value) {
                   onChange(item.value);

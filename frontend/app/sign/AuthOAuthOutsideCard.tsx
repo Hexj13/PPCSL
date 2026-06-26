@@ -74,14 +74,18 @@ export function AuthOAuthOutsideCard({
       <div className="mt-6 flex items-stretch gap-3">
         {showGoogle ? (
           <div
-            className="flex-1 min-w-0 flex"
+            className="relative flex-1 min-w-0 flex"
             data-testid="auth-google-outside-card"
-            onPointerDown={googleAuth.markGoogleSignInIntent}
+            onPointerDown={googleAuth.isButtonReady ? googleAuth.markGoogleSignInIntent : undefined}
           >
-            {googleLoading ? <OAuthSignInButtonSkeleton testId="auth-google-skeleton" /> : null}
+            {googleLoading ? (
+              <div className={gisReady ? 'absolute inset-0 z-10 flex' : 'flex-1 min-w-0 flex'}>
+                <OAuthSignInButtonSkeleton testId="auth-google-skeleton" />
+              </div>
+            ) : null}
             {gisReady ? (
               <div
-                className={`flex-1 min-w-0 flex ${googleAuth.isButtonReady ? '' : 'sr-only'}`}
+                className={`flex-1 min-w-0 flex ${googleAuth.isButtonReady ? '' : 'invisible'}`}
                 aria-hidden={!googleAuth.isButtonReady}
               >
                 <GoogleSignInButton

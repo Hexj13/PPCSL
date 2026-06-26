@@ -161,14 +161,20 @@ function HarnessWithTab({
 }
 
 function Harness() {
-  const { containerRef, isGoogleAuthInFlight, isGoogleBusy, markGoogleSignInIntent } =
-    useGoogleAuth({ tab: 'login' });
+  const {
+    containerRef,
+    isButtonReady,
+    isGoogleAuthInFlight,
+    isGoogleBusy,
+    markGoogleSignInIntent,
+  } = useGoogleAuth({ tab: 'login' });
   return (
     <>
       <div ref={containerRef} data-testid="gis-root" />
       <button type="button" data-testid="mark-google-intent" onClick={markGoogleSignInIntent}>
         intent
       </button>
+      <span data-testid="button-ready">{isButtonReady ? 'true' : 'false'}</span>
       <span data-testid="google-auth-in-flight">{isGoogleAuthInFlight ? 'true' : 'false'}</span>
       <span data-testid="google-auth-busy">{isGoogleBusy ? 'true' : 'false'}</span>
     </>
@@ -234,7 +240,9 @@ describe('useGoogleAuth', () => {
       Promise.resolve({ ...minimalTranslations, __locale: String(locale) } as Translations),
     );
     const initialize = jest.fn();
-    const renderButton = jest.fn();
+    const renderButton = jest.fn((parent: HTMLElement) => {
+      parent.appendChild(document.createElement('iframe'));
+    });
     window.google = {
       accounts: {
         id: {
@@ -262,7 +270,7 @@ describe('useGoogleAuth', () => {
     expect(window.google?.accounts?.id.initialize).not.toHaveBeenCalled();
   });
 
-  it('returns isButtonReady true and renders GIS button when gisScriptLoaded is true', async () => {
+  it('returns isButtonReady true after GIS renders button markup', async () => {
     render(
       <Tree>
         <HarnessGisLoaded loaded={true} />
@@ -274,6 +282,60 @@ describe('useGoogleAuth', () => {
     });
     expect(window.google?.accounts?.id.initialize).toHaveBeenCalled();
     expect(window.google?.accounts?.id.renderButton).toHaveBeenCalled();
+  });
+
+  it('keeps isButtonReady false until GIS renders markup', async () => {
+    let renderedParent: HTMLElement | null = null;
+    (window.google!.accounts!.id.renderButton as jest.Mock).mockImplementationOnce(
+      (parent: HTMLElement) => {
+        renderedParent = parent;
+      },
+    );
+
+    render(
+      <Tree>
+        <HarnessGisLoaded loaded={true} />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(window.google?.accounts?.id.renderButton).toHaveBeenCalled();
+    });
+    expect(screen.getByTestId('button-ready')).toHaveTextContent('false');
+
+    act(() => {
+      renderedParent?.appendChild(document.createElement('iframe'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
+    });
+  });
+
+  it('does not set popup pending when intent is marked before GIS markup is ready', async () => {
+    (window.google!.accounts!.id.renderButton as jest.Mock).mockImplementationOnce(() => {});
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+
+    render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(window.google?.accounts?.id.renderButton).toHaveBeenCalled();
+    });
+    expect(screen.getByTestId('button-ready')).toHaveTextContent('false');
+
+    fireEvent.click(screen.getByTestId('mark-google-intent'));
+    await act(async () => {
+      window.dispatchEvent(new Event('blur'));
+    });
+
+    expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('false');
   });
 
   it('re-renders GIS button with new locale when app locale changes', async () => {
@@ -548,6 +610,9 @@ describe('useGoogleAuth', () => {
 
     await waitFor(() => {
       expect(window.google?.accounts?.id.initialize).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
     });
 
     fireEvent.click(screen.getByTestId('mark-google-intent'));

@@ -4,7 +4,10 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { BottomSheetPanel } from '@/components/common/BottomSheetPanel';
-import { useBottomSheetViewportHeight } from '@/hooks/useBottomSheetViewportHeight';
+import {
+  type BottomSheetViewportRect,
+  useBottomSheetViewportRect,
+} from '@/hooks/useBottomSheetViewportHeight';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -69,6 +72,49 @@ function preventScrollEvent(e: Event) {
     e.preventDefault();
   }
   e.stopPropagation();
+}
+
+function getBottomSheetLayout(
+  viewportRect: BottomSheetViewportRect,
+  lockSheetHeight: boolean,
+  lockedViewportRect: BottomSheetViewportRect | null,
+): {
+  nextLockedViewportRect: BottomSheetViewportRect | null;
+  panelStyle: React.CSSProperties;
+  overlayStyle: React.CSSProperties;
+} {
+  let layoutViewportRect = viewportRect;
+  let nextLockedViewportRect = lockedViewportRect;
+
+  if (lockSheetHeight && viewportRect.height > 0) {
+    nextLockedViewportRect ??= viewportRect;
+    layoutViewportRect = nextLockedViewportRect;
+  }
+
+  const maxHeightPx =
+    layoutViewportRect.height > 0
+      ? computeBottomSheetMaxHeightPx(layoutViewportRect.height)
+      : undefined;
+  const lockMinHeightPx =
+    lockSheetHeight && layoutViewportRect.height > 0
+      ? computeBottomSheetLockMinHeightPx(layoutViewportRect.height)
+      : undefined;
+
+  return {
+    nextLockedViewportRect: lockSheetHeight ? nextLockedViewportRect : null,
+    panelStyle: {
+      ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px` } : {}),
+      ...(lockSheetHeight && maxHeightPx ? { height: `${maxHeightPx}px` } : {}),
+      ...(lockMinHeightPx ? { minHeight: `${lockMinHeightPx}px` } : {}),
+    },
+    overlayStyle: {
+      height: layoutViewportRect.height,
+      left: layoutViewportRect.offsetLeft,
+      top: layoutViewportRect.offsetTop,
+      width: layoutViewportRect.width,
+      zIndex: designTokens.zIndex.modal,
+    },
+  };
 }
 
 function useBlockBackgroundScroll(enabled: boolean, sheetRef: React.RefObject<HTMLElement | null>) {
@@ -150,11 +196,12 @@ export function BottomSheet({
   const notifyParentOnExitRef = useRef(false);
   const exitInProgressRef = useRef(false);
   const exitFallbackTimerRef = useRef<number | null>(null);
+  const lockedViewportRectRef = useRef<BottomSheetViewportRect | null>(null);
   const [mounted, setMounted] = useState(isOpen);
   const [visible, setVisible] = useState(false);
   const isMobileViewport = useMobileSheetViewport();
   const wantShow = isOpen && (mobileOnly ? isMobileViewport : true);
-  const viewportHeightPx = useBottomSheetViewportHeight(
+  const viewportRect = useBottomSheetViewportRect(
     mounted && (mobileOnly ? isMobileViewport : true),
   );
   const overlayHistoryId = useId();
@@ -163,6 +210,12 @@ export function BottomSheet({
 
   useFocusTrap(sheetRef, sheetActive && visible);
   useBlockBackgroundScroll(sheetActive, sheetRef);
+
+  useEffect(() => {
+    if (!sheetActive || !lockSheetHeight) {
+      lockedViewportRectRef.current = null;
+    }
+  }, [lockSheetHeight, sheetActive]);
 
   const clearExitFallback = useCallback(() => {
     if (exitFallbackTimerRef.current) {
@@ -350,23 +403,18 @@ export function BottomSheet({
     return null;
   }
 
-  const maxHeightPx =
-    viewportHeightPx > 0 ? computeBottomSheetMaxHeightPx(viewportHeightPx) : undefined;
-  const lockMinHeightPx =
-    lockSheetHeight && viewportHeightPx > 0
-      ? computeBottomSheetLockMinHeightPx(viewportHeightPx)
-      : undefined;
-
-  const panelStyle: React.CSSProperties = {
-    ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px` } : {}),
-    ...(lockMinHeightPx ? { minHeight: `${lockMinHeightPx}px` } : {}),
-  };
+  const { nextLockedViewportRect, panelStyle, overlayStyle } = getBottomSheetLayout(
+    viewportRect,
+    lockSheetHeight,
+    lockedViewportRectRef.current,
+  );
+  lockedViewportRectRef.current = nextLockedViewportRect;
 
   const content = (
     <div
       data-testid="bottom-sheet-overlay"
-      className="fixed inset-0 overscroll-none pointer-events-auto"
-      style={{ zIndex: designTokens.zIndex.modal }}
+      className="fixed overscroll-none pointer-events-auto"
+      style={overlayStyle}
       role="presentation"
     >
       <button

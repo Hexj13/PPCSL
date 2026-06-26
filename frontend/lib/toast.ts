@@ -2,6 +2,7 @@ import { createElement, type ReactElement } from 'react';
 import hotToast, { type Renderable, type ToastOptions } from 'react-hot-toast';
 
 import { loadThemeSync } from '@/lib/theme';
+import { toastClassNames } from '@/lib/toast-options';
 
 const TOAST_ICON_PX = 24;
 
@@ -112,20 +113,28 @@ function displayWithCount(message: string, count: number): string {
   return count > 1 ? `${message} (${count})` : message;
 }
 
-function mergeToastClassName(existing: string | undefined, marker: string): string {
+function mergeToastClassName(defaultClassName: string, existing: string | undefined): string {
   if (!existing) {
-    return marker;
+    return defaultClassName;
   }
-  if (existing.includes(marker)) {
+  const existingTokens = new Set(existing.split(/\s+/).filter(Boolean));
+  const missingDefaultTokens = defaultClassName
+    .split(/\s+/)
+    .filter((token) => token && !existingTokens.has(token));
+
+  if (missingDefaultTokens.length === 0) {
     return existing;
   }
-  return `${existing} ${marker}`;
+  return `${missingDefaultTokens.join(' ')} ${existing}`;
 }
 
-function withToastMarkerClass(opts: ToastOptions | undefined, marker: string): ToastOptions {
+function withToastClassName(
+  opts: ToastOptions | undefined,
+  defaultClassName: string,
+): ToastOptions {
   return {
     ...opts,
-    className: mergeToastClassName(opts?.className, marker),
+    className: mergeToastClassName(defaultClassName, opts?.className),
   };
 }
 
@@ -135,11 +144,11 @@ function createDedupedHandler(type: DedupeType) {
 
   const invoke = (msg: Renderable, opts?: ToastOptions) => {
     if (type === 'blank') {
-      return hotToast(msg, withToastMarkerClass(opts, 'kupito-toast'));
+      return hotToast(msg, withToastClassName(opts, toastClassNames.blank));
     }
     if (type === 'warning') {
       return hotToast(msg, {
-        ...withToastMarkerClass(opts, 'kupito-toast kupito-toast--warning'),
+        ...withToastClassName(opts, toastClassNames.warning),
         icon: opts?.icon !== undefined ? opts.icon : TOAST_WARNING_ICON,
         style: { ...WARNING_TOAST_STYLE, ...opts?.style },
         duration: opts?.duration ?? duration,
@@ -147,12 +156,12 @@ function createDedupedHandler(type: DedupeType) {
     }
     if (type === 'error') {
       return hotToast.error(msg, {
-        ...withToastMarkerClass(opts, 'kupito-toast kupito-toast--error'),
+        ...withToastClassName(opts, toastClassNames.error),
         icon: opts?.icon !== undefined ? opts.icon : TOAST_ERROR_ICON,
       });
     }
     return hotToast.success(msg, {
-      ...withToastMarkerClass(opts, 'kupito-toast kupito-toast--success'),
+      ...withToastClassName(opts, toastClassNames.success),
       icon: opts?.icon !== undefined ? opts.icon : TOAST_SUCCESS_ICON,
     });
   };

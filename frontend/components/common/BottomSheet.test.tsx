@@ -52,7 +52,9 @@ describe('BottomSheet', () => {
       writable: true,
       value: {
         height: 800,
+        offsetLeft: 0,
         offsetTop: 0,
+        width: 390,
         addEventListener: jest.fn(),
         removeEventListener: jest.fn(),
       },
@@ -156,7 +158,104 @@ describe('BottomSheet', () => {
     );
 
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveStyle({ maxHeight: '736px', minHeight: '704px' });
+    expect(dialog).toHaveStyle({ height: '736px', maxHeight: '736px', minHeight: '704px' });
+  });
+
+  it('keeps locked height stable when visual viewport shrinks after search focus', () => {
+    render(
+      <BottomSheet isOpen onClose={() => {}} title="Search sheet" lockSheetHeight>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div>
+            <input aria-label="Search city" type="search" />
+          </div>
+          <div data-bottom-sheet-scrollable="true">Results</div>
+        </div>
+      </BottomSheet>,
+    );
+
+    const dialog = screen.getByRole('dialog');
+    const overlay = screen.getByTestId('bottom-sheet-overlay');
+    const searchInput = screen.getByLabelText('Search city');
+
+    searchInput.focus();
+    expect(searchInput).toHaveFocus();
+    expect(dialog).toHaveStyle({ height: '736px', maxHeight: '736px', minHeight: '704px' });
+    expect(overlay).toHaveStyle({ height: '800px', top: '0px' });
+
+    Object.defineProperty(window.visualViewport, 'height', {
+      configurable: true,
+      value: 420,
+    });
+    fireEvent.resize(window);
+
+    expect(dialog).toHaveStyle({ height: '736px', maxHeight: '736px', minHeight: '704px' });
+    expect(overlay).toHaveStyle({ height: '800px', top: '0px' });
+    expect(dialog).toContainElement(searchInput);
+    expect(searchInput).toHaveFocus();
+  });
+
+  it('positions unlocked overlay within the visual viewport when the keyboard shifts it', () => {
+    render(
+      <BottomSheet isOpen onClose={() => {}} title="Input sheet">
+        <input aria-label="Mileage from" inputMode="numeric" type="text" />
+      </BottomSheet>,
+    );
+
+    const dialog = screen.getByRole('dialog');
+    const overlay = screen.getByTestId('bottom-sheet-overlay');
+
+    expect(dialog).toHaveStyle({ maxHeight: '736px' });
+    expect(dialog).not.toHaveStyle({ height: '736px' });
+    expect(dialog).not.toHaveStyle({ minHeight: '704px' });
+
+    Object.defineProperty(window.visualViewport, 'height', {
+      configurable: true,
+      value: 420,
+    });
+    Object.defineProperty(window.visualViewport, 'offsetLeft', {
+      configurable: true,
+      value: 6,
+    });
+    Object.defineProperty(window.visualViewport, 'offsetTop', {
+      configurable: true,
+      value: 180,
+    });
+    Object.defineProperty(window.visualViewport, 'width', {
+      configurable: true,
+      value: 378,
+    });
+    fireEvent.resize(window);
+
+    expect(overlay).toHaveStyle({
+      height: '420px',
+      left: '6px',
+      top: '180px',
+      width: '378px',
+    });
+    expect(dialog).toHaveStyle({ maxHeight: '386px' });
+    expect(dialog).not.toHaveStyle({ height: '386px' });
+  });
+
+  it('updates unlocked height when visual viewport changes', () => {
+    render(
+      <BottomSheet isOpen onClose={() => {}} title="Adaptive sheet">
+        <p>Content</p>
+      </BottomSheet>,
+    );
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveStyle({ maxHeight: '736px' });
+    expect(dialog).not.toHaveStyle({ height: '736px' });
+    expect(dialog).not.toHaveStyle({ minHeight: '704px' });
+
+    Object.defineProperty(window.visualViewport, 'height', {
+      configurable: true,
+      value: 420,
+    });
+    fireEvent.resize(window);
+
+    expect(dialog).toHaveStyle({ maxHeight: '386px' });
+    expect(dialog).not.toHaveStyle({ minHeight: '370px' });
   });
 
   it('returns null when closed', () => {

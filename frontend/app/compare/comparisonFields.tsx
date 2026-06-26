@@ -448,6 +448,16 @@ export function getSelectedEquipmentKeysUnion(listings: Listing[]): string[] {
   return [...keys];
 }
 
+export function getApplicableEquipmentKeysUnion(listings: Listing[]): string[] {
+  const keys = new Set<string>();
+  for (const listing of listings) {
+    for (const key of getEquipmentKeysByVehicleType(getVehicleType(listing))) {
+      keys.add(key);
+    }
+  }
+  return [...keys];
+}
+
 function isEquipmentRowVisibleForComparison(listings: Listing[], equipmentKey: string): boolean {
   return listings.some((listing) => getEquipmentCompareCellState(listing, equipmentKey) !== 'na');
 }
@@ -456,7 +466,7 @@ export function getVisibleEquipmentComparisonRowKeys(
   listings: Listing[],
   t: (_key: string) => string,
 ): string[] {
-  const candidateKeys = getSelectedEquipmentKeysUnion(listings);
+  const candidateKeys = getApplicableEquipmentKeysUnion(listings);
   const visibleKeys = candidateKeys.filter((key) =>
     isEquipmentRowVisibleForComparison(listings, key),
   );
@@ -464,7 +474,7 @@ export function getVisibleEquipmentComparisonRowKeys(
 }
 
 export function hasVehicleEquipmentToCompare(listings: Listing[]): boolean {
-  return getSelectedEquipmentKeysUnion(listings).some((key) =>
+  return getApplicableEquipmentKeysUnion(listings).some((key) =>
     isEquipmentRowVisibleForComparison(listings, key),
   );
 }

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
 
@@ -7,6 +7,8 @@ import { brandsApi, citiesApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 import { SearchFilters } from './SearchFilters';
+import { ScrollSnapDualPicker } from './search-filters/mobile/sheets/ScrollSnapDualPicker';
+import { ScrollSnapSinglePicker } from './search-filters/mobile/sheets/ScrollSnapSinglePicker';
 
 function renderWithProviders(ui: React.ReactElement) {
   return render(ui);
@@ -324,6 +326,30 @@ jest.mock('./search-filters/VehicleTypeSelector', () => ({
 jest.mock('./search-filters/PopularFilters', () => ({
   PopularFilters: () => <div data-testid="popular-filters">Popular</div>,
 }));
+
+const scrollSnapPickerOptions = [
+  { value: '2025', label: '2025' },
+  { value: '2024', label: '2024' },
+  { value: '2023', label: '2023' },
+  { value: '2022', label: '2022' },
+];
+
+function flushProgrammaticScrollGuard() {
+  act(() => {
+    jest.advanceTimersByTime(50);
+  });
+}
+
+function finishDebouncedScrollSnap() {
+  act(() => {
+    jest.advanceTimersByTime(120);
+  });
+}
+
+function scrollListbox(listbox: HTMLElement, scrollTop: number) {
+  listbox.scrollTop = scrollTop;
+  fireEvent.scroll(listbox);
+}
 
 describe('SearchFilters', () => {
   const mockPush = jest.fn();
@@ -901,5 +927,94 @@ describe('SearchFilters', () => {
         await screen.findByText('Add to favorites', {}, { timeout: 3000 }),
       ).toBeInTheDocument();
     });
+  });
+});
+
+describe('ScrollSnap pickers', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
+    jest.useRealTimers();
+  });
+
+  it('should not call onChange again after single picker snaps programmatically', () => {
+    const onChange = jest.fn();
+
+    function ControlledSinglePicker() {
+      const [value, setValue] = React.useState('2025');
+
+      return (
+        <ScrollSnapSinglePicker
+          value={value}
+          onChange={(next) => {
+            setValue(next);
+            onChange(next);
+          }}
+          options={scrollSnapPickerOptions}
+          ariaLabel="Year"
+        />
+      );
+    }
+
+    render(<ControlledSinglePicker />);
+    flushProgrammaticScrollGuard();
+
+    const listbox = screen.getByRole('listbox', { name: 'Year' });
+    scrollListbox(listbox, 70);
+    finishDebouncedScrollSnap();
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith('2023');
+    expect(listbox.scrollTop).toBe(88);
+
+    fireEvent.scroll(listbox);
+    finishDebouncedScrollSnap();
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not call onChange again after dual picker snaps a column programmatically', () => {
+    const onFromChange = jest.fn();
+
+    function ControlledDualPicker() {
+      const [fromValue, setFromValue] = React.useState('2025');
+
+      return (
+        <ScrollSnapDualPicker
+          fromLabel="From"
+          toLabel="To"
+          fromValue={fromValue}
+          toValue=""
+          onFromChange={(next) => {
+            setFromValue(next);
+            onFromChange(next);
+          }}
+          onToChange={jest.fn()}
+          options={scrollSnapPickerOptions}
+          emptyOptionLabel=""
+        />
+      );
+    }
+
+    render(<ControlledDualPicker />);
+    flushProgrammaticScrollGuard();
+
+    const fromListbox = screen.getByRole('listbox', { name: 'From' });
+    scrollListbox(fromListbox, 110);
+    finishDebouncedScrollSnap();
+
+    expect(onFromChange).toHaveBeenCalledTimes(1);
+    expect(onFromChange).toHaveBeenCalledWith('2023');
+    expect(fromListbox.scrollTop).toBe(132);
+
+    fireEvent.scroll(fromListbox);
+    finishDebouncedScrollSnap();
+
+    expect(onFromChange).toHaveBeenCalledTimes(1);
   });
 });

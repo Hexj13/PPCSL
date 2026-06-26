@@ -27,15 +27,17 @@ export function SingleSelectSheetContent({
         const normalizedValue = value ?? '';
         const selected =
           option.value === '' ? normalizedValue === '' : option.value === normalizedValue;
+        const optionDisabled = Boolean(normalizedValue) && !selected;
         return (
           <button
             key={option.value === '' ? `empty-${index}` : option.value}
             type="button"
+            disabled={optionDisabled}
             data-testid={option.value === '' ? undefined : `search-sheet-option-${option.value}`}
-            onClick={() => onChange(option.value)}
-            className={`w-full px-4 py-3.5 text-left hover:bg-primary-500/10 flex items-center justify-between gap-2 ${
-              selected ? 'bg-primary-500/15 font-semibold' : ''
-            }`}
+            onClick={() => onChange(selected ? '' : option.value)}
+            className={`w-full px-4 py-3.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-between gap-2 ${
+              optionDisabled ? '' : 'hover:bg-primary-500/10'
+            } ${selected ? 'bg-primary-500/15 font-semibold' : ''}`}
           >
             <span>{option.label}</span>
             {selected ? (

@@ -70,6 +70,7 @@ export function MobileSelectField({
   const { t } = useTranslation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [draftValue, setDraftValue] = useState(value ?? '');
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const selectedOption = useMemo(
@@ -112,8 +113,9 @@ export function MobileSelectField({
   useEffect(() => {
     if (!isSheetOpen) {
       setSearchQuery('');
+      setDraftValue(value ?? '');
     }
-  }, [isSheetOpen]);
+  }, [isSheetOpen, value]);
 
   useEffect(() => {
     if (isMdUp) {
@@ -123,24 +125,36 @@ export function MobileSelectField({
 
   const openSheet = () => {
     if (disabled) return;
+    setDraftValue(value ?? '');
     setIsSheetOpen(true);
   };
 
   const handleSelectOption = (optionValue: string) => {
     if (optionValue.startsWith('__category__')) return;
-    onChange(optionValue);
+    setDraftValue((current) => (current === optionValue ? '' : optionValue));
+  };
+
+  const closeSheet = () => {
     setIsSheetOpen(false);
     setSearchQuery('');
+  };
+
+  const confirmSelection = () => {
+    if (draftValue !== (value ?? '')) {
+      onChange(draftValue);
+    }
+    closeSheet();
   };
 
   const renderOptionList = () =>
     optionsToRender.length > 0 ? (
       optionsToRender.map((option, index) => {
-        const normalizedValue = value ?? '';
+        const normalizedValue = draftValue ?? '';
         const selected =
           option.value === '' ? normalizedValue === '' : option.value === normalizedValue;
         const isCategory =
           Boolean(option.category) && (!option.value || option.value.startsWith('__category__'));
+        const optionDisabled = Boolean(normalizedValue) && !selected;
         const prevOption = index > 0 ? optionsToRender[index - 1] : null;
         const showCategoryHeader =
           Boolean(option.category) && prevOption?.category !== option.category && !isCategory;
@@ -165,9 +179,12 @@ export function MobileSelectField({
             ) : null}
             <button
               type="button"
+              disabled={optionDisabled}
               onClick={() => handleSelectOption(option.value)}
               data-testid={dataTestId ? `${dataTestId}-option-${index}` : undefined}
-              className={`flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left hover:bg-primary-500/10 ${
+              className={`flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                optionDisabled ? '' : 'hover:bg-primary-500/10'
+              } ${
                 selected ? 'bg-primary-500/15 font-semibold' : ''
               } ${option.category ? 'pl-8' : ''}`}
             >
@@ -317,9 +334,18 @@ export function MobileSelectField({
 
       <BottomSheet
         isOpen={isSheetOpen}
-        onClose={() => setIsSheetOpen(false)}
+        onClose={closeSheet}
         title={sheetTitle}
         lockSheetHeight={searchable}
+        footer={
+          <button
+            type="button"
+            onClick={confirmSelection}
+            className="btn-primary w-full py-3 rounded-lg"
+          >
+            {t('common.ok')}
+          </button>
+        }
       >
         {searchable ? (
           <div className="flex min-h-0 w-full flex-1 flex-col">

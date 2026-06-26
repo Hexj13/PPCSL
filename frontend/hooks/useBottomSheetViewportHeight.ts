@@ -2,36 +2,58 @@
 
 import { useEffect, useState } from 'react';
 
-function readViewportHeightPx(): number {
-  if (typeof window === 'undefined') {
-    return 0;
-  }
-  return window.visualViewport?.height ?? window.innerHeight;
+export interface BottomSheetViewportRect {
+  height: number;
+  offsetLeft: number;
+  offsetTop: number;
+  width: number;
 }
 
-export function useBottomSheetViewportHeight(enabled: boolean): number {
-  const [heightPx, setHeightPx] = useState(() => (enabled ? readViewportHeightPx() : 0));
+const EMPTY_VIEWPORT_RECT: BottomSheetViewportRect = {
+  height: 0,
+  offsetLeft: 0,
+  offsetTop: 0,
+  width: 0,
+};
+
+function readViewportRect(): BottomSheetViewportRect {
+  if (typeof window === 'undefined') {
+    return EMPTY_VIEWPORT_RECT;
+  }
+  const viewport = window.visualViewport;
+  return {
+    height: viewport?.height ?? window.innerHeight,
+    offsetLeft: viewport?.offsetLeft ?? 0,
+    offsetTop: viewport?.offsetTop ?? 0,
+    width: viewport?.width ?? window.innerWidth,
+  };
+}
+
+export function useBottomSheetViewportRect(enabled: boolean): BottomSheetViewportRect {
+  const [rect, setRect] = useState(() => (enabled ? readViewportRect() : EMPTY_VIEWPORT_RECT));
 
   useEffect(() => {
     if (!enabled) {
+      setRect(EMPTY_VIEWPORT_RECT);
       return undefined;
     }
 
+    const viewport = window.visualViewport;
     const update = () => {
-      setHeightPx(readViewportHeightPx());
+      setRect(readViewportRect());
     };
 
     update();
-    window.visualViewport?.addEventListener('resize', update);
-    window.visualViewport?.addEventListener('scroll', update);
+    viewport?.addEventListener('resize', update);
+    viewport?.addEventListener('scroll', update);
     window.addEventListener('resize', update);
 
     return () => {
-      window.visualViewport?.removeEventListener('resize', update);
-      window.visualViewport?.removeEventListener('scroll', update);
+      viewport?.removeEventListener('resize', update);
+      viewport?.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
     };
   }, [enabled]);
 
-  return heightPx;
+  return rect;
 }

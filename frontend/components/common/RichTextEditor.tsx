@@ -185,21 +185,26 @@ export function RichTextEditor({
     e.preventDefault();
   };
 
+  const toolbarButtonClass = (isActive: boolean) =>
+    `w-8 h-8 md:w-9 md:h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
+      isActive
+        ? 'bg-primary-600 text-white'
+        : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
+    }`;
+
+  const toolbarIconClass = 'w-4 h-4 md:w-5 md:h-5';
+
   return (
     <div className="w-full">
-      <div className="flex flex-wrap gap-2 mb-2 p-2 bg-bg-darker rounded-lg border border-primary-500/20">
+      <div className="flex flex-nowrap gap-1 md:gap-2 mb-2 p-1.5 md:p-2 bg-bg-darker rounded-lg border border-primary-500/20">
         <button
           type="button"
           onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('bold')}
-          className={`w-9 h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
-            isBoldActive
-              ? 'bg-primary-600 text-white'
-              : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
-          }`}
+          className={toolbarButtonClass(isBoldActive)}
           title={t('common.bold')}
         >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <svg className={toolbarIconClass} fill="currentColor" viewBox="0 0 24 24">
             <path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z" />
           </svg>
         </button>
@@ -207,14 +212,10 @@ export function RichTextEditor({
           type="button"
           onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('italic')}
-          className={`w-9 h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
-            isItalicActive
-              ? 'bg-primary-600 text-white'
-              : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
-          }`}
+          className={toolbarButtonClass(isItalicActive)}
           title={t('common.italic')}
         >
-          <span className="italic font-bold text-base" style={{ fontStyle: 'italic' }}>
+          <span className="italic font-bold text-sm md:text-base" style={{ fontStyle: 'italic' }}>
             I
           </span>
         </button>
@@ -222,14 +223,10 @@ export function RichTextEditor({
           type="button"
           onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('underline')}
-          className={`w-9 h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
-            isUnderlineActive
-              ? 'bg-primary-600 text-white'
-              : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
-          }`}
+          className={toolbarButtonClass(isUnderlineActive)}
           title={t('common.underline')}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -238,7 +235,7 @@ export function RichTextEditor({
             />
           </svg>
         </button>
-        <div className="w-px bg-primary-500/30 mx-1" />
+        <div className="w-px bg-primary-500/30 mx-0.5 md:mx-1 shrink-0" />
         <button
           type="button"
           onMouseDown={toolbarMouseDown}
@@ -307,14 +304,10 @@ export function RichTextEditor({
               }, 10);
             }
           }}
-          className={`w-9 h-9 flex items-center justify-center shrink-0 rounded transition-colors ${
-            isListButtonActive
-              ? 'bg-primary-600 text-white'
-              : 'bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600'
-          }`}
+          className={toolbarButtonClass(isListButtonActive)}
           title={t('common.list')}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -323,12 +316,12 @@ export function RichTextEditor({
             />
           </svg>
         </button>
-        <div className="w-px bg-primary-500/30 mx-1" />
+        <div className="w-px bg-primary-500/30 mx-0.5 md:mx-1 shrink-0" />
         <button
           type="button"
           onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('fontSize', '2')}
-          className="w-9 h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-sm font-semibold"
+          className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-xs md:text-sm font-semibold"
           title={t('common.small')}
         >
           A
@@ -337,7 +330,7 @@ export function RichTextEditor({
           type="button"
           onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('fontSize', '3')}
-          className="w-9 h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-base font-semibold"
+          className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-sm md:text-base font-semibold"
           title={t('common.normal')}
         >
           A
@@ -346,7 +339,7 @@ export function RichTextEditor({
           type="button"
           onMouseDown={toolbarMouseDown}
           onClick={() => execCommand('fontSize', '5')}
-          className="w-9 h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-lg font-semibold"
+          className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center shrink-0 rounded-sm bg-bg-secondary text-primary-500 hover-only:hover:bg-primary-500/30 hover-only:hover:text-primary-600 transition-colors text-base md:text-lg font-semibold"
           title={t('common.large')}
         >
           A

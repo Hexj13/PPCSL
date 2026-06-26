@@ -42,7 +42,7 @@ export function BasicInfoSection({
           value: brand.id,
           label: brand.name,
           category: popularLabel,
-          logoSrc: vehicleBrandLogoUrl(brand.name),
+          ...(vehicleType === 'car' ? { logoSrc: vehicleBrandLogoUrl(brand.name) } : {}),
         });
       });
     }

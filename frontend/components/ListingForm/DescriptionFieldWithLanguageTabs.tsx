@@ -47,7 +47,7 @@ export function DescriptionFieldWithLanguageTabs({
   );
 
   const tabButtonClass = (isActive: boolean) =>
-    `shrink-0 px-4 py-3 text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap ${
+    `shrink-0 px-3 py-2 text-sm md:px-4 md:py-3 md:text-base font-semibold transition-all duration-300 relative z-10 whitespace-nowrap ${
       isActive
         ? 'text-primary-700 bg-primary-500/10 rounded-t-lg'
         : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
