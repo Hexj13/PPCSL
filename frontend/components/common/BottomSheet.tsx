@@ -96,26 +96,41 @@ function getBottomSheetLayout(
     layoutViewportRect.height > 0
       ? computeBottomSheetMaxHeightPx(layoutViewportRect.height)
       : undefined;
-  const lockMinHeightPx =
-    lockSheetHeight && layoutViewportRect.height > 0
-      ? computeBottomSheetLockMinHeightPx(layoutViewportRect.height)
-      : undefined;
-  const keyboardInsetBottomPx = lockSheetHeight ? 0 : viewportRect.keyboardInsetBottom;
-  const sheetMaxHeightPx = maxHeightPx ? maxHeightPx + keyboardInsetBottomPx : undefined;
+
+  if (lockSheetHeight) {
+    const lockMinHeightPx =
+      layoutViewportRect.height > 0
+        ? computeBottomSheetLockMinHeightPx(layoutViewportRect.height)
+        : undefined;
+
+    return {
+      keyboardInsetBottomPx: 0,
+      nextLockedViewportRect,
+      panelStyle: {
+        ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px`, height: `${maxHeightPx}px` } : {}),
+        ...(lockMinHeightPx ? { minHeight: `${lockMinHeightPx}px` } : {}),
+      },
+      overlayStyle: {
+        height: layoutViewportRect.height,
+        left: layoutViewportRect.offsetLeft,
+        top: layoutViewportRect.offsetTop,
+        width: layoutViewportRect.width,
+        zIndex: designTokens.zIndex.modal,
+      },
+    };
+  }
 
   return {
-    keyboardInsetBottomPx,
-    nextLockedViewportRect: lockSheetHeight ? nextLockedViewportRect : null,
+    keyboardInsetBottomPx: viewportRect.keyboardInsetBottom,
+    nextLockedViewportRect: null,
     panelStyle: {
-      ...(sheetMaxHeightPx ? { maxHeight: `${sheetMaxHeightPx}px` } : {}),
-      ...(lockSheetHeight && maxHeightPx ? { height: `${maxHeightPx}px` } : {}),
-      ...(lockMinHeightPx ? { minHeight: `${lockMinHeightPx}px` } : {}),
+      ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px` } : {}),
     },
     overlayStyle: {
-      height: viewportRect.layoutHeight,
-      left: 0,
-      top: 0,
-      width: viewportRect.layoutWidth,
+      height: viewportRect.height,
+      left: viewportRect.offsetLeft,
+      top: viewportRect.offsetTop,
+      width: viewportRect.width,
       zIndex: designTokens.zIndex.modal,
     },
   };

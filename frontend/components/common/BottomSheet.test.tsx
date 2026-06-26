@@ -212,7 +212,7 @@ describe('BottomSheet', () => {
     expect(searchInput).toHaveFocus();
   });
 
-  it('keeps unlocked overlay on the layout viewport and extends the sheet to the keyboard', async () => {
+  it('pins the unlocked overlay to the visual viewport and covers the keyboard gap with a white skirt', async () => {
     render(
       <BottomSheet isOpen onClose={() => {}} title="Input sheet">
         <input aria-label="Mileage from" inputMode="numeric" type="text" />
@@ -246,21 +246,20 @@ describe('BottomSheet', () => {
 
     await waitFor(() => {
       expect(overlay).toHaveStyle({
-        height: '800px',
-        left: '0px',
-        top: '0px',
-        width: '390px',
+        height: '420px',
+        left: '6px',
+        top: '180px',
+        width: '378px',
       });
-      expect(screen.getByTestId('bottom-sheet-panel-anchor')).toHaveStyle({ bottom: '200px' });
-      expect(dialog).toHaveStyle({ maxHeight: '586px' });
+      expect(dialog).toHaveStyle({ maxHeight: '386px' });
       expect(screen.getByTestId('bottom-sheet-keyboard-spacer')).toHaveStyle({
         height: '200px',
       });
     });
-    expect(dialog).not.toHaveStyle({ height: '586px' });
+    expect(dialog).not.toHaveStyle({ height: '386px' });
   });
 
-  it('adds keyboard spacer when unlocked visual viewport changes', async () => {
+  it('adds the keyboard skirt when the unlocked visual viewport shrinks', async () => {
     render(
       <BottomSheet isOpen onClose={() => {}} title="Adaptive sheet">
         <p>Content</p>
@@ -268,6 +267,7 @@ describe('BottomSheet', () => {
     );
 
     const dialog = screen.getByRole('dialog');
+    const overlay = screen.getByTestId('bottom-sheet-overlay');
     expect(dialog).toHaveStyle({ maxHeight: '736px' });
     expect(dialog).not.toHaveStyle({ height: '736px' });
     expect(dialog).not.toHaveStyle({ minHeight: '704px' });
@@ -279,7 +279,8 @@ describe('BottomSheet', () => {
     fireEvent.resize(window);
 
     await waitFor(() => {
-      expect(dialog).toHaveStyle({ maxHeight: '766px' });
+      expect(overlay).toHaveStyle({ height: '420px', top: '0px' });
+      expect(dialog).toHaveStyle({ maxHeight: '386px' });
       expect(screen.getByTestId('bottom-sheet-keyboard-spacer')).toHaveStyle({
         height: '380px',
       });

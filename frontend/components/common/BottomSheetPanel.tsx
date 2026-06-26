@@ -43,19 +43,16 @@ export function BottomSheetPanel({
   onDragPointerUp,
   onDragPointerCancel,
 }: BottomSheetPanelProps) {
-  const keyboardSpacerHeightPx = lockSheetHeight ? 0 : keyboardInsetBottomPx;
+  const keyboardSkirtHeightPx = lockSheetHeight ? 0 : keyboardInsetBottomPx;
 
   return (
     <div
       data-testid="bottom-sheet-panel-anchor"
       onTransitionEnd={onTransitionEnd}
-      className={`pointer-events-none absolute left-0 right-0 flex justify-center motion-safe:transition-[transform,bottom] motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform ${
+      className={`pointer-events-none absolute bottom-0 left-0 right-0 flex justify-center motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform ${
         visible ? 'translate-y-0' : 'translate-y-full'
       }`}
-      style={{
-        bottom: keyboardSpacerHeightPx > 0 ? `${keyboardSpacerHeightPx}px` : 0,
-        transitionDuration: `${BOTTOM_SHEET_TRANSITION_MS}ms`,
-      }}
+      style={{ transitionDuration: `${BOTTOM_SHEET_TRANSITION_MS}ms` }}
     >
       <div
         ref={sheetRef}
@@ -108,15 +105,15 @@ export function BottomSheetPanel({
             {footer}
           </div>
         ) : null}
-        {keyboardSpacerHeightPx > 0 ? (
-          <div
-            data-testid="bottom-sheet-keyboard-spacer"
-            className="shrink-0 bg-bg-base"
-            style={{ height: `${keyboardSpacerHeightPx}px` }}
-            aria-hidden="true"
-          />
-        ) : null}
       </div>
+      {keyboardSkirtHeightPx > 0 ? (
+        <div
+          data-testid="bottom-sheet-keyboard-spacer"
+          className="pointer-events-auto absolute left-0 right-0 top-full bg-bg-base"
+          style={{ height: `${keyboardSkirtHeightPx}px` }}
+          aria-hidden="true"
+        />
+      ) : null}
     </div>
   );
 }
