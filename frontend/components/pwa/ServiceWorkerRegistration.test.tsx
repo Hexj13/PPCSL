@@ -15,6 +15,7 @@ const screen = within(document.documentElement);
 
 describe('ServiceWorkerRegistration', () => {
   const originalNodeEnv = process.env.NODE_ENV;
+  const originalMatchMedia = window.matchMedia;
   let controllerChangeHandler: (() => void) | null = null;
   const mockUnregister = jest.fn().mockResolvedValue(undefined);
   const mockRegister = jest.fn();
@@ -59,6 +60,23 @@ describe('ServiceWorkerRegistration', () => {
     });
   };
 
+  const setupStandalonePwa = () => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: jest.fn((query: string) => ({
+        matches: query === '(display-mode: standalone)',
+        media: query,
+        onchange: null,
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+    });
+  };
+
   beforeEach(() => {
     controllerChangeHandler = null;
     jest.clearAllMocks();
@@ -76,6 +94,15 @@ describe('ServiceWorkerRegistration', () => {
       Reflect.deleteProperty(process.env, 'NODE_ENV');
     }
     controllerChangeHandler = null;
+    if (originalMatchMedia) {
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        writable: true,
+        value: originalMatchMedia,
+      });
+    } else {
+      Reflect.deleteProperty(window, 'matchMedia');
+    }
     jest.restoreAllMocks();
   });
 
@@ -148,6 +175,21 @@ describe('ServiceWorkerRegistration', () => {
     expect(screen.queryByText('pwa.updateAvailable')).not.toBeInTheDocument();
   });
 
+  it('should activate updates without showing update prompt in browser tabs', async () => {
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'production',
+      writable: true,
+      configurable: true,
+    });
+    setupNavigatorServiceWorker({ controller: {} });
+
+    render(<ServiceWorkerRegistration />);
+
+    await waitFor(() => expect(mockRegister).toHaveBeenCalled());
+    await waitFor(() => expect(mockPostMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' }));
+    expect(screen.queryByText('pwa.updateAvailable')).not.toBeInTheDocument();
+  });
+
   it('should not reload on controllerchange until user confirms update', async () => {
     Object.defineProperty(process.env, 'NODE_ENV', {
       value: 'production',
@@ -162,6 +204,7 @@ describe('ServiceWorkerRegistration', () => {
       value: { ...oldLocation, reload },
     });
 
+    setupStandalonePwa();
     setupNavigatorServiceWorker({ controller: {} });
 
     try {

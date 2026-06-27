@@ -5,6 +5,15 @@ import { useEffect, useRef, useState } from 'react';
 import { BottomSheet } from '@/components/common/BottomSheet';
 import { useTranslation } from '@/hooks/useTranslation';
 
+function isStandalonePwa() {
+  const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean };
+
+  return (
+    window.matchMedia?.('(display-mode: standalone)').matches ||
+    navigatorWithStandalone.standalone === true
+  );
+}
+
 export function ServiceWorkerRegistration() {
   const { t } = useTranslation();
   const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -46,7 +55,11 @@ export function ServiceWorkerRegistration() {
 
         setRegistration(reg);
         if (reg.waiting && hadControllerBeforeRegistration) {
-          setUpdateAvailable(true);
+          if (isStandalonePwa()) {
+            setUpdateAvailable(true);
+          } else {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
         }
 
         reg.addEventListener('updatefound', () => {
@@ -55,7 +68,11 @@ export function ServiceWorkerRegistration() {
 
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && hadControllerBeforeRegistration) {
-              setUpdateAvailable(true);
+              if (isStandalonePwa()) {
+                setUpdateAvailable(true);
+              } else {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              }
             }
           });
         });
