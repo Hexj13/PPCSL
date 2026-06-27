@@ -10,6 +10,7 @@ import {
 } from '@/hooks/useBottomSheetViewportHeight';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
+import { useIosKeyboardScrollLock } from '@/hooks/useIosKeyboardScrollLock';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
   BOTTOM_SHEET_TRANSITION_FALLBACK_MS,
@@ -80,80 +81,44 @@ function getBottomSheetLayout(
   viewportRect: BottomSheetViewportRect,
   lockSheetHeight: boolean,
   lockedViewportRect: BottomSheetViewportRect | null,
+  useKeyboardLayout: boolean,
 ): {
-  keyboardSkirtStyle: React.CSSProperties | null;
   nextLockedViewportRect: BottomSheetViewportRect | null;
   panelAnchorStyle: React.CSSProperties;
   panelStyle: React.CSSProperties;
   overlayStyle: React.CSSProperties;
 } {
-  let layoutViewportRect = viewportRect;
   let nextLockedViewportRect = lockedViewportRect;
 
   if (lockSheetHeight && viewportRect.height > 0) {
     nextLockedViewportRect ??= viewportRect;
-    layoutViewportRect = nextLockedViewportRect;
   }
+
+  const lockedRect = nextLockedViewportRect ?? viewportRect;
+  const keyboardInsetBottomPx = useKeyboardLayout ? viewportRect.keyboardInsetBottom : 0;
 
   const maxHeightPx =
-    layoutViewportRect.height > 0
-      ? computeBottomSheetMaxHeightPx(layoutViewportRect.height)
+    viewportRect.height > 0 ? computeBottomSheetMaxHeightPx(viewportRect.height) : undefined;
+  const lockedHeightPx =
+    lockSheetHeight && lockedRect.height > 0
+      ? computeBottomSheetMaxHeightPx(lockedRect.height)
+      : undefined;
+  const lockMinHeightPx =
+    lockSheetHeight && keyboardInsetBottomPx === 0 && lockedRect.height > 0
+      ? computeBottomSheetLockMinHeightPx(lockedRect.height)
       : undefined;
 
-  if (lockSheetHeight) {
-    const lockMinHeightPx =
-      layoutViewportRect.height > 0
-        ? computeBottomSheetLockMinHeightPx(layoutViewportRect.height)
-        : undefined;
-
-    return {
-      keyboardSkirtStyle: null,
-      nextLockedViewportRect,
-      panelAnchorStyle: {
-        height: layoutViewportRect.height,
-        left: layoutViewportRect.offsetLeft,
-        top: layoutViewportRect.offsetTop,
-        width: layoutViewportRect.width,
-      },
-      panelStyle: {
-        ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px`, height: `${maxHeightPx}px` } : {}),
-        ...(lockMinHeightPx ? { minHeight: `${lockMinHeightPx}px` } : {}),
-      },
-      overlayStyle: {
-        height: layoutViewportRect.height,
-        left: layoutViewportRect.offsetLeft,
-        top: layoutViewportRect.offsetTop,
-        width: layoutViewportRect.width,
-        zIndex: designTokens.zIndex.modal,
-      },
-    };
-  }
-
   return {
-    keyboardSkirtStyle:
-      viewportRect.keyboardInsetBottom > 0
-        ? {
-            height: viewportRect.keyboardInsetBottom,
-            left: viewportRect.offsetLeft,
-            top: viewportRect.offsetTop + viewportRect.height,
-            width: viewportRect.width,
-          }
-        : null,
-    nextLockedViewportRect: null,
+    nextLockedViewportRect: lockSheetHeight ? nextLockedViewportRect : null,
     panelAnchorStyle: {
-      height: viewportRect.height,
-      left: viewportRect.offsetLeft,
-      top: viewportRect.offsetTop,
-      width: viewportRect.width,
+      bottom: keyboardInsetBottomPx > 0 ? `${keyboardInsetBottomPx}px` : 0,
     },
     panelStyle: {
       ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px` } : {}),
+      ...(lockedHeightPx ? { height: `${lockedHeightPx}px` } : {}),
+      ...(lockMinHeightPx ? { minHeight: `${lockMinHeightPx}px` } : {}),
     },
     overlayStyle: {
-      height: viewportRect.layoutHeight,
-      left: 0,
-      top: 0,
-      width: viewportRect.layoutWidth,
       zIndex: designTokens.zIndex.modal,
     },
   };
@@ -248,9 +213,11 @@ export function BottomSheet({
   );
   const overlayHistoryId = useId();
   const sheetActive = mounted && (mobileOnly ? isMobileViewport : true);
+  const useKeyboardLayout = sheetActive && isMobileViewport;
   const exiting = mounted && !visible;
 
   useFocusTrap(sheetRef, sheetActive && visible);
+  useIosKeyboardScrollLock(sheetActive && isMobileViewport, sheetRef);
   useBlockBackgroundScroll(sheetActive, sheetRef);
 
   useEffect(() => {
@@ -445,8 +412,13 @@ export function BottomSheet({
     return null;
   }
 
-  const { keyboardSkirtStyle, nextLockedViewportRect, panelAnchorStyle, panelStyle, overlayStyle } =
-    getBottomSheetLayout(viewportRect, lockSheetHeight, lockedViewportRectRef.current);
+  const { nextLockedViewportRect, panelAnchorStyle, panelStyle, overlayStyle } =
+    getBottomSheetLayout(
+      viewportRect,
+      lockSheetHeight,
+      lockedViewportRectRef.current,
+      useKeyboardLayout,
+    );
   lockedViewportRectRef.current = nextLockedViewportRect;
   const backdropEasingClass = visible
     ? BOTTOM_SHEET_BACKDROP_ENTER_EASING_CLASS
@@ -455,7 +427,7 @@ export function BottomSheet({
   const content = (
     <div
       data-testid="bottom-sheet-overlay"
-      className="fixed overscroll-none pointer-events-auto"
+      className="fixed inset-0 overscroll-none pointer-events-auto"
       style={overlayStyle}
       role="presentation"
     >
@@ -472,18 +444,10 @@ export function BottomSheet({
           requestCloseFromUser();
         }}
       />
-      {keyboardSkirtStyle ? (
-        <div
-          data-testid="bottom-sheet-keyboard-spacer"
-          className="pointer-events-auto absolute bg-bg-base"
-          style={keyboardSkirtStyle}
-          aria-hidden="true"
-        />
-      ) : null}
       <BottomSheetPanel
         sheetRef={sheetRef}
         dataTestId={dataTestId}
-        anchorStyle={panelAnchorStyle}
+        panelAnchorStyle={panelAnchorStyle}
         panelStyle={panelStyle}
         exiting={exiting}
         visible={visible}
