@@ -15,13 +15,16 @@ export type MobileTireSheetsProps = {
   mobileDraft: Partial<FilterState> | null;
   filters: FilterState;
   patchMobileDraft: (_patch: Partial<FilterState>) => void;
-  draftPriceChange: (_key: 'price_gte' | 'price_lte', _value: string) => void;
   setDraftTireDimension: (
     _key: 'tire_widths' | 'tire_profiles' | 'tire_diameters',
     _raw: string,
   ) => void;
-  onWheel: (_e: React.WheelEvent<HTMLInputElement>) => void;
   t: MobileTranslateFn;
+  rangeAnyLabel: string;
+  priceOptions: MultiSelectOption[];
+  tireWidthOptions: MultiSelectOption[];
+  tireProfileOptions: MultiSelectOption[];
+  tireDiameterOptions: MultiSelectOption[];
   tireBrandOptions: MultiSelectOption[];
   tireModelOptions: MultiSelectOption[];
   treadOptions: MultiSelectOption[];

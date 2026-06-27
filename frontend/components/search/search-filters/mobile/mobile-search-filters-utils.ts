@@ -24,6 +24,35 @@ export function formatPriceWithSpaces(value: string): string {
   return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
+export type LabeledFilterOption = { value: string; label: string };
+
+function parseNumericOptionValue(value: string): number {
+  const normalized = value.replace(',', '.').trim();
+  const n = parseFloat(normalized);
+  return Number.isNaN(n) ? 0 : n;
+}
+
+export function mergeCurrentValuesIntoOptions(
+  options: LabeledFilterOption[],
+  values: string[],
+  formatLabel?: (_value: string) => string,
+): LabeledFilterOption[] {
+  const merged = new Map(options.map((o) => [o.value, o]));
+  for (const raw of values) {
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+    if (!merged.has(trimmed)) {
+      merged.set(trimmed, {
+        value: trimmed,
+        label: formatLabel ? formatLabel(trimmed) : trimmed,
+      });
+    }
+  }
+  return Array.from(merged.values()).sort(
+    (a, b) => parseNumericOptionValue(a.value) - parseNumericOptionValue(b.value),
+  );
+}
+
 export const sanitizeEngineInput = (raw: string): string | null => {
   let value = raw.replace(',', '.');
   value = value.replace(/[^0-9.]/g, '');

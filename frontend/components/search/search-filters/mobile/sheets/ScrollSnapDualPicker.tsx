@@ -219,6 +219,7 @@ export function ScrollSnapDualPicker({
               type="button"
               role="option"
               aria-selected={isCenter}
+              data-testid={`search-wheel-option-${item.value}`}
               className={`flex w-full shrink-0 snap-center items-center justify-center px-2 text-base font-semibold transition-colors ${
                 isCenter ? 'text-primary-600' : 'text-text-secondary/50'
               }`}

@@ -10,11 +10,15 @@ export type MobileVehicleSheetsProps = {
   mobileDraft: Partial<FilterState> | null;
   filters: FilterState;
   patchMobileDraft: (_patch: Partial<FilterState>) => void;
-  draftPriceChange: (_key: 'price_gte' | 'price_lte', _value: string) => void;
   t: MobileTranslateFn;
+  rangeAnyLabel: string;
   brandOptions: MultiSelectOption[];
   modelOptions: MultiSelectOption[];
   yearOptions: MultiSelectOption[];
+  priceOptions: MultiSelectOption[];
+  mileageOptions: MultiSelectOption[];
+  engineOptions: MultiSelectOption[];
+  powerOptions: MultiSelectOption[];
   fuelOptions: MultiSelectOption[];
   bodyTypeOptions: MultiSelectOption[];
   transmissionOptions: MultiSelectOption[];

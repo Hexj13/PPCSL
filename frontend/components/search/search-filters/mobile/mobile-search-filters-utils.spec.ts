@@ -1,9 +1,29 @@
 import {
+  mergeCurrentValuesIntoOptions,
   normalizeEngineDisplacementRangeOrder,
   normalizeHorsepowerRangeOrder,
   normalizeMileageRangeOrder,
   normalizePriceRangeOrder,
 } from './mobile-search-filters-utils';
+
+describe('mergeCurrentValuesIntoOptions', () => {
+  it('merges missing current values and sorts numerically', () => {
+    const result = mergeCurrentValuesIntoOptions(
+      [
+        { value: '1000', label: '1 000' },
+        { value: '5000', label: '5 000' },
+      ],
+      ['2500', '1000'],
+      (v) => v,
+    );
+    expect(result.map((o) => o.value)).toEqual(['1000', '2500', '5000']);
+  });
+
+  it('ignores empty values', () => {
+    const result = mergeCurrentValuesIntoOptions([{ value: '100', label: '100' }], ['', '  ']);
+    expect(result).toHaveLength(1);
+  });
+});
 
 describe('normalizeHorsepowerRangeOrder', () => {
   it('swaps when from is greater than to', () => {

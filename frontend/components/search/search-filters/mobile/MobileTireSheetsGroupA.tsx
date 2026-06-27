@@ -6,10 +6,10 @@ import { loadSiteConfigSync } from '@/lib/site-config';
 import { toast } from '@/lib/toast';
 import { getCountry } from '@/lib/utils/utils';
 
-import { formatPriceWithSpaces } from './mobile-search-filters-utils';
 import type { MobileTireSheetsProps } from './mobile-tire-sheets-types';
 import { MultiSelectSheetContent } from './sheets/MultiSelectSheet';
 import { RangeSheetContent } from './sheets/RangeSheet';
+import { ScrollSnapSinglePicker } from './sheets/ScrollSnapSinglePicker';
 
 export function MobileTireSheetsGroupA(props: MobileTireSheetsProps) {
   const {
@@ -19,14 +19,22 @@ export function MobileTireSheetsGroupA(props: MobileTireSheetsProps) {
     mobileDraft,
     filters,
     patchMobileDraft,
-    draftPriceChange,
     setDraftTireDimension,
-    onWheel,
     t,
+    rangeAnyLabel,
+    priceOptions,
+    tireWidthOptions,
+    tireProfileOptions,
+    tireDiameterOptions,
     tireBrandOptions,
     tireModelOptions,
     treadOptions,
   } = props;
+
+  const draftOrFilterWidth = (mobileDraft?.tire_widths ?? filters.tire_widths)[0] ?? '';
+  const draftOrFilterProfile = (mobileDraft?.tire_profiles ?? filters.tire_profiles)[0] ?? '';
+  const draftOrFilterDiameter = (mobileDraft?.tire_diameters ?? filters.tire_diameters)[0] ?? '';
+
   return (
     <>
       <BottomSheet
@@ -44,49 +52,43 @@ export function MobileTireSheetsGroupA(props: MobileTireSheetsProps) {
           </button>
         }
       >
-        <div className="p-4 flex flex-col gap-4">
-          <label className="flex flex-col gap-1">
+        <div className="flex flex-col gap-4 px-4 pb-2">
+          <div className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-primary-700">
               {t('searchFilters.tireWidth')}
             </span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={(mobileDraft?.tire_widths ?? filters.tire_widths)[0] ?? ''}
-              onChange={(e) => setDraftTireDimension('tire_widths', e.target.value)}
-              onWheel={onWheel}
-              className="input-field"
-              placeholder="205"
+            <ScrollSnapSinglePicker
+              value={draftOrFilterWidth}
+              onChange={(v) => setDraftTireDimension('tire_widths', v)}
+              options={tireWidthOptions}
+              ariaLabel={t('searchFilters.tireWidth')}
+              emptyOptionLabel={rangeAnyLabel}
             />
-          </label>
-          <label className="flex flex-col gap-1">
+          </div>
+          <div className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-primary-700">
               {t('searchFilters.tireProfile')}
             </span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={(mobileDraft?.tire_profiles ?? filters.tire_profiles)[0] ?? ''}
-              onChange={(e) => setDraftTireDimension('tire_profiles', e.target.value)}
-              onWheel={onWheel}
-              className="input-field"
-              placeholder="55"
+            <ScrollSnapSinglePicker
+              value={draftOrFilterProfile}
+              onChange={(v) => setDraftTireDimension('tire_profiles', v)}
+              options={tireProfileOptions}
+              ariaLabel={t('searchFilters.tireProfile')}
+              emptyOptionLabel={rangeAnyLabel}
             />
-          </label>
-          <label className="flex flex-col gap-1">
+          </div>
+          <div className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-primary-700">
               {t('searchFilters.tireDiameter')}
             </span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={(mobileDraft?.tire_diameters ?? filters.tire_diameters)[0] ?? ''}
-              onChange={(e) => setDraftTireDimension('tire_diameters', e.target.value)}
-              onWheel={onWheel}
-              className="input-field"
-              placeholder="16"
+            <ScrollSnapSinglePicker
+              value={draftOrFilterDiameter}
+              onChange={(v) => setDraftTireDimension('tire_diameters', v)}
+              options={tireDiameterOptions}
+              ariaLabel={t('searchFilters.tireDiameter')}
+              emptyOptionLabel={rangeAnyLabel}
             />
-          </label>
+          </div>
         </div>
       </BottomSheet>
 
@@ -108,16 +110,16 @@ export function MobileTireSheetsGroupA(props: MobileTireSheetsProps) {
         }
       >
         <RangeSheetContent
-          variant="dual-input"
-          showDualInputColumnLabels={false}
+          variant="dual-select"
+          showDualSelectColumnLabels={false}
           fromLabel={t('searchFilters.from')}
           toLabel={t('searchFilters.to')}
-          fromValue={formatPriceWithSpaces(mobileDraft?.price_gte ?? filters.price_gte)}
-          toValue={formatPriceWithSpaces(mobileDraft?.price_lte ?? filters.price_lte)}
-          onFromChange={(v) => draftPriceChange('price_gte', v)}
-          onToChange={(v) => draftPriceChange('price_lte', v)}
-          fromInputMode="numeric"
-          toInputMode="numeric"
+          fromValue={mobileDraft?.price_gte ?? filters.price_gte}
+          toValue={mobileDraft?.price_lte ?? filters.price_lte}
+          onFromChange={(v) => patchMobileDraft({ price_gte: v })}
+          onToChange={(v) => patchMobileDraft({ price_lte: v })}
+          selectOptions={priceOptions}
+          emptySelectLabel={rangeAnyLabel}
         />
       </BottomSheet>
 

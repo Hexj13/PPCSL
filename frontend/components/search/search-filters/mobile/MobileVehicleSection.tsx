@@ -9,7 +9,11 @@ import {
   getBodyTypeOptions,
   getDoorOptions,
   getDriveTypeOptions,
+  getEngineVolumeFilterOptions,
   getFuelOptions,
+  getMileageFilterOptions,
+  getPowerFilterOptions,
+  getPriceFilterOptions,
   getTransmissionOptions,
   getYearOptions,
 } from '@/lib/options';
@@ -20,7 +24,6 @@ import {
   isInRange,
   MILEAGE_RANGE,
   POWER_RANGE,
-  PRICE_RANGE,
 } from '@/lib/validation';
 
 import { EquipmentFilters } from '../EquipmentFilters';
@@ -30,7 +33,11 @@ import { MobileVehicleAdvancedTab } from './MobileVehicleAdvancedTab';
 import { MobileVehicleBasicTab } from './MobileVehicleBasicTab';
 import { MobileVehicleSheets } from './MobileVehicleSheets';
 import type { MobileSearchFiltersVehicleProps } from './mobile-search-filters-types';
-import { formatPriceWithSpaces, summarizeMulti } from './mobile-search-filters-utils';
+import {
+  formatPriceWithSpaces,
+  mergeCurrentValuesIntoOptions,
+  summarizeMulti,
+} from './mobile-search-filters-utils';
 import { createMobileSheetDraft } from './mobile-sheet-draft';
 import { runVehicleSheetConfirm } from './mobile-vehicle-sheet-confirm';
 import type { MultiSelectOption } from './sheets/MultiSelectSheet';
@@ -60,7 +67,6 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
     onMultiSelectChange,
     onCheckboxChange,
     onYearBlur,
-    onPriceChange: _onPriceChange,
     onPriceBlur,
     onWheel: _onWheel,
     updateMultiple,
@@ -101,20 +107,43 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
     setMobileDraft(null);
   }, []);
 
-  const draftPriceChange = useCallback(
-    (key: 'price_gte' | 'price_lte', value: string) => {
-      const numericValue = value.replace(/[^0-9]/g, '');
-      const num = parseInt(numericValue, 10);
-      if (numericValue === '' || (!Number.isNaN(num) && isInRange(num, PRICE_RANGE))) {
-        patchMobileDraft({ [key]: numericValue });
-      }
-    },
-    [patchMobileDraft],
-  );
-
   const { t } = useTranslation();
 
   const yearOptions = useMemo(() => getYearOptions(), []);
+  const priceOptions = useMemo(
+    () =>
+      mergeCurrentValuesIntoOptions(
+        getPriceFilterOptions(),
+        [filters.price_gte, filters.price_lte],
+        formatPriceWithSpaces,
+      ),
+    [filters.price_gte, filters.price_lte],
+  );
+  const mileageOptions = useMemo(
+    () =>
+      mergeCurrentValuesIntoOptions(
+        getMileageFilterOptions(),
+        [filters.mileage_gte, filters.mileage_lte],
+        formatPriceWithSpaces,
+      ),
+    [filters.mileage_gte, filters.mileage_lte],
+  );
+  const engineOptions = useMemo(
+    () =>
+      mergeCurrentValuesIntoOptions(getEngineVolumeFilterOptions(vehicleType), [
+        filters.engine_displ_l_gte,
+        filters.engine_displ_l_lte,
+      ]),
+    [filters.engine_displ_l_gte, filters.engine_displ_l_lte, vehicleType],
+  );
+  const powerOptions = useMemo(
+    () =>
+      mergeCurrentValuesIntoOptions(getPowerFilterOptions(), [
+        filters.horsepower_gte,
+        filters.horsepower_lte,
+      ]),
+    [filters.horsepower_gte, filters.horsepower_lte],
+  );
   const fuelOptions = useMemo(() => getFuelOptions(t), [t]);
   const bodyTypeOptions = useMemo(() => getBodyTypeOptions(t, vehicleType), [t, vehicleType]);
   const transmissionOptions = useMemo(
@@ -346,11 +375,15 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
         mobileDraft={mobileDraft}
         filters={filters}
         patchMobileDraft={patchMobileDraft}
-        draftPriceChange={draftPriceChange}
         t={t}
+        rangeAnyLabel={t('searchFilters.rangeAny')}
         brandOptions={brandOptions}
         modelOptions={modelOptions}
         yearOptions={yearOptions}
+        priceOptions={priceOptions}
+        mileageOptions={mileageOptions}
+        engineOptions={engineOptions}
+        powerOptions={powerOptions}
         fuelOptions={fuelOptions}
         bodyTypeOptions={bodyTypeOptions}
         transmissionOptions={transmissionOptions}

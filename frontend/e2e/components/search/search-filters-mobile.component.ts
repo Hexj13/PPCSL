@@ -6,14 +6,14 @@ import { BottomSheetComponent } from '../common/bottom-sheet.component';
 
 export type SearchFilterTab = 'basic' | 'advanced' | 'equipment' | 'popular';
 
-export type VehicleSheetKind = 'multi' | 'single' | 'range-input' | 'range-select' | 'open-only';
+export type VehicleSheetKind = 'multi' | 'single' | 'range-wheel' | 'range-select' | 'open-only';
 
 export type VehicleSheetCase = {
   tab: SearchFilterTab;
   sheetId: string;
   kind: VehicleSheetKind;
   optionValue?: string;
-  rangeInput?: string;
+  wheelValue?: string;
 };
 
 export class SearchFiltersMobileComponent {
@@ -168,6 +168,12 @@ export class SearchFiltersMobileComponent {
     return null;
   }
 
+  async selectWheelOption(value: string): Promise<void> {
+    const option = this.page.getByTestId(`search-wheel-option-${value}`);
+    await expect(option.first()).toBeVisible();
+    await option.first().click();
+  }
+
   async fillRangeInputs(value: string): Promise<void> {
     const dialog = this.page.locator('[role="dialog"][aria-labelledby="bottom-sheet-title"]');
     const inputs = dialog.locator('input');
@@ -198,8 +204,8 @@ export class SearchFiltersMobileComponent {
       await this.selectSheetOption(sheetCase.optionValue);
     } else if (sheetCase.kind === 'multi' && !sheetCase.optionValue) {
       await this.selectFirstSheetOption();
-    } else if (sheetCase.kind === 'range-input' && sheetCase.rangeInput) {
-      await this.fillRangeInputs(sheetCase.rangeInput);
+    } else if (sheetCase.kind === 'range-wheel' && sheetCase.wheelValue) {
+      await this.selectWheelOption(sheetCase.wheelValue);
     } else if (sheetCase.kind === 'range-select') {
       await this.bottomSheet.expectOpen();
     }

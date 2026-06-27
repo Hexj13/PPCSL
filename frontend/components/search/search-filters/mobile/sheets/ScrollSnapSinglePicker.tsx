@@ -13,6 +13,15 @@ interface ScrollSnapSinglePickerProps {
   onChange: (_v: string) => void;
   options: LabeledValue[];
   ariaLabel: string;
+  emptyOptionLabel?: string;
+}
+
+function buildItems(emptyOptionLabel: string | undefined, options: LabeledValue[]): LabeledValue[] {
+  const filtered = options.filter((o) => o.value && !String(o.value).startsWith('__'));
+  if (emptyOptionLabel) {
+    return [{ value: '', label: emptyOptionLabel }, ...filtered];
+  }
+  return filtered;
 }
 
 function indexForValue(items: LabeledValue[], value: string): number {
@@ -34,11 +43,9 @@ export function ScrollSnapSinglePicker({
   onChange,
   options,
   ariaLabel,
+  emptyOptionLabel,
 }: ScrollSnapSinglePickerProps) {
-  const items = useMemo(
-    () => options.filter((o) => o.value && !String(o.value).startsWith('__')),
-    [options],
-  );
+  const items = useMemo(() => buildItems(emptyOptionLabel, options), [emptyOptionLabel, options]);
   const maxIdx = Math.max(0, items.length - 1);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -142,6 +149,7 @@ export function ScrollSnapSinglePicker({
               type="button"
               role="option"
               aria-selected={isCenter}
+              data-testid={`search-wheel-option-${item.value}`}
               className={`flex w-full shrink-0 snap-center items-center justify-center px-2 text-base font-semibold transition-colors ${
                 isCenter ? 'text-primary-600' : 'text-text-secondary/50'
               }`}

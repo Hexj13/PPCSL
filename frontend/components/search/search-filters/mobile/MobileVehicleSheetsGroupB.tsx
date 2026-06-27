@@ -2,7 +2,6 @@
 
 import { BottomSheet } from '@/components/common/BottomSheet';
 
-import { sanitizeEngineInput, sanitizeHorsepowerInput } from './mobile-search-filters-utils';
 import type { MobileVehicleSheetsProps } from './mobile-vehicle-sheets-types';
 import { MultiSelectSheetContent } from './sheets/MultiSelectSheet';
 import { RangeSheetContent } from './sheets/RangeSheet';
@@ -17,6 +16,9 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
     filters,
     patchMobileDraft,
     t,
+    rangeAnyLabel,
+    engineOptions,
+    powerOptions,
     cityOptions,
     doorOptions,
     colorOptions,
@@ -114,22 +116,16 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
         }
       >
         <RangeSheetContent
-          variant="dual-input"
-          showDualInputColumnLabels={false}
+          variant="dual-select"
+          showDualSelectColumnLabels={false}
           fromLabel={t('searchFilters.from')}
           toLabel={t('searchFilters.to')}
           fromValue={mobileDraft?.engine_displ_l_gte ?? filters.engine_displ_l_gte}
           toValue={mobileDraft?.engine_displ_l_lte ?? filters.engine_displ_l_lte}
-          onFromChange={(v) => {
-            const s = sanitizeEngineInput(v);
-            if (s !== null) patchMobileDraft({ engine_displ_l_gte: s });
-          }}
-          onToChange={(v) => {
-            const s = sanitizeEngineInput(v);
-            if (s !== null) patchMobileDraft({ engine_displ_l_lte: s });
-          }}
-          fromInputMode="decimal"
-          toInputMode="decimal"
+          onFromChange={(v) => patchMobileDraft({ engine_displ_l_gte: v })}
+          onToChange={(v) => patchMobileDraft({ engine_displ_l_lte: v })}
+          selectOptions={engineOptions}
+          emptySelectLabel={rangeAnyLabel}
         />
       </BottomSheet>
 
@@ -149,22 +145,16 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
         }
       >
         <RangeSheetContent
-          variant="dual-input"
-          showDualInputColumnLabels={false}
+          variant="dual-select"
+          showDualSelectColumnLabels={false}
           fromLabel={t('searchFilters.from')}
           toLabel={t('searchFilters.to')}
           fromValue={mobileDraft?.horsepower_gte ?? filters.horsepower_gte}
           toValue={mobileDraft?.horsepower_lte ?? filters.horsepower_lte}
-          onFromChange={(v) => {
-            const s = sanitizeHorsepowerInput(v);
-            if (s !== null) patchMobileDraft({ horsepower_gte: s });
-          }}
-          onToChange={(v) => {
-            const s = sanitizeHorsepowerInput(v);
-            if (s !== null) patchMobileDraft({ horsepower_lte: s });
-          }}
-          fromInputMode="numeric"
-          toInputMode="numeric"
+          onFromChange={(v) => patchMobileDraft({ horsepower_gte: v })}
+          onToChange={(v) => patchMobileDraft({ horsepower_lte: v })}
+          selectOptions={powerOptions}
+          emptySelectLabel={rangeAnyLabel}
         />
       </BottomSheet>
 

@@ -4,9 +4,14 @@ import { useCallback, useMemo, useState } from 'react';
 
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
+import {
+  getPriceFilterOptions,
+  getTireDiameterFilterOptions,
+  getTireProfileFilterOptions,
+  getTireWidthFilterOptions,
+} from '@/lib/options';
 import { buildCategorizedTireBrandOptions } from '@/lib/tire-catalog-sort';
 import { TIRE_TREAD_VALUES } from '@/lib/tire-tread';
-import { isInRange, PRICE_RANGE } from '@/lib/validation';
 
 import { TirePopularPanel } from '../TirePopularPanel';
 
@@ -15,6 +20,7 @@ import { MobileTireSheets } from './MobileTireSheets';
 import type { MobileSearchFiltersTireProps } from './mobile-search-filters-types';
 import {
   formatPriceWithSpaces,
+  mergeCurrentValuesIntoOptions,
   summarizeMulti,
   TIRE_QUANTITY_FILTER_OPTIONS,
 } from './mobile-search-filters-utils';
@@ -32,9 +38,7 @@ export function MobileTireSection(props: MobileSearchFiltersTireProps) {
     onFilterChange,
     onMultiSelectChange,
     onCheckboxChange,
-    onPriceChange: _onPriceChange,
     onPriceBlur,
-    onWheel,
     updateMultiple,
   } = props;
 
@@ -58,18 +62,29 @@ export function MobileTireSection(props: MobileSearchFiltersTireProps) {
     setMobileDraft(null);
   }, []);
 
-  const draftPriceChange = useCallback(
-    (key: 'price_gte' | 'price_lte', value: string) => {
-      const numericValue = value.replace(/[^0-9]/g, '');
-      const num = parseInt(numericValue, 10);
-      if (numericValue === '' || (!Number.isNaN(num) && isInRange(num, PRICE_RANGE))) {
-        patchMobileDraft({ [key]: numericValue });
-      }
-    },
-    [patchMobileDraft],
-  );
-
   const { t } = useTranslation();
+
+  const priceOptions = useMemo(
+    () =>
+      mergeCurrentValuesIntoOptions(
+        getPriceFilterOptions(),
+        [filters.price_gte, filters.price_lte],
+        formatPriceWithSpaces,
+      ),
+    [filters.price_gte, filters.price_lte],
+  );
+  const tireWidthOptions = useMemo(
+    () => mergeCurrentValuesIntoOptions(getTireWidthFilterOptions(), filters.tire_widths),
+    [filters.tire_widths],
+  );
+  const tireProfileOptions = useMemo(
+    () => mergeCurrentValuesIntoOptions(getTireProfileFilterOptions(), filters.tire_profiles),
+    [filters.tire_profiles],
+  );
+  const tireDiameterOptions = useMemo(
+    () => mergeCurrentValuesIntoOptions(getTireDiameterFilterOptions(), filters.tire_diameters),
+    [filters.tire_diameters],
+  );
 
   const tireBrandOptions = useMemo(
     () => buildCategorizedTireBrandOptions([...tireBrands], t),
@@ -243,10 +258,13 @@ export function MobileTireSection(props: MobileSearchFiltersTireProps) {
         mobileDraft={mobileDraft}
         filters={filters}
         patchMobileDraft={patchMobileDraft}
-        draftPriceChange={draftPriceChange}
         setDraftTireDimension={setDraftTireDimension}
-        onWheel={onWheel}
         t={t}
+        rangeAnyLabel={t('searchFilters.rangeAny')}
+        priceOptions={priceOptions}
+        tireWidthOptions={tireWidthOptions}
+        tireProfileOptions={tireProfileOptions}
+        tireDiameterOptions={tireDiameterOptions}
         tireBrandOptions={tireBrandOptions}
         tireModelOptions={tireModelOptions}
         treadOptions={treadOptions}

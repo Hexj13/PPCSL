@@ -5,9 +5,7 @@ import { MAX_SEARCH_BRAND_SELECTIONS, MAX_SEARCH_MODEL_SELECTIONS } from '@/lib/
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { toast } from '@/lib/toast';
 import { getCountry } from '@/lib/utils/utils';
-import { isInRange, MILEAGE_RANGE } from '@/lib/validation';
 
-import { formatPriceWithSpaces } from './mobile-search-filters-utils';
 import type { MobileVehicleSheetsProps } from './mobile-vehicle-sheets-types';
 import { MultiSelectSheetContent } from './sheets/MultiSelectSheet';
 import { RangeSheetContent } from './sheets/RangeSheet';
@@ -20,11 +18,13 @@ export function MobileVehicleSheetsGroupA(props: MobileVehicleSheetsProps) {
     mobileDraft,
     filters,
     patchMobileDraft,
-    draftPriceChange,
     t,
+    rangeAnyLabel,
     brandOptions,
     modelOptions,
     yearOptions,
+    priceOptions,
+    mileageOptions,
     fuelOptions,
     bodyTypeOptions,
     transmissionOptions,
@@ -125,6 +125,7 @@ export function MobileVehicleSheetsGroupA(props: MobileVehicleSheetsProps) {
           onFromChange={(v) => patchMobileDraft({ year_gte: v })}
           onToChange={(v) => patchMobileDraft({ year_lte: v })}
           selectOptions={yearOptions}
+          emptySelectLabel={rangeAnyLabel}
         />
       </BottomSheet>
 
@@ -191,16 +192,16 @@ export function MobileVehicleSheetsGroupA(props: MobileVehicleSheetsProps) {
         }
       >
         <RangeSheetContent
-          variant="dual-input"
-          showDualInputColumnLabels={false}
+          variant="dual-select"
+          showDualSelectColumnLabels={false}
           fromLabel={t('searchFilters.from')}
           toLabel={t('searchFilters.to')}
-          fromValue={formatPriceWithSpaces(mobileDraft?.price_gte ?? filters.price_gte)}
-          toValue={formatPriceWithSpaces(mobileDraft?.price_lte ?? filters.price_lte)}
-          onFromChange={(v) => draftPriceChange('price_gte', v)}
-          onToChange={(v) => draftPriceChange('price_lte', v)}
-          fromInputMode="numeric"
-          toInputMode="numeric"
+          fromValue={mobileDraft?.price_gte ?? filters.price_gte}
+          toValue={mobileDraft?.price_lte ?? filters.price_lte}
+          onFromChange={(v) => patchMobileDraft({ price_gte: v })}
+          onToChange={(v) => patchMobileDraft({ price_lte: v })}
+          selectOptions={priceOptions}
+          emptySelectLabel={rangeAnyLabel}
         />
       </BottomSheet>
 
@@ -266,28 +267,16 @@ export function MobileVehicleSheetsGroupA(props: MobileVehicleSheetsProps) {
         }
       >
         <RangeSheetContent
-          variant="dual-input"
-          showDualInputColumnLabels={false}
+          variant="dual-select"
+          showDualSelectColumnLabels={false}
           fromLabel={t('searchFilters.from')}
           toLabel={t('searchFilters.to')}
-          fromValue={formatPriceWithSpaces(mobileDraft?.mileage_gte ?? filters.mileage_gte)}
-          toValue={formatPriceWithSpaces(mobileDraft?.mileage_lte ?? filters.mileage_lte)}
-          onFromChange={(v) => {
-            const clean = v.replace(/[^0-9]/g, '');
-            const num = parseInt(clean, 10);
-            if (clean === '' || (!Number.isNaN(num) && isInRange(num, MILEAGE_RANGE))) {
-              patchMobileDraft({ mileage_gte: clean });
-            }
-          }}
-          onToChange={(v) => {
-            const clean = v.replace(/[^0-9]/g, '');
-            const num = parseInt(clean, 10);
-            if (clean === '' || (!Number.isNaN(num) && isInRange(num, MILEAGE_RANGE))) {
-              patchMobileDraft({ mileage_lte: clean });
-            }
-          }}
-          fromInputMode="numeric"
-          toInputMode="numeric"
+          fromValue={mobileDraft?.mileage_gte ?? filters.mileage_gte}
+          toValue={mobileDraft?.mileage_lte ?? filters.mileage_lte}
+          onFromChange={(v) => patchMobileDraft({ mileage_gte: v })}
+          onToChange={(v) => patchMobileDraft({ mileage_lte: v })}
+          selectOptions={mileageOptions}
+          emptySelectLabel={rangeAnyLabel}
         />
       </BottomSheet>
     </>
