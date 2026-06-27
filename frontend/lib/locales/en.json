@@ -1186,6 +1186,7 @@
     "mileage": "Mileage",
     "from": "from",
     "to": "to",
+    "rangeAny": "Not selected",
     "horsepower": "Power (HP)",
     "engine": "Engine (L)",
     "selectionLimitBrands": "You can select up to {max} brands.",
