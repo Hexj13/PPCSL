@@ -77,6 +77,8 @@ describe('BottomSheet', () => {
     document.body.style.left = '';
     document.body.style.right = '';
     document.body.style.width = '';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
     delete document.body.dataset.bottomSheetScrollLock;
   });
 
@@ -88,6 +90,8 @@ describe('BottomSheet', () => {
     document.body.style.left = '';
     document.body.style.right = '';
     document.body.style.width = '';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
     delete document.body.dataset.bottomSheetScrollLock;
   });
 
@@ -186,16 +190,8 @@ describe('BottomSheet', () => {
     expect(dialog).toHaveStyle({ height: '736px', maxHeight: '736px', minHeight: '704px' });
   });
 
-  it('locks body scroll while open and restores scrollY on close', async () => {
+  it('locks body scroll while open and restores overflow on close', async () => {
     jest.useFakeTimers();
-    const scrollTo = jest.fn();
-    window.scrollTo = scrollTo;
-    Object.defineProperty(window, 'scrollY', {
-      configurable: true,
-      writable: true,
-      value: 240,
-    });
-
     const onClose = jest.fn();
     const { rerender } = render(
       <BottomSheet isOpen onClose={onClose} title="Scroll lock sheet">
@@ -206,8 +202,9 @@ describe('BottomSheet', () => {
     await waitFor(() => {
       expect(document.body.dataset.bottomSheetScrollLock).toBe('true');
     });
-    expect(document.body.style.position).toBe('fixed');
-    expect(document.body.style.top).toBe('-240px');
+    expect(document.documentElement.style.overflow).toBe('hidden');
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.body.style.position).toBe('');
 
     rerender(
       <BottomSheet isOpen={false} onClose={onClose} title="Scroll lock sheet">
@@ -220,11 +217,11 @@ describe('BottomSheet', () => {
     });
 
     expect(document.body.dataset.bottomSheetScrollLock).toBeUndefined();
-    expect(document.body.style.position).toBe('');
-    expect(scrollTo).toHaveBeenCalledWith(0, 240);
+    expect(document.documentElement.style.overflow).toBe('');
+    expect(document.body.style.overflow).toBe('');
   });
 
-  it('renders the portal outside the locked body', async () => {
+  it('renders the portal inside body while scroll is locked', async () => {
     render(
       <BottomSheet isOpen onClose={() => {}} title="Portal sheet">
         <p>Content</p>
@@ -238,8 +235,7 @@ describe('BottomSheet', () => {
     const overlay = screen.getByTestId('bottom-sheet-overlay');
     const portalRoot = screen.getByTestId('bottom-sheet-portal-root');
     expect(portalRoot).toBeInstanceOf(HTMLElement);
-    expect(document.documentElement).toContainElement(portalRoot);
-    expect(document.body).not.toContainElement(portalRoot);
+    expect(document.body).toContainElement(portalRoot);
     expect(portalRoot).toContainElement(overlay);
   });
 

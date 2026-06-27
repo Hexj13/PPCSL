@@ -89,7 +89,7 @@ function useBottomSheetPortalRoot(enabled: boolean): HTMLElement | null {
     const root = document.createElement('div');
     root.dataset.bottomSheetPortalRoot = 'true';
     root.dataset.testid = 'bottom-sheet-portal-root';
-    document.documentElement.appendChild(root);
+    document.body.appendChild(root);
     setPortalRoot(root);
 
     return () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { type RefObject, useEffect, useRef } from 'react';
+import { type RefObject, useEffect } from 'react';
 
 const FOCUSABLE_INPUT_SELECTOR =
   'input:not([type=hidden]):not([disabled]),textarea:not([disabled]),select:not([disabled])';
@@ -42,30 +42,19 @@ export function useIosKeyboardScrollLock(
   enabled: boolean,
   sheetRef: RefObject<HTMLElement | null>,
 ): void {
-  const savedScrollYRef = useRef(0);
-
   useEffect(() => {
     if (!enabled || typeof window === 'undefined' || typeof document === 'undefined') {
       return undefined;
     }
 
+    const html = document.documentElement;
     const body = document.body;
-    const savedScrollY = window.scrollY;
-    savedScrollYRef.current = savedScrollY;
 
-    const previousBodyStyle = {
-      left: body.style.left,
-      position: body.style.position,
-      right: body.style.right,
-      top: body.style.top,
-      width: body.style.width,
-    };
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
 
-    body.style.position = 'fixed';
-    body.style.top = `-${savedScrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
-    body.style.width = '100%';
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
     body.dataset.bottomSheetScrollLock = 'true';
 
     const handleFocusIn = (event: FocusEvent) => {
@@ -83,13 +72,9 @@ export function useIosKeyboardScrollLock(
 
     return () => {
       document.removeEventListener('focusin', handleFocusIn, true);
-      body.style.position = previousBodyStyle.position;
-      body.style.top = previousBodyStyle.top;
-      body.style.left = previousBodyStyle.left;
-      body.style.right = previousBodyStyle.right;
-      body.style.width = previousBodyStyle.width;
+      html.style.overflow = previousHtmlOverflow;
+      body.style.overflow = previousBodyOverflow;
       delete body.dataset.bottomSheetScrollLock;
-      window.scrollTo(0, savedScrollYRef.current);
     };
   }, [enabled, sheetRef]);
 }
