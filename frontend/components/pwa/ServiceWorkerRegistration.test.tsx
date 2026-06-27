@@ -115,6 +115,39 @@ describe('ServiceWorkerRegistration', () => {
     await waitFor(() => expect(mockRegister).toHaveBeenCalledWith('/sw.js', { scope: '/' }));
   });
 
+  it('should not show update prompt when a first install gains controller during registration', async () => {
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'production',
+      writable: true,
+      configurable: true,
+    });
+    const registrationAddEventListener = jest.fn();
+    let resolveRegistration: (registration: unknown) => void;
+    const registrationPromise = new Promise<unknown>((resolve) => {
+      resolveRegistration = resolve;
+    });
+    setupNavigatorServiceWorker({
+      controller: null,
+      registerImpl: () => registrationPromise,
+    });
+
+    render(<ServiceWorkerRegistration />);
+
+    await waitFor(() => expect(mockRegister).toHaveBeenCalled());
+    Object.defineProperty(navigator.serviceWorker, 'controller', {
+      configurable: true,
+      value: {},
+    });
+    resolveRegistration!({
+      waiting: mockWaitingWorker,
+      installing: null,
+      addEventListener: registrationAddEventListener,
+    });
+
+    await waitFor(() => expect(registrationAddEventListener).toHaveBeenCalled());
+    expect(screen.queryByText('pwa.updateAvailable')).not.toBeInTheDocument();
+  });
+
   it('should not reload on controllerchange until user confirms update', async () => {
     Object.defineProperty(process.env, 'NODE_ENV', {
       value: 'production',

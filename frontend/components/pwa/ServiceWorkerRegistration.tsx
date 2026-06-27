@@ -39,12 +39,13 @@ export function ServiceWorkerRegistration() {
           return;
         }
 
+        const hadControllerBeforeRegistration = Boolean(navigator.serviceWorker.controller);
         const reg = await navigator.serviceWorker.register('/sw.js', {
           scope: '/',
         });
 
         setRegistration(reg);
-        if (reg.waiting && navigator.serviceWorker.controller) {
+        if (reg.waiting && hadControllerBeforeRegistration) {
           setUpdateAvailable(true);
         }
 
@@ -53,7 +54,7 @@ export function ServiceWorkerRegistration() {
           if (!newWorker) return;
 
           newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            if (newWorker.state === 'installed' && hadControllerBeforeRegistration) {
               setUpdateAvailable(true);
             }
           });
