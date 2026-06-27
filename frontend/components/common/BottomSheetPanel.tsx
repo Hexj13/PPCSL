@@ -4,13 +4,9 @@ import type { RefObject } from 'react';
 
 import { BOTTOM_SHEET_TRANSITION_MS } from '@/lib/bottom-sheet-layout';
 
-const BOTTOM_SHEET_ENTER_EASING_CLASS = 'motion-safe:ease-[cubic-bezier(0.32,0.72,0,1)]';
-const BOTTOM_SHEET_EXIT_EASING_CLASS = 'motion-safe:ease-[cubic-bezier(0.4,0,0.2,1)]';
-
 type BottomSheetPanelProps = {
   sheetRef: RefObject<HTMLDivElement | null>;
   dataTestId?: string;
-  panelAnchorStyle: React.CSSProperties;
   panelStyle: React.CSSProperties;
   exiting: boolean;
   visible: boolean;
@@ -30,7 +26,6 @@ type BottomSheetPanelProps = {
 export function BottomSheetPanel({
   sheetRef,
   dataTestId,
-  panelAnchorStyle,
   panelStyle,
   exiting,
   visible,
@@ -46,16 +41,13 @@ export function BottomSheetPanel({
   onDragPointerUp,
   onDragPointerCancel,
 }: BottomSheetPanelProps) {
-  const easingClass = visible ? BOTTOM_SHEET_ENTER_EASING_CLASS : BOTTOM_SHEET_EXIT_EASING_CLASS;
-
   return (
     <div
-      data-testid="bottom-sheet-panel-anchor"
       onTransitionEnd={onTransitionEnd}
-      className={`pointer-events-none fixed left-0 right-0 flex justify-center motion-safe:transition-transform motion-safe:duration-300 ${easingClass} will-change-transform ${
+      className={`pointer-events-none absolute bottom-0 left-0 right-0 flex justify-center motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform ${
         visible ? 'translate-y-0' : 'translate-y-full'
       }`}
-      style={{ ...panelAnchorStyle, transitionDuration: `${BOTTOM_SHEET_TRANSITION_MS}ms` }}
+      style={{ transitionDuration: `${BOTTOM_SHEET_TRANSITION_MS}ms` }}
     >
       <div
         ref={sheetRef}

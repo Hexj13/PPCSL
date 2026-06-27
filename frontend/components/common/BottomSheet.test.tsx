@@ -1,16 +1,19 @@
-import { act, fireEvent, render, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { resetOverlayHistoryForTests, triggerOverlayPopStateForTests } from '@/lib/overlay-history';
 
 import { BottomSheet } from './BottomSheet';
+
+jest.mock('react-dom', () => ({
+  ...jest.requireActual('react-dom'),
+  createPortal: (node: React.ReactNode) => node,
+}));
 
 jest.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({
     t: (key: string) => (key === 'common.close' ? 'Close' : key),
   }),
 }));
-
-const screen = within(document.documentElement);
 
 function mockMobileViewport() {
   Object.defineProperty(window, 'matchMedia', {
@@ -44,22 +47,6 @@ describe('BottomSheet', () => {
         back: jest.fn(),
       },
     });
-    Object.defineProperty(window, 'innerHeight', {
-      configurable: true,
-      writable: true,
-      value: 800,
-    });
-    Object.defineProperty(window, 'innerWidth', {
-      configurable: true,
-      writable: true,
-      value: 390,
-    });
-    Object.defineProperty(window, 'scrollY', {
-      configurable: true,
-      writable: true,
-      value: 0,
-    });
-    window.scrollTo = jest.fn();
     Object.defineProperty(window, 'visualViewport', {
       configurable: true,
       writable: true,
@@ -72,27 +59,11 @@ describe('BottomSheet', () => {
         removeEventListener: jest.fn(),
       },
     });
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.left = '';
-    document.body.style.right = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    document.documentElement.style.overflow = '';
-    delete document.body.dataset.bottomSheetScrollLock;
   });
 
   afterEach(() => {
     resetOverlayHistoryForTests();
     jest.useRealTimers();
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.left = '';
-    document.body.style.right = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    document.documentElement.style.overflow = '';
-    delete document.body.dataset.bottomSheetScrollLock;
   });
 
   it('renders title and calls onClose after close button exit animation', () => {
@@ -190,56 +161,7 @@ describe('BottomSheet', () => {
     expect(dialog).toHaveStyle({ height: '736px', maxHeight: '736px', minHeight: '704px' });
   });
 
-  it('locks body scroll while open and restores overflow on close', async () => {
-    jest.useFakeTimers();
-    const onClose = jest.fn();
-    const { rerender } = render(
-      <BottomSheet isOpen onClose={onClose} title="Scroll lock sheet">
-        <p>Content</p>
-      </BottomSheet>,
-    );
-
-    await waitFor(() => {
-      expect(document.body.dataset.bottomSheetScrollLock).toBe('true');
-    });
-    expect(document.documentElement.style.overflow).toBe('hidden');
-    expect(document.body.style.overflow).toBe('hidden');
-    expect(document.body.style.position).toBe('');
-
-    rerender(
-      <BottomSheet isOpen={false} onClose={onClose} title="Scroll lock sheet">
-        <p>Content</p>
-      </BottomSheet>,
-    );
-
-    act(() => {
-      jest.advanceTimersByTime(400);
-    });
-
-    expect(document.body.dataset.bottomSheetScrollLock).toBeUndefined();
-    expect(document.documentElement.style.overflow).toBe('');
-    expect(document.body.style.overflow).toBe('');
-  });
-
-  it('renders the portal inside body while scroll is locked', async () => {
-    render(
-      <BottomSheet isOpen onClose={() => {}} title="Portal sheet">
-        <p>Content</p>
-      </BottomSheet>,
-    );
-
-    await waitFor(() => {
-      expect(document.body.dataset.bottomSheetScrollLock).toBe('true');
-    });
-
-    const overlay = screen.getByTestId('bottom-sheet-overlay');
-    const portalRoot = screen.getByTestId('bottom-sheet-portal-root');
-    expect(portalRoot).toBeInstanceOf(HTMLElement);
-    expect(document.body).toContainElement(portalRoot);
-    expect(portalRoot).toContainElement(overlay);
-  });
-
-  it('caps the locked sheet above the keyboard while preserving its target height', async () => {
+  it('keeps locked height stable when visual viewport shrinks after search focus', () => {
     render(
       <BottomSheet isOpen onClose={() => {}} title="Search sheet" lockSheetHeight>
         <div className="flex min-h-0 flex-1 flex-col">
@@ -253,38 +175,26 @@ describe('BottomSheet', () => {
 
     const dialog = screen.getByRole('dialog');
     const overlay = screen.getByTestId('bottom-sheet-overlay');
-    const panelAnchor = screen.getByTestId('bottom-sheet-panel-anchor');
     const searchInput = screen.getByLabelText('Search city');
 
     searchInput.focus();
     expect(searchInput).toHaveFocus();
     expect(dialog).toHaveStyle({ height: '736px', maxHeight: '736px', minHeight: '704px' });
-    expect(overlay).toHaveClass('fixed', 'inset-0');
-    expect(panelAnchor).toHaveStyle({ bottom: '0px' });
+    expect(overlay).toHaveStyle({ height: '800px', top: '0px' });
 
     Object.defineProperty(window.visualViewport, 'height', {
       configurable: true,
       value: 420,
     });
-    Object.defineProperty(window, 'innerHeight', {
-      configurable: true,
-      writable: true,
-      value: 420,
-    });
     fireEvent.resize(window);
 
-    await waitFor(() => {
-      expect(dialog).toHaveStyle({ height: '736px', maxHeight: '386px' });
-      expect(panelAnchor).toHaveStyle({ bottom: '380px' });
-    });
-    expect(dialog).not.toHaveStyle({ minHeight: '704px' });
-    expect(overlay).toHaveClass('fixed', 'inset-0');
-    expect(screen.queryByTestId('bottom-sheet-keyboard-spacer')).not.toBeInTheDocument();
+    expect(dialog).toHaveStyle({ height: '736px', maxHeight: '736px', minHeight: '704px' });
+    expect(overlay).toHaveStyle({ height: '800px', top: '0px' });
     expect(dialog).toContainElement(searchInput);
     expect(searchInput).toHaveFocus();
   });
 
-  it('lifts the unlocked sheet above the keyboard using bottom inset', async () => {
+  it('positions unlocked overlay within the visual viewport when the keyboard shifts it', () => {
     render(
       <BottomSheet isOpen onClose={() => {}} title="Input sheet">
         <input aria-label="Mileage from" inputMode="numeric" type="text" />
@@ -293,12 +203,10 @@ describe('BottomSheet', () => {
 
     const dialog = screen.getByRole('dialog');
     const overlay = screen.getByTestId('bottom-sheet-overlay');
-    const panelAnchor = screen.getByTestId('bottom-sheet-panel-anchor');
 
     expect(dialog).toHaveStyle({ maxHeight: '736px' });
     expect(dialog).not.toHaveStyle({ height: '736px' });
     expect(dialog).not.toHaveStyle({ minHeight: '704px' });
-    expect(overlay).toHaveClass('fixed', 'inset-0');
 
     Object.defineProperty(window.visualViewport, 'height', {
       configurable: true,
@@ -318,37 +226,17 @@ describe('BottomSheet', () => {
     });
     fireEvent.resize(window);
 
-    await waitFor(() => {
-      expect(overlay).toHaveClass('fixed', 'inset-0');
-      expect(panelAnchor).toHaveStyle({ bottom: '200px' });
-      expect(dialog).toHaveStyle({ maxHeight: '386px' });
+    expect(overlay).toHaveStyle({
+      height: '420px',
+      left: '6px',
+      top: '180px',
+      width: '378px',
     });
-    expect(screen.queryByTestId('bottom-sheet-keyboard-spacer')).not.toBeInTheDocument();
+    expect(dialog).toHaveStyle({ maxHeight: '386px' });
     expect(dialog).not.toHaveStyle({ height: '386px' });
   });
 
-  it('keeps the sheet anchored to the bottom when the layout viewport exceeds the visual viewport without a keyboard', () => {
-    Object.defineProperty(window.visualViewport, 'height', {
-      configurable: true,
-      value: 650,
-    });
-    Object.defineProperty(window.visualViewport, 'offsetTop', {
-      configurable: true,
-      value: 0,
-    });
-
-    render(
-      <BottomSheet isOpen onClose={() => {}} title="Anchored sheet">
-        <input aria-label="Mileage from" inputMode="numeric" type="text" />
-      </BottomSheet>,
-    );
-
-    const panelAnchor = screen.getByTestId('bottom-sheet-panel-anchor');
-    expect(panelAnchor).toHaveStyle({ bottom: '0px' });
-    expect(screen.queryByTestId('bottom-sheet-keyboard-spacer')).not.toBeInTheDocument();
-  });
-
-  it('raises the unlocked sheet when the visual viewport shrinks', async () => {
+  it('updates unlocked height when visual viewport changes', () => {
     render(
       <BottomSheet isOpen onClose={() => {}} title="Adaptive sheet">
         <p>Content</p>
@@ -356,7 +244,6 @@ describe('BottomSheet', () => {
     );
 
     const dialog = screen.getByRole('dialog');
-    const panelAnchor = screen.getByTestId('bottom-sheet-panel-anchor');
     expect(dialog).toHaveStyle({ maxHeight: '736px' });
     expect(dialog).not.toHaveStyle({ height: '736px' });
     expect(dialog).not.toHaveStyle({ minHeight: '704px' });
@@ -367,66 +254,8 @@ describe('BottomSheet', () => {
     });
     fireEvent.resize(window);
 
-    await waitFor(() => {
-      expect(panelAnchor).toHaveStyle({ bottom: '380px' });
-      expect(dialog).toHaveStyle({ maxHeight: '386px' });
-    });
-    expect(screen.queryByTestId('bottom-sheet-keyboard-spacer')).not.toBeInTheDocument();
+    expect(dialog).toHaveStyle({ maxHeight: '386px' });
     expect(dialog).not.toHaveStyle({ minHeight: '370px' });
-  });
-
-  it('keeps the unlocked sheet stable during a transient keyboard-close viewport frame', async () => {
-    jest.useFakeTimers();
-    render(
-      <BottomSheet isOpen onClose={() => {}} title="Mileage sheet">
-        <input aria-label="Mileage from" inputMode="numeric" type="text" />
-        <input aria-label="Mileage to" inputMode="numeric" type="text" />
-      </BottomSheet>,
-    );
-
-    const dialog = screen.getByRole('dialog');
-    const panelAnchor = screen.getByTestId('bottom-sheet-panel-anchor');
-
-    Object.defineProperty(window.visualViewport, 'height', {
-      configurable: true,
-      value: 420,
-    });
-    fireEvent.resize(window);
-
-    act(() => {
-      jest.advanceTimersByTime(16);
-    });
-
-    await waitFor(() => {
-      expect(panelAnchor).toHaveStyle({ bottom: '380px' });
-      expect(dialog).toHaveStyle({ maxHeight: '386px' });
-    });
-
-    Object.defineProperty(window.visualViewport, 'height', {
-      configurable: true,
-      value: 800,
-    });
-    fireEvent.resize(window);
-
-    act(() => {
-      jest.advanceTimersByTime(16);
-    });
-
-    expect(panelAnchor).toHaveStyle({ bottom: '380px' });
-    expect(dialog).toHaveStyle({ maxHeight: '386px' });
-
-    Object.defineProperty(window.visualViewport, 'height', {
-      configurable: true,
-      value: 420,
-    });
-    fireEvent.resize(window);
-
-    act(() => {
-      jest.advanceTimersByTime(160);
-    });
-
-    expect(panelAnchor).toHaveStyle({ bottom: '380px' });
-    expect(dialog).toHaveStyle({ maxHeight: '386px' });
   });
 
   it('returns null when closed', () => {
@@ -478,6 +307,5 @@ describe('BottomSheet', () => {
       </BottomSheet>,
     );
     expect(screen.getByText('Desktop sheet')).toBeInTheDocument();
-    expect(document.body.dataset.bottomSheetScrollLock).toBeUndefined();
   });
 });

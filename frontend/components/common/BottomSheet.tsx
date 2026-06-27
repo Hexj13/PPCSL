@@ -10,7 +10,6 @@ import {
 } from '@/hooks/useBottomSheetViewportHeight';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
-import { useIosKeyboardScrollLock } from '@/hooks/useIosKeyboardScrollLock';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
   BOTTOM_SHEET_TRANSITION_FALLBACK_MS,
@@ -21,8 +20,6 @@ import { designTokens } from '@/ui';
 
 const MOBILE_SHEET_MAX_WIDTH_PX = 767;
 const BOTTOM_SHEET_SCROLLABLE_SELECTOR = '[data-bottom-sheet-scrollable="true"]';
-const BOTTOM_SHEET_BACKDROP_ENTER_EASING_CLASS = 'motion-safe:ease-[cubic-bezier(0.32,0.72,0,1)]';
-const BOTTOM_SHEET_BACKDROP_EXIT_EASING_CLASS = 'motion-safe:ease-[cubic-bezier(0.4,0,0.2,1)]';
 
 function useMobileSheetViewport(): boolean {
   const [matches, setMatches] = useState(() => {
@@ -77,72 +74,44 @@ function preventScrollEvent(e: Event) {
   e.stopPropagation();
 }
 
-function useBottomSheetPortalRoot(enabled: boolean): HTMLElement | null {
-  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    if (!enabled || typeof document === 'undefined') {
-      setPortalRoot(null);
-      return undefined;
-    }
-
-    const root = document.createElement('div');
-    root.dataset.bottomSheetPortalRoot = 'true';
-    root.dataset.testid = 'bottom-sheet-portal-root';
-    document.body.appendChild(root);
-    setPortalRoot(root);
-
-    return () => {
-      root.remove();
-      setPortalRoot(null);
-    };
-  }, [enabled]);
-
-  return portalRoot;
-}
-
 function getBottomSheetLayout(
   viewportRect: BottomSheetViewportRect,
   lockSheetHeight: boolean,
   lockedViewportRect: BottomSheetViewportRect | null,
-  useKeyboardLayout: boolean,
 ): {
   nextLockedViewportRect: BottomSheetViewportRect | null;
-  panelAnchorStyle: React.CSSProperties;
   panelStyle: React.CSSProperties;
   overlayStyle: React.CSSProperties;
 } {
+  let layoutViewportRect = viewportRect;
   let nextLockedViewportRect = lockedViewportRect;
 
   if (lockSheetHeight && viewportRect.height > 0) {
     nextLockedViewportRect ??= viewportRect;
+    layoutViewportRect = nextLockedViewportRect;
   }
 
-  const lockedRect = nextLockedViewportRect ?? viewportRect;
-  const keyboardInsetBottomPx = useKeyboardLayout ? viewportRect.keyboardInsetBottom : 0;
-
   const maxHeightPx =
-    viewportRect.height > 0 ? computeBottomSheetMaxHeightPx(viewportRect.height) : undefined;
-  const lockedHeightPx =
-    lockSheetHeight && lockedRect.height > 0
-      ? computeBottomSheetMaxHeightPx(lockedRect.height)
+    layoutViewportRect.height > 0
+      ? computeBottomSheetMaxHeightPx(layoutViewportRect.height)
       : undefined;
   const lockMinHeightPx =
-    lockSheetHeight && keyboardInsetBottomPx === 0 && lockedRect.height > 0
-      ? computeBottomSheetLockMinHeightPx(lockedRect.height)
+    lockSheetHeight && layoutViewportRect.height > 0
+      ? computeBottomSheetLockMinHeightPx(layoutViewportRect.height)
       : undefined;
 
   return {
     nextLockedViewportRect: lockSheetHeight ? nextLockedViewportRect : null,
-    panelAnchorStyle: {
-      bottom: keyboardInsetBottomPx > 0 ? `${keyboardInsetBottomPx}px` : 0,
-    },
     panelStyle: {
       ...(maxHeightPx ? { maxHeight: `${maxHeightPx}px` } : {}),
-      ...(lockedHeightPx ? { height: `${lockedHeightPx}px` } : {}),
+      ...(lockSheetHeight && maxHeightPx ? { height: `${maxHeightPx}px` } : {}),
       ...(lockMinHeightPx ? { minHeight: `${lockMinHeightPx}px` } : {}),
     },
     overlayStyle: {
+      height: layoutViewportRect.height,
+      left: layoutViewportRect.offsetLeft,
+      top: layoutViewportRect.offsetTop,
+      width: layoutViewportRect.width,
       zIndex: designTokens.zIndex.modal,
     },
   };
@@ -237,12 +206,9 @@ export function BottomSheet({
   );
   const overlayHistoryId = useId();
   const sheetActive = mounted && (mobileOnly ? isMobileViewport : true);
-  const useKeyboardLayout = sheetActive && isMobileViewport;
   const exiting = mounted && !visible;
-  const portalRoot = useBottomSheetPortalRoot(mounted);
 
   useFocusTrap(sheetRef, sheetActive && visible);
-  useIosKeyboardScrollLock(sheetActive && isMobileViewport, sheetRef);
   useBlockBackgroundScroll(sheetActive, sheetRef);
 
   useEffect(() => {
@@ -433,31 +399,21 @@ export function BottomSheet({
     [clearExitFallback],
   );
 
-  if (
-    !mounted ||
-    (mobileOnly && !isMobileViewport) ||
-    typeof window === 'undefined' ||
-    !portalRoot
-  ) {
+  if (!mounted || (mobileOnly && !isMobileViewport) || typeof window === 'undefined') {
     return null;
   }
 
-  const { nextLockedViewportRect, panelAnchorStyle, panelStyle, overlayStyle } =
-    getBottomSheetLayout(
-      viewportRect,
-      lockSheetHeight,
-      lockedViewportRectRef.current,
-      useKeyboardLayout,
-    );
+  const { nextLockedViewportRect, panelStyle, overlayStyle } = getBottomSheetLayout(
+    viewportRect,
+    lockSheetHeight,
+    lockedViewportRectRef.current,
+  );
   lockedViewportRectRef.current = nextLockedViewportRect;
-  const backdropEasingClass = visible
-    ? BOTTOM_SHEET_BACKDROP_ENTER_EASING_CLASS
-    : BOTTOM_SHEET_BACKDROP_EXIT_EASING_CLASS;
 
   const content = (
     <div
       data-testid="bottom-sheet-overlay"
-      className="fixed inset-0 overscroll-none pointer-events-auto"
+      className="fixed overscroll-none pointer-events-auto"
       style={overlayStyle}
       role="presentation"
     >
@@ -465,7 +421,7 @@ export function BottomSheet({
         type="button"
         data-testid="bottom-sheet-backdrop"
         aria-label={t('common.close')}
-        className={`absolute inset-0 border-0 p-0 cursor-default bg-black/70 motion-safe:transition-opacity motion-safe:duration-300 ${backdropEasingClass} ${
+        className={`absolute inset-0 border-0 p-0 cursor-default bg-black/70 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out ${
           visible ? 'opacity-100' : 'opacity-0'
         } motion-reduce:opacity-100 touch-none`}
         onClick={(e) => {
@@ -477,7 +433,6 @@ export function BottomSheet({
       <BottomSheetPanel
         sheetRef={sheetRef}
         dataTestId={dataTestId}
-        panelAnchorStyle={panelAnchorStyle}
         panelStyle={panelStyle}
         exiting={exiting}
         visible={visible}
@@ -497,5 +452,5 @@ export function BottomSheet({
     </div>
   );
 
-  return createPortal(content, portalRoot);
+  return createPortal(content, document.body);
 }
