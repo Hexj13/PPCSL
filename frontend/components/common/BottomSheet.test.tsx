@@ -331,6 +331,27 @@ describe('BottomSheet', () => {
     expect(dialog).not.toHaveStyle({ height: '386px' });
   });
 
+  it('keeps the sheet anchored to the bottom when the layout viewport exceeds the visual viewport without a keyboard', () => {
+    Object.defineProperty(window.visualViewport, 'height', {
+      configurable: true,
+      value: 650,
+    });
+    Object.defineProperty(window.visualViewport, 'offsetTop', {
+      configurable: true,
+      value: 0,
+    });
+
+    render(
+      <BottomSheet isOpen onClose={() => {}} title="Anchored sheet">
+        <input aria-label="Mileage from" inputMode="numeric" type="text" />
+      </BottomSheet>,
+    );
+
+    const panelAnchor = screen.getByTestId('bottom-sheet-panel-anchor');
+    expect(panelAnchor).toHaveStyle({ bottom: '0px' });
+    expect(screen.queryByTestId('bottom-sheet-keyboard-spacer')).not.toBeInTheDocument();
+  });
+
   it('raises the unlocked sheet when the visual viewport shrinks', async () => {
     render(
       <BottomSheet isOpen onClose={() => {}} title="Adaptive sheet">
