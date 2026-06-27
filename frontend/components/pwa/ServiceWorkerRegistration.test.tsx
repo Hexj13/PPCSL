@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import React from 'react';
 
 import { ServiceWorkerRegistration } from './ServiceWorkerRegistration';
@@ -10,6 +10,8 @@ jest.mock('@/hooks/useTranslation', () => ({
     translations: {},
   }),
 }));
+
+const screen = within(document.documentElement);
 
 describe('ServiceWorkerRegistration', () => {
   const originalNodeEnv = process.env.NODE_ENV;

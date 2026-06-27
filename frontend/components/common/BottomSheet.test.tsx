@@ -1,19 +1,16 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react';
 
 import { resetOverlayHistoryForTests, triggerOverlayPopStateForTests } from '@/lib/overlay-history';
 
 import { BottomSheet } from './BottomSheet';
-
-jest.mock('react-dom', () => ({
-  ...jest.requireActual('react-dom'),
-  createPortal: (node: React.ReactNode) => node,
-}));
 
 jest.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({
     t: (key: string) => (key === 'common.close' ? 'Close' : key),
   }),
 }));
+
+const screen = within(document.documentElement);
 
 function mockMobileViewport() {
   Object.defineProperty(window, 'matchMedia', {
@@ -62,6 +59,7 @@ describe('BottomSheet', () => {
       writable: true,
       value: 0,
     });
+    window.scrollTo = jest.fn();
     Object.defineProperty(window, 'visualViewport', {
       configurable: true,
       writable: true,
@@ -224,6 +222,25 @@ describe('BottomSheet', () => {
     expect(document.body.dataset.bottomSheetScrollLock).toBeUndefined();
     expect(document.body.style.position).toBe('');
     expect(scrollTo).toHaveBeenCalledWith(0, 240);
+  });
+
+  it('renders the portal outside the locked body', async () => {
+    render(
+      <BottomSheet isOpen onClose={() => {}} title="Portal sheet">
+        <p>Content</p>
+      </BottomSheet>,
+    );
+
+    await waitFor(() => {
+      expect(document.body.dataset.bottomSheetScrollLock).toBe('true');
+    });
+
+    const overlay = screen.getByTestId('bottom-sheet-overlay');
+    const portalRoot = screen.getByTestId('bottom-sheet-portal-root');
+    expect(portalRoot).toBeInstanceOf(HTMLElement);
+    expect(document.documentElement).toContainElement(portalRoot);
+    expect(document.body).not.toContainElement(portalRoot);
+    expect(portalRoot).toContainElement(overlay);
   });
 
   it('caps the locked sheet above the keyboard while preserving its target height', async () => {

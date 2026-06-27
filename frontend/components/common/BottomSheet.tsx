@@ -77,6 +77,30 @@ function preventScrollEvent(e: Event) {
   e.stopPropagation();
 }
 
+function useBottomSheetPortalRoot(enabled: boolean): HTMLElement | null {
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!enabled || typeof document === 'undefined') {
+      setPortalRoot(null);
+      return undefined;
+    }
+
+    const root = document.createElement('div');
+    root.dataset.bottomSheetPortalRoot = 'true';
+    root.dataset.testid = 'bottom-sheet-portal-root';
+    document.documentElement.appendChild(root);
+    setPortalRoot(root);
+
+    return () => {
+      root.remove();
+      setPortalRoot(null);
+    };
+  }, [enabled]);
+
+  return portalRoot;
+}
+
 function getBottomSheetLayout(
   viewportRect: BottomSheetViewportRect,
   lockSheetHeight: boolean,
@@ -215,6 +239,7 @@ export function BottomSheet({
   const sheetActive = mounted && (mobileOnly ? isMobileViewport : true);
   const useKeyboardLayout = sheetActive && isMobileViewport;
   const exiting = mounted && !visible;
+  const portalRoot = useBottomSheetPortalRoot(mounted);
 
   useFocusTrap(sheetRef, sheetActive && visible);
   useIosKeyboardScrollLock(sheetActive && isMobileViewport, sheetRef);
@@ -408,7 +433,12 @@ export function BottomSheet({
     [clearExitFallback],
   );
 
-  if (!mounted || (mobileOnly && !isMobileViewport) || typeof window === 'undefined') {
+  if (
+    !mounted ||
+    (mobileOnly && !isMobileViewport) ||
+    typeof window === 'undefined' ||
+    !portalRoot
+  ) {
     return null;
   }
 
@@ -467,5 +497,5 @@ export function BottomSheet({
     </div>
   );
 
-  return createPortal(content, document.body);
+  return createPortal(content, portalRoot);
 }
