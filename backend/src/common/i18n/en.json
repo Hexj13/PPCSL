@@ -39,7 +39,6 @@
     "conditionTypeEnum": "Condition must be Undamaged, Damaged, or ForParts",
     "vinLength17": "VIN must be exactly 17 characters",
     "vinCharset": "VIN must contain only letters and digits (excluding I, O, Q)",
-    "maxEquipmentOptions": "Maximum 40 options",
     "verifyEmailTokenRequired": "Token is required",
     "verifyEmailTokenString": "Token must be a string",
     "loginIdentifierRequired": "Email or phone is required",

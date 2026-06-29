@@ -39,7 +39,6 @@
     "conditionTypeEnum": "Starea trebuie să fie Undamaged, Damaged sau ForParts",
     "vinLength17": "VIN trebuie să aibă exact 17 caractere",
     "vinCharset": "VIN trebuie să conțină doar litere și cifre (fără I, O, Q)",
-    "maxEquipmentOptions": "Maximum 40 opțiuni",
     "verifyEmailTokenRequired": "Tokenul este obligatoriu",
     "verifyEmailTokenString": "Tokenul trebuie să fie un șir de caractere",
     "loginIdentifierRequired": "Emailul sau telefonul este obligatoriu",

@@ -199,16 +199,12 @@ export class UpdateListingDto {
 
   @ApiPropertyOptional({
     example: ['air_conditioning', 'navigation', 'parking_sensors'],
-    description: 'Array of equipment keys (max 40 items)',
+    description: 'Array of equipment keys',
     type: [String],
-    maxItems: 40,
   })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @ArrayMaxSize(40, {
-    message: 'validation.maxEquipmentOptions',
-  })
   equipment?: string[];
 
   @ApiPropertyOptional({

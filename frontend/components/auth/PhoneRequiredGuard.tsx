@@ -10,7 +10,7 @@ import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { useAuthStore } from '@/lib/store';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
-export function PhoneRequiredGuard({ children }: { children: React.ReactNode }) {
+export function PhoneRequiredGuard() {
   const pathname = usePathname();
   const { replace } = useLocalizedNavigation();
   const user = useAuthStore((s) => s.user);
@@ -31,5 +31,5 @@ export function PhoneRequiredGuard({ children }: { children: React.ReactNode }) 
     );
   }, [isInitialized, user, pathname, replace]);
 
-  return <>{children}</>;
+  return null;
 }

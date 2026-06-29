@@ -310,17 +310,13 @@ export class CreateListingDto {
 
   @ApiPropertyOptional({
     example: ['air_conditioning', 'navigation', 'parking_sensors'],
-    description: 'Array of equipment keys (vehicle listings only, max 40 items)',
+    description: 'Array of equipment keys (vehicle listings only)',
     type: [String],
-    maxItems: 40,
   })
   @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @ArrayMaxSize(40, {
-    message: 'validation.maxEquipmentOptions',
-  })
   equipment?: string[];
 
   @ApiPropertyOptional({

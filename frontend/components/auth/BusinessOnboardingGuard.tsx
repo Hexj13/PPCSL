@@ -13,7 +13,7 @@ import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
 import { useAuthStore } from '@/lib/store';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
-export function BusinessOnboardingGuard({ children }: { children: React.ReactNode }) {
+export function BusinessOnboardingGuard() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { replace } = useLocalizedNavigation();
@@ -42,5 +42,5 @@ export function BusinessOnboardingGuard({ children }: { children: React.ReactNod
     );
   }, [isInitialized, user, pathname, replace, searchParams]);
 
-  return <>{children}</>;
+  return null;
 }

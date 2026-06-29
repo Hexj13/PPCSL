@@ -104,6 +104,7 @@ jest.mock('@/components/common/Dropdown', () => {
     ScrollDropdownIntoViewContext,
     Dropdown: (props: DropdownProps) => {
       const { value, onChange, options, disabled, dataTestId } = props;
+      const selectableOptions = options.filter((opt) => !opt.value.startsWith('__category__'));
       return (
         <select
           value={value}
@@ -111,7 +112,7 @@ jest.mock('@/components/common/Dropdown', () => {
           disabled={disabled}
           data-testid={dataTestId ?? 'dropdown'}
         >
-          {options.map((opt: DropdownOption) => (
+          {selectableOptions.map((opt: DropdownOption) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
@@ -453,6 +454,33 @@ describe('ListingForm', () => {
         { timeout: 15000 },
       );
     }, 30000);
+
+    it('should list popular cities with Chișinău first in city select', async () => {
+      const onSuccess = jest.fn();
+      render(
+        <ListingForm
+          mode="edit"
+          listingId="listing-1"
+          initialData={mockListing as Listing}
+          onSuccess={onSuccess}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('listing-create-city-select')).toBeInTheDocument();
+      });
+
+      const citySelect = screen.getByTestId('listing-create-city-select') as HTMLSelectElement;
+      const optionValues = Array.from(citySelect.options).map((option) => option.value);
+
+      expect(optionValues.slice(0, 5)).toEqual([
+        'Chișinău',
+        'Bălți',
+        'Tiraspol',
+        'Bender',
+        'Orhei',
+      ]);
+    });
 
     it('should update condition field', async () => {
       const onSuccess = jest.fn();

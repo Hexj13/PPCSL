@@ -1,28 +1,25 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import type { ReactNode } from 'react';
 
 import { useAuthStore } from '@/lib/store';
 
-const PhoneRequiredGuard = dynamic(
-  () => import('./PhoneRequiredGuard').then((m) => ({ default: m.PhoneRequiredGuard })),
-  { ssr: false },
-);
-
-const BusinessOnboardingGuard = dynamic(
-  () => import('./BusinessOnboardingGuard').then((m) => ({ default: m.BusinessOnboardingGuard })),
-  { ssr: false },
-);
+import { BusinessOnboardingGuard } from './BusinessOnboardingGuard';
+import { PhoneRequiredGuard } from './PhoneRequiredGuard';
 
 export function AuthGuardsShell({ children }: { children: ReactNode }) {
-  const { user, isInitialized } = useAuthStore();
-  if (!isInitialized || !user) {
-    return children;
-  }
+  const user = useAuthStore((s) => s.user);
+  const isInitialized = useAuthStore((s) => s.isInitialized);
+
   return (
-    <PhoneRequiredGuard>
-      <BusinessOnboardingGuard>{children}</BusinessOnboardingGuard>
-    </PhoneRequiredGuard>
+    <>
+      {children}
+      {isInitialized && user ? (
+        <>
+          <BusinessOnboardingGuard />
+          <PhoneRequiredGuard />
+        </>
+      ) : null}
+    </>
   );
 }

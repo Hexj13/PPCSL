@@ -18,11 +18,21 @@ interface ScrollSnapDualPickerProps {
   onFromChange: (_v: string) => void;
   onToChange: (_v: string) => void;
   options: LabeledValue[];
+  fromOptions?: LabeledValue[];
+  toOptions?: LabeledValue[];
   emptyOptionLabel: string;
+  toIncludeEmptyOption?: boolean;
   showColumnLabels?: boolean;
 }
 
-function buildItems(emptyOptionLabel: string, options: LabeledValue[]): LabeledValue[] {
+function buildItems(
+  emptyOptionLabel: string,
+  options: LabeledValue[],
+  includeEmpty: boolean,
+): LabeledValue[] {
+  if (!includeEmpty) {
+    return options;
+  }
   return [{ value: '', label: emptyOptionLabel }, ...options];
 }
 
@@ -48,13 +58,26 @@ export function ScrollSnapDualPicker({
   onFromChange,
   onToChange,
   options,
+  fromOptions,
+  toOptions,
   emptyOptionLabel,
+  toIncludeEmptyOption = true,
   showColumnLabels = true,
 }: ScrollSnapDualPickerProps) {
   const { t } = useTranslation();
   const rangeDash = t('common.rangeDash');
-  const items = useMemo(() => buildItems(emptyOptionLabel, options), [emptyOptionLabel, options]);
-  const maxIdx = items.length - 1;
+  const resolvedFromOptions = fromOptions ?? options;
+  const resolvedToOptions = toOptions ?? options;
+  const fromItems = useMemo(
+    () => buildItems(emptyOptionLabel, resolvedFromOptions, true),
+    [emptyOptionLabel, resolvedFromOptions],
+  );
+  const toItems = useMemo(
+    () => buildItems(emptyOptionLabel, resolvedToOptions, toIncludeEmptyOption),
+    [emptyOptionLabel, resolvedToOptions, toIncludeEmptyOption],
+  );
+  const fromMaxIdx = fromItems.length - 1;
+  const toMaxIdx = toItems.length - 1;
 
   const fromScrollRef = useRef<HTMLDivElement>(null);
   const toScrollRef = useRef<HTMLDivElement>(null);
@@ -63,8 +86,8 @@ export function ScrollSnapDualPicker({
   const fromDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fromSelectedIdx = indexForValue(items, fromValue);
-  const toSelectedIdx = indexForValue(items, toValue);
+  const fromSelectedIdx = indexForValue(fromItems, fromValue);
+  const toSelectedIdx = indexForValue(toItems, toValue);
 
   const [fromHighlightIdx, setFromHighlightIdx] = useState(fromSelectedIdx);
   const [toHighlightIdx, setToHighlightIdx] = useState(toSelectedIdx);
@@ -90,52 +113,52 @@ export function ScrollSnapDualPicker({
   useLayoutEffect(() => {
     const el = fromScrollRef.current;
     if (!el) return;
-    const idx = indexForValue(items, fromValue);
+    const idx = indexForValue(fromItems, fromValue);
     markFromProgrammaticScroll();
     el.scrollTop = scrollTopForIndex(idx);
     setFromHighlightIdx(idx);
-  }, [fromValue, items, markFromProgrammaticScroll]);
+  }, [fromValue, fromItems, markFromProgrammaticScroll]);
 
   useLayoutEffect(() => {
     const el = toScrollRef.current;
     if (!el) return;
-    const idx = indexForValue(items, toValue);
+    const idx = indexForValue(toItems, toValue);
     markToProgrammaticScroll();
     el.scrollTop = scrollTopForIndex(idx);
     setToHighlightIdx(idx);
-  }, [toValue, items, markToProgrammaticScroll]);
+  }, [toValue, toItems, markToProgrammaticScroll]);
 
   const finalizeFromScroll = useCallback(() => {
     const el = fromScrollRef.current;
     if (!el || programmaticFromRef.current) return;
-    const idx = indexFromScrollTop(el.scrollTop, maxIdx);
+    const idx = indexFromScrollTop(el.scrollTop, fromMaxIdx);
     const snappedScrollTop = scrollTopForIndex(idx);
     if (el.scrollTop !== snappedScrollTop) {
       markFromProgrammaticScroll();
       el.scrollTop = snappedScrollTop;
     }
     setFromHighlightIdx(idx);
-    const next = items[idx].value;
+    const next = fromItems[idx].value;
     if (next !== fromValue) {
       onFromChange(next);
     }
-  }, [fromValue, items, markFromProgrammaticScroll, maxIdx, onFromChange]);
+  }, [fromValue, fromItems, fromMaxIdx, markFromProgrammaticScroll, onFromChange]);
 
   const finalizeToScroll = useCallback(() => {
     const el = toScrollRef.current;
     if (!el || programmaticToRef.current) return;
-    const idx = indexFromScrollTop(el.scrollTop, maxIdx);
+    const idx = indexFromScrollTop(el.scrollTop, toMaxIdx);
     const snappedScrollTop = scrollTopForIndex(idx);
     if (el.scrollTop !== snappedScrollTop) {
       markToProgrammaticScroll();
       el.scrollTop = snappedScrollTop;
     }
     setToHighlightIdx(idx);
-    const next = items[idx].value;
+    const next = toItems[idx].value;
     if (next !== toValue) {
       onToChange(next);
     }
-  }, [items, markToProgrammaticScroll, maxIdx, onToChange, toValue]);
+  }, [toItems, toMaxIdx, markToProgrammaticScroll, onToChange, toValue]);
 
   const scheduleFromFinalize = useCallback(() => {
     if (programmaticFromRef.current) return;
@@ -159,19 +182,19 @@ export function ScrollSnapDualPicker({
     if (programmaticFromRef.current) return;
     const el = fromScrollRef.current;
     if (el) {
-      setFromHighlightIdx(indexFromScrollTop(el.scrollTop, maxIdx));
+      setFromHighlightIdx(indexFromScrollTop(el.scrollTop, fromMaxIdx));
     }
     scheduleFromFinalize();
-  }, [maxIdx, scheduleFromFinalize]);
+  }, [fromMaxIdx, scheduleFromFinalize]);
 
   const handleToScroll = useCallback(() => {
     if (programmaticToRef.current) return;
     const el = toScrollRef.current;
     if (el) {
-      setToHighlightIdx(indexFromScrollTop(el.scrollTop, maxIdx));
+      setToHighlightIdx(indexFromScrollTop(el.scrollTop, toMaxIdx));
     }
     scheduleToFinalize();
-  }, [maxIdx, scheduleToFinalize]);
+  }, [scheduleToFinalize, toMaxIdx]);
 
   useEffect(
     () => () => {
@@ -187,7 +210,10 @@ export function ScrollSnapDualPicker({
     'relative isolate w-full shrink-0 min-w-0 overflow-hidden rounded-xl bg-bg-secondary/35';
 
   const renderWheel = (
-    heading: string,
+    columnId: 'from' | 'to',
+    ariaLabel: string,
+    wheelItems: LabeledValue[],
+    maxIdx: number,
     scrollRef: React.RefObject<HTMLDivElement | null>,
     highlightIdx: number,
     onScroll: () => void,
@@ -204,22 +230,22 @@ export function ScrollSnapDualPicker({
         ref={scrollRef}
         data-bottom-sheet-scrollable="true"
         role="listbox"
-        aria-label={heading}
+        aria-label={ariaLabel}
         className="relative z-[1] h-full max-h-full min-h-0 overflow-y-auto overscroll-y-contain scrollbar-hide snap-y snap-mandatory touch-pan-y"
         style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch' }}
         onScroll={onScroll}
         onTouchEnd={onScroll}
       >
         <div style={{ height: PAD_PX }} aria-hidden />
-        {items.map((item, index) => {
+        {wheelItems.map((item, index) => {
           const isCenter = index === highlightIdx;
           return (
             <button
-              key={`${heading}-${item.value}-${index}`}
+              key={`${columnId}-${item.value}-${index}`}
               type="button"
               role="option"
               aria-selected={isCenter}
-              data-testid={`search-wheel-option-${item.value}`}
+              data-testid={`search-wheel-option-${columnId}-${item.value}`}
               className={`flex w-full shrink-0 snap-center items-center justify-center px-2 text-base font-semibold transition-colors ${
                 isCenter ? 'text-primary-600' : 'text-text-secondary/50'
               }`}
@@ -259,7 +285,10 @@ export function ScrollSnapDualPicker({
       <div className="flex flex-row items-center gap-x-2">
         <div className="min-h-0 min-w-0 flex-1 basis-0">
           {renderWheel(
+            'from',
             fromLabel,
+            fromItems,
+            fromMaxIdx,
             fromScrollRef,
             fromHighlightIdx,
             handleFromScroll,
@@ -274,7 +303,10 @@ export function ScrollSnapDualPicker({
         </span>
         <div className="min-h-0 min-w-0 flex-1 basis-0">
           {renderWheel(
+            'to',
             toLabel,
+            toItems,
+            toMaxIdx,
             toScrollRef,
             toHighlightIdx,
             handleToScroll,

@@ -623,7 +623,7 @@ GET /metrics                         # Prometheus metrics (text/plain). Requires
 - `available_in_credit` - Boolean, default false (available in credit/installment)
 - `down_payment_amount` - Integer, nullable (minimum down payment when available_in_credit is true)
 - `power_kw` - Integer, nullable (power in kilowatts)
-- `equipment` - Simple array, nullable (max 40 items). Array of equipment keys; the available set depends on vehicle type (car / truck / moto). Keys and categories are defined in `core/frontend/lib/options/vehicle-equipment.ts`. Create/edit form and search filter UI group options by category (Comfort, Safety, Lighting, Multimedia, Driver assistance, Other). On the listing detail page, `buildListingEquipmentDisplay` (`equipment-display.ts`) uses the same categories when the listing has at least 10 equipment keys spanning at least 3 categories; otherwise it shows a single two-column flat list. Translations: `vehicleOptions.equipment.<key>` and `vehicleOptions.equipmentCategories.<category>` in frontend locales.
+- `equipment` - Simple array, nullable. Array of equipment keys; the available set depends on vehicle type (car / truck / moto). Keys and categories are defined in `core/frontend/lib/options/vehicle-equipment.ts`. Create/edit form and search filter UI group options by category (Comfort, Safety, Lighting, Multimedia, Driver assistance, Other). On the listing detail page, `buildListingEquipmentDisplay` (`equipment-display.ts`) uses the same categories when the listing has at least 10 equipment keys spanning at least 3 categories; otherwise it shows a single two-column flat list. Translations: `vehicleOptions.equipment.<key>` and `vehicleOptions.equipmentCategories.<category>` in frontend locales.
 
 **Vehicles Table:**
 

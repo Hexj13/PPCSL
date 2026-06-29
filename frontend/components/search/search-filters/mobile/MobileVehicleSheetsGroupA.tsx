@@ -126,6 +126,7 @@ export function MobileVehicleSheetsGroupA(props: MobileVehicleSheetsProps) {
           onToChange={(v) => patchMobileDraft({ year_lte: v })}
           selectOptions={yearOptions}
           emptySelectLabel={rangeAnyLabel}
+          toIncludeEmptyOption={false}
         />
       </BottomSheet>
 
@@ -276,6 +277,7 @@ export function MobileVehicleSheetsGroupA(props: MobileVehicleSheetsProps) {
           onFromChange={(v) => patchMobileDraft({ mileage_gte: v })}
           onToChange={(v) => patchMobileDraft({ mileage_lte: v })}
           selectOptions={mileageOptions}
+          fromSelectOptions={mileageOptions.filter((o) => o.value !== '0')}
           emptySelectLabel={rangeAnyLabel}
         />
       </BottomSheet>

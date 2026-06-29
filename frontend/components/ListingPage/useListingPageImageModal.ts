@@ -1,8 +1,8 @@
 'use client';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { getOptimizedImageUrl } from '@/lib/utils';
 
+import { getModalDisplayUrls } from './listing-page-image-modal-urls';
 import type { ListingPageImageModalProps } from './useListingPageImageModal.types';
 import { useListingPageImageModalGestures } from './useListingPageImageModalGestures';
 import { useListingPageImageModalKeyboard } from './useListingPageImageModalKeyboard';
@@ -69,7 +69,7 @@ export function useListingPageImageModal({
     swipeTimeoutRef: navigation.swipeTimeoutRef,
   });
 
-  const { modalImageLoadedRef } = useListingPageImageModalLoading({
+  const { modalImageLoadedRef, hiResRevision, markHiResLoaded } = useListingPageImageModalLoading({
     isOpen,
     images,
     currentIndex,
@@ -78,6 +78,8 @@ export function useListingPageImageModal({
     imageQuality,
     setVisibleIndex: navigation.setVisibleIndex,
   });
+
+  void hiResRevision;
 
   if (!isOpen) {
     return {
@@ -88,6 +90,7 @@ export function useListingPageImageModal({
       visibleIndex: navigation.visibleIndex,
       currentIndex,
       modalImageLoadedRef,
+      markHiResLoaded,
       setVisibleIndex: navigation.setVisibleIndex,
       swipeHandledRef: navigation.swipeHandledRef,
       onClose,
@@ -113,16 +116,36 @@ export function useListingPageImageModal({
     const img = imagesList[index];
     return !!(img && img !== '/placeholder-car.jpg' && !imageErrors.has(index));
   };
-  const confirmedUrl = hasValidImageAt(navigation.visibleIndex)
-    ? listingVideoSlide && navigation.visibleIndex === 0
-      ? listingVideoSlide.posterUrl || ''
-      : getOptimizedImageUrl(imagesList[navigation.visibleIndex], imageQuality, targetImageWidth)
-    : '';
-  const pendingUrl = hasValidImageAt(currentIndex)
-    ? listingVideoSlide && currentIndex === 0
-      ? listingVideoSlide.posterUrl || ''
-      : getOptimizedImageUrl(imagesList[currentIndex], imageQuality, targetImageWidth)
-    : '';
+
+  const isVideoPosterAt = (index: number) =>
+    !!(listingVideoSlide && index === 0 && hasValidImageAt(index));
+
+  const resolveVideoPosterUrl = (index: number) =>
+    isVideoPosterAt(index) ? listingVideoSlide?.posterUrl || '' : '';
+
+  const isHiResLoaded = (url: string) => modalImageLoadedRef.current.has(url);
+
+  const { confirmedUrl: progressiveConfirmedUrl, pendingUrl: progressivePendingUrl } =
+    hasValidImageAt(navigation.visibleIndex) && !isVideoPosterAt(navigation.visibleIndex)
+      ? getModalDisplayUrls({
+          visibleIndex: navigation.visibleIndex,
+          currentIndex,
+          imagesList,
+          imageQuality,
+          targetImageWidth,
+          isHiResLoaded,
+        })
+      : { confirmedUrl: '', pendingUrl: '' };
+
+  const confirmedUrl = isVideoPosterAt(navigation.visibleIndex)
+    ? resolveVideoPosterUrl(navigation.visibleIndex)
+    : progressiveConfirmedUrl;
+
+  const pendingUrl =
+    currentIndex === navigation.visibleIndex && isVideoPosterAt(currentIndex)
+      ? resolveVideoPosterUrl(currentIndex)
+      : progressivePendingUrl;
+
   const hasValidImage =
     !!(
       listingVideoSlide &&
@@ -151,6 +174,7 @@ export function useListingPageImageModal({
     visibleIndex: navigation.visibleIndex,
     currentIndex,
     modalImageLoadedRef,
+    markHiResLoaded,
     setVisibleIndex: navigation.setVisibleIndex,
     swipeHandledRef: navigation.swipeHandledRef,
     onClose,

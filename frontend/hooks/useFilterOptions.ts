@@ -7,21 +7,12 @@ import { vehicleBrandLogoUrl } from '@/lib/brand-logo-urls';
 import { ConditionType, RegistrationType } from '@/lib/constants';
 import { getPopularBrands } from '@/lib/content/popular-brands';
 import { getColorOptions } from '@/lib/options';
-import { compareNames, getCountry, sortByName, sortOptionsByLabel } from '@/lib/utils';
+import { buildCityOptions } from '@/lib/options/city-options';
+import { compareNames, sortByName, sortOptionsByLabel } from '@/lib/utils';
 
 import type { FilterState } from './useSearchFilters';
 
 type TranslationFunction = ReturnType<typeof useTranslation>['t'];
-
-const getPopularCityNamesEn = (): string[] => {
-  const country = getCountry();
-  if (country === 'md') {
-    return ['Chișinău', 'Bălți', 'Tiraspol', 'Bender', 'Orhei'];
-  }
-  return ['Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo'];
-};
-
-const POPULAR_CITY_NAMES_EN = getPopularCityNamesEn();
 
 interface UseFilterOptionsParams {
   vehicleType: 'car' | 'moto' | 'truck';
@@ -158,56 +149,12 @@ export function useFilterOptions({
   }, [models, brands, filters.brand_ids]);
 
   const getCityOptions = useCallback(() => {
-    const popularCities = sortByName(
-      cities.filter((city) => POPULAR_CITY_NAMES_EN.includes(city.nameEn)),
-    );
-    const otherCities = sortByName(
-      cities.filter((city) => !POPULAR_CITY_NAMES_EN.includes(city.nameEn)),
-    );
-
-    const options: Array<{ value: string; label: string; category?: string }> = [];
-
-    if (popularCities.length > 0) {
-      const popularLabel = t('searchFilters.popular');
-      options.push({ value: '__category__popular', label: popularLabel, category: popularLabel });
-      popularCities.forEach((city) => {
-        let label: string;
-        if (locale === 'ro') {
-          label = city.name;
-        } else if (locale === 'ru' && city.nameRu) {
-          label = `${city.nameRu} (${city.name})`;
-        } else {
-          label = city.name;
-        }
-        options.push({
-          value: city.nameEn,
-          label,
-          category: popularLabel,
-        });
-      });
-    }
-
-    if (otherCities.length > 0) {
-      const otherLabel = t('searchFilters.other');
-      options.push({ value: '__category__other', label: otherLabel, category: otherLabel });
-      otherCities.forEach((city) => {
-        let label: string;
-        if (locale === 'ro') {
-          label = city.name;
-        } else if (locale === 'ru' && city.nameRu) {
-          label = `${city.nameRu} (${city.name})`;
-        } else {
-          label = city.name;
-        }
-        options.push({
-          value: city.nameEn,
-          label,
-          category: otherLabel,
-        });
-      });
-    }
-
-    return options;
+    return buildCityOptions({
+      cities,
+      locale,
+      popularLabel: t('searchFilters.popular'),
+      otherLabel: t('searchFilters.other'),
+    });
   }, [cities, t, locale]);
 
   return {

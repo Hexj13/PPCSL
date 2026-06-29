@@ -39,7 +39,6 @@
     "conditionTypeEnum": "Состояние должно быть Undamaged, Damaged или ForParts",
     "vinLength17": "VIN должен содержать ровно 17 символов",
     "vinCharset": "VIN может содержать только буквы и цифры (кроме I, O, Q)",
-    "maxEquipmentOptions": "Не более 40 опций",
     "verifyEmailTokenRequired": "Токен обязателен",
     "verifyEmailTokenString": "Токен должен быть строкой",
     "loginIdentifierRequired": "Укажите email или телефон",

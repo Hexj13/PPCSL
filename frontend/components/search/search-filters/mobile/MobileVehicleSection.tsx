@@ -216,15 +216,17 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
     const a = filters.engine_displ_l_gte;
     const b = filters.engine_displ_l_lte;
     if (!a && !b) return '';
-    return `${a || '—'} – ${b || '—'}`;
-  }, [filters.engine_displ_l_gte, filters.engine_displ_l_lte]);
+    const dash = t('common.rangeDash');
+    return t('searchFilters.fromToRangeSummary', { from: a || dash, to: b || dash });
+  }, [filters.engine_displ_l_gte, filters.engine_displ_l_lte, t]);
 
   const horsepowerSummary = useMemo(() => {
     const a = filters.horsepower_gte;
     const b = filters.horsepower_lte;
     if (!a && !b) return '';
-    return `${a || '—'} – ${b || '—'}`;
-  }, [filters.horsepower_gte, filters.horsepower_lte]);
+    const dash = t('common.rangeDash');
+    return t('searchFilters.fromToRangeSummary', { from: a || dash, to: b || dash });
+  }, [filters.horsepower_gte, filters.horsepower_lte, t]);
 
   const sellerSummary = sellerTypeOptions.find((o) => o.value === filters.seller_type)?.label ?? '';
 

@@ -1,10 +1,13 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { useI18n } from '@/components/providers/I18nProvider';
 import {
   SearchFilterCityIcon,
   SearchFilterPriceIcon,
 } from '@/components/search/search-filters/search-filter-field-icons';
+import { buildCityOptions } from '@/lib/options/city-options';
 import type { Currency } from '@/lib/types';
 import { CurrencyEnum } from '@/lib/types';
 import { sortOptionsByLabel } from '@/lib/utils';
@@ -29,6 +32,16 @@ export function PriceAndLocationSection({
   handleWheel,
 }: ListingFormSectionProps) {
   const { locale } = useI18n();
+  const cityOptions = useMemo(
+    () =>
+      buildCityOptions({
+        cities,
+        locale,
+        popularLabel: t('searchFilters.popular'),
+        otherLabel: t('searchFilters.other'),
+      }),
+    [cities, locale, t],
+  );
   return (
     <div className="border-t border-primary-700/30 pt-6 mb-6">
       <h2 className="text-xl md:text-2xl font-bold mb-5 text-primary-900">
@@ -171,20 +184,7 @@ export function PriceAndLocationSection({
             error={!!errors['city']}
             autoPosition={true}
             menuMaxHeight={300}
-            options={cities.map((city) => {
-              let label: string;
-              if (locale === 'ro') {
-                label = city.name;
-              } else if (locale === 'ru' && city.nameRu) {
-                label = `${city.nameRu} (${city.name})`;
-              } else {
-                label = city.name;
-              }
-              return {
-                value: city.nameEn,
-                label,
-              };
-            })}
+            options={cityOptions}
             dataTestId="listing-create-city-select"
           />
         </div>

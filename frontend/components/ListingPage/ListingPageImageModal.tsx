@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
 import { TrackedNextImage } from '@/components/common/TrackedNextImage';
@@ -17,6 +17,7 @@ export type { ListingPageImageModalProps };
 
 const THUMB_QUALITY = 68;
 const THUMB_WIDTH = 160;
+const THUMB_STRIP_DEFER_FALLBACK_MS = 400;
 
 const EMPTY_WEBVTT_DATA_URL = 'data:text/vtt;charset=utf-8,' + encodeURIComponent('WEBVTT\n\n');
 
@@ -24,15 +25,29 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
   const { t } = useTranslation();
   const thumbStripRef = useRef<HTMLDivElement>(null);
   const modalVideoRef = useRef<HTMLVideoElement>(null);
+  const [mainImagePainted, setMainImagePainted] = useState(false);
   const state = useListingPageImageModal(props);
 
   useEffect(() => {
-    if (!state.isOpen || props.images.length < 5) return;
+    if (!state.isOpen) {
+      setMainImagePainted(false);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      setMainImagePainted(true);
+    }, THUMB_STRIP_DEFER_FALLBACK_MS);
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [state.isOpen, state.visibleIndex]);
+
+  useEffect(() => {
+    if (!state.isOpen || props.images.length < 5 || !mainImagePainted) return;
     const strip = thumbStripRef.current;
     if (!strip) return;
     const active = strip.querySelector<HTMLElement>(`[data-thumb-index="${state.visibleIndex}"]`);
     active?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }, [props.images.length, state.isOpen, state.visibleIndex]);
+  }, [mainImagePainted, props.images.length, state.isOpen, state.visibleIndex]);
 
   useEffect(() => {
     if (!state.isOpen || !state.isVideoSlideActive || !props.listingVideoSlide) {
@@ -58,6 +73,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
     zoom,
     isMobileViewport,
     modalImageLoadedRef,
+    markHiResLoaded,
     setVisibleIndex,
     onClose,
     onNext,
@@ -190,13 +206,14 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
                       height={900}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
                       className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-100 transition-opacity duration-200"
-                      loading="eager"
+                      priority
                       draggable={false}
                       unoptimized={isExternalUrl(confirmedUrl)}
                       placeholder={confirmedBlur ? 'blur' : undefined}
                       blurDataURL={confirmedBlur}
                       onLoad={() => {
                         modalImageLoadedRef.current.add(confirmedUrl);
+                        setMainImagePainted(true);
                       }}
                       onError={() => {
                         onImageError(visibleIndex);
@@ -213,14 +230,17 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
                       height={900}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 90vw"
                       className="absolute inset-0 m-auto max-w-full max-h-[90vh] w-auto h-auto object-contain opacity-0 transition-opacity duration-200 pointer-events-none"
-                      loading="eager"
+                      priority
                       draggable={false}
                       unoptimized={isExternalUrl(pendingUrl)}
                       placeholder={pendingBlur ? 'blur' : undefined}
                       blurDataURL={pendingBlur}
                       onLoad={() => {
-                        modalImageLoadedRef.current.add(pendingUrl);
-                        setVisibleIndex(currentIndex);
+                        markHiResLoaded(pendingUrl);
+                        setMainImagePainted(true);
+                        if (currentIndex !== visibleIndex) {
+                          setVisibleIndex(currentIndex);
+                        }
                       }}
                       onError={() => {
                         onImageError(currentIndex);
@@ -249,7 +269,7 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
           )}
         </div>
 
-        {images.length >= 5 && (
+        {images.length >= 5 && mainImagePainted && (
           <div
             ref={thumbStripRef}
             className="hidden sm:block w-full max-w-full shrink-0 mt-2 px-2 pb-0.5 overflow-x-auto overscroll-x-contain z-10 scrollbar-primary-700"
@@ -301,6 +321,8 @@ export function ListingPageImageModal(props: ListingPageImageModalProps) {
                         fill
                         sizes="64px"
                         className="object-cover"
+                        loading="lazy"
+                        fetchPriority="low"
                         draggable={false}
                         unoptimized={
                           thumbUrl.startsWith('http://') || thumbUrl.startsWith('https://')

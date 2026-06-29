@@ -168,10 +168,11 @@ export class SearchFiltersMobileComponent {
     return null;
   }
 
-  async selectWheelOption(value: string): Promise<void> {
-    const option = this.page.getByTestId(`search-wheel-option-${value}`);
-    await expect(option.first()).toBeVisible();
-    await option.first().click();
+  async selectWheelOption(value: string, column: 'from' | 'to' = 'from'): Promise<void> {
+    const option = this.page.getByTestId(`search-wheel-option-${column}-${value}`).first();
+    await option.scrollIntoViewIfNeeded();
+    await expect(option).toBeVisible();
+    await option.click();
   }
 
   async fillRangeInputs(value: string): Promise<void> {

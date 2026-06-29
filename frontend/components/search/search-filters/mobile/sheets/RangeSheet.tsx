@@ -16,7 +16,10 @@ interface RangeSheetContentProps {
   onFromBlur?: (_value: string) => void;
   onToBlur?: (_value: string) => void;
   selectOptions?: MultiSelectOption[];
+  fromSelectOptions?: MultiSelectOption[];
+  toSelectOptions?: MultiSelectOption[];
   emptySelectLabel?: string;
+  toIncludeEmptyOption?: boolean;
   showDualSelectColumnLabels?: boolean;
   showDualInputColumnLabels?: boolean;
   fromInputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
@@ -34,7 +37,10 @@ export function RangeSheetContent({
   onFromBlur,
   onToBlur,
   selectOptions = [],
+  fromSelectOptions,
+  toSelectOptions,
   emptySelectLabel = '',
+  toIncludeEmptyOption = true,
   showDualSelectColumnLabels = true,
   showDualInputColumnLabels = true,
   fromInputMode,
@@ -44,9 +50,13 @@ export function RangeSheetContent({
   const dash = t('common.rangeDash');
 
   if (variant === 'dual-select') {
-    const flatOptions = selectOptions
-      .filter((o) => o.value && !String(o.value).startsWith('__category__'))
-      .map((o) => ({ value: o.value, label: o.label }));
+    const flattenOptions = (opts: MultiSelectOption[]) =>
+      opts
+        .filter((o) => o.value && !String(o.value).startsWith('__category__'))
+        .map((o) => ({ value: o.value, label: o.label }));
+    const flatOptions = flattenOptions(selectOptions);
+    const flatFromOptions = flattenOptions(fromSelectOptions ?? selectOptions);
+    const flatToOptions = flattenOptions(toSelectOptions ?? selectOptions);
     return (
       <ScrollSnapDualPicker
         fromLabel={fromLabel}
@@ -56,7 +66,10 @@ export function RangeSheetContent({
         onFromChange={onFromChange}
         onToChange={onToChange}
         options={flatOptions}
+        fromOptions={fromSelectOptions ? flatFromOptions : undefined}
+        toOptions={toSelectOptions ? flatToOptions : undefined}
         emptyOptionLabel={emptySelectLabel}
+        toIncludeEmptyOption={toIncludeEmptyOption}
         showColumnLabels={showDualSelectColumnLabels}
       />
     );

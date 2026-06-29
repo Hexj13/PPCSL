@@ -1,6 +1,13 @@
 'use client';
 
-import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 
 import { isListingPageVideoHeroSlideUrl } from '@/lib/listing/listing-page-helpers';
 import { getOptimizedImageUrl } from '@/lib/utils';
@@ -26,6 +33,15 @@ export function useListingPageImageModalLoading({
 }: UseListingPageImageModalLoadingParams) {
   const modalImageLoadedRef = useRef<Set<string>>(new Set());
   const imagesCacheRef = useRef<HTMLImageElement[]>([]);
+  const [hiResRevision, setHiResRevision] = useState(0);
+
+  const markHiResLoaded = useCallback((url: string) => {
+    if (!url || modalImageLoadedRef.current.has(url)) {
+      return;
+    }
+    modalImageLoadedRef.current.add(url);
+    setHiResRevision((revision) => revision + 1);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -53,15 +69,14 @@ export function useListingPageImageModalLoading({
     }
 
     const loadStartTime = performance.now();
-    const wasCached = modalImageLoadedRef.current.has(optimizedUrl);
     const testImg = new window.Image();
     imagesCacheRef.current.push(testImg);
     testImg.src = optimizedUrl;
     const imgIndex = currentIndex;
 
     if (testImg.complete && testImg.naturalWidth > 0) {
-      modalImageLoadedRef.current.add(optimizedUrl);
-      setVisibleIndex(imgIndex);
+      markHiResLoaded(optimizedUrl);
+      setVisibleIndex(currentIndex);
       return;
     }
 
@@ -69,32 +84,36 @@ export function useListingPageImageModalLoading({
       const loadTime = performance.now() - loadStartTime;
       if (process.env.NODE_ENV === 'development') {
         // eslint-disable-next-line no-console -- dev instrumentation
-        console.debug(
-          `[ImageModal] Image ${imgIndex} loaded in ${loadTime.toFixed(0)}ms, cache: ${wasCached}`,
-        );
+        console.debug(`[ImageModal] Hi-res ${imgIndex} prewarmed in ${loadTime.toFixed(0)}ms`);
       }
-      modalImageLoadedRef.current.add(optimizedUrl);
+      markHiResLoaded(optimizedUrl);
       if (imgIndex === currentIndex) {
         setVisibleIndex(currentIndex);
       }
     };
 
-    testImg.onerror = () => {
-      if (imgIndex === currentIndex) {
-        setVisibleIndex(currentIndex);
-      }
-    };
+    testImg.onerror = () => {};
 
     return () => {
       testImg.onload = null;
       testImg.onerror = null;
     };
-  }, [currentIndex, imageErrors, imageQuality, images, isOpen, setVisibleIndex, targetImageWidth]);
+  }, [
+    currentIndex,
+    imageErrors,
+    imageQuality,
+    images,
+    isOpen,
+    markHiResLoaded,
+    setVisibleIndex,
+    targetImageWidth,
+  ]);
 
   const imagesCacheKey = images.join('|');
 
   useEffect(() => {
     modalImageLoadedRef.current.clear();
+    setHiResRevision(0);
     for (const img of imagesCacheRef.current) {
       img.onload = null;
       img.onerror = null;
@@ -105,12 +124,12 @@ export function useListingPageImageModalLoading({
   useEffect(() => {
     if (!isOpen || images.length <= 1) return;
 
-    type NetworkConnection = {
+    type Connection = {
       effectiveType?: string;
       saveData?: boolean;
     };
 
-    const connection = (navigator as Navigator & { connection?: NetworkConnection }).connection;
+    const connection = (navigator as Navigator & { connection?: Connection }).connection;
     const saveData = connection?.saveData === true;
     const slowNetwork = saveData || ['slow-2g', '2g'].includes(connection?.effectiveType ?? '');
     const wide = typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches;
@@ -140,7 +159,7 @@ export function useListingPageImageModalLoading({
         const img = new window.Image();
         imagesCacheRef.current.push(img);
         img.onload = () => {
-          modalImageLoadedRef.current.add(optimizedUrl);
+          markHiResLoaded(optimizedUrl);
         };
         img.src = optimizedUrl;
         preloadImages.push(img);
@@ -155,15 +174,15 @@ export function useListingPageImageModalLoading({
       startPreload();
     };
 
-    preloadByIndex(nextIndex);
-    preloadByIndex(prevIndex, 120);
+    preloadByIndex(nextIndex, 80);
+    preloadByIndex(prevIndex, 200);
 
     if (wide && !slowNetwork && n > 2) {
       if (plus2 !== nextIndex && plus2 !== prevIndex) {
-        preloadByIndex(plus2, 40);
+        preloadByIndex(plus2, 160);
       }
       if (minus2 !== nextIndex && minus2 !== prevIndex) {
-        preloadByIndex(minus2, 180);
+        preloadByIndex(minus2, 280);
       }
     }
 
@@ -175,7 +194,7 @@ export function useListingPageImageModalLoading({
         img.onload = null;
       }
     };
-  }, [currentIndex, imageErrors, imageQuality, images, isOpen, targetImageWidth]);
+  }, [currentIndex, imageErrors, imageQuality, images, isOpen, markHiResLoaded, targetImageWidth]);
 
-  return { modalImageLoadedRef };
+  return { modalImageLoadedRef, hiResRevision, markHiResLoaded };
 }
