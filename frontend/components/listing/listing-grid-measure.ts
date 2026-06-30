@@ -2,8 +2,6 @@ import type { VirtualRow } from './buildVirtualRows';
 
 export const LISTING_GRID_ROW_GAP_PX = 24;
 
-export const LISTING_GRID_VIRTUAL_BOTTOM_BUFFER_PX = 16;
-
 export type StaticGridSwapMetrics = {
   rowHeights: (number | undefined)[];
   gridOffsetTop: number;

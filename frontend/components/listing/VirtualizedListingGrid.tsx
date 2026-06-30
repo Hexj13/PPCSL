@@ -27,7 +27,6 @@ import {
 } from './listing-grid-critical-layout';
 import {
   LISTING_GRID_ROW_GAP_PX,
-  LISTING_GRID_VIRTUAL_BOTTOM_BUFFER_PX,
   measureStaticGridSwapMetrics,
   resolveVirtualRowSize,
   type StaticGridSwapMetrics,
@@ -98,6 +97,34 @@ type VirtualizedListingGridContentProps = VirtualizedListingGridProps & {
   swapMetrics: StaticGridSwapMetrics;
 };
 
+function scheduleVirtualGridLayoutReconcile(onReconcile: () => void): () => void {
+  let cancelled = false;
+  let rafId2: number | undefined;
+
+  const bump = () => {
+    if (!cancelled) {
+      onReconcile();
+    }
+  };
+
+  const rafId1 = requestAnimationFrame(() => {
+    rafId2 = requestAnimationFrame(bump);
+  });
+
+  const fontsReady = document.fonts?.ready;
+  if (fontsReady) {
+    void fontsReady.then(bump).catch(() => {});
+  }
+
+  return () => {
+    cancelled = true;
+    cancelAnimationFrame(rafId1);
+    if (rafId2 !== undefined) {
+      cancelAnimationFrame(rafId2);
+    }
+  };
+}
+
 function VirtualizedListingGridContent({
   listings,
   showPartnerPromoBanner,
@@ -107,6 +134,7 @@ function VirtualizedListingGridContent({
   const columns = useGridColumns();
   const parentRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(swapMetrics.gridOffsetTop);
+  const [, setLayoutReconcileTick] = useState(0);
 
   const { rows } = useMemo(
     () => buildVirtualRows(listings, columns, { showPartnerPromoBanner }),
@@ -144,7 +172,15 @@ function VirtualizedListingGridContent({
     return addCoalescedResizeListener(updateScrollMargin);
   }, [columns]);
 
+  useLayoutEffect(() => {
+    return scheduleVirtualGridLayoutReconcile(() => {
+      setLayoutReconcileTick((tick) => tick + 1);
+    });
+  }, [rows.length]);
+
   const gridColsClass = GRID_COLS_CLASS[columns] ?? 'grid-cols-1';
+
+  const containerHeight = virtualizer.getTotalSize();
 
   const virtualRows = virtualizer.getVirtualItems();
   const windowOffset = (virtualRows[0]?.start ?? 0) - virtualizer.options.scrollMargin;
@@ -160,7 +196,7 @@ function VirtualizedListingGridContent({
       >
         <div
           style={{
-            height: `${virtualizer.getTotalSize() + LISTING_GRID_VIRTUAL_BOTTOM_BUFFER_PX}px`,
+            height: `${containerHeight}px`,
             width: '100%',
             position: 'relative',
             overflowAnchor: 'none',
