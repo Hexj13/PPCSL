@@ -27,6 +27,7 @@ import {
 } from './listing-grid-critical-layout';
 import {
   LISTING_GRID_ROW_GAP_PX,
+  LISTING_GRID_VIRTUAL_BOTTOM_BUFFER_PX,
   measureStaticGridSwapMetrics,
   resolveVirtualRowSize,
   type StaticGridSwapMetrics,
@@ -159,7 +160,7 @@ function VirtualizedListingGridContent({
       >
         <div
           style={{
-            height: `${virtualizer.getTotalSize()}px`,
+            height: `${virtualizer.getTotalSize() + LISTING_GRID_VIRTUAL_BOTTOM_BUFFER_PX}px`,
             width: '100%',
             position: 'relative',
             overflowAnchor: 'none',

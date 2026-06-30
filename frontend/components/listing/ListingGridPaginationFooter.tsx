@@ -19,13 +19,21 @@ export function ListingGridPaginationFooter({
   noMoreLabel,
   showNoMore,
 }: ListingGridPaginationFooterProps) {
+  const showLoadMore = hasMore || loadingMore;
+
+  if (!showLoadMore && !showNoMore) {
+    return null;
+  }
+
   return (
-    <div>
-      {(hasMore || loadingMore) && (
+    <div className="pt-6 md:pt-8" data-testid="listing-grid-pagination-footer">
+      {showLoadMore && (
         <LoadMoreButton
           onClick={onLoadMore}
           loading={loadingMore}
           disabled={loadingMore}
+          wrapperDataTestId="listing-grid-load-more-wrapper"
+          withDefaultWrapperSpacing={false}
           dataTestId="listings-load-more"
         >
           {loadMoreLabel}
@@ -33,7 +41,7 @@ export function ListingGridPaginationFooter({
       )}
 
       {showNoMore && (
-        <div className="flex justify-center pt-8">
+        <div className="flex justify-center" data-testid="listing-grid-no-more-wrapper">
           <p style={{ color: 'rgb(var(--text-secondary-rgb))' }}>{noMoreLabel}</p>
         </div>
       )}

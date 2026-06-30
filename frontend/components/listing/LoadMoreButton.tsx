@@ -13,6 +13,8 @@ interface LoadMoreButtonProps {
   style?: CSSProperties;
   children?: ReactNode;
   wrapperClassName?: string;
+  wrapperDataTestId?: string;
+  withDefaultWrapperSpacing?: boolean;
   variant?: 'default' | 'inline';
   dataTestId?: string;
 }
@@ -26,6 +28,8 @@ export function LoadMoreButton({
   style,
   children,
   wrapperClassName = '',
+  wrapperDataTestId,
+  withDefaultWrapperSpacing = true,
   variant = 'default',
   dataTestId,
 }: LoadMoreButtonProps) {
@@ -66,8 +70,13 @@ export function LoadMoreButton({
     );
   }
 
+  const wrapperSpacingClass = withDefaultWrapperSpacing ? 'pt-8' : '';
+
   return (
-    <div className={`flex justify-center pt-8 ${wrapperClassName}`}>
+    <div
+      className={`flex justify-center ${wrapperSpacingClass} ${wrapperClassName}`}
+      data-testid={wrapperDataTestId}
+    >
       <button
         ref={buttonRef}
         onClick={onClick}
