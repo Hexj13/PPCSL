@@ -133,7 +133,9 @@ function VirtualizedListingGridContent({
 }: VirtualizedListingGridContentProps) {
   const columns = useGridColumns();
   const parentRef = useRef<HTMLDivElement>(null);
+  const renderedInnerRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(swapMetrics.gridOffsetTop);
+  const [renderedInnerHeight, setRenderedInnerHeight] = useState(0);
   const [, setLayoutReconcileTick] = useState(0);
 
   const { rows } = useMemo(
@@ -178,12 +180,35 @@ function VirtualizedListingGridContent({
     });
   }, [rows.length]);
 
-  const gridColsClass = GRID_COLS_CLASS[columns] ?? 'grid-cols-1';
+  useLayoutEffect(() => {
+    const renderedInnerEl = renderedInnerRef.current;
+    if (!renderedInnerEl) {
+      return;
+    }
 
-  const containerHeight = virtualizer.getTotalSize();
+    const updateRenderedInnerHeight = () => {
+      setRenderedInnerHeight(renderedInnerEl.offsetHeight);
+    };
+
+    updateRenderedInnerHeight();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new ResizeObserver(updateRenderedInnerHeight);
+    observer.observe(renderedInnerEl);
+    return () => {
+      observer.disconnect();
+    };
+  }, [rows.length, columns]);
+
+  const gridColsClass = GRID_COLS_CLASS[columns] ?? 'grid-cols-1';
 
   const virtualRows = virtualizer.getVirtualItems();
   const windowOffset = (virtualRows[0]?.start ?? 0) - virtualizer.options.scrollMargin;
+  const renderedContentBottom = windowOffset + renderedInnerHeight;
+  const containerHeight = Math.max(virtualizer.getTotalSize(), renderedContentBottom);
 
   return (
     <>
@@ -203,6 +228,7 @@ function VirtualizedListingGridContent({
           }}
         >
           <div
+            ref={renderedInnerRef}
             style={{
               position: 'absolute',
               top: 0,

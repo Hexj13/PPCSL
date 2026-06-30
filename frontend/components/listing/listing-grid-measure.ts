@@ -32,19 +32,25 @@ export function measureStaticRowHeights(
       return height;
     }
 
-    const firstListingId = row.items[0]?.listing.id;
-    if (!firstListingId) {
+    let maxCardHeight = 0;
+    let measuredCardCount = 0;
+
+    for (const item of row.items) {
+      const card = gridEl.querySelector<HTMLElement>(
+        `[data-testid="listing-card-${item.listing.id}"]`,
+      );
+      if (!card || card.offsetHeight <= 0) {
+        continue;
+      }
+      measuredCardCount += 1;
+      maxCardHeight = Math.max(maxCardHeight, card.offsetHeight);
+    }
+
+    if (measuredCardCount === 0) {
       return undefined;
     }
 
-    const card = gridEl.querySelector<HTMLElement>(
-      `[data-testid="listing-card-${firstListingId}"]`,
-    );
-    if (!card || card.offsetHeight <= 0) {
-      return undefined;
-    }
-
-    return card.offsetHeight;
+    return maxCardHeight;
   });
 }
 

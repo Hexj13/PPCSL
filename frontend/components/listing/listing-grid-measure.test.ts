@@ -64,6 +64,36 @@ describe('measureStaticRowHeights', () => {
     expect(resolveVirtualRowSize(1, 2, 400, 500)).toBe(400);
   });
 
+  it('measures card row height as the tallest card in the row', () => {
+    const listings = [
+      createListing('a'),
+      createListing('b'),
+      createListing('c'),
+      createListing('d'),
+    ];
+    const { rows } = buildVirtualRows(listings, 2, { showPartnerPromoBanner: false });
+
+    const grid = document.createElement('div');
+    const heightsById: Record<string, number> = {
+      a: 400,
+      b: 460,
+      c: 420,
+      d: 430,
+    };
+    for (const listing of listings) {
+      const card = document.createElement('div');
+      card.setAttribute('data-testid', `listing-card-${listing.id}`);
+      Object.defineProperty(card, 'offsetHeight', {
+        configurable: true,
+        value: heightsById[listing.id],
+      });
+      grid.appendChild(card);
+    }
+    document.body.appendChild(grid);
+
+    expect(measureStaticRowHeights(grid, rows)).toEqual([460, 430]);
+  });
+
   it('returns undefined when card element is missing', () => {
     const listings = [createListing('missing')];
     const { rows } = buildVirtualRows(listings, 1, { showPartnerPromoBanner: false });
