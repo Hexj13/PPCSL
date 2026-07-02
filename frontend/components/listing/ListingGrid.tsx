@@ -59,7 +59,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const restoredFromStorageRef = useRef(false);
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
   const returningWithSavedScroll = shouldRestoreGridStateOnMount(searchParamsString);
-  const { user } = useAuthStore();
+  const { user, isInitialized } = useAuthStore();
   const {
     showBanner: showPartnerPromoBanner,
     dismiss: dismissPartnerPromoBanner,
@@ -82,7 +82,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
 
   const checkFavorites = useCallback(
     async (listingIds: string[]) => {
-      if (!user || listingIds.length === 0) return;
+      if (!isInitialized || !user || listingIds.length === 0) return;
       try {
         const favoritesRes = await favoritesApi.checkBatch(listingIds);
         const favoriteIds = Object.entries(favoritesRes.data)
@@ -93,7 +93,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
         setFavorites(Array.from(updatedFavorites));
       } catch {}
     },
-    [user, setFavorites],
+    [isInitialized, user, setFavorites],
   );
 
   const { fetchListings, fetchListingsRef, fetchControllerRef, appendTimeoutRef } =
@@ -171,7 +171,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     searchParamsString,
   );
 
-  useListingGridInitialDataEffect({ initialData, user });
+  useListingGridInitialDataEffect({ initialData, user, isInitialized });
 
   const handleLoadMore = useCallback(async () => {
     if (loadingMore || !meta || !meta.totalPages || currentPage >= meta.totalPages) {

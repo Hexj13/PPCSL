@@ -20,7 +20,7 @@ export function useListingData({
   onListingUpdate,
 }: UseListingDataProps) {
   const id = listingId;
-  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const userId = useAuthStore((s) => (s.isInitialized ? (s.user?.id ?? null) : null));
   const checkFavorite = useFavoritesStore((s) => s.check);
   const checkVehicle = useComparisonStore((s) => s.checkVehicle);
   const checkTire = useComparisonStore((s) => s.checkTire);

@@ -2,6 +2,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import React from 'react';
 
+import { analytics } from '@/lib/analytics';
 import type { Listing, PaginationMeta } from '@/lib/api';
 import { favoritesApi, listingsApi } from '@/lib/api';
 import { Currency, LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
@@ -57,6 +58,13 @@ jest.mock('@/lib/store', () => {
     },
   };
 });
+
+jest.mock('@/lib/analytics', () => ({
+  analytics: {
+    viewItemList: jest.fn(),
+  },
+  listingToViewItemListEntry: jest.fn((listing: Listing) => ({ item_id: listing.id })),
+}));
 
 jest.mock('@/lib/api', () => ({
   favoritesApi: {
@@ -236,6 +244,7 @@ const authStoreMockState = {
     isPlatformPartner?: boolean;
     hidePartnerPromoBanner?: boolean;
   } | null,
+  isInitialized: true,
   setAuth: jest.fn(),
 };
 
@@ -264,6 +273,7 @@ describe('ListingGrid', () => {
     (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
     (usePathname as jest.Mock).mockReturnValue('/');
     authStoreMockState.user = null;
+    authStoreMockState.isInitialized = true;
     authStoreMockState.setAuth = jest.fn();
     (useAuthStore as unknown as jest.Mock).mockImplementation(
       (selector?: (s: typeof authStoreMockState) => unknown) => {
@@ -362,6 +372,7 @@ describe('ListingGrid', () => {
 
     it('should load favorites for initialData when user is logged in', async () => {
       authStoreMockState.user = { id: 'user-1' };
+      authStoreMockState.isInitialized = true;
 
       (favoritesApi.checkBatch as jest.Mock).mockResolvedValue({
         data: { 'listing-1': true, 'listing-2': false },
@@ -386,6 +397,78 @@ describe('ListingGrid', () => {
       await waitFor(() => {
         expect(favoritesApi.checkBatch).toHaveBeenCalledWith(['listing-1', 'listing-2']);
       });
+    });
+
+    it('should not load favorites when user is rehydrated but auth is not initialized', async () => {
+      authStoreMockState.user = { id: 'user-1' };
+      authStoreMockState.isInitialized = false;
+
+      const initialData = {
+        data: [mockListing1, mockListing2],
+        meta: mockMeta,
+      };
+
+      render(<ListingGrid initialData={initialData} />);
+
+      await screen.findByTestId('listing-listing-2');
+      await waitFor(() => {
+        expect(favoritesApi.checkBatch).not.toHaveBeenCalled();
+      });
+      expect(listingsApi.getAll).not.toHaveBeenCalled();
+    });
+
+    it('should load favorites once when auth becomes initialized', async () => {
+      authStoreMockState.user = { id: 'user-1' };
+      authStoreMockState.isInitialized = false;
+
+      (favoritesApi.checkBatch as jest.Mock).mockResolvedValue({
+        data: { 'listing-1': true, 'listing-2': false },
+      });
+
+      const initialData = {
+        data: [mockListing1, mockListing2],
+        meta: mockMeta,
+      };
+
+      const { rerender } = render(<ListingGrid initialData={initialData} />);
+
+      await screen.findByTestId('listing-listing-2');
+      expect(favoritesApi.checkBatch).not.toHaveBeenCalled();
+      expect(listingsApi.getAll).not.toHaveBeenCalled();
+
+      authStoreMockState.isInitialized = true;
+      rerender(<ListingGrid initialData={initialData} />);
+
+      await waitFor(() => {
+        expect(favoritesApi.checkBatch).toHaveBeenCalledTimes(1);
+      });
+      expect(favoritesApi.checkBatch).toHaveBeenCalledWith(['listing-1', 'listing-2']);
+      expect(listingsApi.getAll).not.toHaveBeenCalled();
+    });
+
+    it('should fire analytics once for initialData when user auth initializes', async () => {
+      authStoreMockState.user = { id: 'user-1' };
+      authStoreMockState.isInitialized = false;
+
+      const initialData = {
+        data: [mockListing1, mockListing2],
+        meta: mockMeta,
+      };
+
+      const { rerender } = render(<ListingGrid initialData={initialData} />);
+
+      await screen.findByTestId('listing-listing-2');
+      await waitFor(() => {
+        expect(analytics.viewItemList).toHaveBeenCalledTimes(1);
+      });
+
+      authStoreMockState.isInitialized = true;
+      rerender(<ListingGrid initialData={initialData} />);
+
+      await waitFor(() => {
+        expect(favoritesApi.checkBatch).toHaveBeenCalledTimes(1);
+      });
+      expect(analytics.viewItemList).toHaveBeenCalledTimes(1);
     });
 
     it('should not load favorites when user is not logged in', async () => {
