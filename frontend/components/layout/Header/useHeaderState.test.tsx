@@ -9,6 +9,11 @@ import { useHeaderState } from './useHeaderState';
 
 const mockLogout = jest.fn();
 const mockUsePathname = jest.fn(() => '/ru/profile');
+const mockUseAuthStore = jest.fn(() => ({
+  user: { id: 'user-1' },
+  logout: mockLogout,
+  isInitialized: true,
+}));
 
 jest.mock('next/navigation', () => ({
   usePathname: () => mockUsePathname(),
@@ -30,11 +35,7 @@ jest.mock('@/hooks/useTranslation', () => ({
 }));
 
 jest.mock('@/lib/store', () => ({
-  useAuthStore: () => ({
-    user: { id: 'user-1' },
-    logout: mockLogout,
-    isInitialized: true,
-  }),
+  useAuthStore: () => mockUseAuthStore(),
 }));
 
 describe('useHeaderState handleLogout', () => {
@@ -44,6 +45,11 @@ describe('useHeaderState handleLogout', () => {
     jest.clearAllMocks();
     locationHref = '';
     mockUsePathname.mockReturnValue('/ru/profile');
+    mockUseAuthStore.mockReturnValue({
+      user: { id: 'user-1' },
+      logout: mockLogout,
+      isInitialized: true,
+    });
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: {
@@ -79,5 +85,49 @@ describe('useHeaderState handleLogout', () => {
 
     expect(mockLogout).toHaveBeenCalled();
     expect(locationHref).toBe('');
+  });
+});
+
+describe('useHeaderState showSkeleton', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUsePathname.mockReturnValue('/');
+    document.body.innerHTML = '';
+  });
+
+  it('shows skeleton while auth is not initialized even with rehydrated user', () => {
+    mockUseAuthStore.mockReturnValue({
+      user: { id: 'user-1' },
+      logout: mockLogout,
+      isInitialized: false,
+    });
+
+    const { result } = renderHook(() => useHeaderState());
+
+    expect(result.current.showSkeleton).toBe(true);
+  });
+
+  it('hides skeleton after auth initialization', () => {
+    mockUseAuthStore.mockReturnValue({
+      user: { id: 'user-1' },
+      logout: mockLogout,
+      isInitialized: true,
+    });
+
+    const { result } = renderHook(() => useHeaderState());
+
+    expect(result.current.showSkeleton).toBe(false);
+  });
+
+  it('shows skeleton for guest before auth initialization', () => {
+    mockUseAuthStore.mockReturnValue({
+      user: null,
+      logout: mockLogout,
+      isInitialized: false,
+    });
+
+    const { result } = renderHook(() => useHeaderState());
+
+    expect(result.current.showSkeleton).toBe(true);
   });
 });

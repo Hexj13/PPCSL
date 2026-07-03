@@ -8,6 +8,8 @@ import { LessThan, Repository } from 'typeorm';
 import { RefreshToken } from '../../entities/refresh-token.entity';
 import { hashRefreshToken } from '../utils/refresh-token-hash.utils';
 
+export const REFRESH_TOKEN_ROTATION_GRACE_MS = 60_000;
+
 @Injectable()
 export class RefreshTokenService {
   constructor(
@@ -26,6 +28,7 @@ export class RefreshTokenService {
       token: tokenHash,
       expires_at: expiresAt,
       revoked: false,
+      rotated_at: null,
     });
 
     return token;
@@ -50,8 +53,13 @@ export class RefreshTokenService {
     }
 
     if (refreshToken.revoked) {
-      await this.revokeAllUserTokens(refreshToken.user_id);
-      throw new UnauthorizedException('errors.refreshTokenRevoked');
+      const withinGrace =
+        refreshToken.rotated_at != null &&
+        Date.now() - refreshToken.rotated_at.getTime() < REFRESH_TOKEN_ROTATION_GRACE_MS;
+      if (!withinGrace) {
+        await this.revokeAllUserTokens(refreshToken.user_id);
+        throw new UnauthorizedException('errors.refreshTokenRevoked');
+      }
     }
 
     if (refreshToken.expires_at < new Date()) {
@@ -69,6 +77,18 @@ export class RefreshTokenService {
     );
     if (!result.affected) {
       await this.refreshTokenRepository.update({ token }, { revoked: true });
+    }
+  }
+
+  async rotateToken(token: string): Promise<void> {
+    const tokenHash = hashRefreshToken(token);
+    const rotatedAt = new Date();
+    const result = await this.refreshTokenRepository.update(
+      { token: tokenHash },
+      { revoked: true, rotated_at: rotatedAt },
+    );
+    if (!result.affected) {
+      await this.refreshTokenRepository.update({ token }, { revoked: true, rotated_at: rotatedAt });
     }
   }
 

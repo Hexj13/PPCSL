@@ -34,6 +34,9 @@ export class RefreshToken {
   @Column({ type: 'boolean', default: false })
   revoked: boolean;
 
+  @Column({ type: 'timestamp', nullable: true })
+  rotated_at: Date | null;
+
   @CreateDateColumn()
   created_at: Date;
 }

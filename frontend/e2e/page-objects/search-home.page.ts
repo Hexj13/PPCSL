@@ -411,18 +411,67 @@ export class SearchHomePage extends SearchHomeScrollPage {
     );
   }
 
-  async openSaveFilterModal(): Promise<void> {
+  async waitForAuthReadyForSaveFilter(): Promise<void> {
+    const origin = getE2eBackendApiOrigin();
+    await expect
+      .poll(
+        async () =>
+          this.page.evaluate(async (apiOrigin) => {
+            const raw = localStorage.getItem('auth-storage');
+            if (!raw) return false;
+            const meRes = await fetch(`${apiOrigin}/api/auth/me`, {
+              credentials: 'include',
+              headers: { 'X-Skip-Error-Handling': 'true' },
+            });
+            if (!meRes.ok) return false;
+            const me = (await meRes.json()) as { id?: string };
+            if (!me.id) return false;
+            try {
+              const data = JSON.parse(raw) as { state?: { user?: { id?: string } } };
+              return data.state?.user?.id === me.id;
+            } catch {
+              return false;
+            }
+          }, origin),
+        { timeout: 30_000 },
+      )
+      .toBe(true);
+
     const btn = this.searchFiltersForm().getByTestId('search-save-filter');
+    await expect(btn).toBeVisible({ timeout: 20_000 });
     await expect(btn).toBeEnabled({ timeout: 20_000 });
-    await btn.scrollIntoViewIfNeeded();
-    await btn.click();
+  }
+
+  async openSaveFilterModal(): Promise<void> {
+    await this.waitForAuthReadyForSaveFilter();
+    const btn = this.searchFiltersForm().getByTestId('search-save-filter');
+    const modal = this.page.getByTestId('save-filter-modal');
+
+    await expect
+      .poll(
+        async () => {
+          if (await modal.isVisible().catch(() => false)) {
+            return true;
+          }
+          await btn.scrollIntoViewIfNeeded();
+          await btn.click();
+          try {
+            await modal.waitFor({ state: 'visible', timeout: 2_000 });
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        { timeout: 30_000, intervals: [500, 800, 1200, 2000] },
+      )
+      .toBe(true);
   }
 
   async expectSaveFilterModalVisible(): Promise<void> {
-    await expect(this.page.getByTestId('save-filter-modal')).toBeVisible();
+    await expect(this.page.getByTestId('save-filter-modal')).toBeVisible({ timeout: 20_000 });
   }
 
-  async submitSaveFilterWithName(name: string): Promise<void> {
+  async submitSaveFilterWithName(name: string): Promise<string> {
     await this.page.getByTestId('save-filter-name-input').fill(name);
     const submit = this.page.getByTestId('save-filter-submit');
     await expect(submit).toBeEnabled({ timeout: 10_000 });
@@ -436,6 +485,9 @@ export class SearchHomePage extends SearchHomeScrollPage {
     expect(saveResponse.ok(), `POST /api/saved-filters failed: HTTP ${saveResponse.status()}`).toBe(
       true,
     );
+    const body = (await saveResponse.json()) as { id?: string };
+    expect(body.id, 'Expected saved filter id in POST /api/saved-filters response').toBeTruthy();
     await expect(this.page.getByTestId('save-filter-modal')).toBeHidden({ timeout: 20_000 });
+    return body.id as string;
   }
 }

@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 import type { User } from '@/lib/api';
 import { authApi } from '@/lib/api';
+import { restoreAuthSessionFromApi } from '@/lib/auth-init';
 import {
   AUTH_PERSIST_VERSION,
   migrateAuthPersistedState,
@@ -17,7 +18,6 @@ import {
 import { clearClientAuthLocalStorage } from '@/lib/client-auth-storage';
 import { applyPreferredLocaleFromProfile } from '@/lib/i18n';
 import { PARTNER_PROMO_DISMISS_STORAGE_KEY } from '@/lib/partner-promo-dismiss-storage';
-import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 
 const MAX_COMPARE = 3;
 let initAuthPromise: Promise<void> | null = null;
@@ -104,22 +104,14 @@ export const useAuthStore = create<AuthState>()(
           localStorageRemoveItem('refresh_token');
 
           try {
-            const response = await authApi.meQuiet();
-            const syncedUser = await syncPartnerPromoDismissAfterAuth(response.data);
-            set({ user: syncedUser, isInitialized: true });
-          } catch {
-            try {
-              const refreshResponse = await authApi.refreshQuiet();
-              const syncedUser = await syncPartnerPromoDismissAfterAuth(refreshResponse.data.user);
-              set({ user: syncedUser, isInitialized: true });
-            } catch {
-              clearClientAuthLocalStorage({
-                clearReturnUrl: false,
-                clearAuthPersistKey: true,
-                clearPendingMigrationAndFilters: false,
-              });
-              set({ user: null, isInitialized: true });
+            const session = await restoreAuthSessionFromApi();
+            if (session.kind === 'authenticated') {
+              set({ user: session.user, isInitialized: true });
+              return;
             }
+            set({ user: null, isInitialized: true });
+          } catch {
+            set({ user: null, isInitialized: true });
           }
         })().finally(() => {
           initAuthPromise = null;

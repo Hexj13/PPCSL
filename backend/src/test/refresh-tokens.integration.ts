@@ -4,6 +4,7 @@ import {
 } from './auth-cookie-integration';
 import { getTestRequest } from './setup-integration';
 import { createTestCredentials } from './test-data-cleanup';
+import { expireRotationGraceForToken } from './refresh-token-grace-integration';
 
 describe('Refresh Tokens Integration', () => {
   let request: ReturnType<typeof getTestRequest>;
@@ -120,7 +121,7 @@ describe('Refresh Tokens Integration', () => {
       refreshToken = newRefreshToken;
     });
 
-    it('should reject old refresh token after rotation', async () => {
+    it('allows rotated refresh token reuse within grace window', async () => {
       const loginResponse = await request
         .post('/api/auth/login')
         .send({
@@ -137,6 +138,33 @@ describe('Refresh Tokens Integration', () => {
         .set('Cookie', cookies)
         .send({ refresh_token: oldRefreshToken })
         .expect(200);
+
+      await request
+        .post('/api/auth/refresh')
+        .set('Cookie', cookies)
+        .send({ refresh_token: oldRefreshToken })
+        .expect(200);
+    });
+
+    it('rejects rotated refresh token reuse after grace window expires', async () => {
+      const loginResponse = await request
+        .post('/api/auth/login')
+        .send({
+          login: testPhone,
+          password: testPassword,
+        })
+        .expect(200);
+
+      const cookies = cookieHeaderFromAuthResponse(loginResponse);
+      const oldRefreshToken = refreshTokenValueFromSetCookie(loginResponse);
+
+      await request
+        .post('/api/auth/refresh')
+        .set('Cookie', cookies)
+        .send({ refresh_token: oldRefreshToken })
+        .expect(200);
+
+      await expireRotationGraceForToken(oldRefreshToken);
 
       await request
         .post('/api/auth/refresh')
@@ -190,6 +218,8 @@ describe('Refresh Tokens Integration', () => {
         .set('Cookie', secondCookies)
         .send({ refresh_token: secondRefreshToken })
         .expect(200);
+
+      await expireRotationGraceForToken(firstRefreshToken);
 
       await request
         .post('/api/auth/refresh')

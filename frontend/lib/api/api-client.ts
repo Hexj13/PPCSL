@@ -95,18 +95,25 @@ api.interceptors.request.use((config) => {
 
 export function refreshAuthSession(data: unknown = {}): Promise<AxiosResponse<LoginResponse>> {
   if (!refreshSessionPromise) {
-    refreshSessionPromise = api
-      .post<LoginResponse>('/api/auth/refresh', data, {
+    refreshSessionPromise = runExclusiveAuthRefresh(() =>
+      api.post<LoginResponse>('/api/auth/refresh', data, {
         headers: {
           'X-Skip-Auth-Refresh': 'true',
           'X-Skip-Error-Handling': 'true',
         },
-      })
-      .finally(() => {
-        refreshSessionPromise = null;
-      });
+      }),
+    ).finally(() => {
+      refreshSessionPromise = null;
+    });
   }
   return refreshSessionPromise;
+}
+
+function runExclusiveAuthRefresh<T>(fn: () => Promise<T>): Promise<T> {
+  if (typeof navigator !== 'undefined' && navigator.locks?.request) {
+    return navigator.locks.request('kupito-auth-refresh', () => fn()) as Promise<T>;
+  }
+  return fn();
 }
 
 function createErrorT(

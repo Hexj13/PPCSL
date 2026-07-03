@@ -22,7 +22,7 @@ export function useHeaderState() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isErrorPage, setIsErrorPage] = useState(false);
 
-  const showSkeleton = !isInitialized && !user;
+  const showSkeleton = !isInitialized;
 
   const isAuthPage = isAuthRoutePathname(pathname);
 

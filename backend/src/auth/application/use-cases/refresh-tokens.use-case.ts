@@ -26,7 +26,7 @@ export class RefreshTokensUseCase {
       throw new UnauthorizedException('errors.userNotActive');
     }
 
-    await this.refreshTokenService.revokeToken(token);
+    await this.refreshTokenService.rotateToken(token);
     return this.authTokenIssuer.issueLoginResponse(user);
   }
 }

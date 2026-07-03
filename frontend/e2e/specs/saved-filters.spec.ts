@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures/base';
+import { test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import { deleteAllSavedFiltersForSession } from '../utils/api/saved-filters';
 import { loginByUi } from '../utils/auth';
@@ -13,13 +13,16 @@ const TRUCK_FILTER_PARAMS = {
 } as const;
 
 test.describe('Saved filters', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test('saves truck filter from search and applies it on home', async ({
     page,
     searchHomePage,
     favoritesPage,
   }) => {
     test.setTimeout(90_000);
-    const filterName = `e2e-saved-filter-${Date.now()}`;
+    const filterName = `e2e-saved-filter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    let savedFilterId = '';
 
     const steps: E2EStep[] = [
       {
@@ -46,8 +49,7 @@ test.describe('Saved filters', () => {
         name: 'Save filter from modal',
         action: async () => {
           await searchHomePage.openSaveFilterModal();
-          await searchHomePage.expectSaveFilterModalVisible();
-          await searchHomePage.submitSaveFilterWithName(filterName);
+          savedFilterId = await searchHomePage.submitSaveFilterWithName(filterName);
           await expectSuccessToast(page, t('saveFilter.filterSaved'));
         },
       },
@@ -60,15 +62,15 @@ test.describe('Saved filters', () => {
         },
       },
       {
-        name: 'Expect saved filter heading',
+        name: 'Expect saved filter card',
         action: async () => {
-          await expect(page.getByRole('heading', { name: filterName, exact: true })).toBeVisible();
+          await favoritesPage.expectSavedFilterCardVisible(savedFilterId);
         },
       },
       {
         name: 'Apply saved filter card and verify truck search on home',
         action: async () => {
-          await favoritesPage.clickSavedFilterByName(filterName);
+          await favoritesPage.clickSavedFilterCard(savedFilterId);
           await expectHomeWithSavedFilterApplied(page, searchHomePage, TRUCK_FILTER_PARAMS);
         },
       },

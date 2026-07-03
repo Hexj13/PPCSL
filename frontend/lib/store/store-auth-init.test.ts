@@ -21,7 +21,10 @@ jest.mock('@/lib/api', () => {
   };
 });
 
+import { AxiosError } from 'axios';
+
 import { authApi } from '@/lib/api';
+import { INIT_AUTH_REFRESH_RETRY_DELAY_MS } from '@/lib/auth-init';
 import { clearClientAuthLocalStorage } from '@/lib/client-auth-storage';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 
@@ -43,11 +46,29 @@ const mockUser = {
   hidePartnerPromoBanner: false,
 };
 
+function axiosError(status?: number): AxiosError {
+  if (status == null) {
+    return new AxiosError('Network Error', 'ERR_NETWORK');
+  }
+  return new AxiosError('Request failed', 'ERR_BAD_REQUEST', undefined, undefined, {
+    status,
+    statusText: String(status),
+    headers: {},
+    config: { headers: {} },
+    data: {},
+  });
+}
+
 describe('useAuthStore initAuth', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
     resetInitAuthPromiseForTests();
     useAuthStore.setState({ user: null, isInitialized: false });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('does not call refreshQuiet when meQuiet succeeds', async () => {
@@ -69,7 +90,7 @@ describe('useAuthStore initAuth', () => {
   });
 
   it('calls refreshQuiet once when meQuiet fails', async () => {
-    (authApi.meQuiet as jest.Mock).mockRejectedValue(new Error('401'));
+    (authApi.meQuiet as jest.Mock).mockRejectedValue(axiosError(401));
     (authApi.refreshQuiet as jest.Mock).mockResolvedValue({ data: { user: mockUser } });
     await useAuthStore.getState().initAuth();
     expect(authApi.meQuiet).toHaveBeenCalledTimes(1);
@@ -79,7 +100,7 @@ describe('useAuthStore initAuth', () => {
   });
 
   it('deduplicates concurrent refresh fallback during initAuth', async () => {
-    (authApi.meQuiet as jest.Mock).mockRejectedValue(new Error('401'));
+    (authApi.meQuiet as jest.Mock).mockRejectedValue(axiosError(401));
     (authApi.refreshQuiet as jest.Mock).mockResolvedValue({ data: { user: mockUser } });
     await Promise.all([useAuthStore.getState().initAuth(), useAuthStore.getState().initAuth()]);
     expect(authApi.meQuiet).toHaveBeenCalledTimes(1);
@@ -87,12 +108,9 @@ describe('useAuthStore initAuth', () => {
     expect(useAuthStore.getState().user).toEqual(mockUser);
   });
 
-  it('clears auth when meQuiet fails and refreshQuiet returns 429', async () => {
-    (authApi.meQuiet as jest.Mock).mockRejectedValue(new Error('401'));
-    const err = Object.assign(new Error('429'), {
-      response: { status: 429, headers: {}, data: {} },
-    });
-    (authApi.refreshQuiet as jest.Mock).mockRejectedValue(err);
+  it('clears auth when refresh returns 401', async () => {
+    (authApi.meQuiet as jest.Mock).mockRejectedValue(axiosError(401));
+    (authApi.refreshQuiet as jest.Mock).mockRejectedValue(axiosError(401));
     await useAuthStore.getState().initAuth();
     expect(authApi.refreshQuiet).toHaveBeenCalledTimes(1);
     expect(clearClientAuthLocalStorage).toHaveBeenCalledWith({
@@ -100,6 +118,22 @@ describe('useAuthStore initAuth', () => {
       clearAuthPersistKey: true,
       clearPendingMigrationAndFilters: false,
     });
+    expect(useAuthStore.getState().user).toBeNull();
+    expect(useAuthStore.getState().isInitialized).toBe(true);
+  });
+
+  it('retries refresh on non-401 errors and keeps auth storage on repeated failure', async () => {
+    (authApi.meQuiet as jest.Mock).mockRejectedValue(axiosError(401));
+    (authApi.refreshQuiet as jest.Mock)
+      .mockRejectedValueOnce(axiosError(429))
+      .mockRejectedValueOnce(axiosError(429));
+
+    const pending = useAuthStore.getState().initAuth();
+    await jest.advanceTimersByTimeAsync(INIT_AUTH_REFRESH_RETRY_DELAY_MS);
+    await pending;
+
+    expect(authApi.refreshQuiet).toHaveBeenCalledTimes(2);
+    expect(clearClientAuthLocalStorage).not.toHaveBeenCalled();
     expect(useAuthStore.getState().user).toBeNull();
     expect(useAuthStore.getState().isInitialized).toBe(true);
   });
