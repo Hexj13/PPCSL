@@ -369,6 +369,54 @@ describe('useGoogleAuth', () => {
     });
   });
 
+  it('re-initializes GIS when window.google.accounts.id is replaced after first load', async () => {
+    mockPathname.mockReturnValue('/ru/sign');
+    window.location.pathname = '/ru/sign';
+
+    const { rerender } = render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(window.google?.accounts?.id.initialize).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
+    });
+
+    const newInitialize = jest.fn();
+    const newRenderButton = jest.fn((parent: HTMLElement) => {
+      parent.appendChild(document.createElement('iframe'));
+    });
+
+    window.google = {
+      accounts: {
+        id: {
+          initialize: newInitialize,
+          renderButton: newRenderButton,
+        },
+      },
+    };
+
+    mockPathname.mockReturnValue('/sign');
+    window.location.pathname = '/sign';
+
+    rerender(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(newInitialize).toHaveBeenCalledTimes(1);
+      expect(newRenderButton).toHaveBeenCalled();
+    });
+
+    expect(newInitialize.mock.invocationCallOrder[0]).toBeLessThan(
+      newRenderButton.mock.invocationCallOrder[0],
+    );
+  });
+
   it('redirects new Google users to phone_required with register markers', async () => {
     (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockResolvedValueOnce({
       data: {

@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { LoginForm } from '@/app/login/LoginForm';
 import { useLoginPage } from '@/app/login/useLoginPage';
@@ -19,13 +19,6 @@ import { analytics } from '@/lib/analytics';
 import { buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
 
 export type AuthTab = 'login' | 'register';
-
-function gisScriptHl(locale: string): string {
-  const low = locale.toLowerCase();
-  if (low === 'ro') return 'ro';
-  if (low === 'ru') return 'ru';
-  return 'en';
-}
 
 export function SignPageContent() {
   const { t } = useTranslation();
@@ -47,14 +40,9 @@ export function SignPageContent() {
 
   const [gisReady, setGisReady] = useState(false);
   const [telegramScriptReady, setTelegramScriptReady] = useState(false);
-  const gisHl = useMemo(() => gisScriptHl(locale), [locale]);
   const googleClientIdConfigured = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
   const telegramClientIdConfigured =
     Boolean(process.env.NEXT_PUBLIC_TELEGRAM_CLIENT_ID?.trim()) || isTelegramDevMockEnabled();
-
-  useEffect(() => {
-    setGisReady(false);
-  }, [gisHl]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.google?.accounts?.id) {
@@ -115,8 +103,7 @@ export function SignPageContent() {
       ) : null}
       {googleClientIdConfigured ? (
         <Script
-          key={`gsi-client-${gisHl}`}
-          src={`https://accounts.google.com/gsi/client?hl=${encodeURIComponent(gisHl)}`}
+          src="https://accounts.google.com/gsi/client"
           strategy="afterInteractive"
           onReady={() => setGisReady(true)}
         />
