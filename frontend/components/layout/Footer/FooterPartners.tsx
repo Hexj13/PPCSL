@@ -117,6 +117,7 @@ function FooterPartnersRow({
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [needsCarousel, setNeedsCarousel] = useState(false);
+  const [isInViewport, setIsInViewport] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
   const mobileViewport = useMobileViewport();
   const mobileCarousel = mobileViewport && !prefersReducedMotion;
@@ -149,6 +150,26 @@ function FooterPartnersRow({
     };
   }, [measure, partners, prefersReducedMotion]);
 
+  useEffect(() => {
+    if (!mobileCarousel) {
+      return;
+    }
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInViewport(entry.isIntersecting);
+      },
+      { threshold: 0 },
+    );
+    observer.observe(container);
+    return () => {
+      observer.disconnect();
+    };
+  }, [mobileCarousel]);
+
   const renderCards = (suffix: string) =>
     partners.map((partner, index) => (
       <FooterPartnerCard
@@ -166,7 +187,7 @@ function FooterPartnersRow({
       : 'min-w-0 w-full overflow-hidden pt-1';
 
   const trackClassName = mobileCarousel
-    ? 'footer-partners-marquee flex w-max flex-nowrap items-start'
+    ? `footer-partners-marquee flex w-max flex-nowrap items-start${isInViewport ? '' : ' footer-partners-marquee-paused'}`
     : scrollMode
       ? 'flex w-max flex-nowrap items-start gap-4 px-3 sm:px-4 md:gap-6'
       : 'flex w-full flex-nowrap items-start justify-center gap-4 px-3 sm:px-4 md:gap-6';

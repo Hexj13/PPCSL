@@ -1481,6 +1481,10 @@
   will-change: transform;
 }
 
+.footer-partners-marquee-paused {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .footer-partners-marquee {
     animation: none;
