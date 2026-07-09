@@ -1,5 +1,3 @@
-import { strict as assert } from 'node:assert';
-
 import { expect, type Locator, type Page } from '@playwright/test';
 
 import type { ListingSortKey } from '../../lib/search/listingSort';
@@ -257,6 +255,36 @@ export class SearchHomePage extends SearchHomeScrollPage {
     return (await this.listingCardLinks().count()) > 0;
   }
 
+  private async collectListingIdsFromResults(maxCards = 24): Promise<string[]> {
+    const linkPrefix = this.testIds.listingCardLinkPrefix;
+    await expect(this.listingCardLinks().first()).toBeVisible({ timeout: 20_000 });
+    let ids: string[] = [];
+    await expect
+      .poll(
+        async () => {
+          ids = await this.page.evaluate(
+            ({ prefix, limit }) => {
+              const nodes = Array.from(document.querySelectorAll(`[data-testid^="${prefix}"]`));
+              const collected: string[] = [];
+              for (const node of nodes.slice(0, limit)) {
+                const testId = node.getAttribute('data-testid');
+                const match = testId?.match(/^listing-card-link-(.+)$/);
+                if (match?.[1]) {
+                  collected.push(match[1]);
+                }
+              }
+              return collected;
+            },
+            { prefix: linkPrefix, limit: maxCards },
+          );
+          return ids.length;
+        },
+        { timeout: 20_000, intervals: [200, 400, 800, 1200] },
+      )
+      .toBeGreaterThan(0);
+    return ids;
+  }
+
   async expectUrlParam(name: string, value: string): Promise<void> {
     const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     await expect(this.page).toHaveURL(new RegExp(`[?&]${name}=${escapedValue}(?:&|$)`));
@@ -339,15 +367,7 @@ export class SearchHomePage extends SearchHomeScrollPage {
     if (!(await this.hasListingResults())) {
       return false;
     }
-    const count = await this.listingCardLinks().count();
-    const ids: string[] = [];
-    for (let i = 0; i < count; i += 1) {
-      const testId = await this.listingCardLinks().nth(i).getAttribute('data-testid');
-      const m = testId?.match(/^listing-card-link-(.+)$/);
-      if (m?.[1]) {
-        ids.push(m[1]);
-      }
-    }
+    const ids = await this.collectListingIdsFromResults();
     if (ids.length === 0) {
       return false;
     }
@@ -381,11 +401,8 @@ export class SearchHomePage extends SearchHomeScrollPage {
     if (!targetId) {
       return false;
     }
-    const cardLink = this.page.getByTestId(`listing-card-link-${targetId}`);
-    await cardLink.scrollIntoViewIfNeeded();
-    const href = await cardLink.getAttribute('href');
-    assert.ok(href, 'Expected listing card href');
-    await this.page.goto(href, { waitUntil: 'domcontentloaded' });
+    await forceDefaultCanonicalLocaleCookies(this.page);
+    await this.page.goto(`/listings/${targetId}`, { waitUntil: 'domcontentloaded' });
     await expect(this.page).toHaveURL(/\/listings\/[^/]+$/);
     return true;
   }

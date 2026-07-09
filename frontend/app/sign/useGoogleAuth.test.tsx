@@ -164,6 +164,7 @@ function Harness() {
   const {
     containerRef,
     isButtonReady,
+    isButtonRenderTimedOut,
     isGoogleAuthInFlight,
     isGoogleBusy,
     markGoogleSignInIntent,
@@ -175,6 +176,7 @@ function Harness() {
         intent
       </button>
       <span data-testid="button-ready">{isButtonReady ? 'true' : 'false'}</span>
+      <span data-testid="button-render-timed-out">{isButtonRenderTimedOut ? 'true' : 'false'}</span>
       <span data-testid="google-auth-in-flight">{isGoogleAuthInFlight ? 'true' : 'false'}</span>
       <span data-testid="google-auth-busy">{isGoogleBusy ? 'true' : 'false'}</span>
     </>
@@ -182,7 +184,7 @@ function Harness() {
 }
 
 function HarnessGisLoaded({ loaded }: { loaded: boolean }) {
-  const { containerRef, isButtonReady } = useGoogleAuth({
+  const { containerRef, isButtonReady, isButtonRenderTimedOut } = useGoogleAuth({
     tab: 'login',
     gisScriptLoaded: loaded,
   });
@@ -190,6 +192,7 @@ function HarnessGisLoaded({ loaded }: { loaded: boolean }) {
     <>
       <div ref={containerRef} data-testid="gis-root" />
       <span data-testid="button-ready">{isButtonReady ? 'true' : 'false'}</span>
+      <span data-testid="button-render-timed-out">{isButtonRenderTimedOut ? 'true' : 'false'}</span>
     </>
   );
 }
@@ -672,6 +675,174 @@ describe('useGoogleAuth', () => {
       expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('true');
     });
     expect(screen.getByTestId('google-auth-in-flight')).toHaveTextContent('false');
+  });
+
+  it('clears popup pending on window focus after Google cancel', async () => {
+    jest.useFakeTimers();
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+
+    render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
+    });
+
+    fireEvent.click(screen.getByTestId('mark-google-intent'));
+    await act(async () => {
+      window.dispatchEvent(new Event('blur'));
+    });
+    expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('true');
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+      jest.advanceTimersByTime(400);
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('false');
+    });
+    jest.useRealTimers();
+  });
+
+  it('clears popup pending on visibilitychange when tab becomes visible', async () => {
+    jest.useFakeTimers();
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+
+    render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
+    });
+
+    fireEvent.click(screen.getByTestId('mark-google-intent'));
+    await act(async () => {
+      window.dispatchEvent(new Event('blur'));
+    });
+    expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('true');
+
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      jest.advanceTimersByTime(400);
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('false');
+    });
+    jest.useRealTimers();
+  });
+
+  it('clears popup pending on pageshow after returning to the page', async () => {
+    jest.useFakeTimers();
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+
+    render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
+    });
+
+    fireEvent.click(screen.getByTestId('mark-google-intent'));
+    await act(async () => {
+      window.dispatchEvent(new Event('blur'));
+    });
+    expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('true');
+
+    await act(async () => {
+      window.dispatchEvent(new Event('pageshow'));
+      jest.advanceTimersByTime(400);
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('false');
+    });
+    jest.useRealTimers();
+  });
+
+  it('clears stuck popup pending via safety timeout without focus', async () => {
+    jest.useFakeTimers();
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+
+    render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
+    });
+
+    fireEvent.click(screen.getByTestId('mark-google-intent'));
+    await act(async () => {
+      window.dispatchEvent(new Event('blur'));
+    });
+    expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('true');
+
+    await act(async () => {
+      jest.advanceTimersByTime(5_000);
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('false');
+    });
+    jest.useRealTimers();
+  });
+
+  it('marks button render timed out when GIS never inserts markup', async () => {
+    jest.useFakeTimers();
+    (window.google!.accounts!.id.renderButton as jest.Mock).mockImplementation(() => {});
+
+    render(
+      <Tree>
+        <HarnessGisLoaded loaded={true} />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(window.google?.accounts?.id.renderButton).toHaveBeenCalled();
+    });
+    expect(screen.getByTestId('button-ready')).toHaveTextContent('false');
+    expect(screen.getByTestId('button-render-timed-out')).toHaveTextContent('false');
+
+    await act(async () => {
+      jest.advanceTimersByTime(8_000);
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('button-render-timed-out')).toHaveTextContent('true');
+    });
+    expect(screen.getByTestId('button-ready')).toHaveTextContent('false');
+    expect(window.google?.accounts?.id.renderButton).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
   });
 
   it('ignores blur without Google sign-in intent or focused GIS iframe', async () => {

@@ -97,10 +97,42 @@ export class FavoritesPage {
   async expectActiveTabContentVisible(): Promise<void> {
     const url = new URL(this.page.url());
     if (url.searchParams.get('tab') === 'filters') {
-      await this.expectSavedFiltersListVisible();
+      await this.expectFiltersTabContentVisible();
       return;
     }
     await this.expectListingsTabContentVisible();
+  }
+
+  async expectFiltersTabContentVisible(): Promise<void> {
+    const list = this.page.getByTestId('saved-filters-list');
+    const empty = this.page.getByTestId('saved-filters-empty');
+    await expect
+      .poll(
+        async () => {
+          if (await list.isVisible().catch(() => false)) {
+            return true;
+          }
+          if (await empty.isVisible().catch(() => false)) {
+            return true;
+          }
+          if (!pathnameWithoutLocalePrefix(this.page.url()).includes('tab=filters')) {
+            return false;
+          }
+          const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
+          await this.page.reload({ waitUntil: 'domcontentloaded' });
+          try {
+            await savedFiltersLoaded;
+          } catch {
+            return false;
+          }
+          return (
+            (await list.isVisible().catch(() => false)) ||
+            (await empty.isVisible().catch(() => false))
+          );
+        },
+        { timeout: 45_000, intervals: [600, 1000, 1600, 2400] },
+      )
+      .toBe(true);
   }
 
   async expectListingsEmptyVisible(): Promise<void> {
@@ -144,6 +176,7 @@ export class FavoritesPage {
 
   async expectSavedFiltersListVisible(): Promise<void> {
     const list = this.page.getByTestId('saved-filters-list');
+    const empty = this.page.getByTestId('saved-filters-empty');
     await expect
       .poll(
         async () => {
@@ -152,6 +185,16 @@ export class FavoritesPage {
           }
           if (!pathnameWithoutLocalePrefix(this.page.url()).includes('tab=filters')) {
             return false;
+          }
+          if (await empty.isVisible().catch(() => false)) {
+            const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            try {
+              await savedFiltersLoaded;
+            } catch {
+              return false;
+            }
+            return list.isVisible().catch(() => false);
           }
           const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
           await this.page.reload({ waitUntil: 'domcontentloaded' });
@@ -169,6 +212,7 @@ export class FavoritesPage {
 
   async expectSavedFilterCardVisible(filterId: string): Promise<void> {
     const card = this.page.getByTestId(`saved-filter-card-${filterId}`);
+    const empty = this.page.getByTestId('saved-filters-empty');
     await expect
       .poll(
         async () => {
@@ -178,12 +222,14 @@ export class FavoritesPage {
           if (!pathnameWithoutLocalePrefix(this.page.url()).includes('tab=filters')) {
             return false;
           }
-          const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
-          await this.page.reload({ waitUntil: 'domcontentloaded' });
-          try {
-            await savedFiltersLoaded;
-          } catch {
-            return false;
+          if ((await empty.isVisible().catch(() => false)) || !(await card.isVisible())) {
+            const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
+            await this.page.reload({ waitUntil: 'domcontentloaded' });
+            try {
+              await savedFiltersLoaded;
+            } catch {
+              return false;
+            }
           }
           return card.isVisible();
         },

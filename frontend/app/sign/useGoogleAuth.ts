@@ -15,6 +15,8 @@ import { toast } from '@/lib/toast';
 
 const GOOGLE_SIGN_IN_INTENT_MS = 15_000;
 const GOOGLE_POPUP_CANCEL_FOCUS_MS = 400;
+const GOOGLE_POPUP_PENDING_SAFETY_MS = 5_000;
+const GIS_BUTTON_READY_TIMEOUT_MS = 8_000;
 
 const quietAuthRequest = {
   headers: { 'X-Skip-Auth-Redirect': 'true', 'X-Skip-Error-Handling': 'true' },
@@ -91,14 +93,18 @@ export function useGoogleAuth(options: {
   const searchParams = useSearchParams();
   const [canRenderButton, setCanRenderButton] = useState(false);
   const [isButtonReady, setIsButtonReady] = useState(false);
+  const [isButtonRenderTimedOut, setIsButtonRenderTimedOut] = useState(false);
   const [isGoogleAuthInFlight, setIsGoogleAuthInFlight] = useState(false);
   const [isGooglePopupPending, setIsGooglePopupPending] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const submitStartedAtRef = useRef<number | null>(null);
   const isGoogleAuthInFlightRef = useRef(false);
+  const isGooglePopupPendingRef = useRef(false);
   const googleSignInIntentRef = useRef(false);
   const googleSignInIntentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelPopupPendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const popupPendingSafetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const buttonReadyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const googleCallbackProcessingRef = useRef(false);
   const gisInitializedInstanceRef = useRef<NonNullable<
     NonNullable<Window['google']>['accounts']['id']
@@ -134,6 +140,20 @@ export function useGoogleAuth(options: {
     }
   }, []);
 
+  const clearPopupPendingSafetyTimer = useCallback(() => {
+    if (popupPendingSafetyTimerRef.current) {
+      clearTimeout(popupPendingSafetyTimerRef.current);
+      popupPendingSafetyTimerRef.current = null;
+    }
+  }, []);
+
+  const clearButtonReadyTimeout = useCallback(() => {
+    if (buttonReadyTimeoutRef.current) {
+      clearTimeout(buttonReadyTimeoutRef.current);
+      buttonReadyTimeoutRef.current = null;
+    }
+  }, []);
+
   const clearGoogleSignInIntent = useCallback(() => {
     googleSignInIntentRef.current = false;
     if (googleSignInIntentTimerRef.current) {
@@ -157,26 +177,72 @@ export function useGoogleAuth(options: {
 
   const resetGoogleBusyState = useCallback(() => {
     clearCancelPopupPendingTimer();
+    clearPopupPendingSafetyTimer();
     clearGoogleSignInIntent();
     submitStartedAtRef.current = null;
     isGoogleAuthInFlightRef.current = false;
+    isGooglePopupPendingRef.current = false;
     googleCallbackProcessingRef.current = false;
     setIsGooglePopupPending(false);
     setIsGoogleAuthInFlight(false);
-  }, [clearCancelPopupPendingTimer, clearGoogleSignInIntent]);
+  }, [clearCancelPopupPendingTimer, clearPopupPendingSafetyTimer, clearGoogleSignInIntent]);
+
+  const schedulePopupPendingCancel = useCallback(() => {
+    if (isGoogleAuthInFlightRef.current) return;
+    if (!isGooglePopupPendingRef.current) return;
+    clearCancelPopupPendingTimer();
+    cancelPopupPendingTimerRef.current = setTimeout(async () => {
+      if (isGoogleAuthInFlightRef.current) return;
+      await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
+      if (isGoogleAuthInFlightRef.current) return;
+      if (!isMountedRef.current) return;
+      resetGoogleBusyState();
+    }, GOOGLE_POPUP_CANCEL_FOCUS_MS);
+  }, [clearCancelPopupPendingTimer, resetGoogleBusyState]);
 
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
       clearCancelPopupPendingTimer();
+      clearPopupPendingSafetyTimer();
+      clearButtonReadyTimeout();
       clearGoogleSignInIntent();
     };
-  }, [clearCancelPopupPendingTimer, clearGoogleSignInIntent]);
+  }, [
+    clearCancelPopupPendingTimer,
+    clearPopupPendingSafetyTimer,
+    clearButtonReadyTimeout,
+    clearGoogleSignInIntent,
+  ]);
 
   useEffect(() => {
     isGoogleAuthInFlightRef.current = isGoogleAuthInFlight;
   }, [isGoogleAuthInFlight]);
+
+  useEffect(() => {
+    isGooglePopupPendingRef.current = isGooglePopupPending;
+    clearPopupPendingSafetyTimer();
+    if (!isGooglePopupPending || isGoogleAuthInFlight) return;
+
+    popupPendingSafetyTimerRef.current = setTimeout(async () => {
+      if (isGoogleAuthInFlightRef.current) return;
+      if (!isGooglePopupPendingRef.current) return;
+      await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
+      if (isGoogleAuthInFlightRef.current) return;
+      if (!isMountedRef.current) return;
+      resetGoogleBusyState();
+    }, GOOGLE_POPUP_PENDING_SAFETY_MS);
+
+    return () => {
+      clearPopupPendingSafetyTimer();
+    };
+  }, [
+    isGooglePopupPending,
+    isGoogleAuthInFlight,
+    clearPopupPendingSafetyTimer,
+    resetGoogleBusyState,
+  ]);
 
   useEffect(() => {
     if (!isButtonReady || typeof window === 'undefined') return;
@@ -189,6 +255,7 @@ export function useGoogleAuth(options: {
         focused?.tagName === 'IFRAME' && containerRef.current?.contains(focused) === true;
       if (!focusedIsGisIframe && !googleSignInIntentRef.current) return;
       clearCancelPopupPendingTimer();
+      isGooglePopupPendingRef.current = true;
       setIsGooglePopupPending(true);
       if (submitStartedAtRef.current === null) {
         submitStartedAtRef.current = Date.now();
@@ -196,25 +263,31 @@ export function useGoogleAuth(options: {
     };
 
     const onWindowFocus = () => {
-      if (isGoogleAuthInFlightRef.current) return;
-      clearCancelPopupPendingTimer();
-      cancelPopupPendingTimerRef.current = setTimeout(async () => {
-        if (isGoogleAuthInFlightRef.current) return;
-        await waitForAuthSubmitLoaderMinDisplay(submitStartedAtRef.current);
-        if (isGoogleAuthInFlightRef.current) return;
-        if (!isMountedRef.current) return;
-        resetGoogleBusyState();
-      }, GOOGLE_POPUP_CANCEL_FOCUS_MS);
+      schedulePopupPendingCancel();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        schedulePopupPendingCancel();
+      }
+    };
+
+    const onPageShow = () => {
+      schedulePopupPendingCancel();
     };
 
     window.addEventListener('blur', onWindowBlur);
     window.addEventListener('focus', onWindowFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pageshow', onPageShow);
     return () => {
       clearCancelPopupPendingTimer();
       window.removeEventListener('blur', onWindowBlur);
       window.removeEventListener('focus', onWindowFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pageshow', onPageShow);
     };
-  }, [isButtonReady, clearCancelPopupPendingTimer, resetGoogleBusyState]);
+  }, [isButtonReady, clearCancelPopupPendingTimer, schedulePopupPendingCancel]);
 
   const finishSession = useCallback(
     async (
@@ -311,21 +384,25 @@ export function useGoogleAuth(options: {
     if (!clientId || typeof window === 'undefined') {
       setCanRenderButton(false);
       setIsButtonReady(false);
+      setIsButtonRenderTimedOut(false);
       return;
     }
     if (!gisScriptLoaded) {
       setCanRenderButton(false);
       setIsButtonReady(false);
+      setIsButtonRenderTimedOut(false);
       return;
     }
     if (!window.google?.accounts?.id) {
       setCanRenderButton(false);
       setIsButtonReady(false);
+      setIsButtonRenderTimedOut(false);
       return;
     }
     if (!ensureGisInitialized()) {
       setCanRenderButton(false);
       setIsButtonReady(false);
+      setIsButtonRenderTimedOut(false);
       return;
     }
     setCanRenderButton(true);
@@ -351,11 +428,17 @@ export function useGoogleAuth(options: {
     const container = containerRef.current;
     let cancelled = false;
     const updateButtonReady = () => {
-      if (!cancelled && isMountedRef.current) {
-        setIsButtonReady(container.childElementCount > 0);
+      if (cancelled || !isMountedRef.current) return;
+      const ready = container.childElementCount > 0;
+      setIsButtonReady(ready);
+      if (ready) {
+        clearButtonReadyTimeout();
+        setIsButtonRenderTimedOut(false);
       }
     };
 
+    clearButtonReadyTimeout();
+    setIsButtonRenderTimedOut(false);
     container.innerHTML = '';
     setIsButtonReady(false);
     window.google.accounts.id.renderButton(container, {
@@ -367,9 +450,38 @@ export function useGoogleAuth(options: {
     });
     updateButtonReady();
 
-    if (container.childElementCount > 0 || typeof MutationObserver === 'undefined') {
+    if (container.childElementCount > 0) {
       return () => {
         cancelled = true;
+        clearButtonReadyTimeout();
+      };
+    }
+
+    buttonReadyTimeoutRef.current = setTimeout(() => {
+      if (cancelled || !isMountedRef.current) return;
+      if (container.childElementCount > 0) {
+        updateButtonReady();
+        return;
+      }
+      container.innerHTML = '';
+      window.google?.accounts?.id.renderButton(container, {
+        type: 'icon',
+        theme: 'outline',
+        shape: 'square',
+        size: 'large',
+        locale: gisUiLocale,
+      });
+      if (container.childElementCount > 0) {
+        updateButtonReady();
+        return;
+      }
+      setIsButtonRenderTimedOut(true);
+    }, GIS_BUTTON_READY_TIMEOUT_MS);
+
+    if (typeof MutationObserver === 'undefined') {
+      return () => {
+        cancelled = true;
+        clearButtonReadyTimeout();
       };
     }
 
@@ -383,9 +495,10 @@ export function useGoogleAuth(options: {
 
     return () => {
       cancelled = true;
+      clearButtonReadyTimeout();
       observer.disconnect();
     };
-  }, [canRenderButton, clientId, gisUiLocale, ensureGisInitialized]);
+  }, [canRenderButton, clientId, gisUiLocale, ensureGisInitialized, clearButtonReadyTimeout]);
 
   return {
     containerRef,
@@ -393,6 +506,7 @@ export function useGoogleAuth(options: {
     isGoogleAuthInFlight,
     isGoogleBusy,
     isButtonReady,
+    isButtonRenderTimedOut,
     markGoogleSignInIntent,
   };
 }
