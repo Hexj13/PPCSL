@@ -33,6 +33,7 @@ export function TelegramSignInButton({
   }
 
   const isMock = libraryStatus === 'mock';
+  const label = t('sign.continueWithTelegram');
 
   return (
     <button
@@ -41,17 +42,17 @@ export function TelegramSignInButton({
       disabled={disabled || loading}
       onClick={isMock ? onDevMockClick : onTelegramClick}
       data-testid="auth-telegram"
-      aria-label={t('sign.continueWithTelegram')}
+      aria-label={label}
     >
       {loading ? (
         <Spinner
           size="sm"
           inline
-          className="text-semantic-info"
+          className="text-brand-telegram"
           data-testid="auth-telegram-loading"
         />
       ) : (
-        <TelegramIcon className={`${authOAuthIconButtonIconClass} text-semantic-info`} />
+        <TelegramIcon className={`${authOAuthIconButtonIconClass} text-brand-telegram`} />
       )}
     </button>
   );

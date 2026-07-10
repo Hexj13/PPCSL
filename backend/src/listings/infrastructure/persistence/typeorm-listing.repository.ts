@@ -878,11 +878,20 @@ export class TypeOrmListingRepository implements IListingRepository {
       });
     }
 
+    const bodyTypeCountsFromRows = Object.fromEntries(
+      bodyTypeRows
+        .filter((row) => (POPULAR_BODY_TYPES_CAR as readonly string[]).includes(row.key))
+        .map((row) => [row.key, Number(row.count)]),
+    ) as Partial<Record<PopularBodyTypeCar, number>>;
+
     return {
       modelsByBodyType,
       brandListingCounts: Object.fromEntries(
         brandRows.map((row) => [row.label, Number(row.count)]),
       ),
+      bodyTypeListingCounts: Object.fromEntries(
+        POPULAR_BODY_TYPES_CAR.map((bodyType) => [bodyType, bodyTypeCountsFromRows[bodyType] ?? 0]),
+      ) as Record<PopularBodyTypeCar, number>,
       statistics: {
         brands: this.toPopularStatBucket(brandRows),
         bodyTypes: this.toPopularStatBucket(bodyTypeRows),

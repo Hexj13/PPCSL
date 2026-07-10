@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { usePopularModels } from '@/hooks/usePopularModels';
 import type { FilterState } from '@/hooks/useSearchFilters';
@@ -46,10 +46,8 @@ export function PopularFilters({
 }: PopularFiltersProps) {
   const { t } = useTranslation();
   const blockRef = useRef<HTMLDivElement>(null);
-  const firstBodyType = POPULAR_BODY_TYPES_CAR[0]?.value;
-  const [openBodyTypes, setOpenBodyTypes] = useState<Set<PopularBodyTypeCar>>(
-    () => new Set(firstBodyType ? [firstBodyType] : []),
-  );
+  const [openBodyTypes, setOpenBodyTypes] = useState<Set<PopularBodyTypeCar>>(() => new Set());
+  const [defaultOpenInitialized, setDefaultOpenInitialized] = useState(false);
   const { toggleModel, isModelSelected, toggleBrand, isBrandExplicitlySelected, selectedItems } =
     usePopularModels({
       brands,
@@ -83,6 +81,27 @@ export function PopularFilters({
       return compareNames(a, b);
     });
   }, [vehicleType, popularData?.brandListingCounts]);
+
+  const sortedBodyTypes = useMemo(() => {
+    const counts = popularData?.bodyTypeListingCounts;
+    if (!counts) {
+      return [...POPULAR_BODY_TYPES_CAR];
+    }
+    return [...POPULAR_BODY_TYPES_CAR].sort((a, b) => {
+      const countDiff = (counts[b.value] ?? 0) - (counts[a.value] ?? 0);
+      if (countDiff !== 0) return countDiff;
+      return compareNames(a.value, b.value);
+    });
+  }, [popularData?.bodyTypeListingCounts]);
+
+  useEffect(() => {
+    if (!popularData || defaultOpenInitialized || sortedBodyTypes.length === 0) return;
+    const first = sortedBodyTypes[0]?.value;
+    if (first) {
+      setOpenBodyTypes(new Set([first]));
+      setDefaultOpenInitialized(true);
+    }
+  }, [popularData, sortedBodyTypes, defaultOpenInitialized]);
 
   const toggleBodyType = useCallback(
     (bodyType: PopularBodyTypeCar) => {
@@ -168,7 +187,7 @@ export function PopularFilters({
 
           {!popularLoading && !popularError && popularData && (
             <div className="space-y-2">
-              {POPULAR_BODY_TYPES_CAR.map(({ value }, index) => {
+              {sortedBodyTypes.map(({ value }, index) => {
                 const modelsForBody = [...(popularData.modelsByBodyType[value] ?? [])].sort(
                   (a, b) => {
                     const countDiff = b.listingCount - a.listingCount;
@@ -179,7 +198,7 @@ export function PopularFilters({
                   },
                 );
                 const isOpen = openBodyTypes.has(value);
-                const isLast = index === POPULAR_BODY_TYPES_CAR.length - 1;
+                const isLast = index === sortedBodyTypes.length - 1;
                 const bodyTypeTitle = t(`vehicleOptions.bodyType.${value}`);
                 const contentId = `search-popular-body-type-${value}`;
 

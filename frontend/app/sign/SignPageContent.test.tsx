@@ -9,16 +9,38 @@ import { useEffect, useRef } from 'react';
 import { SignPageContent } from './SignPageContent';
 
 let scriptMountCount = 0;
+let lastScriptSrc: string | undefined;
+let scriptAutoReady = true;
+
+function installMockGoogle() {
+  const initialize = jest.fn();
+  const renderButton = jest.fn((parent: HTMLElement) => {
+    parent.appendChild(document.createElement('iframe'));
+  });
+  window.google = {
+    accounts: {
+      id: {
+        initialize,
+        renderButton,
+      },
+    },
+  };
+}
 
 jest.mock('next/script', () => ({
   __esModule: true,
-  default: function MockScript({ onReady }: { onReady?: () => void }) {
+  default: function MockScript({ src, onReady }: { src?: string; onReady?: () => void }) {
     const onReadyRef = useRef(onReady);
     onReadyRef.current = onReady;
     useEffect(() => {
       scriptMountCount += 1;
+      lastScriptSrc = src;
+      if (!scriptAutoReady) {
+        return;
+      }
+      installMockGoogle();
       onReadyRef.current?.();
-    }, []);
+    }, [src]);
     return null;
   },
 }));
@@ -87,19 +109,10 @@ describe('SignPageContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     scriptMountCount = 0;
+    lastScriptSrc = undefined;
+    scriptAutoReady = true;
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-google-client';
-    const initialize = jest.fn();
-    const renderButton = jest.fn((parent: HTMLElement) => {
-      parent.appendChild(document.createElement('iframe'));
-    });
-    window.google = {
-      accounts: {
-        id: {
-          initialize,
-          renderButton,
-        },
-      },
-    };
+    installMockGoogle();
   });
 
   afterEach(() => {
@@ -132,9 +145,11 @@ describe('SignPageContent', () => {
       expect(screen.getByTestId('auth-google-block')).toBeInTheDocument();
     });
     expect(scriptMountCount).toBe(2);
+    expect(lastScriptSrc).toBe('https://accounts.google.com/gsi/client');
   });
 
   it('shows skeleton before Google button is ready', () => {
+    scriptAutoReady = false;
     delete window.google;
 
     render(<SignPageContent />);

@@ -14,7 +14,6 @@ type GoogleAuthProps = {
   containerRef: RefObject<HTMLDivElement | null>;
   clientIdConfigured: boolean;
   isGoogleBusy: boolean;
-  markGoogleSignInIntent: () => void;
 };
 
 type TelegramAuthProps = {
@@ -49,19 +48,15 @@ function GoogleOAuthSlot({
   const showButtonShell = googleAuth.isButtonReady || googleUnavailable;
 
   return (
-    <div
-      className="relative flex-1 min-w-0 flex"
-      data-testid="auth-google-outside-card"
-      onPointerDown={googleAuth.isButtonReady ? googleAuth.markGoogleSignInIntent : undefined}
-    >
+    <div className="relative flex h-10 w-10" data-testid="auth-google-outside-card">
       {googleLoading ? (
-        <div className={gisReady ? 'absolute inset-0 z-10 flex' : 'flex-1 min-w-0 flex'}>
+        <div className={gisReady ? 'absolute inset-0 z-10 flex' : 'flex'}>
           <OAuthSignInButtonSkeleton testId="auth-google-skeleton" />
         </div>
       ) : null}
       {gisReady ? (
         <div
-          className={`flex-1 min-w-0 flex ${showButtonShell ? '' : 'invisible'}`}
+          className={`flex ${showButtonShell ? '' : 'invisible'}`}
           aria-hidden={!showButtonShell}
         >
           <GoogleSignInButton
@@ -86,10 +81,10 @@ function TelegramOAuthSlot({
   authSubmitBusy: boolean;
 }) {
   return (
-    <div className="flex-1 min-w-0 flex" data-testid="auth-telegram-outside-card">
+    <div className="flex h-10 w-10" data-testid="auth-telegram-outside-card">
       {telegramLoading ? <OAuthSignInButtonSkeleton testId="auth-telegram-skeleton" /> : null}
       <div
-        className={`flex-1 min-w-0 flex ${telegramLoading ? 'sr-only' : ''}`}
+        className={`flex ${telegramLoading ? 'sr-only' : ''}`}
         aria-hidden={telegramLoading}
         data-testid={telegramLoading ? 'auth-telegram-probe' : undefined}
       >
@@ -144,7 +139,7 @@ export function AuthOAuthOutsideCard({
         <span className="text-sm text-hint shrink-0">{t('sign.dividerOr')}</span>
         <span className="grow h-px bg-primary-700/25" />
       </div>
-      <div className="mt-6 flex items-stretch gap-3">
+      <div className="mt-6 mx-auto flex w-fit items-center justify-center gap-3">
         {showGoogle ? (
           <GoogleOAuthSlot
             gisReady={gisReady}

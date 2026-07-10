@@ -35,6 +35,7 @@ export type PopularListingsData = {
   generatedAt: string;
   modelsByBodyType: Record<PopularBodyTypeCar, PopularModelItem[]>;
   brandListingCounts: Record<string, number>;
+  bodyTypeListingCounts: Record<PopularBodyTypeCar, number>;
   statistics: {
     brands: PopularStatBucket;
     bodyTypes: PopularStatBucket;

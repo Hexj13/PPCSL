@@ -19,6 +19,7 @@ module.exports = {
         accent: theme.accent,
         accentSecondary: theme.accentSecondary,
         newBadge: theme.newBadge,
+        brand: theme.brand,
         semantic: theme.semantic,
       },
     },

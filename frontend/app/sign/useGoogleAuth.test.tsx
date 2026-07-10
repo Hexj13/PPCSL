@@ -244,9 +244,20 @@ describe('useGoogleAuth', () => {
       Promise.resolve({ ...minimalTranslations, __locale: String(locale) } as Translations),
     );
     const initialize = jest.fn();
-    const renderButton = jest.fn((parent: HTMLElement) => {
-      parent.appendChild(document.createElement('iframe'));
-    });
+    const renderButton = jest.fn(
+      (
+        parent: HTMLElement,
+        options?: {
+          click_listener?: () => void;
+          type?: string;
+          text?: string;
+          width?: number;
+        },
+      ) => {
+        parent.appendChild(document.createElement('iframe'));
+        (renderButton as jest.Mock & { lastOptions?: typeof options }).lastOptions = options;
+      },
+    );
     window.google = {
       accounts: {
         id: {
@@ -340,35 +351,6 @@ describe('useGoogleAuth', () => {
     });
 
     expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('false');
-  });
-
-  it('keeps the same GIS iframe ready after app locale changes', async () => {
-    const { rerender } = render(
-      <Tree>
-        <Harness />
-      </Tree>,
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
-    });
-
-    const renderButton = window.google!.accounts!.id.renderButton as jest.Mock;
-    expect(renderButton).toHaveBeenCalledTimes(1);
-
-    mockPathname.mockReturnValue('/sign');
-    window.location.pathname = '/sign';
-
-    rerender(
-      <Tree>
-        <Harness />
-      </Tree>,
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
-    });
-    expect(renderButton).toHaveBeenCalledTimes(1);
   });
 
   it('re-initializes GIS when window.google.accounts.id is replaced after first load', async () => {
@@ -652,6 +634,65 @@ describe('useGoogleAuth', () => {
       id: '1',
       phoneVerified: true,
     });
+  });
+
+  it('passes icon button configuration to GIS renderButton', async () => {
+    render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(window.google?.accounts?.id.renderButton).toHaveBeenCalled();
+    });
+
+    const renderButton = window.google!.accounts!.id.renderButton as jest.Mock & {
+      lastOptions?: {
+        click_listener?: () => void;
+        type?: string;
+      };
+    };
+    expect(renderButton.lastOptions?.click_listener).toEqual(expect.any(Function));
+    expect(renderButton.lastOptions).toMatchObject({
+      type: 'icon',
+      theme: 'outline',
+      size: 'large',
+    });
+  });
+
+  it('sets isGooglePopupPending on GIS click_listener followed by blur', async () => {
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+
+    render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
+    });
+
+    const renderButton = window.google!.accounts!.id.renderButton as jest.Mock & {
+      lastOptions?: { click_listener?: () => void };
+    };
+
+    act(() => {
+      renderButton.lastOptions?.click_listener?.();
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event('blur'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('true');
+    });
+    expect(screen.getByTestId('google-auth-in-flight')).toHaveTextContent('false');
   });
 
   it('sets isGooglePopupPending on window blur when Google sign-in intent is marked', async () => {

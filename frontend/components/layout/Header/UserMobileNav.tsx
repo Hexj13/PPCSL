@@ -60,11 +60,7 @@ export function UserMobileNav({
       {showCreateListingInDrawer && (
         <CreateListingButton variant="mobile" drawerCta onClick={onClose} />
       )}
-      <HeaderListingsNavLink
-        className={mobileNavLinkClasses}
-        onNavigate={() => handleNavClick()}
-        t={t}
-      />
+      <HeaderListingsNavLink className={mobileNavLinkClasses} onNavigate={onClose} t={t} />
       <Link href={href('/my-listings')} {...linkProps}>
         <span suppressHydrationWarning>{t('header.myListings')}</span>
       </Link>

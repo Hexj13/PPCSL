@@ -10,7 +10,7 @@ export function OAuthSignInButtonSkeleton({
   testId = 'auth-oauth-skeleton',
 }: OAuthSignInButtonSkeletonProps) {
   return (
-    <div className="flex-1 min-w-0 flex" data-testid={testId} aria-hidden>
+    <div className="w-full flex" data-testid={testId} aria-hidden>
       <div className={authOAuthIconButtonSkeletonClass} />
     </div>
   );

@@ -156,8 +156,6 @@ export function SearchFiltersForm({
             indicatorRef={tabs.indicatorRef}
             indicatorStyle={tabs.indicatorStyle}
             tabsContainerRef={tabs.tabsContainerRef}
-            showFade={tabs.showFade}
-            fadeOpacity={tabs.fadeOpacity}
           />
         </div>
       </div>

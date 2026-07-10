@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 
 import {
   forceReleaseScrollLockToTop,
+  prepareScrollLockReleaseTo,
   prepareScrollLockReleaseToTop,
   useScrollLock,
 } from './useScrollLock';
@@ -63,6 +64,16 @@ describe('useScrollLock', () => {
     });
 
     expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
+  });
+
+  it('releases scroll to a custom position when prepareScrollLockReleaseTo was called', () => {
+    const { unmount } = renderHook(() => useScrollLock(true));
+    prepareScrollLockReleaseTo(820);
+    act(() => {
+      unmount();
+    });
+
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 820);
   });
 
   it('runs a deferred correction only when scroll position drifts after unlock', () => {

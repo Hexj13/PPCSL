@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { finishOAuthSession } from '@/app/sign/finishOAuthSession';
+import { mountGisIconButton } from '@/app/sign/gisIconButtonMount';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { GoogleSignInDto, User } from '@/lib/api';
@@ -15,7 +16,6 @@ import { toast } from '@/lib/toast';
 const GOOGLE_SIGN_IN_INTENT_MS = 15_000;
 const GOOGLE_POPUP_CANCEL_FOCUS_MS = 400;
 const GOOGLE_POPUP_PENDING_SAFETY_MS = 5_000;
-const GIS_BUTTON_READY_TIMEOUT_MS = 8_000;
 
 const quietAuthRequest = {
   headers: { 'X-Skip-Auth-Redirect': 'true', 'X-Skip-Error-Handling': 'true' },
@@ -64,7 +64,7 @@ declare global {
           }) => void;
           renderButton: (
             parent: HTMLElement,
-            options: Record<string, string | boolean | number>,
+            options: Record<string, string | boolean | number | (() => void)>,
           ) => void;
         };
       };
@@ -144,6 +144,7 @@ export function useGoogleAuth(options: {
   const resetGoogleBusyStateRef = useRef<() => void>(() => {});
   const clearCancelPopupPendingTimerRef = useRef<() => void>(() => {});
   const clearGoogleSignInIntentRef = useRef<() => void>(() => {});
+  const markGoogleSignInIntentCoreRef = useRef<() => void>(() => {});
   const tRef = useRef(t);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const gisScriptLoaded = options.gisScriptLoaded ?? true;
@@ -185,8 +186,7 @@ export function useGoogleAuth(options: {
     }
   }, []);
 
-  const markGoogleSignInIntent = useCallback(() => {
-    if (!isButtonReady) return;
+  const markGoogleSignInIntentCore = useCallback(() => {
     if (isGoogleAuthInFlightRef.current) return;
     googleSignInIntentRef.current = true;
     if (googleSignInIntentTimerRef.current) {
@@ -196,7 +196,12 @@ export function useGoogleAuth(options: {
       googleSignInIntentRef.current = false;
       googleSignInIntentTimerRef.current = null;
     }, GOOGLE_SIGN_IN_INTENT_MS);
-  }, [isButtonReady]);
+  }, []);
+
+  const markGoogleSignInIntent = useCallback(() => {
+    if (!isButtonReady) return;
+    markGoogleSignInIntentCore();
+  }, [isButtonReady, markGoogleSignInIntentCore]);
 
   const resetGoogleBusyState = useCallback(() => {
     clearCancelPopupPendingTimer();
@@ -214,8 +219,15 @@ export function useGoogleAuth(options: {
     resetGoogleBusyStateRef.current = resetGoogleBusyState;
     clearCancelPopupPendingTimerRef.current = clearCancelPopupPendingTimer;
     clearGoogleSignInIntentRef.current = clearGoogleSignInIntent;
+    markGoogleSignInIntentCoreRef.current = markGoogleSignInIntentCore;
     tRef.current = t;
-  }, [resetGoogleBusyState, clearCancelPopupPendingTimer, clearGoogleSignInIntent, t]);
+  }, [
+    resetGoogleBusyState,
+    clearCancelPopupPendingTimer,
+    clearGoogleSignInIntent,
+    markGoogleSignInIntentCore,
+    t,
+  ]);
 
   useEffect(() => {
     const handler = (resp: GoogleCredentialResponse) => {
@@ -454,77 +466,25 @@ export function useGoogleAuth(options: {
       return;
     }
 
-    const container = containerRef.current;
-    let cancelled = false;
-    const updateButtonReady = () => {
-      if (cancelled || !isMountedRef.current) return;
-      const ready = container.childElementCount > 0;
-      setIsButtonReady(ready);
-      if (ready) {
-        clearButtonReadyTimeout();
-        setIsButtonRenderTimedOut(false);
-      }
-    };
-
-    clearButtonReadyTimeout();
-    setIsButtonRenderTimedOut(false);
-    container.innerHTML = '';
-    setIsButtonReady(false);
-    window.google.accounts.id.renderButton(container, {
-      type: 'icon',
-      theme: 'outline',
-      shape: 'square',
-      size: 'large',
+    return mountGisIconButton({
+      container: containerRef.current,
+      renderButton: window.google.accounts.id.renderButton.bind(window.google.accounts.id),
+      onClick: () => {
+        markGoogleSignInIntentCoreRef.current();
+      },
+      isMounted: () => isMountedRef.current,
+      clearReadyTimeout: clearButtonReadyTimeout,
+      scheduleReadyTimeout: (callback, delayMs) => {
+        buttonReadyTimeoutRef.current = setTimeout(callback, delayMs);
+      },
+      onReadyChange: (ready) => {
+        setIsButtonReady(ready);
+        if (ready) {
+          clearButtonReadyTimeout();
+        }
+      },
+      onTimedOutChange: setIsButtonRenderTimedOut,
     });
-    updateButtonReady();
-
-    if (container.childElementCount > 0) {
-      return () => {
-        cancelled = true;
-        clearButtonReadyTimeout();
-      };
-    }
-
-    buttonReadyTimeoutRef.current = setTimeout(() => {
-      if (cancelled || !isMountedRef.current) return;
-      if (container.childElementCount > 0) {
-        updateButtonReady();
-        return;
-      }
-      container.innerHTML = '';
-      window.google?.accounts?.id.renderButton(container, {
-        type: 'icon',
-        theme: 'outline',
-        shape: 'square',
-        size: 'large',
-      });
-      if (container.childElementCount > 0) {
-        updateButtonReady();
-        return;
-      }
-      setIsButtonRenderTimedOut(true);
-    }, GIS_BUTTON_READY_TIMEOUT_MS);
-
-    if (typeof MutationObserver === 'undefined') {
-      return () => {
-        cancelled = true;
-        clearButtonReadyTimeout();
-      };
-    }
-
-    const observer = new MutationObserver(() => {
-      if (container.childElementCount > 0) {
-        updateButtonReady();
-        observer.disconnect();
-      }
-    });
-    observer.observe(container, { childList: true });
-
-    return () => {
-      cancelled = true;
-      clearButtonReadyTimeout();
-      observer.disconnect();
-    };
   }, [canRenderButton, clientId, ensureGisInitialized, clearButtonReadyTimeout]);
 
   return {

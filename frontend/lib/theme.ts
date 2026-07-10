@@ -40,6 +40,9 @@ export interface ThemeColors {
   accent: string;
   accentSecondary: string;
   newBadge: string;
+  brand: {
+    telegram: string;
+  };
   semantic: {
     success: string;
     error: string;
@@ -122,6 +125,9 @@ const defaultTheme: ThemeColors = {
   accent: '#ec9e1c',
   accentSecondary: '#FF5A5F',
   newBadge: '#6AA4C6',
+  brand: {
+    telegram: '#229ED9',
+  },
   semantic: {
     success: '#28A745',
     error: '#DC3545',

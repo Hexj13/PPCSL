@@ -1145,6 +1145,8 @@
     "horsepowerRangeError": "Horsepower must be between 1 and 9999",
     "formAriaLabel": "Search filters",
     "basicCriteria": "Basic Criteria",
+    "showNextTabs": "Show next tabs",
+    "showPreviousTabs": "Show previous tabs",
     "popularBodyTypes": "Popular Body Types",
     "categoryLabel": "Category:",
     "brand": "Brand",

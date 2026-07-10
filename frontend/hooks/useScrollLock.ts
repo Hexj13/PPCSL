@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 let scrollLockDepth = 0;
 let lockedScrollY = 0;
 let releaseToTopNext = false;
+let releaseToYNext: number | null = null;
 let bodyStyleSnapshot: {
   position: string;
   top: string;
@@ -66,7 +67,8 @@ function releaseScrollLock() {
   }
 
   restoreBodyStyles();
-  const targetY = releaseToTopNext ? 0 : lockedScrollY;
+  const targetY = releaseToYNext ?? (releaseToTopNext ? 0 : lockedScrollY);
+  releaseToYNext = null;
   releaseToTopNext = false;
   window.scrollTo(0, targetY);
   if (typeof window.requestAnimationFrame === 'function') {
@@ -80,9 +82,21 @@ function releaseScrollLock() {
   }
 }
 
+export function isScrollLockActive(): boolean {
+  return scrollLockDepth > 0;
+}
+
 export function prepareScrollLockReleaseToTop() {
   if (scrollLockDepth > 0) {
     releaseToTopNext = true;
+    releaseToYNext = null;
+  }
+}
+
+export function prepareScrollLockReleaseTo(scrollY: number) {
+  if (scrollLockDepth > 0) {
+    releaseToYNext = scrollY;
+    releaseToTopNext = false;
   }
 }
 
@@ -93,6 +107,7 @@ export function forceReleaseScrollLockToTop() {
   scrollLockDepth = 0;
   restoreBodyStyles();
   releaseToTopNext = false;
+  releaseToYNext = null;
   window.scrollTo(0, 0);
 }
 

@@ -21,6 +21,14 @@ const sampleData: PopularListingsData = {
     Convertible: [],
   },
   brandListingCounts: {},
+  bodyTypeListingCounts: {
+    Hatchback: 0,
+    Wagon: 0,
+    SUV: 0,
+    Minivan: 0,
+    Sedan: 0,
+    Convertible: 0,
+  },
   statistics: {
     brands: { items: [], otherCount: 0, total: 0 },
     bodyTypes: { items: [], otherCount: 0, total: 0 },

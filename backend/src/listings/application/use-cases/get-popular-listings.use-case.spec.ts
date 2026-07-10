@@ -14,6 +14,14 @@ describe('GetPopularListingsUseCase', () => {
       Convertible: [],
     },
     brandListingCounts: {},
+    bodyTypeListingCounts: {
+      Hatchback: 0,
+      Wagon: 0,
+      SUV: 0,
+      Minivan: 0,
+      Sedan: 0,
+      Convertible: 0,
+    },
     statistics: {
       brands: {
         items: [
@@ -73,6 +81,7 @@ describe('GetPopularListingsUseCase', () => {
       expect.objectContaining({
         modelsByBodyType: emptyAggregates.modelsByBodyType,
         brandListingCounts: emptyAggregates.brandListingCounts,
+        bodyTypeListingCounts: emptyAggregates.bodyTypeListingCounts,
         statistics: emptyAggregates.statistics,
         generatedAt: expect.any(String),
       }),

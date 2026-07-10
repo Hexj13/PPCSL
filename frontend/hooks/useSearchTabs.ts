@@ -2,8 +2,8 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useI18n } from '@/components/providers/I18nProvider';
+import { getTabCenteredBetweenControlsScrollLeft } from '@/components/search/search-filters/SearchTabs';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
-import { createCoalescedCallback } from '@/lib/resize-coalesced';
 
 type SearchTab = 'basic' | 'advanced' | 'equipment' | 'popular';
 
@@ -132,14 +132,7 @@ export function useSearchTabs({
   const equipmentTabRef = useRef<HTMLButtonElement>(null);
   const popularTabRef = useRef<HTMLButtonElement>(null);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
-  const [showFade, setShowFade] = useState(true);
-  const [fadeOpacity, setFadeOpacity] = useState(1);
   const buttonsContainerRef = useRef<HTMLDivElement>(null);
-
-  const FADE_OUT_SCROLL_THRESHOLD = 48;
-
-  const lastFadeRef = useRef({ show: true, opacity: 1 });
-  const rafIdRef = useRef(0);
 
   const tabRefs = useMemo(
     () => ({
@@ -159,7 +152,14 @@ export function useSearchTabs({
   );
 
   const scrollTabsToStart = useCallback(() => {
-    tabsContainerRef.current?.scrollTo({ left: 0, behavior: 'instant' });
+    const container = tabsContainerRef.current;
+    const basicTab = basicTabRef.current;
+    if (!container || !basicTab || container.scrollWidth <= container.clientWidth) return;
+
+    container.scrollTo({
+      left: getTabCenteredBetweenControlsScrollLeft(container, basicTab),
+      behavior: 'instant',
+    });
   }, []);
 
   const scrollTabToStart = useCallback((tab: SearchTab) => {
@@ -175,56 +175,16 @@ export function useSearchTabs({
             : popularTabRef;
     const el = tabRef.current;
     if (!el) return;
-    const targetScrollLeft = Math.min(el.offsetLeft, container.scrollWidth - container.clientWidth);
+
+    const isMobileTabsViewport =
+      typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+    const targetScrollLeft = isMobileTabsViewport
+      ? getTabCenteredBetweenControlsScrollLeft(container, el)
+      : Math.min(el.offsetLeft, maxScrollLeft);
+
     container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
   }, []);
-
-  useEffect(() => {
-    const updateFade = () => {
-      if (!tabsContainerRef.current) return;
-      const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
-      const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
-      const show = !isAtEnd;
-      const opacity = isAtEnd ? 0 : Math.max(0, 1 - scrollLeft / FADE_OUT_SCROLL_THRESHOLD);
-      if (lastFadeRef.current.show !== show || lastFadeRef.current.opacity !== opacity) {
-        lastFadeRef.current = { show, opacity };
-        setShowFade(show);
-        setFadeOpacity(opacity);
-      }
-    };
-
-    const runUpdates = () => {
-      updateFade();
-      rafIdRef.current = 0;
-    };
-
-    const handleResize = createCoalescedCallback(updateFade);
-
-    const handleScroll = () => {
-      if (rafIdRef.current === 0) {
-        rafIdRef.current = requestAnimationFrame(runUpdates);
-      }
-    };
-
-    updateFade();
-
-    const container = tabsContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll, { passive: true });
-      const resizeObserver = new ResizeObserver(handleResize);
-      resizeObserver.observe(container);
-      window.addEventListener('resize', handleResize);
-
-      return () => {
-        container.removeEventListener('scroll', handleScroll);
-        resizeObserver.disconnect();
-        window.removeEventListener('resize', handleResize);
-        if (rafIdRef.current !== 0) cancelAnimationFrame(rafIdRef.current);
-      };
-    }
-
-    return undefined;
-  }, [activeTab, mode]);
 
   return {
     activeTab,
@@ -238,8 +198,6 @@ export function useSearchTabs({
     indicatorRef,
     indicatorStyle,
     tabsContainerRef,
-    showFade,
-    fadeOpacity,
     buttonsContainerRef,
   };
 }
