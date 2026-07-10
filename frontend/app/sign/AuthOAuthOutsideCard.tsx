@@ -27,7 +27,6 @@ type TelegramAuthProps = {
 type AuthOAuthOutsideCardProps = {
   googleClientIdConfigured: boolean;
   telegramClientIdConfigured: boolean;
-  gisReady: boolean;
   googleAuth: GoogleAuthProps;
   telegramAuth: TelegramAuthProps;
   googleDisabled: boolean;
@@ -35,36 +34,29 @@ type AuthOAuthOutsideCardProps = {
 };
 
 function GoogleOAuthSlot({
-  gisReady,
   googleAuth,
   googleDisabled,
 }: {
-  gisReady: boolean;
   googleAuth: GoogleAuthProps;
   googleDisabled: boolean;
 }) {
   const googleLoading = !googleAuth.isButtonReady && !googleAuth.isButtonRenderTimedOut;
   const googleUnavailable = !googleAuth.isButtonReady && googleAuth.isButtonRenderTimedOut;
-  const showButtonShell = googleAuth.isButtonReady || googleUnavailable;
 
   return (
-    <div className="relative flex h-10 w-10" data-testid="auth-google-outside-card">
+    <div
+      className="relative h-10 w-10 min-w-[40px] max-w-[40px] shrink-0 overflow-hidden rounded"
+      data-testid="auth-google-outside-card"
+    >
+      <GoogleSignInButton
+        containerRef={googleAuth.containerRef}
+        clientIdConfigured={googleAuth.clientIdConfigured}
+        disabled={googleDisabled || googleUnavailable}
+        loading={googleAuth.isGoogleBusy}
+      />
       {googleLoading ? (
-        <div className={gisReady ? 'absolute inset-0 z-10 flex' : 'flex'}>
+        <div className="pointer-events-none absolute inset-0 z-10">
           <OAuthSignInButtonSkeleton testId="auth-google-skeleton" />
-        </div>
-      ) : null}
-      {gisReady ? (
-        <div
-          className={`flex ${showButtonShell ? '' : 'invisible'}`}
-          aria-hidden={!showButtonShell}
-        >
-          <GoogleSignInButton
-            containerRef={googleAuth.containerRef}
-            clientIdConfigured={googleAuth.clientIdConfigured}
-            disabled={googleDisabled || googleUnavailable}
-            loading={googleAuth.isGoogleBusy}
-          />
         </div>
       ) : null}
     </div>
@@ -81,10 +73,17 @@ function TelegramOAuthSlot({
   authSubmitBusy: boolean;
 }) {
   return (
-    <div className="flex h-10 w-10" data-testid="auth-telegram-outside-card">
-      {telegramLoading ? <OAuthSignInButtonSkeleton testId="auth-telegram-skeleton" /> : null}
+    <div
+      className="relative h-10 w-10 min-w-[40px] max-w-[40px] shrink-0 overflow-hidden rounded"
+      data-testid="auth-telegram-outside-card"
+    >
+      {telegramLoading ? (
+        <div className="pointer-events-none absolute inset-0 z-10">
+          <OAuthSignInButtonSkeleton testId="auth-telegram-skeleton" />
+        </div>
+      ) : null}
       <div
-        className={`flex ${telegramLoading ? 'sr-only' : ''}`}
+        className={`absolute inset-0 flex h-10 w-10 ${telegramLoading ? 'invisible pointer-events-none' : ''}`}
         aria-hidden={telegramLoading}
         data-testid={telegramLoading ? 'auth-telegram-probe' : undefined}
       >
@@ -104,7 +103,6 @@ function TelegramOAuthSlot({
 export function AuthOAuthOutsideCard({
   googleClientIdConfigured,
   telegramClientIdConfigured,
-  gisReady,
   googleAuth,
   telegramAuth,
   googleDisabled,
@@ -141,11 +139,7 @@ export function AuthOAuthOutsideCard({
       </div>
       <div className="mt-6 mx-auto flex w-fit items-center justify-center gap-3">
         {showGoogle ? (
-          <GoogleOAuthSlot
-            gisReady={gisReady}
-            googleAuth={googleAuth}
-            googleDisabled={googleDisabled}
-          />
+          <GoogleOAuthSlot googleAuth={googleAuth} googleDisabled={googleDisabled} />
         ) : null}
         {showTelegramBlock ? (
           <TelegramOAuthSlot

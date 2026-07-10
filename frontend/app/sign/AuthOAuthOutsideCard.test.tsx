@@ -30,11 +30,9 @@ jest.mock('@/app/sign/TelegramSignInButton', () => ({
 }));
 
 function renderOAuthOutsideCard({
-  gisReady,
   isButtonReady,
   isButtonRenderTimedOut = false,
 }: {
-  gisReady: boolean;
   isButtonReady: boolean;
   isButtonRenderTimedOut?: boolean;
 }) {
@@ -42,7 +40,6 @@ function renderOAuthOutsideCard({
     <AuthOAuthOutsideCard
       googleClientIdConfigured={true}
       telegramClientIdConfigured={false}
-      gisReady={gisReady}
       googleAuth={{
         isButtonReady,
         isButtonRenderTimedOut,
@@ -66,18 +63,23 @@ function renderOAuthOutsideCard({
 describe('AuthOAuthOutsideCard', () => {
   it('shows the Google skeleton while the button is still loading', () => {
     renderOAuthOutsideCard({
-      gisReady: true,
       isButtonReady: false,
     });
 
     fireEvent.pointerDown(screen.getByTestId('auth-google-outside-card'));
 
     expect(screen.getByTestId('auth-google-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-google-button')).toBeInTheDocument();
+    expect(screen.getByTestId('auth-google-outside-card')).toHaveClass(
+      'h-10',
+      'w-10',
+      'shrink-0',
+      'overflow-hidden',
+    );
   });
 
   it('removes the blocking skeleton after GIS render timeout', () => {
     renderOAuthOutsideCard({
-      gisReady: true,
       isButtonReady: false,
       isButtonRenderTimedOut: true,
     });
@@ -88,7 +90,6 @@ describe('AuthOAuthOutsideCard', () => {
 
   it('shows the Google button shell when GIS markup is ready', () => {
     renderOAuthOutsideCard({
-      gisReady: true,
       isButtonReady: true,
     });
 

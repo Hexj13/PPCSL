@@ -22,5 +22,6 @@ describe('GoogleSignInButton', () => {
 
     expect(gisContainer).not.toHaveAttribute('inert');
     expect(gisContainer).toHaveAttribute('aria-hidden', 'false');
+    expect(gisContainer).toHaveClass('absolute', 'inset-0', 'h-10', 'w-10', 'overflow-hidden');
   });
 });

@@ -235,7 +235,6 @@ export function SignPageContent() {
       <AuthOAuthOutsideCard
         googleClientIdConfigured={googleClientIdConfigured}
         telegramClientIdConfigured={telegramClientIdConfigured}
-        gisReady={gisReady}
         googleAuth={googleAuth}
         telegramAuth={telegramAuth}
         googleDisabled={googleDisabled}
