@@ -70,6 +70,9 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
     onPriceBlur,
     onWheel: _onWheel,
     updateMultiple,
+    popularData = null,
+    popularLoading = false,
+    popularError = false,
   } = props;
 
   const [openSheet, setOpenSheet] = useState<string | null>(null);
@@ -367,6 +370,9 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
           setFilters={setFilters}
           vehicleType={vehicleType}
           enableE2eTestIds
+          popularData={popularData}
+          popularLoading={popularLoading}
+          popularError={popularError}
         />
       </div>
 

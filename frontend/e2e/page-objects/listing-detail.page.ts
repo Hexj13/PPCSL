@@ -235,22 +235,11 @@ export class ListingDetailPage {
     await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
     await this.page.evaluate(() => {
       const storageKey = '__e2e_clipboard';
-      const writeText = async (text: string) => {
-        sessionStorage.setItem(storageKey, text);
-        try {
-          await Promise.race([
-            navigator.clipboard.writeText(text),
-            new Promise<void>((resolve) => {
-              setTimeout(resolve, 500);
-            }),
-          ]);
-        } catch {
-          // noop
-        }
-      };
       Object.defineProperty(navigator, 'clipboard', {
         value: {
-          writeText,
+          writeText: async (text: string) => {
+            sessionStorage.setItem(storageKey, text);
+          },
           readText: async () => sessionStorage.getItem(storageKey) ?? '',
         },
         configurable: true,
@@ -263,30 +252,24 @@ export class ListingDetailPage {
     await this.ensureClipboardReadyForCopyLink();
     await this.expectCopyLinkButtonVisible();
     await expect(this.copyLinkButton).toBeEnabled({ timeout: 15_000 });
+    await this.copyLinkButton.scrollIntoViewIfNeeded();
     await this.copyLinkButton.click();
-    if (
-      !(await this.page
-        .getByText(t('listingDetail.linkCopied'))
-        .first()
-        .isVisible()
-        .catch(() => false))
-    ) {
-      await this.copyLinkButton.click();
-    }
   }
 
   async expectCopyLinkSuccessToast(): Promise<void> {
     const listingUrl = await this.page.evaluate(() => window.location.href);
     const listingPath = await this.page.evaluate(() => window.location.pathname);
-    try {
-      await expectSuccessToast(this.page, t('listingDetail.linkCopied'));
-      return;
-    } catch {
-      // fallback below
-    }
     await expect
       .poll(
         async () => {
+          const toastVisible = await this.page
+            .getByText(t('listingDetail.linkCopied'))
+            .first()
+            .isVisible()
+            .catch(() => false);
+          if (toastVisible) {
+            return true;
+          }
           const clipboardText = await this.page.evaluate(() => {
             const stored = sessionStorage.getItem('__e2e_clipboard');
             if (stored) {
@@ -298,13 +281,20 @@ export class ListingDetailPage {
               return '';
             }
           });
-          return (
+          if (
             clipboardText.includes(listingPath) ||
             clipboardText === listingUrl ||
             clipboardText.replace(/\/$/, '') === listingUrl.replace(/\/$/, '')
-          );
+          ) {
+            return true;
+          }
+          await this.ensureClipboardReadyForCopyLink();
+          if (await this.copyLinkButton.isEnabled().catch(() => false)) {
+            await this.copyLinkButton.click();
+          }
+          return false;
         },
-        { timeout: 45_000 },
+        { timeout: 30_000, intervals: [400, 800, 1200, 2000] },
       )
       .toBe(true);
   }
@@ -313,6 +303,14 @@ export class ListingDetailPage {
     await expect(this.favoriteActionButton).toHaveAttribute(
       'aria-label',
       t('listingDetail.actionCardFavoriteTitleWhenSaved'),
+      { timeout: 15_000 },
+    );
+  }
+
+  async expectFavoriteInactive(): Promise<void> {
+    await expect(this.favoriteActionButton).toHaveAttribute(
+      'aria-label',
+      t('listingDetail.addToFavorites'),
       { timeout: 15_000 },
     );
   }

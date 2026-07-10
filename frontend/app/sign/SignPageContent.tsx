@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
 import { LoginForm } from '@/app/login/LoginForm';
 import { useLoginPage } from '@/app/login/useLoginPage';
@@ -92,6 +92,23 @@ export function SignPageContent() {
     router.replace(href, { scroll: false });
   };
 
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, current: AuthTab) => {
+    if (authSubmitBusy) return;
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const next: AuthTab =
+      event.key === 'ArrowRight'
+        ? current === 'login'
+          ? 'register'
+          : 'login'
+        : current === 'login'
+          ? 'register'
+          : 'login';
+    handleTabClick(next);
+    const nextRef = next === 'login' ? loginTabRef : registerTabRef;
+    nextRef.current?.focus();
+  };
+
   return (
     <div className="max-w-md mx-auto mt-6 md:mt-12 mb-16" data-testid="auth-page">
       {telegramClientIdConfigured && !isTelegramDevMockEnabled() ? (
@@ -123,7 +140,9 @@ export function SignPageContent() {
             type="button"
             role="tab"
             aria-selected={tab === 'login'}
+            aria-controls="sign-panel-login"
             id="sign-tab-login"
+            tabIndex={tab === 'login' ? 0 : -1}
             data-testid="auth-tab-login"
             className={`flex-1 px-4 py-3 text-sm md:text-base font-semibold transition-all duration-300 ease-in-out relative z-10 text-primary-900 ${
               tab === 'login'
@@ -131,6 +150,7 @@ export function SignPageContent() {
                 : 'hover-only:hover:bg-primary-500/10'
             }`}
             onClick={() => handleTabClick('login')}
+            onKeyDown={(event) => handleTabKeyDown(event, 'login')}
             disabled={authSubmitBusy}
           >
             {t('login.title')}
@@ -140,7 +160,9 @@ export function SignPageContent() {
             type="button"
             role="tab"
             aria-selected={tab === 'register'}
+            aria-controls="sign-panel-register"
             id="sign-tab-register"
+            tabIndex={tab === 'register' ? 0 : -1}
             data-testid="auth-tab-register"
             className={`flex-1 px-4 py-3 text-sm md:text-base font-semibold transition-all duration-300 ease-in-out relative z-10 text-primary-900 ${
               tab === 'register'
@@ -148,6 +170,7 @@ export function SignPageContent() {
                 : 'hover-only:hover:bg-primary-500/10'
             }`}
             onClick={() => handleTabClick('register')}
+            onKeyDown={(event) => handleTabKeyDown(event, 'register')}
             disabled={authSubmitBusy}
           >
             {t('register.title')}

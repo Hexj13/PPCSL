@@ -49,7 +49,7 @@ export function SearchFormActions({
   const { t } = useTranslation();
   const { push: localizedPush } = useLocalizedNavigation();
   const { user, isInitialized } = useAuthStore();
-  const userForUi = user;
+  const userForUi = isInitialized ? user : null;
 
   const handleSmartSelectionClick = async () => {
     if (!userForUi) {

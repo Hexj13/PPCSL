@@ -24,6 +24,14 @@ import {
   decodeSearchCursor,
   encodeSearchCursor,
 } from '../../application/utils/search-cursor.utils';
+import {
+  POPULAR_BODY_TYPES_CAR,
+  type PopularBodyTypeCar,
+  type PopularListingsData,
+  type PopularModelItem,
+  type PopularStatBucket,
+  type PopularStatItem,
+} from '../../domain/popular-listings.types';
 import { getVehicleTypeFromBodyType } from '../../domain/utils/vehicle-type.utils';
 import { Listing } from '../../entities/listing.entity';
 import { applyCitiesFilter } from '../utils/query-filters.utils';
@@ -709,5 +717,193 @@ export class TypeOrmListingRepository implements IListingRepository {
       applyInOrEqualFilter(qb, 'vehicle', 'brand_id', searchDto.brand_ids, searchDto.brand_id);
       applyInOrEqualFilter(qb, 'vehicle', 'model_id', searchDto.model_ids, searchDto.model_id);
     }
+  }
+
+  async getPopularListingsAggregates(): Promise<Omit<PopularListingsData, 'generatedAt'>> {
+    const carBodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE.car];
+    const popularBodyTypes = [...POPULAR_BODY_TYPES_CAR];
+
+    type ModelRow = {
+      body_type: string;
+      brand_id: string;
+      brand_name: string;
+      model_id: string;
+      model_name: string;
+      listing_count: string;
+    };
+    type StatRow = {
+      key: string;
+      label: string;
+      count: string;
+    };
+
+    const [modelRows, brandRows, bodyTypeRows, fuelRows] = await Promise.all([
+      this.repository.manager.query(
+        `
+        WITH active_vehicle_listings AS (
+          SELECT
+            l.id,
+            v.body_type::text AS body_type,
+            v.brand_id,
+            v.model_id,
+            b.name AS brand_name,
+            vm.name AS model_name
+          FROM listings l
+          INNER JOIN vehicles v ON v.id = l.vehicle_id
+          INNER JOIN brands b ON b.id = v.brand_id
+          INNER JOIN vehicle_models vm ON vm.id = v.model_id
+          WHERE l.status = 'Active'
+            AND l.category = 'vehicle'
+            AND v.body_type::text = ANY($1)
+            AND (l.is_promoted = false OR l.promoted_until IS NULL OR l.promoted_until > NOW())
+            AND b.is_archived = false
+            AND vm.is_archived = false
+        ),
+        model_counts AS (
+          SELECT
+            body_type,
+            brand_id,
+            brand_name,
+            model_id,
+            model_name,
+            COUNT(*)::int AS listing_count
+          FROM active_vehicle_listings
+          WHERE body_type = ANY($2)
+          GROUP BY body_type, brand_id, brand_name, model_id, model_name
+        ),
+        ranked AS (
+          SELECT
+            *,
+            ROW_NUMBER() OVER (
+              PARTITION BY body_type
+              ORDER BY listing_count DESC, brand_name ASC, model_name ASC
+            ) AS rn
+          FROM model_counts
+        )
+        SELECT body_type, brand_id, brand_name, model_id, model_name, listing_count
+        FROM ranked
+        WHERE rn <= 8
+        ORDER BY body_type ASC, rn ASC
+        `,
+        [carBodyTypes, popularBodyTypes],
+      ) as Promise<ModelRow[]>,
+      this.repository.manager.query(
+        `
+        WITH active_vehicle_listings AS (
+          SELECT
+            l.id,
+            v.brand_id,
+            b.name AS brand_name
+          FROM listings l
+          INNER JOIN vehicles v ON v.id = l.vehicle_id
+          INNER JOIN brands b ON b.id = v.brand_id
+          INNER JOIN vehicle_models vm ON vm.id = v.model_id
+          WHERE l.status = 'Active'
+            AND l.category = 'vehicle'
+            AND v.body_type::text = ANY($1)
+            AND (l.is_promoted = false OR l.promoted_until IS NULL OR l.promoted_until > NOW())
+            AND b.is_archived = false
+            AND vm.is_archived = false
+        )
+        SELECT brand_id::text AS key, brand_name AS label, COUNT(*)::int AS count
+        FROM active_vehicle_listings
+        GROUP BY brand_id, brand_name
+        ORDER BY count DESC, brand_name ASC
+        `,
+        [carBodyTypes],
+      ) as Promise<StatRow[]>,
+      this.repository.manager.query(
+        `
+        WITH active_vehicle_listings AS (
+          SELECT
+            l.id,
+            v.body_type::text AS body_type
+          FROM listings l
+          INNER JOIN vehicles v ON v.id = l.vehicle_id
+          INNER JOIN brands b ON b.id = v.brand_id
+          INNER JOIN vehicle_models vm ON vm.id = v.model_id
+          WHERE l.status = 'Active'
+            AND l.category = 'vehicle'
+            AND v.body_type::text = ANY($1)
+            AND (l.is_promoted = false OR l.promoted_until IS NULL OR l.promoted_until > NOW())
+            AND b.is_archived = false
+            AND vm.is_archived = false
+        )
+        SELECT body_type AS key, body_type AS label, COUNT(*)::int AS count
+        FROM active_vehicle_listings
+        GROUP BY body_type
+        ORDER BY count DESC, body_type ASC
+        `,
+        [carBodyTypes],
+      ) as Promise<StatRow[]>,
+      this.repository.manager.query(
+        `
+        WITH active_vehicle_listings AS (
+          SELECT
+            l.id,
+            COALESCE(v.fuel::text, 'unknown') AS fuel_key
+          FROM listings l
+          INNER JOIN vehicles v ON v.id = l.vehicle_id
+          INNER JOIN brands b ON b.id = v.brand_id
+          INNER JOIN vehicle_models vm ON vm.id = v.model_id
+          WHERE l.status = 'Active'
+            AND l.category = 'vehicle'
+            AND v.body_type::text = ANY($1)
+            AND (l.is_promoted = false OR l.promoted_until IS NULL OR l.promoted_until > NOW())
+            AND b.is_archived = false
+            AND vm.is_archived = false
+        )
+        SELECT fuel_key AS key, fuel_key AS label, COUNT(*)::int AS count
+        FROM active_vehicle_listings
+        GROUP BY fuel_key
+        ORDER BY count DESC, fuel_key ASC
+        `,
+        [carBodyTypes],
+      ) as Promise<StatRow[]>,
+    ]);
+
+    const modelsByBodyType = Object.fromEntries(
+      POPULAR_BODY_TYPES_CAR.map((bodyType) => [bodyType, [] as PopularModelItem[]]),
+    ) as Record<PopularBodyTypeCar, PopularModelItem[]>;
+
+    for (const row of modelRows) {
+      const bodyType = row.body_type as PopularBodyTypeCar;
+      if (!(bodyType in modelsByBodyType)) continue;
+      modelsByBodyType[bodyType].push({
+        brandId: row.brand_id,
+        brandName: row.brand_name,
+        modelId: row.model_id,
+        modelName: row.model_name,
+        listingCount: Number(row.listing_count),
+      });
+    }
+
+    return {
+      modelsByBodyType,
+      brandListingCounts: Object.fromEntries(
+        brandRows.map((row) => [row.label, Number(row.count)]),
+      ),
+      statistics: {
+        brands: this.toPopularStatBucket(brandRows),
+        bodyTypes: this.toPopularStatBucket(bodyTypeRows),
+        fuels: this.toPopularStatBucket(fuelRows),
+      },
+    };
+  }
+
+  private toPopularStatBucket(
+    rows: Array<{ key: string; label: string; count: string | number }>,
+  ): PopularStatBucket {
+    const parsed: PopularStatItem[] = rows
+      .map((row) => ({
+        key: row.key,
+        label: row.label,
+        count: Number(row.count),
+      }))
+      .filter((item) => item.count > 0);
+    const total = parsed.reduce((sum, item) => sum + item.count, 0);
+    const items = parsed.slice(0, 4);
+    const otherCount = parsed.slice(4).reduce((sum, item) => sum + item.count, 0);
+    return { items, otherCount, total };
   }
 }

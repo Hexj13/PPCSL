@@ -56,6 +56,7 @@ test.describe('Cross-tab favorites sync', () => {
       await listingDetailPage.expectPageView();
       await listingDetailPage.expectFavoriteActionVisible();
       await listingDetailPage.expectFavoriteActionReady();
+      await listingDetailPage.expectFavoriteInactive();
       await listingDetailPage.clickFavoriteAndExpectAdded();
       await waitUntilFavoriteInIdsApi(pageA, listingId);
       await favoritesPageB.expectListingCardVisible(listingId);

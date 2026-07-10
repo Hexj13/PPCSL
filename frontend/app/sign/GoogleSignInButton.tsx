@@ -36,7 +36,7 @@ export function GoogleSignInButton({
       aria-label={t('sign.continueWithGoogle')}
     >
       {loading ? (
-        <Spinner size="sm" inline className="text-[#3c4043]" data-testid="auth-google-loading" />
+        <Spinner size="sm" inline className="text-dark-500" data-testid="auth-google-loading" />
       ) : (
         <GoogleIcon className={authOAuthIconButtonIconClass} />
       )}

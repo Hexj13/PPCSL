@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -20,15 +20,14 @@ import {
   popularTireBrandLogoUrl,
 } from './PopularFilterPickers';
 
-const TIRE_POPULAR_LOGO_DEFAULT_SIZE_BRANDS = new Set(
+const TIRE_POPULAR_LOGO_COMPACT_BRANDS = new Set(
   ['toyo', 'falken'].map((n) => normalizeTireNameKey(n)),
 );
 
 function getTirePopularBrandImageScale(brandName: string): number {
   const key = normalizeTireNameKey(brandName);
-  if (key === 'michelin' || key === 'dunlop') return 2;
-  if (TIRE_POPULAR_LOGO_DEFAULT_SIZE_BRANDS.has(key)) return 0.9;
-  return 1.65;
+  if (TIRE_POPULAR_LOGO_COMPACT_BRANDS.has(key)) return 0.9;
+  return 1;
 }
 
 function tireTriplesAligned(filters: FilterState): boolean {
@@ -69,22 +68,8 @@ export function TirePopularPanel({
   updateMultiple,
 }: TirePopularPanelProps) {
   const { t } = useTranslation();
-  const [isNarrowViewport, setIsNarrowViewport] = useState(false);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
-    const mql = window.matchMedia('(max-width: 1024px)');
-    const update = (event?: MediaQueryListEvent) => {
-      setIsNarrowViewport(event ? event.matches : mql.matches);
-    };
-    update();
-    mql.addEventListener('change', update);
-    return () => {
-      mql.removeEventListener('change', update);
-    };
-  }, []);
-
-  const popularBrandsSorted = useMemo(() => [...POPULAR_TIRE_BRAND_NAMES].sort(compareNames), []);
+  const popularBrandsSorted = useMemo(() => [...POPULAR_TIRE_BRAND_NAMES], []);
 
   const toggleTireBrandPopular = (popularName: string) => {
     const brand = tireBrands.find(
@@ -175,7 +160,7 @@ export function TirePopularPanel({
         <h3 className="text-sm font-medium text-primary-900 mb-3">
           {t('searchFilters.popularTireBrands')}
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6 w-full lg:flex lg:flex-nowrap">
           {popularBrandsSorted.map((brandName) => (
             <PopularFilterBrandTile
               key={brandName}
@@ -183,12 +168,7 @@ export function TirePopularPanel({
               imageSrc={popularTireBrandLogoUrl(brandName)}
               selected={isPopularBrandSelected(brandName)}
               onToggle={() => toggleTireBrandPopular(brandName)}
-              imageScale={
-                isNarrowViewport &&
-                !TIRE_POPULAR_LOGO_DEFAULT_SIZE_BRANDS.has(normalizeTireNameKey(brandName))
-                  ? 1.5
-                  : getTirePopularBrandImageScale(brandName)
-              }
+              imageScale={getTirePopularBrandImageScale(brandName)}
             />
           ))}
         </div>

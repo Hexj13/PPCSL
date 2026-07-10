@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
 import type { FilterState } from '@/hooks/useSearchFilters';
-import type { Brand, VehicleModel } from '@/lib/api';
-import { getPopularBrands, getPopularModelsByBrand } from '@/lib/content/popular-brands';
+import type { Brand, PopularListingsData, VehicleModel } from '@/lib/api';
+import { getPopularBrands } from '@/lib/content/popular-brands';
 
 type UseSearchFiltersPopularActiveParams = {
   filters: FilterState;
@@ -11,19 +11,20 @@ type UseSearchFiltersPopularActiveParams = {
   models: VehicleModel[];
   vehicleType: 'car' | 'moto' | 'truck';
   hasTirePopularFilters: boolean;
+  popularModelIds?: Set<string>;
 };
 
 export function useSearchFiltersPopularActive({
   filters,
   deferredFilters,
   brands,
-  models,
+  models: _models,
   vehicleType,
   hasTirePopularFilters,
+  popularModelIds,
 }: UseSearchFiltersPopularActiveParams): boolean {
+  void _models;
   const popularBrandsSet = useMemo(() => new Set(getPopularBrands(vehicleType)), [vehicleType]);
-
-  const brandNameById = useMemo(() => new Map(brands.map((b) => [b.id, b.name])), [brands]);
 
   const deferredBrandIdSet = useMemo(
     () => new Set(deferredFilters.brand_ids),
@@ -49,26 +50,33 @@ export function useSearchFiltersPopularActive({
       }
     }
 
-    const popularModelsByBrand = getPopularModelsByBrand(vehicleType);
-    for (const model of models) {
-      if (!deferredModelIdSet.has(model.id)) continue;
-      const brandName = brandNameById.get(model.brand_id);
-      if (!brandName) continue;
-      const popularModels = popularModelsByBrand[brandName] ?? [];
-      if (popularModels.includes(model.name)) return true;
+    if (popularModelIds && popularModelIds.size > 0) {
+      for (const modelId of deferredModelIdSet) {
+        if (popularModelIds.has(modelId)) return true;
+      }
     }
+
     return false;
   }, [
     brands,
-    brandNameById,
     deferredBrandIdSet,
     deferredFilters.brand_ids.length,
     deferredFilters.model_ids.length,
     deferredModelIdSet,
     filters.listing_category,
     hasTirePopularFilters,
-    models,
     popularBrandsSet,
-    vehicleType,
+    popularModelIds,
   ]);
+}
+
+export function collectPopularModelIds(data: PopularListingsData | null | undefined): Set<string> {
+  const ids = new Set<string>();
+  if (!data) return ids;
+  for (const models of Object.values(data.modelsByBodyType)) {
+    for (const model of models) {
+      ids.add(model.modelId);
+    }
+  }
+  return ids;
 }

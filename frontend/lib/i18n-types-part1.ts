@@ -82,6 +82,8 @@ export interface TranslationsPart1 {
     delete: string;
     edit: string;
     close: string;
+    showPassword: string;
+    hidePassword: string;
     yes: string;
     no: string;
     search: string;
@@ -157,6 +159,9 @@ export interface TranslationsPart1 {
     phoneRequired: string;
     phoneInvalid: string;
     messengers: string;
+    messengerViber: string;
+    messengerWhatsapp: string;
+    messengerTelegram: string;
     optional: string;
     email: string;
     emailRequired: string;

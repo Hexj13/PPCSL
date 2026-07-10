@@ -429,6 +429,7 @@ export class SearchHomePage extends SearchHomeScrollPage {
   }
 
   async waitForAuthReadyForSaveFilter(): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
     const origin = getE2eBackendApiOrigin();
     await expect
       .poll(
@@ -457,11 +458,14 @@ export class SearchHomePage extends SearchHomeScrollPage {
     const btn = this.searchFiltersForm().getByTestId('search-save-filter');
     await expect(btn).toBeVisible({ timeout: 20_000 });
     await expect(btn).toBeEnabled({ timeout: 20_000 });
+    await expect
+      .poll(async () => !(await btn.getAttribute('title')), { timeout: 20_000 })
+      .toBe(true);
   }
 
   async openSaveFilterModal(): Promise<void> {
+    const searchUrl = this.page.url();
     await this.waitForAuthReadyForSaveFilter();
-    const btn = this.searchFiltersForm().getByTestId('search-save-filter');
     const modal = this.page.getByTestId('save-filter-modal');
 
     await expect
@@ -470,6 +474,23 @@ export class SearchHomePage extends SearchHomeScrollPage {
           if (await modal.isVisible().catch(() => false)) {
             return true;
           }
+
+          const path = pathnameWithoutLocalePrefix(this.page.url());
+          if (path !== '/') {
+            const target = new URL(searchUrl);
+            await this.openAndExpectPageView(`${target.pathname}${target.search}`);
+            await this.waitForAuthReadyForSaveFilter();
+          }
+
+          await dismissCookieConsentIfVisible(this.page);
+          const btn = this.searchFiltersForm().getByTestId('search-save-filter');
+          if (!(await btn.isVisible().catch(() => false))) {
+            return false;
+          }
+          if (await btn.getAttribute('title')) {
+            return false;
+          }
+
           await btn.scrollIntoViewIfNeeded();
           await btn.click();
           try {

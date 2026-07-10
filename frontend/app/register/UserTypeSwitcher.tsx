@@ -7,6 +7,7 @@ type UserTypeSwitcherProps = {
   onChange: (value: 'Individual' | 'Business') => void;
   individualTestId?: string;
   businessTestId?: string;
+  disabled?: boolean;
 };
 
 const buttonBase =
@@ -19,28 +20,40 @@ export function UserTypeSwitcher({
   onChange,
   individualTestId,
   businessTestId,
+  disabled = false,
 }: UserTypeSwitcherProps) {
   const { t } = useTranslation();
+  const labelId = 'register-user-type-label';
 
   return (
     <div className="mb-5">
-      <label className="block text-sm font-semibold mb-2 text-primary-900">
+      <label id={labelId} className="block text-sm font-semibold mb-2 text-primary-900">
         {t('register.userType')}
       </label>
-      <div className="flex gap-1 bg-bg-base rounded-lg p-1 border-2 border-primary-700/30">
+      <div
+        className="flex gap-1 bg-bg-base rounded-lg p-1 border-2 border-primary-700/30"
+        role="radiogroup"
+        aria-labelledby={labelId}
+      >
         <button
           type="button"
+          role="radio"
+          aria-checked={value === 'Individual'}
+          disabled={disabled}
           onClick={() => onChange('Individual')}
           data-testid={individualTestId}
-          className={`${buttonBase} ${value === 'Individual' ? buttonActive : buttonInactive}`}
+          className={`${buttonBase} ${value === 'Individual' ? buttonActive : buttonInactive} disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {t('register.individual')}
         </button>
         <button
           type="button"
+          role="radio"
+          aria-checked={value === 'Business'}
+          disabled={disabled}
           onClick={() => onChange('Business')}
           data-testid={businessTestId}
-          className={`${buttonBase} ${value === 'Business' ? buttonActive : buttonInactive}`}
+          className={`${buttonBase} ${value === 'Business' ? buttonActive : buttonInactive} disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {t('register.business')}
         </button>

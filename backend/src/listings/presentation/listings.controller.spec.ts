@@ -10,9 +10,10 @@ import type { AuthenticatedRequest } from '../../common/express-augmentation';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { ListingAiReportService } from '../application/listing-ai-report.service';
+import { GetPopularListingsUseCase } from '../application/use-cases/get-popular-listings.use-case';
 import { Listing } from '../entities/listing.entity';
-import { ListingsController } from './listings.controller';
 import { ListingsService } from '../listings.service';
+import { ListingsController } from './listings.controller';
 
 describe('ListingsController', () => {
   let controller: ListingsController;
@@ -53,6 +54,10 @@ describe('ListingsController', () => {
       requestReport: jest.fn(),
     };
 
+    const mockGetPopularListingsUseCase = {
+      execute: jest.fn(),
+    };
+
     const mockListingsService = {
       findAll: jest.fn(),
       getUserListings: jest.fn(),
@@ -86,6 +91,10 @@ describe('ListingsController', () => {
           provide: ListingAiReportService,
           useValue: mockListingAiReportService,
         },
+        {
+          provide: GetPopularListingsUseCase,
+          useValue: mockGetPopularListingsUseCase,
+        },
       ],
     })
       .overrideGuard(PhoneVerifiedGuard)
@@ -100,6 +109,37 @@ describe('ListingsController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('getPopular', () => {
+    it('should return popular listings data', async () => {
+      const mockPopular = {
+        generatedAt: '2026-07-10T00:00:00.000Z',
+        modelsByBodyType: {
+          Hatchback: [],
+          Wagon: [],
+          SUV: [],
+          Minivan: [],
+          Sedan: [],
+          Convertible: [],
+        },
+        brandListingCounts: {},
+        statistics: {
+          brands: { items: [], otherCount: 0, total: 0 },
+          bodyTypes: { items: [], otherCount: 0, total: 0 },
+          fuels: { items: [], otherCount: 0, total: 0 },
+        },
+      };
+      const useCase = (
+        controller as unknown as { getPopularListingsUseCase: { execute: jest.Mock } }
+      ).getPopularListingsUseCase;
+      useCase.execute.mockResolvedValue(mockPopular);
+
+      const result = await controller.getPopular();
+
+      expect(useCase.execute).toHaveBeenCalled();
+      expect(result).toEqual(mockPopular);
+    });
   });
 
   describe('findAll', () => {

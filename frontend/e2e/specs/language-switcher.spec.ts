@@ -1,4 +1,4 @@
-import { test } from '../fixtures/base';
+import { test, expect } from '../fixtures/base';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Language switcher', () => {
@@ -20,6 +20,36 @@ test.describe('Language switcher', () => {
         action: async () => {
           await languageSwitcherPage.expectSwitcherVisible();
           await languageSwitcherPage.switchToAnotherLocaleAndExpectApplied(searchHomePage);
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
+  test('keeps Google button clickable on sign page after locale switch', async ({
+    page,
+    signPage,
+    languageSwitcherPage,
+  }) => {
+    const steps: E2EStep[] = [
+      {
+        name: 'Open sign page with returnUrl',
+        action: async () => {
+          await signPage.openWithPath('/sign?returnUrl=%2Ffavorites');
+          await signPage.expectLoginPageView();
+          if ((await page.getByTestId('auth-google-outside-card').count()) === 0) {
+            test.skip(true, 'Google Sign-In is not configured for this environment');
+          }
+          await signPage.expectGoogleButtonReady();
+        },
+      },
+      {
+        name: 'Switch locale and keep Google button clickable',
+        action: async () => {
+          await languageSwitcherPage.expectSwitcherVisible();
+          await languageSwitcherPage.switchToAnotherLocaleAndExpectAppliedOnSign(signPage);
+          await expect(page).toHaveURL((url) => url.search.includes('returnUrl=%2Ffavorites'));
         },
       },
     ];

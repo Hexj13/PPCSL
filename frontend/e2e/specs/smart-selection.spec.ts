@@ -2,6 +2,7 @@ import { expect, test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import { deleteAllSavedFiltersForSession } from '../utils/api/saved-filters';
 import { loginByUi } from '../utils/auth';
+import { withFileLock } from '../utils/file-lock';
 import { expectHomeWithSavedFilterApplied } from '../utils/saved-filter-url';
 import { completeSmartSelectionWizard } from '../utils/smart-selection-flow';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
@@ -92,7 +93,9 @@ test.describe('Smart selection', () => {
         },
       ];
 
-      await runSteps(prependClearBrowserState(page, steps));
+      await withFileLock('saved-filters-account', async () => {
+        await runSteps(prependClearBrowserState(page, steps));
+      });
     },
   );
 });

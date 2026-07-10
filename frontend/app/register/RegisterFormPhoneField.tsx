@@ -9,6 +9,7 @@ type RegisterFormPhoneFieldProps = {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
   onFocus: () => void;
+  disabled?: boolean;
 };
 
 export function RegisterFormPhoneField({
@@ -18,14 +19,21 @@ export function RegisterFormPhoneField({
   onChange,
   onBlur,
   onFocus,
+  disabled = false,
 }: RegisterFormPhoneFieldProps) {
   const { t } = useTranslation();
+  const inputId = 'auth-register-phone-input';
+  const errorId = 'auth-register-phone-error';
+  const showError = touched && Boolean(error);
+
   return (
     <div className="mb-5">
-      <label className="block text-sm font-semibold mb-2 text-primary-900">
-        {t('register.phone')} <span className="text-semantic-error">*</span>
+      <label htmlFor={inputId} className="block text-sm font-semibold mb-2 text-primary-900">
+        {t('register.phone')}{' '}
+        <span className="text-semantic-error">{t('common.requiredAsterisk')}</span>
       </label>
       <input
+        id={inputId}
         type="tel"
         inputMode="tel"
         required
@@ -33,13 +41,19 @@ export function RegisterFormPhoneField({
         onChange={onChange}
         onBlur={onBlur}
         onFocus={onFocus}
-        aria-invalid={touched && error ? true : undefined}
-        className={`input-field ${touched && error ? 'border-red-500' : ''}`}
+        disabled={disabled}
+        aria-invalid={showError ? true : undefined}
+        aria-describedby={showError ? errorId : undefined}
+        className={`input-field ${showError ? 'border-red-500' : ''}`}
         placeholder={t('register.phonePlaceholder')}
         autoComplete="tel"
         data-testid="auth-register-phone-input"
       />
-      {touched && error && <p className="mt-1 text-sm text-semantic-error">{error}</p>}
+      {showError ? (
+        <p id={errorId} className="mt-1 text-sm text-semantic-error">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

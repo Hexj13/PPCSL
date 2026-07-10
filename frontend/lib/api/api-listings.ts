@@ -9,6 +9,7 @@ import type {
   ListingVideoUploadInitResponse,
   MyListingsStatusCounts,
   PaginationMeta,
+  PopularListingsData,
   PromotionAccessStatus,
   PromotionHistory,
   SearchParams,
@@ -22,6 +23,8 @@ export const listingsApi = {
       signal?: AbortSignal;
     },
   ) => api.get<{ data: Listing[]; meta: PaginationMeta }>('/api/listings', { params, ...config }),
+  getPopular: (config?: { signal?: AbortSignal }) =>
+    api.get<PopularListingsData>('/api/listings/popular', config),
   getOne: (id: string) => {
     const config: { params?: Record<string, unknown>; headers?: Record<string, string> } = {};
     if (process.env.NODE_ENV === 'development') {

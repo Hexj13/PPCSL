@@ -32,6 +32,9 @@ export async function registerBusinessAndReachVerifyPhone(
 }
 
 async function submitRegistrationVerificationFlexible(page: Page): Promise<void> {
+  const submit = page.getByTestId('verify-phone-submit');
+  await expect.poll(async () => submit.isEnabled(), { timeout: 30_000 }).toBe(true);
+
   const registerResponsePromise = page.waitForResponse(
     (response) =>
       response.url().includes('/api/auth/register') && response.request().method() === 'POST',
@@ -45,7 +48,7 @@ async function submitRegistrationVerificationFlexible(page: Page): Promise<void>
     )
     .catch(() => null);
 
-  await page.getByTestId('verify-phone-submit').click();
+  await submit.click();
 
   const registerResponse = await registerResponsePromise;
   if (!registerResponse.ok()) {

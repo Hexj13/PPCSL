@@ -1028,6 +1028,11 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 
 - `view_item` - When user views a listing detail page
 - `search` - When user performs search/filtering
+- `select_content` with `content_type: search_tab` - Switching search filter tabs (`basic` / `advanced` / `equipment` / `popular`)
+- `select_content` with `content_type: brand` / `model` / … - Selecting values in search multi-select filters (on add)
+- `select_content` with `content_type: popular_brand` / `popular_model` - Selecting brands/models on the Popular search tab
+- `select_content` with `content_type: popular_body_type` - Expanding a body-type accordion on the Popular tab (cars)
+- `select_content` with `content_type: vehicle_type` - Switching car / truck / moto
 - `add_to_wishlist` / `remove_from_wishlist` - Favorite management
 - `add_to_comparison` / `remove_from_comparison` - Comparison (vehicles or tires)
 - `contact_seller` - When user contacts seller (phone/Viber/WhatsApp/Telegram)

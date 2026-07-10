@@ -9,16 +9,42 @@ export class VerifyPhoneFormComponent {
   constructor(private readonly page: Page) {}
 
   async fillCode(code: string): Promise<void> {
-    for (const [index, char] of code.split('').entries()) {
-      const input = this.page.getByTestId(`${this.testIds.codeInputPrefix}${index}`);
-      await input.click();
-      await input.fill(char);
+    const first = this.page.getByTestId(`${this.testIds.codeInputPrefix}0`);
+    await expect(first).toBeVisible({ timeout: 15_000 });
+    await first.click();
+    await first.evaluate((el, value) => {
+      const dt = new DataTransfer();
+      dt.setData('text/plain', value);
+      el.dispatchEvent(
+        new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }),
+      );
+    }, code);
+
+    const allFilled = async () => {
+      for (const [index, char] of code.split('').entries()) {
+        const value = await this.page
+          .getByTestId(`${this.testIds.codeInputPrefix}${index}`)
+          .inputValue();
+        if (value !== char) return false;
+      }
+      return true;
+    };
+
+    if (!(await allFilled())) {
+      await first.click();
+      for (let i = 0; i < code.length; i += 1) {
+        await this.page.getByTestId(`${this.testIds.codeInputPrefix}${i}`).fill('');
+      }
+      await first.click();
+      await this.page.keyboard.type(code, { delay: 40 });
     }
-    const lastIndex = code.length - 1;
-    await expect(this.page.getByTestId(`${this.testIds.codeInputPrefix}${lastIndex}`)).toHaveValue(
-      code[lastIndex] ?? '',
-      { timeout: 10_000 },
-    );
+
+    for (const [index, char] of code.split('').entries()) {
+      await expect(this.page.getByTestId(`${this.testIds.codeInputPrefix}${index}`)).toHaveValue(
+        char,
+        { timeout: 10_000 },
+      );
+    }
   }
 
   async submit(): Promise<void> {

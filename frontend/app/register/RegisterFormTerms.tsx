@@ -10,37 +10,45 @@ import type { RegisterFormState } from './useRegisterPage';
 type RegisterFormTermsProps = {
   formData: RegisterFormState;
   setFormData: React.Dispatch<React.SetStateAction<RegisterFormState>>;
+  disabled?: boolean;
 };
 
-export function RegisterFormTerms({ formData, setFormData }: RegisterFormTermsProps) {
+export function RegisterFormTerms({
+  formData,
+  setFormData,
+  disabled = false,
+}: RegisterFormTermsProps) {
   const { t } = useTranslation();
   const { href } = useLocalizedNavigation();
+  const inputId = 'auth-register-terms-input';
+
   return (
     <div className="mb-5">
       <div className="flex items-start gap-3 group">
         <div className="relative mt-0.5">
           <input
+            id={inputId}
             type="checkbox"
             checked={formData.termsAccepted}
+            disabled={disabled}
             onChange={(e) => setFormData((prev) => ({ ...prev, termsAccepted: e.target.checked }))}
-            className="sr-only"
+            className="peer sr-only"
             required
             data-testid="auth-register-terms-input"
           />
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              setFormData((prev) => ({ ...prev, termsAccepted: !prev.termsAccepted }));
-            }}
-            className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer shrink-0 ${
+          <label
+            htmlFor={inputId}
+            aria-hidden
+            className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center shrink-0 ${
+              disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+            } ${
               formData.termsAccepted
                 ? 'bg-primary-500/10 border-primary-700'
                 : 'border-primary-700/50 bg-bg-secondary group-hover:border-primary-700'
             }`}
             data-testid="auth-register-terms-toggle"
           >
-            {formData.termsAccepted && (
+            {formData.termsAccepted ? (
               <svg
                 className="w-3 h-3 text-primary-900"
                 fill="none"
@@ -54,11 +62,13 @@ export function RegisterFormTerms({ formData, setFormData }: RegisterFormTermsPr
                   d="M5 13l4 4L19 7"
                 />
               </svg>
-            )}
-          </button>
+            ) : null}
+          </label>
         </div>
         <span className="text-sm leading-relaxed text-primary-900">
-          {t('register.termsAccept')}{' '}
+          <label htmlFor={inputId} className={disabled ? 'cursor-not-allowed' : 'cursor-pointer'}>
+            {t('register.termsAccept')}{' '}
+          </label>
           <Link
             href={href('/terms')}
             target="_blank"
@@ -68,7 +78,7 @@ export function RegisterFormTerms({ formData, setFormData }: RegisterFormTermsPr
           >
             {t('register.termsLink')}
           </Link>
-          <span className="text-semantic-error"> *</span>
+          <span className="text-semantic-error"> {t('common.requiredAsterisk')}</span>
         </span>
       </div>
     </div>

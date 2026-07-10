@@ -19,6 +19,7 @@ type RegisterFormFieldsProps = {
   onPhoneBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
   onPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFormFieldFocus: () => void;
+  disabled?: boolean;
 };
 
 export function RegisterFormFields({
@@ -34,6 +35,7 @@ export function RegisterFormFields({
   onPhoneBlur,
   onPasswordChange,
   onFormFieldFocus,
+  disabled = false,
 }: RegisterFormFieldsProps) {
   const phoneField = (
     <RegisterFormPhoneField
@@ -43,6 +45,7 @@ export function RegisterFormFields({
       onChange={onPhoneChange}
       onBlur={onPhoneBlur}
       onFocus={onFormFieldFocus}
+      disabled={disabled}
     />
   );
   const messengers = (
@@ -53,6 +56,7 @@ export function RegisterFormFields({
         telegram: formData.telegram,
       }}
       onMessengersChange={(next) => setFormData((p) => ({ ...p, ...next }))}
+      disabled={disabled}
     />
   );
   const password = (
@@ -63,6 +67,7 @@ export function RegisterFormFields({
       onTogglePassword={() => setShowPassword(!showPassword)}
       onChange={onPasswordChange}
       rules={getPasswordValidationRules(formData.password)}
+      disabled={disabled}
     />
   );
 
@@ -78,7 +83,7 @@ export function RegisterFormFields({
 
   return (
     <>
-      <RegisterFormCompanyField formData={formData} setFormData={setFormData} />
+      <RegisterFormCompanyField formData={formData} setFormData={setFormData} disabled={disabled} />
       {phoneField}
       {messengers}
       {password}

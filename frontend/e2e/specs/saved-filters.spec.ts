@@ -2,6 +2,7 @@ import { test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import { deleteAllSavedFiltersForSession } from '../utils/api/saved-filters';
 import { loginByUi } from '../utils/auth';
+import { withFileLock } from '../utils/file-lock';
 import { t } from '../utils/i18n';
 import { expectHomeWithSavedFilterApplied } from '../utils/saved-filter-url';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
@@ -76,6 +77,8 @@ test.describe('Saved filters', () => {
       },
     ];
 
-    await runSteps(prependClearBrowserState(page, steps));
+    await withFileLock('saved-filters-account', async () => {
+      await runSteps(prependClearBrowserState(page, steps));
+    });
   });
 });

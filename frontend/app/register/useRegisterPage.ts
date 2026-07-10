@@ -93,6 +93,7 @@ export function useRegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const prevTypeRef = useRef<'Individual' | 'Business'>(formData.type);
   const formStartSentRef = useRef(false);
+  const submitInFlightRef = useRef(false);
 
   useEffect(() => {
     if (formData.type === 'Individual' && prevTypeRef.current !== formData.type) {
@@ -212,12 +213,15 @@ export function useRegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading || submitInFlightRef.current) return;
     if (!validateForm()) return;
 
+    submitInFlightRef.current = true;
     setLoading(true);
     try {
       const submitData = buildSubmitData(formData);
       if (typeof window === 'undefined') {
+        submitInFlightRef.current = false;
         setLoading(false);
         return;
       }
@@ -232,6 +236,7 @@ export function useRegisterPage() {
         }
         const suffix = query.toString();
         push(suffix ? `/verify-phone?${suffix}` : '/verify-phone');
+        return;
       } catch (checkError: unknown) {
         const axiosError = checkError as Parameters<typeof getRegisterSubmitErrorMessage>[0];
         const errorMessage = getRegisterSubmitErrorMessage(axiosError, t);
@@ -242,9 +247,9 @@ export function useRegisterPage() {
     } catch {
       analytics.formSubmit('register', false, getFilledFields(formData));
       toast.error(t('register.dataPreparationError'));
-    } finally {
-      setLoading(false);
     }
+    submitInFlightRef.current = false;
+    setLoading(false);
   };
 
   return {

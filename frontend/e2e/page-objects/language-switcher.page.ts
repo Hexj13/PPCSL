@@ -7,6 +7,7 @@ import { visibleSearchFiltersForm } from '../utils/search-filters-form';
 import { dismissCookieConsentIfVisible } from '../utils/session';
 
 import type { SearchHomePage } from './search-home.page';
+import type { SignPage } from './sign.page';
 
 export class LanguageSwitcherPage {
   readonly headerNav: HeaderNavComponent;
@@ -27,7 +28,7 @@ export class LanguageSwitcherPage {
     await expect(this.headerNav.languageSwitcherMenu).toBeVisible();
   }
 
-  async switchToAnotherLocaleAndExpectApplied(searchHomePage: SearchHomePage): Promise<string> {
+  async switchToAnotherLocale(): Promise<string> {
     const beforePath = pathnameWithoutLocalePrefix(this.page.url());
     const beforeSearch = new URL(this.page.url()).search;
     await this.openMenu();
@@ -52,20 +53,33 @@ export class LanguageSwitcherPage {
       const search = url.search;
       return path === beforePath && search === beforeSearch;
     });
-    await searchHomePage.expectPageView();
     const cookies = await this.page.context().cookies();
     const localeCookie = cookies.find((cookie) => cookie.name === 'kupito-locale');
     expect(localeCookie?.value).toBeTruthy();
     expect(localeCookie?.value).not.toBe('ro');
     await expect(this.headerNav.languageSwitcher.first()).toContainText(selectedLocale);
-    await expect(
-      visibleSearchFiltersForm(this.page).getByTestId('search-vehicle-type-car'),
-    ).toHaveAttribute('aria-pressed', 'true');
     if (localeCookie?.value === 'ru') {
       await expect(this.headerNav.languageSwitcher.first()).toContainText(t('common.languageRu'));
     } else if (localeCookie?.value === 'en') {
       await expect(this.headerNav.languageSwitcher.first()).toContainText(t('common.languageEn'));
     }
     return localeCookie?.value ?? '';
+  }
+
+  async switchToAnotherLocaleAndExpectApplied(searchHomePage: SearchHomePage): Promise<string> {
+    const locale = await this.switchToAnotherLocale();
+    await searchHomePage.expectPageView();
+    await expect(
+      visibleSearchFiltersForm(this.page).getByTestId('search-vehicle-type-car'),
+    ).toHaveAttribute('aria-pressed', 'true');
+    return locale;
+  }
+
+  async switchToAnotherLocaleAndExpectAppliedOnSign(signPage: SignPage): Promise<string> {
+    await signPage.expectGoogleButtonReady();
+    const locale = await this.switchToAnotherLocale();
+    await signPage.expectPageView();
+    await signPage.expectGoogleButtonStillClickable();
+    return locale;
   }
 }

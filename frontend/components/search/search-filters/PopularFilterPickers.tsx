@@ -40,30 +40,33 @@ export function PopularFilterChip({
     >
       {label}
       {selected && (
-        <div
-          className="absolute inset-0 flex items-center justify-center rounded-full pointer-events-none"
-          style={{
-            borderRadius: 'inherit',
-            background:
-              'radial-gradient(circle, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
-          }}
-        >
-          <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
-            <svg
-              className="w-3 h-3 text-primary-900"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={3}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
+        <>
+          <div
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{
+              borderRadius: 'inherit',
+              background:
+                'radial-gradient(ellipse 100% 80% at 50% 100%, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
+            }}
+          />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none">
+            <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
+              <svg
+                className="w-3 h-3 text-primary-900"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={3}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </button>
   );
@@ -76,6 +79,7 @@ export function PopularFilterBrandTile({
   onToggle,
   imageScale = 1,
   letterPlaceholder = false,
+  listingCount,
 }: {
   label: string;
   imageSrc?: string;
@@ -83,6 +87,7 @@ export function PopularFilterBrandTile({
   onToggle: () => void;
   imageScale?: number;
   letterPlaceholder?: boolean;
+  listingCount?: number;
 }) {
   const [logoError, setLogoError] = useState(false);
   const onLogoError = useCallback(() => {
@@ -90,16 +95,16 @@ export function PopularFilterBrandTile({
   }, []);
   const scaled = !letterPlaceholder && imageScale !== 1 && Number.isFinite(imageScale);
   const effectiveSrc = letterPlaceholder ? '' : (imageSrc ?? '');
+  const showListingCount = typeof listingCount === 'number';
 
   return (
-    <div className="flex flex-col items-center gap-1 w-full min-w-0 min-h-[100px] lg:min-h-[110px]">
+    <div className="flex flex-col items-center gap-1 w-full min-w-0 lg:flex-1">
       <button
         type="button"
         onClick={onToggle}
         className={`
-          relative w-full h-[80px] lg:h-[90px] flex items-center justify-center p-2 rounded-lg
+          relative w-full aspect-square flex items-center justify-center p-1.5 rounded-lg
           outline-hidden select-none
-          ${scaled ? 'overflow-visible' : ''}
           ${
             selected
               ? 'border-2 border-primary-700'
@@ -108,8 +113,17 @@ export function PopularFilterBrandTile({
         `}
         style={{ background: '#F4F4F4' }}
         aria-pressed={selected}
-        aria-label={`${label}${selected ? ', selected' : ''}`}
+        aria-label={`${label}${selected ? ', selected' : ''}${showListingCount ? `, ${listingCount}` : ''}`}
       >
+        {showListingCount && (
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+            <div className="min-w-5 h-5 px-1.5 bg-dark-400 rounded-full flex items-center justify-center shadow-md border-2 border-bg-card">
+              <span className="text-[10px] leading-none font-semibold text-bg-card tabular-nums">
+                {listingCount}
+              </span>
+            </div>
+          </div>
+        )}
         <div className="relative w-full h-full flex items-center justify-center">
           {letterPlaceholder ? (
             <span className="text-2xl lg:text-3xl font-semibold text-primary-700">
@@ -117,7 +131,7 @@ export function PopularFilterBrandTile({
             </span>
           ) : !logoError ? (
             <span
-              className="inline-flex max-w-full max-h-full items-center justify-center"
+              className="inline-flex w-full h-full max-w-full max-h-full items-center justify-center"
               style={
                 scaled
                   ? {
@@ -130,10 +144,10 @@ export function PopularFilterBrandTile({
               <Image
                 src={effectiveSrc}
                 alt={label}
-                width={80}
-                height={80}
-                className="object-contain select-none"
-                sizes="(max-width: 768px) 80px, 90px"
+                width={120}
+                height={120}
+                className="max-w-full max-h-full w-auto h-auto object-contain select-none"
+                sizes="(max-width: 768px) 30vw, 96px"
                 loading="lazy"
                 draggable={false}
                 unoptimized

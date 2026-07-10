@@ -24,6 +24,9 @@ export function requireAuthCredentials(): AuthCredentials {
 }
 
 export function buildUniqueMdPhone(): string {
-  const suffix = `${Date.now()}`.slice(-6);
-  return `+37379${suffix}`;
+  const timePart = (Date.now() % 1000).toString().padStart(3, '0');
+  const randPart = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, '0');
+  return `+37379${timePart}${randPart}`;
 }

@@ -1,6 +1,6 @@
 const authOAuthIconButtonHeightClass = 'h-12';
 
-const authOAuthIconButtonBorderClass = 'border border-[#dadce0]';
+const authOAuthIconButtonBorderClass = 'border border-divider';
 
 export const authOAuthIconButtonClass = [
   'relative flex-1 min-w-0',
@@ -8,9 +8,9 @@ export const authOAuthIconButtonClass = [
   'flex items-center justify-center',
   'rounded-lg',
   authOAuthIconButtonBorderClass,
-  'bg-white',
+  'bg-bg-partnerLogo',
   'overflow-hidden transition-colors duration-200',
-  'hover-only:hover:bg-[#f8f9fa] active:bg-[#f1f3f4]',
+  'hover-only:hover:bg-bg-base active:bg-bg-secondary',
   'select-none disabled:opacity-50 disabled:cursor-not-allowed',
 ].join(' ');
 

@@ -4,6 +4,8 @@ import type { ListingSortKey } from '../../lib/search/listingSort';
 import { BottomSheetComponent } from '../components/common/bottom-sheet.component';
 import { listingSortOptionIndex } from '../test-data/listing-sort';
 import { expectPagePath } from '../utils/app-path';
+import { dismissCookieConsentIfVisible } from '../utils/session';
+import { pageUsesMobileLayout } from '../utils/viewport';
 
 export class BoardPage {
   private readonly testIds = {
@@ -55,19 +57,41 @@ export class BoardPage {
       .toBe(true);
   }
 
+  private async openSortDropdownMenu(
+    trigger: ReturnType<Page['getByTestId']>,
+    menu: ReturnType<Page['getByTestId']>,
+    useMobile: boolean,
+  ): Promise<void> {
+    await expect(trigger).toBeVisible({ timeout: 15_000 });
+    await expect(trigger).toBeEnabled({ timeout: 15_000 });
+    await expect
+      .poll(
+        async () => {
+          if (!(await menu.isVisible().catch(() => false))) {
+            await trigger.click({ force: useMobile });
+          }
+          return menu.isVisible().catch(() => false);
+        },
+        { timeout: 15_000, intervals: [300, 500, 800, 1200] },
+      )
+      .toBe(true);
+  }
+
   async selectSort(sortKey: ListingSortKey): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
     const testId = this.testIds.sortSelect;
     const trigger = this.page.getByTestId(testId);
     const menu = this.page.getByTestId(`${testId}-menu`);
     const option = this.page.getByTestId(`${testId}-option-${listingSortOptionIndex(sortKey)}`);
-    await trigger.scrollIntoViewIfNeeded();
-    await trigger.click();
-    if (!(await menu.isVisible().catch(() => false))) {
-      await trigger.click();
+    const useMobile = await pageUsesMobileLayout(this.page);
+    if (!useMobile) {
+      await trigger.scrollIntoViewIfNeeded();
     }
-    await expect(menu).toBeVisible({ timeout: 15_000 });
+    await this.openSortDropdownMenu(trigger, menu, useMobile);
     await expect(option).toBeVisible({ timeout: 15_000 });
-    await option.click();
+    await option.evaluate((element) => {
+      (element as HTMLButtonElement).click();
+    });
   }
 
   async selectSortAndWaitForListings(sortKey: ListingSortKey): Promise<void> {
@@ -75,7 +99,8 @@ export class BoardPage {
       (response) =>
         response.url().includes(`/api/board/${this.boardSlug}/listings`) &&
         response.request().method() === 'GET' &&
-        response.ok(),
+        response.ok() &&
+        response.url().includes('sortBy='),
       { timeout: 45_000 },
     );
     await this.selectSort(sortKey);

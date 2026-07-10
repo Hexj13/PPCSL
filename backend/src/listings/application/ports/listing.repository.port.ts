@@ -1,3 +1,4 @@
+import type { PopularListingsData } from '../../domain/popular-listings.types';
 import type { Listing } from '../../entities/listing.entity';
 
 export const LISTING_REPOSITORY = Symbol('LISTING_REPOSITORY');
@@ -91,4 +92,5 @@ export interface IListingRepository {
     currencyContext: SimilarCandidatesCurrencyContext,
   ): Promise<Listing[]>;
   saveWithActiveLimit(listing: Listing, userId: string, limit: number): Promise<Listing>;
+  getPopularListingsAggregates(): Promise<Omit<PopularListingsData, 'generatedAt'>>;
 }

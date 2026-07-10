@@ -32,6 +32,7 @@ import { CronSecretGuard } from '../../common/guards/cron-secret.guard';
 import { parseLimitQuery, parsePageQuery } from '../../common/utils/pagination.utils';
 import { buildVisitorHash } from '../../common/utils/visitor-identity.util';
 import { ListingAiReportService } from '../application/listing-ai-report.service';
+import { GetPopularListingsUseCase } from '../application/use-cases/get-popular-listings.use-case';
 import { ListingsService } from '../listings.service';
 
 import { CreateListingDto } from './dto/create-listing.dto';
@@ -54,7 +55,24 @@ export class ListingsController {
   constructor(
     private readonly listingsService: ListingsService,
     private readonly listingAiReportService: ListingAiReportService,
+    private readonly getPopularListingsUseCase: GetPopularListingsUseCase,
   ) {}
+
+  @ApiOperation({ summary: 'Get popular car models and market statistics' })
+  @ApiResponse({
+    status: 200,
+    description: 'Popular models by body type and market statistics for cars',
+  })
+  @Throttle({
+    default: {
+      limit: process.env.NODE_ENV === 'production' ? 500 : 10000,
+      ttl: 60000,
+    },
+  })
+  @Get('popular')
+  getPopular() {
+    return this.getPopularListingsUseCase.execute();
+  }
 
   @ApiOperation({ summary: 'Search listings' })
   @ApiResponse({

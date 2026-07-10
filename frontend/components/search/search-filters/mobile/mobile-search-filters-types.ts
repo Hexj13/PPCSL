@@ -1,5 +1,5 @@
 import type { FilterState } from '@/hooks/useSearchFilters';
-import type { Brand, TireBrand, TireModel, VehicleModel } from '@/lib/api';
+import type { Brand, PopularListingsData, TireBrand, TireModel, VehicleModel } from '@/lib/api';
 
 import type { MultiSelectOption } from './sheets/MultiSelectSheet';
 
@@ -29,6 +29,9 @@ export interface MobileSearchFiltersVehicleProps extends MobileSearchFiltersShar
   brands: Brand[];
   models: VehicleModel[];
   setFilters: (_filters: FilterState | ((_prev: FilterState) => FilterState)) => void;
+  popularData?: PopularListingsData | null;
+  popularLoading?: boolean;
+  popularError?: boolean;
 }
 
 export interface MobileSearchFiltersTireProps extends MobileSearchFiltersSharedHandlers {

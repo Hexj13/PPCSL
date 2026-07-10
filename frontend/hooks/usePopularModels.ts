@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { analytics } from '@/lib/analytics';
 import type { Brand, VehicleModel } from '@/lib/api';
 import { MAX_SEARCH_BRAND_SELECTIONS, MAX_SEARCH_MODEL_SELECTIONS } from '@/lib/constants';
 
@@ -88,6 +89,9 @@ export function usePopularModels({
                 : [...prev.brand_ids, brand.id];
           return { ...prev, brand_ids: newBrandIds, model_ids: newModelIds };
         });
+        if (!hasAlreadySelected) {
+          analytics.selectContentDeferred('popular_model', resolvedModel.id);
+        }
         return;
       }
 
@@ -124,6 +128,7 @@ export function usePopularModels({
           ? prev.brand_ids
           : [...prev.brand_ids, brand.id],
       }));
+      analytics.selectContentDeferred('popular_model', `${brandName}:${modelName}`);
     },
     [
       brandByName,
@@ -216,6 +221,7 @@ export function usePopularModels({
           return { ...prev, brand_ids: newBrandIds, model_ids: newModelIds };
         });
         setPendingModels((prev) => prev.filter((p) => p.brand !== brandName));
+        analytics.selectContentDeferred('popular_brand', brand.id);
       }
     },
     [

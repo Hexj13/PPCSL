@@ -9,11 +9,16 @@ import {
 } from '../../../common/utils/cache.utils';
 import { IListingCache } from '../../application/ports/listing-cache.port';
 import { SearchCriteria } from '../../application/ports/listing.repository.port';
+import type { PopularListingsData } from '../../domain/popular-listings.types';
 import { Listing } from '../../entities/listing.entity';
 
 @Injectable()
 export class RedisListingCache implements IListingCache {
   constructor(private readonly redisService: RedisService) {}
+
+  private popularListingsKey(): string {
+    return generateCacheKey({ prefix: CACHE_PREFIXES.listingsPopular, parts: ['car'] });
+  }
 
   async getSearchResults(
     criteria: SearchCriteria,
@@ -100,5 +105,13 @@ export class RedisListingCache implements IListingCache {
   async setSimilarResults(listingId: string, listings: Listing[]): Promise<void> {
     const key = generateCacheKey({ prefix: CACHE_PREFIXES.listingsSimilar, parts: [listingId] });
     await this.redisService.setJson(key, listings, CACHE_TTL.listings.similar);
+  }
+
+  async getPopularListings(): Promise<PopularListingsData | null> {
+    return this.redisService.getJson<PopularListingsData>(this.popularListingsKey());
+  }
+
+  async setPopularListings(data: PopularListingsData): Promise<void> {
+    await this.redisService.setJson(this.popularListingsKey(), data, CACHE_TTL.listings.popular);
   }
 }

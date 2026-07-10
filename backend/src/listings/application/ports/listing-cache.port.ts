@@ -1,3 +1,4 @@
+import type { PopularListingsData } from '../../domain/popular-listings.types';
 import type { Listing } from '../../entities/listing.entity';
 
 import type { SearchCriteria } from './listing.repository.port';
@@ -19,4 +20,6 @@ export interface IListingCache {
   invalidateSimilar(listingId: string): Promise<void>;
   getSimilarResults(listingId: string): Promise<Listing[] | null>;
   setSimilarResults(listingId: string, listings: Listing[]): Promise<void>;
+  getPopularListings(): Promise<PopularListingsData | null>;
+  setPopularListings(data: PopularListingsData): Promise<void>;
 }

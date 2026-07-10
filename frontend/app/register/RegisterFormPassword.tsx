@@ -10,6 +10,7 @@ type RegisterFormPasswordProps = {
   onTogglePassword: () => void;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   rules: PasswordValidationRule[];
+  disabled?: boolean;
 };
 
 export function RegisterFormPassword({
@@ -19,19 +20,28 @@ export function RegisterFormPassword({
   onTogglePassword,
   onChange,
   rules,
+  disabled = false,
 }: RegisterFormPasswordProps) {
   const { t } = useTranslation();
+  const inputId = 'auth-register-password-input';
+  const errorId = 'auth-register-password-error';
+
   return (
     <div className="mb-5">
-      <label className="block text-sm font-semibold mb-2 text-primary-900">
-        {t('register.password')} <span className="text-semantic-error">*</span>
+      <label htmlFor={inputId} className="block text-sm font-semibold mb-2 text-primary-900">
+        {t('register.password')}{' '}
+        <span className="text-semantic-error">{t('common.requiredAsterisk')}</span>
       </label>
       <div className="relative">
         <input
+          id={inputId}
           type={showPassword ? 'text' : 'password'}
           required
           value={value}
           onChange={onChange}
+          disabled={disabled}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           className={`input-field pr-10 ${error ? 'border-red-500' : ''}`}
           placeholder={t('register.passwordPlaceholder')}
           autoComplete="new-password"
@@ -40,8 +50,9 @@ export function RegisterFormPassword({
         <button
           type="button"
           onClick={onTogglePassword}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-900 hover-only:hover:text-primary-700 transition-colors"
-          tabIndex={-1}
+          disabled={disabled}
+          aria-label={showPassword ? t('common.hidePassword') : t('common.showPassword')}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-900 hover-only:hover:text-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="auth-register-password-toggle"
         >
           {showPassword ? (
@@ -51,6 +62,7 @@ export function RegisterFormPassword({
               stroke="currentColor"
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
+              aria-hidden
             >
               <path
                 strokeLinecap="round"
@@ -66,6 +78,7 @@ export function RegisterFormPassword({
               stroke="currentColor"
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
+              aria-hidden
             >
               <path
                 strokeLinecap="round"
@@ -83,6 +96,11 @@ export function RegisterFormPassword({
           )}
         </button>
       </div>
+      {error ? (
+        <p id={errorId} className="mt-1 text-sm text-semantic-error">
+          {error}
+        </p>
+      ) : null}
       <div className="mt-2 space-y-1">
         {rules.map((rule, index) => (
           <div key={index} className="flex items-center gap-2">
@@ -93,6 +111,7 @@ export function RegisterFormPassword({
                 stroke="currentColor"
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
+                aria-hidden
               >
                 <path
                   strokeLinecap="round"
@@ -103,11 +122,12 @@ export function RegisterFormPassword({
               </svg>
             ) : (
               <svg
-                className="w-3 h-3 text-gray-400 shrink-0"
+                className="w-3 h-3 text-dark-400 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
+                aria-hidden
               >
                 <path
                   strokeLinecap="round"
@@ -119,7 +139,7 @@ export function RegisterFormPassword({
             )}
             <p
               className={`text-[10px] leading-tight ${
-                rule.isValid ? 'text-primary-700' : 'text-gray-400'
+                rule.isValid ? 'text-primary-700' : 'text-dark-400'
               } transition-colors`}
             >
               {rule.text}

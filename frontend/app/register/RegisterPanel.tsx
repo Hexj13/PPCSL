@@ -62,7 +62,7 @@ export function RegisterPanel({
         data-testid="auth-register-form"
         aria-busy={submitBusy}
       >
-        <RegisterFormType formData={formData} setFormData={setFormData} />
+        <RegisterFormType formData={formData} setFormData={setFormData} disabled={formDisabled} />
         <RegisterFormFields
           formData={formData}
           setFormData={setFormData}
@@ -76,9 +76,14 @@ export function RegisterPanel({
           onPhoneBlur={handlePhoneBlur}
           onPasswordChange={handlePasswordChange}
           onFormFieldFocus={handleFormFieldFocus}
+          disabled={formDisabled}
         />
         <div className="mb-5">
-          <RegisterFormTerms formData={formData} setFormData={setFormData} />
+          <RegisterFormTerms
+            formData={formData}
+            setFormData={setFormData}
+            disabled={formDisabled}
+          />
         </div>
 
         <LoadingButton

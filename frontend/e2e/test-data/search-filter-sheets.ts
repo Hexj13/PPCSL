@@ -6,10 +6,10 @@ import type {
 export type { SearchFilterTab };
 
 export const VEHICLE_SEARCH_TABS: readonly SearchFilterTab[] = [
+  'popular',
   'basic',
   'advanced',
   'equipment',
-  'popular',
 ];
 
 export const VEHICLE_BASIC_SHEETS: VehicleSheetCase[] = [

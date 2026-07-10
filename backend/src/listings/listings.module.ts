@@ -16,6 +16,7 @@ import { UsersModule } from '../users/users.module';
 import { UserAccountDeletedListener } from './application/listeners/user-account-deleted.listener';
 import { ListingAiReportService } from './application/listing-ai-report.service';
 import { ListingPublicViewMapper } from './application/mappers/listing-public-view.mapper';
+import { PopularListingsRefreshService } from './application/popular-listings-refresh.service';
 import { LISTING_CACHE } from './application/ports/listing-cache.port';
 import { LISTING_REPOSITORY } from './application/ports/listing.repository.port';
 import { PROMOTION_HISTORY_WRITER } from './application/ports/promotion-history.port';
@@ -36,6 +37,7 @@ import { GetListingHistoryUseCase } from './application/use-cases/get-listing-hi
 import { GetListingPhonesUseCase } from './application/use-cases/get-listing-phones.use-case';
 import { GetListingVinUseCase } from './application/use-cases/get-listing-vin.use-case';
 import { GetListingUseCase } from './application/use-cases/get-listing.use-case';
+import { GetPopularListingsUseCase } from './application/use-cases/get-popular-listings.use-case';
 import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion-access.use-case';
 import { GetPromotionHistoryUseCase } from './application/use-cases/get-promotion-history.use-case';
 import { GetReportUrlUseCase } from './application/use-cases/get-report-url.use-case';
@@ -131,6 +133,7 @@ import { MediaConvertService } from './video/mediaconvert.service';
     TogglePromotionUseCase,
     FindSimilarUseCase,
     GetListingUseCase,
+    GetPopularListingsUseCase,
     UpdateListingUseCase,
     GetUserListingsUseCase,
     GetUserListingsStatusCountsUseCase,
@@ -152,6 +155,7 @@ import { MediaConvertService } from './video/mediaconvert.service';
     CloseAllUserListingsUseCase,
     AutoCloseOldListingsUseCase,
     ExpirePromotionsUseCase,
+    PopularListingsRefreshService,
     CronSecretGuard,
     UserAccountDeletedListener,
     GeminiListingAiReportClient,

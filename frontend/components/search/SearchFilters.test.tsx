@@ -3,6 +3,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
 
 import { clearBrandsAndModelsCache } from '@/hooks/useBrandsAndModels';
+import { clearPopularListingsCache } from '@/hooks/usePopularListingsData';
 import { brandsApi, citiesApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
@@ -39,6 +40,27 @@ jest.mock('@/lib/api', () => ({
   tiresApi: {
     getBrands: jest.fn().mockResolvedValue({ data: [] }),
     getModelsByBrand: jest.fn().mockResolvedValue({ data: [] }),
+  },
+  listingsApi: {
+    getPopular: jest.fn().mockResolvedValue({
+      data: {
+        generatedAt: '2026-07-10T00:00:00.000Z',
+        modelsByBodyType: {
+          Hatchback: [],
+          Wagon: [],
+          SUV: [],
+          Minivan: [],
+          Sedan: [],
+          Convertible: [],
+        },
+        brandListingCounts: {},
+        statistics: {
+          brands: { items: [], otherCount: 0, total: 0 },
+          bodyTypes: { items: [], otherCount: 0, total: 0 },
+          fuels: { items: [], otherCount: 0, total: 0 },
+        },
+      },
+    }),
   },
 }));
 
@@ -115,6 +137,7 @@ jest.mock('@/lib/analytics', () => ({
     selectContentDeferred: jest.fn(),
     search: jest.fn(),
     searchDeferred: jest.fn(),
+    searchTabSelect: jest.fn(),
   },
 }));
 
@@ -359,6 +382,7 @@ describe('SearchFilters', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     clearBrandsAndModelsCache();
+    clearPopularListingsCache();
     (useRouter as jest.Mock).mockReturnValue({
       push: mockPush,
       replace: mockReplace,

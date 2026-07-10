@@ -1,6 +1,8 @@
 'use client';
 
 import { useTranslation } from '@/hooks/useTranslation';
+import { analytics } from '@/lib/analytics';
+import { StarIcon } from '@/ui';
 
 interface SearchTabsProps {
   variant?: 'vehicle' | 'tire';
@@ -25,6 +27,15 @@ interface SearchTabsProps {
 const tabButtonClass =
   'px-4 py-3 text-base font-semibold transition-[background-color,border-radius,color] duration-300 relative z-10 shrink-0 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60';
 
+function PopularTabLabel({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5" suppressHydrationWarning>
+      <StarIcon className="w-4 h-4 shrink-0" aria-hidden />
+      <span suppressHydrationWarning>{label}</span>
+    </span>
+  );
+}
+
 export function SearchTabs({
   variant = 'vehicle',
   activeTab,
@@ -48,6 +59,7 @@ export function SearchTabs({
 
   const handleTabClick = (tab: 'basic' | 'advanced' | 'equipment' | 'popular') => {
     if (switchingLocked || activeTab === tab) return;
+    analytics.searchTabSelect(tab);
     onTabChange(tab);
   };
 
@@ -61,6 +73,24 @@ export function SearchTabs({
           aria-busy={switchingLocked}
         >
           <div className="relative flex gap-1 min-w-max">
+            <button
+              ref={popularTabRef}
+              type="button"
+              data-testid="search-tab-popular"
+              disabled={switchingLocked}
+              onClick={() => handleTabClick('popular')}
+              className={`${tabButtonClass} ${
+                activeTab === 'popular'
+                  ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
+                  : 'text-primary-900 hover-only:hover:bg-primary-500/10'
+              }`}
+              suppressHydrationWarning
+            >
+              <PopularTabLabel label={t('searchFilters.popularFilters')} />
+              {hasPopularFiltersActive && (
+                <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
+              )}
+            </button>
             <button
               ref={basicTabRef}
               type="button"
@@ -76,24 +106,6 @@ export function SearchTabs({
             >
               <span suppressHydrationWarning>{t('searchFilters.basicCriteria')}</span>
               {hasBasicFilters && (
-                <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
-              )}
-            </button>
-            <button
-              ref={popularTabRef}
-              type="button"
-              data-testid="search-tab-popular"
-              disabled={switchingLocked}
-              onClick={() => handleTabClick('popular')}
-              className={`${tabButtonClass} ${
-                activeTab === 'popular'
-                  ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
-                  : 'text-primary-900 hover-only:hover:bg-primary-500/10'
-              }`}
-              suppressHydrationWarning
-            >
-              <span suppressHydrationWarning>{t('searchFilters.popularFilters')}</span>
-              {hasPopularFiltersActive && (
                 <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
               )}
             </button>
@@ -130,6 +142,24 @@ export function SearchTabs({
         aria-busy={switchingLocked}
       >
         <div className="relative flex gap-1 min-w-max">
+          <button
+            ref={popularTabRef}
+            type="button"
+            data-testid="search-tab-popular"
+            disabled={switchingLocked}
+            onClick={() => handleTabClick('popular')}
+            className={`${tabButtonClass} ${
+              activeTab === 'popular'
+                ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
+                : 'text-primary-900 hover-only:hover:bg-primary-500/10'
+            }`}
+            suppressHydrationWarning
+          >
+            <PopularTabLabel label={t('searchFilters.popularFilters')} />
+            {hasPopularFiltersActive && (
+              <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
+            )}
+          </button>
           <button
             ref={basicTabRef}
             type="button"
@@ -181,24 +211,6 @@ export function SearchTabs({
           >
             <span suppressHydrationWarning>{t('searchFilters.equipment')}</span>
             {hasEquipmentFiltersActive && (
-              <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
-            )}
-          </button>
-          <button
-            ref={popularTabRef}
-            type="button"
-            data-testid="search-tab-popular"
-            disabled={switchingLocked}
-            onClick={() => handleTabClick('popular')}
-            className={`${tabButtonClass} ${
-              activeTab === 'popular'
-                ? 'text-primary-900 bg-primary-500/10 rounded-t-lg'
-                : 'text-primary-900 hover-only:hover:bg-primary-500/10'
-            }`}
-            suppressHydrationWarning
-          >
-            <span suppressHydrationWarning>{t('searchFilters.popularFilters')}</span>
-            {hasPopularFiltersActive && (
               <span className="absolute right-2 top-2 w-2 h-2 rounded-full bg-accent" />
             )}
           </button>

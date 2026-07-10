@@ -20,11 +20,15 @@ import { useFilterHandlers } from '@/hooks/useFilterHandlers';
 import { useFilterOptions } from '@/hooks/useFilterOptions';
 import { SKELETON_PAGE, useLoadingState } from '@/hooks/useLoadingState';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
+import { usePopularListingsData } from '@/hooks/usePopularListingsData';
 import { useSearchFilterFlags } from '@/hooks/useSearchFilterFlags';
 import { useSearchFilters, type FilterState } from '@/hooks/useSearchFilters';
 import { useSearchFiltersControllerLifecycle } from '@/hooks/useSearchFiltersControllerLifecycle';
 import { useModelsForBrands, useVehicleTypeFromUrl } from '@/hooks/useSearchFiltersEffects';
-import { useSearchFiltersPopularActive } from '@/hooks/useSearchFiltersPopularActive';
+import {
+  useSearchFiltersPopularActive,
+  collectPopularModelIds,
+} from '@/hooks/useSearchFiltersPopularActive';
 import { useSearchFiltersSync } from '@/hooks/useSearchFiltersSync';
 import { useSearchTabs } from '@/hooks/useSearchTabs';
 import { useTireBrandsCatalog } from '@/hooks/useTireBrandsCatalog';
@@ -71,7 +75,6 @@ export function useSearchFiltersController({
   const { user, isInitialized } = useAuthStore();
   const { t } = useTranslation();
   const [isHydrated, setIsHydrated] = useState(false);
-  const userForUi = isHydrated && isInitialized ? user : null;
   const [isSearching, setIsSearching] = useState(false);
   const prevSearchParamsRef = useRef<string>('');
   const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState | null>(null);
@@ -166,6 +169,14 @@ export function useSearchFiltersController({
     setModels: setModelsFromHook,
   } = useBrandsAndModels({ autoLoadModels: false, vehicleType, initialBrands });
 
+  const popularListings = usePopularListingsData(
+    filters.listing_category === 'vehicle' && vehicleType === 'car',
+  );
+  const popularModelIds = useMemo(
+    () => collectPopularModelIds(popularListings.data),
+    [popularListings.data],
+  );
+
   const hasPopularFiltersActive = useSearchFiltersPopularActive({
     filters,
     deferredFilters,
@@ -173,6 +184,7 @@ export function useSearchFiltersController({
     models,
     vehicleType,
     hasTirePopularFilters,
+    popularModelIds,
   });
 
   const { cities } = useCities();
@@ -325,7 +337,10 @@ export function useSearchFiltersController({
   );
 
   const handleSaveFilterClick = useCallback(() => {
-    if (userForUi) {
+    if (!isHydrated || !isInitialized) {
+      return;
+    }
+    if (user) {
       setShowSaveModal(true);
       return;
     }
@@ -333,7 +348,7 @@ export function useSearchFiltersController({
       localStorageSetItem('pendingSavedFilter', JSON.stringify(filtersForSave));
     }
     router.push(buildSignInHref('/favorites?tab=filters'));
-  }, [filtersForSave, router, userForUi]);
+  }, [filtersForSave, isHydrated, isInitialized, router, user]);
 
   const basicTabHasActiveDot =
     filters.listing_category === 'tire' ? hasTireBasicFilters : hasBasicFilters;
@@ -376,5 +391,8 @@ export function useSearchFiltersController({
     showSaveModal,
     onCloseSaveModal: () => setShowSaveModal(false),
     filtersForSave,
+    popularData: popularListings.data,
+    popularLoading: popularListings.loading,
+    popularError: popularListings.error,
   };
 }

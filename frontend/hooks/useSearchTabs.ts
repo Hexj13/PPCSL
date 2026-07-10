@@ -1,6 +1,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { createCoalescedCallback } from '@/lib/resize-coalesced';
 
@@ -81,6 +82,7 @@ export function useSearchTabs({
   preserveTabOnNextSyncRef,
 }: UseSearchTabsParams) {
   const searchParams = useSearchParams();
+  const { locale } = useI18n();
 
   const getInitialTab = useCallback((): SearchTab => {
     if (mode === 'tire') {
@@ -153,7 +155,7 @@ export function useSearchTabs({
     activeTab,
     tabRefs,
     tabsContainerRef,
-    `${mode}-${activeTab}`,
+    `${mode}-${activeTab}-${locale}`,
   );
 
   const scrollTabsToStart = useCallback(() => {

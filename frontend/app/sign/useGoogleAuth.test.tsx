@@ -16,7 +16,7 @@ import { authApi, savedFiltersApi } from '@/lib/api';
 import { loadTranslationsDynamic, type Translations } from '@/lib/i18n';
 import { toast } from '@/lib/toast';
 
-import { useGoogleAuth } from './useGoogleAuth';
+import { useGoogleAuth, resetGisInitStateForTests } from './useGoogleAuth';
 
 const mockReplace = jest.fn();
 
@@ -212,6 +212,7 @@ describe('useGoogleAuth', () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-google-client';
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = 'true';
+    resetGisInitStateForTests();
     mockSearchParams = new URLSearchParams();
     mockLocalStorageGetItem.mockReset();
     mockLocalStorageGetItem.mockReturnValue(null);
@@ -341,7 +342,7 @@ describe('useGoogleAuth', () => {
     expect(screen.getByTestId('google-auth-busy')).toHaveTextContent('false');
   });
 
-  it('re-renders GIS button with new locale when app locale changes', async () => {
+  it('keeps the same GIS iframe ready after app locale changes', async () => {
     const { rerender } = render(
       <Tree>
         <Harness />
@@ -349,13 +350,11 @@ describe('useGoogleAuth', () => {
     );
 
     await waitFor(() => {
-      expect(window.google?.accounts?.id.renderButton).toHaveBeenCalled();
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
     });
 
     const renderButton = window.google!.accounts!.id.renderButton as jest.Mock;
-    expect(renderButton.mock.calls.at(-1)?.[1]).toEqual(
-      expect.objectContaining({ locale: 'ru_RU' }),
-    );
+    expect(renderButton).toHaveBeenCalledTimes(1);
 
     mockPathname.mockReturnValue('/sign');
     window.location.pathname = '/sign';
@@ -367,9 +366,9 @@ describe('useGoogleAuth', () => {
     );
 
     await waitFor(() => {
-      const last = renderButton.mock.calls.at(-1)?.[1];
-      expect(last).toEqual(expect.objectContaining({ locale: 'ro_RO' }));
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
     });
+    expect(renderButton).toHaveBeenCalledTimes(1);
   });
 
   it('re-initializes GIS when window.google.accounts.id is replaced after first load', async () => {
@@ -378,7 +377,7 @@ describe('useGoogleAuth', () => {
 
     const { rerender } = render(
       <Tree>
-        <Harness />
+        <HarnessGisLoaded loaded={true} />
       </Tree>,
     );
 
@@ -401,18 +400,26 @@ describe('useGoogleAuth', () => {
       },
     };
 
-    mockPathname.mockReturnValue('/sign');
-    window.location.pathname = '/sign';
+    rerender(
+      <Tree>
+        <HarnessGisLoaded loaded={false} />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('false');
+    });
 
     rerender(
       <Tree>
-        <Harness />
+        <HarnessGisLoaded loaded={true} />
       </Tree>,
     );
 
     await waitFor(() => {
       expect(newInitialize).toHaveBeenCalledTimes(1);
       expect(newRenderButton).toHaveBeenCalled();
+      expect(screen.getByTestId('button-ready')).toHaveTextContent('true');
     });
 
     expect(newInitialize.mock.invocationCallOrder[0]).toBeLessThan(

@@ -394,6 +394,13 @@ export const analytics = {
     });
   },
 
+  searchTabSelect: (tab: 'basic' | 'advanced' | 'equipment' | 'popular') => {
+    trackEvent('select_content', {
+      content_type: 'search_tab',
+      content_id: tab,
+    });
+  },
+
   signUp: (method?: 'email' | 'phone' | 'google' | 'telegram') => {
     trackEvent('sign_up', {
       method: method || 'email',

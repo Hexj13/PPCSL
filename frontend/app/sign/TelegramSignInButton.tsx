@@ -44,9 +44,14 @@ export function TelegramSignInButton({
       aria-label={t('sign.continueWithTelegram')}
     >
       {loading ? (
-        <Spinner size="sm" inline className="text-[#229ED9]" data-testid="auth-telegram-loading" />
+        <Spinner
+          size="sm"
+          inline
+          className="text-semantic-info"
+          data-testid="auth-telegram-loading"
+        />
       ) : (
-        <TelegramIcon className={`${authOAuthIconButtonIconClass} text-[#229ED9]`} />
+        <TelegramIcon className={`${authOAuthIconButtonIconClass} text-semantic-info`} />
       )}
     </button>
   );

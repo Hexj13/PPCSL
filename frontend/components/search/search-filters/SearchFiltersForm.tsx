@@ -25,7 +25,7 @@ import type { useFilterHandlers } from '@/hooks/useFilterHandlers';
 import type { useFilterOptions } from '@/hooks/useFilterOptions';
 import type { FilterState } from '@/hooks/useSearchFilters';
 import type { useSearchTabs } from '@/hooks/useSearchTabs';
-import type { Brand, TireBrand, TireModel, VehicleModel } from '@/lib/api';
+import type { Brand, PopularListingsData, TireBrand, TireModel, VehicleModel } from '@/lib/api';
 import { resolveListingSortKey } from '@/lib/search';
 
 type FilterHandlers = ReturnType<typeof useFilterHandlers>;
@@ -70,6 +70,9 @@ export type SearchFiltersFormProps = {
   showSaveModal: boolean;
   onCloseSaveModal: () => void;
   filtersForSave: Record<string, unknown>;
+  popularData: PopularListingsData | null;
+  popularLoading: boolean;
+  popularError: boolean;
 };
 
 export function SearchFiltersForm({
@@ -110,6 +113,9 @@ export function SearchFiltersForm({
   showSaveModal,
   onCloseSaveModal,
   filtersForSave,
+  popularData,
+  popularLoading,
+  popularError,
 }: SearchFiltersFormProps) {
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- form-level Enter handling to control submit behavior
@@ -259,6 +265,9 @@ export function SearchFiltersForm({
                 filters={filters}
                 setFilters={setFilters}
                 vehicleType={vehicleType}
+                popularData={popularData}
+                popularLoading={popularLoading}
+                popularError={popularError}
               />
             </div>
           </div>
@@ -287,6 +296,9 @@ export function SearchFiltersForm({
               onPriceBlur={handlers.handlePriceBlur}
               onWheel={handlers.handleWheel}
               updateMultiple={updateMultiple}
+              popularData={popularData}
+              popularLoading={popularLoading}
+              popularError={popularError}
             />
           </div>
 

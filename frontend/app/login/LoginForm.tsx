@@ -49,6 +49,11 @@ export function LoginForm({
   const { locale } = useI18n();
   const registerLink = registerHref ?? buildSignPageHref({ tab: 'register' });
   const formDisabled = loading || disabled;
+  const loginInputId = 'auth-login-input';
+  const passwordInputId = 'auth-login-password-input';
+  const loginErrorId = 'auth-login-error';
+  const passwordErrorId = 'auth-login-password-error';
+
   return (
     <>
       {showTitle && (
@@ -63,27 +68,40 @@ export function LoginForm({
         aria-busy={loading}
       >
         <div className="mb-5">
-          <label className="block text-sm font-semibold mb-2 text-primary-900">
+          <label
+            htmlFor={loginInputId}
+            className="block text-sm font-semibold mb-2 text-primary-900"
+          >
             {t('login.emailOrPhone')}
           </label>
           <input
+            id={loginInputId}
             type="text"
             value={formData.login}
             onChange={handleLoginChange}
             onBlur={handleLoginBlur}
             onFocus={handleFormFieldFocus}
             disabled={formDisabled}
+            aria-invalid={errors.login ? true : undefined}
+            aria-describedby={errors.login ? loginErrorId : undefined}
             className={`input-field ${errors.login ? 'border-red-500' : ''}`}
             placeholder={t('login.emailOrPhone')}
             autoComplete="username"
             data-testid="auth-login-input"
           />
-          {errors.login && <p className="mt-1 text-sm text-red-400">{errors.login}</p>}
+          {errors.login ? (
+            <p id={loginErrorId} className="mt-1 text-sm text-semantic-error">
+              {errors.login}
+            </p>
+          ) : null}
         </div>
 
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-semibold text-primary-900">
+            <label
+              htmlFor={passwordInputId}
+              className="block text-sm font-semibold text-primary-900"
+            >
               {t('login.password')}
             </label>
             <Link
@@ -96,6 +114,7 @@ export function LoginForm({
           </div>
           <div className="relative">
             <input
+              id={passwordInputId}
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={(e) => {
@@ -105,6 +124,8 @@ export function LoginForm({
                 }
               }}
               disabled={formDisabled}
+              aria-invalid={errors.password ? true : undefined}
+              aria-describedby={errors.password ? passwordErrorId : undefined}
               className={`input-field pr-10 ${errors.password ? 'border-red-500' : ''}`}
               placeholder={t('login.passwordPlaceholder')}
               autoComplete="current-password"
@@ -114,8 +135,8 @@ export function LoginForm({
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               disabled={formDisabled}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover-only:hover:text-primary-400 transition-colors"
-              tabIndex={-1}
+              aria-label={showPassword ? t('common.hidePassword') : t('common.showPassword')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover-only:hover:text-primary-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="auth-login-password-toggle"
             >
               {showPassword ? (
@@ -125,6 +146,7 @@ export function LoginForm({
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden
                 >
                   <path
                     strokeLinecap="round"
@@ -140,6 +162,7 @@ export function LoginForm({
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden
                 >
                   <path
                     strokeLinecap="round"
@@ -157,7 +180,11 @@ export function LoginForm({
               )}
             </button>
           </div>
-          {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
+          {errors.password ? (
+            <p id={passwordErrorId} className="mt-1 text-sm text-semantic-error">
+              {errors.password}
+            </p>
+          ) : null}
         </div>
 
         <LoadingButton

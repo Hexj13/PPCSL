@@ -47,9 +47,17 @@ export function useTabIndicator<T extends string>(
       onUpdate = () => updateIndicatorRef.current();
       resizeObserver = new ResizeObserver(onUpdate);
       resizeObserver.observe(container);
+      for (const ref of Object.values(tabRefsRef.current) as Array<
+        RefObject<HTMLButtonElement | null>
+      >) {
+        if (ref.current) {
+          resizeObserver.observe(ref.current);
+        }
+      }
       removeResizeListener = addCoalescedResizeListener(onUpdate);
       container.addEventListener('scroll', onUpdate, { passive: true });
       timeoutIds.push(window.setTimeout(run, 150));
+      timeoutIds.push(window.setTimeout(run, 350));
     } else {
       timeoutIds.push(window.setTimeout(run, 0));
       timeoutIds.push(window.setTimeout(run, 100));
@@ -58,12 +66,12 @@ export function useTabIndicator<T extends string>(
     return () => {
       cancelAnimationFrame(rafId1);
       timeoutIds.forEach((id) => clearTimeout(id));
-      if (resizeObserver && container) {
+      if (resizeObserver) {
         resizeObserver.disconnect();
-        if (onUpdate) {
-          removeResizeListener?.();
-          container.removeEventListener('scroll', onUpdate);
-        }
+      }
+      if (container && onUpdate) {
+        removeResizeListener?.();
+        container.removeEventListener('scroll', onUpdate);
       }
     };
   }, [activeTab, containerRef, measureKey]);

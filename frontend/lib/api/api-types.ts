@@ -443,4 +443,43 @@ export type UpdateListingDto = Omit<
   down_payment_amount?: number | null;
 };
 
+export type PopularBodyTypeCar =
+  | 'Hatchback'
+  | 'Wagon'
+  | 'SUV'
+  | 'Minivan'
+  | 'Sedan'
+  | 'Convertible';
+
+export type PopularModelItem = {
+  brandId: string;
+  brandName: string;
+  modelId: string;
+  modelName: string;
+  listingCount: number;
+};
+
+export type PopularStatItem = {
+  key: string;
+  label: string;
+  count: number;
+};
+
+export type PopularStatBucket = {
+  items: PopularStatItem[];
+  otherCount: number;
+  total: number;
+};
+
+export type PopularListingsData = {
+  generatedAt: string;
+  modelsByBodyType: Record<PopularBodyTypeCar, PopularModelItem[]>;
+  brandListingCounts: Record<string, number>;
+  statistics: {
+    brands: PopularStatBucket;
+    bodyTypes: PopularStatBucket;
+    fuels: PopularStatBucket;
+  };
+};
+
 export * from './api-auth-dtos';

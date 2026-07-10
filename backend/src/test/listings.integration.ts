@@ -72,6 +72,22 @@ describe('Listings API Integration Tests', () => {
     });
   });
 
+  describe('GET /api/listings/popular', () => {
+    it('should return popular models and statistics', async () => {
+      const response = await request.get('/api/listings/popular').expect(200);
+
+      expect(response.body).toHaveProperty('generatedAt');
+      expect(response.body).toHaveProperty('modelsByBodyType');
+      expect(response.body).toHaveProperty('statistics');
+      expect(response.body.statistics).toHaveProperty('brands');
+      expect(response.body.statistics).toHaveProperty('bodyTypes');
+      expect(response.body.statistics).toHaveProperty('fuels');
+      expect(Array.isArray(response.body.statistics.brands.items)).toBe(true);
+      expect(typeof response.body.statistics.brands.otherCount).toBe('number');
+      expect(typeof response.body.statistics.brands.total).toBe('number');
+    });
+  });
+
   describe('POST /api/listings', () => {
     it('should create a listing and match OpenAPI schema', async () => {
       if (!brandId || !modelId) {

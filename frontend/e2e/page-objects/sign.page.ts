@@ -17,6 +17,10 @@ export class SignPage {
     loginInput: 'auth-login-input',
     loginPasswordInput: 'auth-login-password-input',
     loginSubmit: 'auth-login-submit',
+    googleOutsideCard: 'auth-google-outside-card',
+    googleBlock: 'auth-google-block',
+    googleSkeleton: 'auth-google-skeleton',
+    googleDisabledOverlay: 'auth-google-disabled-overlay',
   } as const;
 
   readonly registerForm: RegisterFormComponent;
@@ -209,5 +213,41 @@ export class SignPage {
 
   async registerBusiness(companyName: string, phone: string, password: string): Promise<void> {
     await this.registerForm.submitBusiness(companyName, phone, password);
+  }
+
+  async expectGoogleButtonReady(): Promise<void> {
+    const root = this.visibleAuthPage();
+    await expect(root.getByTestId(this.testIds.googleOutsideCard)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.googleSkeleton)).toHaveCount(0);
+    await expect(root.getByTestId(this.testIds.googleBlock)).toBeVisible();
+    await expect(root.getByTestId(this.testIds.googleDisabledOverlay)).toHaveCount(0);
+    await expect(root.getByTestId(this.testIds.googleBlock).locator('iframe')).toBeAttached({
+      timeout: 15_000,
+    });
+  }
+
+  async expectGoogleButtonStillClickable(): Promise<void> {
+    await this.expectGoogleButtonReady();
+    const currentIframe = await this.visibleAuthPage()
+      .getByTestId(this.testIds.googleBlock)
+      .locator('iframe')
+      .evaluate((el) => {
+        const rect = el.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const hit = document.elementFromPoint(centerX, centerY);
+        return {
+          connected: el.isConnected,
+          width: rect.width,
+          height: rect.height,
+          hitTag: hit?.tagName ?? null,
+          hitTestId: hit instanceof HTMLElement ? (hit.dataset.testid ?? null) : null,
+        };
+      });
+    expect(currentIframe.connected).toBe(true);
+    expect(currentIframe.width).toBeGreaterThan(0);
+    expect(currentIframe.height).toBeGreaterThan(0);
+    expect(currentIframe.hitTestId).not.toBe(this.testIds.googleSkeleton);
+    expect(currentIframe.hitTestId).not.toBe(this.testIds.googleDisabledOverlay);
   }
 }

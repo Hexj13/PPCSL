@@ -4,6 +4,7 @@ import { requireAuthCredentials } from '../fixtures/env';
 import { deleteAllSavedFiltersForSession } from '../utils/api/saved-filters';
 import { getE2eBackendApiOrigin } from '../utils/api-origin';
 import { expectAuthenticatedSession, loginByUi } from '../utils/auth';
+import { withFileLock } from '../utils/file-lock';
 import { t } from '../utils/i18n';
 import { completeSmartSelectionWizard } from '../utils/smart-selection-flow';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
@@ -50,7 +51,9 @@ test.describe('Smart selection edge cases', () => {
       },
     ];
 
-    await runSteps(prependClearBrowserState(page, steps));
+    await withFileLock('saved-filters-account', async () => {
+      await runSteps(prependClearBrowserState(page, steps));
+    });
   });
 
   test('shows error toast when smart selection API fails', async ({
@@ -91,6 +94,8 @@ test.describe('Smart selection edge cases', () => {
       },
     ];
 
-    await runSteps(prependClearBrowserState(page, steps));
+    await withFileLock('saved-filters-account', async () => {
+      await runSteps(prependClearBrowserState(page, steps));
+    });
   });
 });
