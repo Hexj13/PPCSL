@@ -20,6 +20,24 @@ const BROWSER_HEADERS: Record<string, string> = {
   'Accept-Language': 'ro-RO,ro;q=0.9,en-US;q=0.8,en;q=0.7',
 };
 
+interface VehicleJsonLd {
+  name?: string;
+  brand?: string;
+  model?: string;
+  images: string[];
+  year?: number;
+  mileageKm?: number;
+  fuelType?: string;
+  transmission?: string;
+  driveType?: string;
+  bodyType?: string;
+  color?: string;
+  price?: number;
+  currency?: Currency;
+  availability?: string;
+  sku?: string;
+}
+
 export class PdpParser {
   private catalogBrandNamesPromise?: Promise<string[]>;
 
@@ -69,8 +87,8 @@ export function parsePdpHtml(
     throw new Error(`Cannot extract sourceListingId from URL: ${url}`);
   }
 
-  const sourceStatus = detectSourceStatus($, html);
-  const jsonLd = extractProductJsonLd($);
+  const jsonLd = extractVehicleJsonLd($);
+  const sourceStatus = detectSourceStatus($, jsonLd);
   const brandNames = mergeBrandNameLists(extractBrandNamesFromPdp($, html), catalogBrandNames);
   const titleRaw = readTitle($, jsonLd);
   const { year: yearFromTitle, restTitle } = stripYearFromTitleEnd(titleRaw);
@@ -86,6 +104,8 @@ export function parsePdpHtml(
       model = fromCatalog.model;
     }
   }
+  if (!brand && jsonLd?.brand) brand = jsonLd.brand;
+  if (!model && jsonLd?.model) model = jsonLd.model;
 
   const descDesktop = readDescriptionDesktop($);
   const descMobile = readDescriptionMobile($);
@@ -97,11 +117,11 @@ export function parsePdpHtml(
     canonicalUrl: canonicalizeUrl(url),
     sourceStatus: sourceStatus.status,
     sourceStatusReason: sourceStatus.reason,
-    sourcePostId: extractSourcePostId($, html),
+    sourcePostId: extractSourcePostId($, html, jsonLd),
     title: titleRaw,
     brand,
     model,
-    year: readYearFromSpecs($) ?? yearFromTitle ?? readYearFromJsonLd(jsonLd),
+    year: readYearFromSpecs($) ?? yearFromTitle ?? jsonLd?.year ?? readYearFromName(jsonLd?.name),
     price: readPrice($, jsonLd),
     currency: readCurrency($, jsonLd),
     description: desc,
@@ -111,19 +131,26 @@ export function parsePdpHtml(
     downPaymentAmount: readDownPayment($),
     monthlyPayment: readMonthlyPayment($),
     creditPeriodMonths: readCreditPeriod($),
-    images: readImages($, html),
+    images: readImages($, html, url, jsonLd),
     videoUrl: readVideoUrl($, url),
     trimRaw: undefined,
     equipmentOptions: readEquipmentOptions($),
     equipmentKeys: [],
-    mileageKm: readMileageKm($),
+    mileageKm: readMileageKm($) ?? jsonLd?.mileageKm,
     engineVolumeL: readEngineVolumeL($),
     horsepowerFromPdp: readHorsepowerFromPdp($, html),
-    fuelRaw: readSpecValue($, 'Motorizare') ?? readFuelFromBadges($),
-    gearboxRaw: readSpecValue($, 'Cutie de viteze') ?? readGearboxFromBadges($),
-    driveTypeRaw: readSpecValue($, 'Tracțiune') ?? readDriveFromBadges($),
-    bodyRaw: readBodyFromBadges($),
-    colorRaw: readSpecValue($, 'Culoare') ?? readColorFromBadges($),
+    fuelRaw:
+      readSpecValue($, 'Motorizare') ?? readFuelFromBadges($) ?? normalizeFuelRaw(jsonLd?.fuelType),
+    gearboxRaw:
+      readSpecValue($, 'Cutie de viteze') ??
+      readGearboxFromBadges($) ??
+      normalizeTransmissionRaw(jsonLd?.transmission),
+    driveTypeRaw:
+      readSpecValue($, 'Tracțiune') ??
+      readDriveFromBadges($) ??
+      normalizeDriveRaw(jsonLd?.driveType),
+    bodyRaw: readBodyFromBadges($) ?? normalizeBodyRaw(jsonLd?.bodyType),
+    colorRaw: readSpecValue($, 'Culoare') ?? readColorFromBadges($) ?? jsonLd?.color,
     city: undefined,
     warnings,
   };
@@ -190,20 +217,16 @@ function stripYearFromTitleEnd(title?: string): { restTitle?: string; year?: num
   return { restTitle: match[1].trim(), year: Number.isFinite(y) ? y : undefined };
 }
 
-function readTitle(
-  $: cheerio.CheerioAPI,
-  jsonLd: Record<string, unknown> | null,
-): string | undefined {
+function readTitle($: cheerio.CheerioAPI, jsonLd: VehicleJsonLd | null): string | undefined {
   const h1 = $('main.autooutlet-single-vehicle h1').first().text().trim();
   if (h1) return h1;
-  const fromLd = typeof jsonLd?.name === 'string' ? jsonLd.name.trim() : '';
-  if (fromLd) return fromLd;
+  if (jsonLd?.name) return jsonLd.name;
   const og = $('meta[property="og:title"]').attr('content')?.trim();
   return og || undefined;
 }
 
-function readYearFromJsonLd(jsonLd: Record<string, unknown> | null): number | undefined {
-  const name = typeof jsonLd?.name === 'string' ? jsonLd.name : '';
+function readYearFromName(name?: string): number | undefined {
+  if (!name) return undefined;
   const y = Number(name.match(/\b(19|20)\d{2}\b/)?.[0]);
   return Number.isFinite(y) ? y : undefined;
 }
@@ -263,29 +286,18 @@ function extractCpFromText(text: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-function readPrice(
-  $: cheerio.CheerioAPI,
-  jsonLd: Record<string, unknown> | null,
-): number | undefined {
+function readPrice($: cheerio.CheerioAPI, jsonLd: VehicleJsonLd | null): number | undefined {
   const main = $('.autooutlet-price .price-main').first().text().trim();
   const fromDom = parsePriceText(main);
   if (fromDom != null) return fromDom;
-  const offers = jsonLd?.offers as { price?: unknown } | undefined;
-  if (offers?.price != null) {
-    const n = Number(String(offers.price).replace(/\s/g, ''));
-    if (Number.isFinite(n)) return Math.round(n);
-  }
+  if (jsonLd?.price != null && jsonLd.price > 0) return jsonLd.price;
   return undefined;
 }
 
-function readCurrency(
-  $: cheerio.CheerioAPI,
-  jsonLd: Record<string, unknown> | null,
-): Currency | undefined {
+function readCurrency($: cheerio.CheerioAPI, jsonLd: VehicleJsonLd | null): Currency | undefined {
   const main = $('.autooutlet-price .price-main').first().text();
   if (main.includes('€')) return Currency.EUR;
-  const cur = (jsonLd?.offers as { priceCurrency?: unknown } | undefined)?.priceCurrency;
-  if (cur === 'EUR') return Currency.EUR;
+  if (jsonLd?.currency) return jsonLd.currency;
   return undefined;
 }
 
@@ -294,11 +306,18 @@ function parsePriceText(raw: string): number | undefined {
 }
 
 function readCreditAvailable($: cheerio.CheerioAPI, html: string): boolean {
-  const blob = `${$.text()} ${html}`.toLowerCase();
+  const scoped = [
+    $('.autooutlet-price').text(),
+    $('.autooutlet-leasing-block').text(),
+    html.includes('price-monthly') ? 'price-monthly' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
   return (
-    blob.includes('/lună') ||
-    blob.includes('luna') ||
-    blob.includes('leasing') ||
+    scoped.includes('/lună') ||
+    scoped.includes('luna') ||
+    scoped.includes('leasing') ||
     $('#leasing-advance').length > 0 ||
     $('#leasing-monthly').length > 0 ||
     $('.price-monthly').length > 0 ||
@@ -331,11 +350,45 @@ function readMonthlyPayment($: cheerio.CheerioAPI): number | undefined {
 function readCreditPeriod($: cheerio.CheerioAPI): number | undefined {
   const raw = $('#leasing-period').attr('value')?.trim();
   const n = raw ? Number(raw) : NaN;
-  return Number.isFinite(n) && n > 0 ? n : undefined;
+  if (Number.isFinite(n) && n > 0) return n;
+  const calculatorPeriod = $('.autooutlet-leasing-block .autooutlet-input-field[type="number"]')
+    .eq(2)
+    .attr('value')
+    ?.trim();
+  const calculatorValue = calculatorPeriod ? Number(calculatorPeriod) : NaN;
+  return Number.isFinite(calculatorValue) && calculatorValue > 0 ? calculatorValue : undefined;
 }
 
-function readImages($: cheerio.CheerioAPI, html: string): string[] {
-  const urls: string[] = [];
+function readImages(
+  $: cheerio.CheerioAPI,
+  html: string,
+  pageUrl: string,
+  jsonLd: VehicleJsonLd | null,
+): string[] {
+  const urls = [...(jsonLd?.images ?? [])];
+  const gallerySelector =
+    '.vehicle-gallery-simple img, .autooutlet-gallery-main img, .autooutlet-gallery-thumb img, .autooutlet-gallery-thumbnails-grid img';
+
+  $(gallerySelector).each((_, el) => {
+    collectImageUrl($(el).attr('src'), pageUrl, urls);
+    const srcset = $(el).attr('srcset')?.trim();
+    if (srcset) {
+      for (const part of srcset.split(',')) {
+        const candidate = part.trim().split(/\s+/)[0];
+        collectImageUrl(candidate, pageUrl, urls);
+      }
+    }
+  });
+
+  for (const match of html.matchAll(/_next\/image\/\?url=([^&"'\s\\]+)/g)) {
+    try {
+      const decoded = decodeURIComponent(match[1].replace(/&amp;/g, '&'));
+      if (isVehicleImageUrl(decoded)) urls.push(decoded);
+    } catch {
+      /* ignore */
+    }
+  }
+
   $('script#gallery-data').each((_, el) => {
     const raw = $(el).html()?.trim();
     if (!raw) return;
@@ -343,13 +396,14 @@ function readImages($: cheerio.CheerioAPI, html: string): string[] {
       const data = JSON.parse(raw) as { images?: unknown };
       if (Array.isArray(data.images)) {
         for (const u of data.images) {
-          if (typeof u === 'string' && u.startsWith('http')) urls.push(u);
+          if (typeof u === 'string' && isVehicleImageUrl(u)) urls.push(u);
         }
       }
     } catch {
       return;
     }
   });
+
   const inline = html.match(
     /autooutletVehicleData\s*=\s*\{[\s\S]*?galleryImages\s*:\s*(\[[\s\S]*?\])/i,
   );
@@ -358,27 +412,64 @@ function readImages($: cheerio.CheerioAPI, html: string): string[] {
       const arr = JSON.parse(inline[1]) as unknown;
       if (Array.isArray(arr)) {
         for (const u of arr) {
-          if (typeof u === 'string' && u.startsWith('http')) urls.push(u);
+          if (typeof u === 'string' && isVehicleImageUrl(u)) urls.push(u);
         }
       }
     } catch {
       /* ignore */
     }
   }
+
   $('[data-src]').each((_, el) => {
     const ds = $(el).attr('data-src')?.trim();
-    if (ds && ds.startsWith('http') && ds.includes('wp-content/uploads')) urls.push(ds);
+    if (ds && isVehicleImageUrl(ds)) urls.push(ds);
   });
+
   return dedupeUrls(urls);
+}
+
+function collectImageUrl(raw: string | undefined, pageUrl: string, urls: string[]): void {
+  if (!raw) return;
+  const original = extractOriginalUrlFromNextImage(raw, pageUrl);
+  if (original && isVehicleImageUrl(original)) urls.push(original);
+}
+
+function extractOriginalUrlFromNextImage(raw: string, pageUrl: string): string | undefined {
+  try {
+    const abs = raw.startsWith('http') ? raw : new URL(raw, pageUrl).href;
+    const parsed = new URL(abs);
+    if (parsed.pathname.includes('/_next/image')) {
+      const urlParam = parsed.searchParams.get('url');
+      if (urlParam) return decodeURIComponent(urlParam);
+      return undefined;
+    }
+    return abs.startsWith('http') ? abs : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function isVehicleImageUrl(url: string): boolean {
+  if (!url.startsWith('http')) return false;
+  const lower = url.toLowerCase();
+  if (lower.includes('/logo') || lower.includes('/icon') || lower.includes('/favicon')) {
+    return false;
+  }
+  return (
+    lower.includes('vehicle-images') ||
+    lower.includes('wp-content/uploads') ||
+    lower.includes('/gallery/')
+  );
 }
 
 function dedupeUrls(urls: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const u of urls) {
-    if (seen.has(u)) continue;
-    seen.add(u);
-    out.push(u);
+    const normalized = u.replace(/\\+$/, '').replace(/\/$/, '');
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    out.push(normalized);
   }
   return out;
 }
@@ -484,29 +575,31 @@ function pickBadge($: cheerio.CheerioAPI, needles: string[]): string | undefined
   return undefined;
 }
 
-function extractSourcePostId($: cheerio.CheerioAPI, html: string): string | undefined {
+function extractSourcePostId(
+  $: cheerio.CheerioAPI,
+  html: string,
+  jsonLd: VehicleJsonLd | null,
+): string | undefined {
   const bodyClass = $('body').attr('class') ?? '';
   const m = bodyClass.match(/postid-(\d+)/i);
   if (m) return m[1];
   const hidden = $('input[name="vehicle_id"]').attr('value')?.trim();
   if (hidden) return hidden;
   const fromDesc = html.match(/Cod\s+Produs:?\s*([0-9]+)/i);
-  return fromDesc?.[1];
+  if (fromDesc) return fromDesc[1];
+  return jsonLd?.sku;
 }
 
-function extractProductJsonLd($: cheerio.CheerioAPI): Record<string, unknown> | null {
+function extractVehicleJsonLd($: cheerio.CheerioAPI): VehicleJsonLd | null {
   const scripts = $('script[type="application/ld+json"]').toArray();
   for (const script of scripts) {
     const raw = $(script).html()?.trim();
     if (!raw || raw.includes('"@graph"')) continue;
     try {
-      const data = JSON.parse(raw) as unknown;
-      if (
-        data &&
-        typeof data === 'object' &&
-        (data as { '@type'?: unknown })['@type'] === 'Product'
-      ) {
-        return data as Record<string, unknown>;
+      const data = JSON.parse(raw) as Record<string, unknown>;
+      const type = data['@type'];
+      if (type === 'Car' || type === 'Product') {
+        return normalizeVehicleJsonLd(data);
       }
     } catch {
       continue;
@@ -515,22 +608,129 @@ function extractProductJsonLd($: cheerio.CheerioAPI): Record<string, unknown> | 
   return null;
 }
 
+function normalizeVehicleJsonLd(data: Record<string, unknown>): VehicleJsonLd {
+  const brandObj = data.brand as { name?: unknown } | undefined;
+  const brand =
+    typeof brandObj?.name === 'string'
+      ? brandObj.name.trim()
+      : typeof data.brand === 'string'
+        ? data.brand.trim()
+        : undefined;
+  const model = typeof data.model === 'string' ? data.model.trim() : undefined;
+  const name = typeof data.name === 'string' ? data.name.trim() : undefined;
+  const yearRaw =
+    data.vehicleModelDate ?? data.productionDate ?? readYearFromName(name) ?? undefined;
+  const year = parseYearValue(yearRaw);
+  const mileageObj = data.mileageFromOdometer as { value?: unknown } | undefined;
+  const mileageKm = parseMileageValue(mileageObj?.value);
+  const offers = (data.offers ?? {}) as {
+    price?: unknown;
+    priceCurrency?: unknown;
+    availability?: unknown;
+  };
+  const price = parsePriceValue(offers.price);
+  const currency = offers.priceCurrency === 'EUR' ? Currency.EUR : undefined;
+  const availability = typeof offers.availability === 'string' ? offers.availability : undefined;
+  const sku = typeof data.sku === 'string' ? data.sku.trim() : undefined;
+  const images = parseJsonLdImages(data.image);
+
+  return {
+    name,
+    brand,
+    model,
+    images,
+    year,
+    mileageKm,
+    fuelType: typeof data.fuelType === 'string' ? data.fuelType : undefined,
+    transmission:
+      typeof data.vehicleTransmission === 'string' ? data.vehicleTransmission : undefined,
+    driveType:
+      typeof data.driveWheelConfiguration === 'string' ? data.driveWheelConfiguration : undefined,
+    bodyType: typeof data.bodyType === 'string' ? data.bodyType : undefined,
+    color: typeof data.color === 'string' ? data.color : undefined,
+    price,
+    currency,
+    availability,
+    sku,
+  };
+}
+
+function parseJsonLdImages(value: unknown): string[] {
+  const values = Array.isArray(value) ? value : [value];
+  return values.filter(
+    (image): image is string => typeof image === 'string' && isVehicleImageUrl(image),
+  );
+}
+
+function parseYearValue(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const y = Number(value.match(/\b(19|20)\d{2}\b/)?.[0]);
+    return Number.isFinite(y) ? y : undefined;
+  }
+  return undefined;
+}
+
+function parseMileageValue(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return Math.round(value);
+  if (typeof value === 'string') {
+    const digits = value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+    const n = Number(digits);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  }
+  return undefined;
+}
+
+function parsePriceValue(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return Math.round(value);
+  if (typeof value === 'string') {
+    const n = Number(value.replace(/\s/g, '').replace(',', '.'));
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
+  }
+  return undefined;
+}
+
+function normalizeFuelRaw(value?: string): string | undefined {
+  if (!value) return undefined;
+  return value;
+}
+
+function normalizeTransmissionRaw(value?: string): string | undefined {
+  if (!value) return undefined;
+  const lower = value.toLowerCase();
+  if (lower.includes('automatic')) return 'Automată';
+  if (lower.includes('manual')) return 'Manuală';
+  return value;
+}
+
+function normalizeDriveRaw(value?: string): string | undefined {
+  if (!value) return undefined;
+  const upper = value.toUpperCase();
+  if (upper.includes('4WD') || upper.includes('AWD') || upper.includes('ALL')) return '4x4';
+  if (upper.includes('FWD') || upper.includes('FRONT')) return 'Față';
+  if (upper.includes('RWD') || upper.includes('REAR')) return 'Spate';
+  return value;
+}
+
+function normalizeBodyRaw(value?: string): string | undefined {
+  if (!value) return undefined;
+  const lower = value.toLowerCase();
+  if (lower.includes('crossover') || lower.includes('suv')) return 'Crossover';
+  if (lower.includes('sedan')) return 'Sedan';
+  if (lower.includes('wagon') || lower.includes('universal')) return 'Universal';
+  if (lower.includes('minivan')) return 'Minivan';
+  return value;
+}
+
 function detectSourceStatus(
   $: cheerio.CheerioAPI,
-  html: string,
+  jsonLd: VehicleJsonLd | null,
 ): { status: 'active' | 'closed'; reason?: string } {
-  const title = $('title').text().trim();
-  const text = normalizeSourceStatusText([title, $.text(), html].filter(Boolean).join(' '));
-
-  if (text.includes('vandut') || text.includes('sa vandut') || text.includes('vândut')) {
-    return { status: 'closed', reason: 'sold_badge' };
-  }
-
-  const badgeText = $('.autooutlet-header-badges .badge, .badge')
+  const headerBadges = $('.autooutlet-header-badges .badge')
     .map((_, b) => $(b).text().trim())
-    .get()
-    .join(' ');
-  const normBadges = normalizeSourceStatusText(badgeText);
+    .get();
+  const normBadges = normalizeSourceStatusText(headerBadges.join(' '));
+
   if (normBadges.includes('vandut')) {
     return { status: 'closed', reason: 'sold_badge' };
   }
@@ -539,12 +739,29 @@ function detectSourceStatus(
     normBadges.includes('disponibil') ||
     normBadges.includes('in drum') ||
     normBadges.includes('la comanda') ||
+    normBadges.includes('rezervat') ||
     normBadges.includes('curand in vanzare')
   ) {
     return { status: 'active' };
   }
 
-  if ($('main.autooutlet-single-vehicle h1').length === 0) {
+  const availability = jsonLd?.availability?.toLowerCase() ?? '';
+  if (
+    availability.includes('soldout') ||
+    availability.includes('outofstock') ||
+    availability.includes('discontinued')
+  ) {
+    return { status: 'closed', reason: 'sold_badge' };
+  }
+  if (
+    availability.includes('instock') ||
+    availability.includes('preorder') ||
+    availability.includes('limitedavailability')
+  ) {
+    return { status: 'active' };
+  }
+
+  if ($('main.autooutlet-single-vehicle h1').length === 0 && !jsonLd?.name) {
     return { status: 'closed', reason: 'pdp_template' };
   }
 

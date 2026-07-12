@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import type { Element } from 'domhandler';
 
 import { requestText } from '../../partner-import-shared/utils/http';
 import { extractVehiculListingPathId } from '../../partner-import-shared/vehicul-listing-path-id';
@@ -11,6 +12,8 @@ const BROWSER_HEADERS: Record<string, string> = {
   Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
   'Accept-Language': 'ro-RO,ro;q=0.9,en-US;q=0.8,en;q=0.7',
 };
+
+const DEFAULT_PAGE_SIZE = 24;
 
 export interface ParsePlpPageResult {
   items: ParsedPlpItem[];
@@ -29,6 +32,19 @@ export function extractBrandOptions(html: string): string[] {
     const text = $(el).text().trim();
     if (!val || !text) return;
     names.push(text);
+  });
+  if (names.length > 0) {
+    return [...new Set(names)].sort((a, b) => b.length - a.length);
+  }
+  return extractBrandNamesFromMarciPage(html);
+}
+
+export function extractBrandNamesFromMarciPage(html: string): string[] {
+  const $ = cheerio.load(html);
+  const names: string[] = [];
+  $('.brand-name').each((_, el) => {
+    const text = $(el).text().trim();
+    if (text) names.push(text);
   });
   return [...new Set(names)].sort((a, b) => b.length - a.length);
 }
@@ -55,35 +71,87 @@ export async function fetchCatalogBrandNames(config: {
   requestTimeoutMs: number;
   maxRetries: number;
 }): Promise<string[]> {
-  const url = buildCatalogUrl(config.autooutletBaseUrl, 1);
-  const { data } = await requestText({
-    url,
+  const catalogUrl = buildCatalogUrl(config.autooutletBaseUrl, 1);
+  const { data: catalogHtml } = await requestText({
+    url: catalogUrl,
     method: 'GET',
     headers: BROWSER_HEADERS,
     timeoutMs: config.requestTimeoutMs,
     retries: config.maxRetries,
   });
-  return extractBrandOptions(data);
+  const fromCatalog = extractBrandOptions(catalogHtml);
+  if (fromCatalog.length > 0) {
+    return fromCatalog;
+  }
+  const marciUrl = `${config.autooutletBaseUrl.replace(/\/+$/, '')}/marci-modele/`;
+  const { data: marciHtml } = await requestText({
+    url: marciUrl,
+    method: 'GET',
+    headers: BROWSER_HEADERS,
+    timeoutMs: config.requestTimeoutMs,
+    retries: config.maxRetries,
+  });
+  return extractBrandNamesFromMarciPage(marciHtml);
 }
 
-export function readMaxPagesFromCatalogHtml(html: string): number | undefined {
+function readMaxPagesFromPaginationButtons(html: string): number | undefined {
+  const $ = cheerio.load(html);
+  let max = 0;
+  $('.pagination-page').each((_, el) => {
+    const n = Number($(el).text().trim());
+    if (Number.isFinite(n) && n > max) max = n;
+  });
+  return max > 0 ? max : undefined;
+}
+
+function readTotalResultsFromCatalogHtml(html: string): number | undefined {
+  const $ = cheerio.load(html);
+  const selectors = ['.results-count', '.filters-result-count'];
+  for (const sel of selectors) {
+    const text = $(sel).first().text().trim();
+    const m = text.match(/(\d+)/);
+    if (m) {
+      const n = Number(m[1]);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+  }
+  const escaped = html.match(/\\"total\\":(\d+)/);
+  if (escaped) {
+    const n = Number(escaped[1]);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return undefined;
+}
+
+export function readMaxPagesFromCatalogHtml(
+  html: string,
+  pageItemCount?: number,
+): number | undefined {
   const m1 = html.match(/window\.vehiclesData\.maxPages\s*=\s*(\d+)/i);
   if (m1) {
     const value = Number(m1[1]);
-    return Number.isFinite(value) && value > 0 ? value : undefined;
+    if (Number.isFinite(value) && value > 0) return value;
   }
   const m2 = html.match(/window\.vehiclesData\s*=\s*\{[^}]*maxPages\s*:\s*(\d+)/i);
   if (m2) {
     const value = Number(m2[1]);
-    return Number.isFinite(value) && value > 0 ? value : undefined;
+    if (Number.isFinite(value) && value > 0) return value;
   }
+  const fromPagination = readMaxPagesFromPaginationButtons(html);
+  if (fromPagination) return fromPagination;
   const matches = html.match(/data-page=["'](\d+)["']/gi) ?? [];
-  let max = 0;
+  let maxFromDataPage = 0;
   for (const fragment of matches) {
     const n = Number(fragment.replace(/\D/g, ''));
-    if (Number.isFinite(n) && n > max) max = n;
+    if (Number.isFinite(n) && n > maxFromDataPage) maxFromDataPage = n;
   }
-  return max > 0 ? max : undefined;
+  if (maxFromDataPage > 0) return maxFromDataPage;
+  const total = readTotalResultsFromCatalogHtml(html);
+  if (total) {
+    const pageSize = pageItemCount && pageItemCount > 0 ? pageItemCount : DEFAULT_PAGE_SIZE;
+    return Math.ceil(total / pageSize);
+  }
+  return undefined;
 }
 
 export function splitTitleToBrandModel(
@@ -126,6 +194,12 @@ function pickYearFromSpecs(specs: string[]): number | undefined {
   return undefined;
 }
 
+function pickYearFromVehicleSpecsText(text: string): number | undefined {
+  const firstPart = text.split('•')[0]?.trim() ?? text;
+  const y = Number(firstPart.match(/\b(19|20)\d{2}\b/)?.[0]);
+  return Number.isFinite(y) ? y : undefined;
+}
+
 function parsePrice(value: string): number | undefined {
   return parseVehiclePriceText(value);
 }
@@ -138,10 +212,10 @@ function dedupeBySourceId(items: ParsedPlpItem[]): ParsedPlpItem[] {
   return [...map.values()];
 }
 
-function toAbsoluteUrl(href: string): string {
+function toAbsoluteUrl(href: string, baseUrl: string): string {
   try {
     if (href.startsWith('http')) return href;
-    return new URL(href, 'https://autooutlet.md').href;
+    return new URL(href, baseUrl).href;
   } catch {
     return href;
   }
@@ -159,63 +233,90 @@ export function canonicalizeUrl(url: string): string {
   }
 }
 
-export function parsePlpHtmlFragment(html: string, brandNames: string[]): ParsePlpPageResult {
-  const $ = cheerio.load(html);
-  const items: ParsedPlpItem[] = [];
+const CARD_SELECTORS = 'article.vehicle-card, #vehicles-grid .car-card, .car-card';
 
-  $('#vehicles-grid .car-card').each((_, el) => {
-    const card = $(el);
-    const link =
-      card.find('a.car-card-link').first().attr('href')?.trim() ??
-      card.find('a[href*="/vehicul/"]').first().attr('href')?.trim();
-    if (!link) return;
-    const sourceListingId = extractSourceListingId(link);
-    if (!sourceListingId) return;
+function parseCardElement(
+  $: cheerio.CheerioAPI,
+  card: cheerio.Cheerio<Element>,
+  brandNames: string[],
+  baseUrl: string,
+): ParsedPlpItem | null {
+  const link =
+    card.find('a[href*="/vehicul/"]').first().attr('href')?.trim() ??
+    card.find('a.car-card-link').first().attr('href')?.trim();
+  if (!link) return null;
+  const sourceListingId = extractSourceListingId(link);
+  if (!sourceListingId) return null;
 
-    const title = card.find('h3.car-title').first().text().trim() || undefined;
-    const badges = card
-      .find('.car-badge')
-      .map((__, b) => $(b).text().trim())
-      .get()
-      .join(' ');
-    const normBadge = normalizeStatusText(badges);
-    const plpSoldBadge = normBadge.includes('vandut');
+  const title =
+    card.find('h3.vehicle-title').first().text().trim() ||
+    card.find('h3.car-title').first().text().trim() ||
+    undefined;
+  const badges = card
+    .find('.vehicle-badge, .car-badge')
+    .map((__, b) => $(b).text().trim())
+    .get()
+    .join(' ');
+  const normBadge = normalizeStatusText(badges);
+  const plpSoldBadge = normBadge.includes('vandut');
 
-    const specs = card
-      .find('.car-specs .car-spec')
-      .map((__, s) => $(s).text().trim())
-      .get();
-    const year = pickYearFromSpecs(specs);
-    const { brand, model } = splitTitleToBrandModel(title, brandNames);
+  const vehicleSpecsText = card.find('p.vehicle-specs').first().text().trim();
+  const legacySpecs = card
+    .find('.car-specs .car-spec')
+    .map((__, s) => $(s).text().trim())
+    .get();
+  const year = vehicleSpecsText
+    ? pickYearFromVehicleSpecsText(vehicleSpecsText)
+    : pickYearFromSpecs(legacySpecs);
+  const { brand, model } = splitTitleToBrandModel(title, brandNames);
 
-    const priceRaw = card.find('.current-price').first().text().trim();
-    const price = parsePrice(priceRaw);
-    const currency = priceRaw.includes('€') ? 'EUR' : undefined;
+  const priceRaw = card.find('.current-price').first().text().trim();
+  const price = parsePrice(priceRaw);
+  const currency = priceRaw.includes('€') ? 'EUR' : undefined;
 
-    const absUrl = toAbsoluteUrl(link);
-    items.push({
-      sourceListingId,
-      url: absUrl,
-      canonicalUrl: canonicalizeUrl(absUrl),
-      title,
-      brand,
-      model,
-      year,
-      price,
-      currency,
-      plpSoldBadge: plpSoldBadge || undefined,
-    });
-  });
-
+  const absUrl = toAbsoluteUrl(link, baseUrl);
   return {
-    items: dedupeBySourceId(items),
-    maxPages: readMaxPagesFromCatalogHtml(html),
+    sourceListingId,
+    url: absUrl,
+    canonicalUrl: canonicalizeUrl(absUrl),
+    title,
+    brand,
+    model,
+    year,
+    price,
+    currency,
+    plpSoldBadge: plpSoldBadge || undefined,
   };
 }
 
-export function parsePlpHtml(html: string, brandNames: string[]): ParsePlpPageResult {
-  const fromGrid = parsePlpHtmlFragment(html, brandNames);
-  const maxPages = fromGrid.maxPages ?? readMaxPagesFromCatalogHtml(html);
+export function parsePlpHtmlFragment(
+  html: string,
+  brandNames: string[],
+  baseUrl = 'https://autooutlet.md',
+): ParsePlpPageResult {
+  const $ = cheerio.load(html);
+  const items: ParsedPlpItem[] = [];
+
+  $(CARD_SELECTORS).each((_, el) => {
+    const card = $(el);
+    const parsed = parseCardElement($, card, brandNames, baseUrl);
+    if (parsed) items.push(parsed);
+  });
+
+  const deduped = dedupeBySourceId(items);
+  return {
+    items: deduped,
+    maxPages: readMaxPagesFromCatalogHtml(html, deduped.length),
+  };
+}
+
+export function parsePlpHtml(
+  html: string,
+  brandNames: string[],
+  baseUrl = 'https://autooutlet.md',
+): ParsePlpPageResult {
+  const fromGrid = parsePlpHtmlFragment(html, brandNames, baseUrl);
+  const maxPages = fromGrid.maxPages ?? readMaxPagesFromCatalogHtml(html, fromGrid.items.length);
   return { items: fromGrid.items, maxPages };
 }
 
@@ -252,105 +353,34 @@ export function parseLoadVehiclesAjaxJson(
   return { items: inner.items, maxPages };
 }
 
+function isCatalogHtml(data: string): boolean {
+  return (
+    data.includes('vehicle-card') || data.includes('car-card') || data.includes('vehicles-grid')
+  );
+}
+
 export class PlpParser {
-  private firstPageHtml?: string;
-  private bootstrap?: { nonce: string; ajaxUrl: string; brandNames: string[] };
+  private brandNames?: string[];
 
   constructor(private readonly config: AutooutletConfig) {}
 
   async parseCatalogPage(page: number): Promise<ParsePlpPageResult> {
-    await this.ensureBootstrapHtml();
-    const brandNames = this.bootstrap?.brandNames ?? extractBrandOptions(this.firstPageHtml ?? '');
-
-    if (page <= 1) {
-      const html = this.firstPageHtml ?? '';
-      return parsePlpHtml(html, brandNames);
-    }
-
-    const ajaxHtml = await this.tryFetchPageViaAjax(page);
-    if (ajaxHtml) {
-      const ajaxParsed = parseLoadVehiclesAjaxJson(ajaxHtml, brandNames);
-      if (ajaxParsed && ajaxParsed.items.length > 0) {
-        const maxFromBootstrap = readMaxPagesFromCatalogHtml(this.firstPageHtml ?? '');
-        return {
-          items: ajaxParsed.items,
-          maxPages: ajaxParsed.maxPages ?? maxFromBootstrap,
-        };
-      }
-    }
-
-    const fallbackHtml = await this.fetchCatalogDirect(page);
-    return parsePlpHtml(fallbackHtml, brandNames);
+    const brandNames = await this.ensureBrandNames();
+    const html = await this.fetchCatalogPageHtml(page);
+    return parsePlpHtml(html, brandNames, this.config.autooutletBaseUrl);
   }
 
-  private async ensureBootstrapHtml(): Promise<void> {
-    if (this.firstPageHtml) return;
-    const url = buildCatalogUrl(this.config.autooutletBaseUrl, 1);
-    const { data } = await requestText({
-      url,
-      method: 'GET',
-      headers: BROWSER_HEADERS,
-      timeoutMs: this.config.requestTimeoutMs,
-      retries: this.config.maxRetries,
+  private async ensureBrandNames(): Promise<string[]> {
+    if (this.brandNames) return this.brandNames;
+    this.brandNames = await fetchCatalogBrandNames({
+      autooutletBaseUrl: this.config.autooutletBaseUrl,
+      requestTimeoutMs: this.config.requestTimeoutMs,
+      maxRetries: this.config.maxRetries,
     });
-    this.firstPageHtml = data;
-    const nonce = extractNonce(data);
-    const ajaxUrl = extractAjaxUrl(data);
-    const brandNames = extractBrandOptions(data);
-    this.bootstrap = { nonce, ajaxUrl, brandNames };
+    return this.brandNames;
   }
 
-  private async tryFetchPageViaAjax(page: number): Promise<string | null> {
-    await this.ensureBootstrapHtml();
-    const { nonce, ajaxUrl } = this.bootstrap ?? { nonce: '', ajaxUrl: '' };
-    if (!nonce || !ajaxUrl) return null;
-    const body = new URLSearchParams({
-      action: 'load_vehicles',
-      nonce,
-      page: String(page),
-      view: 'grid',
-      sort: 'newest',
-      keyword: '',
-      brand: '',
-      model: '',
-      label: '',
-      price_min: '',
-      price_max: '',
-      year_min: '',
-      year_max: '',
-      fuel_type: '',
-      transmission: '',
-      drive_type: '',
-      body_type: '',
-      availability: '',
-      color: '',
-      seats: '',
-      capacity_cc_min: '',
-      capacity_cc_max: '',
-      parcurs_min: '',
-      parcurs_max: '',
-      putere_min: '',
-      putere_max: '',
-    });
-    try {
-      const { data } = await requestText({
-        url: ajaxUrl,
-        method: 'POST',
-        headers: {
-          ...BROWSER_HEADERS,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: body.toString(),
-        timeoutMs: this.config.requestTimeoutMs,
-        retries: 1,
-      });
-      return data;
-    } catch {
-      return null;
-    }
-  }
-
-  private async fetchCatalogDirect(page: number): Promise<string> {
+  private async fetchCatalogPageHtml(page: number): Promise<string> {
     const urls = buildCatalogDirectUrlCandidates(this.config.autooutletBaseUrl, page);
     let lastError: unknown;
     for (const candidate of urls) {
@@ -362,7 +392,7 @@ export class PlpParser {
           timeoutMs: this.config.requestTimeoutMs,
           retries: this.config.maxRetries,
         });
-        if (data.includes('car-card') || data.includes('vehicles-grid')) {
+        if (isCatalogHtml(data)) {
           return data;
         }
       } catch (e) {
@@ -370,28 +400,9 @@ export class PlpParser {
       }
     }
     throw new Error(
-      `AutoOutlet PLP direct fetch failed for page ${page}: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+      `AutoOutlet PLP fetch failed for page ${page}: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
     );
   }
-}
-
-function extractNonce(html: string): string {
-  const m =
-    html.match(/var\s+autooutletFilters\s*=\s*\{[^}]*"nonce"\s*:\s*"([^"]+)"/i) ??
-    html.match(/autooutletFilters\s*=\s*\{[^}]*"nonce"\s*:\s*"([^"]+)"/i) ??
-    html.match(/"nonce"\s*:\s*"([a-f0-9]+)"/i);
-  return m?.[1]?.trim() ?? '';
-}
-
-function extractAjaxUrl(html: string): string {
-  const m =
-    html.match(/var\s+autooutletFilters\s*=\s*\{[^}]*"ajaxurl"\s*:\s*"([^"]+)"/i) ??
-    html.match(/autooutletFilters\s*=\s*\{[^}]*"ajaxurl"\s*:\s*"([^"]+)"/i);
-  const raw = m?.[1]?.trim();
-  if (raw) {
-    return raw.replace(/\\\//g, '/');
-  }
-  return 'https://autooutlet.md/wp-admin/admin-ajax.php';
 }
 
 export function buildCatalogUrl(baseUrl: string, page: number): string {
@@ -399,7 +410,7 @@ export function buildCatalogUrl(baseUrl: string, page: number): string {
   if (page <= 1) {
     return `${normalizedBase}/catalog-auto/?sort=newest`;
   }
-  return `${normalizedBase}/catalog-auto/page/${page}/?sort=newest`;
+  return `${normalizedBase}/catalog-auto/?sort=newest&page=${page}`;
 }
 
 function buildCatalogDirectUrlCandidates(baseUrl: string, page: number): string[] {
@@ -408,7 +419,7 @@ function buildCatalogDirectUrlCandidates(baseUrl: string, page: number): string[
     return [`${normalizedBase}/catalog-auto/?sort=newest`];
   }
   return [
-    `${normalizedBase}/catalog-auto/page/${page}/?sort=newest`,
-    `${normalizedBase}/catalog-auto/?sort=newest&paged=${page}`,
+    `${normalizedBase}/catalog-auto/?sort=newest&page=${page}`,
+    `${normalizedBase}/catalog-auto/?page=${page}`,
   ];
 }

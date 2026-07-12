@@ -195,6 +195,7 @@ async function runScan(options: ScanCommandOptions): Promise<void> {
   let readyForImport = 0;
   let detectedMaxPages: number | undefined;
   let lastScannedPage = pageFrom - 1;
+  let consecutiveEmptyPages = 0;
 
   for (let page = pageFrom; page <= requestedPageTo; page++) {
     if (shouldStop) {
@@ -250,6 +251,26 @@ async function runScan(options: ScanCommandOptions): Promise<void> {
       'SCAN',
       `[PAGE ${page}] found=${parsed.items.length} new=${pageNew} duplicates=${pageDuplicates} maxPages=${parsed.maxPages ?? '-'} elapsed=${elapsedSec}s`,
     );
+
+    if (pageFrom === 1 && page === 1 && parsed.items.length === 0) {
+      throw new Error(
+        'AutoOutlet PLP page 1 returned 0 cards — catalog HTML or selectors may have changed.',
+      );
+    }
+
+    if (parsed.items.length === 0) {
+      consecutiveEmptyPages += 1;
+    } else {
+      consecutiveEmptyPages = 0;
+    }
+
+    if (!detectedMaxPages && consecutiveEmptyPages >= 2) {
+      logger.info(
+        'SCAN',
+        `[STOP] ${consecutiveEmptyPages} consecutive empty pages without maxPages`,
+      );
+      break;
+    }
 
     if (detectedMaxPages && page >= detectedMaxPages) {
       break;
