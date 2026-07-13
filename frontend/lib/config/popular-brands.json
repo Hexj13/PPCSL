@@ -75,11 +75,11 @@
       ]
     },
     {
-      "brand": "Suzuki",
+      "brand": "BYD",
       "top_models": [
-        { "model": "Vitara", "most_popular": true },
-        { "model": "Swift", "most_popular": false },
-        { "model": "SX4", "most_popular": false }
+        { "model": "Atto 3", "most_popular": true },
+        { "model": "Dolphin", "most_popular": false },
+        { "model": "Seal", "most_popular": false }
       ]
     },
     {

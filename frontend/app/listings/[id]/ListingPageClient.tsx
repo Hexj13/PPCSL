@@ -29,6 +29,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
 import { getBlurForListing } from '@/lib/blur-navigation-cache';
 import { reportImageLoadFailure } from '@/lib/image-failure-monitor';
+import { shouldShowListingViews } from '@/lib/listing-views-visibility';
 import {
   getListingDescriptionForLocale,
   listingHasAnyDescription,
@@ -55,6 +56,7 @@ function ListingPageListingInfoSection({
   onCopyLink,
   onShare,
   canShare,
+  showViews,
 }: {
   listing: Listing;
   closingDate: Date;
@@ -63,6 +65,7 @@ function ListingPageListingInfoSection({
   onCopyLink: () => void;
   onShare: () => void;
   canShare: boolean;
+  showViews: boolean;
 }) {
   return (
     <div className="surface overflow-hidden">
@@ -70,7 +73,7 @@ function ListingPageListingInfoSection({
         {t('listingDetail.listingInfo')}
       </h2>
       <div className="space-y-3 wrap-break-word">
-        {listing.views !== undefined && listing.views > 0 && (
+        {showViews && (
           <div className="flex items-center gap-2 text-base min-w-0">
             <svg
               className="w-4 h-4 text-primary-400 shrink-0"
@@ -279,7 +282,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     router,
     listing,
     id,
-    user: _user,
+    user,
     isInitialized,
     isInComparison,
     isFavorite,
@@ -408,6 +411,8 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
   if (!listing) return null;
 
   const showContact = listingPageShowsContactCard(listing, promotionAccess, isOwnListing);
+  const showViews =
+    shouldShowListingViews(user, isInitialized) && listing.views !== undefined && listing.views > 0;
   const closingDate = getClosingDate(listing.last_updated_at);
   const h1Title = listingPagePrimaryHeadingTitle(listing, t);
 
@@ -538,6 +543,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
                 onCopyLink={handleCopyLink}
                 onShare={handleShare}
                 canShare={canShare}
+                showViews={showViews}
               />
             </div>
           </div>

@@ -246,6 +246,12 @@ NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
 # Google Analytics Measurement ID (optional)
 NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 
+# Listing views visibility (optional)
+# all: show view counts to everyone (default)
+# admin: show view counts only to Admin users
+# Set in frontend/.env.local — backend .env does not affect the Next.js client bundle.
+NEXT_PUBLIC_LISTING_VIEWS_VISIBILITY=all
+
 ```
 
 ### Promotion Feature Variables (backend runtime)

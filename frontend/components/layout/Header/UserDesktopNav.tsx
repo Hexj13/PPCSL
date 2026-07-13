@@ -35,12 +35,7 @@ export function UserDesktopNavLinks({
         labelClassName={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES}
         t={t}
       />
-      <Link href={href('/my-listings')} className={navLinkClasses}>
-        <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
-          {t('header.myListings')}
-        </span>
-      </Link>
-      <Link href={href('/favorites')} className={`${navLinkClasses} lg:hidden xl:flex`}>
+      <Link href={href('/favorites')} className={navLinkClasses}>
         <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
           {t('header.favorites')}
         </span>
@@ -55,6 +50,11 @@ export function UserDesktopNavLinks({
           </span>
         )}
       </Link>
+      <Link href={href('/my-listings')} className={`${navLinkClasses} lg:hidden xl:flex`}>
+        <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
+          {t('header.myListings')}
+        </span>
+      </Link>
       {userType !== 'Individual' && (
         <Link href={href('/partners')} className={`${navLinkClasses} lg:hidden xl:flex`}>
           <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
@@ -63,8 +63,8 @@ export function UserDesktopNavLinks({
         </Link>
       )}
       <HeaderMoreDropdown
-        favoritesHref={href('/favorites')}
         compareHref={href('/compare')}
+        myListingsHref={href('/my-listings')}
         partnersHref={userType !== 'Individual' ? href('/partners') : undefined}
         comparisonCount={comparisonCount}
         navLinkClasses={navLinkClasses}

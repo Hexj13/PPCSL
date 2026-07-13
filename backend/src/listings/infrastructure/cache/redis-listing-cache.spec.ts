@@ -1,3 +1,4 @@
+import { CACHE_TTL } from '../../../common/utils/cache.utils';
 import { RedisService } from '../../../common/redis.service';
 import type { PopularListingsData } from '../../domain/popular-listings.types';
 
@@ -20,6 +21,10 @@ describe('RedisListingCache', () => {
     await cache.setPopularListings({} as PopularListingsData);
 
     expect(redisService.getJson).toHaveBeenCalledWith('cache:listings:popular:v2:car');
-    expect(redisService.setJson).toHaveBeenCalledWith('cache:listings:popular:v2:car', {}, 93600);
+    expect(redisService.setJson).toHaveBeenCalledWith(
+      'cache:listings:popular:v2:car',
+      {},
+      CACHE_TTL.listings.popular,
+    );
   });
 });

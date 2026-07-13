@@ -55,7 +55,7 @@ export const CACHE_TTL: CacheTTL = {
     single: 120,
     userListings: 180,
     similar: 120,
-    popular: 93600,
+    popular: 3600,
   },
   brands: {
     all: 86400,

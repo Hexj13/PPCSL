@@ -9,6 +9,8 @@ import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStat
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import type { Listing } from '@/lib/api';
+import { shouldShowListingViews } from '@/lib/listing-views-visibility';
+import { useAuthStore } from '@/lib/store';
 import {
   formatDateShort,
   formatDateRelative,
@@ -32,6 +34,9 @@ export function ListingCardBody({
   isHydrated: boolean;
   t: (key: string, params?: Record<string, string | number>) => string;
 }) {
+  const { user, isInitialized } = useAuthStore();
+  const showViews =
+    shouldShowListingViews(user, isInitialized) && listing.views !== undefined && listing.views > 0;
   const tireCard = isTireListing(listing);
   return (
     <div className="p-4 md:p-5 grow flex flex-col">
@@ -78,7 +83,7 @@ export function ListingCardBody({
       >
         <span className="min-w-0 truncate">{getCityName(listing.city, locale, cities)}</span>
         <div className="flex items-center gap-3 shrink-0">
-          {listing.views !== undefined && listing.views > 0 && (
+          {showViews && (
             <>
               <span className="flex items-center gap-1 text-sm shrink-0">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +100,7 @@ export function ListingCardBody({
                     d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                   />
                 </svg>
-                {formatViewsCompact(listing.views)}
+                {formatViewsCompact(listing.views!)}
               </span>
               <span className="h-4 w-px bg-primary-500/20 shrink-0" />
             </>

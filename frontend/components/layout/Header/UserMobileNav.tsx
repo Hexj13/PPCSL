@@ -61,9 +61,6 @@ export function UserMobileNav({
         <CreateListingButton variant="mobile" drawerCta onClick={onClose} />
       )}
       <HeaderListingsNavLink className={mobileNavLinkClasses} onNavigate={onClose} t={t} />
-      <Link href={href('/my-listings')} {...linkProps}>
-        <span suppressHydrationWarning>{t('header.myListings')}</span>
-      </Link>
       <Link
         href={href('/favorites')}
         className={mobileNavLinkClasses}
@@ -82,6 +79,9 @@ export function UserMobileNav({
             {comparisonCount > 99 ? '99+' : comparisonCount}
           </span>
         )}
+      </Link>
+      <Link href={href('/my-listings')} {...linkProps}>
+        <span suppressHydrationWarning>{t('header.myListings')}</span>
       </Link>
       {user.type !== 'Individual' && (
         <Link

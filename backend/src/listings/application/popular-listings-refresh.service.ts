@@ -9,7 +9,7 @@ export class PopularListingsRefreshService {
 
   constructor(private readonly getPopularListingsUseCase: GetPopularListingsUseCase) {}
 
-  @Cron('0 1 * * *')
+  @Cron('0 * * * *')
   async refreshPopularListings(): Promise<void> {
     try {
       await this.getPopularListingsUseCase.execute({ forceRefresh: true });
