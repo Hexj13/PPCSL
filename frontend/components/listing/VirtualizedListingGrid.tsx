@@ -136,7 +136,7 @@ function VirtualizedListingGridContent({
   const parentRef = useRef<HTMLDivElement>(null);
   const renderedInnerRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(swapMetrics.gridOffsetTop);
-  const [renderedInnerHeight, setRenderedInnerHeight] = useState(0);
+  const [domRenderedBottom, setDomRenderedBottom] = useState(0);
   const [, setLayoutReconcileTick] = useState(0);
 
   const { rows } = useMemo(
@@ -181,37 +181,48 @@ function VirtualizedListingGridContent({
     });
   }, [rows.length]);
 
+  const gridColsClass = GRID_COLS_CLASS[columns] ?? 'grid-cols-1';
+
+  const virtualRows = virtualizer.getVirtualItems();
+  const firstVirtualRow = virtualRows[0];
+  const lastVirtualRow = virtualRows[virtualRows.length - 1];
+  const windowOffset = (firstVirtualRow?.start ?? 0) - virtualizer.options.scrollMargin;
+  const virtualRenderedBottom = lastVirtualRow
+    ? lastVirtualRow.end - virtualizer.options.scrollMargin
+    : 0;
+  const firstVirtualRowIndex = firstVirtualRow?.index ?? -1;
+  const lastVirtualRowIndex = lastVirtualRow?.index ?? -1;
+
   useLayoutEffect(() => {
+    const parentEl = parentRef.current;
     const renderedInnerEl = renderedInnerRef.current;
-    if (!renderedInnerEl) {
+    if (!parentEl || !renderedInnerEl) {
       return;
     }
 
-    const updateRenderedInnerHeight = () => {
-      setRenderedInnerHeight(renderedInnerEl.offsetHeight);
+    const updateDomRenderedBottom = () => {
+      const nextBottom =
+        renderedInnerEl.getBoundingClientRect().bottom - parentEl.getBoundingClientRect().top;
+      setDomRenderedBottom((prev) => (prev === nextBottom ? prev : nextBottom));
     };
 
-    updateRenderedInnerHeight();
+    updateDomRenderedBottom();
 
     if (typeof ResizeObserver === 'undefined') {
       return;
     }
 
-    const observer = new ResizeObserver(updateRenderedInnerHeight);
+    const observer = new ResizeObserver(updateDomRenderedBottom);
     observer.observe(renderedInnerEl);
     return () => {
       observer.disconnect();
     };
-  }, [rows.length, columns]);
+  }, [columns, firstVirtualRowIndex, lastVirtualRowIndex, rows.length]);
 
-  const gridColsClass = GRID_COLS_CLASS[columns] ?? 'grid-cols-1';
-
-  const virtualRows = virtualizer.getVirtualItems();
-  const windowOffset = (virtualRows[0]?.start ?? 0) - virtualizer.options.scrollMargin;
   const containerHeight = resolveVirtualContainerHeight(
     virtualizer.getTotalSize(),
-    windowOffset,
-    renderedInnerHeight,
+    virtualRenderedBottom,
+    domRenderedBottom,
   );
 
   return (

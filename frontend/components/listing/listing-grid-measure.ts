@@ -18,10 +18,10 @@ export function resolveVirtualRowSize(
 
 export function resolveVirtualContainerHeight(
   virtualTotalSize: number,
-  windowOffset: number,
-  renderedInnerHeight: number,
+  virtualRenderedBottom: number,
+  domRenderedBottom: number,
 ): number {
-  return Math.max(virtualTotalSize, windowOffset + renderedInnerHeight);
+  return Math.max(virtualTotalSize, virtualRenderedBottom, domRenderedBottom);
 }
 
 export function measureStaticRowHeights(

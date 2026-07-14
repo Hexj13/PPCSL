@@ -68,12 +68,14 @@ describe('measureStaticRowHeights', () => {
     expect(resolveVirtualRowSize(1, 2, 400, 500)).toBe(400);
   });
 
-  it('uses rendered inner height when it exceeds the cached virtual total', () => {
-    expect(resolveVirtualContainerHeight(6000, 100, 6200)).toBe(6300);
+  it('uses the highest absolute bottom among virtual total, virtual window, and DOM', () => {
+    expect(resolveVirtualContainerHeight(6000, 5900, 6300)).toBe(6300);
+    expect(resolveVirtualContainerHeight(6400, 6100, 6200)).toBe(6400);
+    expect(resolveVirtualContainerHeight(6000, 6500, 6200)).toBe(6500);
   });
 
-  it('keeps the virtualizer total when rendered content already fits', () => {
-    expect(resolveVirtualContainerHeight(6400, 200, 5000)).toBe(6400);
+  it('keeps the virtualizer total when rendered bottoms already fit', () => {
+    expect(resolveVirtualContainerHeight(6400, 5000, 5100)).toBe(6400);
   });
 
   it('measures card row height as the tallest card in the row', () => {
