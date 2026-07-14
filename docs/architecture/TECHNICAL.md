@@ -1391,7 +1391,7 @@ For deploying kupito.club on Render.com, configure the following:
 **Build Command:**
 
 ```bash
-git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm run prepare:build && cd core/frontend && npm ci && npm run build
+git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && rm -rf core .git/modules/core && git submodule update --init --recursive && npm run prepare:build && cd core/frontend && npm ci && npm run build
 ```
 
 **Start Command:**
@@ -1440,7 +1440,7 @@ For deploying kupito.club backend on Render.com, configure the following:
 **Build Command:**
 
 ```bash
-git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm ci && npm run prepare:build && cd core/backend && ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build
+git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && rm -rf core .git/modules/core && git submodule update --init --recursive && npm ci && npm run prepare:build && cd core/backend && ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build
 ```
 
 **Start Command:**

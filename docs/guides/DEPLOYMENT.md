@@ -490,7 +490,7 @@ After creation, Render will show:
 - **Branch:** `main`
 - **Root Directory:** (leave empty)
 - **Runtime:** `Node`
-- **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm ci && npm run prepare:build && cd core/backend && ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build`
+- **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && rm -rf core .git/modules/core && git submodule update --init --recursive && npm ci && npm run prepare:build && cd core/backend && ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build`
 - **Start Command:** `cd core/backend && npm run start:prod`
 - **Pre-Deploy Command (recommended):** `cd core/backend && npm run migration:run:prod` — run migrations before each deploy so schema and code stay aligned (see platform [production-deployment.md](../../../docs/deployment/production-deployment.md)).
 
@@ -650,7 +650,7 @@ Sentry image diagnostics use the backend `HEAD` proxy (`/api/diagnostics/image-s
 **Build Settings:**
 
 1. **Root Directory:** Leave empty
-2. **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm ci && npm run prepare:build && cd core/backend && ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build`
+2. **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && rm -rf core .git/modules/core && git submodule update --init --recursive && npm ci && npm run prepare:build && cd core/backend && ONNXRUNTIME_NODE_INSTALL=skip npm ci && npm run build`
 3. **Start Command:** `cd core/backend && npm run start:prod`
 4. **Pre-Deploy Command (recommended):** `cd core/backend && npm run migration:run:prod`
 
@@ -772,7 +772,7 @@ If you deploy the frontend as a separate service on Render.com:
    - **Name:** `kupito-frontend`
 
 - **Root Directory:** leave empty
-- **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && git submodule update --init --recursive && npm run prepare:build && cd core/frontend && npm ci && npm run build`
+- **Build Command:** `git config --global credential.helper store && echo "https://x-access-token:${GITHUB_PAT}@github.com" > ~/.git-credentials && rm -rf core .git/modules/core && git submodule update --init --recursive && npm run prepare:build && cd core/frontend && npm ci && npm run build`
 - **Start Command:** `cd core/frontend && npm start`
 
 **Environment Variables:**
