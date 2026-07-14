@@ -11,9 +11,9 @@ import { sortByName } from '@/lib/utils';
 import { HintTooltip } from '@/ui';
 
 import { BrandModelCatalogInfoBlock } from './BrandModelCatalogInfoBlock';
+import { ListingFormTextInput } from './ListingFormTextInput';
 import { ListingYearField } from './ListingYearField';
 import { MobileSelectField } from './MobileSelectField';
-import { RequiredAsterisk } from './RequiredAsterisk';
 import type { ListingFormSectionProps } from './types';
 
 export function BasicInfoSection({
@@ -65,10 +65,6 @@ export function BasicInfoSection({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
         <div>
-          <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
-            {t('listings.brandLabel')}
-            <RequiredAsterisk filled={!!formData.vehicle.brand_id} />
-          </label>
           <MobileSelectField
             value={formData.vehicle.brand_id}
             onChange={(value) => {
@@ -94,10 +90,6 @@ export function BasicInfoSection({
         </div>
 
         <div>
-          <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
-            {t('listings.modelLabel')}
-            <RequiredAsterisk filled={!!formData.vehicle.model_id} />
-          </label>
           <MobileSelectField
             value={formData.vehicle.model_id}
             onChange={(value) => {
@@ -127,11 +119,6 @@ export function BasicInfoSection({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="mb-2 hidden items-center gap-2 text-sm font-semibold text-primary-900 md:flex">
-            <SearchFilterYearIcon />
-            {t('listings.yearLabel')}
-            <RequiredAsterisk filled={!!formData.vehicle.year} />
-          </label>
           <ListingYearField
             value={formData.vehicle.year}
             onChange={(v) => {
@@ -154,7 +141,7 @@ export function BasicInfoSection({
         </div>
 
         <div>
-          <div className="flex items-center gap-1.5 mb-2">
+          <div className="flex items-center gap-1.5 mb-2 md:hidden">
             <label htmlFor="vin-input" className="text-sm font-semibold text-primary-900">
               {t('listings.vinLabel')}
             </label>
@@ -162,20 +149,20 @@ export function BasicInfoSection({
               {t('listings.vinHint')}
             </HintTooltip>
           </div>
-          <input
-            id="vin-input"
-            type="text"
-            maxLength={17}
+          <ListingFormTextInput
+            inputId="vin-input"
             value={formData.vin}
-            onChange={(e) => {
+            onChange={(value) => {
               clearError('vin');
-              const value = e.target.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '');
-              setFormData((prev) => ({ ...prev, vin: value }));
+              const normalized = value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '');
+              setFormData((prev) => ({ ...prev, vin: normalized }));
             }}
-            className={`input-field h-[48px] ${errors['vin'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-            placeholder={t('listings.vinPlaceholder')}
+            fieldLabel={t('listings.vinLabel')}
             title={t('listings.vinTitle')}
-            data-testid="listing-create-vin-input"
+            placeholder={t('listings.vinPlaceholder')}
+            maxLength={17}
+            error={!!errors['vin']}
+            dataTestId="listing-create-vin-input"
           />
           {formData.vin && formData.vin.length > 0 && formData.vin.length < 17 && (
             <p className="mt-1 text-sm text-gray-400">

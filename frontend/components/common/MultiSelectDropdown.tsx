@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
 
+import { MultiSelectDropdownTrigger } from '@/components/common/MultiSelectDropdownTrigger';
 import { MultiSelectOptionLeadingLogo } from '@/components/common/MultiSelectOptionLeadingLogo';
 import { useTranslation } from '@/hooks/useTranslation';
 import { designTokens } from '@/ui';
@@ -26,6 +27,8 @@ interface MultiSelectDropdownProps {
   showActionButtons?: boolean;
   maxSelection?: number;
   onSelectionLimitReached?: () => void;
+  fieldLabel?: string;
+  fieldLabelIcon?: React.ReactNode;
 }
 
 function MultiSelectDropdownComponent({
@@ -39,6 +42,8 @@ function MultiSelectDropdownComponent({
   showActionButtons = false,
   maxSelection,
   onSelectionLimitReached,
+  fieldLabel,
+  fieldLabelIcon,
 }: MultiSelectDropdownProps) {
   const { t } = useTranslation();
   const safeValues = Array.isArray(values) ? values : EMPTY_VALUES;
@@ -110,6 +115,7 @@ function MultiSelectDropdownComponent({
           : t('common.selectedCount', { count: selectedOptions.length }),
     [selectedOptions, placeholder, t],
   );
+  const floating = Boolean(fieldLabel) && (safeValues.length > 0 || searchQuery.length > 0);
 
   const filteredOptions = useMemo(() => {
     if (!searchable || !deferredSearchQuery) return optionsWithLower;
@@ -205,81 +211,38 @@ function MultiSelectDropdownComponent({
     }
   }, [disabled]);
 
+  const handleToggleOpen = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (disabled) return;
+      if (isOpen && showActionButtons) {
+        onChange(tempValues);
+        setSearchQuery('');
+      }
+      setIsOpen((prev) => !prev);
+    },
+    [disabled, isOpen, showActionButtons, onChange, tempValues],
+  );
+
   return (
     <div ref={dropdownRef} className={`relative ${className}`}>
-      {searchable ? (
-        <div className="relative group">
-          <input
-            ref={inputRef}
-            type="text"
-            value={isOpen ? searchQuery : safeValues.length > 0 ? displayText : ''}
-            onChange={handleInputChange}
-            onFocus={handleInputFocus}
-            disabled={disabled}
-            placeholder={isOpen ? '' : (placeholder ?? t('common.choose'))}
-            className="input-field"
-            style={{ paddingRight: '52px' }}
-          />
-          <svg
-            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 cursor-pointer ${
-              isOpen ? 'rotate-180' : ''
-            }`}
-            style={{ right: '16px' }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!disabled) {
-                if (isOpen && showActionButtons) {
-                  onChange(tempValues);
-                  setSearchQuery('');
-                }
-                setIsOpen((prev) => !prev);
-              }
-            }}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onMouseDown={(e) => {
-            e.stopPropagation();
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!disabled) {
-              if (isOpen && showActionButtons) {
-                onChange(tempValues);
-                setSearchQuery('');
-              }
-              setIsOpen((prev) => !prev);
-            }
-          }}
-          disabled={disabled}
-          className="input-field text-left cursor-pointer relative group"
-          style={{ paddingRight: '52px' }}
-        >
-          <span
-            className={`flex-1 truncate ${safeValues.length > 0 ? 'text-text-primary' : 'text-hint'}`}
-          >
-            {displayText}
-          </span>
-          <svg
-            className={`absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 shrink-0 ${
-              isOpen ? 'rotate-180' : ''
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            style={{ right: '16px' }}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-      )}
+      <MultiSelectDropdownTrigger
+        searchable={searchable}
+        disabled={disabled}
+        isOpen={isOpen}
+        floating={floating}
+        fieldLabel={fieldLabel}
+        fieldLabelIcon={fieldLabelIcon}
+        displayText={displayText}
+        placeholder={placeholder}
+        inputValue={isOpen ? searchQuery : safeValues.length > 0 ? displayText : ''}
+        hasValues={safeValues.length > 0}
+        inputRef={inputRef}
+        onInputChange={handleInputChange}
+        onInputFocus={handleInputFocus}
+        onToggle={handleToggleOpen}
+        chooseFallback={t('common.choose')}
+      />
 
       {isOpen && !disabled && (
         <div

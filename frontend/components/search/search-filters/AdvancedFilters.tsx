@@ -11,6 +11,7 @@ import { toast } from '@/lib/toast';
 import { clampToRange, ENGINE_RANGE, isInRange, POWER_RANGE } from '@/lib/validation';
 import { Checkbox } from '@/ui';
 
+import { SearchFilterInput } from './SearchFilterInput';
 import { SearchFilterCityIcon } from './search-filter-field-icons';
 import { FIRE_EMOJI, renderSearchFilterLabelBadge, SPARKLES_EMOJI } from './searchFilterLabelBadge';
 
@@ -102,19 +103,14 @@ export function AdvancedFilters({
 
   return (
     <div className="mb-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-5">
         <div className="min-w-0">
-          <label
-            className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2 overflow-hidden"
-            title={t('searchFilters.city')}
-          >
-            <SearchFilterCityIcon />
-            <span className="truncate">{t('searchFilters.city')}</span>
-          </label>
           <MultiSelectDropdown
             values={filters.cities}
             onChange={(values) => onMultiSelectChange('cities', values)}
             searchable={true}
+            fieldLabel={t('searchFilters.city')}
+            fieldLabelIcon={<SearchFilterCityIcon />}
             placeholder={t('searchFilters.selectCities')}
             showActionButtons={true}
             options={cityOptions}
@@ -122,15 +118,10 @@ export function AdvancedFilters({
         </div>
 
         <div className="min-w-0">
-          <label
-            className="block text-sm font-semibold mb-2 text-primary-900 truncate"
-            title={t('searchFilters.registrationTypeLabel')}
-          >
-            {t('searchFilters.registrationTypeLabel')}
-          </label>
           <MultiSelectDropdown
             values={filters.registration_types}
             onChange={(values) => onMultiSelectChange('registration_types', values)}
+            fieldLabel={t('searchFilters.registrationTypeLabel')}
             placeholder={t('searchFilters.selectRegistrationType')}
             searchable={false}
             showActionButtons={true}
@@ -139,15 +130,10 @@ export function AdvancedFilters({
         </div>
 
         <div>
-          <label
-            className="block text-sm font-semibold mb-2 text-primary-900 truncate"
-            title={t('searchFilters.condition')}
-          >
-            {t('searchFilters.condition')}
-          </label>
           <MultiSelectDropdown
             values={filters.conditions}
             onChange={(values) => onMultiSelectChange('conditions', values)}
+            fieldLabel={t('searchFilters.condition')}
             placeholder={t('searchFilters.selectCondition')}
             searchable={false}
             showActionButtons={true}
@@ -156,78 +142,62 @@ export function AdvancedFilters({
         </div>
 
         <div>
-          <label
-            className="block text-sm font-semibold mb-2 text-primary-900 truncate"
-            title={t('searchFilters.engine')}
-          >
-            {t('searchFilters.engine')}
-          </label>
           <div className="flex">
-            <input
-              type="text"
-              inputMode="decimal"
+            <SearchFilterInput
               value={filters.engine_displ_l_gte}
-              onChange={(e) => {
-                const sanitized = sanitizeEngineInput(e.target.value);
+              onChange={(value) => {
+                const sanitized = sanitizeEngineInput(value);
                 if (sanitized !== null) onFilterChange('engine_displ_l_gte', sanitized);
               }}
-              onBlur={(e) => handleEngineBlur('engine_displ_l_gte', e.target.value)}
+              onBlur={(value) => handleEngineBlur('engine_displ_l_gte', value)}
               onWheel={onWheel}
-              className="input-field paired-left"
-              placeholder={t('searchFilters.from')}
+              fieldLabel={t('searchFilters.engineFrom')}
+              paired="left"
+              inputMode="decimal"
               title={t('searchFilters.engineDisplacementFromTitle')}
             />
-            <input
-              type="text"
-              inputMode="decimal"
+            <SearchFilterInput
               value={filters.engine_displ_l_lte}
-              onChange={(e) => {
-                const sanitized = sanitizeEngineInput(e.target.value);
+              onChange={(value) => {
+                const sanitized = sanitizeEngineInput(value);
                 if (sanitized !== null) onFilterChange('engine_displ_l_lte', sanitized);
               }}
-              onBlur={(e) => handleEngineBlur('engine_displ_l_lte', e.target.value)}
+              onBlur={(value) => handleEngineBlur('engine_displ_l_lte', value)}
               onWheel={onWheel}
-              className="input-field paired-right"
-              placeholder={t('searchFilters.to')}
+              fieldLabel={t('searchFilters.engineTo')}
+              paired="right"
+              inputMode="decimal"
               title={t('searchFilters.engineDisplacementToTitle')}
             />
           </div>
         </div>
 
         <div>
-          <label
-            className="block text-sm font-semibold mb-2 text-primary-900 truncate"
-            title={t('searchFilters.horsepower')}
-          >
-            {t('searchFilters.horsepower')}
-          </label>
           <div className="flex">
-            <input
-              type="text"
-              inputMode="numeric"
+            <SearchFilterInput
               value={filters.horsepower_gte}
-              onChange={(e) => {
-                const sanitized = sanitizeHorsepowerInput(e.target.value);
+              onChange={(value) => {
+                const sanitized = sanitizeHorsepowerInput(value);
                 if (sanitized !== null) onFilterChange('horsepower_gte', sanitized);
               }}
-              onBlur={(e) => handleHorsepowerBlur('horsepower_gte', e.target.value)}
+              onBlur={(value) => handleHorsepowerBlur('horsepower_gte', value)}
               onWheel={onWheel}
-              className="input-field paired-left"
-              placeholder={t('searchFilters.from')}
+              fieldLabel={t('searchFilters.horsepowerFrom')}
+              paired="left"
+              inputMode="numeric"
               title={t('searchFilters.horsepowerFromTitle')}
             />
-            <input
-              type="text"
-              inputMode="numeric"
+            <SearchFilterInput
               value={filters.horsepower_lte}
-              onChange={(e) => {
-                const sanitized = sanitizeHorsepowerInput(e.target.value);
+              onChange={(value) => {
+                const sanitized = sanitizeHorsepowerInput(value);
                 if (sanitized !== null) onFilterChange('horsepower_lte', sanitized);
               }}
-              onBlur={(e) => handleHorsepowerBlur('horsepower_lte', e.target.value)}
+              onBlur={(value) => handleHorsepowerBlur('horsepower_lte', value)}
               onWheel={onWheel}
-              className="input-field paired-right"
-              placeholder={t('searchFilters.to')}
+              fieldLabel={t('searchFilters.horsepowerTo')}
+              paired="right"
+              inputMode="numeric"
               title={t('searchFilters.horsepowerToTitle')}
             />
           </div>
@@ -236,31 +206,21 @@ export function AdvancedFilters({
         {vehicleType !== 'moto' ? (
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label
-                className="block text-sm font-semibold mb-2 text-primary-900 truncate"
-                title={t('searchFilters.color')}
-              >
-                {t('searchFilters.color')}
-              </label>
               <MultiSelectDropdown
                 values={filters.colors}
                 onChange={(values) => onMultiSelectChange('colors', values)}
                 searchable={true}
+                fieldLabel={t('searchFilters.color')}
                 placeholder={t('searchFilters.selectColor')}
                 showActionButtons={true}
                 options={colorOptions}
               />
             </div>
             <div>
-              <label
-                className="block text-sm font-semibold mb-2 text-primary-900 truncate"
-                title={t('searchFilters.doors')}
-              >
-                {t('searchFilters.doors')}
-              </label>
               <MultiSelectDropdown
                 values={filters.doors}
                 onChange={(values) => onMultiSelectChange('doors', values)}
+                fieldLabel={t('searchFilters.doors')}
                 placeholder={t('searchFilters.selectDoors')}
                 searchable={false}
                 showActionButtons={true}
@@ -270,16 +230,11 @@ export function AdvancedFilters({
           </div>
         ) : (
           <div>
-            <label
-              className="block text-sm font-semibold mb-2 text-primary-900 truncate"
-              title={t('searchFilters.color')}
-            >
-              {t('searchFilters.color')}
-            </label>
             <MultiSelectDropdown
               values={filters.colors}
               onChange={(values) => onMultiSelectChange('colors', values)}
               searchable={true}
+              fieldLabel={t('searchFilters.color')}
               placeholder={t('searchFilters.selectColor')}
               showActionButtons={true}
               options={colorOptions}
@@ -290,16 +245,11 @@ export function AdvancedFilters({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="min-w-0">
-          <label
-            className="block text-sm font-semibold mb-2 text-primary-900 truncate"
-            title={t('searchFilters.sellerTypeLabel')}
-          >
-            {t('searchFilters.sellerTypeLabel')}
-          </label>
           <Dropdown
             value={filters.seller_type}
             onChange={(value) => onFilterChange('seller_type', value)}
             options={sellerTypeOptions}
+            fieldLabel={t('searchFilters.sellerTypeLabel')}
             placeholder={t('searchFilters.sellerTypePlaceholder')}
             searchable={false}
           />

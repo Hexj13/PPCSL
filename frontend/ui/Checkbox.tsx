@@ -53,14 +53,14 @@ export function Checkbox({
         />
         <label
           htmlFor={checkboxId}
-          className={`${sizeClasses[size].box} rounded border-2 transition-all duration-200 flex items-center justify-center ${
+          className={`${sizeClasses[size].box} rounded search-control-border transition-all duration-200 flex items-center justify-center ${
             disabled ? 'cursor-not-allowed' : 'cursor-pointer'
           } ${
             checked
-              ? 'border-primary-500 bg-primary-500/10'
+              ? 'is-selected bg-primary-500/10'
               : disabled
-                ? 'border-divider bg-bg-secondary'
-                : 'border-primary-700 bg-bg-secondary group-hover:border-primary-900'
+                ? 'bg-bg-secondary'
+                : 'bg-bg-secondary'
           }`}
         >
           {checked && <CheckIcon className={`${sizeClasses[size].icon} text-primary-900`} />}

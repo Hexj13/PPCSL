@@ -37,7 +37,7 @@ export function HomeHero({
   return (
     <div className={rootClassName} {...props}>
       <h1 className="text-[30px] font-extrabold mb-4 leading-tight text-primary-900">{title}</h1>
-      <h2 className="text-[24px] font-medium leading-relaxed tracking-wide text-primary-900">
+      <h2 className="text-[18px] md:text-[20px] font-medium leading-relaxed tracking-wide text-primary-900">
         <span>{subtitle}</span>
         <span className="text-primary-500 font-bold"> {subtitle3}</span>
         <span>{subtitle2}</span>

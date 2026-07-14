@@ -100,6 +100,7 @@ export interface TranslationsPart1 {
     confirm: string;
     continue: string;
     selectSorting: string;
+    sortingLabel: string;
     scrollToFilters: string;
     scrollBack: string;
     acceptCookies: string;

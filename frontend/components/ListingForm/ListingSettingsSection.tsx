@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/lib/store';
 import { CheckIcon, HintTooltip } from '@/ui';
 
+import { ListingFormTextInput } from './ListingFormTextInput';
 import { MobileSelectField } from './MobileSelectField';
 import type { ListingFormSectionProps } from './types';
 import { useAssignUserValidation } from './useAssignUserValidation';
@@ -43,9 +44,6 @@ export function ListingSettingsSection({
         {t('listings.listingSettings')}
       </h2>
       <div className="sm:max-w-[50%]">
-        <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
-          {t('listings.statusLabel')}
-        </label>
         <MobileSelectField
           value={formData.status}
           onChange={(value) =>
@@ -65,7 +63,7 @@ export function ListingSettingsSection({
 
       {isAdmin && (
         <div className="mt-5">
-          <div className="flex items-center gap-1.5 mb-2">
+          <div className="mb-2 flex items-center gap-1.5 md:hidden">
             <label className="block text-sm font-semibold text-primary-900">
               {t('listings.assignToUser')}
             </label>
@@ -74,15 +72,17 @@ export function ListingSettingsSection({
             </HintTooltip>
           </div>
           <div className="relative">
-            <input
-              type="text"
+            <ListingFormTextInput
               value={formData.assignedUserId}
-              onChange={(e) => {
-                setFormData((prev) => ({ ...prev, assignedUserId: e.target.value }));
+              onChange={(value) => {
+                setFormData((prev) => ({ ...prev, assignedUserId: value }));
                 clearError('assignedUserId');
               }}
-              className={`input-field h-[48px] pr-10 ${borderClass}`}
+              fieldLabel={t('listings.assignToUser')}
               placeholder={t('listings.userIdPlaceholder')}
+              className={`pr-10 ${borderClass}`.trim()}
+              mobileClassName={`pr-10 ${borderClass}`.trim()}
+              error={hasError}
             />
             {isChecking && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">

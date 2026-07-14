@@ -75,13 +75,13 @@ export function SearchFormActions({
   return (
     <div className="mt-4 relative -mx-3 sm:mx-0 px-3 sm:px-0">
       <div className="flex flex-col lg:flex-row lg:flex-nowrap lg:justify-between gap-3 items-stretch lg:items-end">
-        <div className="w-full lg:w-auto shrink-0 relative">
+        <div className="w-full lg:w-[220px] lg:shrink-0 relative">
           <div
-            className="w-full inline-flex justify-start items-center gap-2 pb-2"
+            className="w-full flex justify-start items-center gap-2 pb-2 min-h-[1.5rem]"
             aria-live="polite"
             data-testid="search-available-listings"
           >
-            <span className="inline-flex items-center gap-2">
+            <span className="inline-flex items-center gap-2 min-w-0">
               <svg
                 className="h-4 w-4 shrink-0 text-primary-900"
                 viewBox="0 0 24 24"
@@ -96,7 +96,7 @@ export function SearchFormActions({
                   fill="currentColor"
                 />
               </svg>
-              <span className="text-sm text-primary-900">
+              <span className="text-sm text-primary-900 truncate">
                 <span className="inline [@media_(width:1024px)]:hidden">
                   {t('searchFilters.availableListingsLabel')}
                 </span>
@@ -105,13 +105,15 @@ export function SearchFormActions({
                 </span>
               </span>
             </span>
-            {isAvailableListingsLoading || availableListingsTotal === null ? (
-              <span className="w-4 h-4 border-2 border-primary-300 border-t-transparent rounded-full animate-spin shrink-0" />
-            ) : (
-              <span className="text-sm font-semibold text-primary-700">
-                {availableListingsTotal ?? 0}
-              </span>
-            )}
+            <span className="inline-flex items-center shrink-0">
+              {isAvailableListingsLoading || availableListingsTotal === null ? (
+                <span className="w-4 h-4 border-2 border-primary-300 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <span className="text-sm font-semibold text-primary-700 tabular-nums">
+                  {availableListingsTotal ?? 0}
+                </span>
+              )}
+            </span>
           </div>
           <SortDropdown
             selectedSortKey={selectedSortKey}
@@ -204,7 +206,7 @@ export function SearchFormActions({
                   e.preventDefault();
                   e.currentTarget.blur();
                 }}
-                className={`relative h-12 max-h-12 min-h-12 w-full overflow-hidden rounded-lg px-6 font-semibold text-base outline-hidden select-none border-2 transition-colors duration-200 text-primary-900! ${
+                className={`relative box-border h-[52px] max-h-[52px] min-h-[52px] w-full overflow-hidden rounded-lg px-6 font-semibold text-base outline-hidden select-none border-2 transition-colors duration-200 text-primary-900! ${
                   isSearchReady
                     ? 'border-primary-700 bg-primary-500/12'
                     : 'border-primary-700/30 bg-bg-secondary hover-only:hover:border-primary-700'

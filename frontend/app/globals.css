@@ -394,6 +394,19 @@
   display: flex !important;
   align-items: center !important;
 
+  &.search-control-border {
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: color-mix(in srgb, var(--color-primary-500) 20%, transparent) !important;
+    line-height: 46px !important;
+  }
+
+  &.search-control-border:focus,
+  &.search-control-border:focus-within,
+  &.search-control-border.is-open {
+    border-color: var(--color-primary-500) !important;
+  }
+
   &:focus {
     border-color: var(--color-primary-500) !important;
   }
@@ -1261,6 +1274,150 @@
 
 @utility text-hint {
   color: var(--color-dark-400) !important;
+}
+
+@utility search-control-border {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: color-mix(in srgb, var(--color-primary-500) 20%, transparent) !important;
+
+  &:focus,
+  &:focus-within,
+  &.is-open,
+  &[aria-pressed='true'],
+  &.is-selected {
+    border-color: var(--color-primary-500) !important;
+  }
+
+  &.input-field-error,
+  &.border-red-500,
+  &.input-field-error:focus,
+  &.border-red-500:focus {
+    border-color: var(--color-semantic-error) !important;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled, [aria-disabled='true']) {
+      border-color: color-mix(in srgb, var(--color-primary-500) 40%, transparent) !important;
+    }
+  }
+}
+
+@utility search-field-floating {
+  white-space: normal !important;
+  line-height: normal !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  overflow: hidden !important;
+
+  &.paired-left,
+  .paired-left & {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right-width: 1px !important;
+    margin-left: 0 !important;
+  }
+
+  &.paired-right,
+  .paired-right & {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-left-width: 1px !important;
+    margin-left: -1px !important;
+  }
+
+  &.paired-middle {
+    border-radius: 0 !important;
+    border-left-width: 1px !important;
+    border-right-width: 1px !important;
+    margin-left: -1px !important;
+  }
+}
+
+@utility search-field-floating-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.375rem !important;
+  min-width: 0 !important;
+  max-width: calc(100% - 36px) !important;
+  color: var(--color-primary-900) !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  pointer-events: none !important;
+  transition:
+    font-size 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease !important;
+
+  &.is-floating {
+    font-size: 0.6875rem !important;
+    font-weight: 600 !important;
+    color: var(--color-primary-700) !important;
+    max-width: calc(100% - 36px) !important;
+  }
+}
+
+@utility search-field-floating-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: inherit !important;
+
+  & svg {
+    width: 0.8125rem !important;
+    height: 0.8125rem !important;
+  }
+
+  .search-field-floating-label.is-floating & svg {
+    width: 0.75rem !important;
+    height: 0.75rem !important;
+  }
+}
+
+@utility search-field-floating-value {
+  display: block !important;
+  min-width: 0 !important;
+  max-width: calc(100% - 36px) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: var(--color-primary-900) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+}
+
+@utility search-field-floating-input {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: calc(100% - 36px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  color: var(--color-primary-900) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  min-height: 1.0625rem !important;
+
+  &.is-empty {
+    position: absolute !important;
+    inset: 0 !important;
+    max-width: none !important;
+    opacity: 0 !important;
+    caret-color: transparent !important;
+  }
+
+  &:disabled {
+    cursor: not-allowed !important;
+  }
 }
 
 @utility listing-description {

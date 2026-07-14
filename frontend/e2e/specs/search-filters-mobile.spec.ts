@@ -97,7 +97,7 @@ test.describe('Search: mobile filters and sheets @p0', () => {
       {
         name: 'Toggle equipment checkbox on equipment tab',
         action: async () => {
-          await mobileFilters.toggleEquipmentOption('abs');
+          await mobileFilters.toggleEquipmentOption('air_conditioning');
         },
       },
       {

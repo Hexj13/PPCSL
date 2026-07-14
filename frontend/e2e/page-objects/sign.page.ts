@@ -228,26 +228,47 @@ export class SignPage {
 
   async expectGoogleButtonStillClickable(): Promise<void> {
     await this.expectGoogleButtonReady();
-    const currentIframe = await this.visibleAuthPage()
-      .getByTestId(this.testIds.googleBlock)
-      .locator('iframe')
-      .evaluate((el) => {
-        const rect = el.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const hit = document.elementFromPoint(centerX, centerY);
-        return {
-          connected: el.isConnected,
-          width: rect.width,
-          height: rect.height,
-          hitTag: hit?.tagName ?? null,
-          hitTestId: hit instanceof HTMLElement ? (hit.dataset.testid ?? null) : null,
-        };
-      });
-    expect(currentIframe.connected).toBe(true);
-    expect(currentIframe.width).toBeGreaterThan(0);
-    expect(currentIframe.height).toBeGreaterThan(0);
-    expect(currentIframe.hitTestId).not.toBe(this.testIds.googleSkeleton);
-    expect(currentIframe.hitTestId).not.toBe(this.testIds.googleDisabledOverlay);
+    const googleBlock = this.visibleAuthPage().getByTestId(this.testIds.googleBlock);
+    await expect
+      .poll(
+        async () => {
+          const clickable = await googleBlock.evaluate((block) => {
+            const iframe = block.querySelector('iframe');
+            const iframeRect = iframe?.getBoundingClientRect();
+            const button = block.querySelector('[role="button"]');
+            const buttonRect = button?.getBoundingClientRect();
+            const target =
+              iframeRect && iframeRect.width > 0 && iframeRect.height > 0
+                ? iframe
+                : buttonRect && buttonRect.width > 0 && buttonRect.height > 0
+                  ? button
+                  : null;
+            if (!target) {
+              return null;
+            }
+            const rect = target.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const hit = document.elementFromPoint(centerX, centerY);
+            return {
+              width: rect.width,
+              height: rect.height,
+              hitTestId: hit instanceof HTMLElement ? (hit.dataset.testid ?? null) : null,
+            };
+          });
+          if (
+            !clickable ||
+            clickable.width <= 0 ||
+            clickable.height <= 0 ||
+            clickable.hitTestId === this.testIds.googleSkeleton ||
+            clickable.hitTestId === this.testIds.googleDisabledOverlay
+          ) {
+            return null;
+          }
+          return clickable;
+        },
+        { timeout: 15_000 },
+      )
+      .not.toBeNull();
   }
 }

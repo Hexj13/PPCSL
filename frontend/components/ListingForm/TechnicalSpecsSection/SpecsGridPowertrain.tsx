@@ -4,6 +4,7 @@ import { FuelIcon } from '@/components/search/search-filters/search-filter-field
 import { getFuelOptions } from '@/lib/options';
 import { horsepowerToKw, kwToHorsepower } from '@/lib/utils';
 
+import { ListingFormTextInput } from '../ListingFormTextInput';
 import { MobileSelectField } from '../MobileSelectField';
 import { RequiredAsterisk } from '../RequiredAsterisk';
 import type { ListingFormSectionProps } from '../types';
@@ -25,11 +26,6 @@ export function SpecsGridPowertrain({
   return (
     <>
       <div>
-        <label className="mb-2 hidden items-center gap-2 text-sm font-semibold text-primary-900 md:flex">
-          <FuelIcon />
-          {t('listings.fuelLabel')}
-          <RequiredAsterisk filled={!!formData.vehicle.fuel} />
-        </label>
         <MobileSelectField
           value={formData.vehicle.fuel}
           onChange={(value) => {
@@ -57,23 +53,15 @@ export function SpecsGridPowertrain({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold mb-2 text-primary-900 whitespace-nowrap">
+        <label className="mb-2 block whitespace-nowrap text-sm font-semibold text-primary-900 md:hidden">
           {t('listings.engineDisplacementLabel')}
           {!isElectric && <RequiredAsterisk filled={!!formData.vehicle.engine_displ_l.trim()} />}
         </label>
-        <input
-          type="text"
-          inputMode="decimal"
-          required={!isElectric}
-          step="0.1"
-          min="0"
-          max="99"
+        <ListingFormTextInput
           value={formData.vehicle.engine_displ_l}
-          disabled={isElectric}
-          data-testid="listing-form-engine-displacement"
-          onChange={(e) => {
+          onChange={(raw) => {
             clearError('vehicle.engine_displ_l');
-            let value = e.target.value.replace(',', '.');
+            let value = raw.replace(',', '.');
             value = value.replace(/[^0-9.]/g, '');
             const parts = value.split('.');
             if (parts.length > 2) {
@@ -90,8 +78,8 @@ export function SpecsGridPowertrain({
               }));
             }
           }}
-          onBlur={(e) => {
-            const inputValue = e.target.value.trim();
+          onBlur={(raw) => {
+            const inputValue = raw.trim();
             if (!inputValue) return;
             const numValue = parseFloat(inputValue);
             if (isNaN(numValue)) return;
@@ -107,31 +95,34 @@ export function SpecsGridPowertrain({
               }));
             }
           }}
-          className={`input-field h-[48px] ${errors['vehicle.engine_displ_l'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-          placeholder={isElectric ? '—' : t('listings.engineDisplacementPlaceholder')}
+          fieldLabel={t('listings.engineDisplacementLabel')}
+          fieldLabelTrailing={
+            !isElectric ? (
+              <RequiredAsterisk filled={!!formData.vehicle.engine_displ_l.trim()} />
+            ) : undefined
+          }
+          inputMode="decimal"
+          disabled={isElectric}
           title={t('listings.engineDisplacementTitle')}
+          placeholder={isElectric ? '—' : t('listings.engineDisplacementPlaceholder')}
+          error={!!errors['vehicle.engine_displ_l']}
+          dataTestId="listing-form-engine-displacement"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold mb-2 text-primary-900 whitespace-nowrap">
+        <label className="mb-2 block whitespace-nowrap text-sm font-semibold text-primary-900 md:hidden">
           {t('listings.powerHorsepowerLabel')}
           <RequiredAsterisk filled={!!formData.horsepower.trim()} />
         </label>
-        <input
-          type="text"
-          inputMode="numeric"
-          required
-          min="1"
-          max="9999"
+        <ListingFormTextInput
           value={formData.horsepower}
-          data-testid="listing-form-horsepower"
-          onChange={(e) => {
+          onChange={(raw) => {
             clearError('horsepower');
             clearError('power_kw');
-            const value = e.target.value.replace(/[^0-9]/g, '');
-            if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 9999)) {
-              const hpValue = value === '' ? 0 : parseInt(value);
+            const value = raw.replace(/[^0-9]/g, '');
+            if (value === '' || (parseInt(value, 10) >= 1 && parseInt(value, 10) <= 9999)) {
+              const hpValue = value === '' ? 0 : parseInt(value, 10);
               const kwValue = hpValue > 0 ? horsepowerToKw(hpValue) : '';
               setFormData((prev) => ({
                 ...prev,
@@ -141,31 +132,29 @@ export function SpecsGridPowertrain({
             }
           }}
           onWheel={handleWheel}
-          className={`input-field h-[48px] ${errors['horsepower'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-          placeholder={t('listings.powerPlaceholder')}
+          fieldLabel={t('listings.powerHorsepowerLabel')}
+          fieldLabelTrailing={<RequiredAsterisk filled={!!formData.horsepower.trim()} />}
+          inputMode="numeric"
           title={t('listings.powerHorsepowerTitle')}
+          placeholder={t('listings.powerPlaceholder')}
+          error={!!errors['horsepower']}
+          dataTestId="listing-form-horsepower"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold mb-2 text-primary-900 whitespace-nowrap">
+        <label className="mb-2 block whitespace-nowrap text-sm font-semibold text-primary-900 md:hidden">
           {t('listings.powerKwLabel')}
           <RequiredAsterisk filled={!!formData.power_kw.trim()} />
         </label>
-        <input
-          type="text"
-          inputMode="numeric"
-          required
-          min="1"
-          max="9999"
+        <ListingFormTextInput
           value={formData.power_kw}
-          data-testid="listing-form-power-kw"
-          onChange={(e) => {
+          onChange={(raw) => {
             clearError('power_kw');
             clearError('horsepower');
-            const value = e.target.value.replace(/[^0-9]/g, '');
-            if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 9999)) {
-              const kwValue = value === '' ? 0 : parseInt(value);
+            const value = raw.replace(/[^0-9]/g, '');
+            if (value === '' || (parseInt(value, 10) >= 1 && parseInt(value, 10) <= 9999)) {
+              const kwValue = value === '' ? 0 : parseInt(value, 10);
               const hpValue = kwValue > 0 ? kwToHorsepower(kwValue) : '';
               setFormData((prev) => ({
                 ...prev,
@@ -175,9 +164,13 @@ export function SpecsGridPowertrain({
             }
           }}
           onWheel={handleWheel}
-          className={`input-field h-[48px] ${errors['power_kw'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-          placeholder={t('listings.torquePlaceholder')}
+          fieldLabel={t('listings.powerKwLabel')}
+          fieldLabelTrailing={<RequiredAsterisk filled={!!formData.power_kw.trim()} />}
+          inputMode="numeric"
           title={t('listings.powerKwTitle')}
+          placeholder={t('listings.torquePlaceholder')}
+          error={!!errors['power_kw']}
+          dataTestId="listing-form-power-kw"
         />
       </div>
     </>

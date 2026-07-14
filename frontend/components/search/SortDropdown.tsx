@@ -98,7 +98,6 @@ export function SortDropdown({
       <Dropdown
         dataTestId={dataTestId}
         value={currentSortKey}
-        buttonClassName="h-12! min-h-12! max-h-12!"
         onChange={(value) => {
           if (!isListingSortKey(value) || value === currentSortKey) {
             return;
@@ -106,6 +105,7 @@ export function SortDropdown({
           const { sortBy, sortOrder } = LISTING_SORTS[value];
           updateSortParams(sortBy, sortOrder);
         }}
+        fieldLabel={t('common.sortingLabel')}
         placeholder={t('common.selectSorting')}
         options={sortOptions}
         autoPosition={true}

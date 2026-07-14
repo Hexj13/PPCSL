@@ -223,10 +223,27 @@ export class SearchFiltersMobileComponent {
     const panel = this.mobilePanelForTab('equipment');
     await panel.scrollIntoViewIfNeeded();
     const checkbox = panel.getByTestId(`search-equipment-${key}`);
-    const visualLabel = checkbox
-      .locator('xpath=ancestor::div[contains(@class,"relative")]/label')
-      .first();
-    await visualLabel.click({ force: true });
+    await expect(checkbox).toBeAttached();
+    const category = await checkbox.evaluate((el) => {
+      const content = el.closest('[id^="search-equipment-category-"][id$="-content"]');
+      if (!content?.id) {
+        return null;
+      }
+      return content.id.replace('search-equipment-category-', '').replace('-content', '');
+    });
+    if (category) {
+      const categoryToggle = panel.getByTestId(`search-equipment-category-${category}-toggle`);
+      const categoryContent = panel.getByTestId(`search-equipment-category-${category}-content`);
+      if ((await categoryToggle.getAttribute('aria-expanded')) !== 'true') {
+        await categoryToggle.scrollIntoViewIfNeeded();
+        await categoryToggle.click();
+        await expect(categoryToggle).toHaveAttribute('aria-expanded', 'true');
+        await expect(categoryContent).toHaveClass(/grid-rows-\[1fr\]/);
+      }
+    }
+    await checkbox.scrollIntoViewIfNeeded();
+    const label = checkbox.locator('xpath=ancestor::div[contains(@class,"group")]/label[last()]');
+    await label.click();
     await expect(checkbox).toBeChecked();
   }
 
@@ -245,7 +262,7 @@ export class SearchFiltersMobileComponent {
       .locator('.md\\:hidden')
       .locator('[data-testid^="search-popular-chip-"]')
       .first();
-    await expect(chip).toHaveClass(/border-primary-900/);
+    await expect(chip).toHaveClass(/is-selected/);
     await expect(chip).toHaveClass(/bg-primary-500\/10/);
   }
 

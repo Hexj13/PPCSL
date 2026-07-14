@@ -3,7 +3,6 @@
 import type { ConditionType, RegistrationType } from '@/lib/types';
 
 import { MobileSelectField } from '../MobileSelectField';
-import { RequiredAsterisk } from '../RequiredAsterisk';
 import { getConditionOptions, getRegistrationTypeOptions } from '../listingFormUtils';
 import type { ListingFormSectionProps } from '../types';
 
@@ -21,10 +20,6 @@ export function ConditionRegistration({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
-            {t('listings.conditionLabel')}
-            <RequiredAsterisk filled={!!formData.condition} />
-          </label>
           <MobileSelectField
             value={formData.condition}
             onChange={(value) => {
@@ -46,10 +41,6 @@ export function ConditionRegistration({
         </div>
 
         <div>
-          <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
-            {t('listings.registrationTypeLabel')}
-            <RequiredAsterisk filled={!!formData.registration_type} />
-          </label>
           <MobileSelectField
             value={formData.registration_type}
             onChange={(value) => {

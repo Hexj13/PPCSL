@@ -61,11 +61,12 @@ export function MobileTireBasicPanel({
           <button
             type="button"
             onClick={() => onFilterChange('tire_vehicle_type', '')}
-            className={`h-12 px-3 inline-flex items-center justify-center shrink-0 rounded-lg text-sm font-semibold border-2 transition-colors ${
+            className={`h-12 px-3 inline-flex items-center justify-center shrink-0 rounded-lg text-sm font-semibold search-control-border transition-colors ${
               filters.tire_vehicle_type === ''
-                ? 'border-primary-900 bg-primary-500/10 text-primary-900'
-                : 'border-primary-500/40 text-primary-900 hover-only:hover:border-primary-700'
+                ? 'is-selected bg-primary-500/10 text-primary-900'
+                : 'text-primary-900'
             }`}
+            aria-pressed={filters.tire_vehicle_type === ''}
           >
             {t('searchFilters.tireVehicleTypeAny')}
           </button>
@@ -82,11 +83,10 @@ export function MobileTireBasicPanel({
               onClick={() =>
                 onFilterChange('tire_vehicle_type', filters.tire_vehicle_type === v ? '' : v)
               }
-              className={`h-12 w-14 inline-flex items-center justify-center shrink-0 rounded-lg border-2 transition-colors ${
-                filters.tire_vehicle_type === v
-                  ? 'border-primary-900 bg-primary-500/10'
-                  : 'border-primary-500/40 hover-only:hover:border-primary-700'
+              className={`h-12 w-14 inline-flex items-center justify-center shrink-0 rounded-lg search-control-border transition-colors ${
+                filters.tire_vehicle_type === v ? 'is-selected bg-primary-500/10' : ''
               }`}
+              aria-pressed={filters.tire_vehicle_type === v}
               aria-label={t(`searchFilters.tireVehicleType.${v}`)}
             >
               <Icon className="w-9 h-9 text-primary-900 scale-x-[-1]" />
@@ -167,7 +167,7 @@ export function MobileTireBasicPanel({
         onClick={() => openSheetForEdit('tire_seller')}
       />
 
-      <div className="rounded-lg border-2 border-primary-500/25 p-4">
+      <div className="rounded-lg search-control-border p-4">
         <h3 className="text-sm font-semibold mb-2 text-primary-900">{t('searchFilters.labels')}</h3>
         <Checkbox
           size="md"

@@ -111,7 +111,7 @@ export function MobileVehicleAdvancedTab({
         valueSummary={sellerSummary}
         onClick={() => openSheetForEdit('vehicle_seller')}
       />
-      <div className="rounded-lg border-2 border-primary-500/25 p-4 mt-2">
+      <div className="rounded-lg search-control-border p-4 mt-2">
         <h3 className="text-sm font-semibold mb-3 text-primary-900">{t('searchFilters.labels')}</h3>
         <div className="flex flex-wrap gap-4">
           <Checkbox

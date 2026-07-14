@@ -32,10 +32,8 @@ export function PopularFilterChip({
       data-testid={dataTestId}
       onClick={onToggle}
       style={style}
-      className={`relative px-3 py-2 rounded-full border-2 text-primary-900 transition-all text-sm ${
-        selected
-          ? 'border-primary-900 bg-primary-500/10'
-          : 'border-primary-500 bg-bg-secondary hover-only:hover:border-primary-900 hover-only:hover:bg-primary-500/10'
+      className={`relative px-3 py-2 rounded-full search-control-border text-primary-900 transition-all text-sm ${
+        selected ? 'is-selected bg-primary-500/10' : 'bg-bg-secondary'
       }`}
     >
       {label}
@@ -49,8 +47,8 @@ export function PopularFilterChip({
                 'radial-gradient(ellipse 100% 80% at 50% 100%, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
             }}
           />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none">
-            <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none z-10">
+            <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center search-control-border">
               <svg
                 className="w-3 h-3 text-primary-900"
                 fill="none"
@@ -104,12 +102,8 @@ export function PopularFilterBrandTile({
         onClick={onToggle}
         className={`
           relative w-full aspect-square flex items-center justify-center p-1.5 rounded-lg
-          outline-hidden select-none
-          ${
-            selected
-              ? 'border-2 border-primary-700'
-              : 'border-2 border-primary-700/30 hover-only:hover:border-primary-700 transition-colors duration-200'
-          }
+          outline-hidden select-none search-control-border transition-colors duration-200
+          ${selected ? 'is-selected' : ''}
         `}
         style={{ background: '#F4F4F4' }}
         aria-pressed={selected}
@@ -170,8 +164,8 @@ export function PopularFilterBrandTile({
                   'radial-gradient(ellipse 100% 80% at 50% 100%, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
               }}
             />
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none">
-              <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none z-10">
+              <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center search-control-border">
                 <svg
                   className="w-3 h-3 text-primary-900"
                   fill="none"

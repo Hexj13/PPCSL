@@ -145,7 +145,7 @@ function DonutChart({
       : [];
 
   return (
-    <div className="rounded-xl border border-primary-500/20 bg-bg-card p-4 flex flex-col gap-3">
+    <div className="rounded-xl search-control-border bg-bg-card p-4 flex flex-col gap-3">
       <h4 className="text-sm font-semibold text-primary-900">{title}</h4>
       <div className="flex items-center gap-4">
         <div className="relative w-28 h-28 shrink-0" role="img" aria-label={ariaLabel}>

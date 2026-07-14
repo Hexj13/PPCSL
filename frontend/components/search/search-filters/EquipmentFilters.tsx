@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { useTranslation } from '@/hooks/useTranslation';
 import {
   EQUIPMENT_CATEGORIES,
@@ -7,7 +9,7 @@ import {
   getEquipmentKeysByVehicleType,
 } from '@/lib/options';
 import { sortOptionsByLabel } from '@/lib/utils';
-import { Checkbox, HintTooltip } from '@/ui';
+import { Checkbox, ChevronDownIcon, HintTooltip } from '@/ui';
 
 const HEADLIGHT_GROUP: readonly string[] = ['led_lights', 'xenon_lights', 'laser_headlights'];
 const TIRE_KEYS: readonly string[] = [
@@ -38,16 +40,56 @@ export function EquipmentFilters({
   const { t } = useTranslation();
   const availableKeys = getEquipmentKeysByVehicleType(vehicleType);
 
-  const categorizedGroups = EQUIPMENT_CATEGORIES.map((category) => {
-    const keysInCategory = availableKeys.filter((key) => EQUIPMENT_CATEGORY_MAP[key] === category);
-    const sortedKeys = sortOptionsByLabel(
-      keysInCategory.map((key) => ({
-        value: key,
-        label: t(`vehicleOptions.equipment.${key}`),
-      })),
-    ).map((opt) => opt.value);
-    return { category, keys: sortedKeys };
-  }).filter((group) => group.keys.length > 0);
+  const categorizedGroups = useMemo(
+    () =>
+      EQUIPMENT_CATEGORIES.map((category) => {
+        const keysInCategory = availableKeys.filter(
+          (key) => EQUIPMENT_CATEGORY_MAP[key] === category,
+        );
+        const sortedKeys = sortOptionsByLabel(
+          keysInCategory.map((key) => ({
+            value: key,
+            label: t(`vehicleOptions.equipment.${key}`),
+          })),
+        ).map((opt) => opt.value);
+        return { category, keys: sortedKeys };
+      }).filter((group) => group.keys.length > 0),
+    [availableKeys, t],
+  );
+
+  const firstCategory = categorizedGroups[0]?.category;
+  const categoryKey = categorizedGroups.map(({ category }) => category).join('|');
+  const [openCategories, setOpenCategories] = useState<Set<string>>(
+    () => new Set(firstCategory ? [firstCategory] : []),
+  );
+
+  useEffect(() => {
+    setOpenCategories((prev) => {
+      const categories = categoryKey ? categoryKey.split('|') : [];
+      const availableCategories = new Set(categories);
+      const next = new Set([...prev].filter((category) => availableCategories.has(category)));
+
+      if (next.size === 0 && categories[0]) {
+        next.add(categories[0]);
+      }
+
+      const hasChanged =
+        next.size !== prev.size || [...next].some((category) => !prev.has(category));
+      return hasChanged ? next : prev;
+    });
+  }, [categoryKey]);
+
+  const toggleCategory = useCallback((category: string) => {
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  }, []);
 
   const handleChange = (key: string, checked: boolean) => {
     if (checked) {
@@ -82,10 +124,10 @@ export function EquipmentFilters({
           <button
             type="button"
             onClick={() => onEquipmentMatchModeChange('full')}
-            className={`px-3 py-2 rounded-full text-sm border-2 transition-all ${
+            className={`px-3 py-2 rounded-full text-sm search-control-border transition-all ${
               equipmentMatchMode === 'full'
-                ? 'bg-primary-500/5 border-primary-500 text-text-secondary'
-                : 'bg-primary-500/5 border-primary-500/20 text-text-secondary hover-only:hover:bg-primary-500/15 hover-only:hover:border-primary-500/30'
+                ? 'is-selected bg-primary-500/5 text-text-secondary'
+                : 'bg-primary-500/5 text-text-secondary hover-only:hover:bg-primary-500/15'
             }`}
             aria-pressed={equipmentMatchMode === 'full'}
           >
@@ -94,10 +136,10 @@ export function EquipmentFilters({
           <button
             type="button"
             onClick={() => onEquipmentMatchModeChange('partial')}
-            className={`px-3 py-2 rounded-full text-sm border-2 transition-all ${
+            className={`px-3 py-2 rounded-full text-sm search-control-border transition-all ${
               equipmentMatchMode === 'partial'
-                ? 'bg-primary-500/5 border-primary-500 text-text-secondary'
-                : 'bg-primary-500/5 border-primary-500/20 text-text-secondary hover-only:hover:bg-primary-500/15 hover-only:hover:border-primary-500/30'
+                ? 'is-selected bg-primary-500/5 text-text-secondary'
+                : 'bg-primary-500/5 text-text-secondary hover-only:hover:bg-primary-500/15'
             }`}
             aria-pressed={equipmentMatchMode === 'partial'}
           >
@@ -105,57 +147,89 @@ export function EquipmentFilters({
           </button>
         </div>
       </div>
-      <div className="space-y-6">
-        {categorizedGroups.map(({ category, keys }) => {
+      <div className="space-y-2">
+        {categorizedGroups.map(({ category, keys }, index) => {
           const third = Math.ceil(keys.length / 3);
           const col1 = keys.slice(0, third);
           const col2 = keys.slice(third, 2 * third);
           const col3 = keys.slice(2 * third);
+          const isOpen = openCategories.has(category);
+          const isLast = index === categorizedGroups.length - 1;
+          const categoryTitle = t(`vehicleOptions.equipmentCategories.${category}`);
+          const contentId = `search-equipment-category-${category}`;
 
           return (
             <div key={category}>
-              <h3 className="text-sm font-semibold mb-3 text-primary-900">
-                {t(`vehicleOptions.equipmentCategories.${category}`)}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-3">
-                  {col1.map((key) => (
-                    <Checkbox
-                      key={key}
-                      id={`search-equipment-${key}`}
-                      data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
-                      checked={equipment.includes(key)}
-                      onChange={(checked) => handleChange(key, checked)}
-                      label={t(`vehicleOptions.equipment.${key}`)}
-                      size="md"
-                    />
-                  ))}
-                </div>
-                <div className="space-y-3">
-                  {col2.map((key) => (
-                    <Checkbox
-                      key={key}
-                      id={`search-equipment-${key}`}
-                      data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
-                      checked={equipment.includes(key)}
-                      onChange={(checked) => handleChange(key, checked)}
-                      label={t(`vehicleOptions.equipment.${key}`)}
-                      size="md"
-                    />
-                  ))}
-                </div>
-                <div className="space-y-3">
-                  {col3.map((key) => (
-                    <Checkbox
-                      key={key}
-                      id={`search-equipment-${key}`}
-                      data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
-                      checked={equipment.includes(key)}
-                      onChange={(checked) => handleChange(key, checked)}
-                      label={t(`vehicleOptions.equipment.${key}`)}
-                      size="md"
-                    />
-                  ))}
+              <button
+                type="button"
+                className={`w-full flex items-center gap-1.5 text-left text-xs font-semibold text-primary-700 py-3 ${
+                  isLast ? '' : 'border-b border-primary-500/20'
+                }`}
+                aria-expanded={isOpen}
+                aria-controls={contentId}
+                onClick={() => toggleCategory(category)}
+                data-testid={
+                  enableE2eTestIds ? `search-equipment-category-${category}-toggle` : undefined
+                }
+              >
+                <span>{categoryTitle}</span>
+                <ChevronDownIcon
+                  className={`w-4 h-4 shrink-0 transition-transform duration-200 ease-out ${
+                    isOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              <div
+                id={contentId}
+                data-testid={
+                  enableE2eTestIds ? `search-equipment-category-${category}-content` : undefined
+                }
+                className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                  isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                }`}
+              >
+                <div className="overflow-hidden">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 pb-4">
+                    <div className="space-y-3">
+                      {col1.map((key) => (
+                        <Checkbox
+                          key={key}
+                          id={`search-equipment-${key}`}
+                          data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
+                          checked={equipment.includes(key)}
+                          onChange={(checked) => handleChange(key, checked)}
+                          label={t(`vehicleOptions.equipment.${key}`)}
+                          size="md"
+                        />
+                      ))}
+                    </div>
+                    <div className="space-y-3">
+                      {col2.map((key) => (
+                        <Checkbox
+                          key={key}
+                          id={`search-equipment-${key}`}
+                          data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
+                          checked={equipment.includes(key)}
+                          onChange={(checked) => handleChange(key, checked)}
+                          label={t(`vehicleOptions.equipment.${key}`)}
+                          size="md"
+                        />
+                      ))}
+                    </div>
+                    <div className="space-y-3">
+                      {col3.map((key) => (
+                        <Checkbox
+                          key={key}
+                          id={`search-equipment-${key}`}
+                          data-testid={enableE2eTestIds ? `search-equipment-${key}` : undefined}
+                          checked={equipment.includes(key)}
+                          onChange={(checked) => handleChange(key, checked)}
+                          label={t(`vehicleOptions.equipment.${key}`)}
+                          size="md"
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

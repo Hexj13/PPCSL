@@ -384,7 +384,7 @@ export function RichTextEditor({
           document.execCommand('insertText', false, text);
           handleInput();
         }}
-        className={`input-field overflow-y-auto scrollbar-custom ${editorClassName ?? ''}`.trim()}
+        className={`input-field search-control-border overflow-y-auto scrollbar-custom ${editorClassName ?? ''}`.trim()}
         style={{
           minHeight: `${rows * 1.5}rem`,
         }}

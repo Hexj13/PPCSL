@@ -11,6 +11,7 @@ import {
 import { getBodyTypeOptions, getDriveTypeOptions, getTransmissionOptions } from '@/lib/options';
 import { formatThousandsWithSpaces } from '@/lib/utils';
 
+import { ListingFormTextInput } from '../ListingFormTextInput';
 import { MobileSelectField } from '../MobileSelectField';
 import { RequiredAsterisk } from '../RequiredAsterisk';
 import type { ListingFormSectionProps } from '../types';
@@ -49,11 +50,6 @@ export function SpecsGrid({
         />
 
         <div>
-          <label className="mb-2 hidden items-center gap-2 text-sm font-semibold text-primary-900 md:flex">
-            <SearchFilterTransmissionIcon />
-            {t('listings.transmissionLabel')}
-            <RequiredAsterisk filled={!!formData.vehicle.transmission} />
-          </label>
           <MobileSelectField
             value={formData.vehicle.transmission}
             onChange={(value) => {
@@ -77,11 +73,6 @@ export function SpecsGrid({
 
         {vehicleType !== 'moto' && (
           <div>
-            <label className="mb-2 hidden items-center gap-2 text-sm font-semibold text-primary-900 md:flex">
-              <DriveTypeIcon />
-              {t('listings.driveTypeLabel')}
-              <RequiredAsterisk filled={!!formData.vehicle.drive_type} />
-            </label>
             <MobileSelectField
               value={formData.vehicle.drive_type}
               onChange={(value) => {
@@ -105,11 +96,6 @@ export function SpecsGrid({
         )}
 
         <div>
-          <label className="mb-2 hidden items-center gap-2 text-sm font-semibold text-primary-900 md:flex">
-            <BodyTypeIcon />
-            {t('listings.bodyTypeLabel')}
-            <RequiredAsterisk filled={!!formData.vehicle.body_type} />
-          </label>
           <MobileSelectField
             value={formData.vehicle.body_type}
             onChange={(value) => {
@@ -132,22 +118,16 @@ export function SpecsGrid({
         </div>
 
         <div>
-          <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary-900">
+          <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary-900 md:hidden">
             <MileageIcon />
             {t('listings.mileageLabel')}
             <RequiredAsterisk filled={!!formData.vehicle.mileage_km.trim()} />
           </label>
-          <input
-            type="text"
-            inputMode="numeric"
-            required
-            min="0"
-            max="9999999"
+          <ListingFormTextInput
             value={formattedMileage}
-            data-testid="listing-form-mileage"
-            onChange={(e) => {
+            onChange={(raw) => {
               clearError('vehicle.mileage_km');
-              const value = e.target.value.replace(/[^0-9]/g, '');
+              const value = raw.replace(/[^0-9]/g, '');
               if (value === '' || (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 9999999)) {
                 setFormData((prev) => ({
                   ...prev,
@@ -155,8 +135,8 @@ export function SpecsGrid({
                 }));
               }
             }}
-            onBlur={(e) => {
-              const value = e.target.value.replace(/\s/g, '').trim();
+            onBlur={(raw) => {
+              const value = raw.replace(/\s/g, '').trim();
               if (value && /^0+$/.test(value)) {
                 setFormData((prev) => ({
                   ...prev,
@@ -165,9 +145,14 @@ export function SpecsGrid({
               }
             }}
             onWheel={handleWheel}
-            className={`input-field h-[48px] ${errors['vehicle.mileage_km'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-            placeholder={t('listings.mileagePlaceholder')}
+            fieldLabel={t('listings.mileageLabel')}
+            fieldLabelIcon={<MileageIcon />}
+            fieldLabelTrailing={<RequiredAsterisk filled={!!formData.vehicle.mileage_km.trim()} />}
+            inputMode="numeric"
             title={t('listings.mileageTitle')}
+            placeholder={t('listings.mileagePlaceholder')}
+            error={!!errors['vehicle.mileage_km']}
+            dataTestId="listing-form-mileage"
           />
         </div>
       </div>

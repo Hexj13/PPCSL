@@ -83,7 +83,7 @@ export function MultiSelectSheetContent({
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="input-field w-full"
+            className="input-field search-control-border w-full"
             placeholder={searchInputPlaceholder}
           />
         </div>

@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 
+import { ListingFormTextInput } from '@/components/ListingForm/ListingFormTextInput';
 import { MobileSelectField } from '@/components/ListingForm/MobileSelectField';
 import { useI18n } from '@/components/providers/I18nProvider';
 import {
@@ -59,27 +60,21 @@ export function TirePriceAndLocationSection({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:auto-rows-min">
         <div className="sm:row-start-1 sm:col-span-1">
-          <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary-900">
+          <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary-900 md:hidden">
             <SearchFilterPriceIcon />
             {t('listings.priceLabel')}
             <RequiredAsterisk filled={!!formData.price.trim()} />
           </label>
-          <div className="flex flex-row flex-nowrap gap-2">
-            <input
-              type="text"
-              inputMode="numeric"
-              required
-              min="0"
-              max="999999999"
+          <div className="flex flex-col gap-2">
+            <ListingFormTextInput
               value={formData.price}
-              data-testid="tire-listing-form-price"
-              onChange={(e) => {
+              onChange={(raw) => {
                 clearError('price');
-                const value = e.target.value.replace(/[^0-9]/g, '');
+                const value = raw.replace(/[^0-9]/g, '');
                 setFormData((prev) => ({ ...prev, price: value }));
               }}
-              onBlur={(e) => {
-                const value = e.target.value.trim();
+              onBlur={(raw) => {
+                const value = raw.trim();
                 if (value && /^0+$/.test(value)) {
                   setFormData((prev) => ({
                     ...prev,
@@ -88,9 +83,14 @@ export function TirePriceAndLocationSection({
                 }
               }}
               onWheel={handleWheel}
-              className={`input-field flex-1 min-w-0 h-[48px] ${errors['price'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-              placeholder={t('listings.pricePlaceholder')}
+              fieldLabel={t('listings.priceLabel')}
+              fieldLabelIcon={<SearchFilterPriceIcon />}
+              fieldLabelTrailing={<RequiredAsterisk filled={!!formData.price.trim()} />}
+              inputMode="numeric"
               title={t('listings.tireForm.priceTitle')}
+              placeholder={t('listings.pricePlaceholder')}
+              error={!!errors['price']}
+              dataTestId="tire-listing-form-price"
             />
             <MobileSelectField
               value={formData.currency}
@@ -98,9 +98,7 @@ export function TirePriceAndLocationSection({
                 setFormData((prev) => ({ ...prev, currency: value as Currency }))
               }
               sheetTitle={t('listings.currency')}
-              leadingIcon={<SearchFilterPriceIcon />}
-              className="w-32 shrink-0"
-              mobileValueOnlyTrigger={true}
+              className="w-full"
               autoPosition={true}
               menuMaxHeight={300}
               options={CURRENCY_OPTIONS}
@@ -125,11 +123,6 @@ export function TirePriceAndLocationSection({
         </div>
 
         <div className="sm:row-start-3 sm:col-span-1">
-          <label className="mb-2 hidden items-center gap-2 text-sm font-semibold text-primary-900 md:flex">
-            <SearchFilterCityIcon />
-            {t('listings.cityLabel')}
-            <RequiredAsterisk filled={!!formData.city} />
-          </label>
           <MobileSelectField
             value={formData.city}
             onChange={(value) => {

@@ -31,7 +31,9 @@ export function FilterRow({
       data-testid={`search-filter-row-${sheetId}`}
       data-has-selection={hasSelection ? 'true' : 'false'}
       onClick={onClick}
-      className="flex h-12 w-full items-center justify-between gap-3 rounded-lg border-2 border-primary-500/25 bg-bg-base px-4 text-left disabled:cursor-not-allowed disabled:opacity-50 hover-only:hover:border-primary-600/50 transition-colors"
+      className={`flex h-12 w-full items-center justify-between gap-3 rounded-lg search-control-border bg-bg-base px-4 text-left disabled:cursor-not-allowed disabled:opacity-50 transition-colors ${
+        hasSelection ? 'is-selected' : ''
+      }`}
     >
       <span className="flex items-center gap-2 min-w-0 shrink">
         {leadingIcon ? (

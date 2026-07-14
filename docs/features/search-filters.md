@@ -72,7 +72,7 @@ Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | '
 
 **Component:** `BasicFilters.tsx`.
 
-**Layout:** Responsive grid. On `md` and up: 3 columns; on smaller screens: 2 or 1 column. Two main rows of filters, then a full-width “Popular body types” block.
+**Layout:** Responsive grid: 1 column by default, 2 from `sm`, 3 from `xl` (so `lg` / 1024px stays on 2 columns). Two main rows of filters, then a full-width “Popular body types” block.
 
 ### Row 1 (three columns)
 
@@ -90,9 +90,11 @@ Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | '
 
 - **Popular body types** — `PopularBodyTypesFilter`: clickable body-type chips (e.g. Sedan, SUV). Selection syncs with the Body type multi-select from row 1.
 
-**Paired fields (From/To):** Year, Price, Mileage use a single label and two controls side by side, styled as one block (shared border, `.paired-left` / `.paired-right` in `app/globals.css`). Placeholders use `searchFilters.from` and `searchFilters.to`.
+**Paired fields (From/To):** Year, Price, Mileage use two controls side by side, styled as one block (shared border, `.paired-left` / `.paired-right` in `app/globals.css`). On desktop each half has its own floating label (`yearFrom`/`yearTo`, `priceFrom`/`priceTo` + currency, `mileageFrom`/`mileageTo`).
 
-**Translation keys (examples):** `searchFilters.brand`, `searchFilters.model`, `searchFilters.year`, `searchFilters.price`, `searchFilters.fuel`, `searchFilters.body`, `searchFilters.transmission`, `searchFilters.drive`, `searchFilters.mileage`, plus placeholders like `searchFilters.selectBrands`, `searchFilters.selectModels`, etc.
+**Desktop floating labels:** Desktop Basic/Advanced/Tire input and dropdown controls render the field name inside the control (`fieldLabel` / `SearchFilterInput`). Text inputs float on focus or when a value is present. Dropdowns keep the label centered while open/empty and float only after a selection (or while typing in a searchable dropdown filter), with the value (or `common.selectedCount`) on the second line. Mobile filter rows and sheets are unchanged.
+
+**Translation keys (examples):** `searchFilters.brand`, `searchFilters.model`, `searchFilters.yearFrom`, `searchFilters.yearTo`, `searchFilters.priceFrom`, `searchFilters.priceTo`, `searchFilters.fuel`, `searchFilters.body`, `searchFilters.transmission`, `searchFilters.drive`, `searchFilters.mileageFrom`, `searchFilters.mileageTo`, plus placeholders like `searchFilters.selectBrands`, `searchFilters.selectModels`, etc.
 
 ---
 
@@ -100,7 +102,7 @@ Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | '
 
 **Component:** `AdvancedFilters.tsx`.
 
-**Layout:** Same responsive 3-column grid as Basic. Labels use `truncate` and `title` so long text (e.g. “long label text”) stays on one line on tablets and shows full text on hover.
+**Layout:** Same responsive grid as Basic (`1` → `sm:2` → `xl:3`). Desktop dropdown/input labels are floating inside the controls; long floating labels truncate with `title` for the full text on hover.
 
 ### Row 1 (three columns)
 
@@ -137,7 +139,8 @@ Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | '
 **Component:** `EquipmentFilters.tsx`.
 
 - Equipment keys depend on `vehicleType` (car/truck/moto); see `getEquipmentKeysByVehicleType` and `vehicle-equipment.ts`.
-- Options are grouped by category (e.g. comfort, safety). Headlights (e.g. LED, xenon) and tires are mutually exclusive within their group when match mode is “full”.
+- Options are grouped by category (e.g. comfort, safety) in an accordion: the first non-empty category is open by default; the rest are collapsed. Multiple categories can be open at once (same pattern as popular models by body type). Toggle/content test ids (when E2E ids are enabled): `search-equipment-category-{category}-toggle`, `search-equipment-category-{category}-content`.
+- Headlights (e.g. LED, xenon) and tires are mutually exclusive within their group when match mode is “full”.
 - Each checkbox uses a stable `id` (`search-equipment-${key}`) so SSR/hydration does not rely on React `useId()` for label association.
 - **Match mode:** “Full” (listing must have all selected) or “Partial” (at least one). Stored in `filters.equipment_match_mode`; sent as `equipmentMatch` in API.
 
@@ -206,13 +209,25 @@ Automated coverage: `e2e/specs/search-filters-mobile.spec.ts` (sheet matrix + di
 - Right control: `paired-right` (rounded right, overlapping left border, higher z-index on focus so the shared edge highlights correctly).
 - Defined in `core/frontend/app/globals.css` (`.paired-left`, `.paired-right`, focus states).
 
+### Desktop floating labels
+
+- Opt-in via `fieldLabel` / `fieldLabelIcon` on `Dropdown` and `MultiSelectDropdown`, and via `SearchFilterInput` for native inputs.
+- Classes: `.search-field-floating`, `.search-field-floating-label`, `.search-field-floating-value`, `.search-field-floating-input`. Floating labels use `primary-900` when empty and `primary-700` when floating; values and typed input text use `primary-900`.
+- Without `fieldLabel`, shared dropdowns (for example the language switcher) keep the previous single-line trigger. `SortDropdown` uses the same floating-label pattern as desktop search filter controls.
+
+### Border contract
+
+- Utility: `.search-control-border` (1px solid `primary-500/20`; hover `primary-500/40`; focus/open/selected `primary-500`).
+- Applied on desktop and mobile search controls: floating fields, mobile `FilterRow`s, popular statistics cards, popular body/brand tiles, popular model/tire-size chips, selection check badges, equipment match-mode chips, tire vehicle-type selectors, label cards, sheet inputs, and checkboxes.
+- Action CTAs keep their own borders.
+
 ### Label truncation
 
-- Long labels (e.g. “Has registration”, “Registration type”) use `truncate` and `title={t('...')}` so they stay on one line on narrow viewports and show full text on hover. Applied across Basic and Advanced filter labels where needed.
+- Long floating labels truncate inside the control; `title` preserves the full text on hover.
 
 ### Responsive grid
 
-- Grid: `grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4`. Inner groups (e.g. Brand+Model) use `grid-cols-2 gap-2` where two controls share one column.
+- Grid (Basic/Advanced): `grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4`. Inner groups (e.g. Brand+Model) use `grid-cols-2 gap-2` where two controls share one column.
 
 ---
 
@@ -240,15 +255,19 @@ Automated coverage: `e2e/specs/search-filters-mobile.spec.ts` (sheet matrix + di
 | `search-filters/mobile/MobileSearchFilters.tsx` | Mobile vehicle/tire filter UI and sheets |
 | `search-filters/BasicFilters.tsx`           | Basic criteria grid + PopularBodyTypesFilter                                               |
 | `search-filters/AdvancedFilters.tsx`        | Additional criteria grid + labels                                                          |
+| `search-filters/SearchFilterInput.tsx`      | Desktop floating-label wrapper for native search inputs                                    |
+| `search-filters/SearchFieldFloatingLabel.tsx` | Shared floating label markup for desktop search fields                                   |
 | `search-filters/EquipmentFilters.tsx`       | Equipment checkboxes and match mode                                                        |
 | `search-filters/PopularFilters.tsx`         | Popular brands/models links                                                                |
+| `search-filters/PopularFilterPickers.tsx`   | Popular brand tiles and model/size chips                                                   |
+| `search-filters/PopularStatistics.tsx`      | Popular tab statistics cards                                                               |
 | `search-filters/SearchTabs.tsx`             | Tab buttons and indicator                                                                  |
 | `search-filters/SearchFormActions.tsx`      | Available-count display, sort dropdown, Smart selection, Save, Search, Reset, and Log in buttons |
 | `components/search/SortDropdown.tsx`        | Listing sort select; deferred on home (`onSortChange`), immediate on board |
 | `search-filters/VehicleTypeSelector.tsx`    | Car / Truck / Moto selector                                                                |
 | `search-filters/PopularBodyTypesFilter.tsx` | Body type chips under Basic filters                                                        |
 | `hooks/usePopularModels.ts`                 | Popular tab: brand/model selection, mutual exclusion, selectedItems                         |
-| `app/globals.css`                           | `.paired-left`, `.paired-right`, `.input-field` padding/truncation                         |
+| `app/globals.css`                           | `.paired-left`, `.paired-right`, `.input-field`, `.search-control-border`, `.search-field-floating*` |
 
 ---
 
@@ -264,11 +283,24 @@ Stable `data-testid` values used by `search-filters-mobile.spec.ts` and `search-
 | Mobile panels | `search-panel-mobile-basic`, `search-panel-mobile-advanced`, `search-panel-mobile-equipment`, `search-panel-mobile-popular` |
 | Mobile sheet rows | `search-filter-row-{sheetId}` (e.g. `vehicle_brand`); `data-has-selection` on the row |
 | Sheet UI | `search-sheet-option-{value}`, `search-sheet-confirm` |
-| Mobile equipment / popular | `search-equipment-{key}` (mobile layout only), `search-popular-chip-{brand}-{model}` |
+| Mobile equipment / popular | `search-equipment-{key}` (mobile layout only), `search-equipment-category-{category}-toggle` / `-content`, `search-popular-chip-{brand}-{model}` |
 | Actions | `search-submit`, `search-reset`, `search-smart-selection`, `search-save-filter` |
 | Sort (home) | `search-sort-select`, `search-sort-select-menu`, `search-sort-select-option-{index}` |
 
 E2E: `listing-sort.spec.ts` — home selects sort then `submitSearch()`; board applies sort immediately. See [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md) for project layout and flow rules.
+
+---
+
+## Listing create/edit forms
+
+The same floating-label and `search-control-border` primitives are reused in vehicle and tire listing forms (`ListingFormTextInput`, `MobileSelectField`, `ListingYearField`).
+
+| Viewport | Text inputs | Selects / year |
+| --- | --- | --- |
+| Desktop (`≥768px`) | `SearchFilterInput` with internal floating label; optional `fieldLabelTrailing` (`RequiredAsterisk`) | `Dropdown` via wrappers with `fieldLabel` / `fieldLabelTrailing` |
+| Mobile (`<768px`) | Plain `input-field` + `search-control-border`; external labels unchanged | Bottom-sheet triggers + `search-control-border`; no floating labels |
+
+`VehicleTypeSelector` and tire compatible-vehicle chips use `search-control-border` + `is-selected` for the active state on all viewports.
 
 ---
 
@@ -282,4 +314,4 @@ E2E: `listing-sort.spec.ts` — home selects sort then `submitSearch()`; board a
 
 ---
 
-**Last updated:** 2026-06-03
+**Last updated:** 2026-07-14

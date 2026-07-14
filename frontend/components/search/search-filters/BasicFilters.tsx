@@ -20,6 +20,7 @@ import { toast } from '@/lib/toast';
 import { getCountry } from '@/lib/utils/utils';
 import { isInRange, MILEAGE_RANGE } from '@/lib/validation';
 
+import { SearchFilterInput } from './SearchFilterInput';
 import {
   BodyTypeIcon,
   DriveTypeIcon,
@@ -109,19 +110,18 @@ export function BasicFilters({
     [t, vehicleType],
   );
   const driveTypeOptions = useMemo(() => getDriveTypeOptions(t), [t]);
+  const priceCurrency = loadSiteConfigSync(getCountry()).currency;
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-900">
-              {t('searchFilters.brand')}
-            </label>
             <MultiSelectDropdown
               values={filters.brand_ids}
               onChange={(values) => onMultiSelectChange('brand_ids', values)}
               searchable={true}
+              fieldLabel={t('searchFilters.brand')}
               placeholder={t('searchFilters.selectBrands')}
               showActionButtons={true}
               options={brandOptions}
@@ -136,14 +136,12 @@ export function BasicFilters({
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-900">
-              {t('searchFilters.model')}
-            </label>
             <MultiSelectDropdown
               values={filters.model_ids}
               onChange={(values) => onMultiSelectChange('model_ids', values)}
               disabled={filters.brand_ids.length === 0 || loadingModels}
               searchable={true}
+              fieldLabel={t('searchFilters.model')}
               placeholder={t('searchFilters.selectModels')}
               showActionButtons={true}
               options={modelOptions}
@@ -160,16 +158,14 @@ export function BasicFilters({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2">
-            <SearchFilterYearIcon />
-            {t('searchFilters.year')}
-          </label>
           <div className="flex">
             <div className="flex-1 paired-left">
               <Dropdown
                 value={filters.year_gte}
                 onChange={(value) => onFilterChange('year_gte', value)}
                 searchable={true}
+                fieldLabel={t('searchFilters.yearFrom')}
+                fieldLabelIcon={<SearchFilterYearIcon />}
                 placeholder={t('searchFilters.from')}
                 options={yearOptions}
               />
@@ -179,6 +175,7 @@ export function BasicFilters({
                 value={filters.year_lte}
                 onChange={(value) => onFilterChange('year_lte', value)}
                 searchable={true}
+                fieldLabel={t('searchFilters.yearTo')}
                 placeholder={t('searchFilters.to')}
                 options={yearOptions}
               />
@@ -188,13 +185,11 @@ export function BasicFilters({
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2">
-              <FuelIcon />
-              {t('searchFilters.fuel')}
-            </label>
             <MultiSelectDropdown
               values={filters.fuels}
               onChange={(values) => onMultiSelectChange('fuels', values)}
+              fieldLabel={t('searchFilters.fuel')}
+              fieldLabelIcon={<FuelIcon />}
               placeholder={t('searchFilters.selectFuel')}
               searchable={false}
               showActionButtons={true}
@@ -202,14 +197,12 @@ export function BasicFilters({
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2">
-              <BodyTypeIcon />
-              {t('searchFilters.body')}
-            </label>
             <MultiSelectDropdown
               values={filters.body_types}
               onChange={(values) => onMultiSelectChange('body_types', values)}
               searchable={true}
+              fieldLabel={t('searchFilters.body')}
+              fieldLabelIcon={<BodyTypeIcon />}
               placeholder={t('searchFilters.selectBodyType')}
               showActionButtons={true}
               options={bodyTypeOptions}
@@ -218,33 +211,26 @@ export function BasicFilters({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2">
-            <SearchFilterPriceIcon />
-            {t('searchFilters.priceWithSearchCurrency', {
-              currency: loadSiteConfigSync(getCountry()).currency,
-            })}
-          </label>
           <div className="flex">
-            <input
-              type="text"
-              inputMode="numeric"
+            <SearchFilterInput
               value={formattedPriceGte}
-              onChange={(e) => onPriceChange('price_gte', e.target.value)}
-              onBlur={(e) => onPriceBlur('price_gte', e.target.value.replace(/\s/g, ''))}
+              onChange={(value) => onPriceChange('price_gte', value)}
+              onBlur={(value) => onPriceBlur('price_gte', value.replace(/\s/g, ''))}
               onWheel={onWheel}
-              className="input-field paired-left"
-              placeholder={t('searchFilters.from')}
+              fieldLabel={`${t('searchFilters.priceFrom')}, ${priceCurrency}`}
+              fieldLabelIcon={<SearchFilterPriceIcon />}
+              paired="left"
+              inputMode="numeric"
               title={t('searchFilters.priceFromTitle')}
             />
-            <input
-              type="text"
-              inputMode="numeric"
+            <SearchFilterInput
               value={formattedPriceLte}
-              onChange={(e) => onPriceChange('price_lte', e.target.value)}
-              onBlur={(e) => onPriceBlur('price_lte', e.target.value.replace(/\s/g, ''))}
+              onChange={(value) => onPriceChange('price_lte', value)}
+              onBlur={(value) => onPriceBlur('price_lte', value.replace(/\s/g, ''))}
               onWheel={onWheel}
-              className="input-field paired-right"
-              placeholder={t('searchFilters.to')}
+              fieldLabel={`${t('searchFilters.priceTo')}, ${priceCurrency}`}
+              paired="right"
+              inputMode="numeric"
               title={t('searchFilters.priceToTitle')}
             />
           </div>
@@ -252,26 +238,22 @@ export function BasicFilters({
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2">
-              <SearchFilterTransmissionIcon />
-              {t('searchFilters.transmission')}
-            </label>
             <MultiSelectDropdown
               values={filters.transmissions}
               onChange={(values) => onMultiSelectChange('transmissions', values)}
+              fieldLabel={t('searchFilters.transmission')}
+              fieldLabelIcon={<SearchFilterTransmissionIcon />}
               placeholder={t('searchFilters.selectTransmission')}
               showActionButtons={true}
               options={transmissionOptions}
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2">
-              <DriveTypeIcon />
-              {t('searchFilters.drive')}
-            </label>
             <MultiSelectDropdown
               values={filters.drive_types}
               onChange={(values) => onMultiSelectChange('drive_types', values)}
+              fieldLabel={t('searchFilters.drive')}
+              fieldLabelIcon={<DriveTypeIcon />}
               placeholder={t('searchFilters.selectDriveType')}
               searchable={false}
               showActionButtons={true}
@@ -281,43 +263,38 @@ export function BasicFilters({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2">
-            <MileageIcon />
-            {t('searchFilters.mileage')}
-          </label>
           <div className="flex">
-            <input
-              type="text"
-              inputMode="numeric"
+            <SearchFilterInput
               value={formattedMileageGte}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                const num = parseInt(value, 10);
-                if (value === '' || (!Number.isNaN(num) && isInRange(num, MILEAGE_RANGE))) {
-                  onFilterChange('mileage_gte', value);
+              onChange={(value) => {
+                const cleaned = value.replace(/[^0-9]/g, '');
+                const num = parseInt(cleaned, 10);
+                if (cleaned === '' || (!Number.isNaN(num) && isInRange(num, MILEAGE_RANGE))) {
+                  onFilterChange('mileage_gte', cleaned);
                 }
               }}
-              onBlur={(e) => handleMileageBlur('mileage_gte', e.target.value.replace(/\s/g, ''))}
+              onBlur={(value) => handleMileageBlur('mileage_gte', value.replace(/\s/g, ''))}
               onWheel={onWheel}
-              className="input-field paired-left"
-              placeholder={t('searchFilters.from')}
+              fieldLabel={t('searchFilters.mileageFrom')}
+              fieldLabelIcon={<MileageIcon />}
+              paired="left"
+              inputMode="numeric"
               title={t('searchFilters.mileageFromTitle')}
             />
-            <input
-              type="text"
-              inputMode="numeric"
+            <SearchFilterInput
               value={formattedMileageLte}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                const num = parseInt(value, 10);
-                if (value === '' || (!Number.isNaN(num) && isInRange(num, MILEAGE_RANGE))) {
-                  onFilterChange('mileage_lte', value);
+              onChange={(value) => {
+                const cleaned = value.replace(/[^0-9]/g, '');
+                const num = parseInt(cleaned, 10);
+                if (cleaned === '' || (!Number.isNaN(num) && isInRange(num, MILEAGE_RANGE))) {
+                  onFilterChange('mileage_lte', cleaned);
                 }
               }}
-              onBlur={(e) => handleMileageBlur('mileage_lte', e.target.value.replace(/\s/g, ''))}
+              onBlur={(value) => handleMileageBlur('mileage_lte', value.replace(/\s/g, ''))}
               onWheel={onWheel}
-              className="input-field paired-right"
-              placeholder={t('searchFilters.to')}
+              fieldLabel={t('searchFilters.mileageTo')}
+              paired="right"
+              inputMode="numeric"
               title={t('searchFilters.mileageToTitle')}
             />
           </div>

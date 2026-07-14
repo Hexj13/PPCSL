@@ -88,7 +88,7 @@ export function RangeSheetContent({
                 value={fromValue}
                 onChange={(e) => onFromChange(e.target.value)}
                 onBlur={(e) => onFromBlur?.(e.target.value)}
-                className="input-field w-full"
+                className="input-field search-control-border w-full"
               />
             </label>
             <span className="pb-3 text-primary-700 font-semibold shrink-0">{dash}</span>
@@ -100,7 +100,7 @@ export function RangeSheetContent({
                 value={toValue}
                 onChange={(e) => onToChange(e.target.value)}
                 onBlur={(e) => onToBlur?.(e.target.value)}
-                className="input-field w-full"
+                className="input-field search-control-border w-full"
               />
             </label>
           </>
@@ -114,7 +114,7 @@ export function RangeSheetContent({
                 aria-label={fromLabel}
                 onChange={(e) => onFromChange(e.target.value)}
                 onBlur={(e) => onFromBlur?.(e.target.value)}
-                className="input-field w-full"
+                className="input-field search-control-border w-full"
               />
             </div>
             <span className="shrink-0 pb-3 font-semibold text-primary-700">{dash}</span>
@@ -126,7 +126,7 @@ export function RangeSheetContent({
                 aria-label={toLabel}
                 onChange={(e) => onToChange(e.target.value)}
                 onBlur={(e) => onToBlur?.(e.target.value)}
-                className="input-field w-full"
+                className="input-field search-control-border w-full"
               />
             </div>
           </>

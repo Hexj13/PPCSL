@@ -13,6 +13,7 @@ import { CurrencyEnum } from '@/lib/types';
 import { sortOptionsByLabel } from '@/lib/utils';
 import { Checkbox } from '@/ui';
 
+import { ListingFormTextInput } from './ListingFormTextInput';
 import { MobileSelectField } from './MobileSelectField';
 import { RequiredAsterisk } from './RequiredAsterisk';
 import type { ListingFormSectionProps } from './types';
@@ -49,27 +50,21 @@ export function PriceAndLocationSection({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:auto-rows-min">
         <div className="sm:row-start-1 sm:col-span-1">
-          <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary-900">
+          <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary-900 md:hidden">
             <SearchFilterPriceIcon />
             {t('listings.priceLabel')}
             <RequiredAsterisk filled={!!formData.price.trim()} />
           </label>
-          <div className="flex flex-row flex-nowrap gap-2">
-            <input
-              type="text"
-              inputMode="numeric"
-              required
-              min="0"
-              max="999999999"
+          <div className="flex flex-col gap-2">
+            <ListingFormTextInput
               value={formData.price}
-              data-testid="listing-form-price"
-              onChange={(e) => {
+              onChange={(raw) => {
                 clearError('price');
-                const value = e.target.value.replace(/[^0-9]/g, '');
+                const value = raw.replace(/[^0-9]/g, '');
                 setFormData((prev) => ({ ...prev, price: value }));
               }}
-              onBlur={(e) => {
-                const value = e.target.value.trim();
+              onBlur={(raw) => {
+                const value = raw.trim();
                 if (value && /^0+$/.test(value)) {
                   setFormData((prev) => ({
                     ...prev,
@@ -78,9 +73,14 @@ export function PriceAndLocationSection({
                 }
               }}
               onWheel={handleWheel}
-              className={`input-field flex-1 min-w-0 h-[48px] ${errors['price'] ? 'border-red-500 focus:border-red-500 ' : ''}`}
-              placeholder={t('listings.pricePlaceholder')}
+              fieldLabel={t('listings.priceLabel')}
+              fieldLabelIcon={<SearchFilterPriceIcon />}
+              fieldLabelTrailing={<RequiredAsterisk filled={!!formData.price.trim()} />}
+              inputMode="numeric"
               title={t('listings.priceTitle')}
+              placeholder={t('listings.pricePlaceholder')}
+              error={!!errors['price']}
+              dataTestId="listing-form-price"
             />
             <MobileSelectField
               value={formData.currency}
@@ -88,9 +88,7 @@ export function PriceAndLocationSection({
                 setFormData((prev) => ({ ...prev, currency: value as Currency }))
               }
               sheetTitle={t('listings.currency')}
-              leadingIcon={<SearchFilterPriceIcon />}
-              className="w-32 shrink-0"
-              mobileValueOnlyTrigger={true}
+              className="w-full"
               autoPosition={true}
               menuMaxHeight={300}
               options={CURRENCY_OPTIONS}
@@ -133,24 +131,18 @@ export function PriceAndLocationSection({
         </div>
 
         <div className="sm:row-start-4 sm:col-span-1">
-          <label className="block text-sm font-semibold mb-2 text-primary-900">
+          <label className="mb-2 block text-sm font-semibold text-primary-900 md:hidden">
             {t('listings.downPaymentFrom')}{' '}
             <span className="text-text-secondary">{t('listings.optionalShort')}</span>
           </label>
-          <input
-            type="text"
-            inputMode="numeric"
-            min="0"
-            max="999999999"
+          <ListingFormTextInput
             value={formData.down_payment_amount}
-            disabled={!formData.available_in_credit}
-            data-testid="listing-form-down-payment"
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^0-9]/g, '');
+            onChange={(raw) => {
+              const value = raw.replace(/[^0-9]/g, '');
               setFormData((prev) => ({ ...prev, down_payment_amount: value }));
             }}
-            onBlur={(e) => {
-              const value = e.target.value.trim();
+            onBlur={(raw) => {
+              const value = raw.trim();
               if (value && /^0+$/.test(value)) {
                 setFormData((prev) => ({
                   ...prev,
@@ -159,17 +151,16 @@ export function PriceAndLocationSection({
               }
             }}
             onWheel={handleWheel}
-            className="input-field h-[48px] w-full max-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed"
+            fieldLabel={`${t('listings.downPaymentFrom')} ${t('listings.optionalShort')}`}
+            inputMode="numeric"
+            disabled={!formData.available_in_credit}
             placeholder={t('listings.pricePlaceholder')}
+            mobileClassName="w-full max-w-[200px]"
+            dataTestId="listing-form-down-payment"
           />
         </div>
 
         <div className="sm:row-start-5 sm:col-span-1">
-          <label className="mb-2 hidden items-center gap-2 text-sm font-semibold text-primary-900 md:flex">
-            <SearchFilterCityIcon />
-            {t('listings.cityLabel')}
-            <RequiredAsterisk filled={!!formData.city} />
-          </label>
           <MobileSelectField
             value={formData.city}
             onChange={(value) => {

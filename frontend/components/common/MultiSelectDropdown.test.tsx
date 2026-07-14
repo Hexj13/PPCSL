@@ -48,4 +48,38 @@ describe('MultiSelectDropdown', () => {
     fireEvent.click(screen.getByRole('button', { name: 'OK' }));
     expect(onChange).toHaveBeenCalledWith(['a', 'b']);
   });
+
+  it('renders floating field label and selected count inside the trigger', () => {
+    const { rerender } = render(
+      <MultiSelectDropdown
+        values={[]}
+        onChange={jest.fn()}
+        options={[
+          { value: 'a', label: 'Alpha' },
+          { value: 'b', label: 'Beta' },
+        ]}
+        fieldLabel="Body"
+        showActionButtons={true}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Body' })).toBeInTheDocument();
+    expect(screen.queryByText('Selected 2')).not.toBeInTheDocument();
+
+    rerender(
+      <MultiSelectDropdown
+        values={['a', 'b']}
+        onChange={jest.fn()}
+        options={[
+          { value: 'a', label: 'Alpha' },
+          { value: 'b', label: 'Beta' },
+        ]}
+        fieldLabel="Body"
+        showActionButtons={true}
+      />,
+    );
+
+    expect(screen.getByText('Body')).toBeInTheDocument();
+    expect(screen.getByText('Selected 2')).toBeInTheDocument();
+  });
 });

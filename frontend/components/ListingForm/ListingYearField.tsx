@@ -71,11 +71,12 @@ export function ListingYearField({
   const matched = value ? options.find((o) => o.value === value) : undefined;
   const displayLabel = matched?.label ?? '';
 
-  const triggerBorder = error
-    ? 'border-red-500'
-    : 'border-primary-500/25 hover-only:hover:border-primary-600/50';
+  const triggerBorder = error ? 'border-red-500' : 'search-control-border';
 
-  const triggerIcon = leadingIcon;
+  const fieldLabelTrailing =
+    requiredAsteriskFilled !== undefined ? (
+      <RequiredAsterisk filled={requiredAsteriskFilled} />
+    ) : undefined;
 
   if (isMdUp) {
     return (
@@ -89,9 +90,14 @@ export function ListingYearField({
         autoPosition={autoPosition}
         menuMaxHeight={menuMaxHeight}
         dataTestId={dataTestId}
+        fieldLabel={sheetTitle}
+        fieldLabelIcon={leadingIcon}
+        fieldLabelTrailing={fieldLabelTrailing}
       />
     );
   }
+
+  const triggerIcon = leadingIcon;
 
   const confirmYear = () => {
     const next = draft || options[0]?.value || '';
@@ -109,7 +115,7 @@ export function ListingYearField({
         data-testid={dataTestId}
         aria-haspopup="dialog"
         aria-expanded={sheetOpen}
-        className={`flex h-12 w-full items-center justify-between gap-3 rounded-lg border-2 bg-bg-base px-4 text-left transition-colors ${triggerBorder}`}
+        className={`flex h-12 w-full items-center justify-between gap-3 rounded-lg bg-bg-base px-4 text-left transition-colors ${triggerBorder}`}
       >
         <span className="flex min-w-0 shrink items-center gap-2">
           {triggerIcon ? (

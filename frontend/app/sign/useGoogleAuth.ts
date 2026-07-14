@@ -108,6 +108,7 @@ export function useGoogleAuth(options: {
   tab: 'login' | 'register';
   preferredNewUserType?: GoogleSignInDto['type'];
   gisScriptLoaded?: boolean;
+  locale?: string;
 }) {
   const { t } = useTranslation();
   const { replace } = useLocalizedNavigation();
@@ -148,6 +149,7 @@ export function useGoogleAuth(options: {
   const tRef = useRef(t);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const gisScriptLoaded = options.gisScriptLoaded ?? true;
+  const locale = options.locale;
   const isGoogleBusy = isGoogleAuthInFlight || isGooglePopupPending;
 
   useEffect(() => {
@@ -485,7 +487,7 @@ export function useGoogleAuth(options: {
       },
       onTimedOutChange: setIsButtonRenderTimedOut,
     });
-  }, [canRenderButton, clientId, ensureGisInitialized, clearButtonReadyTimeout]);
+  }, [canRenderButton, clientId, ensureGisInitialized, clearButtonReadyTimeout, locale]);
 
   return {
     containerRef,

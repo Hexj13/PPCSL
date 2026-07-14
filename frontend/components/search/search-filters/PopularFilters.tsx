@@ -233,13 +233,13 @@ export function PopularFilters({
                       }`}
                     >
                       <div className="overflow-hidden">
-                        <div className="pt-3 pb-2">
+                        <div className="pt-3 pb-4">
                           {modelsForBody.length === 0 ? (
                             <p className="text-sm text-text-secondary">
                               {t('searchFilters.noPopularModelsForBodyType')}
                             </p>
                           ) : (
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-4">
                               {modelsForBody.map(({ brandName, modelName }) => (
                                 <PopularFilterChip
                                   key={`${brandName}-${modelName}`}

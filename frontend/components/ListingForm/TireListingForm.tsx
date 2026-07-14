@@ -5,7 +5,6 @@ import { useMemo } from 'react';
 import { ListingFormSkeleton } from '@/components/ListingForm/ListingFormSkeleton';
 import { MobileSelectField } from '@/components/ListingForm/MobileSelectField';
 import { PhotosSection } from '@/components/ListingForm/PhotosSection';
-import { RequiredAsterisk } from '@/components/ListingForm/RequiredAsterisk';
 import { TireAdditionalInfoSection } from '@/components/ListingForm/TireAdditionalInfoSection';
 import { TireFormOptionsSection } from '@/components/ListingForm/TireFormOptionsSection';
 import { TireFormSizeTechnicalSection } from '@/components/ListingForm/TireFormSizeTechnicalSection';
@@ -175,10 +174,10 @@ export function TireListingForm({
                           run_flat: v === 'car' ? prev.run_flat : false,
                         }))
                       }
-                      className={`h-12 w-14 inline-flex items-center justify-center shrink-0 rounded-lg border-2 transition-colors ${
+                      className={`h-12 w-14 inline-flex items-center justify-center shrink-0 rounded-lg search-control-border transition-colors ${
                         formData.tire_vehicle_type === v
-                          ? 'border-primary-900 bg-primary-500/10'
-                          : 'border-primary-500/40 hover-only:hover:border-primary-700'
+                          ? 'is-selected bg-primary-500/10'
+                          : 'hover-only:hover:border-primary-700'
                       }`}
                       aria-label={t(`searchFilters.tireVehicleType.${v}`)}
                       aria-pressed={formData.tire_vehicle_type === v}
@@ -190,10 +189,6 @@ export function TireListingForm({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
-                    {t('listings.brandLabel')}
-                    <RequiredAsterisk filled={!!formData.brand_id} />
-                  </label>
                   <MobileSelectField
                     value={formData.brand_id}
                     onChange={(value) => {
@@ -215,9 +210,6 @@ export function TireListingForm({
                   />
                 </div>
                 <div>
-                  <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
-                    {t('listings.modelLabel')}
-                  </label>
                   <MobileSelectField
                     value={formData.model_id}
                     onChange={(value) => {
@@ -246,10 +238,6 @@ export function TireListingForm({
               <BrandModelCatalogInfoBlock />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
-                    {t('searchFilters.tireTreadLabel')}
-                    <RequiredAsterisk filled={!!formData.season} />
-                  </label>
                   <MobileSelectField
                     value={formData.season}
                     onChange={(value) => {
@@ -268,10 +256,6 @@ export function TireListingForm({
                   />
                 </div>
                 <div>
-                  <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
-                    {t('searchFilters.tireConditionLabel')}
-                    <RequiredAsterisk filled={!!formData.condition} />
-                  </label>
                   <MobileSelectField
                     value={formData.condition}
                     onChange={(value) =>

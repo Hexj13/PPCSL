@@ -13,9 +13,24 @@ jest.mock('@/hooks/useTranslation', () => ({
       ({
         'common.ok': 'OK',
         'common.search': 'Search',
+        'common.requiredAsterisk': '*',
       })[key] ?? key,
   }),
 }));
+
+function mockDesktopViewport() {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation((query: string) => ({
+      matches: query.includes('min-width') && query.includes('768'),
+      media: query,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+}
 
 function mockMobileViewport() {
   Object.defineProperty(window, 'matchMedia', {
@@ -180,5 +195,43 @@ describe('MobileSelectField', () => {
 
     expect(dialog).toHaveStyle({ height: '736px', maxHeight: '736px', minHeight: '704px' });
     expect(searchInput).toHaveValue('zzzz');
+  });
+
+  it('renders a desktop dropdown with floating label and required asterisk', () => {
+    mockDesktopViewport();
+    render(
+      <MobileSelectField
+        value="toyota"
+        onChange={jest.fn()}
+        options={[
+          { value: 'toyota', label: 'Toyota' },
+          { value: 'bmw', label: 'BMW' },
+        ]}
+        sheetTitle="Brand"
+        requiredAsteriskFilled={true}
+        placeholder="Select brand"
+        dataTestId="listing-create-brand-select"
+      />,
+    );
+
+    expect(screen.getByText('Brand')).toBeInTheDocument();
+    expect(screen.getByText('Toyota')).toBeInTheDocument();
+    expect(screen.getByText('*')).toBeInTheDocument();
+    expect(screen.getByTestId('listing-create-brand-select')).toHaveClass('search-control-border');
+  });
+
+  it('uses search-control-border on the mobile trigger', () => {
+    render(
+      <MobileSelectField
+        value=""
+        onChange={jest.fn()}
+        options={[{ value: 'toyota', label: 'Toyota' }]}
+        sheetTitle="Brand"
+        placeholder="Select brand"
+        dataTestId="listing-create-brand-select"
+      />,
+    );
+
+    expect(screen.getByTestId('listing-create-brand-select')).toHaveClass('search-control-border');
   });
 });

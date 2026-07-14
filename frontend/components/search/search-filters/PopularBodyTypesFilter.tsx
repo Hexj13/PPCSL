@@ -126,7 +126,7 @@ export function PopularBodyTypesFilter({
           <button
             type="button"
             onClick={scrollLeft}
-            className="hidden lg:flex absolute left-0 top-[55px] -translate-y-1/2 -translate-x-4 z-30 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover-only:hover:bg-primary-500/10 hover-only:hover:border-primary-500 transition-colors duration-200 shadow-lg"
+            className="hidden lg:flex absolute left-0 top-[55px] -translate-y-1/2 -translate-x-4 z-30 w-10 h-10 items-center justify-center bg-bg-secondary search-control-border rounded-full hover-only:hover:bg-primary-500/10 transition-colors duration-200 shadow-lg"
             aria-label={t('common.scrollLeft')}
           >
             <svg
@@ -148,7 +148,7 @@ export function PopularBodyTypesFilter({
           <button
             type="button"
             onClick={scrollRight}
-            className="hidden lg:flex absolute right-0 top-[55px] -translate-y-1/2 translate-x-4 z-30 w-10 h-10 items-center justify-center bg-bg-secondary border-2 border-primary-500/50 rounded-full hover-only:hover:bg-primary-500/10 hover-only:hover:border-primary-500 transition-colors duration-200 shadow-lg"
+            className="hidden lg:flex absolute right-0 top-[55px] -translate-y-1/2 translate-x-4 z-30 w-10 h-10 items-center justify-center bg-bg-secondary search-control-border rounded-full hover-only:hover:bg-primary-500/10 transition-colors duration-200 shadow-lg"
             aria-label={t('common.scrollRight')}
           >
             <svg
@@ -178,12 +178,8 @@ export function PopularBodyTypesFilter({
                   onClick={() => handleTileClick(value)}
                   className={`
                   relative w-full h-[110px] flex items-center justify-center p-2 rounded-lg
-                  outline-hidden select-none ${vehicleType === 'moto' ? 'md:overflow-hidden xl:overflow-visible' : ''}
-                  ${
-                    isSelected
-                      ? 'border-2 border-primary-700'
-                      : 'border-2 border-primary-700/30 hover-only:hover:border-primary-700 transition-colors duration-200'
-                  }
+                  outline-hidden select-none search-control-border transition-colors duration-200 ${vehicleType === 'moto' ? 'md:overflow-hidden xl:overflow-visible' : ''}
+                  ${isSelected ? 'is-selected' : ''}
                 `}
                   onMouseDown={(e) => {
                     e.preventDefault();
@@ -259,8 +255,8 @@ export function PopularBodyTypesFilter({
                             'radial-gradient(ellipse 100% 80% at 50% 100%, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
                         }}
                       />
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none">
-                        <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-900">
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none z-10">
+                        <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center search-control-border">
                           <svg
                             className="w-3 h-3 text-primary-900"
                             fill="none"

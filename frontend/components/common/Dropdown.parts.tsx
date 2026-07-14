@@ -3,6 +3,10 @@
 import React from 'react';
 
 import { MultiSelectOptionLeadingLogo } from '@/components/common/MultiSelectOptionLeadingLogo';
+import {
+  SearchFloatingShell,
+  SearchFloatingTextInput,
+} from '@/components/search/search-filters/SearchFloatingShell';
 import { Button, designTokens } from '@/ui';
 
 import type { DropdownOption } from './dropdown-types';
@@ -18,6 +22,9 @@ interface DropdownTriggerProps {
   error: boolean;
   buttonClassName: string;
   rightIcon?: React.ReactNode;
+  fieldLabel?: string;
+  fieldLabelIcon?: React.ReactNode;
+  fieldLabelTrailing?: React.ReactNode;
   inputRef: React.RefObject<HTMLInputElement | null>;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onInputFocus: () => void;
@@ -36,12 +43,74 @@ export function DropdownTrigger({
   error,
   buttonClassName,
   rightIcon,
+  fieldLabel,
+  fieldLabelIcon,
+  fieldLabelTrailing,
   inputRef,
   onInputChange,
   onInputFocus,
   onToggle,
   dataTestId,
 }: DropdownTriggerProps) {
+  const floating = Boolean(fieldLabel) && (Boolean(selectedOption) || searchQuery.length > 0);
+
+  if (fieldLabel && searchable) {
+    return (
+      <SearchFloatingShell
+        fieldLabel={fieldLabel}
+        fieldLabelIcon={fieldLabelIcon}
+        fieldLabelTrailing={fieldLabelTrailing}
+        floating={floating}
+        isOpen={isOpen}
+        disabled={disabled}
+        error={error}
+        chevron={<DropdownChevron isOpen={isOpen} onClick={onToggle} />}
+      >
+        <SearchFloatingTextInput
+          inputRef={inputRef}
+          value={isOpen ? searchQuery : selectedOption ? displayText : ''}
+          floating={floating}
+          disabled={disabled}
+          fieldLabel={fieldLabel}
+          dataTestId={dataTestId}
+          onChange={onInputChange}
+          onFocus={onInputFocus}
+        />
+      </SearchFloatingShell>
+    );
+  }
+
+  if (fieldLabel && !searchable) {
+    return (
+      <SearchFloatingShell
+        fieldLabel={fieldLabel}
+        fieldLabelIcon={fieldLabelIcon}
+        fieldLabelTrailing={fieldLabelTrailing}
+        floating={floating}
+        isOpen={isOpen}
+        disabled={disabled}
+        error={error}
+        asButton
+        buttonClassName={buttonClassName}
+        onToggle={onToggle}
+        dataTestId={dataTestId}
+        chevron={
+          <DropdownChevron
+            isOpen={isOpen}
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-900 group-hover:text-primary-700 transition-colors duration-200 shrink-0 pointer-events-none"
+            style={{ right: '16px' }}
+          />
+        }
+      >
+        {selectedOption ? (
+          <span className="search-field-floating-value" suppressHydrationWarning>
+            {displayText}
+          </span>
+        ) : null}
+      </SearchFloatingShell>
+    );
+  }
+
   if (searchable) {
     return (
       <div className="relative group">
@@ -52,7 +121,7 @@ export function DropdownTrigger({
           onChange={onInputChange}
           onFocus={onInputFocus}
           disabled={disabled}
-          placeholder={isOpen ? '' : placeholder}
+          placeholder={isOpen ? undefined : placeholder}
           className={`input-field ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} ${selectedOption ? 'text-text-primary' : ''}`}
           style={{ paddingRight: '52px', color: selectedOption ? undefined : '#9ca3af' }}
           data-testid={dataTestId}
@@ -61,6 +130,7 @@ export function DropdownTrigger({
       </div>
     );
   }
+
   return (
     <button
       type="button"

@@ -178,7 +178,7 @@ export function TirePopularPanel({
         <h3 className="text-sm font-medium text-primary-900 mb-3">
           {t('searchFilters.popularTireSizes')}
         </h3>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-4 pb-2">
           {POPULAR_TIRE_SIZES.map((size) => (
             <PopularFilterChip
               key={`${size.width}-${size.profile}-${size.diameter}`}

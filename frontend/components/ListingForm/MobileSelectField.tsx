@@ -228,9 +228,12 @@ export function MobileSelectField({
   const mobileTriggerAriaLabel = mobileValueOnlyTrigger
     ? `${sheetTitle}: ${mobileTriggerPrimaryText}`
     : undefined;
-  const triggerBorder = error
-    ? 'border-red-500'
-    : 'border-primary-500/25 hover-only:hover:border-primary-600/50';
+  const triggerBorder = error ? 'border-red-500' : 'search-control-border';
+
+  const fieldLabelTrailing =
+    requiredAsteriskFilled !== undefined ? (
+      <RequiredAsterisk filled={requiredAsteriskFilled} />
+    ) : undefined;
 
   if (isMdUp) {
     return (
@@ -248,6 +251,9 @@ export function MobileSelectField({
           menuMaxHeight={menuMaxHeight}
           dataTestId={dataTestId}
           rightIcon={rightIcon}
+          fieldLabel={sheetTitle}
+          fieldLabelIcon={leadingIcon}
+          fieldLabelTrailing={fieldLabelTrailing}
         />
       </div>
     );
@@ -263,7 +269,7 @@ export function MobileSelectField({
         aria-label={mobileTriggerAriaLabel}
         aria-haspopup="dialog"
         aria-expanded={isSheetOpen}
-        className={`flex h-12 w-full items-center justify-between gap-3 rounded-lg border-2 bg-bg-base px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${triggerBorder} ${buttonClassName}`}
+        className={`flex h-12 w-full items-center justify-between gap-3 rounded-lg bg-bg-base px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${triggerBorder} ${buttonClassName}`}
       >
         {mobileValueOnlyTrigger ? (
           <>
@@ -354,7 +360,7 @@ export function MobileSelectField({
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-field w-full"
+                className="input-field search-control-border w-full"
                 placeholder={t('common.search')}
               />
             </div>

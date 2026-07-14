@@ -180,32 +180,17 @@ export class ListingDetailPage {
       .poll(
         async () => {
           if (await this.sellerPhoneLink.isVisible().catch(() => false)) {
-            return 'revealed';
+            return true;
           }
-          if (await this.sellerRevealPhoneButton.isVisible().catch(() => false)) {
-            return 'button';
+          const revealButton = this.sellerRevealPhoneButton;
+          if (await revealButton.isVisible().catch(() => false)) {
+            await revealButton.click({ timeout: 2_000 }).catch(() => undefined);
           }
-          return null;
+          return false;
         },
-        { timeout: 30_000 },
+        { timeout: 45_000, intervals: [500, 1000, 1500, 2000] },
       )
-      .not.toBeNull();
-
-    if (await this.sellerPhoneLink.isVisible().catch(() => false)) {
-      await this.expectSellerPhoneRevealed();
-      return;
-    }
-
-    const phonesResponse = this.page.waitForResponse(
-      (response) => response.url().includes('/phones') && response.ok(),
-      { timeout: 45_000 },
-    );
-    await this.sellerRevealPhoneButton.click();
-    try {
-      await phonesResponse;
-    } catch {
-      // contact action may have already loaded phones
-    }
+      .toBe(true);
     await this.expectSellerPhoneRevealed();
   }
 

@@ -26,10 +26,10 @@ export type VehicleTypeSelectorProps = VehicleOnlyProps | ListingCategoryProps;
 
 function buttonBase(active: boolean, stretchCell: boolean) {
   const layout = stretchCell ? 'w-full min-w-0 h-14 px-4' : 'flex-1 h-14 px-4';
-  return `${layout} text-base font-semibold transition-colors duration-300 rounded-lg flex items-center justify-center ${
+  return `${layout} text-base font-semibold transition-colors duration-300 rounded-lg flex items-center justify-center search-control-border ${
     active
-      ? 'bg-primary-500/10 border-2 border-primary-700 text-primary-700'
-      : 'bg-bg-secondary border-2 border-primary-700/30 text-primary-900 hover-only:hover:border-primary-700 hover-only:hover:text-primary-700'
+      ? 'is-selected bg-primary-500/10 text-primary-700'
+      : 'bg-bg-secondary text-primary-900 hover-only:hover:border-primary-700 hover-only:hover:text-primary-700'
   }`;
 }
 

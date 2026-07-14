@@ -61,6 +61,7 @@ export function SignPageContent() {
     tab,
     preferredNewUserType: tab === 'register' ? registerPage.formData.type : undefined,
     gisScriptLoaded: gisReady,
+    locale,
   });
   const telegramAuth = useTelegramAuth({
     tab,

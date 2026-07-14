@@ -20,9 +20,6 @@ export function ExteriorFields({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
-            {t('listings.colorLabel')}
-          </label>
           <MobileSelectField
             value={formData.vehicle.color}
             onChange={(value) =>
@@ -42,9 +39,6 @@ export function ExteriorFields({
 
         {vehicleType !== 'moto' && (
           <div>
-            <label className="mb-2 hidden text-sm font-semibold text-primary-900 md:block">
-              {t('vehicleOptions.doorsLabel')}
-            </label>
             <MobileSelectField
               value={formData.vehicle.doors}
               onChange={(value) =>

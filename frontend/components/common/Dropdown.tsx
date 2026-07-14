@@ -74,6 +74,9 @@ interface DropdownProps {
   autoPosition?: boolean;
   renderMenuInPortal?: boolean;
   rightIcon?: React.ReactNode;
+  fieldLabel?: string;
+  fieldLabelIcon?: React.ReactNode;
+  fieldLabelTrailing?: React.ReactNode;
   menuMaxHeight?: number;
   menuSelectedStyle?: 'background' | 'checkmark';
   menuExpandToContent?: boolean;
@@ -96,6 +99,9 @@ function DropdownComponent({
   autoPosition = false,
   renderMenuInPortal = false,
   rightIcon,
+  fieldLabel,
+  fieldLabelIcon,
+  fieldLabelTrailing,
   menuMaxHeight,
   menuSelectedStyle = 'background',
   menuExpandToContent = false,
@@ -375,6 +381,9 @@ function DropdownComponent({
         error={error}
         buttonClassName={buttonClassName}
         rightIcon={rightIcon}
+        fieldLabel={fieldLabel}
+        fieldLabelIcon={fieldLabelIcon}
+        fieldLabelTrailing={fieldLabelTrailing}
         inputRef={inputRef}
         onInputChange={handleInputChange}
         onInputFocus={handleInputFocus}
