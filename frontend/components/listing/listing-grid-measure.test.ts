@@ -4,7 +4,11 @@ import type { Listing } from '@/lib/api';
 import { Currency } from '@/lib/constants';
 
 import { buildVirtualRows } from './buildVirtualRows';
-import { measureStaticRowHeights, resolveVirtualRowSize } from './listing-grid-measure';
+import {
+  measureStaticRowHeights,
+  resolveVirtualContainerHeight,
+  resolveVirtualRowSize,
+} from './listing-grid-measure';
 
 function createListing(id: string): Listing {
   return {
@@ -62,6 +66,14 @@ describe('measureStaticRowHeights', () => {
     expect(resolveVirtualRowSize(2, 3, 400, 500)).toBe(400);
     expect(resolveVirtualRowSize(0, 2, undefined, 500)).toBe(500);
     expect(resolveVirtualRowSize(1, 2, 400, 500)).toBe(400);
+  });
+
+  it('uses rendered inner height when it exceeds the cached virtual total', () => {
+    expect(resolveVirtualContainerHeight(6000, 100, 6200)).toBe(6300);
+  });
+
+  it('keeps the virtualizer total when rendered content already fits', () => {
+    expect(resolveVirtualContainerHeight(6400, 200, 5000)).toBe(6400);
   });
 
   it('measures card row height as the tallest card in the row', () => {

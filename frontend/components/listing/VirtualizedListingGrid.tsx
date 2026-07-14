@@ -28,6 +28,7 @@ import {
 import {
   LISTING_GRID_ROW_GAP_PX,
   measureStaticGridSwapMetrics,
+  resolveVirtualContainerHeight,
   resolveVirtualRowSize,
   type StaticGridSwapMetrics,
 } from './listing-grid-measure';
@@ -133,7 +134,9 @@ function VirtualizedListingGridContent({
 }: VirtualizedListingGridContentProps) {
   const columns = useGridColumns();
   const parentRef = useRef<HTMLDivElement>(null);
+  const renderedInnerRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(swapMetrics.gridOffsetTop);
+  const [renderedInnerHeight, setRenderedInnerHeight] = useState(0);
   const [, setLayoutReconcileTick] = useState(0);
 
   const { rows } = useMemo(
@@ -178,13 +181,38 @@ function VirtualizedListingGridContent({
     });
   }, [rows.length]);
 
+  useLayoutEffect(() => {
+    const renderedInnerEl = renderedInnerRef.current;
+    if (!renderedInnerEl) {
+      return;
+    }
+
+    const updateRenderedInnerHeight = () => {
+      setRenderedInnerHeight(renderedInnerEl.offsetHeight);
+    };
+
+    updateRenderedInnerHeight();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new ResizeObserver(updateRenderedInnerHeight);
+    observer.observe(renderedInnerEl);
+    return () => {
+      observer.disconnect();
+    };
+  }, [rows.length, columns]);
+
   const gridColsClass = GRID_COLS_CLASS[columns] ?? 'grid-cols-1';
 
   const virtualRows = virtualizer.getVirtualItems();
   const windowOffset = (virtualRows[0]?.start ?? 0) - virtualizer.options.scrollMargin;
-  const lastRow = virtualRows[virtualRows.length - 1];
-  const renderedContentBottom = lastRow ? lastRow.end - virtualizer.options.scrollMargin : 0;
-  const containerHeight = Math.max(virtualizer.getTotalSize(), renderedContentBottom);
+  const containerHeight = resolveVirtualContainerHeight(
+    virtualizer.getTotalSize(),
+    windowOffset,
+    renderedInnerHeight,
+  );
 
   return (
     <>
@@ -204,6 +232,7 @@ function VirtualizedListingGridContent({
           }}
         >
           <div
+            ref={renderedInnerRef}
             style={{
               position: 'absolute',
               top: 0,

@@ -16,6 +16,14 @@ export function resolveVirtualRowSize(
   return contentHeight ?? fallbackHeight;
 }
 
+export function resolveVirtualContainerHeight(
+  virtualTotalSize: number,
+  windowOffset: number,
+  renderedInnerHeight: number,
+): number {
+  return Math.max(virtualTotalSize, windowOffset + renderedInnerHeight);
+}
+
 export function measureStaticRowHeights(
   gridEl: HTMLElement,
   rows: VirtualRow[],
