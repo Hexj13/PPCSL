@@ -23,7 +23,7 @@ jest.mock('@/components/common/Dropdown', () => ({
     options,
   }: {
     onChange: (v: string) => void;
-    options: { value: string; label: string }[];
+    options: { value: string; label: string; leadingEmoji?: string }[];
   }) => (
     <div>
       {options.map((o) => (
@@ -33,6 +33,9 @@ jest.mock('@/components/common/Dropdown', () => ({
           data-testid={`lang-${o.value}`}
           onClick={() => onChange(o.value)}
         >
+          {o.leadingEmoji ? (
+            <span data-testid={`lang-flag-${o.value}`}>{o.leadingEmoji}</span>
+          ) : null}
           {o.label}
         </button>
       ))}
@@ -106,5 +109,16 @@ describe('LanguageSwitcher', () => {
 
     expect(pushMock).toHaveBeenCalledWith('/dacia');
     expect(refreshMock).toHaveBeenCalled();
+  });
+
+  it('passes locale flag emoji only in dropdown options', () => {
+    render(
+      <Tree initialLocale="ru">
+        <LanguageSwitcher />
+      </Tree>,
+    );
+
+    expect(screen.getByTestId('lang-flag-ro')).toHaveTextContent('🇷🇴');
+    expect(screen.getByTestId('lang-flag-ru')).toHaveTextContent('🇷🇺');
   });
 });

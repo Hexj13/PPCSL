@@ -2,6 +2,8 @@ import {
   buildHomeBrandTitle,
   buildHomeCategoryTitle,
   buildListingSeoTitle,
+} from './listing-seo-title';
+import {
   createSlug,
   formatAdminTableDateTime,
   formatBodyType,

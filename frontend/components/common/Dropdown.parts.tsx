@@ -270,6 +270,11 @@ export function DropdownMenu({
                   <span
                     className={`flex min-w-0 items-center gap-2 ${menuExpandToContent ? 'flex-1 whitespace-nowrap pr-1' : 'flex-1'}`}
                   >
+                    {option.leadingEmoji ? (
+                      <span className="shrink-0 text-base leading-none" aria-hidden>
+                        {option.leadingEmoji}
+                      </span>
+                    ) : null}
                     <MultiSelectOptionLeadingLogo src={option.logoSrc} />
                     <span
                       className={

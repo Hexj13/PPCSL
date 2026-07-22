@@ -3,4 +3,5 @@ export interface DropdownOption {
   label: string;
   category?: string;
   logoSrc?: string;
+  leadingEmoji?: string;
 }

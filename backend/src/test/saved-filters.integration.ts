@@ -146,7 +146,7 @@ describe('Saved Filters API Integration Tests', () => {
         .expect(400);
 
       expect(response).toSatisfyApiSpec();
-      expect(response.body.message).toBe('Validation failed. Please check the entered data.');
+      expect(response.body.message).toBe('Validation failed. Please check your input.');
     });
 
     it('should return 400 when name exceeds 100 characters', async () => {

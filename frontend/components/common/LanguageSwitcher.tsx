@@ -21,6 +21,12 @@ const headerStyle =
 const footerStyle =
   'header-language-switcher bg-transparent! text-white! font-medium text-sm hover-only:hover:text-primary-100! active:text-primary-300! transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:text-white! hover-only:hover:[&_span]:text-primary-100! [&_svg]:text-white! hover-only:hover:[&_svg]:text-primary-100!';
 
+const LOCALE_FLAG_EMOJI: Readonly<Record<string, string>> = {
+  ro: '🇷🇴',
+  ru: '🇷🇺',
+  en: '🇬🇧',
+};
+
 export function LanguageSwitcher({
   variant = 'desktop',
   context = 'footer',
@@ -43,7 +49,11 @@ export function LanguageSwitcher({
         const key = routing.languageSwitcherTranslationKeys[low] ?? 'common.languageLocaleCode';
         const label =
           key === 'common.languageLocaleCode' ? t(key, { code: value.toUpperCase() }) : t(key);
-        return { value: value as Locale, label };
+        return {
+          value: value as Locale,
+          label,
+          leadingEmoji: LOCALE_FLAG_EMOJI[low],
+        };
       }),
     [routing, t],
   );
