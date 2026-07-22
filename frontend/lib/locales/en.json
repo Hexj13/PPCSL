@@ -627,13 +627,13 @@
     "modelLabel": "Model",
     "yearLabel": "Year",
     "vinLabel": "VIN",
-    "engineDisplacementLabel": "Engine Displacement (L)",
+    "engineDisplacementLabel": "Engine (L)",
     "horsepowerLabel": "Horsepower",
     "powerHorsepowerLabel": "Power (hp)",
     "powerKwLabel": "Power (kW)",
     "fuelLabel": "Fuel",
     "transmissionLabel": "Transmission",
-    "driveTypeLabel": "Drive Type",
+    "driveTypeLabel": "Drive",
     "mileageLabel": "Mileage (km)",
     "technicalSpecs": "Technical Specifications",
     "equipment": "Equipment",
@@ -1170,8 +1170,8 @@
     "driveType": "Drive Type",
     "mileageFrom": "Mileage from (km)",
     "mileageTo": "Mileage to (km)",
-    "engineFrom": "Volume from (L)",
-    "engineTo": "Volume to (L)",
+    "engineFrom": "Engine from (L)",
+    "engineTo": "Engine to (L)",
     "horsepowerFrom": "Horsepower from",
     "horsepowerTo": "Horsepower to",
     "body": "Body",
@@ -1863,9 +1863,9 @@
       "Robot": "Robot"
     },
     "driveType": {
-      "FWD": "Front Wheel Drive",
-      "RWD": "Rear Wheel Drive",
-      "AWD": "All Wheel Drive"
+      "FWD": "FWD",
+      "RWD": "RWD",
+      "AWD": "AWD"
     },
     "bodyType": {
       "Sedan": "Sedan",
