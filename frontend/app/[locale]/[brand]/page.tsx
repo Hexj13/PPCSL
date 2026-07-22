@@ -220,9 +220,10 @@ export default async function BrandLandingPage({
   });
 
   const heroTitle = fillTemplate(t.home.titleWithBrand, { brand: brand.name });
-  const vehicleType = (
-    isIndexableVehicleTypeParam(sp.vehicleType) ? sp.vehicleType : 'car'
-  ) as 'car' | 'truck' | 'moto';
+  const vehicleType = (isIndexableVehicleTypeParam(sp.vehicleType) ? sp.vehicleType : 'car') as
+    | 'car'
+    | 'truck'
+    | 'moto';
   const heroCategoryWord = t.home.heroCategory[category === 'tire' ? 'tire' : vehicleType];
   const subtitleWithCategory = t.home.subtitle.replaceAll('{category}', heroCategoryWord);
   const subtitle2WithCategory = t.home.subtitle2.replaceAll('{category}', heroCategoryWord);

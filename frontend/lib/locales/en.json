@@ -1766,7 +1766,7 @@
   "savedFiltersList": {
     "edit": "Edit",
     "delete": "Delete",
-    "deleteSuccess": "Filter successfully deleted",
+    "deleteSuccess": "Filter deleted successfully",
     "deleteError": "Error deleting filter",
     "applyError": "Error applying filter. Please try again.",
     "empty": "You have no saved filters",
