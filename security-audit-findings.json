@@ -1,108 +1,61 @@
 [
   {
     "severity": "HIGH",
-    "location": "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts",
-    "title": "Race condition in promotion toggle allows exceeding max promoted listings limit",
-    "description": "The TogglePromotionUseCase checks the current count of promoted listings (line 86) and then starts a new promotion (line 91-101) without wrapping both operations in a serializable transaction. Two concurrent requests can both pass the limit check and both succeed, exceeding the maxPromotedListings cap. The listingRepo.save() call at line 124 is a simple save, not transactional with the count check. Contrast this with saveWithActiveLimit() in the create listing flow, which uses a SERIALIZABLE transaction.",
-    "impact": "Users can exceed the maximum number of simultaneously promoted listings by sending concurrent promotion requests. This bypasses a business rule intended to cap promotions per user.",
-    "attack_path": "1. Attacker has (maxPromotions - 1) promoted listings. 2. Attacker sends two concurrent PATCH /api/listings/:id1/promote and PATCH /api/listings/:id2/promote requests. 3. Both requests read activePromotionsCount as (maxPromotions - 1). 4. Both pass the limit check. 5. Both start promotions, resulting in (maxPromotions + 1) promoted listings.",
+    "location": "auth/infrastructure/services/refresh-token.service.ts",
+    "title": "Refresh token grace period is perpetually extensible, defeating token-theft detection",
+    "description": "When a rotated (revoked) refresh token is reused within the 60-second grace window, the rotateToken() method overwrites rotated_at with the current timestamp, effectively resetting the grace period. An attacker who intercepts a refresh token can keep reusing it indefinitely by sending requests within each 60-second window. Each successful reuse resets rotated_at to now, so the revoked-token-reuse detection (revokeAllUserTokens) never triggers. The attacker maintains persistent access while the legitimate user is unaware.",
+    "impact": "An attacker who steals a single refresh token gains indefinite session persistence. The token-theft detection mechanism (revoking all user tokens when a revoked token is reused outside the grace period) is completely bypassed because the grace window resets on each reuse. The attacker can continuously generate new access tokens and refresh tokens in parallel with the legitimate user.",
+    "attack_path": "1. Attacker intercepts refresh token T via network sniffing, XSS, or log exposure. 2. Legitimate user uses T to refresh, obtaining new tokens. T is marked revoked with rotated_at=T1. 3. Within 60s, attacker sends T to POST /api/auth/refresh. validateToken() passes the grace check (Date.now() - T1 < 60000). 4. rotateToken() updates rotated_at to T2=now, resetting the grace window. Attacker gets new valid tokens. 5. Within 60s of T2, attacker repeats step 3. The grace window resets to T3. 6. This loop continues indefinitely, giving the attacker permanent access.",
     "evidence": [
-      "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts:86-101",
-      "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts:124"
+      "auth/infrastructure/services/refresh-token.service.ts:56-62 (grace period check uses rotated_at which is overwritten on each reuse)",
+      "auth/infrastructure/services/refresh-token.service.ts:83-92 (rotateToken overwrites rotated_at with new Date(), resetting the grace window)",
+      "auth/application/use-cases/refresh-tokens.use-case.ts:22-30 (validateToken then rotateToken sequence without preventing grace period reset)",
+      "auth/infrastructure/services/refresh-token.service.ts:11 (REFRESH_TOKEN_ROTATION_GRACE_MS = 60_000)"
     ],
-    "remediation": "Wrap the count check + promotion start + save in a SERIALIZABLE transaction, similar to how saveWithActiveLimit() works in typeorm-listing.repository.ts:186-197."
+    "remediation": "Record the original rotated_at timestamp and do not overwrite it when the token is reused within the grace period. Alternatively, track a 'used_within_grace' flag and reject any second reuse of the same rotated token. A safer approach: return the previously-issued new token from a cache during the grace window instead of generating a fresh one, and mark the rotated token as fully consumed after first grace-period reuse so a second reuse triggers revokeAllUserTokens."
   },
   {
     "severity": "HIGH",
-    "location": "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts",
-    "title": "Race condition in partner promotion balance consumption allows free promotions beyond balance",
-    "description": "When using partner_balance promotions, the use case first checks freePromotionBalance > 0 (line 69), then starts the promotion (line 92), and only then attempts to atomically consume the balance (line 103). However, the check at line 69 is a non-transactional read via usersService.findOneById(). Multiple concurrent requests can all pass the balance check before any of them consume the balance. While tryConsumeFreePromotionBalance() at line 103 is atomic (uses a WHERE clause), the promotion has already been started on the listing entity at line 92, and the listing is saved at line 124 regardless of the balance consumption ordering. If the atomic consume fails (balance already drained by concurrent request), a BadRequestException is thrown at line 105, but the listing entity's promotion state was already mutated in memory. In the edge case where two concurrent requests arrive, one might get the promotion started and saved before the balance check error is thrown.",
-    "impact": "Partners could potentially activate more free promotions than their balance allows by exploiting the TOCTOU gap between balance check and consumption.",
-    "attack_path": "1. Partner user has freePromotionBalance = 1. 2. Two concurrent requests to PATCH /api/listings/:id1/promote and PATCH /api/listings/:id2/promote both with source=partner_balance. 3. Both read balance as 1 at line 69. 4. Both call listing.startPromotion(null) at line 92. 5. First request's tryConsumeFreePromotionBalance succeeds, balance becomes 0. 6. Second request's tryConsumeFreePromotionBalance fails, but timing matters since listing.save() hasn't been called yet - the exception at line 105 prevents the save at line 124.",
+    "location": "auth/infrastructure/services/refresh-token.service.ts",
+    "title": "Refresh token hashing defeated by plaintext fallback lookup enabling use of stolen DB hashes as valid tokens",
+    "description": "The validateToken(), revokeToken(), and rotateToken() methods all fall back to querying the database by the raw token value when the hashed lookup fails. Since generateToken() stores the SHA-256 hash in the 'token' column, an attacker who obtains database contents (via SQL injection, backup exposure, or DB compromise) can use the stored hash values directly as refresh tokens. The fallback lookup will match the stored hash against the provided raw value, bypassing the hashing protection entirely.",
+    "impact": "Complete compromise of all active refresh token sessions upon database exposure. The SHA-256 hashing layer, which is supposed to prevent token recovery from stored hashes, provides zero protection. An attacker with read access to the refresh_tokens table can impersonate any user with an active refresh token.",
+    "attack_path": "1. Attacker gains read access to the refresh_tokens table (e.g., SQL injection, leaked backup, compromised DB credentials). 2. Attacker extracts stored hash H from the 'token' column for an active (non-revoked, non-expired) token. 3. Attacker sends H as the refresh_token to POST /api/auth/refresh. 4. validateToken(H): computes hash(H)=H2, looks up by H2 → not found. Falls back to looking up by raw value H → matches the DB row. 5. Token validation succeeds. Attacker receives new access + refresh tokens for the victim user.",
     "evidence": [
-      "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts:58-72",
-      "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts:91-107",
-      "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts:124"
+      "auth/infrastructure/services/refresh-token.service.ts:37-49 (validateToken falls back to findOne({where: {token}}) with raw value after hash lookup fails)",
+      "auth/infrastructure/services/refresh-token.service.ts:72-80 (revokeToken same fallback pattern)",
+      "auth/infrastructure/services/refresh-token.service.ts:83-92 (rotateToken same fallback pattern)",
+      "auth/infrastructure/services/refresh-token.service.ts:20-35 (generateToken stores hash in token column: token: hashRefreshToken(token))",
+      "auth/infrastructure/utils/refresh-token-hash.utils.ts:3-5 (hashRefreshToken uses SHA-256, producing 64-char hex output)"
     ],
-    "remediation": "Wrap the entire operation in a SERIALIZABLE transaction. Move the balance consumption before listing.startPromotion() so the atomic check is the gating operation. If the consume fails, no promotion state is mutated."
-  },
-  {
-    "severity": "HIGH",
-    "location": "backend/src/listings/infrastructure/persistence/typeorm-listing.repository.ts",
-    "title": "SQL LIKE injection via equipment search filter allows cross-listing data matching",
-    "description": "The equipment search filter uses LIKE with user-supplied equipment keys interpolated via parameterized `%${key}%` patterns (lines 498-511). While the values are parameterized (preventing SQL injection), the equipment column uses TypeORM's 'simple-array' storage which stores values as comma-separated text. The LIKE pattern `%user_value%` matches substrings across the entire comma-delimited string, meaning a user can craft equipment keys containing SQL LIKE wildcards ('%' and '_') to match unintended equipment combinations. For example, searching for equipment key 'a]%' would match any listing with any equipment starting with 'a]'. More practically, a search for equipment key '%' matches all listings with any equipment. The SearchListingsDto validates equipment items with @IsString({each:true}) but does not sanitize LIKE metacharacters.",
-    "impact": "Attackers can craft search queries that match listings they shouldn't be able to find through normal equipment filtering, potentially enabling enumeration of listings with specific equipment combinations. The `_` wildcard allows single-character wildcard matching within equipment keys.",
-    "attack_path": "1. Attacker sends GET /api/listings?equipment=%25 (URL-encoded '%'). 2. The '%' value passes @IsString validation. 3. It becomes LIKE '%%25%' which matches any listing with any equipment. 4. Or attacker sends equipment=air_ which matches 'air_conditioning' and any 'air_' prefixed equipment.",
-    "evidence": [
-      "backend/src/listings/infrastructure/persistence/typeorm-listing.repository.ts:497-511",
-      "backend/src/listings/presentation/dto/search-listings.dto.ts:862-875"
-    ],
-    "remediation": "Escape LIKE metacharacters (%, _) in user-supplied equipment keys before constructing the LIKE pattern, or switch to array containment operator (@>) with a proper PostgreSQL array column instead of simple-array with LIKE."
+    "remediation": "Remove the plaintext fallback lookup entirely. If backward compatibility with pre-hashing tokens is still needed, run a one-time migration to hash all existing plaintext tokens in the database, then remove the fallback code. Alternatively, add a 'hash_version' column to distinguish legacy plaintext tokens and only allow the fallback for rows explicitly marked as unhashed."
   },
   {
     "severity": "MEDIUM",
-    "location": "backend/src/listings/presentation/dto/create-listing.dto.ts",
-    "title": "Users can create listings with 'Closed' status, bypassing active listing limit enforcement",
-    "description": "The CreateListingDto accepts a 'status' field (lines 228-233) that allows any of 'Active', 'Paused', 'Closed'. In create-listing.use-case.ts (line 182/326), the active listing limit check at line 271/404 is only applied when status === 'Active'. A user can create a listing with status 'Closed', which bypasses the limit check entirely. They can then potentially publish it later (though the publish flow re-checks limits). However, creating a listing with 'Closed' status sets closed_at but allows the listing to exist in database, and the subsequent publish operation (which calls listing.publish()) would throw 'errors.listingClosedCannotPublish' per the entity logic at line 228. Creating as 'Paused' does bypass the active limit check at creation time, then publishing later might succeed if within limits at that point.",
-    "impact": "Users can accumulate arbitrarily many 'Paused' listings without limit checks, then selectively publish them. While each publish re-checks the limit, this creates a pool of pre-created listings that can be published faster than creating new ones, and also consumes database resources without restriction.",
-    "attack_path": "1. User has reached active listing limit. 2. User creates listings with status='Paused' - these bypass the active limit check. 3. User accumulates many paused listings. 4. When an active listing is closed, user can immediately publish a paused one.",
+    "location": "auth/presentation/dto/reset-password.dto.ts",
+    "title": "Password reset endpoint lacks password complexity validation allowing weak passwords",
+    "description": "The ResetPasswordDto only enforces MinLength(8) on the newPassword field but does not apply the @IsPassword() decorator or MaxLength validation. In contrast, RegisterDto and ChangePasswordDto both enforce @IsPassword() (which requires uppercase and lowercase characters) and MaxLength(100). An attacker who compromises a password reset flow can set an arbitrarily simple 8-character password (e.g., 'aaaaaaaa') that would not be accepted through normal registration or password change.",
+    "impact": "Users who reset their passwords can set weak passwords that bypass the complexity requirements enforced everywhere else. This creates accounts with passwords vulnerable to brute-force and dictionary attacks. The inconsistency also means password policy is not uniformly enforced.",
+    "attack_path": "1. Attacker initiates password reset for a target account via POST /api/auth/request-password-reset. 2. Attacker obtains the SMS reset code (via social engineering, SIM swap, or if this is the target's own account). 3. Attacker calls POST /api/auth/reset-password with newPassword='aaaaaaaa' (8 lowercase chars, no uppercase, no special chars). 4. Password is accepted because ResetPasswordDto only checks MinLength(8). 5. The same password 'aaaaaaaa' would be rejected by RegisterDto or ChangePasswordDto which require @IsPassword() complexity.",
     "evidence": [
-      "backend/src/listings/presentation/dto/create-listing.dto.ts:228-233",
-      "backend/src/listings/application/use-cases/create-listing.use-case.ts:182",
-      "backend/src/listings/application/use-cases/create-listing.use-case.ts:271-276"
+      "auth/presentation/dto/reset-password.dto.ts:33 (only @MinLength(8), no @IsPassword() or @MaxLength)",
+      "auth/presentation/dto/register.dto.ts:37-38 (RegisterDto enforces @MinLength(8), @MaxLength(100), and @IsPassword())",
+      "auth/presentation/dto/change-password.dto.ts:22-24 (ChangePasswordDto enforces @MinLength(8), @MaxLength(100), and @IsPassword())"
     ],
-    "remediation": "Either remove the 'status' field from CreateListingDto (server should determine initial status), or add a total listing count limit (not just active) to prevent unlimited accumulation of paused listings."
+    "remediation": "Add the @IsPassword() and @MaxLength(100) decorators to the newPassword field in ResetPasswordDto to match the validation applied in RegisterDto and ChangePasswordDto."
   },
   {
     "severity": "MEDIUM",
-    "location": "backend/src/listings/application/use-cases/get-listing-phones.use-case.ts",
-    "title": "Phone rate limit fails open when Redis is unavailable, allowing unlimited phone number harvesting",
-    "description": "The phone number reveal rate limiting catches all Redis errors and allows the request through (line 114-117). When Redis is unavailable, every phone number reveal request succeeds without any rate limiting. This is similar to known vulnerability #5 about rate limits failing open, but this is a distinct instance specifically in the phone reveal flow (not the general throttler), with a distinct rate-limiting mechanism (Redis set-based unique counting vs @nestjs/throttler).",
-    "impact": "When Redis is down, an attacker can enumerate all seller phone numbers across all listings without any rate limiting. The phone endpoint is accessible to unauthenticated users (OptionalJwtAuthGuard), making mass harvesting trivial.",
-    "attack_path": "1. Redis becomes unavailable (outage, configuration error, or attacker-induced). 2. Attacker iterates over listing IDs calling GET /api/listings/:id/phones. 3. Each request bypasses rate limiting due to the catch block at line 114. 4. Attacker collects all seller phone numbers.",
+    "location": "auth/presentation/auth.controller.ts:255-260, auth/application/use-cases/e2e-create-google-business-user.use-case.ts",
+    "title": "Unauthenticated E2E endpoint creates fully-privileged accounts when NODE_ENV is misconfigured",
+    "description": "The POST /api/auth/e2e/google-business-user endpoint has no authentication guard (no JwtAuthGuard, no AdminGuard). It relies solely on the NODE_ENV environment variable check inside the use case (blocking only 'production' and 'stage'). If NODE_ENV is undefined, empty, or set to any value other than 'production'/'stage' (e.g., 'prod', 'Production', 'staging'), the endpoint allows any anonymous HTTP client to create fully authenticated business accounts with valid JWT and refresh tokens.",
+    "impact": "In any environment where NODE_ENV is not exactly 'production' or 'stage', an anonymous attacker can create unlimited authenticated business user accounts. Each call returns valid access and refresh tokens without requiring email, phone verification, or password. This could be exploited if a preview/staging/development deployment is accessible from the internet.",
+    "attack_path": "1. Attacker discovers a non-production deployment (e.g., preview environment, development server exposed via ngrok, or a deployment where NODE_ENV is misconfigured). 2. Attacker sends POST /api/auth/e2e/google-business-user with no authentication headers. 3. The use case checks process.env.NODE_ENV - if it's not 'production' or 'stage', assertAllowed() passes. 4. A new Business user is created with a verified email and phone. 5. Access and refresh tokens are returned in cookies. 6. Attacker now has a fully authenticated account that can create listings, access all authenticated features.",
     "evidence": [
-      "backend/src/listings/application/use-cases/get-listing-phones.use-case.ts:112-117"
+      "auth/presentation/auth.controller.ts:255-260 (endpoint has no @UseGuards - no authentication required)",
+      "auth/application/use-cases/e2e-create-google-business-user.use-case.ts:24-29 (assertAllowed only blocks 'production' and 'stage', undefined/other values pass)",
+      "auth/application/use-cases/e2e-create-google-business-user.use-case.ts:31-63 (creates user with phoneVerified:true, emailVerified:true, returns full login response)"
     ],
-    "remediation": "Fail closed when Redis is unavailable - deny the phone reveal request instead of allowing it. Consider returning an error asking the user to try again later."
-  },
-  {
-    "severity": "MEDIUM",
-    "location": "backend/src/listings/application/use-cases/get-active-user-listings.use-case.ts",
-    "title": "Public user listings endpoint exposes full VIN numbers without masking",
-    "description": "The GET /api/listings/user/:userId/active endpoint (controller lines 250-258) is unauthenticated (no auth guard) and returns listings via GetActiveUserListingsUseCase. This use case (lines 27-33) fetches listings with full relations including all listing fields but does NOT apply VIN masking. While the listing entity's VIN field is loaded, the response includes the complete VIN without the 4+****+4 masking that is applied in the GetListingUseCase (get-listing.use-case.ts lines 96-98). However, examining the relations loaded at line 29, the user relation is NOT included, so phone numbers do not leak here. But VIN data does leak as the listing entity includes the vin column which is loaded by default.",
-    "impact": "Any unauthenticated user can retrieve full VIN numbers for all active listings of any user, enabling vehicle history lookups and potential fraud.",
-    "attack_path": "1. Attacker obtains a userId (available from any listing response or public profile). 2. Attacker calls GET /api/listings/user/:userId/active. 3. Response includes unmasked VIN for each listing. 4. Attacker extracts complete 17-character VINs.",
-    "evidence": [
-      "backend/src/listings/presentation/listings.controller.ts:250-258",
-      "backend/src/listings/application/use-cases/get-active-user-listings.use-case.ts:27-34"
-    ],
-    "remediation": "Apply the same VIN masking logic used in GetListingUseCase to the active user listings response. Add a post-processing step that masks VINs to the 4+****+4 format."
-  },
-  {
-    "severity": "MEDIUM",
-    "location": "backend/src/listings/application/use-cases/update-listing.use-case.ts",
-    "title": "Listing update returns full user entity including sensitive fields to non-owner admins",
-    "description": "When an admin updates another user's listing, the response includes the listing's user entity with full details. At line 579-582, the freshListing is fetched with the user relation. At line 603-604, only the password is removed via removePasswordFromUser(). However, the user entity includes sensitive fields like registration_ip, last_login_ip, last_login_at, googleId, telegramId, telegramUsername, and other internal fields that should not be exposed. While the User entity uses @Exclude() decorators on some fields, TypeORM's serialization doesn't apply class-transformer decorators unless explicitly configured in the response pipeline. The admin endpoint already has access to admin-level data, but the update listing endpoint (PATCH /api/listings/:id) is a regular user endpoint that admins can also use.",
-    "impact": "Admin users performing listing updates can see internal user metadata (registration IP, last login IP, Telegram credentials) that should be restricted even from admins in this context. If class-transformer interceptor is not globally enabled, regular update responses may also leak these fields.",
-    "attack_path": "1. Admin sends PATCH /api/listings/:id with a minor update to another user's listing. 2. Response includes freshListing with full user entity. 3. Admin extracts registration_ip, last_login_ip, googleId, telegramId from the response.",
-    "evidence": [
-      "backend/src/listings/application/use-cases/update-listing.use-case.ts:579-608",
-      "backend/src/users/entities/user.entity.ts:119-129"
-    ],
-    "remediation": "Apply explicit field selection when returning user data in listing responses. Only include public-safe user fields (id, type, firstName, companyName, phone masked, board_slug)."
-  },
-  {
-    "severity": "MEDIUM",
-    "location": "backend/src/listings/presentation/dto/search-listings.dto.ts",
-    "title": "Search sortBy field lacks strict validation, enabling potential SQL injection via TypeORM column name interpolation",
-    "description": "The SearchListingsDto's sortBy field (lines 708-712) is validated only with @IsString() and no enum restriction. In the board listings use case (get-board-listings.use-case.ts line 76), the sortBy value is used in template literal interpolation: `listing.${dateSortColumn}`. While the repository search method (typeorm-listing.repository.ts line 77) does validate against a whitelist of valid sort fields, the board listings use case (get-board-listings.use-case.ts lines 44-46) independently validates against its own whitelist. However, the controller-level sortBy from the board controller (line 55) comes from a raw query parameter with no DTO validation. The sortBy in SearchListingsDto is validated via @IsString() only.",
-    "impact": "If a valid sort field passes the whitelist check but a code path is missed, the template literal `listing.${dateSortColumn}` could be exploited. Currently, the whitelists are correctly placed, but the defense is fragile - any new sort field added to the whitelist without proper quoting could enable SQL injection.",
-    "attack_path": "1. Attacker sends GET /api/board/:slug/listings?sortBy=malicious_value. 2. The value is checked against validSortFields at get-board-listings.use-case.ts:44. 3. Currently safe due to whitelist, but fragile defense pattern.",
-    "evidence": [
-      "backend/src/listings/presentation/dto/search-listings.dto.ts:708-712",
-      "backend/src/listings/application/use-cases/get-board-listings.use-case.ts:44-77",
-      "backend/src/board/board.controller.ts:55"
-    ],
-    "remediation": "Add @IsIn(['created_at', 'price', 'year', 'views']) validation to the sortBy field in SearchListingsDto. Use an enum or const array for allowed sort fields rather than relying on runtime whitelist checks in use cases."
+    "remediation": "Apply a defense-in-depth approach: 1) Use an allowlist instead of a denylist - only allow the endpoint when NODE_ENV is exactly 'development' or 'test'. 2) Add an additional secret-based guard (e.g., require a header with a shared E2E secret). 3) Consider gating the route registration itself behind the environment check so the endpoint is not even mounted in non-development builds."
   }
 ]
