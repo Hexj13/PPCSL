@@ -1,0 +1,108 @@
+[
+  {
+    "severity": "HIGH",
+    "location": "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts",
+    "title": "Race condition in promotion toggle allows exceeding max promoted listings limit",
+    "description": "The TogglePromotionUseCase checks the current count of promoted listings (line 86) and then starts a new promotion (line 91-101) without wrapping both operations in a serializable transaction. Two concurrent requests can both pass the limit check and both succeed, exceeding the maxPromotedListings cap. The listingRepo.save() call at line 124 is a simple save, not transactional with the count check. Contrast this with saveWithActiveLimit() in the create listing flow, which uses a SERIALIZABLE transaction.",
+    "impact": "Users can exceed the maximum number of simultaneously promoted listings by sending concurrent promotion requests. This bypasses a business rule intended to cap promotions per user.",
+    "attack_path": "1. Attacker has (maxPromotions - 1) promoted listings. 2. Attacker sends two concurrent PATCH /api/listings/:id1/promote and PATCH /api/listings/:id2/promote requests. 3. Both requests read activePromotionsCount as (maxPromotions - 1). 4. Both pass the limit check. 5. Both start promotions, resulting in (maxPromotions + 1) promoted listings.",
+    "evidence": [
+      "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts:86-101",
+      "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts:124"
+    ],
+    "remediation": "Wrap the count check + promotion start + save in a SERIALIZABLE transaction, similar to how saveWithActiveLimit() works in typeorm-listing.repository.ts:186-197."
+  },
+  {
+    "severity": "HIGH",
+    "location": "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts",
+    "title": "Race condition in partner promotion balance consumption allows free promotions beyond balance",
+    "description": "When using partner_balance promotions, the use case first checks freePromotionBalance > 0 (line 69), then starts the promotion (line 92), and only then attempts to atomically consume the balance (line 103). However, the check at line 69 is a non-transactional read via usersService.findOneById(). Multiple concurrent requests can all pass the balance check before any of them consume the balance. While tryConsumeFreePromotionBalance() at line 103 is atomic (uses a WHERE clause), the promotion has already been started on the listing entity at line 92, and the listing is saved at line 124 regardless of the balance consumption ordering. If the atomic consume fails (balance already drained by concurrent request), a BadRequestException is thrown at line 105, but the listing entity's promotion state was already mutated in memory. In the edge case where two concurrent requests arrive, one might get the promotion started and saved before the balance check error is thrown.",
+    "impact": "Partners could potentially activate more free promotions than their balance allows by exploiting the TOCTOU gap between balance check and consumption.",
+    "attack_path": "1. Partner user has freePromotionBalance = 1. 2. Two concurrent requests to PATCH /api/listings/:id1/promote and PATCH /api/listings/:id2/promote both with source=partner_balance. 3. Both read balance as 1 at line 69. 4. Both call listing.startPromotion(null) at line 92. 5. First request's tryConsumeFreePromotionBalance succeeds, balance becomes 0. 6. Second request's tryConsumeFreePromotionBalance fails, but timing matters since listing.save() hasn't been called yet - the exception at line 105 prevents the save at line 124.",
+    "evidence": [
+      "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts:58-72",
+      "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts:91-107",
+      "backend/src/listings/application/use-cases/toggle-promotion.use-case.ts:124"
+    ],
+    "remediation": "Wrap the entire operation in a SERIALIZABLE transaction. Move the balance consumption before listing.startPromotion() so the atomic check is the gating operation. If the consume fails, no promotion state is mutated."
+  },
+  {
+    "severity": "HIGH",
+    "location": "backend/src/listings/infrastructure/persistence/typeorm-listing.repository.ts",
+    "title": "SQL LIKE injection via equipment search filter allows cross-listing data matching",
+    "description": "The equipment search filter uses LIKE with user-supplied equipment keys interpolated via parameterized `%${key}%` patterns (lines 498-511). While the values are parameterized (preventing SQL injection), the equipment column uses TypeORM's 'simple-array' storage which stores values as comma-separated text. The LIKE pattern `%user_value%` matches substrings across the entire comma-delimited string, meaning a user can craft equipment keys containing SQL LIKE wildcards ('%' and '_') to match unintended equipment combinations. For example, searching for equipment key 'a]%' would match any listing with any equipment starting with 'a]'. More practically, a search for equipment key '%' matches all listings with any equipment. The SearchListingsDto validates equipment items with @IsString({each:true}) but does not sanitize LIKE metacharacters.",
+    "impact": "Attackers can craft search queries that match listings they shouldn't be able to find through normal equipment filtering, potentially enabling enumeration of listings with specific equipment combinations. The `_` wildcard allows single-character wildcard matching within equipment keys.",
+    "attack_path": "1. Attacker sends GET /api/listings?equipment=%25 (URL-encoded '%'). 2. The '%' value passes @IsString validation. 3. It becomes LIKE '%%25%' which matches any listing with any equipment. 4. Or attacker sends equipment=air_ which matches 'air_conditioning' and any 'air_' prefixed equipment.",
+    "evidence": [
+      "backend/src/listings/infrastructure/persistence/typeorm-listing.repository.ts:497-511",
+      "backend/src/listings/presentation/dto/search-listings.dto.ts:862-875"
+    ],
+    "remediation": "Escape LIKE metacharacters (%, _) in user-supplied equipment keys before constructing the LIKE pattern, or switch to array containment operator (@>) with a proper PostgreSQL array column instead of simple-array with LIKE."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/listings/presentation/dto/create-listing.dto.ts",
+    "title": "Users can create listings with 'Closed' status, bypassing active listing limit enforcement",
+    "description": "The CreateListingDto accepts a 'status' field (lines 228-233) that allows any of 'Active', 'Paused', 'Closed'. In create-listing.use-case.ts (line 182/326), the active listing limit check at line 271/404 is only applied when status === 'Active'. A user can create a listing with status 'Closed', which bypasses the limit check entirely. They can then potentially publish it later (though the publish flow re-checks limits). However, creating a listing with 'Closed' status sets closed_at but allows the listing to exist in database, and the subsequent publish operation (which calls listing.publish()) would throw 'errors.listingClosedCannotPublish' per the entity logic at line 228. Creating as 'Paused' does bypass the active limit check at creation time, then publishing later might succeed if within limits at that point.",
+    "impact": "Users can accumulate arbitrarily many 'Paused' listings without limit checks, then selectively publish them. While each publish re-checks the limit, this creates a pool of pre-created listings that can be published faster than creating new ones, and also consumes database resources without restriction.",
+    "attack_path": "1. User has reached active listing limit. 2. User creates listings with status='Paused' - these bypass the active limit check. 3. User accumulates many paused listings. 4. When an active listing is closed, user can immediately publish a paused one.",
+    "evidence": [
+      "backend/src/listings/presentation/dto/create-listing.dto.ts:228-233",
+      "backend/src/listings/application/use-cases/create-listing.use-case.ts:182",
+      "backend/src/listings/application/use-cases/create-listing.use-case.ts:271-276"
+    ],
+    "remediation": "Either remove the 'status' field from CreateListingDto (server should determine initial status), or add a total listing count limit (not just active) to prevent unlimited accumulation of paused listings."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/listings/application/use-cases/get-listing-phones.use-case.ts",
+    "title": "Phone rate limit fails open when Redis is unavailable, allowing unlimited phone number harvesting",
+    "description": "The phone number reveal rate limiting catches all Redis errors and allows the request through (line 114-117). When Redis is unavailable, every phone number reveal request succeeds without any rate limiting. This is similar to known vulnerability #5 about rate limits failing open, but this is a distinct instance specifically in the phone reveal flow (not the general throttler), with a distinct rate-limiting mechanism (Redis set-based unique counting vs @nestjs/throttler).",
+    "impact": "When Redis is down, an attacker can enumerate all seller phone numbers across all listings without any rate limiting. The phone endpoint is accessible to unauthenticated users (OptionalJwtAuthGuard), making mass harvesting trivial.",
+    "attack_path": "1. Redis becomes unavailable (outage, configuration error, or attacker-induced). 2. Attacker iterates over listing IDs calling GET /api/listings/:id/phones. 3. Each request bypasses rate limiting due to the catch block at line 114. 4. Attacker collects all seller phone numbers.",
+    "evidence": [
+      "backend/src/listings/application/use-cases/get-listing-phones.use-case.ts:112-117"
+    ],
+    "remediation": "Fail closed when Redis is unavailable - deny the phone reveal request instead of allowing it. Consider returning an error asking the user to try again later."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/listings/application/use-cases/get-active-user-listings.use-case.ts",
+    "title": "Public user listings endpoint exposes full VIN numbers without masking",
+    "description": "The GET /api/listings/user/:userId/active endpoint (controller lines 250-258) is unauthenticated (no auth guard) and returns listings via GetActiveUserListingsUseCase. This use case (lines 27-33) fetches listings with full relations including all listing fields but does NOT apply VIN masking. While the listing entity's VIN field is loaded, the response includes the complete VIN without the 4+****+4 masking that is applied in the GetListingUseCase (get-listing.use-case.ts lines 96-98). However, examining the relations loaded at line 29, the user relation is NOT included, so phone numbers do not leak here. But VIN data does leak as the listing entity includes the vin column which is loaded by default.",
+    "impact": "Any unauthenticated user can retrieve full VIN numbers for all active listings of any user, enabling vehicle history lookups and potential fraud.",
+    "attack_path": "1. Attacker obtains a userId (available from any listing response or public profile). 2. Attacker calls GET /api/listings/user/:userId/active. 3. Response includes unmasked VIN for each listing. 4. Attacker extracts complete 17-character VINs.",
+    "evidence": [
+      "backend/src/listings/presentation/listings.controller.ts:250-258",
+      "backend/src/listings/application/use-cases/get-active-user-listings.use-case.ts:27-34"
+    ],
+    "remediation": "Apply the same VIN masking logic used in GetListingUseCase to the active user listings response. Add a post-processing step that masks VINs to the 4+****+4 format."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/listings/application/use-cases/update-listing.use-case.ts",
+    "title": "Listing update returns full user entity including sensitive fields to non-owner admins",
+    "description": "When an admin updates another user's listing, the response includes the listing's user entity with full details. At line 579-582, the freshListing is fetched with the user relation. At line 603-604, only the password is removed via removePasswordFromUser(). However, the user entity includes sensitive fields like registration_ip, last_login_ip, last_login_at, googleId, telegramId, telegramUsername, and other internal fields that should not be exposed. While the User entity uses @Exclude() decorators on some fields, TypeORM's serialization doesn't apply class-transformer decorators unless explicitly configured in the response pipeline. The admin endpoint already has access to admin-level data, but the update listing endpoint (PATCH /api/listings/:id) is a regular user endpoint that admins can also use.",
+    "impact": "Admin users performing listing updates can see internal user metadata (registration IP, last login IP, Telegram credentials) that should be restricted even from admins in this context. If class-transformer interceptor is not globally enabled, regular update responses may also leak these fields.",
+    "attack_path": "1. Admin sends PATCH /api/listings/:id with a minor update to another user's listing. 2. Response includes freshListing with full user entity. 3. Admin extracts registration_ip, last_login_ip, googleId, telegramId from the response.",
+    "evidence": [
+      "backend/src/listings/application/use-cases/update-listing.use-case.ts:579-608",
+      "backend/src/users/entities/user.entity.ts:119-129"
+    ],
+    "remediation": "Apply explicit field selection when returning user data in listing responses. Only include public-safe user fields (id, type, firstName, companyName, phone masked, board_slug)."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/listings/presentation/dto/search-listings.dto.ts",
+    "title": "Search sortBy field lacks strict validation, enabling potential SQL injection via TypeORM column name interpolation",
+    "description": "The SearchListingsDto's sortBy field (lines 708-712) is validated only with @IsString() and no enum restriction. In the board listings use case (get-board-listings.use-case.ts line 76), the sortBy value is used in template literal interpolation: `listing.${dateSortColumn}`. While the repository search method (typeorm-listing.repository.ts line 77) does validate against a whitelist of valid sort fields, the board listings use case (get-board-listings.use-case.ts lines 44-46) independently validates against its own whitelist. However, the controller-level sortBy from the board controller (line 55) comes from a raw query parameter with no DTO validation. The sortBy in SearchListingsDto is validated via @IsString() only.",
+    "impact": "If a valid sort field passes the whitelist check but a code path is missed, the template literal `listing.${dateSortColumn}` could be exploited. Currently, the whitelists are correctly placed, but the defense is fragile - any new sort field added to the whitelist without proper quoting could enable SQL injection.",
+    "attack_path": "1. Attacker sends GET /api/board/:slug/listings?sortBy=malicious_value. 2. The value is checked against validSortFields at get-board-listings.use-case.ts:44. 3. Currently safe due to whitelist, but fragile defense pattern.",
+    "evidence": [
+      "backend/src/listings/presentation/dto/search-listings.dto.ts:708-712",
+      "backend/src/listings/application/use-cases/get-board-listings.use-case.ts:44-77",
+      "backend/src/board/board.controller.ts:55"
+    ],
+    "remediation": "Add @IsIn(['created_at', 'price', 'year', 'views']) validation to the sortBy field in SearchListingsDto. Use an enum or const array for allowed sort fields rather than relying on runtime whitelist checks in use cases."
+  }
+]
