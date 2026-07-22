@@ -14,7 +14,7 @@ import { User } from '../users/entities/user.entity';
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club').replace(/\/$/, '');
 const CACHE_TTL = 3600;
-const CACHE_PREFIX = 'sitemap:v3:';
+const CACHE_PREFIX = 'sitemap:v4:';
 
 const BRAND_SITEMAP_VEHICLE_TYPES = ['car', 'truck', 'moto'] as const;
 type BrandSitemapVehicleType = (typeof BRAND_SITEMAP_VEHICLE_TYPES)[number];
@@ -46,28 +46,32 @@ export class SitemapService {
     private readonly redis: RedisService,
   ) {}
 
-  private ruAlternateLoc(roLoc: string): string {
+  private prefixedAlternateLoc(roLoc: string, locale: string): string {
     const u = new URL(roLoc);
     const pq = `${u.pathname}${u.search}`;
-    if (pq === '/ru' || pq.startsWith('/ru/')) {
+    const prefix = `/${locale}`;
+    if (pq === prefix || pq.startsWith(`${prefix}/`)) {
       return roLoc;
     }
     if (pq === '/' || pq === '') {
-      return `${u.origin}/ru`;
+      return `${u.origin}${prefix}`;
     }
-    return `${u.origin}/ru${pq}`;
+    return `${u.origin}${prefix}${pq}`;
   }
 
   private buildHreflangAlternateXml(roLoc: string): string | null {
-    const ruLoc = this.ruAlternateLoc(roLoc);
-    if (ruLoc === roLoc) {
+    const ruLoc = this.prefixedAlternateLoc(roLoc, 'ru');
+    const enLoc = this.prefixedAlternateLoc(roLoc, 'en');
+    if (ruLoc === roLoc && enLoc === roLoc) {
       return null;
     }
     const escapedRo = this.escapeXml(roLoc);
     const escapedRu = this.escapeXml(ruLoc);
+    const escapedEn = this.escapeXml(enLoc);
     return [
       `    <xhtml:link rel="alternate" hreflang="ro" href="${escapedRo}"/>`,
       `    <xhtml:link rel="alternate" hreflang="ru" href="${escapedRu}"/>`,
+      `    <xhtml:link rel="alternate" hreflang="en" href="${escapedEn}"/>`,
       `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapedRo}"/>`,
     ].join('\n');
   }
@@ -141,9 +145,13 @@ export class SitemapService {
     for (const xml of xmlSitemaps) {
       for (const u of this.extractLocValues(xml)) {
         ordered.add(u);
-        const ru = this.ruAlternateLoc(u);
+        const ru = this.prefixedAlternateLoc(u, 'ru');
         if (ru !== u) {
           ordered.add(ru);
+        }
+        const en = this.prefixedAlternateLoc(u, 'en');
+        if (en !== u) {
+          ordered.add(en);
         }
       }
     }

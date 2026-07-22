@@ -18,7 +18,7 @@ export type UserProfilePatchFields = {
   viber?: boolean;
   whatsapp?: boolean;
   telegram?: boolean;
-  preferredLocale?: 'ro' | 'ru' | null;
+  preferredLocale?: 'ro' | 'ru' | 'en' | null;
   phone?: string | null;
   phoneVerified?: boolean;
   type?: 'Individual' | 'Business';

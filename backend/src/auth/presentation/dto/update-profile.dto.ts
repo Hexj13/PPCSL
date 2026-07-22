@@ -157,10 +157,10 @@ export class UpdateProfileDto {
 
   @ApiPropertyOptional({
     example: 'ro',
-    description: 'Preferred UI locale (ro or ru)',
-    enum: ['ro', 'ru'],
+    description: 'Preferred UI locale (ro, ru, or en)',
+    enum: ['ro', 'ru', 'en'],
   })
   @IsOptional()
-  @IsIn(['ro', 'ru'], { message: 'errors.invalidPreferredLocale' })
-  preferredLocale?: 'ro' | 'ru';
+  @IsIn(['ro', 'ru', 'en'], { message: 'errors.invalidPreferredLocale' })
+  preferredLocale?: 'ro' | 'ru' | 'en';
 }

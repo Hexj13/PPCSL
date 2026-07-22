@@ -11,12 +11,13 @@ export type ResolvedLocaleRouting = {
 const DEFAULT_LANGUAGE_LABEL_KEYS: Readonly<Record<string, string>> = {
   ro: 'common.languageRo',
   ru: 'common.languageRu',
+  en: 'common.languageEn',
 };
 
 const MOLDOVA_DEFAULT: ResolvedLocaleRouting = {
   defaultLocale: 'ro',
-  supportedLocales: ['ro', 'ru'],
-  prefixedLocales: ['ru'],
+  supportedLocales: ['ro', 'ru', 'en'],
+  prefixedLocales: ['ru', 'en'],
   enableLegacyDefaultLocaleRedirect: true,
   languageSwitcherTranslationKeys: { ...DEFAULT_LANGUAGE_LABEL_KEYS },
 };

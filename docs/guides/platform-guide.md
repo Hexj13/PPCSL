@@ -249,7 +249,7 @@ const config: SiteConfig = {
 };
 ```
 
-Moldova-style example (default `ro` at `/`, Russian at `/ru`):
+Moldova-style example (default `ro` at `/`, Russian at `/ru`, English at `/en`):
 
 ```typescript
 const config: SiteConfig = {
@@ -264,12 +264,13 @@ const config: SiteConfig = {
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://example.md',
   localeRouting: {
     defaultLocale: 'ro',
-    supportedLocales: ['ro', 'ru'],
-    prefixedLocales: ['ru'],
+    supportedLocales: ['ro', 'ru', 'en'],
+    prefixedLocales: ['ru', 'en'],
     enableLegacyDefaultLocaleRedirect: true,
     languageSwitcherTranslationKeys: {
       ro: 'common.languageRo',
       ru: 'common.languageRu',
+      en: 'common.languageEn',
     },
   },
 };

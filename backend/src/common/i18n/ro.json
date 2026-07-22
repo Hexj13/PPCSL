@@ -87,7 +87,7 @@
     "userAlreadyExists": "Utilizator cu aceste date există deja",
     "imageProcessingError": "Eroare la procesarea imaginii: {error}",
     "invalidLoginCredentials": "Date de autentificare invalide",
-    "invalidPreferredLocale": "Limbă invalidă. Valori permise: ro, ru.",
+    "invalidPreferredLocale": "Limbă invalidă. Valori permise: ro, ru, en.",
     "emailNotVerifiedForLogin": "Pentru autentificare cu email, confirmă mai întâi această adresă. Acum te poți autentifica prin numărul de telefon.",
     "googleEmailNotVerified": "Emailul din contul Google nu este verificat.",
     "googleSignInFailed": "Autentificarea Google a eșuat. Încearcă din nou.",
@@ -309,9 +309,9 @@
   },
   "metadata": {
     "site": {
-      "homePageDescription": "Cumpără sau vinde auto pe Kupito! Publică anunț gratuit. Platformă pentru cumpărarea și vânzarea autoturismelor online în Moldova. Anunțuri auto Moldova - publicare gratuită de anunțuri pentru persoane fizice și dealeri auto.",
-      "homePageDescriptionWithBrand": "Cumpără autoturisme {brand} pe Kupito! Găsește cele mai bune prețuri și selecție de autoturisme {brand} în Moldova.",
-      "homePageDescriptionWithBrandModel": "Cumpără {brand} {model} pe Kupito! Găsește cele mai bune prețuri și selecție de autoturisme {brand} {model} în Moldova.",
+      "homePageDescription": "Cumpără sau vinde auto pe Kupito! Publică anunț gratuit. Platformă pentru cumpărarea și vânzarea autoturismelor online în Moldova. Anunțuri unice de la proprietari și dealeri auto — publicare gratuită de anunțuri.",
+      "homePageDescriptionWithBrand": "Cumpără autoturisme {brand} pe Kupito! Anunțuri unice de la proprietari și dealeri — cele mai bune prețuri și selecție de {brand} în Moldova.",
+      "homePageDescriptionWithBrandModel": "Cumpără {brand} {model} pe Kupito! Anunțuri unice de la proprietari și dealeri — cele mai bune prețuri și selecție de {brand} {model} în Moldova.",
       "tiresHomePageDescription": "Cumpără sau vinde anvelope pe Kupito! Anunțuri gratuite pentru anvelope în Moldova: noi și uzate, diverse dimensiuni și sezoane.",
       "tiresHomePageDescriptionWithBrand": "Anvelope {brand} pe Kupito! Alegere și prețuri pentru anvelope {brand} în Moldova.",
       "tiresHomePageDescriptionWithBrandModel": "Anvelope {brand} {model} pe Kupito! Alegere și prețuri pentru {brand} {model} în Moldova."

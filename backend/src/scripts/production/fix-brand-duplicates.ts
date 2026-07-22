@@ -5,20 +5,12 @@ import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { RedisService } from '../../common/redis.service';
 import { CACHE_PREFIXES } from '../../common/utils/cache.utils';
+import { normalizeForComparison } from '../../common/utils/slug.utils';
 import { AppDataSource } from '../../data-source';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
 import { checkEnvironment } from '../script-guard';
 
 checkEnvironment(['production']);
-
-function normalizeForComparison(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '')
-    .trim();
-}
 
 const CORRECT_BRAND_NAMES: Record<string, string> = {
   citroen: 'Citroën',

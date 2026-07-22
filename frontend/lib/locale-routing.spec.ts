@@ -44,7 +44,7 @@ describe('resolveLocaleRouting', () => {
     } as SiteConfig;
     const r = resolveLocaleRouting(site);
     expect(r.defaultLocale).toBe('ro');
-    expect(r.supportedLocales).toEqual(['ro', 'ru']);
+    expect(r.supportedLocales).toEqual(['ro', 'ru', 'en']);
   });
 
   it('maps enableLegacyRoPathRedirect to enableLegacyDefaultLocaleRedirect when new field is omitted', () => {

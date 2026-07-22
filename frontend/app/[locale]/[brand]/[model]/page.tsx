@@ -23,6 +23,7 @@ import {
   brandLandingVehicleTypeQs,
   needsBrandLandingPathRedirect,
 } from '@/lib/search/brand-landing-canonical';
+import { isIndexableVehicleTypeParam } from '@/lib/search/home-page-indexable-params';
 import {
   buildLandingTitle,
   fillTemplate,
@@ -265,6 +266,12 @@ export default async function BrandModelLandingPage({
     brand: brand.name,
     model: model.name,
   });
+  const vehicleType = (
+    isIndexableVehicleTypeParam(sp.vehicleType) ? sp.vehicleType : 'car'
+  ) as 'car' | 'truck' | 'moto';
+  const heroCategoryWord = t.home.heroCategory[category === 'tire' ? 'tire' : vehicleType];
+  const subtitleWithCategory = t.home.subtitle.replaceAll('{category}', heroCategoryWord);
+  const subtitle2WithCategory = t.home.subtitle2.replaceAll('{category}', heroCategoryWord);
 
   return (
     <div>
@@ -273,9 +280,9 @@ export default async function BrandModelLandingPage({
       <SearchFiltersLimitToast />
       <HomeHero
         title={heroTitle}
-        subtitle={t.home.subtitle}
+        subtitle={subtitleWithCategory}
         subtitleBold={t.home.subtitleBold}
-        subtitle2={t.home.subtitle2}
+        subtitle2={subtitle2WithCategory}
         subtitle3={t.home.subtitle3}
       />
       <SearchFiltersWrapper brandSlug={canonicalBrandSlug} modelSlug={canonicalModelSlug} />

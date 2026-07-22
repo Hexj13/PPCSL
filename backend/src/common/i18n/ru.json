@@ -87,7 +87,7 @@
     "userAlreadyExists": "Пользователь с такими данными уже существует",
     "imageProcessingError": "Ошибка обработки изображения: {error}",
     "invalidLoginCredentials": "Неверные учетные данные",
-    "invalidPreferredLocale": "Недопустимый язык. Допустимые значения: ro, ru.",
+    "invalidPreferredLocale": "Недопустимый язык. Допустимые значения: ro, ru, en.",
     "emailNotVerifiedForLogin": "Чтобы войти по email, сначала подтвердите этот адрес. Сейчас можно войти по номеру телефона.",
     "googleEmailNotVerified": "Email в аккаунте Google не подтверждён.",
     "googleSignInFailed": "Не удалось войти через Google. Попробуйте ещё раз.",
@@ -309,9 +309,9 @@
   },
   "metadata": {
     "site": {
-      "homePageDescription": "Купите или продайте авто на Kupito! Опубликуйте объявление бесплатно. Платформа для покупки и продажи автомобилей онлайн в Молдове. Объявления о продаже автомобилей Молдова - бесплатная публикация объявлений для физических лиц и автодилеров.",
-      "homePageDescriptionWithBrand": "Купите автомобили {brand} на Kupito! Найдите лучшие цены и выбор автомобилей {brand} в Молдове.",
-      "homePageDescriptionWithBrandModel": "Купите {brand} {model} на Kupito! Найдите лучшие цены и выбор автомобилей {brand} {model} в Молдове.",
+      "homePageDescription": "Купите или продайте авто на Kupito! Опубликуйте объявление бесплатно. Платформа для покупки и продажи автомобилей онлайн в Молдове. Уникальные объявления от собственников и автодилеров — бесплатная публикация объявлений.",
+      "homePageDescriptionWithBrand": "Купите автомобили {brand} на Kupito! Уникальные объявления от собственников и дилеров — лучшие цены и выбор {brand} в Молдове.",
+      "homePageDescriptionWithBrandModel": "Купите {brand} {model} на Kupito! Уникальные объявления от собственников и дилеров — лучшие цены и выбор {brand} {model} в Молдове.",
       "tiresHomePageDescription": "Купите или продайте шины на Kupito! Бесплатные объявления о шинах в Молдове: новые и б/у, разные размеры и сезоны.",
       "tiresHomePageDescriptionWithBrand": "Шины {brand} на Kupito! Выбор и цены на шины {brand} в Молдове.",
       "tiresHomePageDescriptionWithBrandModel": "Шины {brand} {model} на Kupito! Выбор и цены на {brand} {model} в Молдове."

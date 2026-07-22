@@ -98,9 +98,12 @@ describe('SitemapService', () => {
       expect(xml).toContain('/cookie-settings</loc>');
       expect(xml).toContain('hreflang="ro"');
       expect(xml).toContain('hreflang="ru"');
+      expect(xml).toContain('hreflang="en"');
       expect(xml).toContain('hreflang="x-default"');
       expect(xml).toContain('https://kupito.club/ru"');
+      expect(xml).toContain('https://kupito.club/en"');
       expect(xml).toContain('https://kupito.club/ru/listings"');
+      expect(xml).toContain('https://kupito.club/en/listings"');
       expect(xml).toContain('<priority>1</priority>');
     });
 
@@ -118,7 +121,7 @@ describe('SitemapService', () => {
       await service.getPagesSitemap();
 
       expect(mockRedis.set).toHaveBeenCalledWith(
-        'sitemap:v3:pages',
+        'sitemap:v4:pages',
         expect.stringContaining('<?xml'),
         3600,
       );
