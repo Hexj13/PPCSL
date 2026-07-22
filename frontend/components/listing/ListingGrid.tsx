@@ -69,7 +69,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const restoreCompletedRef = useRef(false);
   const skipClientFetchOnMountRef = useRef(initialData?.meta != null);
   const [gridVirtualEpoch, setGridVirtualEpoch] = useState(0);
-  const skipPostRestoreVirtualSwapRef = useListingGridHomeScrollRestoreLayout(setGridVirtualEpoch);
+  const deferredVirtualSwapRef = useListingGridHomeScrollRestoreLayout(setGridVirtualEpoch);
 
   const uniqueListings = useMemo(() => {
     const seen = new Set<string>();
@@ -146,7 +146,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     returningWithSavedScroll,
     restoredFromStorageRef,
     restoreCompletedRef,
-    skipPostRestoreVirtualSwapRef,
+    deferredVirtualSwapRef,
     setGridVirtualEpoch,
   });
 

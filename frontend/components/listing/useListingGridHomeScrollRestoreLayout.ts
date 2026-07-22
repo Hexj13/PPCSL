@@ -14,21 +14,22 @@ import { requestListingGridVirtualSwap } from './listing-grid-virtual-swap';
 export function useListingGridHomeScrollRestoreLayout(
   setGridVirtualEpoch: Dispatch<SetStateAction<number>>,
 ) {
-  const skipPostRestoreVirtualSwapRef = useRef(false);
+  const deferredVirtualSwapRef = useRef(false);
 
   useLayoutEffect(() => {
     const runPendingRestoreWhenGridReady = () => {
       if (getHomeScrollRestorePhase() !== 'pending') {
         return;
       }
-      skipPostRestoreVirtualSwapRef.current = true;
       if (shouldDeferVirtualSwapForHomeScrollRestore()) {
+        deferredVirtualSwapRef.current = true;
         setGridVirtualEpoch((epoch) => epoch + 1);
         if (document.getElementById('listings-results')) {
           applyHomeScrollRestoreScrollPosition();
         }
         return;
       }
+      deferredVirtualSwapRef.current = false;
       requestListingGridVirtualSwap();
       if (document.getElementById('listings-results')) {
         applyHomeScrollRestoreScrollPosition();
@@ -45,10 +46,10 @@ export function useListingGridHomeScrollRestoreLayout(
       if (restorePhase !== 'done' && restorePhase !== 'cancelled') {
         return;
       }
-      const skipSwap = skipPostRestoreVirtualSwapRef.current;
-      skipPostRestoreVirtualSwapRef.current = false;
+      const shouldSwapAfterDefer = deferredVirtualSwapRef.current;
+      deferredVirtualSwapRef.current = false;
       requestAnimationFrame(() => {
-        if (!skipSwap) {
+        if (shouldSwapAfterDefer) {
           requestListingGridVirtualSwap();
         }
       });
@@ -57,5 +58,5 @@ export function useListingGridHomeScrollRestoreLayout(
     return unsubscribe;
   }, [setGridVirtualEpoch]);
 
-  return skipPostRestoreVirtualSwapRef;
+  return deferredVirtualSwapRef;
 }

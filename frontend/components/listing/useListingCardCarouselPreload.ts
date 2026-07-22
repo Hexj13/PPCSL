@@ -60,8 +60,12 @@ export function useListingCardCarouselPreload(
   loadedRef: MutableRefObject<Set<number>>,
   preloadingRef: MutableRefObject<Set<number>>,
   imagesCacheRef: MutableRefObject<HTMLImageElement[]>,
+  enabled = true,
 ) {
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     const next = (currentIndex + 1) % images.length;
     const prev = (currentIndex - 1 + images.length) % images.length;
 
@@ -92,5 +96,14 @@ export function useListingCardCarouselPreload(
     if (prev !== next) {
       preloadIndex(prev);
     }
-  }, [currentIndex, images, imageErrors, markLoaded, loadedRef, preloadingRef, imagesCacheRef]);
+  }, [
+    currentIndex,
+    images,
+    imageErrors,
+    markLoaded,
+    loadedRef,
+    preloadingRef,
+    imagesCacheRef,
+    enabled,
+  ]);
 }

@@ -1,19 +1,11 @@
 /**
  * @jest-environment node
  */
-import { afterAll, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { afterAll, beforeEach, describe, expect, it } from '@jest/globals';
 import ReactDOMServer from 'react-dom/server';
 
 import { OrganizationSchema } from '@/components/analytics/OrganizationSchema';
 import { WebsiteSearchSchema } from '@/components/analytics/WebsiteSearchSchema';
-import { URL_LOCALE_HEADER } from '@/lib/url-locale';
-
-const headersGet = jest.fn();
-
-jest.mock('next/headers', () => ({
-  headers: async () => ({ get: (name: string) => headersGet(name) }),
-  cookies: async () => ({ get: () => undefined }),
-}));
 
 function firstLdJsonFromMarkup(markup: string): Record<string, unknown> {
   const m = markup.match(/type="application\/ld\+json">(\{[\s\S]*?)<\/script>/);
@@ -28,16 +20,14 @@ describe('WebsiteSearchSchema', () => {
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = 'true';
-    headersGet.mockReset();
   });
 
   afterAll(() => {
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = originalSwitcher;
   });
 
-  it('uses /ru base url when x-kupito-url-locale is ru', async () => {
-    headersGet.mockImplementation((name: unknown) => (name === URL_LOCALE_HEADER ? 'ru' : null));
-    const el = await WebsiteSearchSchema();
+  it('uses /ru base url when locale is ru', async () => {
+    const el = await WebsiteSearchSchema({ locale: 'ru' });
     const view = ReactDOMServer.renderToString(el);
     const data = firstLdJsonFromMarkup(view);
     expect(String(data.url ?? '')).toMatch(/\/ru(\/|$)/);
@@ -49,9 +39,8 @@ describe('WebsiteSearchSchema', () => {
     expect(data.inLanguage).toBe('ru');
   });
 
-  it('uses RO base url when url locale header is absent', async () => {
-    headersGet.mockImplementation(() => null);
-    const el = await WebsiteSearchSchema();
+  it('uses RO base url when locale is ro', async () => {
+    const el = await WebsiteSearchSchema({ locale: 'ro' });
     const view = ReactDOMServer.renderToString(el);
     const data = firstLdJsonFromMarkup(view);
     expect(String(data.url ?? '')).not.toMatch(/\/ru(\/|$)/);
@@ -64,25 +53,22 @@ describe('OrganizationSchema', () => {
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = 'true';
-    headersGet.mockReset();
   });
 
   afterAll(() => {
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = originalSwitcher;
   });
 
-  it('uses /ru organization url when x-kupito-url-locale is ru', async () => {
-    headersGet.mockImplementation((name: unknown) => (name === URL_LOCALE_HEADER ? 'ru' : null));
-    const el = await OrganizationSchema();
+  it('uses /ru organization url when locale is ru', async () => {
+    const el = await OrganizationSchema({ locale: 'ru' });
     const view = ReactDOMServer.renderToString(el);
     const data = firstLdJsonFromMarkup(view);
     expect(String(data.url ?? '')).toMatch(/\/ru(\/|$)/);
     expect(data.inLanguage).toBe('ru');
   });
 
-  it('uses RO organization url when url locale header is absent', async () => {
-    headersGet.mockImplementation(() => null);
-    const el = await OrganizationSchema();
+  it('uses RO organization url when locale is ro', async () => {
+    const el = await OrganizationSchema({ locale: 'ro' });
     const view = ReactDOMServer.renderToString(el);
     const data = firstLdJsonFromMarkup(view);
     expect(String(data.url ?? '')).not.toMatch(/\/ru(\/|$)/);

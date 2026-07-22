@@ -1,5 +1,6 @@
 import { getVersionedAssetPath } from '@/lib/assets';
-import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
+import { getServerTranslations } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n-types';
 import { resolveLocaleRouting } from '@/lib/locale-routing';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
@@ -11,11 +12,10 @@ const SCHEMA_ORG_LANGUAGE_NAMES: Readonly<Record<string, string>> = {
   en: 'English',
 };
 
-export async function OrganizationSchema() {
+export async function OrganizationSchema({ locale }: { locale: Locale }) {
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
   const routing = resolveLocaleRouting(siteConfig);
-  const locale = await getMetadataLocale();
   const t = getServerTranslations(locale);
 
   const sitePageUrl = absoluteUrlWithLocalePrefix(siteConfig.siteUrl, '/', locale);

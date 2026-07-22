@@ -3,7 +3,7 @@ import type { Locale, Translations } from './i18n-types';
 export type { Locale, Translations } from './i18n-types';
 import { resolveLocaleRouting } from './locale-routing';
 import { loadSiteConfigSync } from './site-config';
-import { getLocaleFromPathname, isLanguageSwitcherEnabled, URL_LOCALE_HEADER } from './url-locale';
+import { getLocaleFromPathname, isLanguageSwitcherEnabled } from './url-locale';
 import { getCountry } from './utils';
 
 const STORAGE_KEY = 'kupito-locale';
@@ -188,24 +188,26 @@ export function getServerTranslations(locale?: Locale): Translations {
   return loadTranslations(locale);
 }
 
-export async function getMetadataLocale(): Promise<Locale> {
+export type LocaleRouteParams = { locale: string };
+
+export function resolveMetadataLocale(localeParam?: string | null): Locale {
   const defaultLocale = getDefaultLocale();
   if (!isLanguageSwitcherEnabled()) {
     return defaultLocale;
   }
-  const supported = supportedLocaleSet();
-  const { headers } = await import('next/headers');
-  const headerLocale = (await headers()).get(URL_LOCALE_HEADER)?.toLowerCase();
-  if (headerLocale && supported.has(headerLocale)) {
-    return headerLocale;
-  }
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const localeCookie = cookieStore.get('kupito-locale')?.value?.toLowerCase();
-  if (localeCookie && supported.has(localeCookie)) {
-    return localeCookie;
-  }
-  return defaultLocale;
+  const picked = pickKnownLocale(localeParam ?? undefined);
+  return picked ?? defaultLocale;
+}
+
+export async function getMetadataLocaleFromParams(
+  params: Promise<LocaleRouteParams> | LocaleRouteParams,
+): Promise<Locale> {
+  const { locale } = await Promise.resolve(params);
+  return resolveMetadataLocale(locale);
+}
+
+export function getMetadataLocale(localeParam?: string | null): Locale {
+  return resolveMetadataLocale(localeParam);
 }
 
 export function getTFromTranslations(translations: Translations): (_key: string) => string {

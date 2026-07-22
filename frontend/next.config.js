@@ -206,6 +206,17 @@ const nextConfig = {
         ],
       },
       {
+        source: '/popular_body_types/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: isDev
+              ? 'no-store, no-cache, must-revalidate'
+              : 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
         source: '/sw.js',
         headers: [
           {

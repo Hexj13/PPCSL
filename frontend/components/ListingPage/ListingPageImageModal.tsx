@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
+import { isListingPageVideoHeroSlideUrl } from '@/app/[locale]/listings/[id]/listing-page-helpers';
 import { TrackedNextImage } from '@/components/common/TrackedNextImage';
 import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhotoCarouselNavButtons';
 import { useTranslation } from '@/hooks/useTranslation';

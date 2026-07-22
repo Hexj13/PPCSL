@@ -1,7 +1,7 @@
 import {
   isOAuthSignupSource,
   type OAuthPhoneRequiredSource,
-} from '@/app/complete-profile/oauthPhoneRequiredCancel';
+} from '@/app/[locale]/complete-profile/oauthPhoneRequiredCancel';
 import type { User } from '@/lib/api';
 import {
   sessionStorageGetItem,

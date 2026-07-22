@@ -1,12 +1,11 @@
-import { getMetadataLocale } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n-types';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
 import { getCountry, toSafeJsonLdHtml } from '@/lib/utils';
 
-export async function WebsiteSearchSchema() {
+export async function WebsiteSearchSchema({ locale }: { locale: Locale }) {
   const siteConfig = loadSiteConfigSync(getCountry());
   const siteUrl = siteConfig.siteUrl;
-  const locale = await getMetadataLocale();
   const sitePageUrl = absoluteUrlWithLocalePrefix(siteUrl, '/', locale);
   const searchTemplate = absoluteUrlWithLocalePrefix(
     siteUrl,

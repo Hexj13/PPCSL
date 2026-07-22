@@ -6,7 +6,7 @@ import {
   getListingPagePreviewImageUrl,
   getListingPageThumbImageUrl,
   isListingPageVideoHeroSlideUrl,
-} from '@/app/listings/[id]/listing-page-helpers';
+} from '@/app/[locale]/listings/[id]/listing-page-helpers';
 import { TrackedNextImage } from '@/components/common/TrackedNextImage';
 
 export const RESET_TO_FIRST_DELAY_MS = 10000;

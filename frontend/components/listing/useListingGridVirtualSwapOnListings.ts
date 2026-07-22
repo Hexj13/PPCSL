@@ -6,7 +6,6 @@ import { LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
 import {
   applyHomeScrollRestoreScrollPosition,
   getHomeScrollRestorePhase,
-  isHomeScrollRestoreInProgress,
   shouldDeferVirtualSwapForHomeScrollRestore,
 } from '@/lib/home-scroll-restore';
 
@@ -46,17 +45,15 @@ function shouldAwaitRestoredListingCount(
 
 function runDeferredVirtualSwap(
   setGridVirtualEpoch: (_updater: (_epoch: number) => number) => void,
-  skipPostRestoreVirtualSwapRef: MutableRef<boolean>,
+  deferredVirtualSwapRef: MutableRef<boolean>,
 ): void {
-  skipPostRestoreVirtualSwapRef.current = true;
+  deferredVirtualSwapRef.current = true;
   setGridVirtualEpoch((epoch) => epoch + 1);
   applyPendingHomeScrollRestorePosition();
 }
 
-function runImmediateVirtualSwap(skipPostRestoreVirtualSwapRef: MutableRef<boolean>): void {
-  if (isHomeScrollRestoreInProgress()) {
-    skipPostRestoreVirtualSwapRef.current = true;
-  }
+function runImmediateVirtualSwap(deferredVirtualSwapRef: MutableRef<boolean>): void {
+  deferredVirtualSwapRef.current = false;
   requestListingGridVirtualSwap();
   applyPendingHomeScrollRestorePosition();
 }
@@ -67,7 +64,7 @@ type UseListingGridVirtualSwapOnListingsArgs = {
   returningWithSavedScroll: boolean;
   restoredFromStorageRef: MutableRef<boolean>;
   restoreCompletedRef: MutableRef<boolean>;
-  skipPostRestoreVirtualSwapRef: MutableRef<boolean>;
+  deferredVirtualSwapRef: MutableRef<boolean>;
   setGridVirtualEpoch: (_updater: (_epoch: number) => number) => void;
 };
 
@@ -77,7 +74,7 @@ export function useListingGridVirtualSwapOnListings({
   returningWithSavedScroll,
   restoredFromStorageRef,
   restoreCompletedRef,
-  skipPostRestoreVirtualSwapRef,
+  deferredVirtualSwapRef,
   setGridVirtualEpoch,
 }: UseListingGridVirtualSwapOnListingsArgs) {
   useLayoutEffect(() => {
@@ -100,18 +97,18 @@ export function useListingGridVirtualSwapOnListings({
     }
 
     if (shouldDeferVirtualSwapForHomeScrollRestore()) {
-      runDeferredVirtualSwap(setGridVirtualEpoch, skipPostRestoreVirtualSwapRef);
+      runDeferredVirtualSwap(setGridVirtualEpoch, deferredVirtualSwapRef);
       return;
     }
 
-    runImmediateVirtualSwap(skipPostRestoreVirtualSwapRef);
+    runImmediateVirtualSwap(deferredVirtualSwapRef);
   }, [
     uniqueListingsLength,
     searchParamsString,
     returningWithSavedScroll,
     restoredFromStorageRef,
     restoreCompletedRef,
-    skipPostRestoreVirtualSwapRef,
+    deferredVirtualSwapRef,
     setGridVirtualEpoch,
   ]);
 }

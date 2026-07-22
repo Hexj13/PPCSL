@@ -69,6 +69,18 @@ describe('url-locale', () => {
       expect(stripLocalePrefixFromPathname('/dacia')).toEqual({ locale: 'ro', restPath: '/dacia' });
     });
 
+    it('strips internal default-locale rewrite prefix /ro', () => {
+      expect(stripLocalePrefixFromPathname('/ro')).toEqual({ locale: 'ro', restPath: '/' });
+      expect(stripLocalePrefixFromPathname('/ro/listings/abc')).toEqual({
+        locale: 'ro',
+        restPath: '/listings/abc',
+      });
+      expect(stripLocalePrefixFromPathname('/RO/dacia')).toEqual({
+        locale: 'ro',
+        restPath: '/dacia',
+      });
+    });
+
     it('strips case-insensitive /ru prefix', () => {
       expect(stripLocalePrefixFromPathname('/RU/dacia')).toEqual({
         locale: 'ru',

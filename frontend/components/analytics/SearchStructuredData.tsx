@@ -3,8 +3,7 @@ import type { ReactNode } from 'react';
 
 import type { Listing } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
-import { getMetadataLocale, getServerTranslations } from '@/lib/i18n';
-import type { Locale } from '@/lib/i18n-types';
+import { getServerTranslations, type Locale } from '@/lib/i18n';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
 import { createSlug, getCountry, getListingHref, toSafeJsonLdHtml } from '@/lib/utils';
@@ -175,6 +174,7 @@ export async function getSearchStructuredData({
   brandName,
   modelName,
   maxItems = 12,
+  locale,
 }: {
   brand?: string | null;
   model?: string | null;
@@ -183,10 +183,10 @@ export async function getSearchStructuredData({
   brandName?: string | null;
   modelName?: string | null;
   maxItems?: number;
+  locale: Locale;
 }): Promise<ReactNode> {
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
-  const locale = await getMetadataLocale();
   const t = getServerTranslations(locale);
   const siteUrl = siteConfig.siteUrl;
   const brandParam = brand || null;

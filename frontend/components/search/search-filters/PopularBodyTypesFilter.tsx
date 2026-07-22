@@ -204,8 +204,8 @@ export function PopularBodyTypesFilter({
                         className={`object-contain max-md:max-w-full max-md:max-h-full select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'max-w-full max-h-full scale-[1.2]' : ''} ${value === 'Minivan' ? 'scale-[1.15] mt-2' : ''} ${vehicleType === 'car' && value !== 'Convertible' && value !== 'Minivan' ? 'scale-[1.2]' : ''} ${vehicleType === 'moto' && value !== 'ATV' ? 'max-w-full max-h-full scale-[1.2]' : ''}`}
                         sizes={
                           value === 'ATV'
-                            ? '(max-width: 768px) 260px, (max-width: 1024px) 280px, 300px'
-                            : '(max-width: 768px) 180px, (max-width: 1024px) 200px, 220px'
+                            ? '(max-width: 768px) 200px, (max-width: 1024px) 220px, 240px'
+                            : '(max-width: 768px) 140px, (max-width: 1024px) 160px, 180px'
                         }
                         loading="lazy"
                         draggable={false}

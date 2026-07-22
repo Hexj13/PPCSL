@@ -277,6 +277,8 @@ const config: SiteConfig = {
 
 The header and footer `LanguageSwitcher` is shown only when `NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER` is set to `true` in the frontend environment and `supportedLocales` has more than one entry.
 
+Frontend routing (PPCSL): pages live under `app/[locale]/...`. The Next.js proxy (`proxy.ts`) rewrites unprefixed URLs to `/<defaultLocale>/...` internally and leaves prefixed locales (for example `/ru/...`) unchanged. Locale for SSR metadata and translations comes from the `[locale]` path segment (not from `cookies()` / `headers()`), so document responses are not forced into `Cache-Control: no-store` solely because of locale resolution. Preferred-locale cookies are still used only in the proxy for redirects onto a prefixed path.
+
 When the switcher is enabled, the Next.js middleware may redirect a path **without** a locale prefix to a prefixed URL (for example `/ru/...`) using cookies: **`kupito-locale`** (explicit choice from the UI) takes precedence over **`kupito-preferred-locale`** (first-visit hint). If `kupito-locale` is the `defaultLocale`, that redirect does not run to the prefixed locale even when the preferred cookie suggests one.
 
 ### Step 7: Create CI/CD Workflow
@@ -748,13 +750,15 @@ All settings are configured **only via environment variables**. Each platform ha
 
 ### Google Analytics
 
-- **Variable:** `NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX`
-- **Where:** `GoogleAnalytics.tsx`. Without the variable the component does not render.
+- **Preferred:** configure the GA4 tag inside the GTM container (no separate `gtag.js` on the page).
+- **`GoogleAnalytics.tsx`:** after idle + granted consent, pushes SPA `page_view` events to `dataLayer` for GTM. Consent defaults stay in `GoogleAnalyticsConsent.tsx`.
+- **`NEXT_PUBLIC_GA_ID`:** optional / legacy; not required for the current GTM-only load path.
 
 ### Google Tag Manager
 
 - **Current:** `GTM_ID` is hardcoded in `GoogleTagManager.tsx`. For multi-platform, move to `NEXT_PUBLIC_GTM_ID`.
 - **Order in layout:** `GoogleTagManager` → `GoogleAnalyticsConsent` → `GoogleAnalytics`.
+- GTM loads after idle (`lazyOnload`).
 
 ### Sentry (variables)
 
@@ -766,7 +770,6 @@ Detailed setup and integration: [SENTRY.md](./SENTRY.md).
 ### Example (Moldova, Frontend)
 
 ```env
-NEXT_PUBLIC_GA_ID=G-MD12345678
 NEXT_PUBLIC_SENTRY_DSN=https://md-frontend@sentry.io/123456
 SENTRY_ORG=kupito
 SENTRY_PROJECT=kupito-frontend
@@ -774,7 +777,7 @@ SENTRY_PROJECT=kupito-frontend
 
 ### Checklist for new platform
 
-- [ ] GA4: separate project, `NEXT_PUBLIC_GA_ID`, verify events
+- [ ] GA4: separate property, wired via GTM; verify events in GTM Preview / GA4 DebugView
 - [ ] GTM (optional): container and/or `NEXT_PUBLIC_GTM_ID`
 - [ ] Sentry: Frontend + Backend projects, DSN and env in both; see [SENTRY.md](./SENTRY.md) if needed
 

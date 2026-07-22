@@ -10,7 +10,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const country = getCountry();
   const siteConfig = loadSiteConfigSync(country);
   const theme = loadThemeSync(country);
-  const locale = await getMetadataLocale();
+  const locale = getMetadataLocale();
   const t = getServerTranslations(locale);
   const pwa192Url = getVersionedAssetPath('/pwa192.png', siteConfig.assetVersion);
   const logoUrl = getVersionedAssetPath('/logo.png', siteConfig.assetVersion);

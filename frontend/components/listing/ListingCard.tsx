@@ -48,6 +48,7 @@ interface ListingCardProps {
   onRemove?: () => void;
   priority?: boolean;
   linkPrefetch?: boolean;
+  enableCarouselPreload?: boolean;
 }
 
 const RESET_TO_FIRST_DELAY_MS = 10000;
@@ -190,6 +191,7 @@ function ListingCardComponent({
   onRemove,
   priority = false,
   linkPrefetch = false,
+  enableCarouselPreload = true,
 }: ListingCardProps) {
   const { t } = useTranslation();
   const { locale } = useI18n();
@@ -469,6 +471,7 @@ function ListingCardComponent({
               onBusyChange={handleCarouselBusyChange}
               imageAltTitle={imageAltTitle}
               priority={priority}
+              enableNeighborPreload={enableCarouselPreload}
               blurDataURLs={resolvedImageBlurDataURLs}
               t={t}
             />

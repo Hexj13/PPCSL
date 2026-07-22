@@ -2,7 +2,7 @@
 
 import { type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
-import { isListingPageVideoHeroSlideUrl } from '@/app/listings/[id]/listing-page-helpers';
+import { isListingPageVideoHeroSlideUrl } from '@/app/[locale]/listings/[id]/listing-page-helpers';
 import { ImageCounter } from '@/components/listing/ImageCounter';
 import { ListingPhotoCarouselNavButtons } from '@/components/listing/ListingPhotoCarouselNavButtons';
 

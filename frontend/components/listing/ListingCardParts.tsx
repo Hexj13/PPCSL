@@ -105,6 +105,7 @@ export const ListingCardImageCarousel = React.forwardRef<
     onBusyChange?: (busy: boolean) => void;
     imageAltTitle: string;
     priority: boolean;
+    enableNeighborPreload?: boolean;
     blurDataURLs?: (string | undefined)[];
     t: (_key: string, _params?: Record<string, string>) => string;
   }
@@ -117,6 +118,7 @@ export const ListingCardImageCarousel = React.forwardRef<
     onBusyChange,
     imageAltTitle,
     priority,
+    enableNeighborPreload = true,
     blurDataURLs,
     t,
   },
@@ -233,6 +235,7 @@ export const ListingCardImageCarousel = React.forwardRef<
     loadedRef,
     preloadingRef,
     imagesCacheRef,
+    enableNeighborPreload,
   );
 
   const errorPlaceholder = React.useMemo(

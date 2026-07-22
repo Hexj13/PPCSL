@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminFilterButton } from '@/app/admin/components/AdminButtons';
+import { AdminFilterButton } from '@/app/[locale]/admin/components/AdminButtons';
 import { useTranslation } from '@/hooks/useTranslation';
 
 type ListingStatus = 'All' | 'Active' | 'Paused' | 'Closed';

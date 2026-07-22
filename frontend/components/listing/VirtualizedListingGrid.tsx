@@ -21,6 +21,7 @@ import {
   getBannerVariantClassName,
   getVirtualRowEstimateSize,
 } from './buildVirtualRows';
+import { LISTING_GRID_PRIORITY_CARD_COUNT } from './listing-card-image';
 import {
   ListingGridCriticalStyles,
   listingGridRowCriticalStyle,
@@ -78,8 +79,9 @@ function StaticListingGrid({
             <Fragment key={listing.id}>
               <ListingCard
                 listing={listing}
-                priority={index < 6}
+                priority={index < LISTING_GRID_PRIORITY_CARD_COUNT}
                 linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
+                enableCarouselPreload={index < LISTING_GRID_PRIORITY_CARD_COUNT}
               />
               {partnerPromoPosition === cardPosition && (
                 <div className="col-span-full">
@@ -279,8 +281,9 @@ function VirtualizedListingGridContent({
                         <ListingCard
                           key={listing.id}
                           listing={listing}
-                          priority={index < 6}
+                          priority={index < LISTING_GRID_PRIORITY_CARD_COUNT}
                           linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
+                          enableCarouselPreload={index < LISTING_GRID_PRIORITY_CARD_COUNT}
                         />
                       ))}
                     </div>
@@ -321,7 +324,11 @@ export function VirtualizedListingGrid(props: VirtualizedListingGridProps) {
       setVirtualized(true);
     };
 
-    return registerListingGridVirtualSwapListener(trySwap);
+    const unregister = registerListingGridVirtualSwapListener(trySwap);
+    if (!shouldDeferVirtualSwapForHomeScrollRestore()) {
+      trySwap();
+    }
+    return unregister;
   }, [virtualized, initialRows]);
 
   useLayoutEffect(() => {

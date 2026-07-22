@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useEffect, useRef } from 'react';
 
 import {
   sessionStorageGetItem,
@@ -71,9 +71,36 @@ function shouldSkipScrollResetForPreservedScroll(
   return false;
 }
 
+function restoreHomeScrollAfterBfCache() {
+  const { restPath } = stripLocalePrefixFromPathname(window.location.pathname);
+  if (restPath !== '/') {
+    return;
+  }
+  ensureHomeScrollRestoreInteractionListeners();
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
+  const previousPath = sessionStorageGetItem(LAST_REST_PATH_KEY);
+  const target = readHomeScrollRestoreTarget(previousPath);
+  if (target) {
+    beginHomeScrollRestore(target);
+  }
+}
+
 export function ScrollReset() {
   const pathname = usePathname();
   const previousPathRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) {
+        return;
+      }
+      restoreHomeScrollAfterBfCache();
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') {

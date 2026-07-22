@@ -11,7 +11,7 @@ const actionButtonClassName =
   'w-full sm:w-auto sm:max-w-fit h-12 py-2 sm:h-auto sm:min-h-0 sm:py-3.5 md:py-2.5 px-8 text-base rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:border-primary-900 active:text-primary-900 active:border-primary-900 border-2 border-primary-700 bg-primary-500/10 select-none min-w-[220px] whitespace-nowrap';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getMetadataLocale();
+  const locale = getMetadataLocale();
   const translations = loadTranslations(locale);
   const siteConfig = await loadSiteConfig(getCountry());
   return {
@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function NotFound() {
-  const locale = await getMetadataLocale();
+  const locale = getMetadataLocale();
   const translations = loadTranslations(locale);
   const homeHref = localePrefixPath('/', locale);
 

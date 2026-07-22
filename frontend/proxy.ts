@@ -12,18 +12,11 @@ import {
   getLocaleFromPathname,
   isLanguageSwitcherEnabled,
   stripPrefixedLocaleFromPathname,
-  URL_LOCALE_HEADER,
 } from '@/lib/url-locale';
 import { getCountry } from '@/lib/utils';
 
 function getRouting() {
   return resolveLocaleRouting(loadSiteConfigSync(getCountry()));
-}
-
-function withLocaleHeader(request: NextRequest, locale: string) {
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set(URL_LOCALE_HEADER, locale);
-  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 function passthroughIfExcludedPath(pathname: string): NextResponse | null {
@@ -72,6 +65,20 @@ function redirectLegacyDefaultLocalePath(
   return NextResponse.redirect(url, 308);
 }
 
+function rewriteUnprefixedToDefaultLocale(
+  request: NextRequest,
+  pathname: string,
+  search: string,
+  routing: ReturnType<typeof getRouting>,
+): NextResponse {
+  const locale = routing.defaultLocale;
+  const url = request.nextUrl.clone();
+  const suffix = pathname === '/' ? '' : pathname;
+  url.pathname = `/${locale}${suffix}`;
+  url.search = search;
+  return NextResponse.rewrite(url);
+}
+
 function handleLanguageSwitcherDisabled(
   request: NextRequest,
   pathname: string,
@@ -80,7 +87,7 @@ function handleLanguageSwitcherDisabled(
 ): NextResponse | null {
   const { hasPrefix, restPath } = stripPrefixedLocaleFromPathname(pathname, routing);
   if (!hasPrefix) {
-    return withLocaleHeader(request, routing.defaultLocale);
+    return rewriteUnprefixedToDefaultLocale(request, pathname, search, routing);
   }
   const destPath = restPath;
   const url = request.nextUrl.clone();
@@ -103,25 +110,6 @@ function redirectPrefixedWrongCase(
   url.pathname = canonical;
   url.search = search;
   return NextResponse.redirect(url, 308);
-}
-
-function rewritePrefixedLocaleRequest(
-  request: NextRequest,
-  pathname: string,
-  search: string,
-  routing: ReturnType<typeof getRouting>,
-): NextResponse | null {
-  const { hasPrefix, restPath, matchedLocale } = stripPrefixedLocaleFromPathname(pathname, routing);
-  if (!hasPrefix) {
-    return null;
-  }
-  const destPath = restPath;
-  const url = request.nextUrl.clone();
-  url.pathname = destPath.startsWith('/') ? destPath : `/${destPath}`;
-  url.search = search;
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set(URL_LOCALE_HEADER, matchedLocale);
-  return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
 }
 
 function redirectPreferredPrefixedLocale(
@@ -219,13 +207,14 @@ export async function proxy(request: NextRequest) {
   const caseFix = redirectPrefixedWrongCase(request, pathname, search, routing);
   if (caseFix) return caseFix;
 
-  const rewrite = rewritePrefixedLocaleRequest(request, pathname, search, routing);
-  if (rewrite) return rewrite;
+  if (getLocaleFromPathname(pathname, routing)) {
+    return NextResponse.next();
+  }
 
   const pref = redirectPreferredPrefixedLocale(request, pathname, search, routing);
   if (pref) return pref;
 
-  return withLocaleHeader(request, routing.defaultLocale);
+  return rewriteUnprefixedToDefaultLocale(request, pathname, search, routing);
 }
 
 export const config = {

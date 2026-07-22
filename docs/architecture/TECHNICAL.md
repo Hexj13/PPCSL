@@ -243,8 +243,8 @@ NEXT_PUBLIC_COUNTRY=<country>
 # Google Search Console Verification (optional)
 NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
 
-# Google Analytics Measurement ID (optional)
-NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+# Google Analytics Measurement ID (optional; configure GA4 inside GTM, not via a direct gtag.js load)
+# NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 
 # Listing views visibility (optional)
 # all: show view counts to everyone (default)
@@ -1018,8 +1018,8 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 3. Create property: "Your Platform Website"
 4. Create data stream: Web → `https://your-domain.com`
 5. Copy Measurement ID (format: `G-XXXXXXXXXX`)
-6. Add to `NEXT_PUBLIC_GA_ID` in `.env.local` (or production environment variables)
-7. Component `GoogleAnalytics.tsx` is already created and integrated
+6. Configure the GA4 tag inside Google Tag Manager (GTM container `GTM-K527X5WK`); do not load a separate `gtag.js` on the page
+7. `GoogleAnalytics.tsx` pushes consented SPA `page_view` events to `dataLayer` after idle; consent defaults stay in `GoogleAnalyticsConsent.tsx`
 
 #### Google Analytics Features
 
@@ -1170,8 +1170,8 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - Automatic optimization for external images via `remotePatterns` configuration
   - Conditional `unoptimized` prop for localhost images in development
   - Proper `sizes` attribute for responsive image loading - Next.js automatically generates appropriate image sizes for mobile and desktop
-  - Optimized quality settings: 75% for listing cards (responsive srcset up to 1200px via `listing-card-image.ts`), 70% for management cards (900px), 75% for detail pages (1200px)
-  - Priority loading for first 6 visible images in grid to improve LCP
+  - Optimized quality settings: 75% for listing cards (responsive srcset up to 1080px via `listing-card-image.ts`), 70% for management cards (900px), 75% for detail pages (1200px)
+  - Priority loading for first 4 visible images in grid; carousel neighbor preload only on those cards
   - Next.js Image component handles responsive image loading automatically via `srcSet` based on `sizes` attribute
   - Improved sizes attributes for better responsive image selection across breakpoints
 - **Image preview system:** Simplified, efficient image preview and photo viewer system
@@ -1185,7 +1185,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 - **Race condition prevention:** Loading states and request guards to prevent duplicate API calls
   - Favorite toggle button disabled during operation with visual feedback
   - Ref-based guards to prevent concurrent requests
-- Third-party scripts optimization (Google Analytics, Google Tag Manager) using `lazyOnload` strategy to reduce Total Blocking Time (TBT)
+- Third-party scripts optimization: GTM loads after idle (`lazyOnload`); GA page views via `dataLayer` (no separate `gtag.js` on the critical path)
 - **INP (Interaction to Next Paint) optimizations for mobile:** Deferred analytics (search/select_content) via requestIdleCallback; single rAF for scroll restore after router.replace; rAF-throttled scroll handlers with state guards (ScrollToFiltersButton, useSearchTabs, BackgroundDecorations, usePageScroll); GTM loaded after idle; parse cache for ListingGrid search params; chunked dropdown render and precomputed lowerLabel for filter options; listing card blur placeholders decoded off the main thread via a dedicated Web Worker (`lib/blurhash-worker.ts`) with sync fallback. See [inp-validation.md](../engineering/inp-validation.md) for post-deploy validation.
 - **Resource hints optimization:**
   - Static preconnect to API domain in `layout.tsx` for faster image loading (server-rendered, no JS required)
@@ -1630,7 +1630,7 @@ cd core/backend && npm run test -- listings.service.spec.ts
   - Static CSS grid on SSR/first paint; `listing-grid-measure.ts` + `listing-grid-virtual-swap.ts` swap to the virtualizer after mount (listing-return restore keeps static grid until `scrollY` is applied)
   - Home scroll restore after listing detail uses `lib/home-scroll-restore.ts` (exact saved `scrollY` + grid min-height placeholder, same path as reload restore)
   - Resize handlers coalesced via `lib/resize-coalesced.ts` (search tabs, tab indicator, hint tooltips, virtualizer)
-  - LCP priority on first 6 visible cards; link prefetch on first 4
+  - LCP priority and carousel neighbor preload on first 4 visible cards; link prefetch on first 4; popular body-type filter icons served as WebP with long-cache headers
   - Repeatable audit: `npm run perf:list-grid` → `core/frontend/.perf-audit/list-perf.json`
 - **Performance Optimizations (2025-01):**
   - Migrated initial data fetching to Server Components for improved SEO and initial page load

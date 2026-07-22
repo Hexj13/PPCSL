@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import {
   getListingPagePreviewImageUrl,
   isListingPageVideoHeroSlideUrl,
-} from '@/app/listings/[id]/listing-page-helpers';
+} from '@/app/[locale]/listings/[id]/listing-page-helpers';
 
 interface UseListingImagesProps {
   images: string[];

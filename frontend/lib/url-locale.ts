@@ -7,8 +7,6 @@ import {
 import { loadSiteConfigSync } from './site-config';
 import { getCountry } from './utils';
 
-export const URL_LOCALE_HEADER = 'x-kupito-url-locale';
-
 function getRouting(): ResolvedLocaleRouting {
   return resolveLocaleRouting(loadSiteConfigSync(getCountry()));
 }
@@ -161,7 +159,19 @@ export function stripLocalePrefixFromPathname(
   if (hasPrefix && r.supportedLocales.map((x) => x.toLowerCase()).includes(matchedLocale)) {
     return { locale: matchedLocale as Locale, restPath };
   }
-  return { locale: r.defaultLocale as Locale, restPath: pathname || '/' };
+
+  const defaultSeg = `/${r.defaultLocale.toLowerCase()}`;
+  const path = pathname || '/';
+  const pathLower = path.toLowerCase();
+  if (pathLower === defaultSeg || pathLower.startsWith(`${defaultSeg}/`)) {
+    const rest = path.length === defaultSeg.length ? '/' : path.slice(defaultSeg.length) || '/';
+    return {
+      locale: r.defaultLocale as Locale,
+      restPath: rest.startsWith('/') ? rest : `/${rest}`,
+    };
+  }
+
+  return { locale: r.defaultLocale as Locale, restPath: path };
 }
 
 export function absoluteUrlWithLocalePrefix(

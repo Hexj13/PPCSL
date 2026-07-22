@@ -4,9 +4,11 @@ import { getOptimizedImageUrl } from '@/lib/utils';
 export const CARD_IMAGE_QUALITY = 75;
 
 export const CARD_IMAGE_SIZES =
-  '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 360px';
+  '(max-width: 640px) 400px, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 360px';
 
-export const CARD_IMAGE_DEVICE_WIDTHS = [640, 750, 828, 1080, 1200] as const;
+export const CARD_IMAGE_DEVICE_WIDTHS = [420, 640, 750, 828, 1080] as const;
+
+export const LISTING_GRID_PRIORITY_CARD_COUNT = 4;
 
 export function getListingCardImageSrc(imageUrl: string): string {
   if (!imageUrl || imageUrl === '/placeholder-car.jpg') {

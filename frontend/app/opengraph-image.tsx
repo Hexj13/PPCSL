@@ -18,7 +18,7 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Image() {
-  const locale = await getMetadataLocale();
+  const locale = getMetadataLocale();
   const t = getServerTranslations(locale);
 
   try {
