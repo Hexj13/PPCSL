@@ -1,61 +1,74 @@
 [
   {
     "severity": "HIGH",
-    "location": "auth/infrastructure/services/refresh-token.service.ts",
-    "title": "Refresh token grace period is perpetually extensible, defeating token-theft detection",
-    "description": "When a rotated (revoked) refresh token is reused within the 60-second grace window, the rotateToken() method overwrites rotated_at with the current timestamp, effectively resetting the grace period. An attacker who intercepts a refresh token can keep reusing it indefinitely by sending requests within each 60-second window. Each successful reuse resets rotated_at to now, so the revoked-token-reuse detection (revokeAllUserTokens) never triggers. The attacker maintains persistent access while the legitimate user is unaware.",
-    "impact": "An attacker who steals a single refresh token gains indefinite session persistence. The token-theft detection mechanism (revoking all user tokens when a revoked token is reused outside the grace period) is completely bypassed because the grace window resets on each reuse. The attacker can continuously generate new access tokens and refresh tokens in parallel with the legitimate user.",
-    "attack_path": "1. Attacker intercepts refresh token T via network sniffing, XSS, or log exposure. 2. Legitimate user uses T to refresh, obtaining new tokens. T is marked revoked with rotated_at=T1. 3. Within 60s, attacker sends T to POST /api/auth/refresh. validateToken() passes the grace check (Date.now() - T1 < 60000). 4. rotateToken() updates rotated_at to T2=now, resetting the grace window. Attacker gets new valid tokens. 5. Within 60s of T2, attacker repeats step 3. The grace window resets to T3. 6. This loop continues indefinitely, giving the attacker permanent access.",
+    "location": "backend/src/listings/video/listing-video.service.ts:151",
+    "title": "Staged Video Token HMAC Verified with Non-Timing-Safe String Comparison",
+    "description": "The parseStagedVideoToken method verifies the HMAC signature of staged video tokens using a plain JavaScript strict inequality operator (signature !== this.signStagedVideoPayload(encodedPayload)). This is susceptible to timing side-channel attacks. In contrast, the upload delete token verification in upload.service.ts:578-585 correctly uses crypto.timingSafeEqual for the same purpose.",
+    "impact": "An attacker who can observe response timing differences (e.g. same-network or repeated requests) could progressively recover the HMAC signature byte-by-byte. A forged staged video token would allow: (1) bypassing the video upload flow to attach arbitrary S3 keys as listing video references, (2) replaying previously consumed staged video tokens, (3) setting the video status of any listing the user owns without going through the proper upload/transcode pipeline.",
+    "attack_path": "1. Authenticated user initiates staged video upload to obtain a valid token structure. 2. Attacker measures response time of POST /api/listings/video/staged-status with crafted tokens, varying one character at a time. 3. Over many requests (feasible due to the SkipThrottle or generous throttle limits), the attacker reconstructs the valid HMAC signature for an arbitrary payload. 4. Attacker crafts a token with kind='ready' and arbitrary video S3 keys, consuming it during listing creation to reference attacker-controlled content.",
     "evidence": [
-      "auth/infrastructure/services/refresh-token.service.ts:56-62 (grace period check uses rotated_at which is overwritten on each reuse)",
-      "auth/infrastructure/services/refresh-token.service.ts:83-92 (rotateToken overwrites rotated_at with new Date(), resetting the grace window)",
-      "auth/application/use-cases/refresh-tokens.use-case.ts:22-30 (validateToken then rotateToken sequence without preventing grace period reset)",
-      "auth/infrastructure/services/refresh-token.service.ts:11 (REFRESH_TOKEN_ROTATION_GRACE_MS = 60_000)"
+      "backend/src/listings/video/listing-video.service.ts:151 — signature !== this.signStagedVideoPayload(encodedPayload)",
+      "backend/src/upload/upload.service.ts:578-585 — correct usage of timingSafeEqual for delete token"
     ],
-    "remediation": "Record the original rotated_at timestamp and do not overwrite it when the token is reused within the grace period. Alternatively, track a 'used_within_grace' flag and reject any second reuse of the same rotated token. A safer approach: return the previously-issued new token from a cache during the grace window instead of generating a fresh one, and mark the rotated token as fully consumed after first grace-period reuse so a second reuse triggers revokeAllUserTokens."
+    "remediation": "Replace the !== comparison with crypto.timingSafeEqual, matching the pattern already used in upload.service.ts verifyDeleteToken. Convert both the provided and expected signatures to Buffers, check length equality first, then use timingSafeEqual."
   },
   {
     "severity": "HIGH",
-    "location": "auth/infrastructure/services/refresh-token.service.ts",
-    "title": "Refresh token hashing defeated by plaintext fallback lookup enabling use of stolen DB hashes as valid tokens",
-    "description": "The validateToken(), revokeToken(), and rotateToken() methods all fall back to querying the database by the raw token value when the hashed lookup fails. Since generateToken() stores the SHA-256 hash in the 'token' column, an attacker who obtains database contents (via SQL injection, backup exposure, or DB compromise) can use the stored hash values directly as refresh tokens. The fallback lookup will match the stored hash against the provided raw value, bypassing the hashing protection entirely.",
-    "impact": "Complete compromise of all active refresh token sessions upon database exposure. The SHA-256 hashing layer, which is supposed to prevent token recovery from stored hashes, provides zero protection. An attacker with read access to the refresh_tokens table can impersonate any user with an active refresh token.",
-    "attack_path": "1. Attacker gains read access to the refresh_tokens table (e.g., SQL injection, leaked backup, compromised DB credentials). 2. Attacker extracts stored hash H from the 'token' column for an active (non-revoked, non-expired) token. 3. Attacker sends H as the refresh_token to POST /api/auth/refresh. 4. validateToken(H): computes hash(H)=H2, looks up by H2 → not found. Falls back to looking up by raw value H → matches the DB row. 5. Token validation succeeds. Attacker receives new access + refresh tokens for the victim user.",
+    "location": "backend/src/listings/video/mediaconvert-webhook.controller.ts:110-116",
+    "title": "MediaConvert SNS Webhook Accepts Any AWS Topic When Topic ARN Env Var Is Unset",
+    "description": "The isExpectedTopic() method returns true for ANY SNS topic ARN when the AWS_MEDIACONVERT_SNS_TOPIC_ARN environment variable is not configured. The webhook endpoint at POST /api/webhooks/mediaconvert is completely unauthenticated (no JwtAuthGuard or AdminGuard). The SNS message validator library (sns-validator) validates that a message was legitimately published through AWS SNS, but any AWS account holder can create an SNS topic and publish valid, signature-verified messages.",
+    "impact": "An attacker with an AWS account can send crafted SNS Notification messages to the webhook endpoint. If the target listing's video jobId can be guessed or enumerated (e.g. from a previous upload-init response or an information leak), the attacker can: (1) force any listing's video status to 'failed' by sending a status: 'ERROR' event with a matching jobId, causing denial of service for video features. (2) The attacker can also trigger the SubscriptionConfirmation flow, causing the server to make outbound HTTP requests to the SubscribeURL (limited to SNS endpoints due to certificate validation).",
+    "attack_path": "1. Attacker identifies the webhook URL (public API endpoint, discoverable via Swagger/OpenAPI docs). 2. Attacker creates an SNS topic in their own AWS account. 3. Attacker publishes a SubscriptionConfirmation message to get the server to subscribe. 4. Attacker publishes Notification messages with detail-type: 'MediaConvert Job State Change', a valid listingId, and status: 'ERROR'. 5. If the listing has a video in 'processing' state with a known jobId, its video status is set to 'failed'.",
     "evidence": [
-      "auth/infrastructure/services/refresh-token.service.ts:37-49 (validateToken falls back to findOne({where: {token}}) with raw value after hash lookup fails)",
-      "auth/infrastructure/services/refresh-token.service.ts:72-80 (revokeToken same fallback pattern)",
-      "auth/infrastructure/services/refresh-token.service.ts:83-92 (rotateToken same fallback pattern)",
-      "auth/infrastructure/services/refresh-token.service.ts:20-35 (generateToken stores hash in token column: token: hashRefreshToken(token))",
-      "auth/infrastructure/utils/refresh-token-hash.utils.ts:3-5 (hashRefreshToken uses SHA-256, producing 64-char hex output)"
+      "backend/src/listings/video/mediaconvert-webhook.controller.ts:110-116 — isExpectedTopic returns true when env var is empty",
+      "backend/src/listings/video/mediaconvert-webhook.controller.ts:28-29 — no @UseGuards decorator on the handler",
+      "backend/src/listings/video/listing-video.service.ts:1098-1125 — ERROR/CANCELED events processed without verifying job exists in MediaConvert"
     ],
-    "remediation": "Remove the plaintext fallback lookup entirely. If backward compatibility with pre-hashing tokens is still needed, run a one-time migration to hash all existing plaintext tokens in the database, then remove the fallback code. Alternatively, add a 'hash_version' column to distinguish legacy plaintext tokens and only allow the fallback for rows explicitly marked as unhashed."
+    "remediation": "1. Make AWS_MEDIACONVERT_SNS_TOPIC_ARN required in production — throw on startup if not configured. 2. Change isExpectedTopic to return false (deny-by-default) when the expected ARN is not configured. 3. Consider adding a shared-secret query parameter or custom header to the webhook URL as an additional layer of defense."
   },
   {
     "severity": "MEDIUM",
-    "location": "auth/presentation/dto/reset-password.dto.ts",
-    "title": "Password reset endpoint lacks password complexity validation allowing weak passwords",
-    "description": "The ResetPasswordDto only enforces MinLength(8) on the newPassword field but does not apply the @IsPassword() decorator or MaxLength validation. In contrast, RegisterDto and ChangePasswordDto both enforce @IsPassword() (which requires uppercase and lowercase characters) and MaxLength(100). An attacker who compromises a password reset flow can set an arbitrarily simple 8-character password (e.g., 'aaaaaaaa') that would not be accepted through normal registration or password change.",
-    "impact": "Users who reset their passwords can set weak passwords that bypass the complexity requirements enforced everywhere else. This creates accounts with passwords vulnerable to brute-force and dictionary attacks. The inconsistency also means password policy is not uniformly enforced.",
-    "attack_path": "1. Attacker initiates password reset for a target account via POST /api/auth/request-password-reset. 2. Attacker obtains the SMS reset code (via social engineering, SIM swap, or if this is the target's own account). 3. Attacker calls POST /api/auth/reset-password with newPassword='aaaaaaaa' (8 lowercase chars, no uppercase, no special chars). 4. Password is accepted because ResetPasswordDto only checks MinLength(8). 5. The same password 'aaaaaaaa' would be rejected by RegisterDto or ChangePasswordDto which require @IsPassword() complexity.",
+    "location": "backend/src/parsing/application/parsing-orchestrator.service.ts:799-823 and backend/src/parsing/application/parser-plp-path.util.ts:36-47",
+    "title": "Path Traversal in PLP File Read and Delete via Unsanitized parserCode/fileKey",
+    "description": "The getPlpFileContentByKey and deletePlpFile methods in ParsingOrchestratorService pass parserCode and fileKey directly to resolveS3RelativePath without validating that parserCode exists in the parser catalog. For unknown parser codes, the path is built as `${parserCode}/${fileKey}.json` without any traversal sanitization. Since NestJS/Express decodes %2F in URL path parameters via decodeURIComponent, an admin can inject path traversal sequences (../) via URL-encoded slashes (%2F) in the parserCode parameter.",
+    "impact": "An authenticated admin user can read or delete arbitrary .json files on the server filesystem outside the intended parsing runtime directory. This could expose sensitive configuration files (e.g., package.json, tsconfig.json, nest-cli.json, or application config files with credentials), or cause denial of service by deleting critical JSON configuration files.",
+    "attack_path": "1. Admin sends GET /api/admin/parsing/parsers/..%2F..%2F..%2F..%2Fapp/plp-files/package/download. 2. parserCode decodes to '../../../../app', fileKey = 'package'. 3. resolveS3RelativePath returns '../../../../app/package.json'. 4. plpStorage.downloadFile joins with localRuntimeRoot, resolving outside the intended directory. 5. Server returns contents of /app/package.json (or equivalent resolved path). 6. Similarly, DELETE requests can remove arbitrary .json files.",
     "evidence": [
-      "auth/presentation/dto/reset-password.dto.ts:33 (only @MinLength(8), no @IsPassword() or @MaxLength)",
-      "auth/presentation/dto/register.dto.ts:37-38 (RegisterDto enforces @MinLength(8), @MaxLength(100), and @IsPassword())",
-      "auth/presentation/dto/change-password.dto.ts:22-24 (ChangePasswordDto enforces @MinLength(8), @MaxLength(100), and @IsPassword())"
+      "backend/src/parsing/application/parsing-orchestrator.service.ts:807 — resolveS3RelativePath called without catalog validation",
+      "backend/src/parsing/application/parser-plp-path.util.ts:46 — fallback path: return `${parserCode}/${fileKey}.json`",
+      "backend/src/parsing/infrastructure/plp-storage.service.ts:58 — path.join(this.localRuntimeRoot, relativePath) resolves .. traversal",
+      "backend/src/parsing/presentation/admin-parsing.controller.ts:100-105 — downloadPlpFile passes raw parserCode/fileKey"
     ],
-    "remediation": "Add the @IsPassword() and @MaxLength(100) decorators to the newPassword field in ResetPasswordDto to match the validation applied in RegisterDto and ChangePasswordDto."
+    "remediation": "1. In getPlpFileContentByKey and deletePlpFile, validate that parserCode exists in the parser catalog before proceeding (throw NotFoundException if not found). 2. Add path traversal checks in resolveS3RelativePath: reject any relativePath containing '..' segments after path.normalize(). 3. Consider using path.resolve and verifying the result starts with the expected base directory."
   },
   {
     "severity": "MEDIUM",
-    "location": "auth/presentation/auth.controller.ts:255-260, auth/application/use-cases/e2e-create-google-business-user.use-case.ts",
-    "title": "Unauthenticated E2E endpoint creates fully-privileged accounts when NODE_ENV is misconfigured",
-    "description": "The POST /api/auth/e2e/google-business-user endpoint has no authentication guard (no JwtAuthGuard, no AdminGuard). It relies solely on the NODE_ENV environment variable check inside the use case (blocking only 'production' and 'stage'). If NODE_ENV is undefined, empty, or set to any value other than 'production'/'stage' (e.g., 'prod', 'Production', 'staging'), the endpoint allows any anonymous HTTP client to create fully authenticated business accounts with valid JWT and refresh tokens.",
-    "impact": "In any environment where NODE_ENV is not exactly 'production' or 'stage', an anonymous attacker can create unlimited authenticated business user accounts. Each call returns valid access and refresh tokens without requiring email, phone verification, or password. This could be exploited if a preview/staging/development deployment is accessible from the internet.",
-    "attack_path": "1. Attacker discovers a non-production deployment (e.g., preview environment, development server exposed via ngrok, or a deployment where NODE_ENV is misconfigured). 2. Attacker sends POST /api/auth/e2e/google-business-user with no authentication headers. 3. The use case checks process.env.NODE_ENV - if it's not 'production' or 'stage', assertAllowed() passes. 4. A new Business user is created with a verified email and phone. 5. Access and refresh tokens are returned in cookies. 6. Attacker now has a fully authenticated account that can create listings, access all authenticated features.",
+    "location": "backend/src/admin/admin.controller.ts:149-152 and backend/src/admin/delete-all-brands.service.ts",
+    "title": "Destructive DeleteAllBrands Operation Bypasses Audit Logging",
+    "description": "The DELETE /api/admin/brands/all endpoint cascades deletion of ALL brands, models, vehicles, listings, listing views, and favorites in the database. Unlike all other admin mutation endpoints (createBrand, updateBrand, archiveBrand, etc.), this destructive operation does not write any entry to the admin_audit_log table and does not capture the admin user who performed the action. The controller handler also does not pass req.user context to the service.",
+    "impact": "A complete wipe of all brand/listing data can be performed by any admin with no accountability trail in the audit log. In a post-incident investigation, there would be no record of who initiated this destructive action or when it occurred (beyond standard application logs). This violates the principle of least privilege and complete audit trail for admin operations.",
+    "attack_path": "1. Compromised or rogue admin account sends DELETE /api/admin/brands/all. 2. All brands, models, vehicles, listings, listing views, and favorites are deleted in a cascade. 3. No audit_log entry is created — only application-level Logger.log statements exist. 4. Investigation cannot determine which admin performed the action from the audit table.",
     "evidence": [
-      "auth/presentation/auth.controller.ts:255-260 (endpoint has no @UseGuards - no authentication required)",
-      "auth/application/use-cases/e2e-create-google-business-user.use-case.ts:24-29 (assertAllowed only blocks 'production' and 'stage', undefined/other values pass)",
-      "auth/application/use-cases/e2e-create-google-business-user.use-case.ts:31-63 (creates user with phoneVerified:true, emailVerified:true, returns full login response)"
+      "backend/src/admin/admin.controller.ts:149-152 — deleteAllBrands() handler has no @Req() parameter, no audit context passed",
+      "backend/src/admin/delete-all-brands.service.ts — no injection of AdminAuditService, no audit log calls",
+      "backend/src/admin/admin-brands-models.service.ts:195-201 — createBrand correctly logs to auditService for comparison"
     ],
-    "remediation": "Apply a defense-in-depth approach: 1) Use an allowlist instead of a denylist - only allow the endpoint when NODE_ENV is exactly 'development' or 'test'. 2) Add an additional secret-based guard (e.g., require a header with a shared E2E secret). 3) Consider gating the route registration itself behind the environment check so the endpoint is not even mounted in non-development builds."
+    "remediation": "1. Inject AdminAuditService into DeleteAllBrandsService and log the operation with actor context. 2. Pass req.user from the controller to the service. 3. Consider adding a confirmation mechanism (e.g., confirmation token or two-step process) for such a destructive operation. 4. Consider restricting this endpoint to a super-admin role or removing it from production."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/admin/admin-listings.service.ts:184-197 and backend/src/admin/admin.controller.ts:459-465",
+    "title": "Admin Listing Status Changes and Promotion Toggles Have No Audit Trail",
+    "description": "The updateListingStatus method (PATCH /api/admin/listings/:id/status) allows admins to change any listing's status to Active/Paused/Closed without creating an audit log entry. The controller handler does not pass the requesting admin's identity to the service. Similarly, toggleListingPromotion in AdminPromotionsService does not write audit entries when toggling promotion status. The toggleUserStatus endpoint (PATCH /api/admin/users/:id/toggle-status) also lacks audit logging for user activation/deactivation.",
+    "impact": "Critical admin operations on listings and users — status changes, promotion grants, and user deactivation — are untracked in the structured audit log. A malicious or compromised admin could silently close competitor listings, grant unauthorized promotions, or deactivate user accounts with no audit trail. Other admin operations like brand/model CRUD properly use AdminAuditService.",
+    "attack_path": "1. Admin sends PATCH /api/admin/listings/:id/status with {status:'Closed'} to close a competitor's listing. 2. No audit_log entry is created — the action is invisible in the admin audit table. 3. Admin sends PATCH /api/admin/listings/:id/promote to grant free promotion to a colluding user. 4. Admin sends PATCH /api/admin/users/:id/toggle-status to deactivate a user. 5. None of these actions appear in admin_audit_log.",
+    "evidence": [
+      "backend/src/admin/admin-listings.service.ts:184-197 — updateListingStatus has no audit logging",
+      "backend/src/admin/admin.controller.ts:459-465 — controller does not inject @Req() or pass actor context",
+      "backend/src/admin/admin-promotions.service.ts:31-89 — toggleListingPromotion has no audit logging",
+      "backend/src/admin/admin-users.service.ts:279-303 — toggleUserStatus has no logUserEvent or audit call",
+      "backend/src/admin/admin.controller.ts:588-591 — toggleUserStatus handler has no @Req() parameter"
+    ],
+    "remediation": "1. Add @Req() parameter to the affected controller handlers and pass req.user.id to the services. 2. Inject AdminAuditService into AdminListingsService and AdminPromotionsService. 3. Log LISTING_STATUS_UPDATE, LISTING_PROMOTION_TOGGLE, and USER_STATUS_TOGGLE actions with before/after snapshots. 4. Add logUserEvent calls to toggleUserStatus matching the pattern used in updateUserPartnerSettings."
   }
 ]
