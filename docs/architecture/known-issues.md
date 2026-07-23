@@ -71,7 +71,7 @@ Platform configs: `core/backend/src/scripts/platforms/{country}/config.ts` (e.g.
 
 **Status:** Moved to platform-level config
 
-- FAQ content: in platform repo — `config/faq.ts` (aggregates `config/faq-data-ro.ts`, `config/faq-data-ru.ts` by language); copied to `core/frontend/lib/config/` on build
+- FAQ content: in platform repo — `config/faq.ts` (aggregates `config/faq-data-ro.ts`, `config/faq-data-ru.ts`, `config/faq-data-en.ts` by language); copied to `core/frontend/lib/config/` on build
 - Page `app/faq/page.tsx` loads config via `loadFaqSync(country, locale)` from `@/lib/content/faq`
 - Support: Q&A blocks (`items`) and user scenarios (`scenarios`); email and domain from `config/site.ts` (via `loadSiteConfigSync`)
 
@@ -99,9 +99,10 @@ Platform configs: `core/backend/src/scripts/platforms/{country}/config.ts` (e.g.
 │   └── colors.ts            # Colors and pwa
 ├── config/
 │   ├── site.ts              # Site config (domain, email, name)
-│   ├── faq.ts               # FAQ: aggregator (faq-data-ro, faq-data-ru)
+│   ├── faq.ts               # FAQ: aggregator (faq-data-ro, faq-data-ru, faq-data-en)
 │   ├── faq-data-ro.ts       # FAQ content in Romanian
 │   ├── faq-data-ru.ts       # FAQ content in Russian
+│   ├── faq-data-en.ts       # FAQ content in English
 │   ├── faq-types.ts         # Types FAQConfig, FAQItem, FAQScenario
 │   ├── legal.ts             # Terms/Privacy text by language
 │   ├── popular-brands.json  # Popular brands/models — cars (priority)

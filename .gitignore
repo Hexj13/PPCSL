@@ -79,9 +79,11 @@ storybook-static
 
 # Platform-specific files (should be in platform repositories, not in core)
 # Already-tracked files are not affected by this rule; only new files are ignored.
+# Ignore directory contents (not the directory itself) so negations below work.
 # To track a new config file in core, add a negation (!path) below.
-frontend/lib/config/
+frontend/lib/config/*
 !frontend/lib/config/parsers.ts
+!frontend/lib/config/faq-data-en.ts
 frontend/lib/locales/*.json
 !frontend/lib/locales/en.json
 frontend/lib/theme/colors.ts
