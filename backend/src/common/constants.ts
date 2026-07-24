@@ -4,6 +4,9 @@ export const listingStatuses = ['Active', 'Paused', 'Closed'] as const;
 
 export const listingCategories = ['vehicle', 'tire'] as const;
 
+export const maxSearchBrandSelections = 40;
+export const maxSearchModelSelections = 20;
+
 export const POPULAR_BRAND_COUNTRIES = [
   'chinese',
   'french',

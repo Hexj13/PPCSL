@@ -12,8 +12,8 @@ tags:
 
 The search form enforces hard selection limits for brands and models:
 
-- Brands: max `20`
-- Models: max `20`
+- Brands: max `40` (`MAX_SEARCH_BRAND_SELECTIONS` / `maxSearchBrandSelections`)
+- Models: max `20` (`MAX_SEARCH_MODEL_SELECTIONS` / `maxSearchModelSelections`)
 
 ## UI behavior
 
@@ -30,7 +30,7 @@ The search form enforces hard selection limits for brands and models:
 
 ## Backend validation
 
-- `SearchListingsDto` validates `brand_ids` and `model_ids` with `ArrayMaxSize(20)`.
+- `SearchListingsDto` validates `brand_ids` / `tire_brand_ids` with `ArrayMaxSize(maxSearchBrandSelections)` and `model_ids` / `tire_model_ids` with `ArrayMaxSize(maxSearchModelSelections)`.
 - Validation errors use localized keys:
   - `errors.searchBrandIdsLimit`
   - `errors.searchModelIdsLimit`

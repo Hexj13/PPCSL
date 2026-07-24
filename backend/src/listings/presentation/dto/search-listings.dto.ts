@@ -64,7 +64,9 @@ export class SearchListingsDto {
     return [];
   })
   @IsArray()
-  @ArrayMaxSize(20, { message: 'errors.searchBrandIdsLimit|20' })
+  @ArrayMaxSize(constants.maxSearchBrandSelections, {
+    message: `errors.searchBrandIdsLimit|${constants.maxSearchBrandSelections}`,
+  })
   @IsUUID(undefined, { each: true })
   tire_brand_ids?: string[];
 
@@ -83,7 +85,9 @@ export class SearchListingsDto {
     return [];
   })
   @IsArray()
-  @ArrayMaxSize(20, { message: 'errors.searchModelIdsLimit|20' })
+  @ArrayMaxSize(constants.maxSearchModelSelections, {
+    message: `errors.searchModelIdsLimit|${constants.maxSearchModelSelections}`,
+  })
   @IsUUID(undefined, { each: true })
   tire_model_ids?: string[];
 
@@ -294,7 +298,9 @@ export class SearchListingsDto {
     return [];
   })
   @IsArray()
-  @ArrayMaxSize(20, { message: 'errors.searchBrandIdsLimit|20' })
+  @ArrayMaxSize(constants.maxSearchBrandSelections, {
+    message: `errors.searchBrandIdsLimit|${constants.maxSearchBrandSelections}`,
+  })
   @IsUUID(undefined, { each: true })
   brand_ids?: string[];
 
@@ -322,7 +328,9 @@ export class SearchListingsDto {
     return [];
   })
   @IsArray()
-  @ArrayMaxSize(20, { message: 'errors.searchModelIdsLimit|20' })
+  @ArrayMaxSize(constants.maxSearchModelSelections, {
+    message: `errors.searchModelIdsLimit|${constants.maxSearchModelSelections}`,
+  })
   @IsUUID(undefined, { each: true })
   model_ids?: string[];
 
