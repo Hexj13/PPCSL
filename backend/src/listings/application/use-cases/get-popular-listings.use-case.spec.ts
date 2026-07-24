@@ -11,7 +11,7 @@ describe('GetPopularListingsUseCase', () => {
       SUV: [],
       Minivan: [],
       Sedan: [],
-      Convertible: [],
+      Pickup: [],
     },
     brandListingCounts: {},
     bodyTypeListingCounts: {
@@ -20,7 +20,7 @@ describe('GetPopularListingsUseCase', () => {
       SUV: 0,
       Minivan: 0,
       Sedan: 0,
-      Convertible: 0,
+      Pickup: 0,
     },
     statistics: {
       brands: {

@@ -36,7 +36,9 @@ export function Checkbox({
   const checkboxId = id ?? reactId;
 
   return (
-    <div className={`flex items-center gap-3 group ${disabled ? 'opacity-50' : ''} ${className}`}>
+    <label
+      className={`flex items-center gap-3 group ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
+    >
       <div className="relative">
         <input
           type="checkbox"
@@ -51,37 +53,28 @@ export function Checkbox({
           disabled={disabled}
           className="sr-only"
         />
-        <label
-          htmlFor={checkboxId}
-          className={`${sizeClasses[size].box} rounded search-control-border transition-all duration-200 flex items-center justify-center ${
-            disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-          } ${
-            checked
-              ? 'is-selected bg-primary-500/10'
-              : disabled
-                ? 'bg-bg-secondary'
-                : 'bg-bg-secondary'
+        <span
+          aria-hidden
+          className={`${sizeClasses[size].box} rounded search-control-border transition-all duration-200 flex items-center justify-center pointer-events-none ${
+            checked ? 'is-selected bg-primary-500/10' : 'bg-bg-secondary'
           }`}
         >
           {checked && <CheckIcon className={`${sizeClasses[size].icon} text-primary-900`} />}
-        </label>
+        </span>
       </div>
       {label && (
-        <label
-          htmlFor={checkboxId}
+        <span
           className={`text-sm transition-colors duration-200 ${
-            disabled ? 'cursor-not-allowed text-text-secondary' : 'cursor-pointer'
-          } ${
             disabled
-              ? ''
+              ? 'text-text-secondary'
               : checked
                 ? 'text-primary-700'
                 : 'text-text-primary group-hover:text-primary-900'
           } ${labelClassName}`}
         >
           {label}
-        </label>
+        </span>
       )}
-    </div>
+    </label>
   );
 }

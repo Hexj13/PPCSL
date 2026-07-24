@@ -256,7 +256,7 @@ export function AdvancedFilters({
         </div>
         <div>
           <h3
-            className="text-sm font-semibold mb-2 text-primary-900 truncate"
+            className="text-sm font-medium mb-3 text-primary-900 truncate"
             title={t('searchFilters.labels')}
           >
             {t('searchFilters.labels')}
@@ -292,7 +292,7 @@ export function AdvancedFilters({
         </div>
         <div>
           <h3
-            className="text-sm font-semibold mb-2 text-primary-900 truncate"
+            className="text-sm font-medium mb-3 text-primary-900 truncate"
             title={t('searchFilters.creditSection')}
           >
             {t('searchFilters.creditSection')}

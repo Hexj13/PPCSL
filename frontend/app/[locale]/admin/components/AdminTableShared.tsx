@@ -46,6 +46,30 @@ interface AdminTableStateProps {
   children: ReactNode;
 }
 
+const ADMIN_TABLE_SKELETON_ROWS = 12;
+
+export function AdminTableSkeleton({ rows = ADMIN_TABLE_SKELETON_ROWS }: { rows?: number }) {
+  return (
+    <div className="overflow-x-auto" data-testid="admin-table-skeleton" aria-hidden="true">
+      <div className="w-full border-collapse">
+        <div className="border-b border-primary-700/30 py-3 px-4">
+          <div className="mx-auto h-4 w-3/4 max-w-xl animate-pulse rounded-sm bg-primary-500/15" />
+        </div>
+        {Array.from({ length: rows }, (_, index) => (
+          <div
+            key={index}
+            className={`border-b border-primary-700/10 py-3 px-4 ${
+              index % 2 === 1 ? 'bg-primary-500/5' : ''
+            }`}
+          >
+            <div className="mx-auto h-4 w-full max-w-3xl animate-pulse rounded-sm bg-bg-secondary/50" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface AdminCopyValueCellProps {
   value: string;
   label: string;
@@ -85,7 +109,12 @@ export function AdminTableState({
   children,
 }: AdminTableStateProps) {
   if (loading) {
-    return <div className="py-8 text-center text-text-secondary">{loadingText}</div>;
+    return (
+      <div role="status" aria-live="polite" aria-busy="true">
+        <span className="sr-only">{loadingText}</span>
+        <AdminTableSkeleton />
+      </div>
+    );
   }
   if (isEmpty) {
     return (

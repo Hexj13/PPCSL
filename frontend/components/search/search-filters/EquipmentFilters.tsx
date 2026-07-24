@@ -117,7 +117,7 @@ export function EquipmentFilters({
         <HintTooltip ariaLabel={t('searchFilters.equipmentSortMode')} width="w-72">
           {t('searchFilters.equipmentSortModeHint')}
         </HintTooltip>
-        <span className="text-sm font-semibold text-primary-900">
+        <span className="text-sm font-medium text-primary-900">
           {t('searchFilters.equipmentSortMode')}
         </span>
         <div className="flex flex-wrap items-center gap-2">

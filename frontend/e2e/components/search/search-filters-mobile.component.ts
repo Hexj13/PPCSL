@@ -242,7 +242,7 @@ export class SearchFiltersMobileComponent {
       }
     }
     await checkbox.scrollIntoViewIfNeeded();
-    const label = checkbox.locator('xpath=ancestor::div[contains(@class,"group")]/label[last()]');
+    const label = checkbox.locator('xpath=ancestor::label[1]');
     await label.click();
     await expect(checkbox).toBeChecked();
   }

@@ -14,6 +14,7 @@ import { toast } from '@/lib/toast';
 import { compareNames } from '@/lib/utils';
 import { ChevronDownIcon } from '@/ui';
 
+import { PopularCountryBrandsFilter } from './PopularCountryBrandsFilter';
 import {
   PopularFilterBrandTile,
   PopularFilterChip,
@@ -82,17 +83,7 @@ export function PopularFilters({
     });
   }, [vehicleType, popularData?.brandListingCounts]);
 
-  const sortedBodyTypes = useMemo(() => {
-    const counts = popularData?.bodyTypeListingCounts;
-    if (!counts) {
-      return [...POPULAR_BODY_TYPES_CAR];
-    }
-    return [...POPULAR_BODY_TYPES_CAR].sort((a, b) => {
-      const countDiff = (counts[b.value] ?? 0) - (counts[a.value] ?? 0);
-      if (countDiff !== 0) return countDiff;
-      return compareNames(a.value, b.value);
-    });
-  }, [popularData?.bodyTypeListingCounts]);
+  const sortedBodyTypes = POPULAR_BODY_TYPES_CAR;
 
   useEffect(() => {
     if (!popularData || defaultOpenInitialized || sortedBodyTypes.length === 0) return;
@@ -125,6 +116,11 @@ export function PopularFilters({
   if (popularBrandsSorted.length === 0) {
     return (
       <div className="mb-5">
+        <PopularCountryBrandsFilter
+          brands={brands}
+          selectedBrandIds={filters.brand_ids}
+          onSelectionChange={(brandIds) => setFilters((prev) => ({ ...prev, brand_ids: brandIds }))}
+        />
         <div className="text-sm text-text-secondary">{t('searchFilters.noPopularBrands')}</div>
       </div>
     );
@@ -157,6 +153,12 @@ export function PopularFilters({
           )}
         </>
       )}
+
+      <PopularCountryBrandsFilter
+        brands={brands}
+        selectedBrandIds={filters.brand_ids}
+        onSelectionChange={(brandIds) => setFilters((prev) => ({ ...prev, brand_ids: brandIds }))}
+      />
 
       <h3 className="text-sm font-medium text-primary-900 mb-3">
         {t('searchFilters.popularBrands')}

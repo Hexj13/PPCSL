@@ -1,12 +1,12 @@
 import { BodyType } from '../../common/constants';
 
 export const POPULAR_BODY_TYPES_CAR = [
-  BodyType.Hatchback,
-  BodyType.Wagon,
   BodyType.SUV,
-  BodyType.Minivan,
   BodyType.Sedan,
-  BodyType.Convertible,
+  BodyType.Wagon,
+  BodyType.Hatchback,
+  BodyType.Minivan,
+  BodyType.Pickup,
 ] as const;
 
 export type PopularBodyTypeCar = (typeof POPULAR_BODY_TYPES_CAR)[number];

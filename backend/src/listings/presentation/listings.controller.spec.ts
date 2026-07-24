@@ -121,7 +121,7 @@ describe('ListingsController', () => {
           SUV: [],
           Minivan: [],
           Sedan: [],
-          Convertible: [],
+          Pickup: [],
         },
         brandListingCounts: {},
         bodyTypeListingCounts: {
@@ -130,7 +130,7 @@ describe('ListingsController', () => {
           SUV: 0,
           Minivan: 0,
           Sedan: 0,
-          Convertible: 0,
+          Pickup: 0,
         },
         statistics: {
           brands: { items: [], otherCount: 0, total: 0 },

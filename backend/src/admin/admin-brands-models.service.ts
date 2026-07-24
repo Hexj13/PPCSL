@@ -13,6 +13,7 @@ import { IBrandsCache } from '../brands/application/ports/brands-cache.port';
 import { BRANDS_CACHE } from '../brands/application/ports/brands-cache.port';
 import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
+import type { PopularBrandCountry } from '../common/constants';
 import { buildPaginationMeta } from '../common/utils/pagination.utils';
 import { normalizeForComparison } from '../common/utils/slug.utils';
 import { IListingCache } from '../listings/application/ports/listing-cache.port';
@@ -29,6 +30,7 @@ export interface AdminBrandDto {
   id: string;
   name: string;
   vehicleTypes: ('car' | 'truck' | 'moto' | 'tire')[];
+  popularCountry: PopularBrandCountry | null;
   isArchived: boolean;
   activeListingsCount: number;
   models: AdminModelDto[];
@@ -144,6 +146,7 @@ export class AdminBrandsModelsService {
       id: b.id,
       name: b.name,
       vehicleTypes: (b.vehicle_types ?? []) as ('car' | 'truck' | 'moto' | 'tire')[],
+      popularCountry: b.popular_country ?? null,
       isArchived: b.is_archived,
       activeListingsCount: brandCountMap.get(b.id) ?? 0,
       models: (modelsByBrand.get(b.id) ?? [])
@@ -181,6 +184,7 @@ export class AdminBrandsModelsService {
         name,
         name_normalized: nameNormalized,
         vehicle_types: dto.vehicleTypes,
+        popular_country: dto.popularCountry ?? null,
         is_archived: false,
       });
       const saved = await manager.save(Brand, brand).catch((err: { code?: string }) => {
@@ -259,6 +263,9 @@ export class AdminBrandsModelsService {
           }
         }
         brand.vehicle_types = dto.vehicleTypes;
+      }
+      if (Object.prototype.hasOwnProperty.call(dto, 'popularCountry')) {
+        brand.popular_country = dto.popularCountry ?? null;
       }
       await manager.save(Brand, brand).catch((err: { code?: string }) => {
         if (err?.code === '23505') {
@@ -619,6 +626,7 @@ export class AdminBrandsModelsService {
       name: b.name,
       name_normalized: b.name_normalized,
       vehicle_types: b.vehicle_types,
+      popular_country: b.popular_country,
       is_archived: b.is_archived,
     };
   }
@@ -640,6 +648,7 @@ export class AdminBrandsModelsService {
       id: b.id,
       name: b.name,
       vehicleTypes: (b.vehicle_types ?? []) as ('car' | 'truck' | 'moto' | 'tire')[],
+      popularCountry: b.popular_country ?? null,
       isArchived: b.is_archived,
       activeListingsCount: brandCount,
       models: models.map((m) => ({

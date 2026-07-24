@@ -32,21 +32,12 @@ jest.mock('@/hooks/useTranslation', () => ({
         'vehicleOptions.bodyType.SUV': 'SUV',
         'vehicleOptions.bodyType.Minivan': 'Minivan',
         'vehicleOptions.bodyType.Sedan': 'Sedan',
-        'vehicleOptions.bodyType.Convertible': 'Convertible',
+        'vehicleOptions.bodyType.Pickup': 'Pickup',
       };
       return map[key] ?? key;
     },
   }),
 }));
-
-const emptyBodyTypeListingCounts = {
-  Hatchback: 0,
-  Wagon: 0,
-  SUV: 0,
-  Minivan: 0,
-  Sedan: 0,
-  Convertible: 0,
-} as const;
 
 function renderPopularFilters(popularData: PopularListingsData) {
   const Wrapper = () => {
@@ -76,12 +67,12 @@ function createPopularData(
   return {
     generatedAt: '2026-07-10T00:00:00.000Z',
     modelsByBodyType: {
-      Hatchback: [],
-      Wagon: [],
       SUV: [],
-      Minivan: [],
       Sedan: [],
-      Convertible: [],
+      Wagon: [],
+      Hatchback: [],
+      Minivan: [],
+      Pickup: [],
     },
     brandListingCounts: {},
     bodyTypeListingCounts,
@@ -94,13 +85,15 @@ function createPopularData(
 }
 
 describe('PopularFilters', () => {
-  it('sorts body type sections by listing count and opens the most popular one', async () => {
+  it('lists body type sections in catalog order and opens the first one', async () => {
     renderPopularFilters(
       createPopularData({
-        ...emptyBodyTypeListingCounts,
-        SUV: 100,
-        Hatchback: 50,
-        Sedan: 25,
+        SUV: 10,
+        Sedan: 100,
+        Wagon: 50,
+        Hatchback: 200,
+        Minivan: 5,
+        Pickup: 1,
       }),
     );
 
@@ -117,14 +110,12 @@ describe('PopularFilters', () => {
     );
 
     const toggles = screen.getAllByRole('button', {
-      name: /Hatchback|SUV|Wagon|Minivan|Sedan|Convertible/i,
+      name: /Hatchback|SUV|Wagon|Minivan|Sedan|Pickup/i,
     });
     const bodyTypeLabels = toggles
       .map((button) => button.textContent?.trim())
       .filter((label): label is string => Boolean(label));
 
-    expect(bodyTypeLabels[0]).toBe('SUV');
-    expect(bodyTypeLabels[1]).toBe('Hatchback');
-    expect(bodyTypeLabels[2]).toBe('Sedan');
+    expect(bodyTypeLabels).toEqual(['SUV', 'Sedan', 'Wagon', 'Hatchback', 'Minivan', 'Pickup']);
   });
 });

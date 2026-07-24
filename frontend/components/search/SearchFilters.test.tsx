@@ -51,7 +51,7 @@ jest.mock('@/lib/api', () => ({
           SUV: [],
           Minivan: [],
           Sedan: [],
-          Convertible: [],
+          Pickup: [],
         },
         brandListingCounts: {},
         bodyTypeListingCounts: {
@@ -60,7 +60,7 @@ jest.mock('@/lib/api', () => ({
           SUV: 0,
           Minivan: 0,
           Sedan: 0,
-          Convertible: 0,
+          Pickup: 0,
         },
         statistics: {
           brands: { items: [], otherCount: 0, total: 0 },
@@ -266,7 +266,7 @@ jest.mock('./search-filters/PopularBodyTypesFilter', () => {
     selectedBodyTypes,
     onSelectionChange,
   }: PopularBodyTypesFilterProps) => {
-    const bodyTypes = ['SUV', 'Hatchback', 'Wagon', 'Minivan', 'Sedan', 'Convertible'];
+    const bodyTypes = ['SUV', 'Sedan', 'Wagon', 'Hatchback', 'Minivan', 'Pickup'];
     return (
       <div data-testid="popular-body-types-filter">
         <h3>Popular body types</h3>

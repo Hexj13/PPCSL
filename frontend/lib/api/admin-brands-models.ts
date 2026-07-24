@@ -1,9 +1,12 @@
+import type { PopularBrandCountry } from '@/lib/content/popular-brand-countries';
+
 import { api } from './api-client';
 
 export interface AdminBrand {
   id: string;
   name: string;
   vehicleTypes: ('car' | 'truck' | 'moto' | 'tire')[];
+  popularCountry: PopularBrandCountry | null;
   isArchived: boolean;
   activeListingsCount: number;
   models: AdminModel[];
@@ -22,11 +25,13 @@ export interface AdminModel {
 export interface CreateBrandPayload {
   name: string;
   vehicleTypes: ('car' | 'truck' | 'moto' | 'tire')[];
+  popularCountry?: PopularBrandCountry | null;
 }
 
 export interface UpdateBrandPayload {
   name?: string;
   vehicleTypes?: ('car' | 'truck' | 'moto' | 'tire')[];
+  popularCountry?: PopularBrandCountry | null;
 }
 
 export interface CreateModelPayload {

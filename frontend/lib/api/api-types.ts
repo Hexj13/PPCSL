@@ -1,3 +1,5 @@
+import type { PopularBodyTypeCar } from '../content/popular-body-types';
+import type { PopularBrandCountry } from '../content/popular-brand-countries';
 import type { Locale } from '../i18n-types';
 import type { TireTread } from '../tire-tread';
 import type {
@@ -209,6 +211,7 @@ export interface Brand {
   logoUrl?: string;
   order: number;
   vehicle_types?: ('car' | 'truck' | 'moto')[];
+  popular_country?: PopularBrandCountry | null;
 }
 
 export interface VehicleModel {
@@ -443,13 +446,7 @@ export type UpdateListingDto = Omit<
   down_payment_amount?: number | null;
 };
 
-export type PopularBodyTypeCar =
-  | 'Hatchback'
-  | 'Wagon'
-  | 'SUV'
-  | 'Minivan'
-  | 'Sedan'
-  | 'Convertible';
+export type { PopularBodyTypeCar };
 
 export type PopularModelItem = {
   brandId: string;

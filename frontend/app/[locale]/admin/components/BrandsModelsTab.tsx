@@ -9,6 +9,7 @@ import type { AdminBrand, AdminModel } from '@/lib/api';
 import { adminApi } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
+import { AdminTableSkeleton } from './AdminTableShared';
 import type { ArchiveTarget } from './ArchiveConfirmModal';
 import { ArchiveConfirmModal } from './ArchiveConfirmModal';
 import { BrandFormModal } from './BrandFormModal';
@@ -203,9 +204,16 @@ export function BrandsModelsTab({ isActive }: BrandsModelsTabProps) {
       />
 
       {brands.length === 0 ? (
-        <div className="text-center py-8 text-text-secondary">
-          {loading ? t('common.loading') : t('admin.brandsModelsTab.noBrands')}
-        </div>
+        loading ? (
+          <div role="status" aria-live="polite" aria-busy="true">
+            <span className="sr-only">{t('common.loading')}</span>
+            <AdminTableSkeleton />
+          </div>
+        ) : (
+          <div className="text-center py-8 text-text-secondary">
+            {t('admin.brandsModelsTab.noBrands')}
+          </div>
+        )
       ) : (
         <BrandsModelsTable
           brands={brands}

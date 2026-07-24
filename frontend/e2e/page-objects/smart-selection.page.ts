@@ -43,10 +43,7 @@ export class SmartSelectionPage {
     const option = this.page.getByTestId(`${this.testIds.optionPrefix}-${value}`);
     await expect(option).toBeVisible({ timeout: 20_000 });
 
-    const inputId = await option.getAttribute('id');
-    const clickTarget = inputId
-      ? this.page.locator(`label[for="${inputId}"]`).last()
-      : option.locator('xpath=ancestor::label[1]');
+    const clickTarget = option.locator('xpath=ancestor::label[1]');
 
     await clickTarget.scrollIntoViewIfNeeded();
     await clickTarget.click();

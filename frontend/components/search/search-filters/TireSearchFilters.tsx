@@ -205,7 +205,7 @@ export function TireSearchFilters({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="min-w-0">
           <label
-            className="block text-sm font-semibold mb-2 text-primary-900 truncate"
+            className="block text-sm font-medium mb-3 text-primary-900 truncate"
             title={t('searchFilters.tireVehicleTypeFilter')}
           >
             {t('searchFilters.tireVehicleTypeFilter')}
@@ -434,7 +434,7 @@ export function TireSearchFilters({
         </div>
         <div className="min-w-0">
           <h3
-            className="text-sm font-semibold mb-2 text-primary-900 truncate"
+            className="text-sm font-medium mb-3 text-primary-900 truncate"
             title={t('searchFilters.labels')}
           >
             {t('searchFilters.labels')}

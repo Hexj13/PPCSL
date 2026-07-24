@@ -557,8 +557,8 @@ PATCH /api/admin/users/:id/toggle-status # Enable/disable user (revokes refresh 
 
 ```http
 GET   /api/admin/brands-models        # Paginated brands with models; query: page, limit, query (search), vehicleType (car|truck|moto)
-POST  /api/admin/brands               # Create brand (name, vehicleTypes)
-PATCH /api/admin/brands/:id           # Update brand
+POST  /api/admin/brands               # Create brand (name, vehicleTypes, optional popularCountry)
+PATCH /api/admin/brands/:id           # Update brand (name, vehicleTypes, optional popularCountry)
 POST  /api/admin/models               # Create model (brandId, name, vehicleTypes)
 PATCH /api/admin/models/:id           # Update model
 PATCH /api/admin/brands/:id/archive   # Archive brand (and all its models); 409 if active listings exist
@@ -581,9 +581,11 @@ PATCH /api/admin/tire-brands/:id/unarchive
 PATCH /api/admin/tire-models/:id/unarchive
 ```
 
-Entities: `brands` and `vehicle_models` have `is_archived`, `name_normalized`, `vehicle_types` (array). `tire_brands` and `tire_models` have `is_archived`, `name_normalized`; models also `is_other`. Public catalog endpoints exclude archived records. Audit: `admin_audit_log` for vehicle and tire entities. After vehicle mutations, brands cache is invalidated; after tire mutations, tire Redis cache and listing search cache are invalidated.
+Entities: `brands` and `vehicle_models` have `is_archived`, `name_normalized`, `vehicle_types` (array). `brands` also has optional `popular_country` (`chinese` | `french` | `german` | `korean` | `japanese` | `american` | `italian`) for the search “Popular brands by country” chips. `tire_brands` and `tire_models` have `is_archived`, `name_normalized`; models also `is_other`. Public catalog endpoints exclude archived records. Audit: `admin_audit_log` for vehicle and tire entities. After vehicle mutations, brands cache is invalidated; after tire mutations, tire Redis cache and listing search cache are invalidated.
 
-**Frontend (Brands/Models tab):** Container `BrandsModelsTab` uses `usePaginatedData`, renders `BrandsModelsFilters` (search, vehicle or tire catalog toggle, vehicle type filter for cars/trucks/moto, tire listing-type filter when in tire mode, Add Brand / Add Model), `BrandsModelsTable` (expandable rows, archive/unarchive buttons, edit icons, copy ID), `ArchiveConfirmModal`, `BrandFormModal`, `ModelFormModal`, `TireBrandFormModal`, `TireModelFormModal`. Model form uses searchable brand dropdown with `renderMenuInPortal` so the list is not clipped by the modal. Duplicate name errors show inline (no global toast); API returns `code: 'DUPLICATE_NAME'` with 409.
+**Frontend (Brands/Models tab):** Container `BrandsModelsTab` uses `usePaginatedData`, renders `BrandsModelsFilters` (search, vehicle or tire catalog toggle, vehicle type filter for cars/trucks/moto, tire listing-type filter when in tire mode, Add Brand / Add Model), `BrandsModelsTable` (expandable rows, archive/unarchive buttons, edit icons, copy ID), `ArchiveConfirmModal`, `BrandFormModal`, `ModelFormModal`, `TireBrandFormModal`, `TireModelFormModal`. `BrandFormModal` includes a “Popular brands by country” dropdown (`popularCountry`, single optional value, clearable). Model form uses searchable brand dropdown with `renderMenuInPortal` so the list is not clipped by the modal. Duplicate name errors show inline (no global toast); API returns `code: 'DUPLICATE_NAME'` with 409.
+
+**Search (popular tab):** `PopularCountryBrandsFilter` renders country chips above popular brands when at least one brand in the current vehicle-type catalog has `popular_country`; clicking a chip adds that country’s brand IDs to `brand_ids`, clicking again removes them (respects `MAX_SEARCH_BRAND_SELECTIONS` when adding).
 
 ### Health
 

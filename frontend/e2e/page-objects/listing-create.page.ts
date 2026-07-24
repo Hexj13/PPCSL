@@ -149,7 +149,7 @@ export class ListingCreatePage {
   }
 
   async setCheckboxCheckedById(
-    checkboxId: string,
+    _checkboxId: string,
     testId: string,
     checked: boolean,
   ): Promise<void> {
@@ -157,7 +157,7 @@ export class ListingCreatePage {
     if ((await checkbox.isChecked()) === checked) {
       return;
     }
-    await this.page.locator(`label[for="${checkboxId}"]`).first().click();
+    await checkbox.locator('xpath=ancestor::label[1]').click();
     if (checked) {
       await expect(checkbox).toBeChecked();
       return;
@@ -170,8 +170,7 @@ export class ListingCreatePage {
     if ((await checkbox.isChecked()) === checked) {
       return;
     }
-    const container = checkbox.locator('xpath=ancestor::div[contains(@class,"group")]');
-    await container.locator('label').last().click();
+    await checkbox.locator('xpath=ancestor::label[1]').click();
     if (checked) {
       await expect(checkbox).toBeChecked();
       return;
@@ -181,8 +180,8 @@ export class ListingCreatePage {
 
   async getCustomCheckboxLabel(testId: string): Promise<string> {
     const checkbox = this.page.getByTestId(testId);
-    const container = checkbox.locator('xpath=ancestor::div[contains(@class,"group")]');
-    return (await container.locator('label').last().innerText()).trim();
+    const label = checkbox.locator('xpath=ancestor::label[1]');
+    return (await label.innerText()).trim();
   }
 
   async fillRequiredFields(): Promise<void> {

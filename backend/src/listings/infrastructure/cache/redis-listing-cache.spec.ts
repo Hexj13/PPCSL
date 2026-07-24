@@ -20,9 +20,9 @@ describe('RedisListingCache', () => {
     await cache.getPopularListings();
     await cache.setPopularListings({} as PopularListingsData);
 
-    expect(redisService.getJson).toHaveBeenCalledWith('cache:listings:popular:v2:car');
+    expect(redisService.getJson).toHaveBeenCalledWith('cache:listings:popular:v3:car');
     expect(redisService.setJson).toHaveBeenCalledWith(
-      'cache:listings:popular:v2:car',
+      'cache:listings:popular:v3:car',
       {},
       CACHE_TTL.listings.popular,
     );

@@ -55,6 +55,37 @@ export function usePaginatedData<T, F>(
   const showLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevDebouncedFiltersRef = useRef<F>(initialFilters);
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+
+  const hasNonDebouncedFilterChange = useCallback(
+    (prev: F, next: F): boolean => {
+      const debouncedKeys = new Set(debounceFilters ?? []);
+      const prevRecord = prev as Record<string, unknown>;
+      const nextRecord = next as Record<string, unknown>;
+      const allKeys = new Set([...Object.keys(prevRecord), ...Object.keys(nextRecord)]);
+      for (const key of allKeys) {
+        if (debouncedKeys.has(key as keyof F)) {
+          continue;
+        }
+        if (prevRecord[key] !== nextRecord[key]) {
+          return true;
+        }
+      }
+      return false;
+    },
+    [debounceFilters],
+  );
+
+  const clearStaleDataForFilterChange = useCallback(() => {
+    if (showLoadingTimeoutRef.current) {
+      clearTimeout(showLoadingTimeoutRef.current);
+      showLoadingTimeoutRef.current = null;
+    }
+    hasDataRef.current = false;
+    setData([]);
+    setLoading(true);
+  }, []);
 
   const load = useCallback(
     async (
@@ -128,13 +159,20 @@ export function usePaginatedData<T, F>(
     [fetchFn, limit, debouncedFilters, showLoadingDelay, onDataTransform],
   );
 
-  const setFilters = useCallback((newFilters: F | ((_prev: F) => F)) => {
-    setFiltersState((prev) => {
+  const setFilters = useCallback(
+    (newFilters: F | ((_prev: F) => F)) => {
+      const prev = filtersRef.current;
       const updated =
         typeof newFilters === 'function' ? (newFilters as (_prev: F) => F)(prev) : newFilters;
-      return updated;
-    });
-  }, []);
+
+      if (hasInitializedRef.current && hasNonDebouncedFilterChange(prev, updated)) {
+        clearStaleDataForFilterChange();
+      }
+
+      setFiltersState(updated);
+    },
+    [hasNonDebouncedFilterChange, clearStaleDataForFilterChange],
+  );
 
   useEffect(() => {
     if (!hasInitializedRef.current) {
@@ -161,6 +199,7 @@ export function usePaginatedData<T, F>(
         clearTimeout(debounceTimerRef.current);
       }
       debounceTimerRef.current = setTimeout(() => {
+        clearStaleDataForFilterChange();
         prevDebouncedFiltersRef.current = filters;
         setDebouncedFilters(filters);
       }, debounceMs);
@@ -174,7 +213,7 @@ export function usePaginatedData<T, F>(
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [filters, debounceFilters, debounceMs]);
+  }, [filters, debounceFilters, debounceMs, clearStaleDataForFilterChange]);
 
   useEffect(() => {
     if (!hasInitializedRef.current) return;

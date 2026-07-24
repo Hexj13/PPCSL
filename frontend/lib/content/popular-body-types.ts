@@ -1,21 +1,15 @@
-export type PopularBodyTypeCar =
-  | 'Hatchback'
-  | 'Wagon'
-  | 'SUV'
-  | 'Minivan'
-  | 'Sedan'
-  | 'Convertible';
+export type PopularBodyTypeCar = 'Hatchback' | 'Wagon' | 'SUV' | 'Minivan' | 'Sedan' | 'Pickup';
 
 export const POPULAR_BODY_TYPES_CAR: Array<{
   value: PopularBodyTypeCar;
   image: string;
 }> = [
-  { value: 'Hatchback', image: '/popular_body_types/cars/HATCHBACK.webp' },
-  { value: 'Wagon', image: '/popular_body_types/cars/WAGON.webp' },
   { value: 'SUV', image: '/popular_body_types/cars/SUV.webp' },
-  { value: 'Minivan', image: '/popular_body_types/cars/VAN.webp' },
   { value: 'Sedan', image: '/popular_body_types/cars/SEDAN.webp' },
-  { value: 'Convertible', image: '/popular_body_types/cars/CABRIO.webp' },
+  { value: 'Wagon', image: '/popular_body_types/cars/WAGON.webp' },
+  { value: 'Hatchback', image: '/popular_body_types/cars/HATCHBACK.webp' },
+  { value: 'Minivan', image: '/popular_body_types/cars/VAN.webp' },
+  { value: 'Pickup', image: '/popular_body_types/cars/PICKUP.webp' },
 ];
 
 export const POPULAR_BODY_TYPES_TRUCK: Array<{ value: string; image: string }> = [

@@ -1,11 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { Dropdown } from '@/components/common/Dropdown';
 import { Modal } from '@/components/modals/Modal';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { AdminBrand, CreateBrandPayload, UpdateBrandPayload } from '@/lib/api';
 import { adminApi } from '@/lib/api';
+import {
+  POPULAR_BRAND_COUNTRIES,
+  type PopularBrandCountry,
+} from '@/lib/content/popular-brand-countries';
 import { toast } from '@/lib/toast';
 import { Checkbox } from '@/ui';
 
@@ -24,17 +29,33 @@ export function BrandFormModal({ isOpen, onClose, onSuccess, brand }: BrandFormM
   const { t } = useTranslation();
   const [name, setName] = useState('');
   const [vehicleTypes, setVehicleTypes] = useState<('car' | 'truck' | 'moto' | 'tire')[]>(['car']);
+  const [popularCountry, setPopularCountry] = useState<PopularBrandCountry | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
+  const wasOpenRef = useRef(false);
 
   const isEdit = !!brand;
 
+  const popularCountryOptions = useMemo(
+    () => [
+      { value: '', label: t('admin.brandsModelsTab.popularCountryNone') },
+      ...POPULAR_BRAND_COUNTRIES.map((country) => ({
+        value: country,
+        label: t(`admin.brandsModelsTab.popularCountry.${country}`),
+      })),
+    ],
+    [t],
+  );
+
   useEffect(() => {
-    if (isOpen) {
-      setName(brand?.name ?? '');
-      setVehicleTypes(brand?.vehicleTypes?.length ? [...brand.vehicleTypes] : ['car']);
-      setNameError(null);
-    }
+    const justOpened = isOpen && !wasOpenRef.current;
+    wasOpenRef.current = isOpen;
+    if (!justOpened) return;
+
+    setName(brand?.name ?? '');
+    setVehicleTypes(brand?.vehicleTypes?.length ? [...brand.vehicleTypes] : ['car']);
+    setPopularCountry(brand?.popularCountry ?? null);
+    setNameError(null);
   }, [isOpen, brand]);
 
   const toggleType = (type: 'car' | 'truck' | 'moto' | 'tire') => {
@@ -44,6 +65,16 @@ export function BrandFormModal({ isOpen, onClose, onSuccess, brand }: BrandFormM
     });
   };
 
+  const handlePopularCountryChange = (value: string) => {
+    if (value === '') {
+      setPopularCountry(null);
+      return;
+    }
+    if ((POPULAR_BRAND_COUNTRIES as readonly string[]).includes(value)) {
+      setPopularCountry(value as PopularBrandCountry);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setNameError(null);
@@ -51,10 +82,18 @@ export function BrandFormModal({ isOpen, onClose, onSuccess, brand }: BrandFormM
     setSubmitting(true);
     try {
       if (isEdit && brand) {
-        const payload: UpdateBrandPayload = { name: name.trim(), vehicleTypes };
+        const payload: UpdateBrandPayload = {
+          name: name.trim(),
+          vehicleTypes,
+          popularCountry,
+        };
         await adminApi.updateBrand(brand.id, payload);
       } else {
-        const payload: CreateBrandPayload = { name: name.trim(), vehicleTypes };
+        const payload: CreateBrandPayload = {
+          name: name.trim(),
+          vehicleTypes,
+          popularCountry,
+        };
         await adminApi.createBrand(payload);
       }
       toast.success(t('admin.brandsModelsTab.saveSuccess'));
@@ -130,6 +169,19 @@ export function BrandFormModal({ isOpen, onClose, onSuccess, brand }: BrandFormM
               />
             ))}
           </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-primary-900 mb-1">
+            {t('admin.brandsModelsTab.fieldPopularCountry')}
+          </label>
+          <Dropdown
+            value={popularCountry ?? ''}
+            onChange={handlePopularCountryChange}
+            options={popularCountryOptions}
+            placeholder={t('admin.brandsModelsTab.popularCountryNone')}
+            renderMenuInPortal
+            className="w-full"
+          />
         </div>
         <div className="flex flex-col sm:flex-row gap-3 pt-2 shrink-0">
           <AdminActionButton

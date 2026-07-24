@@ -213,7 +213,7 @@ export function ListingsTab({ isActive, initialSearchQuery = '' }: ListingsTabPr
     [selectedListingId, t, reload, loadStatusCounts, filters.searchQuery],
   );
 
-  const showInitialSkeleton = showSkeleton && listings.length === 0;
+  const showInitialSkeleton = listings.length === 0 && (loading || showSkeleton);
 
   return (
     <div>

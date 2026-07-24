@@ -17,7 +17,7 @@ export class RedisListingCache implements IListingCache {
   constructor(private readonly redisService: RedisService) {}
 
   private popularListingsKey(): string {
-    return generateCacheKey({ prefix: CACHE_PREFIXES.listingsPopular, parts: ['v2', 'car'] });
+    return generateCacheKey({ prefix: CACHE_PREFIXES.listingsPopular, parts: ['v3', 'car'] });
   }
 
   async getSearchResults(

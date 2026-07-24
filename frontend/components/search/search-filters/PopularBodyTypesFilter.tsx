@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef, useState, useEffect, useMemo, memo } from 'react';
+import { useMemo, memo } from 'react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { getPopularBodyTypes } from '@/lib/content/popular-body-types';
@@ -20,69 +20,6 @@ export function PopularBodyTypesFilter({
   const { t } = useTranslation();
   const POPULAR_BODY_TYPES = useMemo(() => getPopularBodyTypes(vehicleType), [vehicleType]);
 
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const checkScrollability = useRef(() => {
-    if (!scrollContainerRef.current) return;
-
-    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-    setCanScrollLeft(scrollLeft > 0);
-    const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 1;
-    setCanScrollRight(!isAtEnd);
-  }).current;
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    requestAnimationFrame(() => {
-      if (container) {
-        container.scrollLeft = 0;
-        checkScrollability();
-      }
-    });
-
-    const handleScroll = () => {
-      checkScrollability();
-    };
-
-    const resizeObserver = new ResizeObserver(() => {
-      requestAnimationFrame(() => {
-        checkScrollability();
-      });
-    });
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    resizeObserver.observe(container);
-
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      resizeObserver.disconnect();
-    };
-  }, [vehicleType, POPULAR_BODY_TYPES, checkScrollability]);
-
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = scrollContainerRef.current.clientWidth * 0.8;
-      scrollContainerRef.current.scrollBy({
-        left: -scrollAmount,
-        behavior: 'smooth',
-      });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = scrollContainerRef.current.clientWidth * 0.8;
-      scrollContainerRef.current.scrollBy({
-        left: scrollAmount,
-        behavior: 'smooth',
-      });
-    }
-  };
-
   const handleTileClick = (bodyType: string) => {
     const isSelected = selectedBodyTypes.includes(bodyType);
 
@@ -95,7 +32,7 @@ export function PopularBodyTypesFilter({
 
   return (
     <div className="mt-6 mb-4 select-none">
-      <label className="block text-sm font-semibold mb-2 text-primary-900 flex items-center gap-2">
+      <label className="block text-sm font-medium mb-3 text-primary-900 flex items-center gap-2">
         <svg
           width="16"
           height="16"
@@ -121,167 +58,123 @@ export function PopularBodyTypesFilter({
         {t('searchFilters.popularBodyTypes')}
       </label>
 
-      <div className="relative">
-        {canScrollLeft && (
-          <button
-            type="button"
-            onClick={scrollLeft}
-            className="hidden lg:flex absolute left-0 top-[55px] -translate-y-1/2 -translate-x-4 z-30 w-10 h-10 items-center justify-center bg-bg-secondary search-control-border rounded-full hover-only:hover:bg-primary-500/10 transition-colors duration-200 shadow-lg"
-            aria-label={t('common.scrollLeft')}
-          >
-            <svg
-              className="w-5 h-5 text-text-secondary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-        )}
-        {canScrollRight && (
-          <button
-            type="button"
-            onClick={scrollRight}
-            className="hidden lg:flex absolute right-0 top-[55px] -translate-y-1/2 translate-x-4 z-30 w-10 h-10 items-center justify-center bg-bg-secondary search-control-border rounded-full hover-only:hover:bg-primary-500/10 transition-colors duration-200 shadow-lg"
-            aria-label={t('common.scrollRight')}
-          >
-            <svg
-              className="w-5 h-5 text-text-secondary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        )}
-        <div
-          ref={scrollContainerRef}
-          className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:flex lg:gap-4 lg:overflow-x-auto lg:scrollbar-hide lg:justify-between"
-        >
-          {POPULAR_BODY_TYPES.map(({ value, image }) => {
-            const isSelected = selectedBodyTypes.includes(value);
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4">
+        {POPULAR_BODY_TYPES.map(({ value, image }) => {
+          const isSelected = selectedBodyTypes.includes(value);
 
-            return (
-              <div
-                key={`${vehicleType}-${value}`}
-                className="flex flex-col items-center gap-2 w-full min-w-0 min-h-[152px] lg:shrink-0 lg:w-[180px] lg:flex-1 lg:min-w-0 lg:max-w-[210px]"
-              >
-                <button
-                  type="button"
-                  onClick={() => handleTileClick(value)}
-                  className={`
+          return (
+            <div
+              key={`${vehicleType}-${value}`}
+              className="flex flex-col items-center gap-2 w-full min-w-0 min-h-[152px]"
+            >
+              <button
+                type="button"
+                onClick={() => handleTileClick(value)}
+                className={`
                   relative w-full h-[110px] flex items-center justify-center p-2 rounded-lg
                   outline-hidden select-none search-control-border transition-colors duration-200 ${vehicleType === 'moto' ? 'md:overflow-hidden xl:overflow-visible' : ''}
                   ${isSelected ? 'is-selected' : ''}
                 `}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.blur();
-                  }}
-                  style={{
-                    background: '#F4F4F4',
-                  }}
-                  aria-pressed={isSelected}
-                  aria-label={`${t(`vehicleOptions.bodyType.${value}`)}${isSelected ? ', selected' : ''}`}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }}
+                style={{
+                  background: '#F4F4F4',
+                }}
+                aria-pressed={isSelected}
+                aria-label={`${t(`vehicleOptions.bodyType.${value}`)}${isSelected ? ', selected' : ''}`}
+              >
+                <div
+                  className={`relative w-full h-full flex items-center justify-center ${vehicleType === 'moto' ? 'overflow-hidden' : ''}`}
                 >
-                  <div
-                    className={`relative w-full h-full flex items-center justify-center ${vehicleType === 'moto' ? 'overflow-hidden' : ''}`}
-                  >
-                    {image ? (
-                      <Image
-                        key={image}
-                        src={image}
-                        alt={t(`vehicleOptions.bodyType.${value}`)}
-                        width={value === 'ATV' ? 260 : 180}
-                        height={value === 'ATV' ? 260 : 180}
-                        className={`object-contain max-md:max-w-full max-md:max-h-full select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'max-w-full max-h-full scale-[1.2]' : ''} ${value === 'Minivan' ? 'scale-[1.15] mt-2' : ''} ${vehicleType === 'car' && value !== 'Convertible' && value !== 'Minivan' ? 'scale-[1.2]' : ''} ${vehicleType === 'moto' && value !== 'ATV' ? 'max-w-full max-h-full scale-[1.2]' : ''}`}
-                        sizes={
-                          value === 'ATV'
-                            ? '(max-width: 768px) 200px, (max-width: 1024px) 220px, 240px'
-                            : '(max-width: 768px) 140px, (max-width: 1024px) 160px, 180px'
+                  {image ? (
+                    <Image
+                      key={image}
+                      src={image}
+                      alt={t(`vehicleOptions.bodyType.${value}`)}
+                      width={value === 'ATV' ? 260 : 180}
+                      height={value === 'ATV' ? 260 : 180}
+                      className={`object-contain max-md:max-w-full max-md:max-h-full select-none transition-opacity duration-200 ${value === 'Wagon' ? 'object-top -mt-4' : ''} ${value === 'ATV' ? 'max-w-full max-h-full scale-[1.2]' : ''} ${value === 'Minivan' ? 'scale-[1.11] mt-2' : ''} ${vehicleType === 'car' && value !== 'Minivan' ? (value === 'SUV' ? 'scale-[1.1]' : 'scale-[1.2]') : ''} ${vehicleType === 'moto' && value !== 'ATV' ? 'max-w-full max-h-full scale-[1.2]' : ''}`}
+                      sizes={
+                        value === 'ATV'
+                          ? '(max-width: 768px) 200px, (max-width: 1024px) 220px, 240px'
+                          : '(max-width: 768px) 140px, (max-width: 1024px) 160px, 180px'
+                      }
+                      loading="lazy"
+                      draggable={false}
+                      priority={false}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        const parent = target.parentElement;
+                        if (parent && !parent.querySelector('svg')) {
+                          target.style.display = 'none';
+                          const iconSvg = document.createElementNS(
+                            'http://www.w3.org/2000/svg',
+                            'svg',
+                          );
+                          iconSvg.setAttribute('class', 'w-full h-full text-text-secondary/50');
+                          iconSvg.setAttribute('viewBox', '0 0 24 24');
+                          iconSvg.setAttribute('fill', 'currentColor');
+                          const path = document.createElementNS(
+                            'http://www.w3.org/2000/svg',
+                            'path',
+                          );
+                          path.setAttribute(
+                            'd',
+                            'M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z',
+                          );
+                          iconSvg.appendChild(path);
+                          parent.appendChild(iconSvg);
                         }
-                        loading="lazy"
-                        draggable={false}
-                        priority={false}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          const parent = target.parentElement;
-                          if (parent && !parent.querySelector('svg')) {
-                            target.style.display = 'none';
-                            const iconSvg = document.createElementNS(
-                              'http://www.w3.org/2000/svg',
-                              'svg',
-                            );
-                            iconSvg.setAttribute('class', 'w-full h-full text-text-secondary/50');
-                            iconSvg.setAttribute('viewBox', '0 0 24 24');
-                            iconSvg.setAttribute('fill', 'currentColor');
-                            const path = document.createElementNS(
-                              'http://www.w3.org/2000/svg',
-                              'path',
-                            );
-                            path.setAttribute(
-                              'd',
-                              'M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z',
-                            );
-                            iconSvg.appendChild(path);
-                            parent.appendChild(iconSvg);
-                          }
-                        }}
-                      />
-                    ) : (
-                      <svg
-                        className="w-full h-full text-text-secondary/50"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
-                      </svg>
-                    )}
-                  </div>
-                  {isSelected && (
-                    <>
-                      <div
-                        className="absolute inset-0 rounded-lg pointer-events-none"
-                        style={{
-                          borderRadius: 'inherit',
-                          background:
-                            'radial-gradient(ellipse 100% 80% at 50% 100%, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
-                        }}
-                      />
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none z-10">
-                        <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center search-control-border">
-                          <svg
-                            className="w-3 h-3 text-primary-900"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={3}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-                    </>
+                      }}
+                    />
+                  ) : (
+                    <svg
+                      className="w-full h-full text-text-secondary/50"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
+                    </svg>
                   )}
-                </button>
-                <span className="text-xs md:text-sm font-medium text-primary-900 text-center select-none h-[32px] flex items-center justify-center">
-                  {t(`vehicleOptions.bodyType.${value}`)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+                </div>
+                {isSelected && (
+                  <>
+                    <div
+                      className="absolute inset-0 rounded-lg pointer-events-none"
+                      style={{
+                        borderRadius: 'inherit',
+                        background:
+                          'radial-gradient(ellipse 100% 80% at 50% 100%, rgba(64, 145, 107, 0.25) 0%, rgba(64, 145, 107, 0.15) 40%, rgba(64, 145, 107, 0.05) 100%)',
+                      }}
+                    />
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-none z-10">
+                      <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center search-control-border">
+                        <svg
+                          className="w-3 h-3 text-primary-900"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </button>
+              <span className="text-xs md:text-sm font-medium text-primary-900 text-center select-none h-[32px] flex items-center justify-center">
+                {t(`vehicleOptions.bodyType.${value}`)}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

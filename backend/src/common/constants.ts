@@ -4,6 +4,18 @@ export const listingStatuses = ['Active', 'Paused', 'Closed'] as const;
 
 export const listingCategories = ['vehicle', 'tire'] as const;
 
+export const POPULAR_BRAND_COUNTRIES = [
+  'chinese',
+  'french',
+  'german',
+  'korean',
+  'japanese',
+  'american',
+  'italian',
+] as const;
+
+export type PopularBrandCountry = (typeof POPULAR_BRAND_COUNTRIES)[number];
+
 export const tireVehicleTypes = ['car', 'truck', 'moto'] as const;
 
 export const tireSeasons = [

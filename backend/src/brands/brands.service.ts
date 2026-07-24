@@ -41,7 +41,14 @@ export class BrandsService {
 
     const queryBuilder = this.brandsRepository
       .createQueryBuilder('brand')
-      .select(['brand.id', 'brand.name', 'brand.logoUrl', 'brand.order', 'brand.vehicle_types'])
+      .select([
+        'brand.id',
+        'brand.name',
+        'brand.logoUrl',
+        'brand.order',
+        'brand.vehicle_types',
+        'brand.popular_country',
+      ])
       .where('brand.is_archived = :archived', { archived: false });
 
     if (vehicleType) {
