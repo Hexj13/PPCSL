@@ -37,12 +37,19 @@ function getInitialBrandsForKey(brandsKey: string, initialBrands?: Brand[] | nul
   return [];
 }
 
-function fetchBrands(vehicleType: VehicleTypeOption): Promise<Brand[]> {
+function fetchBrands(
+  vehicleType: VehicleTypeOption,
+  options?: { force?: boolean },
+): Promise<Brand[]> {
   const key = getBrandsKey(vehicleType);
-  const cached = brandsCache.get(key);
-  if (cached) return Promise.resolve(cached);
-  const existing = brandsPromiseCache.get(key);
-  if (existing) return existing;
+  if (!options?.force) {
+    const cached = brandsCache.get(key);
+    if (cached) return Promise.resolve(cached);
+    const existing = brandsPromiseCache.get(key);
+    if (existing) return existing;
+  } else {
+    brandsPromiseCache.delete(key);
+  }
   const promise = brandsApi
     .getAll(vehicleType)
     .then((res) => {
@@ -51,8 +58,12 @@ function fetchBrands(vehicleType: VehicleTypeOption): Promise<Brand[]> {
       return sorted;
     })
     .catch(() => {
-      brandsPromiseCache.delete(key);
-      return [];
+      return brandsCache.get(key) ?? [];
+    })
+    .finally(() => {
+      if (brandsPromiseCache.get(key) === promise) {
+        brandsPromiseCache.delete(key);
+      }
     });
   brandsPromiseCache.set(key, promise);
   return promise;
@@ -117,10 +128,10 @@ export function useBrandsAndModels({
     if (cached) {
       setBrands(cached);
       setLoadingBrands(false);
-      return;
+    } else {
+      setLoadingBrands(true);
     }
-    setLoadingBrands(true);
-    fetchBrands(vehicleType)
+    fetchBrands(vehicleType, { force: true })
       .then((data) => {
         if (!cancelled) {
           startTransition(() => {

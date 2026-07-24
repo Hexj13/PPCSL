@@ -90,7 +90,7 @@ export const fetchBrands = cache(
     try {
       const qs = vehicleType ? `?vehicleType=${encodeURIComponent(vehicleType)}` : '';
       const response = await fetch(`${API_URL}/api/brands${qs}`, {
-        next: { revalidate: 3600 },
+        next: { revalidate: 30 },
       });
       if (!response.ok) return [];
       return response.json();
