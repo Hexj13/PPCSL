@@ -42,6 +42,7 @@ function baseListing(overrides: Partial<Listing> = {}): Listing {
     description_ro: 'RO text',
     description_ru: 'RU text',
     registration_type: 'Local',
+    availability: 'InStock',
     equipment: ['abs', 'esp'],
     condition: 'Good',
     is_new: false,

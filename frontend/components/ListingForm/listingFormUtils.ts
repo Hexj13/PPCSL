@@ -2,7 +2,12 @@ import type { Listing } from '@/lib/api';
 import { VEHICLE_TYPE_BY_BODY_TYPE } from '@/lib/constants';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import type { Currency } from '@/lib/types';
-import { ConditionTypeEnum, ListingStatusEnum, RegistrationTypeEnum } from '@/lib/types';
+import {
+  AvailabilityEnum,
+  ConditionTypeEnum,
+  ListingStatusEnum,
+  RegistrationTypeEnum,
+} from '@/lib/types';
 import { getCountry, horsepowerToKw, sortOptionsByLabel } from '@/lib/utils';
 
 import type { ListingFormData } from './listingFormTypes';
@@ -24,7 +29,11 @@ const EMPTY_VEHICLE_FORM = {
   drive_type: '',
   body_type: '',
   color: '',
+  interior_color: '',
   doors: '',
+  seats: '',
+  country_of_origin: '',
+  owners_count: '',
 };
 
 function getEmptyFormData(): ListingFormData {
@@ -45,6 +54,7 @@ function getEmptyFormData(): ListingFormData {
     is_new: false,
     vin: '',
     condition: ConditionTypeEnum.Undamaged,
+    availability: AvailabilityEnum.InStock,
     registration_type: RegistrationTypeEnum.Local,
     horsepower: '',
     power_kw: '',
@@ -80,7 +90,11 @@ function getInitialVehicleFormData(vehicle: Listing['vehicle']): ListingFormData
     drive_type: vehicle.drive_type || '',
     body_type: vehicle.body_type || '',
     color: vehicle.color || '',
+    interior_color: vehicle.interior_color || '',
     doors: vehicle.doors?.toString() || '',
+    seats: vehicle.seats?.toString() || '',
+    country_of_origin: vehicle.country_of_origin || '',
+    owners_count: vehicle.owners_count != null ? String(vehicle.owners_count) : '',
   };
 }
 
@@ -125,6 +139,7 @@ export function getInitialFormData(initialData?: Listing): ListingFormData {
     is_new: initialData.is_new || false,
     vin: initialData.vin || '',
     condition: initialData.condition || ConditionTypeEnum.Undamaged,
+    availability: initialData.availability ?? '',
     registration_type: initialData.registration_type || RegistrationTypeEnum.Local,
     horsepower: initialData.horsepower?.toString() || '',
     power_kw: getInitialPowerKw(initialData),

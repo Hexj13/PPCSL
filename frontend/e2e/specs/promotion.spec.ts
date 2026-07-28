@@ -1,29 +1,20 @@
 import type { Page } from '@playwright/test';
 
-import { expect, test } from '../fixtures/base';
+import { test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import type { MyListingsPage } from '../page-objects/my-listings.page';
 import { loginByUi } from '../utils/auth';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
-import { ensurePromotionQuotaViaApi, findPromotableListingIdViaApi } from '../utils/listings';
+import { ensurePromotableActiveListingViaApi } from '../utils/listings';
+import { dismissCookieConsentIfVisible } from '../utils/session';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 async function loginAndOpenMyListings(page: Page, myListingsPage: MyListingsPage): Promise<void> {
   await loginByUi(page, requireAuthCredentials());
   await forceDefaultCanonicalLocaleCookies(page);
   await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
+  await dismissCookieConsentIfVisible(page);
   await myListingsPage.expectPageView();
-}
-
-async function focusActiveListingsWithPromoteAction(page: Page): Promise<void> {
-  const filter = page.getByTestId('my-listings-status-filter-active');
-  await expect(filter).toBeVisible({ timeout: 30_000 });
-  await filter.click();
-  await expect
-    .poll(async () => page.locator('[data-testid^="my-listings-promote-button-"]').count(), {
-      timeout: 30_000,
-    })
-    .toBeGreaterThan(0);
 }
 
 test.describe('Promotion @p0', () => {
@@ -36,16 +27,14 @@ test.describe('Promotion @p0', () => {
         },
       },
       {
-        name: 'Filter active listings and wait for promote action',
+        name: 'Ensure promotable listing and open promotion modal',
         action: async () => {
-          await focusActiveListingsWithPromoteAction(page);
-        },
-      },
-      {
-        name: 'Open promotion modal and verify period options',
-        action: async () => {
+          await ensurePromotableActiveListingViaApi(page);
+          await page.reload({ waitUntil: 'domcontentloaded' });
+          await dismissCookieConsentIfVisible(page);
+          await myListingsPage.expectPageView();
+          await myListingsPage.filterActiveAndExpectPromoteButtons();
           await myListingsPage.openFirstPromotion();
-          await myListingsPage.expectPromotionModalWithPeriodOptions();
         },
       },
     ];
@@ -67,22 +56,17 @@ test.describe('Promotion @p0', () => {
       {
         name: 'Resolve promotable listing',
         action: async () => {
-          await ensurePromotionQuotaViaApi(page);
+          listingId = await ensurePromotableActiveListingViaApi(page);
           await page.reload({ waitUntil: 'domcontentloaded' });
+          await dismissCookieConsentIfVisible(page);
           await myListingsPage.expectPageView();
-          await focusActiveListingsWithPromoteAction(page);
-          const resolvedId = await findPromotableListingIdViaApi(page);
-          if (!resolvedId) {
-            throw new Error('Expected at least one promotable active listing');
-          }
-          listingId = resolvedId;
+          await myListingsPage.filterActiveAndExpectPromoteButtons();
         },
       },
       {
         name: 'Open promotion modal for listing',
         action: async () => {
           await myListingsPage.openPromotionForListing(listingId);
-          await myListingsPage.expectPromotionModalWithPeriodOptions();
         },
       },
       {

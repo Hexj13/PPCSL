@@ -90,6 +90,7 @@ export const useAuthStore = create<AuthState>()(
           });
           useFavoritesStore.getState().clear();
           useComparisonStore.getState().clear();
+          navigator.serviceWorker?.controller?.postMessage({ type: 'CLEAR_USER_CACHE' });
         }
       },
       initAuth: () => {

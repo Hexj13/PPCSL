@@ -27,6 +27,7 @@ import {
 
 import * as constants from '../../../common/constants';
 import {
+  Availability,
   ConditionType,
   Currency,
   ListingCategory,
@@ -282,6 +283,16 @@ export class CreateListingDto {
     message: 'validation.registrationType',
   })
   registration_type?: RegistrationType;
+
+  @ApiPropertyOptional({
+    example: 'InStock',
+    enum: constants.availabilityTypes,
+    description: 'Vehicle availability (vehicle listings only)',
+  })
+  @ValidateIf((o) => inferListingCategoryFromPayload(o) === ListingCategory.Vehicle)
+  @IsOptional()
+  @IsEnum(Availability, { message: 'validation.availabilityTypeEnum' })
+  availability?: Availability;
 
   @ApiPropertyOptional({
     example: 150,

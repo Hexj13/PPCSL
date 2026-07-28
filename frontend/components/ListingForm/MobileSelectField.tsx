@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useState, useCallback } from 'react';
 
 import { BottomSheet } from '@/components/common/BottomSheet';
 import { Dropdown } from '@/components/common/Dropdown';
@@ -12,6 +12,7 @@ import { BOTTOM_SHEET_LIST_SCROLL_CLASS } from '@/lib/bottom-sheet-layout';
 import { RequiredAsterisk } from './RequiredAsterisk';
 
 const RENDER_CHUNK = 50;
+const CLEAR_OPTION_VALUE = '__clear_selection__';
 
 function useIsMdUp(): boolean {
   const [matches, setMatches] = useState(false);
@@ -25,6 +26,78 @@ function useIsMdUp(): boolean {
   }, []);
 
   return matches;
+}
+
+function MobileSelectChevron() {
+  return (
+    <svg
+      className="h-5 w-5 shrink-0 text-primary-700"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+}
+
+function MobileSelectTriggerContent({
+  mobileValueOnlyTrigger,
+  triggerIcon,
+  mobileTriggerPrimaryText,
+  sheetTitle,
+  requiredAsteriskFilled,
+  displaySummary,
+}: {
+  mobileValueOnlyTrigger: boolean;
+  triggerIcon?: React.ReactNode;
+  mobileTriggerPrimaryText: string;
+  sheetTitle: string;
+  requiredAsteriskFilled?: boolean;
+  displaySummary: string;
+}) {
+  if (mobileValueOnlyTrigger) {
+    return (
+      <>
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          {triggerIcon ? (
+            <span className="shrink-0 text-primary-700 [&_svg]:block" aria-hidden>
+              {triggerIcon}
+            </span>
+          ) : null}
+          <span className="min-w-0 flex-1 truncate text-sm font-semibold text-primary-900">
+            {mobileTriggerPrimaryText}
+          </span>
+        </span>
+        <MobileSelectChevron />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <span className="flex min-w-0 shrink items-center gap-2">
+        {triggerIcon ? (
+          <span className="shrink-0 text-primary-700 [&_svg]:block" aria-hidden>
+            {triggerIcon}
+          </span>
+        ) : null}
+        <span className="flex min-w-0 items-baseline gap-1.5">
+          <span className="truncate text-sm font-semibold text-primary-900">{sheetTitle}</span>
+          {requiredAsteriskFilled !== undefined ? (
+            <RequiredAsterisk filled={requiredAsteriskFilled} />
+          ) : null}
+        </span>
+      </span>
+      <span className="flex min-w-0 flex-1 items-center justify-end gap-2">
+        {displaySummary.trim() !== '' ? (
+          <span className="truncate text-sm text-text-primary">{displaySummary}</span>
+        ) : null}
+        <MobileSelectChevron />
+      </span>
+    </>
+  );
 }
 
 export interface MobileSelectFieldProps {
@@ -45,6 +118,7 @@ export interface MobileSelectFieldProps {
   requiredAsteriskFilled?: boolean;
   rightIcon?: React.ReactNode;
   mobileValueOnlyTrigger?: boolean;
+  clearable?: boolean;
 }
 
 export function MobileSelectField({
@@ -65,6 +139,7 @@ export function MobileSelectField({
   requiredAsteriskFilled,
   rightIcon,
   mobileValueOnlyTrigger = false,
+  clearable = false,
 }: MobileSelectFieldProps) {
   const isMdUp = useIsMdUp();
   const { t } = useTranslation();
@@ -131,6 +206,10 @@ export function MobileSelectField({
 
   const handleSelectOption = (optionValue: string) => {
     if (optionValue.startsWith('__category__')) return;
+    if (optionValue === CLEAR_OPTION_VALUE) {
+      setDraftValue('');
+      return;
+    }
     setDraftValue((current) => (current === optionValue ? '' : optionValue));
   };
 
@@ -146,77 +225,102 @@ export function MobileSelectField({
     closeSheet();
   };
 
-  const renderOptionList = () =>
-    optionsToRender.length > 0 ? (
-      optionsToRender.map((option, index) => {
-        const normalizedValue = draftValue ?? '';
-        const selected =
-          option.value === '' ? normalizedValue === '' : option.value === normalizedValue;
-        const isCategory =
-          Boolean(option.category) && (!option.value || option.value.startsWith('__category__'));
-        const optionDisabled = Boolean(normalizedValue) && !selected;
-        const prevOption = index > 0 ? optionsToRender[index - 1] : null;
-        const showCategoryHeader =
-          Boolean(option.category) && prevOption?.category !== option.category && !isCategory;
+  const clearDisabled = !(draftValue ?? '');
+  const clearLabel = t('common.clearSelection');
 
-        if (isCategory) {
-          return (
-            <div
-              key={`category-${option.category}-${index}`}
-              className="pointer-events-none sticky top-0 z-10 border-b border-primary-500/20 bg-bg-base px-4 py-2 text-sm font-semibold text-primary-500"
-            >
-              {option.label}
-            </div>
-          );
-        }
-
-        return (
-          <React.Fragment key={option.value || `option-${index}`}>
-            {showCategoryHeader ? (
-              <div className="pointer-events-none sticky top-0 z-10 border-b border-primary-500/20 bg-bg-base px-4 py-2 text-sm font-semibold text-primary-500">
-                {option.category}
-              </div>
-            ) : null}
-            <button
-              type="button"
-              disabled={optionDisabled}
-              onClick={() => handleSelectOption(option.value)}
-              data-testid={dataTestId ? `${dataTestId}-option-${index}` : undefined}
-              className={`flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                optionDisabled ? '' : 'hover:bg-primary-500/10'
-              } ${
-                selected ? 'bg-primary-500/15 font-semibold' : ''
-              } ${option.category ? 'pl-8' : ''}`}
-            >
-              <span className="flex min-w-0 flex-1 items-center gap-2">
-                <MultiSelectOptionLeadingLogo src={option.logoSrc} />
-                <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
-                  {option.label}
-                </span>
-              </span>
-              {selected ? (
-                <svg
-                  className="h-5 w-5 shrink-0 text-primary-900"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  aria-hidden
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ) : null}
-            </button>
-          </React.Fragment>
-        );
-      })
-    ) : (
-      <div className="px-4 py-6 text-center text-sm text-text-secondary">
-        {t('searchFilters.noResults')}
-      </div>
+  const renderClearOption = () => {
+    if (!clearable) return null;
+    return (
+      <>
+        <button
+          type="button"
+          disabled={clearDisabled}
+          onClick={() => handleSelectOption(CLEAR_OPTION_VALUE)}
+          data-testid={dataTestId ? `${dataTestId}-clear-selection` : undefined}
+          className="flex w-full items-center px-4 py-3.5 text-left text-sm text-text-primary transition-colors disabled:cursor-not-allowed disabled:opacity-50 hover:enabled:bg-primary-500/10"
+        >
+          {clearLabel}
+        </button>
+        <div className="my-0.5 border-b border-primary-500/20" aria-hidden />
+      </>
     );
+  };
+
+  const renderOptionList = () => (
+    <>
+      {renderClearOption()}
+      {optionsToRender.length > 0 ? (
+        optionsToRender.map((option, index) => {
+          const normalizedValue = draftValue ?? '';
+          const selected =
+            option.value === '' ? normalizedValue === '' : option.value === normalizedValue;
+          const isCategory =
+            Boolean(option.category) && (!option.value || option.value.startsWith('__category__'));
+          const optionDisabled = Boolean(normalizedValue) && !selected;
+          const prevOption = index > 0 ? optionsToRender[index - 1] : null;
+          const showCategoryHeader =
+            Boolean(option.category) && prevOption?.category !== option.category && !isCategory;
+
+          if (isCategory) {
+            return (
+              <div
+                key={`category-${option.category}-${index}`}
+                className="pointer-events-none sticky top-0 z-10 border-b border-primary-500/20 bg-bg-base px-4 py-2 text-sm font-semibold text-primary-500"
+              >
+                {option.label}
+              </div>
+            );
+          }
+
+          return (
+            <React.Fragment key={option.value || `option-${index}`}>
+              {showCategoryHeader ? (
+                <div className="pointer-events-none sticky top-0 z-10 border-b border-primary-500/20 bg-bg-base px-4 py-2 text-sm font-semibold text-primary-500">
+                  {option.category}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                disabled={optionDisabled}
+                onClick={() => handleSelectOption(option.value)}
+                data-testid={dataTestId ? `${dataTestId}-option-${index}` : undefined}
+                className={`flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                  optionDisabled ? '' : 'hover:bg-primary-500/10'
+                } ${
+                  selected ? 'bg-primary-500/15 font-semibold' : ''
+                } ${option.category ? 'pl-8' : ''}`}
+              >
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <MultiSelectOptionLeadingLogo src={option.logoSrc} />
+                  <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
+                    {option.label}
+                  </span>
+                </span>
+                {selected ? (
+                  <svg
+                    className="h-5 w-5 shrink-0 text-primary-900"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    aria-hidden
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ) : null}
+              </button>
+            </React.Fragment>
+          );
+        })
+      ) : (
+        <div className="px-4 py-6 text-center text-sm text-text-secondary">
+          {t('searchFilters.noResults')}
+        </div>
+      )}
+    </>
+  );
 
   const triggerIcon = leadingIcon ?? rightIcon;
   const mobileTriggerPrimaryText =
@@ -234,6 +338,19 @@ export function MobileSelectField({
     requiredAsteriskFilled !== undefined ? (
       <RequiredAsterisk filled={requiredAsteriskFilled} />
     ) : undefined;
+
+  const handleDesktopClear = useCallback(() => onChange(''), [onChange]);
+  const desktopClearOption = useMemo(
+    () =>
+      clearable
+        ? {
+            label: clearLabel,
+            disabled: !value,
+            onSelect: handleDesktopClear,
+          }
+        : undefined,
+    [clearable, clearLabel, value, handleDesktopClear],
+  );
 
   if (isMdUp) {
     return (
@@ -254,6 +371,7 @@ export function MobileSelectField({
           fieldLabel={sheetTitle}
           fieldLabelIcon={leadingIcon}
           fieldLabelTrailing={fieldLabelTrailing}
+          clearOption={desktopClearOption}
         />
       </div>
     );
@@ -271,71 +389,14 @@ export function MobileSelectField({
         aria-expanded={isSheetOpen}
         className={`flex h-12 w-full items-center justify-between gap-3 rounded-lg bg-bg-base px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${triggerBorder} ${buttonClassName}`}
       >
-        {mobileValueOnlyTrigger ? (
-          <>
-            <span className="flex min-w-0 flex-1 items-center gap-2">
-              {triggerIcon ? (
-                <span className="shrink-0 text-primary-700 [&_svg]:block" aria-hidden>
-                  {triggerIcon}
-                </span>
-              ) : null}
-              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-primary-900">
-                {mobileTriggerPrimaryText}
-              </span>
-            </span>
-            <svg
-              className="h-5 w-5 shrink-0 text-primary-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </>
-        ) : (
-          <>
-            <span className="flex min-w-0 shrink items-center gap-2">
-              {triggerIcon ? (
-                <span className="shrink-0 text-primary-700 [&_svg]:block" aria-hidden>
-                  {triggerIcon}
-                </span>
-              ) : null}
-              <span className="flex min-w-0 items-baseline gap-1.5">
-                <span className="truncate text-sm font-semibold text-primary-900">
-                  {sheetTitle}
-                </span>
-                {requiredAsteriskFilled !== undefined ? (
-                  <RequiredAsterisk filled={requiredAsteriskFilled} />
-                ) : null}
-              </span>
-            </span>
-            <span className="flex min-w-0 flex-1 items-center justify-end gap-2">
-              {displaySummary.trim() !== '' ? (
-                <span className="truncate text-sm text-text-primary">{displaySummary}</span>
-              ) : null}
-              <svg
-                className="h-5 w-5 shrink-0 text-primary-700"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </span>
-          </>
-        )}
+        <MobileSelectTriggerContent
+          mobileValueOnlyTrigger={mobileValueOnlyTrigger}
+          triggerIcon={triggerIcon}
+          mobileTriggerPrimaryText={mobileTriggerPrimaryText}
+          sheetTitle={sheetTitle}
+          requiredAsteriskFilled={requiredAsteriskFilled}
+          displaySummary={displaySummary}
+        />
       </button>
 
       <BottomSheet

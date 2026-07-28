@@ -2,7 +2,7 @@ import { expect, type Page } from '@playwright/test';
 
 import { ListingAiReportModalComponent } from '../components/listing/listing-ai-report-modal.component';
 import { ListingSimilarListingsComponent } from '../components/listing/listing-similar-listings.component';
-import { expectPagePath } from '../utils/app-path';
+import { expectPagePath, pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { t } from '../utils/i18n';
 import { dismissCookieConsentIfVisible } from '../utils/session';
 import { expectSuccessToast } from '../utils/toast';
@@ -122,24 +122,14 @@ export class ListingDetailPage {
 
   async openGalleryModal(): Promise<void> {
     await dismissCookieConsentIfVisible(this.page);
-    await expect
-      .poll(
-        async () => {
-          const hero = this.galleryHero;
-          if (!(await hero.isVisible().catch(() => false))) {
-            return false;
-          }
-          await hero.scrollIntoViewIfNeeded().catch(() => undefined);
-          await hero.click();
-          if (await this.imageModal.isVisible().catch(() => false)) {
-            return true;
-          }
-          await hero.click({ force: true }).catch(() => undefined);
-          return this.imageModal.isVisible().catch(() => false);
-        },
-        { timeout: 20_000 },
-      )
-      .toBe(true);
+    const hero = this.galleryHero;
+    await expect(hero).toBeVisible({ timeout: 20_000 });
+    await hero.scrollIntoViewIfNeeded();
+    await hero.click();
+    if (!(await this.imageModal.isVisible())) {
+      await hero.click({ force: true });
+    }
+    await expect(this.imageModal).toBeVisible({ timeout: 15_000 });
   }
 
   async closeGalleryModal(): Promise<void> {
@@ -147,8 +137,10 @@ export class ListingDetailPage {
     await expect(this.imageModal).toBeHidden({ timeout: 15_000 });
   }
 
-  async clickContactSeller(): Promise<void> {
+  async clickContactAndExpectSellerVisible(): Promise<void> {
+    await expect(this.contactActionButton).toBeVisible({ timeout: 15_000 });
     await this.contactActionButton.click();
+    await this.expectSellerSectionInViewport();
   }
 
   async expectSellerSectionInViewport(): Promise<void> {
@@ -385,8 +377,37 @@ export class ListingDetailPage {
     await expect(this.aiReportActionButton).toBeVisible();
   }
 
-  async clickAiReportAction(): Promise<void> {
+  async clickAiReportAndExpectModalOrSign(): Promise<'modal' | 'sign'> {
     await this.aiReportActionButton.click();
+    let outcome: 'modal' | 'sign' | null = null;
+    await expect
+      .poll(
+        async () => {
+          if (await this.page.getByTestId('listing-ai-report-modal').isVisible()) {
+            outcome = 'modal';
+            return true;
+          }
+          const path = pathnameWithoutLocalePrefix(this.page.url());
+          if (path.startsWith('/sign') && this.page.url().includes('returnUrl')) {
+            outcome = 'sign';
+            return true;
+          }
+          return false;
+        },
+        { timeout: 30_000 },
+      )
+      .toBe(true);
+    if (!outcome) {
+      throw new Error('Expected AI report modal or sign redirect with returnUrl');
+    }
+    return outcome;
+  }
+
+  async expectTitleOrPriceBlockVisible(): Promise<void> {
+    const header = this.detailPageRoot.getByTestId(this.testIds.detailHeader);
+    await expect(header).toBeVisible({ timeout: 30_000 });
+    await expect(header.locator('h1')).toBeVisible();
+    await expect(header.locator('h1')).not.toBeEmpty();
   }
 
   async expectFullPageView(

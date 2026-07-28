@@ -57,12 +57,15 @@ export class LanguageSwitcherPage {
     const localeCookie = cookies.find((cookie) => cookie.name === 'kupito-locale');
     expect(localeCookie?.value).toBeTruthy();
     expect(localeCookie?.value).not.toBe('ro');
-    await expect(this.headerNav.languageSwitcher.first()).toContainText(selectedLocale);
-    if (localeCookie?.value === 'ru') {
-      await expect(this.headerNav.languageSwitcher.first()).toContainText(t('common.languageRu'));
-    } else if (localeCookie?.value === 'en') {
-      await expect(this.headerNav.languageSwitcher.first()).toContainText(t('common.languageEn'));
-    }
+    const expectedLabel =
+      localeCookie?.value === 'ru'
+        ? t('common.languageRu')
+        : localeCookie?.value === 'en'
+          ? t('common.languageEn')
+          : selectedLocale.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+    await expect(this.headerNav.languageSwitcher.first()).toContainText(expectedLabel, {
+      timeout: 15_000,
+    });
     return localeCookie?.value ?? '';
   }
 

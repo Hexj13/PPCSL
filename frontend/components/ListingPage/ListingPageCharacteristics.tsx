@@ -273,7 +273,12 @@ function BodyColorDoorsSection({
   vehicleType: 'car' | 'truck' | 'moto';
   t: (k: string, p?: Record<string, string | number>) => string;
 }) {
-  const hasAny = vehicle.body_type || vehicle.color || vehicle.doors;
+  const hasAny =
+    vehicle.body_type ||
+    vehicle.color ||
+    vehicle.interior_color ||
+    (vehicle.doors != null && vehicleType !== 'moto') ||
+    vehicle.seats != null;
   if (!hasAny) return null;
   return (
     <div className="pt-4 border-t border-primary-500/30">
@@ -287,8 +292,17 @@ function BodyColorDoorsSection({
         {vehicle.color && (
           <CharRow label={t('listingDetail.color')} value={getColorLabel(vehicle.color, t)} />
         )}
+        {vehicle.interior_color && (
+          <CharRow
+            label={t('listingDetail.interiorColor')}
+            value={getColorLabel(vehicle.interior_color, t)}
+          />
+        )}
         {vehicle.doors != null && vehicleType !== 'moto' && (
           <CharRow label={t('listingDetail.doors')} value={String(vehicle.doors)} />
+        )}
+        {vehicle.seats != null && (
+          <CharRow label={t('listingDetail.seats')} value={String(vehicle.seats)} />
         )}
       </div>
     </div>

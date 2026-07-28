@@ -69,8 +69,8 @@ const seoMockT = (key: string): string => {
     'metadata.listing.yearFormat': '{year}',
     'metadata.listing.pricePrefix': 'priced at',
     'metadata.listing.siteSuffix': 'on Kupito.club',
-    'metadata.site.homeTitleTemplate': 'Kupito.club: buy, sell or exchange {category} in Moldova',
-    'metadata.site.homeBrandTitleTemplate': 'Buy {value} in Moldova on Kupito.club',
+    'metadata.site.homeTitleTemplate': 'Kupito.club: buy and sell {category} in Moldova',
+    'metadata.site.homeBrandTitleTemplate': 'Buy or sell {value} in Moldova on Kupito.club',
     'metadata.site.categoryTitle.car': 'cars',
     'metadata.site.categoryTitle.truck': 'commercial vehicles',
     'metadata.site.categoryTitle.moto': 'motorcycles',
@@ -438,14 +438,16 @@ describe('utils', () => {
   describe('buildHomeCategoryTitle', () => {
     it('should build category title from template', () => {
       expect(buildHomeCategoryTitle(seoMockT, 'car')).toBe(
-        'Kupito.club: buy, sell or exchange cars in Moldova',
+        'Kupito.club: buy and sell cars in Moldova',
       );
     });
   });
 
   describe('buildHomeBrandTitle', () => {
     it('should build brand title from template', () => {
-      expect(buildHomeBrandTitle(seoMockT, 'BMW')).toBe('Buy BMW in Moldova on Kupito.club');
+      expect(buildHomeBrandTitle(seoMockT, 'BMW')).toBe(
+        'Buy or sell BMW in Moldova on Kupito.club',
+      );
     });
   });
 

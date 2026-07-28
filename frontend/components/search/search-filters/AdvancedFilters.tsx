@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 
-import { Dropdown } from '@/components/common/Dropdown';
 import { MultiSelectDropdown } from '@/components/common/MultiSelectDropdown';
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -245,13 +244,14 @@ export function AdvancedFilters({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="min-w-0">
-          <Dropdown
-            value={filters.seller_type}
-            onChange={(value) => onFilterChange('seller_type', value)}
+          <MultiSelectDropdown
+            values={filters.seller_types}
+            onChange={(values) => onMultiSelectChange('seller_types', values)}
             options={sellerTypeOptions}
             fieldLabel={t('searchFilters.sellerTypeLabel')}
             placeholder={t('searchFilters.sellerTypePlaceholder')}
             searchable={false}
+            showActionButtons={true}
           />
         </div>
         <div>

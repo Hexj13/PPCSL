@@ -17,6 +17,10 @@ export interface ListingAiModelSnapshotVehicle {
   engine_displ_l: number | null;
   color: string | null;
   doors: number | null;
+  country_of_origin: string | null;
+  owners_count: number | null;
+  interior_color: string | null;
+  seats: number | null;
 }
 
 export interface ListingAiDataCompletenessSnapshot {
@@ -43,6 +47,7 @@ export interface ListingAiInputSnapshot {
   registration_semantic_hint: string | null;
   equipment: string[];
   condition: string | null;
+  availability: string | null;
   is_new: boolean;
   status: string;
   last_updated_at: string;
@@ -107,6 +112,7 @@ export function buildDataCompletenessSnapshot(params: {
   city: string;
   registration_type: string | null;
   condition: string | null;
+  availability: string | null;
   equipment: string[];
   vin_present: boolean;
   images_count: number;
@@ -123,6 +129,7 @@ export function buildDataCompletenessSnapshot(params: {
     { field: 'city', filled: params.city.trim().length > 0, weight: 5 },
     { field: 'registration_type', filled: params.registration_type != null, weight: 6 },
     { field: 'condition', filled: params.condition != null, weight: 6 },
+    { field: 'availability', filled: (params.availability?.trim().length ?? 0) > 0, weight: 4 },
     { field: 'equipment', filled: params.equipment.length > 0, weight: 5 },
     { field: 'vin', filled: params.vin_present, weight: 4, optional: true },
     { field: 'photos', filled: params.images_count > 0, weight: 10 },
@@ -165,6 +172,25 @@ export function buildDataCompletenessSnapshot(params: {
       optional: true,
     },
     { field: 'vehicle_doors', filled: params.vehicle?.doors != null, weight: 2, optional: true },
+    {
+      field: 'vehicle_country_of_origin',
+      filled: (params.vehicle?.country_of_origin?.trim().length ?? 0) > 0,
+      weight: 3,
+      optional: true,
+    },
+    {
+      field: 'vehicle_owners_count',
+      filled: params.vehicle?.owners_count != null,
+      weight: 4,
+      optional: true,
+    },
+    {
+      field: 'vehicle_interior_color',
+      filled: (params.vehicle?.interior_color?.trim().length ?? 0) > 0,
+      weight: 2,
+      optional: true,
+    },
+    { field: 'vehicle_seats', filled: params.vehicle?.seats != null, weight: 2, optional: true },
   ];
 
   const filled_fields = checks.filter((c) => c.filled).map((c) => c.field);
@@ -211,6 +237,10 @@ export function buildListingAiInputSnapshot(
         engine_displ_l: v.engine_displ_l != null ? Number(v.engine_displ_l) : null,
         color: v.color ?? null,
         doors: v.doors ?? null,
+        country_of_origin: v.country_of_origin ?? null,
+        owners_count: v.owners_count ?? null,
+        interior_color: v.interior_color ?? null,
+        seats: v.seats ?? null,
       }
     : null;
 
@@ -235,6 +265,7 @@ export function buildListingAiInputSnapshot(
     registration_semantic_hint: registrationSemanticHint(registration_type),
     equipment,
     condition: listing.condition ?? null,
+    availability: listing.availability,
     is_new: listing.is_new,
     status: listing.status,
     last_updated_at:
@@ -250,6 +281,7 @@ export function buildListingAiInputSnapshot(
       city: listing.city,
       registration_type,
       condition: listing.condition ?? null,
+      availability: listing.availability,
       equipment,
       vin_present,
       images_count,

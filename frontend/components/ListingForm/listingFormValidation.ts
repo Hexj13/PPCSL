@@ -84,6 +84,21 @@ export function runListingFormValidation(
     ...validators.required(val as string),
     errorKey: 'registrationTypeRequired',
   }));
+  if (formData.vehicle.owners_count.trim() !== '') {
+    const owners = parseInt(formData.vehicle.owners_count, 10);
+    if (!Number.isInteger(owners) || owners < 0 || owners > 100) {
+      toast.error(t('listings.ownersCountInvalid'));
+      newErrors['vehicle.owners_count'] = true;
+    }
+  }
+  if (formData.vehicle.seats.trim() !== '') {
+    const seats = parseInt(formData.vehicle.seats, 10);
+    const maxSeats = vehicleType === 'moto' ? 4 : 9;
+    if (!Number.isInteger(seats) || seats < 1 || seats > maxSeats) {
+      toast.error(t('listings.seatsInvalid'));
+      newErrors['vehicle.seats'] = true;
+    }
+  }
   checkField('horsepower', formData.horsepower, (val) => ({
     ...validators.required(val as string),
     errorKey: 'horsepowerRequired',

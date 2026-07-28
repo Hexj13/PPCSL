@@ -18,8 +18,6 @@ test.describe('Admin', () => {
     await runSteps(prependClearBrowserState(page, steps));
 
     await adminPage.expectPageView();
-
     await adminPage.openPromotionsTab();
-    await adminPage.expectPromotionsTabContentVisible();
   });
 });

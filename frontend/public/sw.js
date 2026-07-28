@@ -1,6 +1,5 @@
-const CACHE_NAME = 'kupito-v4';
-const STATIC_CACHE_NAME = 'kupito-static-v4';
-const DATA_CACHE_NAME = 'kupito-data-v4';
+const STATIC_CACHE_NAME = 'kupito-static-v5';
+const DATA_CACHE_NAME = 'kupito-data-v5';
 const CACHE_EXPIRY = 60 * 60 * 1000;
 const MAX_CACHE_SIZE = 2 * 1024 * 1024;
 
@@ -27,7 +26,7 @@ const activateHandler = async () => {
   const cacheNames = await caches.keys();
   await Promise.all(
     cacheNames
-      .filter((name) => name !== CACHE_NAME && name !== STATIC_CACHE_NAME && name !== DATA_CACHE_NAME)
+      .filter((name) => name !== STATIC_CACHE_NAME && name !== DATA_CACHE_NAME)
       .map((name) => caches.delete(name))
   );
   
@@ -212,26 +211,12 @@ const fetchHandler = async (event) => {
   }
 
   try {
-    const response = await fetch(request);
-    if (response.ok && request.mode !== 'navigate') {
-      const canCache = await shouldCache(response);
-      if (canCache) {
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, response.clone()).catch((error) => {
-          console.warn(`Failed to cache ${request.url}:`, error);
-        });
-      }
-    }
-    return response;
+    return await fetch(request);
   } catch (error) {
-    const cached = await caches.match(request);
-    if (cached) {
-      return cached;
-    }
-    if (request.mode === 'navigate') {
-      const offlinePage = await caches.match('/offline');
-      if (offlinePage) {
-        return offlinePage;
+    if (isStaticAsset(request.url)) {
+      const cached = await caches.match(request);
+      if (cached) {
+        return cached;
       }
     }
     throw error;
@@ -271,7 +256,12 @@ self.addEventListener('fetch', (event) => {
 
 const clearUserDataCaches = async () => {
   await caches.delete(DATA_CACHE_NAME);
-  await caches.delete(CACHE_NAME);
+  const names = await caches.keys();
+  await Promise.all(
+    names
+      .filter((name) => name.startsWith('kupito-v') && !name.startsWith('kupito-static-'))
+      .map((name) => caches.delete(name)),
+  );
 };
 
 self.addEventListener('message', (event) => {
@@ -284,12 +274,12 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CACHE_URLS') {
     const urls = Array.isArray(event.data.urls) ? event.data.urls : [];
     event.waitUntil(
-      caches.open(CACHE_NAME).then(async (cache) => {
+      caches.open(STATIC_CACHE_NAME).then(async (cache) => {
         const results = await Promise.allSettled(
           urls.map(async (url) => {
             try {
               const cacheUrl = getSameOriginUrl(url);
-              if (!cacheUrl) {
+              if (!cacheUrl || !isStaticAsset(cacheUrl)) {
                 return;
               }
               const response = await fetch(cacheUrl);

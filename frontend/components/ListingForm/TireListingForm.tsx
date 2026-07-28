@@ -228,10 +228,8 @@ export function TireListingForm({
                     error={!!errors['model_id']}
                     autoPosition={true}
                     menuMaxHeight={300}
-                    options={[
-                      { value: '', label: t('listings.tireForm.modelNotSelected') },
-                      ...tireModels.map((m) => ({ value: m.id, label: m.name })),
-                    ]}
+                    options={tireModels.map((m) => ({ value: m.id, label: m.name }))}
+                    clearable
                   />
                 </div>
               </div>

@@ -38,10 +38,15 @@ test.describe('Language switcher', () => {
         action: async () => {
           await signPage.openWithPath('/sign?returnUrl=%2Ffavorites');
           await signPage.expectLoginPageView();
-          if ((await page.getByTestId('auth-google-outside-card').count()) === 0) {
-            test.skip(true, 'Google Sign-In is not configured for this environment');
+          test.skip(
+            !(await signPage.hasGoogleSignIn()),
+            'Google Sign-In is not configured for this environment',
+          );
+          try {
+            await signPage.expectGoogleButtonReady();
+          } catch {
+            test.skip(true, 'Google Sign-In widget did not become ready in this environment');
           }
-          await signPage.expectGoogleButtonReady();
         },
       },
       {

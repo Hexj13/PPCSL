@@ -8,7 +8,6 @@ import {
 } from './mobile-search-filters-utils';
 import type { MobileTireSheetsProps } from './mobile-tire-sheets-types';
 import { MultiSelectSheetContent } from './sheets/MultiSelectSheet';
-import { SingleSelectSheetContent } from './sheets/SingleSelectSheet';
 
 export function MobileTireSheetsGroupB(props: MobileTireSheetsProps) {
   const {
@@ -145,10 +144,11 @@ export function MobileTireSheetsGroupB(props: MobileTireSheetsProps) {
           </button>
         }
       >
-        <SingleSelectSheetContent
+        <MultiSelectSheetContent
           options={sellerTypeOptions}
-          value={mobileDraft?.seller_type ?? filters.seller_type}
-          onChange={(v) => patchMobileDraft({ seller_type: v })}
+          values={mobileDraft?.seller_types ?? filters.seller_types}
+          onChange={(values) => patchMobileDraft({ seller_types: values })}
+          searchable={false}
         />
       </BottomSheet>
     </>

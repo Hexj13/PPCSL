@@ -8,44 +8,35 @@ tags:
   - status/active
 ---
 
-# Storybook — setup (alternative)
+# Storybook
 
-If you want to use Storybook for more advanced component documentation, follow these steps:
+Storybook is installed in `core/frontend` (`.storybook/`, Storybook 10, Next.js Vite framework). Use it for isolated UI review and a11y checks alongside the `/design-system` page.
 
-## Installation
+## Run
 
-```bash
-cd frontend
-npx storybook@latest init
-```
-
-This will:
-- Install Storybook and its dependencies
-- Add scripts to `package.json`
-- Create a `.storybook` folder with configuration
-
-## Benefits of Storybook
-
-- **Interactive Controls**: Test components with different props in real-time
-- **Documentation**: Write markdown documentation alongside components
-- **Addons**: Install addons for accessibility testing, viewport testing, etc.
-- **Isolation**: View components in isolation without app context
-- **Export**: Generate static documentation site
-
-## Usage
-
-After installation:
+From `core/frontend`:
 
 ```bash
 npm run storybook
+# or without the info wrapper:
+npm run storybook:dev
 ```
 
-Stories should be created in `ui/*.stories.tsx` files.
+Static build:
 
-## Example Story
+```bash
+npm run build-storybook
+```
+
+Default dev URL: `http://localhost:6006`.
+
+## Stories
+
+Stories live next to components (for example under `ui/` and feature folders) as `*.stories.tsx`. Existing addons include docs, a11y, and onboarding.
+
+## Example
 
 ```tsx
-// ui/Button.stories.tsx
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from './Button';
 
@@ -68,9 +59,4 @@ export const Primary: Story = {
 
 ## Note
 
-The current implementation uses a Next.js page at `/design-system` which is simpler and doesn't require additional dependencies. Storybook is recommended if you need more advanced features like:
-- Interactive prop controls
-- Multiple viewports
-- Accessibility testing
-- Component composition testing
-
+The `/design-system` Next.js page remains available for a lighter in-app palette/component check. Prefer Storybook when you need interactive controls, viewports, or accessibility tooling.

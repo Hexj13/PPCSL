@@ -28,7 +28,7 @@ function tireBasicFilterChecks(filters: FilterState): boolean[] {
     filters.price_lte !== '',
     filters.cities.length > 0,
     filters.urgent,
-    filters.seller_type !== '',
+    filters.seller_types.length > 0,
   ];
 }
 

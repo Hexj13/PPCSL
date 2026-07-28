@@ -70,6 +70,7 @@ export function buildFallbackListingSearchParamsFromFilters(
     | 'registration_types'
     | 'drive_types'
     | 'equipment'
+    | 'seller_types'
   >)[] = [
     'fuels',
     'transmissions',
@@ -80,10 +81,14 @@ export function buildFallbackListingSearchParamsFromFilters(
     'registration_types',
     'drive_types',
     'equipment',
+    'seller_types',
   ];
 
   for (const key of multiKeys) {
-    const filtered = filterValidMultiSelectValues(filters[key]);
+    const filtered =
+      key === 'seller_types'
+        ? filters.seller_types.filter((v) => v === 'Individual' || v === 'Business')
+        : filterValidMultiSelectValues(filters[key]);
     if (filtered.length) out[key] = filtered.join(',');
   }
 
@@ -119,10 +124,6 @@ export function buildFallbackListingSearchParamsFromFilters(
   if (filters.urgent) out.urgent = true;
   if (filters.is_new) out.is_new = true;
   if (filters.available_in_credit) out.available_in_credit = true;
-
-  if (filters.seller_type === 'Individual' || filters.seller_type === 'Business') {
-    out.seller_type = filters.seller_type;
-  }
 
   if (filters.currency?.trim()) out.currency = filters.currency.trim();
 

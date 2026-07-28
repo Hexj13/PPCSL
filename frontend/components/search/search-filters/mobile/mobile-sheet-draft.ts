@@ -30,7 +30,7 @@ const MOBILE_SHEET_DRAFT: Record<string, DraftFn> = {
   }),
   vehicle_color: (f) => ({ colors: [...f.colors] }),
   vehicle_doors: (f) => ({ doors: [...f.doors] }),
-  vehicle_seller: (f) => ({ seller_type: f.seller_type }),
+  vehicle_seller: (f) => ({ seller_types: [...f.seller_types] }),
   tire_size: (f) => ({
     tire_widths: [...f.tire_widths],
     tire_profiles: [...f.tire_profiles],
@@ -51,7 +51,7 @@ const MOBILE_SHEET_DRAFT: Record<string, DraftFn> = {
   tire_city: (f) => ({ cities: [...f.cities] }),
   tire_condition: (f) => ({ tire_conditions: [...f.tire_conditions] }),
   tire_quantity: (f) => ({ tire_quantities: [...f.tire_quantities] }),
-  tire_seller: (f) => ({ seller_type: f.seller_type }),
+  tire_seller: (f) => ({ seller_types: [...f.seller_types] }),
 };
 
 export function createMobileSheetDraft(sheet: string, f: FilterState): Partial<FilterState> {

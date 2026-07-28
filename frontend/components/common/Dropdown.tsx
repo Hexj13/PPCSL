@@ -80,6 +80,11 @@ interface DropdownProps {
   menuMaxHeight?: number;
   menuSelectedStyle?: 'background' | 'checkmark';
   menuExpandToContent?: boolean;
+  clearOption?: {
+    label: string;
+    disabled: boolean;
+    onSelect: () => void;
+  };
   dataTestId?: string;
 }
 
@@ -105,6 +110,7 @@ function DropdownComponent({
   menuMaxHeight,
   menuSelectedStyle = 'background',
   menuExpandToContent = false,
+  clearOption,
   dataTestId,
 }: DropdownProps) {
   const { t } = useTranslation();
@@ -368,6 +374,23 @@ function DropdownComponent({
     setSearchQuery('');
   }, [tempValue, onChange]);
 
+  const clearOptionLabel = clearOption?.label;
+  const clearOptionDisabled = clearOption?.disabled;
+  const clearOptionSelect = clearOption?.onSelect;
+
+  const resolvedClearOption = useMemo(() => {
+    if (clearOptionLabel == null || clearOptionSelect == null) return undefined;
+    return {
+      label: clearOptionLabel,
+      disabled: Boolean(clearOptionDisabled),
+      onSelect: () => {
+        clearOptionSelect();
+        setIsOpen(false);
+        setSearchQuery('');
+      },
+    };
+  }, [clearOptionLabel, clearOptionDisabled, clearOptionSelect]);
+
   return (
     <div ref={dropdownRef} className={`relative ${className || ''}`} suppressHydrationWarning>
       <DropdownTrigger
@@ -408,6 +431,7 @@ function DropdownComponent({
                 t={t}
                 menuSelectedStyle={menuSelectedStyle}
                 menuExpandToContent={menuExpandToContent}
+                clearOption={resolvedClearOption}
                 dataTestId={dataTestId}
                 portalStyle={{
                   position: 'fixed',
@@ -441,6 +465,7 @@ function DropdownComponent({
                 dataTestId={dataTestId}
                 menuSelectedStyle={menuSelectedStyle}
                 menuExpandToContent={menuExpandToContent}
+                clearOption={resolvedClearOption}
               />
             ))}
     </div>

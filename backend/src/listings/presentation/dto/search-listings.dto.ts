@@ -769,8 +769,43 @@ export class SearchListingsDto {
   down_payment_amount_gte?: number;
 
   @ApiPropertyOptional({
+    example: ['Individual', 'Business'],
     enum: ['Individual', 'Business'],
-    description: 'Filter by seller account type (private person or business/dealer)',
+    description:
+      'Seller account types (comma-separated or array). Legacy seller_type is also accepted.',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value, obj }) => {
+    const fromValue = (() => {
+      if (typeof value === 'string') {
+        return value.split(',').filter((v: string) => v.trim() !== '');
+      }
+      if (Array.isArray(value)) {
+        return value;
+      }
+      return [];
+    })();
+    const normalized = fromValue
+      .map((v: unknown) => String(v).trim())
+      .filter((v: string) => v === 'Individual' || v === 'Business');
+    if (normalized.length > 0) {
+      return [...new Set(normalized)];
+    }
+    const legacy = obj?.seller_type;
+    if (legacy === 'Individual' || legacy === 'Business') {
+      return [legacy];
+    }
+    return [];
+  })
+  @IsArray()
+  @IsIn(['Individual', 'Business'], { each: true })
+  seller_types?: ('Individual' | 'Business')[];
+
+  @ApiPropertyOptional({
+    enum: ['Individual', 'Business'],
+    description: 'Deprecated: use seller_types. Kept for URL/API backward compatibility.',
+    deprecated: true,
   })
   @IsOptional()
   @IsString()

@@ -135,6 +135,8 @@ export const conditionTypes = ['Undamaged', 'Damaged', 'ForParts'] as const;
 
 export const registrationTypes = ['Local', 'Foreign', 'Cleared', 'NotCleared'] as const;
 
+export const availabilityTypes = ['InStock', 'OnOrder'] as const;
+
 export const UserType = {
   Individual: userTypes[0],
   Business: userTypes[1],
@@ -287,4 +289,9 @@ export const RegistrationType = {
   Foreign: registrationTypes[1],
   Cleared: registrationTypes[2],
   NotCleared: registrationTypes[3],
+} as const;
+
+export const Availability = {
+  InStock: availabilityTypes[0],
+  OnOrder: availabilityTypes[1],
 } as const;

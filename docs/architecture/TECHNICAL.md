@@ -436,7 +436,7 @@ GET    /api/listings/promotion-access  # Get promotion access status (no auth re
 - When both `brand_ids` and `model_ids` are sent, the backend uses **OR** logic so that “brand-only” selections still return results: a listing matches if its `model_id` is in the list **or** its `brand_id` is in the list and that brand has no selected models (e.g. “all Škoda” + specific models for other brands returns all Škoda listings plus the chosen models). Implementation: `TypeOrmListingRepository.applyBrandModelFilter`.
 - `?equipment=air_conditioning,navigation` - Filter by equipment keys (comma-separated). Options depend on `vehicleType` (car/truck/moto). See `vehicle-equipment.ts` for keys and categories.
 - `?equipmentMatch=full|partial` - Equipment match mode (optional; default `full`). **Full:** listing must contain all selected equipment (AND). **Partial:** listing must contain at least one selected option (OR).
-- `?seller_type=Individual|Business` - Restrict results to listings whose owner has that account type (`user.type`). Applied to both vehicle and tire searches. Omit for no filter. Legacy `?seller_types=…` in the URL is still read by the frontend (first valid value is used).
+- `?seller_types=Individual,Business` - Restrict results to listings whose owner has one of those account types (`user.type`). Applied to both vehicle and tire searches. Omit for no filter. Legacy `?seller_type=Individual|Business` (singular) is still accepted by the frontend URL parser and the API.
 - Example URLs:
   - `/?brand=toyota` - All Toyota listings
   - `/?brand=toyota&model=yaris` - Toyota Yaris listings
@@ -632,12 +632,14 @@ GET /metrics                         # Prometheus metrics (text/plain). Requires
 - `down_payment_amount` - Integer, nullable (minimum down payment when available_in_credit is true)
 - `power_kw` - Integer, nullable (power in kilowatts)
 - `equipment` - Simple array, nullable. Array of equipment keys; the available set depends on vehicle type (car / truck / moto). Keys and categories are defined in `core/frontend/lib/options/vehicle-equipment.ts`. Create/edit form and search filter UI group options by category (Comfort, Safety, Lighting, Multimedia, Driver assistance, Other). On the listing detail page, `buildListingEquipmentDisplay` (`equipment-display.ts`) uses the same categories when the listing has at least 10 equipment keys spanning at least 3 categories; otherwise it shows a single two-column flat list. Translations: `vehicleOptions.equipment.<key>` and `vehicleOptions.equipmentCategories.<category>` in frontend locales.
+- `availability` - Enum `InStock` | `OnOrder`, default `InStock` (vehicle listings)
 
 **Vehicles Table:**
 
 - `brand_id`, `model_id`, `brand_id + model_id` (composite)
 - `year`, `fuel` (partial), `transmission` (partial)
 - `body_type`, `mileage_km` (partial), `engine_displ_l` (partial)
+- `country_of_origin` (nullable, ISO alpha-2), `owners_count` (nullable, 0–100), `interior_color` (nullable color slug), `seats` (nullable, 1–9)
 
 **Users Table:**
 
@@ -1200,8 +1202,9 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 - Skeleton loaders for improved UX
 - **PWA Support:** Service Worker (`frontend/public/sw.js`) with selective caching
   - Static assets (CSS, JS, images, fonts) cached in a dedicated static cache
-  - Small catalog API responses (`/api/brands`, `/api/cities`, brand models) cached with 1 hour TTL (stale-while-revalidate)
-  - Navigate caching with 1 hour TTL only for favorites, profile, my-listings, and listing detail; other navigations are not stored as documents
+  - Small catalog API responses (`/api/brands`, `/api/cities`, brand models) cached with 1 hour TTL (stale-while-revalidate) when requested same-origin
+  - Navigations and other non-static same-origin responses are not cached (network-only; offline navigations fall back to `/offline`)
+  - Logout posts `CLEAR_USER_CACHE` to delete data/runtime caches
   - Precache on install: `/offline` only (not the home route)
   - Automatic cache cleanup for expired entries and old cache names on activate
   - Full-page reload after a waiting worker activates only when the user confirms an update (`ServiceWorkerRegistration`)

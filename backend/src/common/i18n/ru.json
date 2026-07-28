@@ -37,6 +37,8 @@
     "termsAcceptedBoolean": "Поле termsAccepted должно быть логическим",
     "listingStatusEnum": "Статус должен быть Active, Paused или Closed",
     "conditionTypeEnum": "Состояние должно быть Undamaged, Damaged или ForParts",
+    "availabilityTypeEnum": "Доступность должна быть InStock или OnOrder",
+    "countryOfOriginIso2": "Страна происхождения должна быть двухбуквенным ISO-кодом",
     "vinLength17": "VIN должен содержать ровно 17 символов",
     "vinCharset": "VIN может содержать только буквы и цифры (кроме I, O, Q)",
     "verifyEmailTokenRequired": "Токен обязателен",

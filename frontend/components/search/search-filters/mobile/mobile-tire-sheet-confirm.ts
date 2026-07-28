@@ -40,7 +40,7 @@ const TIRE_SHEET_CONFIRM: Record<string, TireConfirmFn> = {
   tire_city: (d, deps) => deps.onMultiSelectChange('cities', d.cities ?? []),
   tire_condition: (d, deps) => deps.onMultiSelectChange('tire_conditions', d.tire_conditions ?? []),
   tire_quantity: (d, deps) => deps.onMultiSelectChange('tire_quantities', d.tire_quantities ?? []),
-  tire_seller: (d, deps) => deps.onFilterChange('seller_type', d.seller_type ?? ''),
+  tire_seller: (d, deps) => deps.onMultiSelectChange('seller_types', d.seller_types ?? []),
 };
 
 export function runTireSheetConfirm(

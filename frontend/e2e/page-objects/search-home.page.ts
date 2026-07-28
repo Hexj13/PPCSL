@@ -8,9 +8,11 @@ import { expectPagePath, pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
 import { visibleSearchFiltersForm } from '../utils/search-filters-form';
 import { dismissCookieConsentIfVisible } from '../utils/session';
+import { expectErrorToast } from '../utils/toast';
 import { pageUsesMobileLayout } from '../utils/viewport';
 
 import { SearchHomeScrollPage } from './search-home-scroll.page';
+import type { SmartSelectionPage } from './smart-selection.page';
 
 const VEHICLE_CATEGORY_POLL = { timeout: 45_000, intervals: [400, 600, 1000, 1600] };
 
@@ -420,12 +422,25 @@ export class SearchHomePage extends SearchHomeScrollPage {
     await btn.click();
   }
 
-  async clickSmartSelectionAndExpectWizard(): Promise<void> {
+  async clickSmartSelectionAndExpectSignIn(): Promise<void> {
+    await this.clickSmartSelection();
+    await expect(this.page).toHaveURL(/\/sign/, { timeout: 20_000 });
+  }
+
+  async clickSmartSelectionAndExpectWizard(smartSelectionPage?: SmartSelectionPage): Promise<void> {
     await this.clickSmartSelection();
     await expect(this.page).toHaveURL(
       (url) => pathnameWithoutLocalePrefix(url).startsWith('/smart-selection'),
       { timeout: 20_000 },
     );
+    if (smartSelectionPage) {
+      await smartSelectionPage.expectPageView();
+    }
+  }
+
+  async clickSmartSelectionAndExpectLimitToast(message: string | RegExp): Promise<void> {
+    await this.clickSmartSelection();
+    await expectErrorToast(this.page, message);
   }
 
   async waitForAuthReadyForSaveFilter(): Promise<void> {

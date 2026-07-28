@@ -469,7 +469,9 @@ export class TypeOrmListingRepository implements IListingRepository {
     applyBooleanFilter(qb, 'listing', 'urgent', searchDto.urgent);
     applyBooleanFilter(qb, 'listing', 'is_new', searchDto.is_new);
     applyBooleanFilter(qb, 'listing', 'available_in_credit', searchDto.available_in_credit);
-    if (searchDto.seller_type) {
+    if (searchDto.seller_types && searchDto.seller_types.length > 0) {
+      qb.andWhere('user.type IN (:...sellerTypes)', { sellerTypes: searchDto.seller_types });
+    } else if (searchDto.seller_type) {
       qb.andWhere('user.type = :sellerType', { sellerType: searchDto.seller_type });
     }
     if (searchDto.down_payment_amount_gte != null && searchDto.down_payment_amount_gte >= 0) {
@@ -623,7 +625,9 @@ export class TypeOrmListingRepository implements IListingRepository {
     applyTextSearchFilter(qb, 'listing', 'title', searchDto.title);
     applyBooleanFilter(qb, 'listing', 'urgent', searchDto.urgent);
     applyBooleanFilter(qb, 'listing', 'is_new', searchDto.is_new);
-    if (searchDto.seller_type) {
+    if (searchDto.seller_types && searchDto.seller_types.length > 0) {
+      qb.andWhere('user.type IN (:...sellerTypes)', { sellerTypes: searchDto.seller_types });
+    } else if (searchDto.seller_type) {
       qb.andWhere('user.type = :sellerType', { sellerType: searchDto.seller_type });
     }
 

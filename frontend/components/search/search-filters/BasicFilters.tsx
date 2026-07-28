@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { MultiSelectDropdown } from '@/components/common/MultiSelectDropdown';
@@ -69,7 +69,7 @@ export function BasicFilters({
   brandOptions,
   modelOptions,
   loadingModels,
-  currentYear: _currentYear,
+  currentYear,
   vehicleType = 'car',
   includePopularBodyTypes = true,
 }: BasicFiltersProps) {
@@ -100,6 +100,28 @@ export function BasicFilters({
   const formattedMileageLte = useMemo(
     () => formatThousandsWithSpaces(filters.mileage_lte),
     [filters.mileage_lte],
+  );
+
+  const clearYearGte = useCallback(() => onFilterChange('year_gte', ''), [onFilterChange]);
+  const clearYearLte = useCallback(
+    () => onFilterChange('year_lte', currentYear),
+    [onFilterChange, currentYear],
+  );
+  const yearGteClearOption = useMemo(
+    () => ({
+      label: t('common.clearSelection'),
+      disabled: !filters.year_gte,
+      onSelect: clearYearGte,
+    }),
+    [t, filters.year_gte, clearYearGte],
+  );
+  const yearLteClearOption = useMemo(
+    () => ({
+      label: t('common.clearSelection'),
+      disabled: !filters.year_lte || filters.year_lte === currentYear,
+      onSelect: clearYearLte,
+    }),
+    [t, filters.year_lte, clearYearLte, currentYear],
   );
 
   const yearOptions = useMemo(() => getYearOptions(), []);
@@ -168,6 +190,7 @@ export function BasicFilters({
                 fieldLabelIcon={<SearchFilterYearIcon />}
                 placeholder={t('searchFilters.from')}
                 options={yearOptions}
+                clearOption={yearGteClearOption}
               />
             </div>
             <div className="flex-1 paired-right">
@@ -178,6 +201,7 @@ export function BasicFilters({
                 fieldLabel={t('searchFilters.yearTo')}
                 placeholder={t('searchFilters.to')}
                 options={yearOptions}
+                clearOption={yearLteClearOption}
               />
             </div>
           </div>

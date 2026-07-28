@@ -52,9 +52,20 @@ export class MyListingsPage {
     return (await this.promoteButtons.count()) > 0;
   }
 
+  async filterActiveAndExpectPromoteButtons(): Promise<void> {
+    await this.filterByActiveStatus();
+    await this.expectPageView();
+    await expect
+      .poll(async () => this.promoteButtons.count(), {
+        timeout: 45_000,
+      })
+      .toBeGreaterThan(0);
+  }
+
   async openFirstPromotion(): Promise<void> {
     await dismissCookieConsentIfVisible(this.page);
     await this.promoteButtons.first().click();
+    await this.expectPromotionModalWithPeriodOptions();
   }
 
   async selectFirstPromotionPeriod(): Promise<void> {
@@ -141,6 +152,7 @@ export class MyListingsPage {
 
   async openPromotionForListing(listingId: string): Promise<void> {
     await this.promoteButtonForListing(listingId).click();
+    await this.expectPromotionModalWithPeriodOptions();
   }
 
   publishButtonForListing(listingId: string) {

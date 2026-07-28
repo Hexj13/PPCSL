@@ -379,7 +379,7 @@ function SellerPublicProfileSummary({
   );
 }
 
-function ListingSellerContactsWhenClosed({
+function ListingSellerPhonesWhenClosed({
   user,
   isBusiness,
   t,
@@ -391,14 +391,8 @@ function ListingSellerContactsWhenClosed({
   const primaryPhoneLabel = getPrimaryPhoneContactLabel(t, isBusiness, user.additionalPhone);
   return (
     <>
-      {user.email && (
-        <div>
-          <span className="font-semibold text-primary-700">{t('listingDetail.email')}:</span>
-          <span className="ml-2 text-text-secondary">{MASKED_CONTACT}</span>
-        </div>
-      )}
       {user.phone && (
-        <div className="border-t border-primary-500/20 pt-4">
+        <div>
           <span className="font-semibold text-primary-700 block">{primaryPhoneLabel}:</span>
           <span className="text-text-secondary">{MASKED_CONTACT}</span>
         </div>
@@ -415,7 +409,7 @@ function ListingSellerContactsWhenClosed({
   );
 }
 
-function ListingSellerContactsWhenOpen({
+function ListingSellerPhonesWhenOpen({
   user,
   listing,
   listingId,
@@ -439,30 +433,8 @@ function ListingSellerContactsWhenOpen({
   const primaryPhoneLabel = getPrimaryPhoneContactLabel(t, isBusiness, user.additionalPhone);
   return (
     <>
-      {user.email && (
-        <div className="flex items-center min-w-0">
-          <span className="font-semibold text-primary-700 shrink-0">
-            {t('listingDetail.email')}:
-          </span>
-          <a
-            href={`mailto:${user.email}`}
-            className="ml-2 text-text-secondary hover-only:hover:text-primary-700 transition-colors underline break-all min-w-0"
-          >
-            {user.email}
-          </a>
-          <CopyButton
-            text={user.email}
-            label={t('listingDetail.email')}
-            successMessageKey="listingDetail.copied"
-            errorMessageKey="listingDetail.copyError"
-            title={t('listingDetail.copyEmail')}
-            className="ml-2"
-            iconClassName="w-4 h-4"
-          />
-        </div>
-      )}
       {user.phone && (
-        <div className="min-w-0 border-t border-primary-500/20 pt-4">
+        <div className="min-w-0">
           <span className="font-semibold text-primary-700 mb-2 block">{primaryPhoneLabel}:</span>
           <ListingPhoneRow
             key={`${listingId}-phone`}
@@ -504,6 +476,46 @@ function ListingSellerContactsWhenOpen({
   );
 }
 
+function ListingSellerEmail({
+  email,
+  isClosed,
+  t,
+}: {
+  email: string;
+  isClosed: boolean;
+  t: (key: string) => string;
+}) {
+  if (isClosed) {
+    return (
+      <div>
+        <span className="font-semibold text-primary-700">{t('listingDetail.email')}:</span>
+        <span className="ml-2 text-text-secondary">{MASKED_CONTACT}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center min-w-0">
+      <span className="font-semibold text-primary-700 shrink-0">{t('listingDetail.email')}:</span>
+      <a
+        href={`mailto:${email}`}
+        className="ml-2 text-text-secondary hover-only:hover:text-primary-700 transition-colors underline break-all min-w-0"
+      >
+        {email}
+      </a>
+      <CopyButton
+        text={email}
+        label={t('listingDetail.email')}
+        successMessageKey="listingDetail.copied"
+        errorMessageKey="listingDetail.copyError"
+        title={t('listingDetail.copyEmail')}
+        className="ml-2"
+        iconClassName="w-4 h-4"
+      />
+    </div>
+  );
+}
+
 function ListingPageSellerInner({
   listing,
   listingId: id,
@@ -531,32 +543,14 @@ function ListingPageSellerInner({
     fullPhones?.phone ?? (user.phone && !user.phone.includes('*') ? user.phone : null);
   return (
     <div id="listing-contact-info" className="surface overflow-hidden">
-      <h2
-        className={`text-xl md:text-2xl font-bold text-primary-900 ${showPlatformPartnerLabel ? 'mb-2' : 'mb-4'}`}
-      >
+      <h2 className="text-xl md:text-2xl font-bold text-primary-900 mb-4">
         {t('listingDetail.contactInfo')}
       </h2>
-      {showPlatformPartnerLabel && (
-        <div className="mb-4">
-          <PlatformPartnerBadge />
-        </div>
-      )}
       <div className="space-y-4 wrap-break-word">
-        <SellerPublicProfileSummary
-          listing={listing}
-          user={user}
-          isBusiness={isBusiness}
-          isClosed={isClosed}
-          locale={locale}
-          cities={cities}
-          secondaryStyle={secondaryStyle}
-          t={t}
-        />
-
         {isClosed ? (
-          <ListingSellerContactsWhenClosed user={user} isBusiness={isBusiness} t={t} />
+          <ListingSellerPhonesWhenClosed user={user} isBusiness={isBusiness} t={t} />
         ) : (
-          <ListingSellerContactsWhenOpen
+          <ListingSellerPhonesWhenOpen
             user={user}
             listing={listing}
             listingId={id}
@@ -569,12 +563,29 @@ function ListingPageSellerInner({
           />
         )}
 
-        <SellerMessengerLinks
-          listing={listing}
-          listingId={id}
-          t={t}
-          phoneForDial={phoneDialForMessengers}
-        />
+        <div className={`space-y-4 ${user.phone ? 'border-t border-primary-500/20 pt-4' : ''}`}>
+          <SellerPublicProfileSummary
+            listing={listing}
+            user={user}
+            isBusiness={isBusiness}
+            isClosed={isClosed}
+            locale={locale}
+            cities={cities}
+            secondaryStyle={secondaryStyle}
+            t={t}
+          />
+
+          {user.email && <ListingSellerEmail email={user.email} isClosed={isClosed} t={t} />}
+
+          <SellerMessengerLinks
+            listing={listing}
+            listingId={id}
+            t={t}
+            phoneForDial={phoneDialForMessengers}
+          />
+
+          {showPlatformPartnerLabel && <PlatformPartnerBadge />}
+        </div>
 
         {listing.user && activeListingsCount > 1 && boardSlug && (
           <div className="pt-4 border-t border-primary-500/20">

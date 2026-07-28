@@ -33,7 +33,7 @@ const createDefaultFilters = (): FilterState => ({
   drive_types: [],
   available_in_credit: false,
   down_payment_amount_gte: '',
-  seller_type: '',
+  seller_types: [],
   equipment: [],
   equipment_match_mode: 'full',
   sortBy: 'created_at',

@@ -111,9 +111,9 @@ Page objects must absorb these differences (`ListingCreatePage.pickDropdownOptio
 | Project | Viewport | Specs |
 | --- | --- | --- |
 | **`mobile`** | `Pixel 7` | All specs except `search-filters-desktop.spec.ts` (`testIgnore` on the mobile project) |
-| **`desktop`** | `Desktop Chrome` | All specs except `search-filters-mobile.spec.ts` (`testIgnore` on the desktop project) |
+| **`desktop`** | `Desktop Chrome` | All specs except `search-filters-mobile.spec.ts` and `twa-mobile-smoke.spec.ts` (`testIgnore` on the desktop project) |
 
-**Viewport-only specs** are scoped in `playwright.config.ts` with per-project `testIgnore` (not in-spec `test.skip`): `search-filters-mobile.spec.ts` runs on mobile only; `search-filters-desktop.spec.ts` runs on desktop only. All other specs run on both viewports.
+**Viewport-only specs** are scoped in `playwright.config.ts` with per-project `testIgnore` (not in-spec `test.skip`): `search-filters-mobile.spec.ts` and `twa-mobile-smoke.spec.ts` run on mobile only; `search-filters-desktop.spec.ts` runs on desktop only. All other specs run on both viewports.
 
 Specs that mutate shared E2E admin data (favorites, saved-filters, smart-selection, listing-detail-actions, sync-favorites-cross-tab, listing-create, my-listings, listing-view, search-filters, promotion) rely on isolated flows or cleanup helpers; run the full suite locally before release when changing those areas.
 
@@ -167,12 +167,21 @@ After every meaningful user action (submit, save, delete, toggle, navigate), ass
 3. **Destination content rendered** — strong `expectPageView()` on the target page object: header + primary blocks + results grid, empty state, table, or list as the scenario requires.
 4. **Toast / notification** — when the app shows feedback: `expectSuccessToast` / `expectErrorToast` / `expectWarningToast` from `e2e/utils/toast.ts`, optionally matching text from `e2e/utils/i18n.ts` (`t('listings.changesSaved')` for UI copy; `tb('errors.invalidLoginCredentials')` when the API returns backend-translated messages). Toast nodes use stable marker classes (`kupito-toast--success`, `--error`, `--warning`) from `lib/toast.ts`.
 
+### Paired `…AndExpect…` page-object methods
+
+Meaningful click/submit helpers must assert their primary outcome inside the page object (or a dedicated flow util), not leave a naked `.click()` for the caller to remember.
+
+- Prefer names like `clickFavoriteAndExpectAdded`, `submitLoginAndExpectSuccess`, `clickSmartSelectionAndExpectWizard`, `openPromotionForListing` (modal visible), `clickContactAndExpectSellerVisible`.
+- Specs call the paired method; do not re-assert the same primary outcome unless adding a second axis (for example returnUrl after sign redirect).
+- One primary outcome per action (modal **or** redirect **or** toast **or** checked state). Do not spam full `expectPageView()` after every micro-interaction.
+
 Avoid:
 
 - Clicking without waiting for the mutation or navigation to finish.
 - Asserting only `toHaveURL` after a save/submit flow.
 - Conditional `if (visible)` branches that skip assertions when an element is missing.
 - `body` visible as proof that a page rendered.
+- Hard sleeps (`waitForTimeout`); wait on URL, visibility, or `waitForResponse` instead.
 
 Example reference: `listing-view.spec.ts` (copy link — toast + URL + page view), `my-listings.spec.ts` (edit save — API + my-listings view + success toast + updated card).
 
@@ -202,6 +211,13 @@ Example reference: `listing-view.spec.ts` (copy link — toast + URL + page view
 Examples:
 
 - `listing-create-brand-select`
+- `listing-create-availability-select`
+- `listing-create-country-of-origin-select`
+- `listing-create-owners-count-input`
+- `listing-create-color-select`
+- `listing-create-interior-color-select`
+- `listing-create-doors-select`
+- `listing-create-seats-select`
 - `auth-login-submit`
 - `listing-detail-copy-link`
 - `admin-users-tab-content`, `admin-users-table`, `admin-promotions-tab-content`
@@ -275,18 +291,19 @@ await page.locator(`[data-testid^="${testId}-option-"]`).first().click();
 A spec must cover the user-visible outcome of the feature, not only an intermediate API or list state.
 
 - **Saved filters / smart selection:** after create or wizard submit, click the saved filter card, assert navigation to search home (`/`), URL query params match the saved `filters` payload, and results grid or empty state is visible.
-- **Favorites:** after toggle on listing detail, open favorites tab, assert the card, then open listing detail again from that card. `FavoritesPage.expectListingCardVisible` polls with reload until `GET /api/favorites` returns the card (shared account + parallel guest projects can delay list hydration).
-- **AI listing report:** guest redirect with `openAiReport` intent; authenticated flow waits for terminal modal state and, when `ready`, asserts report content (not only loading/unavailable shells).
+- **Favorites:** after toggle on listing detail, open favorites tab, assert the card, then open listing detail again from that card. `FavoritesPage.expectListingCardVisible` waits for the card after list hydration; a single reload is a last resort only (not a poll+reload loop).
+- **AI listing report:** guest redirect with `openAiReport` intent; authenticated flow waits for terminal modal state and asserts content for both `ready` and `unavailable` shells.
 - **Compare / listing actions:** add-to-compare on detail must reach compare page with table visible, not only empty-state tabs.
 - **Search filters (mobile):** all vehicle tabs (`basic`, `advanced`, `equipment`, `popular`); each mobile bottom sheet opens, offers options, confirms with OK, and sets `data-has-selection` on the filter row; separate spec submits with a changed filter and waits for `GET /api/listings`. See `search-filters-mobile.spec.ts`.
 - **Search home scroll:** `search-home-scroll.spec.ts` (@p0) — focus a card, open listing detail via click, `goBack`, assert scroll near the focused card and card still in viewport; extended serial cases in `home-scroll-restore.spec.ts`.
-- **Promotion:** confirm waits for `PATCH /api/listings/:id/promote` (assert `response.ok()`). When the shared E2E admin already has `MAX_PROMOTIONS_PER_USER` active promotions, call `ensurePromotionQuotaViaApi` in `e2e/utils/listings.ts` before opening the modal (unpromotes one active listing via API).
+- **Promotion:** confirm waits for `PATCH /api/listings/:id/promote` (assert `response.ok()`). Use `ensurePromotableActiveListingViaApi` in `e2e/utils/listings.ts` before opening the modal (unpromotes an active listing when none are promotable, and frees quota when at `MAX_PROMOTIONS_PER_USER`).
 - **Listing sort:** on home, `selectSort` updates UI only until `submitSearch()`; assert URL `sortBy`/`sortOrder` and listings response after submit. On seller board, sort updates URL and refetches immediately. See `listing-sort.spec.ts`, `e2e/test-data/listing-sort.ts`, `BoardPage`.
 
 Prefer parsing create/save API responses for `id` and `filters` when asserting apply-on-home, so expander or backend relaxations stay aligned with what the UI applies.
 
 ## Allure defaults
 
+- `playwright.config.ts` includes the `allure-playwright` reporter (with `list`, plus `github` on CI). Results land in `core/frontend/allure-results`; generate/open with `npm run test:e2e:allure` / `test:e2e:allure:open`.
 - `e2e/fixtures/base.ts` applies an automatic Allure `layer` label (`e2e-ui`) for every test via an auto fixture.
 
 ## P0 smoke scope
@@ -299,7 +316,8 @@ P0 is the minimum E2E subset that protects release readiness for the primary mar
 | Search home scroll restore | `search-home-scroll.spec.ts` |
 | Listing detail view | `listing-view.spec.ts` |
 | Auth login | `auth-login.spec.ts` |
-| Auth registration (individual + business → home) | `auth-registration.spec.ts` (`e2e/utils/registration-flow.ts`) |
+| Auth registration (individual + business → home) | `auth-registration.spec.ts` (`e2e/utils/registration-flow.ts`); `auth-register.spec.ts` is tab/form smoke only |
+| TWA mobile shell | `twa-mobile-smoke.spec.ts` (mobile project only) |
 | Listing create | `listing-create.spec.ts` |
 | My listings | `my-listings.spec.ts` |
 | Promotion | `promotion.spec.ts` (uses `ensurePromotionQuotaViaApi` before confirm) |
@@ -312,7 +330,7 @@ All other end-to-end checks are considered non-P0 coverage and can run in the fu
 
 Current suite is aligned with this standard:
 
-- Shared fixtures: `e2e/fixtures/base.ts` (page objects + Allure auto layer)
+- Shared fixtures: `e2e/fixtures/base.ts` (page objects including `boardPage(slug)` factory and `twaPage`, plus Allure auto layer)
 - Browser reset helper: `e2e/utils/session.ts` (no `beforeEach` UI hooks)
 - Shared step runner: `e2e/utils/steps.ts` (`prependClearBrowserState`, `runSteps`); `clearBrowserState` restores default locale cookies (`ro`) before navigating home so i18n does not leave a duplicate hidden search form in the DOM
 - Search form locators: `e2e/utils/search-filters-form.ts` (`visibleSearchFiltersForm` — scopes to `[data-testid="search-filters-form"]:visible`)
@@ -336,7 +354,8 @@ Current suite is aligned with this standard:
   - `VerifyPhonePage`
   - `CompleteProfilePage`
   - `SearchHomePage` (`selectSort`, `selectSortAndApply`, `submitSearch`)
-  - `BoardPage` (seller board sort, immediate URL apply)
+  - `BoardPage` (seller board sort, immediate URL apply; fixture `boardPage(slug)`)
+  - `TwaPage` (TWA meta/manifest + assetlinks; mobile-only smoke)
   - `ListingDetailPage`
   - `ListingCreatePage`
   - `MyListingsPage`

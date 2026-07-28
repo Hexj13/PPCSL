@@ -5,6 +5,8 @@ import type {
   PartnerImportVehicleType,
 } from '../listing-types';
 
+import { mapColor } from './color-mapper';
+
 export function buildCreateListingPayload(
   input: BuildListingPayloadInput,
 ): KupitoCreateListingPayload {
@@ -31,6 +33,9 @@ export function buildCreateListingPayload(
         ? { description: legacyDescription }
         : {};
 
+  const countryOfOrigin = normalizeCountryOfOrigin(input.parsed.countryOfOrigin);
+  const ownersCount = normalizeOwnersCount(input.parsed.ownersCount);
+
   const payload: KupitoCreateListingPayload = {
     price,
     currency: input.parsed.currency ?? Currency.EUR,
@@ -48,6 +53,7 @@ export function buildCreateListingPayload(
     horsepower: input.horsepower,
     equipment: input.parsed.equipmentKeys?.slice(0, 40),
     assignedUserId: input.ownerUserId,
+    ...(input.parsed.availability !== undefined ? { availability: input.parsed.availability } : {}),
     ...(input.parsed.vin !== undefined ? { vin: input.parsed.vin } : {}),
     vehicle: {
       brand_id: input.resolvedBrandId,
@@ -62,6 +68,12 @@ export function buildCreateListingPayload(
       color: input.mappedEnums.color,
       ...(shouldIncludeDoorsInPayload(input.vehicleType, input.parsed.doors)
         ? { doors: input.parsed.doors }
+        : {}),
+      ...(countryOfOrigin !== undefined ? { country_of_origin: countryOfOrigin } : {}),
+      ...(ownersCount !== undefined ? { owners_count: ownersCount } : {}),
+      ...resolveInteriorColorField(input),
+      ...(shouldIncludeSeatsInPayload(input.vehicleType, input.parsed.seats)
+        ? { seats: input.parsed.seats }
         : {}),
     },
   };
@@ -115,6 +127,45 @@ function shouldIncludeDoorsInPayload(
     return false;
   }
   return true;
+}
+
+export function shouldIncludeSeatsInPayload(
+  vehicleType: PartnerImportVehicleType | undefined,
+  seats: number | undefined,
+): seats is number {
+  if (seats === undefined || !Number.isInteger(seats) || seats < 1 || seats > 9) {
+    return false;
+  }
+  if (vehicleType === 'moto' && seats > 4) {
+    return false;
+  }
+  return true;
+}
+
+export function normalizeCountryOfOrigin(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const code = value.trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(code) ? code : undefined;
+}
+
+export function normalizeOwnersCount(value: number | undefined): number | undefined {
+  if (value === undefined || !Number.isInteger(value) || value < 0 || value > 100) {
+    return undefined;
+  }
+  return value;
+}
+
+function resolveInteriorColorField(
+  input: BuildListingPayloadInput,
+): { interior_color: string } | Record<string, never> {
+  if (input.mappedEnums.interiorColor !== undefined) {
+    return { interior_color: input.mappedEnums.interiorColor };
+  }
+  if (input.parsed.interiorColorRaw === undefined) {
+    return {};
+  }
+  const mapped = mapColor(input.parsed.interiorColorRaw);
+  return mapped.value !== undefined ? { interior_color: mapped.value } : {};
 }
 
 function trimText(value?: string, maxLength = 5000): string | undefined {

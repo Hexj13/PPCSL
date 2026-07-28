@@ -1,4 +1,10 @@
-import type { ConditionType, Currency, ListingStatus, RegistrationType } from '@/lib/types';
+import type {
+  Availability,
+  ConditionType,
+  Currency,
+  ListingStatus,
+  RegistrationType,
+} from '@/lib/types';
 
 export interface ListingFormData {
   price: string;
@@ -17,6 +23,7 @@ export interface ListingFormData {
   is_new: boolean;
   vin: string;
   condition: ConditionType;
+  availability: Availability | '';
   registration_type: RegistrationType;
   horsepower: string;
   power_kw: string;
@@ -32,7 +39,11 @@ export interface ListingFormData {
     drive_type: string;
     body_type: string;
     color: string;
+    interior_color: string;
     doors: string;
+    seats: string;
+    country_of_origin: string;
+    owners_count: string;
   };
   assignedUserId: string;
 }

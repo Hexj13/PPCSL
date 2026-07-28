@@ -90,7 +90,7 @@ Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | '
 
 - **Popular body types** — `PopularBodyTypesFilter`: clickable body-type chips (e.g. Sedan, SUV). Selection syncs with the Body type multi-select from row 1.
 
-**Paired fields (From/To):** Year, Price, Mileage use two controls side by side, styled as one block (shared border, `.paired-left` / `.paired-right` in `app/globals.css`). On desktop each half has its own floating label (`yearFrom`/`yearTo`, `priceFrom`/`priceTo` + currency, `mileageFrom`/`mileageTo`).
+**Paired fields (From/To):** Year, Price, Mileage use two controls side by side, styled as one block (shared border, `.paired-left` / `.paired-right` in `app/globals.css`). On desktop each half has its own floating label (`yearFrom`/`yearTo`, `priceFrom`/`priceTo` + currency, `mileageFrom`/`mileageTo`). Desktop Year From/To dropdowns include a first menu item `common.clearSelection`: Year From clears to empty (disabled when empty); Year To resets to the current year (disabled at that default). On mobile, the year bottom sheet uses a dual scroll picker: From has an empty/`searchFilters.rangeAny` option; To omits the empty option because `year_lte` defaults to the current year.
 
 **Desktop floating labels:** Desktop Basic/Advanced/Tire input and dropdown controls render the field name inside the control (`fieldLabel` / `SearchFilterInput`). Text inputs float on focus or when a value is present. Dropdowns keep the label centered while open/empty and float only after a selection (or while typing in a searchable dropdown filter), with the value (or `common.selectedCount`) on the second line. Mobile filter rows and sheets are unchanged.
 
@@ -120,7 +120,7 @@ Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | '
 
 | Column 1 | Column 2 | Column 3 |
 | -------- | -------- | -------- |
-| **Seller type** — `MultiSelectDropdown` used as single-select (`Individual` / `Business`); empty selection means “any” | **Labels** — “Urgent” and “New” (or “New moto” for moto) checkboxes, badge styling | **Credit/installment** — “Available in credit” checkbox |
+| **Seller type** — `MultiSelectDropdown` (`Individual` / `Business`) with clear actions; empty selection means “any” | **Labels** — “Urgent” and “New” (or “New moto” for moto) checkboxes, badge styling | **Credit/installment** — “Available in credit” checkbox |
 
 **Options:**
 
@@ -128,7 +128,7 @@ Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | '
 - Has registration: yes/no; placeholder e.g. “Select”; no “All” option.
 - Registration type, Condition, Color, Number of doors: from `useFilterOptions` (backend/options); multi-select or dropdown as in UI.
 
-**URL / API:** `seller_type` is sent when set to `Individual` or `Business` (mono). Available in both vehicle advanced filters and tire search filters; applied by both `buildVehicleSearchQuery` and `buildTireSearchQuery` on the backend. See `build-fallback-listing-search-params.ts` and `SearchListingsDto.seller_type`.
+**URL / API:** `seller_types` is sent as a comma-separated list when one or more of `Individual` / `Business` are selected. Available in both vehicle advanced filters and tire search filters; applied by both `buildVehicleSearchQuery` and `buildTireSearchQuery` on the backend. Legacy `seller_type` (singular) is still accepted when reading URLs and by the API. See `build-fallback-listing-search-params.ts` and `SearchListingsDto.seller_types`.
 
 **Translation keys (examples):** `searchFilters.city`, `searchFilters.currency`, `searchFilters.registration`, `searchFilters.registrationTypeLabel`, `searchFilters.condition`, `searchFilters.engine`, `searchFilters.horsepower`, `searchFilters.color`, `searchFilters.doors`, `searchFilters.labels`, `searchFilters.sellerTypeLabel`, `searchFilters.sellerTypePlaceholder`, `searchFilters.sellerTypeIndividual`, `searchFilters.sellerTypeBusiness`, `searchFilters.urgent`, `searchFilters.new`, `searchFilters.newMoto`, plus placeholders.
 

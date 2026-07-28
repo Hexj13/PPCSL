@@ -13,6 +13,7 @@ import {
 import * as constants from '../../common/constants';
 import { ConflictError, ValidationError } from '../../common/errors/domain.errors';
 import {
+  Availability,
   ConditionType,
   Currency,
   ListingCategory,
@@ -162,6 +163,14 @@ export class Listing {
     nullable: true,
   })
   registration_type: RegistrationType | null;
+
+  @Column({
+    type: 'enum',
+    enum: constants.availabilityTypes,
+    enumName: 'availability_type_enum',
+    nullable: true,
+  })
+  availability: Availability | null;
 
   @Column('int', { nullable: true })
   horsepower: number | null;

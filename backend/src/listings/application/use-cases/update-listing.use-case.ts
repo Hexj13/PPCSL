@@ -320,6 +320,7 @@ export class UpdateListingUseCase {
     delete (listingFields as Record<string, unknown>).category;
     delete (listingFields as Record<string, unknown>).condition;
     delete (listingFields as Record<string, unknown>).registration_type;
+    delete (listingFields as Record<string, unknown>).availability;
     delete (listingFields as Record<string, unknown>).horsepower;
     delete (listingFields as Record<string, unknown>).power_kw;
     delete (listingFields as Record<string, unknown>).equipment;
@@ -481,6 +482,13 @@ export class UpdateListingUseCase {
       if (vehicleDto.body_type !== undefined) vehicleUpdateData.body_type = vehicleDto.body_type;
       if (vehicleDto.color !== undefined) vehicleUpdateData.color = vehicleDto.color;
       if (vehicleDto.doors !== undefined) vehicleUpdateData.doors = vehicleDto.doors;
+      if (vehicleDto.country_of_origin !== undefined)
+        vehicleUpdateData.country_of_origin = vehicleDto.country_of_origin;
+      if (vehicleDto.owners_count !== undefined)
+        vehicleUpdateData.owners_count = vehicleDto.owners_count;
+      if (vehicleDto.interior_color !== undefined)
+        vehicleUpdateData.interior_color = vehicleDto.interior_color;
+      if (vehicleDto.seats !== undefined) vehicleUpdateData.seats = vehicleDto.seats;
 
       if (Object.keys(vehicleUpdateData).length > 0) {
         await this.vehiclesRepository.update(listing.vehicle_id, vehicleUpdateData);

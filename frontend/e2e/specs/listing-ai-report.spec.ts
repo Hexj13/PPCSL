@@ -25,7 +25,8 @@ test.describe('Listing AI report', () => {
         name: 'Start AI report and expect sign-in redirect',
         action: async () => {
           await listingDetailPage.expectAiReportActionVisible();
-          await listingDetailPage.clickAiReportAction();
+          const outcome = await listingDetailPage.clickAiReportAndExpectModalOrSign();
+          expect(outcome).toBe('sign');
           await expect(page).toHaveURL(/\/sign/);
         },
       },
@@ -62,14 +63,16 @@ test.describe('Listing AI report', () => {
       {
         name: 'Open AI report modal and wait for terminal state',
         action: async () => {
-          await listingDetailPage.clickAiReportAction();
+          const outcome = await listingDetailPage.clickAiReportAndExpectModalOrSign();
+          expect(outcome).toBe('modal');
           await listingDetailPage.aiReportModal.expectOpen();
-          const outcome = await listingDetailPage.aiReportModal.expectTerminalState({
+          const terminal = await listingDetailPage.aiReportModal.expectTerminalState({
             timeoutMs: 150_000,
           });
-          expect(['ready', 'unavailable']).toContain(outcome);
-          if (outcome === 'ready') {
+          if (terminal === 'ready') {
             await listingDetailPage.aiReportModal.expectReadyContentVisible();
+          } else {
+            await listingDetailPage.aiReportModal.expectUnavailableContentVisible();
           }
         },
       },

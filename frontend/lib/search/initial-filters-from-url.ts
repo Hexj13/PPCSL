@@ -83,23 +83,16 @@ function buildInitialTireFilters(ctx: UrlParseContext): FilterState {
     tire_spare_donut: ctx.searchParams.get('tire_spare_donut') === 'true',
     tire_tubeless: ctx.searchParams.get('tire_tubeless') === 'true',
     tire_acoustic: ctx.searchParams.get('tire_acoustic') === 'true',
+    seller_types: resolveSellerTypes(ctx),
   };
 }
 
-function resolveSellerType(searchParams: URLSearchParams): '' | 'Individual' | 'Business' {
-  const raw = searchParams.get('seller_type');
-  if (raw === 'Individual' || raw === 'Business') {
-    return raw;
-  }
-  const legacy = searchParams.get('seller_types');
-  if (!legacy) {
-    return '';
-  }
-  const first = legacy
-    .split(',')
-    .map((s) => s.trim())
-    .find((v) => v === 'Individual' || v === 'Business');
-  return first ?? '';
+function resolveSellerTypes(ctx: UrlParseContext): string[] {
+  const fromUrl = resolveArrayFromStorageOrUrl(ctx, 'seller_types', [
+    'seller_types',
+    'seller_type',
+  ]);
+  return fromUrl.filter((v) => v === 'Individual' || v === 'Business');
 }
 
 function buildInitialVehicleFilters(ctx: UrlParseContext): FilterState {
@@ -164,7 +157,7 @@ function buildInitialVehicleFilters(ctx: UrlParseContext): FilterState {
     equipment_match_mode: ctx.searchParams.get('equipmentMatch') === 'partial' ? 'partial' : 'full',
     available_in_credit: ctx.searchParams.get('available_in_credit') === 'true',
     down_payment_amount_gte: ctx.searchParams.get('down_payment_amount_gte') || '',
-    seller_type: resolveSellerType(ctx.searchParams),
+    seller_types: resolveSellerTypes(ctx),
     sortBy: ctx.searchParams.get('sortBy') || 'created_at',
     sortOrder: (ctx.searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
   };

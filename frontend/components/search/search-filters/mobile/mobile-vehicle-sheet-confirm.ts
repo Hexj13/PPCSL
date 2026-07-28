@@ -79,7 +79,7 @@ const VEHICLE_SHEET_CONFIRM: Record<string, ConfirmFn> = {
   },
   vehicle_color: (d, deps) => deps.onMultiSelectChange('colors', d.colors ?? []),
   vehicle_doors: (d, deps) => deps.onMultiSelectChange('doors', d.doors ?? []),
-  vehicle_seller: (d, deps) => deps.onFilterChange('seller_type', d.seller_type ?? ''),
+  vehicle_seller: (d, deps) => deps.onMultiSelectChange('seller_types', d.seller_types ?? []),
 };
 
 export function runVehicleSheetConfirm(

@@ -41,9 +41,7 @@ test.describe('Smart selection edge cases', () => {
         name: 'Expect smart selection entry shows limit error',
         action: async () => {
           await searchHomePage.openAndExpectPageView();
-          await searchHomePage.clickSmartSelection();
-          await expectErrorToast(
-            page,
+          await searchHomePage.clickSmartSelectionAndExpectLimitToast(
             t('searchFilters.smartSelectionFilterLimitError', { max: MAX_SAVED_FILTERS }),
           );
           await searchHomePage.expectPageView();
@@ -72,8 +70,7 @@ test.describe('Smart selection edge cases', () => {
           await deleteAllSavedFiltersForSession(page);
           await searchHomePage.openAndExpectPageView();
           await expectAuthenticatedSession(page);
-          await searchHomePage.clickSmartSelectionAndExpectWizard();
-          await smartSelectionPage.expectPageView();
+          await searchHomePage.clickSmartSelectionAndExpectWizard(smartSelectionPage);
         },
       },
       {

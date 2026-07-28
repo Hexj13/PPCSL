@@ -5,7 +5,6 @@ import { BottomSheet } from '@/components/common/BottomSheet';
 import type { MobileVehicleSheetsProps } from './mobile-vehicle-sheets-types';
 import { MultiSelectSheetContent } from './sheets/MultiSelectSheet';
 import { RangeSheetContent } from './sheets/RangeSheet';
-import { SingleSelectSheetContent } from './sheets/SingleSelectSheet';
 
 export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
   const {
@@ -222,10 +221,11 @@ export function MobileVehicleSheetsGroupB(props: MobileVehicleSheetsProps) {
           </button>
         }
       >
-        <SingleSelectSheetContent
+        <MultiSelectSheetContent
           options={sellerTypeOptions}
-          value={mobileDraft?.seller_type ?? filters.seller_type}
-          onChange={(v) => patchMobileDraft({ seller_type: v })}
+          values={mobileDraft?.seller_types ?? filters.seller_types}
+          onChange={(values) => patchMobileDraft({ seller_types: values })}
+          searchable={false}
         />
       </BottomSheet>
     </>

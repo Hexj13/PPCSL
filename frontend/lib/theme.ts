@@ -57,34 +57,6 @@ export interface ThemeColors {
   };
 }
 
-let theme: ThemeColors | null = null;
-
-export async function loadTheme(_country: string): Promise<ThemeColors> {
-  if (theme) {
-    return theme;
-  }
-
-  try {
-    // Dynamic import may not exist in core repository
-    // @ts-ignore - File may not exist in core, will be provided by platform repository
-    const module = await import(`./theme/colors`).catch(() => null);
-    if (module?.default) {
-      theme = module.default;
-      return theme!;
-    }
-    throw new Error('Module not found');
-  } catch {
-    return defaultTheme;
-  }
-}
-
-export function getTheme(): ThemeColors {
-  if (!theme) {
-    throw new Error('Theme not loaded. Call loadTheme first.');
-  }
-  return theme;
-}
-
 const defaultTheme: ThemeColors = {
   primary: {
     50: '#f0f9f6',

@@ -2,6 +2,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { ListingFormTextInput } from './ListingFormTextInput';
 
+jest.mock('@/hooks/useTranslation', () => ({
+  useTranslation: () => ({
+    t: (key: string) =>
+      ({
+        'common.clear': 'Clear',
+      })[key] ?? key,
+  }),
+}));
+
 function mockDesktopViewport() {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
@@ -72,5 +81,36 @@ describe('ListingFormTextInput', () => {
 
     fireEvent.change(screen.getByTestId('price'), { target: { value: '42' } });
     expect(onChange).toHaveBeenCalledWith('42');
+  });
+
+  it('shows a clear button when the value is non-empty and clears on click', () => {
+    mockMobileViewport();
+    const onChange = jest.fn();
+    render(
+      <ListingFormTextInput
+        value="ABC"
+        onChange={onChange}
+        fieldLabel="VIN"
+        dataTestId="listing-create-vin-input"
+      />,
+    );
+
+    expect(screen.getByTestId('listing-create-vin-input-clear')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('listing-create-vin-input-clear'));
+    expect(onChange).toHaveBeenCalledWith('');
+  });
+
+  it('hides the clear button when the value is empty', () => {
+    mockMobileViewport();
+    render(
+      <ListingFormTextInput
+        value=""
+        onChange={jest.fn()}
+        fieldLabel="VIN"
+        dataTestId="listing-create-vin-input"
+      />,
+    );
+
+    expect(screen.queryByTestId('listing-create-vin-input-clear')).not.toBeInTheDocument();
   });
 });

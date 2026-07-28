@@ -361,47 +361,42 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
         <div
           key={filter.id}
           data-testid={`saved-filter-card-${filter.id}`}
-          onClick={() => {
-            handleApply(filter).catch((error) => {
-              console.error('Failed to apply filter:', error);
-            });
-          }}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleApply(filter).catch((error) => {
-                console.error('Failed to apply filter:', error);
-              });
-            }
-          }}
           style={{ transitionDuration: `${CARD_EXIT_ANIMATION_MS}ms` }}
-          className={`saved-filter-card card p-4 md:p-5 cursor-pointer group bg-white rounded-xl border-2 border-primary-700/30 shadow-none transition-[opacity,transform] ease-out ${
+          className={`saved-filter-card card p-4 md:p-5 group bg-white rounded-xl border-2 border-primary-700/30 shadow-none transition-[opacity,transform] ease-out ${
             exitingIds.has(filter.id) ? 'opacity-0 scale-[0.97]' : ''
           }`}
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex-1">
+            <button
+              type="button"
+              onClick={() => {
+                handleApply(filter).catch((error) => {
+                  console.error('Failed to apply filter:', error);
+                });
+              }}
+              className="flex-1 text-left cursor-pointer bg-transparent border-0 p-0"
+              data-testid={`saved-filter-apply-${filter.id}`}
+            >
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-sm font-semibold text-primary-700">#{index + 1}</span>
-                <h3 className="text-lg font-bold text-primary-900 transition-colors duration-200">
+                <span className="text-lg font-bold text-primary-900 transition-colors duration-200">
                   {filter.name}
-                </h3>
+                </span>
               </div>
               <p className="text-sm text-text-secondary">
                 {t('savedFiltersList.created')}: {formatDateLong(filter.created_at, locale)}
               </p>
-            </div>
+            </button>
             <div className="flex gap-2">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
+                type="button"
+                onClick={() => {
                   setEditingFilterId(filter.id);
                   setShowEditModal(true);
                 }}
                 className="shrink-0 p-2 text-primary-700 hover-only:hover:text-primary-900 transition-colors duration-200"
                 title={t('common.edit')}
+                aria-label={t('common.edit')}
                 data-testid={`saved-filter-edit-${filter.id}`}
               >
                 <svg
@@ -420,13 +415,14 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
                 </svg>
               </button>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
+                type="button"
+                onClick={() => {
                   void handleDelete(filter.id);
                 }}
                 disabled={deletingIds.has(filter.id)}
                 className="shrink-0 p-2 text-text-secondary hover-only:hover:text-red-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 title={t('common.delete')}
+                aria-label={t('common.delete')}
                 data-testid={`saved-filter-delete-${filter.id}`}
               >
                 {deletingIds.has(filter.id) ? (

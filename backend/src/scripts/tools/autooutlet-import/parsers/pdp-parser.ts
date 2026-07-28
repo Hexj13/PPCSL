@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 
-import { Currency } from '../../../../common/types';
+import { Availability } from '../../../../common/constants';
+import { Currency, type Availability as AvailabilityType } from '../../../../common/types';
 import { requestText } from '../../partner-import-shared/utils/http';
 import { isProbablyVideoUrl } from '../../partner-import-shared/utils/video-url';
 import { parseVehiclePriceText } from '../parse-vehicle-price-text';
@@ -152,6 +153,8 @@ export function parsePdpHtml(
     bodyRaw: readBodyFromBadges($) ?? normalizeBodyRaw(jsonLd?.bodyType),
     colorRaw: readSpecValue($, 'Culoare') ?? readColorFromBadges($) ?? jsonLd?.color,
     city: undefined,
+    seats: readSeatsFromBadges($),
+    availability: readAvailability($, jsonLd, sourceStatus.status),
     warnings,
   };
 
@@ -499,10 +502,85 @@ function readBodyFromBadges($: cheerio.CheerioAPI): string | undefined {
   return pickBadge($, ['Crossover', 'Sedan', 'Suv 4x4', 'Universal', 'Minivan']);
 }
 
-function readColorFromBadges($: cheerio.CheerioAPI): string | undefined {
-  const badges = $('.autooutlet-specs .spec-badge')
+function readSeatsFromBadges($: cheerio.CheerioAPI): number | undefined {
+  const badges = readSpecBadges($);
+  for (const badge of badges) {
+    const match = badge.match(/^(\d+)\s*locuri?$/i);
+    if (!match) continue;
+    const seats = Number(match[1]);
+    if (Number.isInteger(seats) && seats >= 1 && seats <= 9) {
+      return seats;
+    }
+  }
+  return undefined;
+}
+
+function readAvailability(
+  $: cheerio.CheerioAPI,
+  jsonLd: VehicleJsonLd | null,
+  sourceStatus: 'active' | 'closed',
+): AvailabilityType | undefined {
+  if (sourceStatus === 'closed') {
+    return undefined;
+  }
+
+  const headerBadges = $('.autooutlet-header-badges .badge')
     .map((_, b) => $(b).text().trim())
     .get();
+  const fromHeader = mapAvailabilityFromBadgeTexts(headerBadges);
+  if (fromHeader) {
+    return fromHeader;
+  }
+
+  return mapAvailabilityFromJsonLd(jsonLd?.availability);
+}
+
+function mapAvailabilityFromBadgeTexts(badges: string[]): AvailabilityType | undefined {
+  for (const badge of badges) {
+    const norm = normalizeSourceStatusText(badge);
+    if (norm.includes('vandut')) {
+      return undefined;
+    }
+    if (norm.includes('la comanda')) {
+      return Availability.OnOrder;
+    }
+    if (
+      norm.includes('disponibil') ||
+      norm.includes('in drum') ||
+      norm.includes('rezervat') ||
+      norm.includes('curand')
+    ) {
+      return Availability.InStock;
+    }
+  }
+  return undefined;
+}
+
+function mapAvailabilityFromJsonLd(availability?: string): AvailabilityType | undefined {
+  if (!availability) {
+    return undefined;
+  }
+  const norm = availability.toLowerCase();
+  if (norm.includes('soldout') || norm.includes('outofstock') || norm.includes('discontinued')) {
+    return undefined;
+  }
+  if (norm.includes('preorder')) {
+    return Availability.OnOrder;
+  }
+  if (norm.includes('instock') || norm.includes('limitedavailability')) {
+    return Availability.InStock;
+  }
+  return undefined;
+}
+
+function readSpecBadges($: cheerio.CheerioAPI): string[] {
+  return $('.autooutlet-specs .spec-badge')
+    .map((_, b) => $(b).text().trim())
+    .get();
+}
+
+function readColorFromBadges($: cheerio.CheerioAPI): string | undefined {
+  const badges = readSpecBadges($);
   const skip = new Set(
     [
       'km',

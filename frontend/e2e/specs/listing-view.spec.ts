@@ -39,7 +39,9 @@ test.describe('Listing detail: view and interaction @p0', () => {
       {
         name: 'Validate listing detail page view',
         action: async () => {
+          await expectPagePath(page, (path) => /\/listings\/[^/]+$/.test(path));
           await listingDetailPage.expectPageView();
+          await listingDetailPage.expectTitleOrPriceBlockVisible();
         },
       },
     ];

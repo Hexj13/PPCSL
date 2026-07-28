@@ -20,7 +20,7 @@ export type MobileVehicleAdvancedTabProps = {
     urgent: boolean;
     is_new: boolean;
     available_in_credit: boolean;
-    seller_type: string;
+    seller_types: string[];
   };
   citySummary: string;
   registrationSummary: string;

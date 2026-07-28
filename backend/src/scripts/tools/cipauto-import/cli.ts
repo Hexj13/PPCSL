@@ -500,6 +500,8 @@ async function processSingleItem(params: {
     if (bodyMap.warning) warnings.push(bodyMap.warning);
     const colorMap = mapColor(parsed.colorRaw);
     if (colorMap.warning) warnings.push(colorMap.warning);
+    const interiorColorMap = parsed.interiorColorRaw ? mapColor(parsed.interiorColorRaw) : {};
+    if (interiorColorMap.warning) warnings.push(interiorColorMap.warning);
     const driveType = mapDriveType(parsed.driveTypeRaw);
     if (parsed.driveTypeRaw && driveType === undefined) {
       warnings.push(`UNMAPPED_DRIVE:${parsed.driveTypeRaw}`);
@@ -654,6 +656,7 @@ async function processSingleItem(params: {
         bodyType: bodyMap.value,
         driveType,
         color: colorMap.value,
+        interiorColor: interiorColorMap.value,
       },
       horsepower: hp.horsepower,
       imageBlurHashes: uploadedImages.blurHashes,

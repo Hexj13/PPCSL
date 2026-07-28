@@ -1,5 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsNumber, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 import { fuelTypes } from '../../../common/constants';
 import { BodyType, DriveType, FuelType, TransmissionType } from '../../../common/types';
@@ -118,4 +130,52 @@ export class CreateVehicleDto {
   @Min(2)
   @Max(5)
   doors?: number;
+
+  @ApiPropertyOptional({
+    example: 'DE',
+    description: 'Country of origin (ISO 3166-1 alpha-2)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === null || value === undefined) return value;
+    if (typeof value !== 'string') return value;
+    const trimmed = value.trim();
+    return trimmed === '' ? undefined : trimmed.toUpperCase();
+  })
+  @IsString()
+  @Matches(/^[A-Z]{2}$/, { message: 'validation.countryOfOriginIso2' })
+  country_of_origin?: string | null;
+
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'Number of previous owners',
+    minimum: 0,
+    maximum: 100,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  owners_count?: number | null;
+
+  @ApiPropertyOptional({
+    example: 'beige',
+    description: 'Interior color',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  interior_color?: string | null;
+
+  @ApiPropertyOptional({
+    example: 5,
+    description: 'Number of seats',
+    minimum: 1,
+    maximum: 9,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(9)
+  seats?: number | null;
 }

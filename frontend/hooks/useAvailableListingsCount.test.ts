@@ -51,7 +51,7 @@ const baseFilters: FilterState = {
   is_new: false,
   available_in_credit: false,
   down_payment_amount_gte: '',
-  seller_type: '',
+  seller_types: [],
   conditions: [],
   registration_types: [],
   horsepower_gte: '',

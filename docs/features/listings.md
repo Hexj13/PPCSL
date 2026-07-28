@@ -1,5 +1,22 @@
 # Listings
 
+## Optional vehicle and listing fields
+
+Vehicle create/edit exposes optional fields in addition to core specs:
+
+- **Listing `availability`:** `InStock` (default) or `OnOrder`.
+- **Vehicle `country_of_origin`:** ISO 3166-1 alpha-2 code (nullable).
+- **Vehicle `owners_count`:** integer 0–100 (nullable).
+- **Vehicle `interior_color`:** color slug from the shared vehicle palette (nullable).
+- **Vehicle `seats`:** integer 1–9 (cars/trucks); motorcycle form allows 1–4 (nullable).
+
+**Form sections (vehicle):**
+
+- **Condition and Registration** — order: condition, availability, registration, country of origin, owners count.
+- **Interior and Exterior** (renamed from “Exterior”; exterior color label **Vehicle color**) — order: vehicle color, interior color, doors, seats.
+
+Optional select fields on create/edit (`availability`, country of origin, colors, doors, seats; tire model) use a first menu item `common.clearSelection` (disabled when empty) instead of a fake “Not selected” option. Free-text `ListingFormTextInput` fields show a clear (×) control when non-empty.
+
 ## Listing video
 
 Sellers can attach **one video** per vehicle listing. **New listing:** optional **staged** multipart upload without a listing id (`POST /api/listings/video/staged-upload-init`, `POST /api/listings/video/staged-upload-complete`, poll `POST /api/listings/video/staged-status`); when processing reaches a publishable state, `POST /api/listings` may include **`stagedVideoToken`** to attach that asset to the created row. **Existing listing:** multipart upload uses `POST /api/listings/:id/video/upload-init` and `POST /api/listings/:id/video/upload-complete`. The backend starts transcoding and stores public playback URLs on the listing when processing completes.

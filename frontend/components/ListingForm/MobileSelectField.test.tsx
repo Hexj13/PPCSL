@@ -13,6 +13,8 @@ jest.mock('@/hooks/useTranslation', () => ({
       ({
         'common.ok': 'OK',
         'common.search': 'Search',
+        'common.clear': 'Clear',
+        'common.clearSelection': 'Clear selection',
         'common.requiredAsterisk': '*',
       })[key] ?? key,
   }),
@@ -233,5 +235,86 @@ describe('MobileSelectField', () => {
     );
 
     expect(screen.getByTestId('listing-create-brand-select')).toHaveClass('search-control-border');
+  });
+
+  it('does not show a trigger clear button when a value is selected', () => {
+    render(
+      <MobileSelectField
+        value="toyota"
+        onChange={jest.fn()}
+        options={[
+          { value: 'toyota', label: 'Toyota' },
+          { value: 'bmw', label: 'BMW' },
+        ]}
+        sheetTitle="Brand"
+        placeholder="Select brand"
+        dataTestId="listing-create-brand-select"
+      />,
+    );
+
+    expect(screen.queryByTestId('listing-create-brand-select-clear')).not.toBeInTheDocument();
+  });
+
+  it('shows a disabled clear selection option when clearable and empty', () => {
+    render(
+      <MobileSelectField
+        value=""
+        onChange={jest.fn()}
+        options={[
+          { value: 'toyota', label: 'Toyota' },
+          { value: 'bmw', label: 'BMW' },
+        ]}
+        sheetTitle="Color"
+        clearable
+        dataTestId="listing-create-color-select"
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('listing-create-color-select'));
+    const clearOption = screen.getByTestId('listing-create-color-select-clear-selection');
+    expect(clearOption).toBeDisabled();
+    expect(clearOption).toHaveTextContent('Clear selection');
+  });
+
+  it('clears the draft via clear selection and commits empty on OK', async () => {
+    const onChange = jest.fn();
+    render(
+      <MobileSelectField
+        value="toyota"
+        onChange={onChange}
+        options={[
+          { value: 'toyota', label: 'Toyota' },
+          { value: 'bmw', label: 'BMW' },
+        ]}
+        sheetTitle="Color"
+        clearable
+        dataTestId="listing-create-color-select"
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('listing-create-color-select'));
+    const clearOption = screen.getByTestId('listing-create-color-select-clear-selection');
+    expect(clearOption).not.toBeDisabled();
+    fireEvent.click(clearOption);
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+
+    expect(onChange).toHaveBeenCalledWith('');
+  });
+
+  it('does not show clear selection when clearable is false', () => {
+    render(
+      <MobileSelectField
+        value="toyota"
+        onChange={jest.fn()}
+        options={[{ value: 'toyota', label: 'Toyota' }]}
+        sheetTitle="Brand"
+        dataTestId="listing-create-brand-select"
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('listing-create-brand-select'));
+    expect(
+      screen.queryByTestId('listing-create-brand-select-clear-selection'),
+    ).not.toBeInTheDocument();
   });
 });

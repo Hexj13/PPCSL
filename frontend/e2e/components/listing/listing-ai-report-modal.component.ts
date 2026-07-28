@@ -38,4 +38,11 @@ export class ListingAiReportModalComponent {
     await expect(ready).toBeVisible();
     await expect(ready.locator('ul li').first()).toBeVisible();
   }
+
+  async expectUnavailableContentVisible(): Promise<void> {
+    const unavailable = this.page.getByTestId(this.testIds.unavailable);
+    await expect(unavailable).toBeVisible();
+    await expect(unavailable.locator('p').first()).toBeVisible();
+    await expect(unavailable.locator('p').nth(1)).toBeVisible();
+  }
 }

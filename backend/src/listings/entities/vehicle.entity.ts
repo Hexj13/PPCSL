@@ -69,9 +69,21 @@ export class Vehicle {
   })
   body_type: BodyType;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   color: string;
 
   @Column('int', { nullable: true })
   doors: number;
+
+  @Column({ type: 'varchar', length: 2, nullable: true })
+  country_of_origin: string | null;
+
+  @Column('int', { nullable: true })
+  owners_count: number | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  interior_color: string | null;
+
+  @Column('int', { nullable: true })
+  seats: number | null;
 }

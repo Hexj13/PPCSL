@@ -14,11 +14,18 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
 import * as constants from '../../../common/constants';
-import { ConditionType, Currency, ListingCategory, RegistrationType } from '../../../common/types';
+import {
+  ConditionType,
+  Currency,
+  ListingCategory,
+  RegistrationType,
+  Availability,
+} from '../../../common/types';
 
 import { CreateVehicleDto } from './create-vehicle.dto';
 import { UpdateTireDto } from './update-tire.dto';
@@ -172,6 +179,17 @@ export class UpdateListingDto {
     message: 'validation.registrationType',
   })
   registration_type?: RegistrationType;
+
+  @ApiPropertyOptional({
+    example: 'InStock',
+    enum: constants.availabilityTypes,
+    description: 'Vehicle availability',
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsEnum(Availability, { message: 'validation.availabilityTypeEnum' })
+  availability?: Availability | null;
 
   @ApiPropertyOptional({
     example: 150,

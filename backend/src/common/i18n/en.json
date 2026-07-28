@@ -37,6 +37,8 @@
     "termsAcceptedBoolean": "termsAccepted must be a boolean",
     "listingStatusEnum": "Status must be Active, Paused, or Closed",
     "conditionTypeEnum": "Condition must be Undamaged, Damaged, or ForParts",
+    "availabilityTypeEnum": "Availability must be InStock or OnOrder",
+    "countryOfOriginIso2": "Country of origin must be a 2-letter ISO country code",
     "vinLength17": "VIN must be exactly 17 characters",
     "vinCharset": "VIN must contain only letters and digits (excluding I, O, Q)",
     "verifyEmailTokenRequired": "Token is required",

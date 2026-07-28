@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useMemo, useState, type RefObject } fro
 import { ListingPageActions } from '@/components/ListingPage/ListingPageActions';
 import { ListingPageBreadcrumbs } from '@/components/ListingPage/ListingPageBreadcrumbs';
 import { ListingPageCharacteristics } from '@/components/ListingPage/ListingPageCharacteristics';
+import { ListingPageConditionRegistrationSection } from '@/components/ListingPage/ListingPageConditionRegistration';
 import { ListingPageDescription } from '@/components/ListingPage/ListingPageDescription';
 import { ListingPageHeader } from '@/components/ListingPage/ListingPageHeader';
 import { ListingPageImageModal } from '@/components/ListingPage/ListingPageImageModal';
@@ -195,46 +196,6 @@ function ListingPageListingInfoSection({
             </svg>
             <span>{t('listingDetail.share')}</span>
           </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ListingPageConditionRegistrationSection({
-  listing,
-  t,
-  formatRegistrationType,
-}: {
-  listing: Listing;
-  t: (k: string) => string;
-  formatRegistrationType: (v: string, t: (k: string) => string) => string;
-}) {
-  const hasAny = listing.condition || listing.registration_type;
-  if (!hasAny) return null;
-  return (
-    <div className="surface overflow-hidden">
-      <h2 className="text-xl md:text-2xl font-bold mb-4 text-primary-900">
-        {t('listingDetail.conditionAndRegistration')}
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {listing.condition && (
-          <div>
-            <span className="text-primary-700 font-semibold">{t('listingDetail.condition')}:</span>
-            <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-              {t(`vehicleOptions.condition.${listing.condition}`)}
-            </span>
-          </div>
-        )}
-        {listing.registration_type && (
-          <div>
-            <span className="text-primary-700 font-semibold">
-              {t('listingDetail.registrationType')}:
-            </span>
-            <span className="ml-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
-              {formatRegistrationType(listing.registration_type, t)}
-            </span>
-          </div>
         )}
       </div>
     </div>
@@ -488,6 +449,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
                 <ListingPageConditionRegistrationSection
                   listing={listing}
                   t={t}
+                  locale={locale}
                   formatRegistrationType={formatRegistrationType}
                 />
               </div>

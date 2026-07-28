@@ -3,6 +3,7 @@ import type { PopularBrandCountry } from '../content/popular-brand-countries';
 import type { Locale } from '../i18n-types';
 import type { TireTread } from '../tire-tread';
 import type {
+  Availability,
   BodyType,
   ConditionType,
   Currency,
@@ -136,6 +137,7 @@ export interface Listing {
   is_new?: boolean;
   vin?: string;
   condition?: ConditionType | null;
+  availability?: Availability | null;
   registration_type?: RegistrationType | null;
   horsepower?: number | null;
   power_kw?: number;
@@ -237,7 +239,11 @@ export interface Vehicle {
   drive_type: DriveType;
   body_type: BodyType;
   color?: string;
+  interior_color?: string;
   doors?: number;
+  seats?: number;
+  country_of_origin?: string;
+  owners_count?: number;
 }
 
 export interface User {
@@ -338,7 +344,7 @@ export interface SearchParams {
   horsepower_gte?: number;
   horsepower_lte?: number;
   drive_types?: string[];
-  seller_type?: 'Individual' | 'Business';
+  seller_types?: string[];
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -385,6 +391,7 @@ export interface CreateListingDto {
   is_new?: boolean;
   vin?: string;
   condition?: ConditionType;
+  availability?: Availability | null;
   registration_type?: RegistrationType;
   horsepower?: number;
   power_kw?: number;
@@ -400,7 +407,11 @@ export interface CreateListingDto {
     drive_type?: DriveType;
     body_type: BodyType;
     color?: string;
+    interior_color?: string;
     doors?: number;
+    seats?: number;
+    country_of_origin?: string;
+    owners_count?: number;
   };
   tire?: CreateTireDtoPayload;
   assignedUserId?: string;
@@ -430,7 +441,17 @@ export type UpdateListingDto = Omit<
   equipment?: string[] | null;
   vehicle?: Omit<
     Partial<NonNullable<CreateListingDto['vehicle']>>,
-    'engine_displ_l' | 'mileage_km' | 'fuel' | 'transmission' | 'drive_type' | 'color' | 'doors'
+    | 'engine_displ_l'
+    | 'mileage_km'
+    | 'fuel'
+    | 'transmission'
+    | 'drive_type'
+    | 'color'
+    | 'interior_color'
+    | 'doors'
+    | 'seats'
+    | 'country_of_origin'
+    | 'owners_count'
   > & {
     engine_displ_l?: number | null;
     mileage_km?: number | null;
@@ -438,7 +459,11 @@ export type UpdateListingDto = Omit<
     transmission?: NonNullable<CreateListingDto['vehicle']>['transmission'] | null;
     drive_type?: NonNullable<CreateListingDto['vehicle']>['drive_type'] | null;
     color?: string | null;
+    interior_color?: string | null;
     doors?: number | null;
+    seats?: number | null;
+    country_of_origin?: string | null;
+    owners_count?: number | null;
   };
   tire?: Partial<Omit<CreateTireDtoPayload, 'model_id'>> & {
     model_id?: string | null;

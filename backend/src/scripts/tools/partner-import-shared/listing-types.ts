@@ -1,4 +1,5 @@
 import type {
+  Availability,
   BodyType,
   ConditionType,
   Currency,
@@ -55,8 +56,13 @@ export interface ParsedPdpData {
   driveTypeRaw?: string;
   bodyRaw?: string;
   colorRaw?: string;
+  interiorColorRaw?: string;
   city?: string;
   doors?: number;
+  seats?: number;
+  countryOfOrigin?: string;
+  ownersCount?: number;
+  availability?: Availability;
   vin?: string;
   condition?: ConditionType;
   warnings: string[];
@@ -150,6 +156,7 @@ export interface MappedVehicleEnums {
   bodyType: BodyType;
   driveType?: 'FWD' | 'RWD' | 'AWD';
   color?: string;
+  interiorColor?: string;
 }
 
 export type PartnerImportVehicleType = 'car' | 'truck' | 'moto';
@@ -228,6 +235,7 @@ export interface KupitoCreateListingPayload {
   power_kw?: number;
   equipment?: string[];
   assignedUserId: string;
+  availability?: Availability;
   vin?: string;
   vehicle: {
     brand_id: string;
@@ -241,6 +249,10 @@ export interface KupitoCreateListingPayload {
     body_type: BodyType;
     color?: string;
     doors?: number;
+    country_of_origin?: string;
+    owners_count?: number;
+    interior_color?: string;
+    seats?: number;
   };
 }
 

@@ -197,7 +197,7 @@ export function MobileTireSection(props: MobileSearchFiltersTireProps) {
     return `${widthInput || '—'} / ${profileInput || '—'} / ${diameterInput || '—'}`;
   }, [widthInput, profileInput, diameterInput]);
 
-  const sellerSummary = sellerTypeOptions.find((o) => o.value === filters.seller_type)?.label ?? '';
+  const sellerSummary = summarizeMulti(filters.seller_types, sellerTypeOptions, t);
 
   const confirmTireSheet = useCallback(() => {
     runTireSheetConfirm(openSheet, mobileDraft, {

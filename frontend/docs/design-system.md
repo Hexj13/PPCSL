@@ -160,10 +160,10 @@ Design tokens are available through `designTokens`:
 
 ```tsx
 import { designTokens } from '@/ui';
-import { getTheme } from '@/lib/theme';
+import { loadThemeSync } from '@/lib/theme';
 
 const spacing = designTokens.spacing.md;
-const theme = getTheme();
+const theme = loadThemeSync('md');
 const primaryColor = theme.primary[500];
 ```
 
@@ -183,7 +183,7 @@ All components use Tailwind CSS and existing classes from `globals.css`. Compone
 
 The project includes optimized dropdown components in `components/`:
 
-- **Dropdown**: Single-select dropdown with optional search and action buttons
+- **Dropdown**: Single-select dropdown with optional search, action buttons, and optional `clearOption` (first menu item + divider; used for optional clearable fields such as listing form selects and search year From/To)
 - **MultiSelectDropdown**: Multi-select dropdown with:
   - Search functionality
   - Category grouping

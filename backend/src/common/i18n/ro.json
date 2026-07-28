@@ -37,6 +37,8 @@
     "termsAcceptedBoolean": "termsAccepted trebuie să fie boolean",
     "listingStatusEnum": "Starea trebuie să fie Active, Paused sau Closed",
     "conditionTypeEnum": "Starea trebuie să fie Undamaged, Damaged sau ForParts",
+    "availabilityTypeEnum": "Disponibilitatea trebuie să fie InStock sau OnOrder",
+    "countryOfOriginIso2": "Țara de origine trebuie să fie un cod ISO din 2 litere",
     "vinLength17": "VIN trebuie să aibă exact 17 caractere",
     "vinCharset": "VIN trebuie să conțină doar litere și cifre (fără I, O, Q)",
     "verifyEmailTokenRequired": "Tokenul este obligatoriu",

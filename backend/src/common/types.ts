@@ -26,6 +26,8 @@ export type ConditionType = (typeof constants.conditionTypes)[number];
 
 export type RegistrationType = (typeof constants.registrationTypes)[number];
 
+export type Availability = (typeof constants.availabilityTypes)[number];
+
 export type SortOrder = (typeof constants.sortOrders)[number];
 
 export {
@@ -39,6 +41,7 @@ export {
   BodyType,
   ConditionType,
   RegistrationType,
+  Availability,
   SortOrder,
   TireVehicleType,
   TireSeason,

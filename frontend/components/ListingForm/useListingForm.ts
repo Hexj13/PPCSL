@@ -240,6 +240,7 @@ export function useListingForm({
           brand_id: '',
           model_id: '',
           doors: '',
+          seats: '',
           drive_type: '',
           body_type: '',
         },

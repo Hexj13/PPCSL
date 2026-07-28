@@ -25,7 +25,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   return {
     name: `${siteConfig.name} - ${t.home.title}`,
     short_name: siteConfig.name,
-    description: `${t.home.subtitle} ${t.home.subtitleBold} ${t.home.subtitle2} ${t.home.subtitle3}`,
+    description: t.metadata.site.defaultDescription,
     id: '/',
     start_url: '/',
     scope: '/',

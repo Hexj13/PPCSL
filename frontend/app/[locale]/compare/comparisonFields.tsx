@@ -5,7 +5,11 @@ import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStat
 import type { Listing } from '@/lib/api';
 import { getClientLocale } from '@/lib/i18n';
 import type { Locale } from '@/lib/i18n-types';
-import { getColorLabel, getEquipmentKeysByVehicleType } from '@/lib/options';
+import {
+  getColorLabel,
+  getCountryOfOriginLabel,
+  getEquipmentKeysByVehicleType,
+} from '@/lib/options';
 import {
   formatPrice,
   formatMileage,
@@ -308,6 +312,21 @@ export const comparisonFields: ComparisonField[] = [
     ),
   },
   {
+    key: 'interiorColor',
+    labelKey: 'compare.interiorColor',
+    renderCell: (listing, t, _, _locale) => (
+      <td
+        key={listing.id}
+        className={compareDataCellClass}
+        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+      >
+        {listing.vehicle?.interior_color
+          ? getColorLabel(listing.vehicle.interior_color, t)
+          : t('compare.notAvailable')}
+      </td>
+    ),
+  },
+  {
     key: 'doors',
     labelKey: 'compare.doors',
     renderCell: (listing, t, _, _locale) => (
@@ -317,6 +336,19 @@ export const comparisonFields: ComparisonField[] = [
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         {getCompareCellValue(listing.vehicle?.doors, t)}
+      </td>
+    ),
+  },
+  {
+    key: 'seats',
+    labelKey: 'compare.seats',
+    renderCell: (listing, t, _, _locale) => (
+      <td
+        key={listing.id}
+        className={compareDataCellClass}
+        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+      >
+        {getCompareCellValue(listing.vehicle?.seats, t)}
       </td>
     ),
   },
@@ -332,6 +364,49 @@ export const comparisonFields: ComparisonField[] = [
         {listing.condition
           ? t(`vehicleOptions.condition.${listing.condition}`)
           : t('compare.notAvailable')}
+      </td>
+    ),
+  },
+  {
+    key: 'availability',
+    labelKey: 'compare.availability',
+    renderCell: (listing, t, _, _locale) => (
+      <td
+        key={listing.id}
+        className={compareDataCellClass}
+        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+      >
+        {listing.availability
+          ? t(`vehicleOptions.availability.${listing.availability}`)
+          : t('compare.notAvailable')}
+      </td>
+    ),
+  },
+  {
+    key: 'countryOfOrigin',
+    labelKey: 'compare.countryOfOrigin',
+    renderCell: (listing, t, _, locale) => (
+      <td
+        key={listing.id}
+        className={compareDataCellClass}
+        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+      >
+        {listing.vehicle?.country_of_origin
+          ? getCountryOfOriginLabel(listing.vehicle.country_of_origin, locale ?? getClientLocale())
+          : t('compare.notAvailable')}
+      </td>
+    ),
+  },
+  {
+    key: 'ownersCount',
+    labelKey: 'compare.ownersCount',
+    renderCell: (listing, t, _, _locale) => (
+      <td
+        key={listing.id}
+        className={compareDataCellClass}
+        style={{ color: 'rgb(var(--text-secondary-rgb))' }}
+      >
+        {getCompareCellValue(listing.vehicle?.owners_count, t)}
       </td>
     ),
   },

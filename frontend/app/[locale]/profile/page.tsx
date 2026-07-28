@@ -51,6 +51,8 @@ function ProfileContactSection({
             type="checkbox"
             checked={checked}
             onChange={(e) => onChange(field, e.target.checked)}
+            tabIndex={-1}
+            aria-hidden="true"
             className="sr-only"
           />
           <button

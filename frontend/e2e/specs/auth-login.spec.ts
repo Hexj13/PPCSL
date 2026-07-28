@@ -69,10 +69,8 @@ test.describe('Auth: login @p0', () => {
       {
         name: 'Switch to register tab and keep returnUrl',
         action: async () => {
-          await page.getByTestId('auth-tab-register').click();
+          await signPage.openRegisterTab();
           await expect(page).toHaveURL(new RegExp(`returnUrl=${encodeURIComponent(returnPath)}`));
-          await expect(page).toHaveURL(/[?&]tab=register/);
-          await signPage.expectRegisterPageView();
         },
       },
     ];

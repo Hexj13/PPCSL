@@ -3,8 +3,8 @@
     "copyright": "© 2025-2026 Kupito.club. All rights reserved.",
     "navTitle": "Navigation",
     "infoTitle": "Information",
-    "legalTitle": "Legal",
-    "about": "Kupito.club is a platform for buying and selling cars in Moldova. Post listings for free and find the right car by the criteria that matter to you.",
+    "legalTitle": "Legal information",
+    "about": "Kupito.club is a platform for buying and selling cars in Moldova. Post listings for free and find the right vehicle using the criteria and features that matter to you.",
     "partnersTitle": "Our Partners",
     "faq": "Frequently Asked Questions",
     "partners": "For partners",
@@ -25,7 +25,7 @@
     "listings": "Listings",
     "favorites": "Favorites",
     "forBusiness": "For Business",
-    "compare": "Compare",
+    "compare": "Comparison",
     "profile": "Profile",
     "admin": "Admin",
     "logout": "Logout",
@@ -41,14 +41,14 @@
     "more": "More"
   },
   "home": {
-    "title": "Cars in Moldova",
-    "titleWithBrand": "{brand} in Moldova",
-    "titleWithBrandModel": "{brand} {model} in Moldova",
+    "title": "Cars for Sale in Moldova",
+    "titleWithBrand": "{brand} Cars for Sale in Moldova",
+    "titleWithBrandModel": "{brand} {model} Cars for Sale in Moldova",
     "titleByCategory": {
-      "car": "Cars in Moldova",
-      "truck": "Commercial vehicles in Moldova",
-      "moto": "Motorcycles in Moldova",
-      "tire": "Tires and wheels in Moldova"
+      "car": "Cars for Sale in Moldova",
+      "truck": "Commercial Vehicles for Sale in Moldova",
+      "moto": "Motorcycles for Sale in Moldova",
+      "tire": "Tires and Wheels for Sale in Moldova"
     },
     "heroCategory": {
       "car": "a car",
@@ -56,19 +56,19 @@
       "moto": "a motorcycle",
       "tire": "tires and wheels"
     },
-    "subtitle": "Post a listing",
+    "subtitle": "Post your listing",
     "subtitleBold": "Kupito.club!",
     "subtitle2": ". Buy or sell {category} on ",
     "subtitle3": "for free",
-    "descriptionIntro": "This platform is designed for buying and selling cars in Moldova for free and without unnecessary hassle.",
-    "descriptionDetails": "Kupito.club helps sellers publish listings quickly and helps buyers find the right car by brand, price, year, and other important criteria. We bring unique listings from private owners and dealer offers together in a convenient search experience, making the path from interest to a call as short as possible.",
-    "descriptionExpand": "Expand",
-    "descriptionCollapse": "Collapse",
+    "descriptionIntro": "Buy and sell vehicles in Moldova on Kupito — post listings for free, without unnecessary hassle.",
+    "descriptionDetails": "Kupito.club helps sellers publish listings quickly and helps buyers find the right vehicle by brand, price, year, and other important criteria. We bring unique listings from private owners and dealers together in one convenient search, so the path from interest to a call is as short as possible.",
+    "descriptionExpand": "Show more",
+    "descriptionCollapse": "Show less",
     "popularSearches": "Popular Searches"
   },
   "listingsPage": {
-    "title": "Car Listings",
-    "description": "Search for cars for sale in Moldova. Filter by brand, model, price, year, and more on Kupito."
+    "title": "Cars for Sale in Moldova",
+    "description": "Search cars for sale in Moldova. Filter by brand, model, price, year, and more on Kupito."
   },
   "common": {
     "loading": "Loading...",
@@ -95,6 +95,9 @@
     "no": "No",
     "search": "Search",
     "choose": "Choose...",
+    "notSelected": "Not selected",
+    "clear": "Clear",
+    "clearSelection": "Clear selection",
     "rangeDash": "—",
     "selectedCount": "Selected {count}",
     "requiredAsterisk": "*",
@@ -526,12 +529,12 @@
     "loadListingError": "Could not load listing",
     "selectModel": "Select model",
     "addPhotos": "Add photos",
-    "pausedStatus": "Paused (not shown in catalog)",
+    "pausedStatus": "Temporarily paused (not shown in catalog)",
     "notFound": "Listings not found",
     "viewAllListings": "View all listings",
     "publishedStatus": "Published (shown in catalog)",
     "publishAction": "Publish",
-    "pauseAction": "Pause",
+    "pauseAction": "Pause temporarily",
     "published": "Listing has been published",
     "statusUpdateError": "Error updating status",
     "refreshDateLimit": "You can use this action once every 48 hours",
@@ -541,7 +544,7 @@
     "refreshDateWithTime": "Refresh listing dates ({time})",
     "all": "All",
     "active": "Active",
-    "paused": "Paused",
+    "paused": "Temporarily paused",
     "closed": "Closed",
     "noListingsYet": "You don't have any listings yet",
     "noListingsWithStatus": "No listings with selected status",
@@ -570,7 +573,7 @@
     "descriptionPlaceholder": "Add car description...",
     "vehicleTypeLabel": "Vehicle Type",
     "vehicleType": {
-      "car": "Car",
+      "car": "Passenger car",
       "truck": "Truck",
       "moto": "Motorcycle"
     },
@@ -589,7 +592,7 @@
     "modelRequired": "Model selection is required",
     "yearRequired": "Year is required",
     "yearMustBePositive": "Year must be a positive integer",
-    "yearMinError": "Year cannot be less than 1900",
+    "yearMinError": "Year cannot be less than 1940",
     "yearMaxError": "Year cannot be greater than {maxYear}",
     "engineRequired": "Engine displacement is required",
     "mileageRequired": "Mileage is required",
@@ -608,9 +611,11 @@
     "powerKwRequired": "Valid power (kW) is required",
     "registrationDateRequired": "Registration expiration date is required",
     "registrationDateInvalid": "Registration date cannot be less than current month and year",
+    "ownersCountInvalid": "Number of owners must be between 0 and 100",
+    "seatsInvalid": "Number of seats must be between 1 and 9",
     "registrationDateFormatError": "Date must be in format month.year (e.g., 05.2025). Month must be two digits.",
     "brandAndModelRequired": "Brand and model selection is required",
-    "yearRangeErrorForm": "Year must be between 1900 and {maxYear}",
+    "yearRangeErrorForm": "Year must be between 1940 and {maxYear}",
     "imageFormatError": "Only images are supported (JPEG, PNG, GIF, WebP)",
     "imageSizeError": "Maximum file size is 10MB",
     "imageEmptyError": "File is empty",
@@ -639,6 +644,7 @@
     "equipment": "Equipment",
     "equipmentInfo": "Specifying equipment is optional, but it helps improve listing quality and search effectiveness for buyers.",
     "exterior": "Exterior",
+    "interiorAndExterior": "Interior and Exterior",
     "priceAndLocation": "Price and Location",
     "conditionAndRegistration": "Condition and Registration",
     "conditionLabel": "Condition",
@@ -680,7 +686,12 @@
     "cityLabel": "City",
     "isRegistered": "Registered",
     "bodyTypeLabel": "Body Type",
-    "colorLabel": "Color",
+    "colorLabel": "Vehicle color",
+    "interiorColorLabel": "Interior color",
+    "seatsLabel": "Number of seats",
+    "availabilityLabel": "Availability",
+    "countryOfOriginLabel": "Country of origin",
+    "ownersCountLabel": "Number of owners",
     "yearTitle": "Enter car production year",
     "vinPlaceholder": "17 characters (without I, O, Q)",
     "vinTitle": "Enter VIN code (17 characters, without letters I, O, Q)",
@@ -774,7 +785,7 @@
   "favorites": {
     "title": "Favorites",
     "home": "Home",
-    "listings": "Cars",
+    "listings": "Listings",
     "filters": "Filters",
     "empty": "No favorites yet"
   },
@@ -788,14 +799,14 @@
     "refreshDateWithTime": "Refresh listing dates ({time})",
     "all": "All",
     "active": "Active",
-    "paused": "Paused",
+    "paused": "Temporarily paused",
     "closed": "Closed",
     "noListingsYet": "You don't have any listings yet",
     "noListingsWithStatus": "No listings with selected status",
     "loadMore": "Load more",
     "noMoreListings": "No more listings",
     "published": "Listing has been published",
-    "pausedMessage": "Listing is paused",
+    "pausedMessage": "Listing is temporarily paused",
     "closedMessage": "Listing is closed",
     "statusUpdateError": "Error updating status",
     "refreshDateLimit": "You can use this action once every 48 hours",
@@ -831,7 +842,7 @@
       "captionsTrackLabel": "No dialogue captions"
     },
     "home": "Home",
-    "addToFavorites": "To favorites",
+    "addToFavorites": "Add to favorites",
     "removeFromFavorites": "Remove from favorites",
     "yourListing": "Your listing",
     "cannotFavoriteOwnListingToast": "You cannot add your own listings to favorites.",
@@ -854,6 +865,7 @@
     "downPaymentFromLabel": "Down payment from: {amount} {currency}",
     "characteristics": "Characteristics",
     "equipment": "Equipment",
+    "interiorAndExterior": "Interior and Exterior",
     "conditionAndRegistration": "Condition and Registration",
     "brand": "Brand",
     "model": "Model",
@@ -881,7 +893,12 @@
     "driveType": "Drive Type",
     "mileage": "Mileage",
     "bodyType": "Body Type",
-    "color": "Color",
+    "color": "Vehicle color",
+    "availability": "Availability",
+    "countryOfOrigin": "Country of origin",
+    "ownersCount": "Number of owners",
+    "interiorColor": "Interior color",
+    "seats": "Number of seats",
     "doors": "Doors",
     "condition": "Condition",
     "registrationType": "Registration",
@@ -907,8 +924,8 @@
     "actionCardCompareTitleWhenInComparison": "In comparison",
     "actionCardCompareDescriptionWhenInComparison": "Remove from comparison",
     "actionCardPromoteDescription": "Improve your position in search",
-    "actionCardPromoteTitleWhenPromoted": "Being promoted",
-    "actionCardPromoteDescriptionWhenPromoted": "This increases how often it is shown",
+    "actionCardPromoteTitleWhenPromoted": "Promoted",
+    "actionCardPromoteDescriptionWhenPromoted": "Increases visibility in search results",
     "actionCardAiDescription": "Analysis of this listing",
     "aiReportNewBadge": "New",
     "aiReportActionCardGenerating": "Generating listing analysis…",
@@ -1109,6 +1126,10 @@
     "selectDriveType": "Select drive",
     "selectBodyType": "Select body",
     "selectColor": "Select color",
+    "selectAvailability": "Select availability",
+    "selectCountryOfOrigin": "Select country of origin",
+    "selectInteriorColor": "Select interior color",
+    "selectSeats": "Select number of seats",
     "selectDoors": "Select number",
     "selectCondition": "Select condition",
     "selectRegistrationType": "Select type",
@@ -1122,13 +1143,13 @@
     "registered": "Registered",
     "notRegistered": "Not Registered",
     "registrationTypeOptions": {
-      "Local": "Local",
-      "Foreign": "Foreign",
-      "Cleared": "Cleared (in buyer's name)",
-      "NotCleared": "Not cleared"
+      "Local": "Locally registered",
+      "Foreign": "Foreign-registered",
+      "Cleared": "Customs-cleared",
+      "NotCleared": "Not customs-cleared"
     },
-    "yearFromTitle": "Enter year (1900-{currentYear})",
-    "yearToTitle": "Enter year (1900-{currentYear})",
+    "yearFromTitle": "Enter year (1940-{currentYear})",
+    "yearToTitle": "Enter year (1940-{currentYear})",
     "priceFromTitle": "Enter price (integers only, 0-999999999)",
     "priceToTitle": "Enter price (integers only, 0-999999999)",
     "priceFromPlaceholder": "0",
@@ -1144,7 +1165,7 @@
     "showAdvanced": "Show",
     "hideAdvanced": "Hide",
     "other": "Other",
-    "yearRangeError": "Year must be between 1900 and {maxYear}",
+    "yearRangeError": "Year must be between 1940 and {maxYear}",
     "priceRangeError": "Price must be between 0 and 999999999",
     "yearFromGreaterThanTo": "Year \"from\" cannot be greater than year \"to\"",
     "priceFromGreaterThanTo": "Price \"from\" cannot be greater than price \"to\"",
@@ -1253,7 +1274,7 @@
     "invalidCompanyWebsiteUrl": "Enter a valid URL starting with http:// or https://",
     "partnerProgramTitle": "Partnership",
     "partnerProgramSync": "Partners can enable automatic syncing with their website or any platform where their listings are already published.",
-    "partnerProgramHint": "Platform partners receive free unlimited promotions.",
+    "partnerProgramHint": "Platform partners receive free promotions with no time limit.",
     "partnerProgramDescription": "Every 20 new listings adds 1 free promotion to the balance.",
     "partnerStatus": "Status:",
     "partnerStatusInactive": "Partnership is not enabled",
@@ -1840,7 +1861,12 @@
     "transmission": "Transmission",
     "driveType": "Drive Type",
     "bodyType": "Body Type",
-    "color": "Color",
+    "color": "Vehicle color",
+    "availability": "Availability",
+    "countryOfOrigin": "Country of origin",
+    "ownersCount": "Number of owners",
+    "interiorColor": "Interior color",
+    "seats": "Number of seats",
     "doors": "Doors",
     "condition": "Condition",
     "registrationType": "Registration",
@@ -1881,7 +1907,7 @@
       "Manual": "Manual",
       "Automatic": "Automatic",
       "CVT": "CVT",
-      "Robot": "Robot"
+      "Robot": "Automated manual"
     },
     "driveType": {
       "FWD": "FWD",
@@ -1892,7 +1918,7 @@
       "Sedan": "Sedan",
       "Hatchback": "Hatchback",
       "Wagon": "Wagon",
-      "SUV": "Off-road/Crossover",
+      "SUV": "SUV/Crossover",
       "Coupe": "Coupe",
       "Convertible": "Convertible",
       "Van": "Van",
@@ -1928,6 +1954,10 @@
       "TourEnduro": "Tour-enduro",
       "Chopper": "Chopper",
       "ElectricScooter": "Electric scooter"
+    },
+    "availability": {
+      "InStock": "In stock",
+      "OnOrder": "On order"
     },
     "doors": {
       "2": "2 doors",
@@ -2009,8 +2039,8 @@
       "curtain_airbags": "Curtain Airbags",
       "driver_airbag": "Driver Airbag",
       "electric_mirrors": "Electric Mirrors",
-      "electric_seats_driver": "Electric Driver Seat",
-      "electric_seats_passenger": "Electric Passenger Seat",
+      "electric_seats_driver": "Power-adjustable driver seat",
+      "electric_seats_passenger": "Power-adjustable passenger seat",
       "electric_trunk": "Electric Trunk",
       "electric_windows": "Electric Windows",
       "electronic_suspension": "Electronic Suspension",
@@ -2106,7 +2136,7 @@
   "faq": {
     "title": "Frequently Asked Questions (FAQ)",
     "userScenarios": {
-      "title": "Reminder: User Scenarios",
+      "title": "Common user scenarios",
       "description": "Here is a brief overview of the most common scenarios for working with listings on Kupito:"
     },
     "contact": {
@@ -2337,18 +2367,18 @@
   },
   "metadata": {
     "site": {
-      "defaultTitle": "Cars in Moldova",
+      "defaultTitle": "Cars for Sale in Moldova",
       "defaultDescription": "Buy or sell a car on Kupito! Unique listings from private owners and dealers. Post for free.",
-      "homePageDescription": "Buy or sell a car on Kupito! Post your listing for free. Platform for buying and selling cars online in Moldova. Unique listings from private owners and car dealers — free listing posting.",
-      "homePageDescriptionWithBrand": "Buy {brand} cars on Kupito! Unique listings from private owners and dealers — best prices and selection of {brand} in Moldova.",
-      "homePageDescriptionWithBrandModel": "Buy {brand} {model} on Kupito! Unique listings from private owners and dealers — best prices and selection of {brand} {model} in Moldova.",
-      "tiresDefaultTitle": "Tires in Moldova",
+      "homePageDescription": "Buy or sell a car on Kupito! Free to post. A platform for buying and selling cars online in Moldova. Unique listings from private owners and dealers.",
+      "homePageDescriptionWithBrand": "Find {brand} cars for sale on Kupito! Unique listings from private owners and dealers — selection of {brand} in Moldova.",
+      "homePageDescriptionWithBrandModel": "Find {brand} {model} for sale on Kupito! Unique listings from private owners and dealers — selection of {brand} {model} in Moldova.",
+      "tiresDefaultTitle": "Tires for Sale in Moldova",
       "tiresHomePageDescription": "Buy or sell tires on Kupito! Free tire listings in Moldova: new and used, many sizes and seasons.",
-      "tiresHomePageDescriptionWithBrand": "{brand} tires on Kupito! Selection and prices for {brand} tires in Moldova.",
-      "tiresHomePageDescriptionWithBrandModel": "{brand} {model} tires on Kupito! Selection and prices for {brand} {model} in Moldova.",
-      "organizationDescription": "Buy or sell a car on Kupito! Unique listings from private owners and dealers. Platform for buying and selling cars online in Moldova.",
-      "homeTitleTemplate": "Kupito.club: buy, sell or exchange {category} in Moldova",
-      "homeBrandTitleTemplate": "Buy {value} in Moldova on Kupito.club",
+      "tiresHomePageDescriptionWithBrand": "{brand} tires for sale on Kupito! Selection and prices for {brand} tires in Moldova.",
+      "tiresHomePageDescriptionWithBrandModel": "{brand} {model} tires for sale on Kupito! Selection and prices for {brand} {model} in Moldova.",
+      "organizationDescription": "Buy or sell a car on Kupito! Unique listings from private owners and dealers. A platform for buying and selling cars online in Moldova.",
+      "homeTitleTemplate": "Kupito.club: buy and sell {category} in Moldova",
+      "homeBrandTitleTemplate": "Buy or sell {value} in Moldova on Kupito.club",
       "categoryTitle": {
         "car": "cars",
         "truck": "commercial vehicles",
@@ -2363,10 +2393,10 @@
         "unique car listings",
         "cars from private owners Moldova",
         "car dealers Moldova",
-        "autoturisme Moldova",
-        "cumpărare auto online",
-        "vânzare auto Moldova",
-        "anunțuri auto Moldova"
+        "cars Chisinau",
+        "cars for sale Moldova",
+        "car ads Chisinau",
+        "used cars Moldova"
       ]
     },
     "login": {
@@ -2402,7 +2432,7 @@
       "description": "Find answers to the most common questions about Kupito. Learn how to post a listing, manage your listings, search and compare cars.",
       "ogTitle": "Frequently Asked Questions (FAQ) - Kupito",
       "ogDescription": "Find answers to the most common questions about Kupito. Learn how to post a listing, manage your listings, search and compare cars, and more.",
-      "ogAlt": "Kupito - FAQ"
+      "ogAlt": "Kupito - Frequently Asked Questions"
     },
     "partners": {
       "title": "For partners - Kupito",
@@ -2433,17 +2463,17 @@
       "ogAlt": "Kupito - Cookie Settings"
     },
     "terms": {
-      "title": "Terms of Service",
-      "description": "Read Kupito Terms of Service. Learn the rules, responsibilities, and rights when using the car listings platform.",
-      "ogTitle": "Terms of Service - Kupito",
-      "ogDescription": "Read Kupito Terms of Service. Learn the rules, responsibilities, and rights when using the car listings platform.",
-      "ogAlt": "Kupito - Terms of Service"
+      "title": "Terms of Use",
+      "description": "Read Kupito Terms of Use. Learn the rules, responsibilities, and rights when using the car listings platform.",
+      "ogTitle": "Terms of Use - Kupito",
+      "ogDescription": "Read Kupito Terms of Use. Learn the rules, responsibilities, and rights when using the car listings platform.",
+      "ogAlt": "Kupito - Terms of Use"
     },
     "privacy": {
       "title": "Privacy Policy",
-      "description": "Learn how Kupito collects, uses and protects your personal data. Read our Privacy Policy.",
+      "description": "Learn how Kupito collects, uses, and protects your personal data. Read our Privacy Policy and how we process data in accordance with GDPR.",
       "ogTitle": "Privacy Policy - Kupito",
-      "ogDescription": "Learn how Kupito collects, uses and protects your personal data. Read our Privacy Policy to understand how we process your data.",
+      "ogDescription": "Learn how Kupito collects, uses, and protects your personal data. Read our Privacy Policy to understand how we process your data in accordance with GDPR.",
       "ogAlt": "Kupito - Privacy Policy"
     },
     "brandLanding": {
@@ -2451,7 +2481,7 @@
       "titleWithPrice": "Buy {brand} in Moldova: used and new cars for sale from {price}",
       "description": "Browse {brand} listings on Kupito. Current offers in Moldova.",
       "h1": "{brand} — for sale",
-      "intro": "Find unique {brand} cars from private owners and dealers.",
+      "intro": "Find unique {brand} listings from private owners and dealers.",
       "ogAlt": "{brand} — Kupito car listings"
     },
     "brandModelLanding": {
@@ -2459,7 +2489,7 @@
       "titleWithPrice": "Buy {brand} {model} in Moldova: used and new cars for sale from {price}",
       "description": "Browse {brand} {model} on Kupito. Current prices in Moldova.",
       "h1": "{brand} {model} — for sale",
-      "ogAlt": "{brand} {model} — Kupito"
+      "ogAlt": "{brand} {model} — Kupito car listings"
     },
     "listing": {
       "notFoundTitle": "Listing not found",
@@ -2493,7 +2523,7 @@
     "unlimited": "Unlimited",
     "partnerUnlimited": "Unlimited (from partner balance)",
     "partnerBalanceValue": "Balance: {count}",
-    "paymentNote": "Will switch to payment in the future",
+    "paymentNote": "Paid promotion will be introduced later",
     "historyTitle": "Promotion History",
     "history": {
       "title": "Promotion History",

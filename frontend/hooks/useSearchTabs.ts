@@ -37,6 +37,7 @@ const ADVANCED_PARAM_KEYS = [
   'is_new',
   'available_in_credit',
   'down_payment_amount_gte',
+  'seller_types',
   'seller_type',
 ] as const;
 
@@ -68,6 +69,7 @@ const TIRE_BASIC_PARAM_KEYS = [
   'price_gte',
   'price_lte',
   'cities',
+  'seller_types',
   'seller_type',
 ] as const;
 

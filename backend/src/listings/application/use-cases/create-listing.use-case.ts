@@ -252,6 +252,7 @@ export class CreateListingUseCase {
       vehicle_id: null,
       condition: null,
       registration_type: null,
+      availability: null,
       horsepower: null,
       power_kw: null,
       vin: null,

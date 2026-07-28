@@ -94,14 +94,17 @@ describe('proxy locale routing', () => {
 
 describe('proxy phone verification gate', () => {
   const originalJwt = process.env.JWT_SECRET;
+  const originalSwitcher = process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER;
 
   beforeEach(() => {
     process.env.JWT_SECRET = 'test-secret-test-secret-test-32';
+    process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = 'true';
     (jwtVerify as unknown as jest.Mock).mockResolvedValue({ payload: { phoneVerified: false } });
   });
 
   afterEach(() => {
     process.env.JWT_SECRET = originalJwt;
+    process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = originalSwitcher;
     (jwtVerify as unknown as jest.Mock).mockResolvedValue({ payload: { phoneVerified: true } });
   });
 
@@ -115,5 +118,35 @@ describe('proxy phone verification gate', () => {
     expect(loc).toContain('mode=phone_required');
     expect(loc).toContain('returnUrl=');
     expect(decodeURIComponent(loc)).toContain('/ru/sell');
+  });
+
+  it('does not redirect when access token cookie is missing', async () => {
+    const res = await proxy(mk('https://kupito.test/ru/sell'));
+    expect(res.status).toBe(200);
+  });
+
+  it('does not redirect when jwtVerify rejects', async () => {
+    (jwtVerify as unknown as jest.Mock).mockRejectedValue(new Error('invalid token'));
+    const res = await proxy(
+      mk('https://kupito.test/ru/sell', { kupito_access_token: 'broken.jwt' }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('does not redirect when phoneVerified claim is true', async () => {
+    (jwtVerify as unknown as jest.Mock).mockResolvedValue({ payload: { phoneVerified: true } });
+    const res = await proxy(
+      mk('https://kupito.test/ru/sell', { kupito_access_token: 'any.jwt.value' }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('redirects when phoneVerified claim is missing', async () => {
+    (jwtVerify as unknown as jest.Mock).mockResolvedValue({ payload: {} });
+    const res = await proxy(
+      mk('https://kupito.test/ru/sell', { kupito_access_token: 'any.jwt.value' }),
+    );
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location') ?? '').toContain('/complete-profile');
   });
 });

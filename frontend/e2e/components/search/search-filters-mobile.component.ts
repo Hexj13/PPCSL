@@ -154,6 +154,7 @@ export class SearchFiltersMobileComponent {
 
   async selectFirstSheetOption(): Promise<string | null> {
     const options = this.page.locator('[data-testid^="search-sheet-option-"]');
+    await expect(options.first()).toBeVisible({ timeout: 20_000 });
     const count = await options.count();
     for (let i = 0; i < count; i += 1) {
       const option = options.nth(i);
@@ -162,7 +163,13 @@ export class SearchFiltersMobileComponent {
       if (!value || value.startsWith('__category__')) {
         continue;
       }
-      await option.click();
+      await expect(option).toBeVisible({ timeout: 15_000 });
+      await option.scrollIntoViewIfNeeded();
+      try {
+        await option.click({ timeout: 15_000 });
+      } catch {
+        await option.click({ force: true });
+      }
       return value;
     }
     return null;

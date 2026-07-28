@@ -133,6 +133,11 @@ export async function ensurePromotionQuotaViaApi(
     return;
   }
 
+  await unpromoteFirstActivePromotedListing(page);
+}
+
+async function unpromoteFirstActivePromotedListing(page: Page): Promise<string> {
+  const apiOrigin = getE2eBackendApiOrigin();
   const listRes = await page.request.get(
     `${apiOrigin}/api/listings/my?limit=1&status=Active&promoted=true`,
   );
@@ -152,6 +157,19 @@ export async function ensurePromotionQuotaViaApi(
     unpromoteRes.ok(),
     `Failed to unpromote listing ${listingId}: HTTP ${unpromoteRes.status()}`,
   );
+  return listingId;
+}
+
+export async function ensurePromotableActiveListingViaApi(page: Page): Promise<string> {
+  await ensurePromotionQuotaViaApi(page);
+  const existing = await findPromotableListingIdViaApi(page);
+  if (existing) {
+    return existing;
+  }
+  const unpromotedId = await unpromoteFirstActivePromotedListing(page);
+  const resolved = (await findPromotableListingIdViaApi(page)) ?? unpromotedId;
+  assert.ok(resolved, 'Expected a promotable active listing after unpromoting');
+  return resolved;
 }
 
 export async function findPromotableListingIdViaApi(page: Page): Promise<string | null> {

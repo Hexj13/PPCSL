@@ -85,7 +85,7 @@ export interface BuildSearchQueryFilters {
   is_new: boolean;
   available_in_credit: boolean;
   down_payment_amount_gte: string;
-  seller_type: string;
+  seller_types: string[];
   conditions: string[];
   registration_types: string[];
   horsepower_gte: string;
@@ -156,11 +156,8 @@ type BuildQueryContext = {
 };
 
 function handleYearLte(ctx: BuildQueryContext, value: unknown): void {
-  const urlYearLte = ctx.searchParams.get('year_lte');
-  if (value !== '' && value !== undefined && value !== ctx.currentYear && value !== urlYearLte) {
+  if (value !== '' && value !== undefined && value !== ctx.currentYear) {
     ctx.params.set('year_lte', value as string);
-  } else if (urlYearLte && urlYearLte !== ctx.currentYear) {
-    ctx.params.set('year_lte', urlYearLte);
   }
 }
 
@@ -233,8 +230,9 @@ function buildTireSearchQuery(
   if (filters.price_lte) params.set('price_lte', filters.price_lte);
   if (filters.currency) params.set('currency', filters.currency);
   if (filters.urgent) params.set('urgent', 'true');
-  if (filters.seller_type === 'Individual' || filters.seller_type === 'Business') {
-    params.set('seller_type', filters.seller_type);
+  const sellerTypes = filters.seller_types.filter((v) => v === 'Individual' || v === 'Business');
+  if (sellerTypes.length > 0) {
+    params.set('seller_types', sellerTypes.join(','));
   }
 
   if (

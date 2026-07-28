@@ -599,12 +599,9 @@ describe('ListingForm', () => {
 
       await waitFor(
         () => {
-          const colorSelects = screen.getAllByTestId('dropdown');
-          const colorSelect = colorSelects.find((select) => {
-            const selectElement = select as HTMLSelectElement;
-            return selectElement.value === 'black';
-          });
+          const colorSelect = screen.getByTestId('listing-create-color-select');
           expect(colorSelect).toBeInTheDocument();
+          expect((colorSelect as HTMLSelectElement).value).toBe('black');
         },
         { timeout: 15000 },
       );
@@ -622,8 +619,28 @@ describe('ListingForm', () => {
       );
 
       await waitFor(() => {
-        const dropdowns = getFormDropdowns();
-        expect(dropdowns.some((d) => d.value === '4')).toBe(true);
+        const doorsSelect = screen.getByTestId('listing-create-doors-select');
+        expect((doorsSelect as HTMLSelectElement).value).toBe('4');
+      });
+    });
+
+    it('should show availability and new interior exterior fields', async () => {
+      const onSuccess = jest.fn();
+      render(
+        <ListingForm
+          mode="edit"
+          listingId="listing-1"
+          initialData={mockListing as Listing}
+          onSuccess={onSuccess}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('listing-create-availability-select')).toBeInTheDocument();
+        expect(screen.getByTestId('listing-create-country-of-origin-select')).toBeInTheDocument();
+        expect(screen.getByTestId('listing-create-owners-count-input')).toBeInTheDocument();
+        expect(screen.getByTestId('listing-create-interior-color-select')).toBeInTheDocument();
+        expect(screen.getByTestId('listing-create-seats-select')).toBeInTheDocument();
       });
     });
 
@@ -801,7 +818,7 @@ describe('ListingForm', () => {
       expect(hasFutureYear).toBe(false);
     });
 
-    it('should validate year is not less than 1900', async () => {
+    it('should validate year is not less than 1940', async () => {
       const onSuccess = jest.fn();
 
       render(<ListingForm mode="create" onSuccess={onSuccess} />);
@@ -813,10 +830,10 @@ describe('ListingForm', () => {
       const yearInput = (await screen.findByTestId(
         'listing-create-year-select',
       )) as HTMLSelectElement;
-      const hasBefore1900 = Array.from(yearInput.options).some(
-        (option) => option.value && parseInt(option.value, 10) < 1900,
+      const hasBefore1940 = Array.from(yearInput.options).some(
+        (option) => option.value && parseInt(option.value, 10) < 1940,
       );
-      expect(hasBefore1900).toBe(false);
+      expect(hasBefore1940).toBe(false);
     });
 
     it('should validate year accepts current year', async () => {

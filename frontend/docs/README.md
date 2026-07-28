@@ -46,11 +46,14 @@ Frontend-specific documentation for PPCSL Next.js application.
 - **Filter conversion:** IDs ↔ slugs for SEO
 
 ### PWA Support
-- Service worker (`public/sw.js`) with 1h TTL for selected navigations and small catalog API responses
+- Service worker (`public/sw.js`): cache-first for static assets (CSS/JS/images/fonts); stale-while-revalidate with 1h TTL only for same-origin small catalog paths (`/api/brands`, `/api/cities`, brand models) when those requests hit the app origin
+- Does **not** cache navigations, RSC/HTML payloads, or other same-origin document-like responses (avoids cross-session leakage on shared devices)
+- On logout the client posts `CLEAR_USER_CACHE` to clear data/runtime caches
 - Precache on install: `/offline` only (home is not precached)
-- Offline fallback for favorites, profile, my-listings, and listing detail when network fails
+- Offline navigate fallback: `/offline` when the network fails
 - Installation prompts for iOS/Android and installed app detection (`standalone`, `fullscreen`, TWA referrer)
 - Update banner reloads the page only after the user taps update (`ServiceWorkerRegistration`)
+- Known debt: CSP is `Content-Security-Policy-Report-Only` without a reporting endpoint and with `script-src 'unsafe-inline'`; enforcing needs a report collector, nonces for Next/GTM, then a switch to `Content-Security-Policy`
 
 ### SEO & Metadata
 - Open Graph tags on all pages

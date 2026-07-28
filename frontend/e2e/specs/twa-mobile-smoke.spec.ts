@@ -1,18 +1,27 @@
-import { expect, test } from '../fixtures/base';
+import { test } from '../fixtures/base';
+import { TwaPage } from '../page-objects/twa.page';
+import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('TWA mobile smoke @p0', () => {
-  test('home exposes light color scheme and manifest link', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.locator('meta[name="color-scheme"]')).toHaveAttribute('content', 'light');
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#40916B');
-    await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
+  test('home exposes light color scheme and manifest link', async ({
+    page,
+    searchHomePage,
+    twaPage,
+  }) => {
+    const steps: E2EStep[] = [
+      {
+        name: 'Open home and expect search shell with TWA meta',
+        action: async () => {
+          await searchHomePage.openAndExpectPageView();
+          await twaPage.expectHomeTwaShell();
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
   });
 
   test('digital asset links endpoint returns JSON when configured', async ({ request }) => {
-    const response = await request.get('/.well-known/assetlinks.json');
-    const contentType = response.headers()['content-type'] ?? '';
-    expect(contentType).toContain('application/json');
-    const body = await response.json();
-    expect(Array.isArray(body)).toBe(true);
+    await TwaPage.expectAssetLinksJson(request);
   });
 });

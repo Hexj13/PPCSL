@@ -39,6 +39,10 @@ export class SmartSelectionPage {
       .toBe(true);
   }
 
+  private wizardTitle() {
+    return this.page.getByTestId(this.testIds.wizard).locator('h2');
+  }
+
   async selectOption(value: string): Promise<void> {
     const option = this.page.getByTestId(`${this.testIds.optionPrefix}-${value}`);
     await expect(option).toBeVisible({ timeout: 20_000 });
@@ -47,12 +51,15 @@ export class SmartSelectionPage {
 
     await clickTarget.scrollIntoViewIfNeeded();
     await clickTarget.click();
+    await expect(option).toBeChecked();
   }
 
   async clickNext(): Promise<void> {
     const next = this.page.getByTestId(this.testIds.next);
     await expect(next).toBeEnabled({ timeout: 20_000 });
+    const titleBefore = (await this.wizardTitle().textContent()) ?? '';
     await next.click();
+    await expect(this.wizardTitle()).not.toHaveText(titleBefore, { timeout: 20_000 });
   }
 
   async clickSubmit(): Promise<void> {

@@ -140,8 +140,9 @@ export function appendTireFallbackScalars(sink: TireUrlParamSink, filters: Filte
   appendOptionalIntParamToSink(sink, filters.price_gte, 'price_gte');
   appendOptionalIntParamToSink(sink, filters.price_lte, 'price_lte');
   if (filters.urgent) sink.setScalar('urgent', true);
-  if (filters.seller_type === 'Individual' || filters.seller_type === 'Business') {
-    sink.setScalar('seller_type', filters.seller_type);
+  const sellerTypes = filters.seller_types.filter((v) => v === 'Individual' || v === 'Business');
+  if (sellerTypes.length > 0) {
+    sink.setJoined('seller_types', sellerTypes);
   }
   if (filters.currency?.trim()) {
     sink.setScalar('currency', filters.currency.trim());

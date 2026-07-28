@@ -53,18 +53,18 @@ export class SignPage {
         if (routeAttempt === 2) {
           throw lastGotoError;
         }
-        await this.page.waitForTimeout(400);
+        await this.visibleAuthPage()
+          .waitFor({ state: 'visible', timeout: 2_000 })
+          .catch(() => undefined);
         continue;
       }
-      const ready = await this.visibleAuthPage()
-        .waitFor({ state: 'visible', timeout: 8000 })
-        .then(() => true)
-        .catch(() => false);
-      if (ready) {
+      try {
+        await this.visibleAuthPage().waitFor({ state: 'visible', timeout: 8_000 });
         return;
-      }
-      if (routeAttempt < 2) {
-        await this.page.waitForTimeout(500 * (routeAttempt + 1));
+      } catch {
+        if (routeAttempt === 2) {
+          throw new Error(`Sign page did not become visible after navigating to ${url}`);
+        }
       }
     }
   }
@@ -89,6 +89,17 @@ export class SignPage {
   async openRegisterAndExpectPageView(): Promise<void> {
     await this.openRegister();
     await this.expectRegisterPageView();
+  }
+
+  async openRegisterTab(): Promise<void> {
+    const root = this.visibleAuthPage();
+    await root.getByTestId(this.testIds.registerTab).click();
+    await expect(this.page).toHaveURL(/[?&]tab=register/);
+    await this.expectRegisterPageView();
+  }
+
+  async hasGoogleSignIn(): Promise<boolean> {
+    return (await this.visibleAuthPage().getByTestId(this.testIds.googleOutsideCard).count()) > 0;
   }
 
   async expectLoginPageView(): Promise<void> {

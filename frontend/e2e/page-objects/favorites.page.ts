@@ -9,6 +9,8 @@ export class FavoritesPage {
     tabFilters: 'favorites-tab-filters',
     listingsEmpty: 'favorites-listings-empty',
     listingsTab: 'favorites-listings-tab',
+    savedFiltersList: 'saved-filters-list',
+    savedFiltersEmpty: 'saved-filters-empty',
   } as const;
 
   constructor(private readonly page: Page) {}
@@ -44,6 +46,18 @@ export class FavoritesPage {
     );
   }
 
+  private async reloadFavoritesListOnce(): Promise<void> {
+    const favoritesListLoaded = this.waitForFavoritesListResponse();
+    await this.page.reload({ waitUntil: 'domcontentloaded' });
+    await favoritesListLoaded;
+  }
+
+  private async reloadSavedFiltersListOnce(): Promise<void> {
+    const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
+    await this.page.reload({ waitUntil: 'domcontentloaded' });
+    await savedFiltersLoaded;
+  }
+
   async openFiltersTab(): Promise<void> {
     const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
     await this.page.getByTestId(this.testIds.tabFilters).click();
@@ -51,7 +65,7 @@ export class FavoritesPage {
     try {
       await savedFiltersLoaded;
     } catch {
-      // tab may already be active
+      // tab may already be active with list already loaded
     }
     await this.expectSavedFiltersListVisible();
   }
@@ -63,7 +77,7 @@ export class FavoritesPage {
     try {
       await favoritesListLoaded;
     } catch {
-      // tab may already be active
+      // tab may already be active with list already loaded
     }
     await this.expectListingsTabContentVisible();
   }
@@ -84,7 +98,7 @@ export class FavoritesPage {
       .poll(
         async () => {
           const empty = this.page.getByTestId(this.testIds.listingsEmpty);
-          if (await empty.isVisible().catch(() => false)) {
+          if (await empty.isVisible()) {
             return true;
           }
           return (await this.page.locator('[data-testid^="listing-card-"]').count()) > 0;
@@ -104,34 +118,21 @@ export class FavoritesPage {
   }
 
   async expectFiltersTabContentVisible(): Promise<void> {
-    const list = this.page.getByTestId('saved-filters-list');
-    const empty = this.page.getByTestId('saved-filters-empty');
+    const list = this.page.getByTestId(this.testIds.savedFiltersList);
+    const empty = this.page.getByTestId(this.testIds.savedFiltersEmpty);
+    await expect(this.page).toHaveURL(/tab=filters/, { timeout: 15_000 });
+    try {
+      await expect
+        .poll(async () => (await list.isVisible()) || (await empty.isVisible()), {
+          timeout: 20_000,
+        })
+        .toBe(true);
+      return;
+    } catch {
+      await this.reloadSavedFiltersListOnce();
+    }
     await expect
-      .poll(
-        async () => {
-          if (await list.isVisible().catch(() => false)) {
-            return true;
-          }
-          if (await empty.isVisible().catch(() => false)) {
-            return true;
-          }
-          if (!pathnameWithoutLocalePrefix(this.page.url()).includes('tab=filters')) {
-            return false;
-          }
-          const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
-          await this.page.reload({ waitUntil: 'domcontentloaded' });
-          try {
-            await savedFiltersLoaded;
-          } catch {
-            return false;
-          }
-          return (
-            (await list.isVisible().catch(() => false)) ||
-            (await empty.isVisible().catch(() => false))
-          );
-        },
-        { timeout: 45_000, intervals: [600, 1000, 1600, 2400] },
-      )
+      .poll(async () => (await list.isVisible()) || (await empty.isVisible()), { timeout: 20_000 })
       .toBe(true);
   }
 
@@ -151,91 +152,49 @@ export class FavoritesPage {
 
   async expectListingCardVisible(listingId: string): Promise<void> {
     const card = this.page.getByTestId(`listing-card-${listingId}`);
-    await expect
-      .poll(
-        async () => {
-          if (await card.isVisible()) {
-            return true;
-          }
-          if (!pathnameWithoutLocalePrefix(this.page.url()).startsWith('/favorites')) {
-            return false;
-          }
-          const favoritesListLoaded = this.waitForFavoritesListResponse();
-          await this.page.reload({ waitUntil: 'domcontentloaded' });
-          try {
-            await favoritesListLoaded;
-          } catch {
-            return false;
-          }
-          return card.isVisible();
-        },
-        { timeout: 45_000, intervals: [600, 1000, 1600, 2400] },
-      )
-      .toBe(true);
+    await expect(this.page).toHaveURL((url) =>
+      pathnameWithoutLocalePrefix(url).startsWith('/favorites'),
+    );
+    try {
+      await expect(card).toBeVisible({ timeout: 20_000 });
+      return;
+    } catch {
+      await this.reloadFavoritesListOnce();
+    }
+    await expect(card).toBeVisible({
+      timeout: 20_000,
+    });
   }
 
   async expectSavedFiltersListVisible(): Promise<void> {
-    const list = this.page.getByTestId('saved-filters-list');
-    const empty = this.page.getByTestId('saved-filters-empty');
+    const list = this.page.getByTestId(this.testIds.savedFiltersList);
+    const empty = this.page.getByTestId(this.testIds.savedFiltersEmpty);
+    await expect(this.page).toHaveURL(/tab=filters/, { timeout: 15_000 });
+    try {
+      await expect
+        .poll(async () => (await list.isVisible()) || (await empty.isVisible()), {
+          timeout: 20_000,
+        })
+        .toBe(true);
+      return;
+    } catch {
+      await this.reloadSavedFiltersListOnce();
+    }
     await expect
-      .poll(
-        async () => {
-          if (await list.isVisible().catch(() => false)) {
-            return true;
-          }
-          if (!pathnameWithoutLocalePrefix(this.page.url()).includes('tab=filters')) {
-            return false;
-          }
-          if (await empty.isVisible().catch(() => false)) {
-            const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
-            try {
-              await savedFiltersLoaded;
-            } catch {
-              return false;
-            }
-            return list.isVisible().catch(() => false);
-          }
-          const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
-          await this.page.reload({ waitUntil: 'domcontentloaded' });
-          try {
-            await savedFiltersLoaded;
-          } catch {
-            return false;
-          }
-          return list.isVisible().catch(() => false);
-        },
-        { timeout: 45_000, intervals: [600, 1000, 1600, 2400] },
-      )
+      .poll(async () => (await list.isVisible()) || (await empty.isVisible()), { timeout: 20_000 })
       .toBe(true);
   }
 
   async expectSavedFilterCardVisible(filterId: string): Promise<void> {
     const card = this.page.getByTestId(`saved-filter-card-${filterId}`);
-    const empty = this.page.getByTestId('saved-filters-empty');
-    await expect
-      .poll(
-        async () => {
-          if (await card.isVisible()) {
-            return true;
-          }
-          if (!pathnameWithoutLocalePrefix(this.page.url()).includes('tab=filters')) {
-            return false;
-          }
-          if ((await empty.isVisible().catch(() => false)) || !(await card.isVisible())) {
-            const savedFiltersLoaded = this.waitForSavedFiltersListResponse();
-            await this.page.reload({ waitUntil: 'domcontentloaded' });
-            try {
-              await savedFiltersLoaded;
-            } catch {
-              return false;
-            }
-          }
-          return card.isVisible();
-        },
-        { timeout: 45_000, intervals: [600, 1000, 1600, 2400] },
-      )
-      .toBe(true);
+    await expect(this.page).toHaveURL(/tab=filters/, { timeout: 15_000 });
+    try {
+      await expect(card).toBeVisible({ timeout: 20_000 });
+      return;
+    } catch {
+      await this.reloadSavedFiltersListOnce();
+    }
+    await expect(card).toBeVisible({ timeout: 20_000 });
   }
 
   async clickSavedFilterCard(filterId: string): Promise<void> {
@@ -251,7 +210,7 @@ export class FavoritesPage {
   async clickSavedFilterByName(name: string): Promise<void> {
     await dismissCookieConsentIfVisible(this.page);
     const card = this.page.locator('[data-testid^="saved-filter-card-"]').filter({
-      has: this.page.getByRole('heading', { name, exact: true }),
+      has: this.page.getByText(name, { exact: true }),
     });
     await expect(card).toBeVisible({ timeout: 30_000 });
     await card.click();

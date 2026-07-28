@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import { Availability } from '../../../../common/constants';
 import { Currency } from '../../../../common/types';
 import { parsePdpHtml } from './pdp-parser';
 
@@ -74,6 +75,9 @@ function buildNextActiveFixture(): string {
         <div class="spec-item"><span class="spec-label">Cutie de viteze</span><span class="spec-value">Automată</span></div>
         <div class="spec-item"><span class="spec-label">Tracțiune</span><span class="spec-value">4x4</span></div>
         <div class="spec-item"><span class="spec-label">Culoare</span><span class="spec-value">Verde închis</span></div>
+      </div>
+      <div class="autooutlet-specs">
+        <span class="spec-badge">5 locuri</span>
       </div>
       <div class="autooutlet-description-block">
         <div class="autooutlet-description-content"><p>Cod Produs:205910</p><p>BYD Tang L description</p></div>
@@ -171,6 +175,8 @@ describe('autooutlet PDP parser', () => {
     expect(parsed.equipmentOptions.length).toBe(2);
     expect(parsed.warnings).not.toContain('MISSING_IMAGES');
     expect(parsed.warnings.some((w) => w.startsWith('SOURCE_CLOSED'))).toBe(false);
+    expect(parsed.availability).toBe(Availability.InStock);
+    expect(parsed.seats).toBe(5);
   });
 
   it('does not mark active PDP closed when i18n contains sold translation', () => {
@@ -194,6 +200,7 @@ describe('autooutlet PDP parser', () => {
     expect(parsed.price).toBe(20950);
     expect(parsed.brand).toBe('BYD');
     expect(parsed.model).toBe('Sealion 06');
+    expect(parsed.availability).toBeUndefined();
     expect(parsed.warnings.some((w) => w.startsWith('SOURCE_CLOSED'))).toBe(true);
   });
 
@@ -234,5 +241,29 @@ describe('autooutlet PDP parser', () => {
     expect(parsed.brand).toBe('Lynk & Co');
     expect(parsed.model).toBe('900');
     expect(parsed.year).toBe(2025);
+  });
+
+  it('maps La comandă header badge to OnOrder availability', () => {
+    const html = `<!DOCTYPE html><html><body class="postid-5"><main class="autooutlet-single-vehicle"><h1>Test Car 2024</h1><div class="autooutlet-header-badges"><span class="badge">La comandă</span></div><div class="autooutlet-price"><span class="price-main">10.000€</span></div><script id="gallery-data">{"images":["https://autooutlet.md/a.jpg","https://autooutlet.md/b.jpg"]}</script></main></body></html>`;
+    const parsed = parsePdpHtml(html, 'https://autooutlet.md/vehicul/5-slug/');
+    expect(parsed.availability).toBe(Availability.OnOrder);
+  });
+
+  it('maps În drum and Rezervat header badges to InStock availability', () => {
+    const inDrumHtml = `<!DOCTYPE html><html><body><main class="autooutlet-single-vehicle"><h1>Test 2024</h1><div class="autooutlet-header-badges"><span class="badge">În drum</span></div><div class="autooutlet-price"><span class="price-main">10.000€</span></div><script id="gallery-data">{"images":["https://autooutlet.md/a.jpg","https://autooutlet.md/b.jpg"]}</script></main></body></html>`;
+    expect(parsePdpHtml(inDrumHtml, 'https://autooutlet.md/vehicul/6-slug/').availability).toBe(
+      Availability.InStock,
+    );
+
+    const rezervatHtml = `<!DOCTYPE html><html><body><main class="autooutlet-single-vehicle"><h1>Test 2024</h1><div class="autooutlet-header-badges"><span class="badge">Rezervat</span></div><div class="autooutlet-price"><span class="price-main">10.000€</span></div><script id="gallery-data">{"images":["https://autooutlet.md/a.jpg","https://autooutlet.md/b.jpg"]}</script></main></body></html>`;
+    expect(parsePdpHtml(rezervatHtml, 'https://autooutlet.md/vehicul/7-slug/').availability).toBe(
+      Availability.InStock,
+    );
+  });
+
+  it('extracts seats from spec badges', () => {
+    const html = `<!DOCTYPE html><html><body><main class="autooutlet-single-vehicle"><h1>Test 2024</h1><div class="autooutlet-header-badges"><span class="badge">Disponibil</span></div><div class="autooutlet-price"><span class="price-main">10.000€</span></div><div class="autooutlet-specs"><span class="spec-badge">7 locuri</span></div><script id="gallery-data">{"images":["https://autooutlet.md/a.jpg","https://autooutlet.md/b.jpg"]}</script></main></body></html>`;
+    const parsed = parsePdpHtml(html, 'https://autooutlet.md/vehicul/8-slug/');
+    expect(parsed.seats).toBe(7);
   });
 });

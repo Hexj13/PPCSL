@@ -33,7 +33,7 @@ function hasVehicleAdvancedFiltersActive(filters: FilterState): boolean {
     filters.doors.length > 0 ||
     filters.conditions.length > 0 ||
     filters.registration_types.length > 0 ||
-    filters.seller_type !== ''
+    filters.seller_types.length > 0
   );
 }
 

@@ -11,6 +11,12 @@ import { Button, designTokens } from '@/ui';
 
 import type { DropdownOption } from './dropdown-types';
 
+export type DropdownClearOption = {
+  label: string;
+  disabled: boolean;
+  onSelect: () => void;
+};
+
 interface DropdownTriggerProps {
   searchable: boolean;
   disabled: boolean;
@@ -179,6 +185,7 @@ interface DropdownMenuProps {
   menuMaxHeight?: number;
   menuSelectedStyle: 'background' | 'checkmark';
   menuExpandToContent: boolean;
+  clearOption?: DropdownClearOption;
   dataTestId?: string;
 }
 
@@ -198,6 +205,7 @@ export function DropdownMenu({
   menuMaxHeight,
   menuSelectedStyle,
   menuExpandToContent,
+  clearOption,
   dataTestId,
 }: DropdownMenuProps) {
   const isPortaled = !!portalStyle;
@@ -220,6 +228,20 @@ export function DropdownMenu({
       data-testid={dataTestId ? `${dataTestId}-menu` : undefined}
     >
       <div className={scrollClass} style={scrollStyle}>
+        {clearOption ? (
+          <>
+            <button
+              type="button"
+              disabled={clearOption.disabled}
+              onClick={clearOption.onSelect}
+              data-testid={dataTestId ? `${dataTestId}-clear-selection` : undefined}
+              className="flex w-full items-center px-4 py-3 text-left text-sm text-text-primary transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 hover-only:hover:enabled:bg-primary-500/10"
+            >
+              {clearOption.label}
+            </button>
+            <div className="my-0.5 border-b border-primary-500/20" aria-hidden />
+          </>
+        ) : null}
         {filteredOptions.length > 0 ? (
           filteredOptions.map((option, index) => {
             const isSelected = showActionButtons

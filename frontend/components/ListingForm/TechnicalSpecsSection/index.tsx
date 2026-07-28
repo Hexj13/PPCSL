@@ -4,7 +4,7 @@ import { EquipmentSection } from '../EquipmentSection';
 import type { ListingFormSectionProps } from '../types';
 
 import { ConditionRegistration } from './ConditionRegistration';
-import { ExteriorFields } from './ExteriorFields';
+import { InteriorExteriorFields } from './InteriorExteriorFields';
 import { SpecsGrid } from './SpecsGrid';
 
 export function TechnicalSpecsSection(props: ListingFormSectionProps) {
@@ -13,7 +13,7 @@ export function TechnicalSpecsSection(props: ListingFormSectionProps) {
       <SpecsGrid {...props} />
       <EquipmentSection {...props} />
       <ConditionRegistration {...props} />
-      <ExteriorFields {...props} />
+      <InteriorExteriorFields {...props} />
     </>
   );
 }

@@ -257,9 +257,15 @@ export function useFilterHandlers({
       }
 
       const merged = { ...filters, ...overrides };
+      if (merged.year_lte === '') {
+        merged.year_lte = currentYear;
+      }
       setIsSearching(true);
       isInternalSearchRef.current = true;
       setLastAppliedFilters({ ...merged });
+      if (merged.year_lte !== filters.year_lte) {
+        setFilters((prev) => ({ ...prev, year_lte: merged.year_lte }));
+      }
 
       const result = buildSearchQuery(merged, brands, models, cities, {
         currentYear,
@@ -277,12 +283,16 @@ export function useFilterHandlers({
       analytics.searchDeferred(undefined, searchFilters);
 
       const newUrl = `/?${result.urlString}`;
+      const urlUnchanged = result.urlString === searchParams.toString();
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
       sessionStorageSetItem('scrollPreserved', 'true');
       sessionStorageSetItem('scrollToResultsAfterLoad', 'true');
       clearHomeScrollRestoreSession();
       startTransition(() => {
         replace(newUrl, { scroll: false });
+        if (urlUnchanged) {
+          setIsSearching(false);
+        }
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
             window.scrollTo({ top: scrollY, behavior: 'instant' });

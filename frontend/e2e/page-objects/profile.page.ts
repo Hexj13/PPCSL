@@ -9,6 +9,9 @@ export class ProfilePage {
     page: 'profile-page',
     editForm: 'profile-edit-form',
     save: 'profile-save',
+    phoneInput: 'profile-phone-input',
+    firstNameInput: 'profileFirstName',
+    companyNameInput: 'profileCompanyName',
   } as const;
 
   readonly password: ProfilePasswordComponent;
@@ -28,7 +31,15 @@ export class ProfilePage {
     );
     await expect(this.page.locator('header').first()).toBeVisible();
     await expect(this.page.getByTestId(this.testIds.page)).toBeVisible();
-    await expect(this.page.getByTestId(this.testIds.editForm)).toBeVisible();
+    const form = this.page.getByTestId(this.testIds.editForm);
+    await expect(form).toBeVisible();
+    await expect(form.locator(`#${this.testIds.phoneInput}`)).toBeVisible();
+    const nameField = form.locator(`input[name="${this.testIds.firstNameInput}"]`);
+    const companyField = form.locator(`input[name="${this.testIds.companyNameInput}"]`);
+    await expect(nameField.or(companyField)).toBeVisible();
+    if (await nameField.isVisible()) {
+      await expect(form.locator('input[name="profileLastName"]')).toBeVisible();
+    }
     await expect(this.page.getByTestId(this.testIds.save)).toBeVisible();
   }
 

@@ -18,6 +18,8 @@ export type ConditionType = (typeof constants.conditionTypes)[number];
 
 export type RegistrationType = (typeof constants.registrationTypes)[number];
 
+export type Availability = (typeof constants.availabilityTypes)[number];
+
 export {
   UserType as UserTypeEnum,
   ListingStatus as ListingStatusEnum,
@@ -28,4 +30,5 @@ export {
   BodyType as BodyTypeEnum,
   ConditionType as ConditionTypeEnum,
   RegistrationType as RegistrationTypeEnum,
+  Availability as AvailabilityEnum,
 } from './constants';

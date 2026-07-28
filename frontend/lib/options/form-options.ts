@@ -1,6 +1,57 @@
 import { BODY_TYPES_BY_VEHICLE_TYPE } from '../constants';
-import { DriveTypeEnum } from '../types';
+import { AvailabilityEnum, DriveTypeEnum } from '../types';
 import { sortOptionsByLabel, type LabeledOption } from '../utils';
+
+import { ISO_COUNTRY_CODES } from './iso-country-codes';
+
+export function getAvailabilityOptions(t: (_key: string) => string): Array<LabeledOption<string>> {
+  return [
+    { value: AvailabilityEnum.InStock, label: t('vehicleOptions.availability.InStock') },
+    { value: AvailabilityEnum.OnOrder, label: t('vehicleOptions.availability.OnOrder') },
+  ];
+}
+
+export function getSeatOptions(
+  _t: (_key: string) => string,
+  vehicleType: 'car' | 'truck' | 'moto' = 'car',
+): Array<LabeledOption<string>> {
+  const max = vehicleType === 'moto' ? 4 : 9;
+  const options: Array<LabeledOption<string>> = [];
+  for (let i = 1; i <= max; i++) {
+    options.push({ value: String(i), label: String(i) });
+  }
+  return options;
+}
+
+export function getCountryOfOriginOptions(
+  locale: string,
+  _t: (_key: string) => string,
+): Array<LabeledOption<string>> {
+  let displayNames: Intl.DisplayNames | null = null;
+  try {
+    displayNames = new Intl.DisplayNames([locale], { type: 'region' });
+  } catch {
+    displayNames = new Intl.DisplayNames(['en'], { type: 'region' });
+  }
+  const options = ISO_COUNTRY_CODES.map((code) => ({
+    value: code,
+    label: displayNames?.of(code) ?? code,
+  })).filter((o) => o.label);
+  return sortOptionsByLabel(options);
+}
+
+export function getCountryOfOriginLabel(code: string | undefined | null, locale: string): string {
+  if (!code) return '';
+  try {
+    return new Intl.DisplayNames([locale], { type: 'region' }).of(code) ?? code;
+  } catch {
+    try {
+      return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code;
+    } catch {
+      return code;
+    }
+  }
+}
 
 export function getFuelOptions(t: (_key: string) => string): Array<LabeledOption<string>> {
   return sortOptionsByLabel([

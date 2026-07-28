@@ -57,9 +57,7 @@ test.describe('Listing detail interactions', () => {
       {
         name: 'Use contact action and reveal phone',
         action: async () => {
-          await expect(listingDetailPage.contactActionButton).toBeVisible({ timeout: 15_000 });
-          await listingDetailPage.clickContactSeller();
-          await listingDetailPage.expectSellerSectionInViewport();
+          await listingDetailPage.clickContactAndExpectSellerVisible();
           await listingDetailPage.revealSellerPhone();
           await listingDetailPage.expectPageView();
         },
@@ -117,9 +115,7 @@ test.describe('Listing detail interactions', () => {
       {
         name: 'Reveal seller phone from contact action',
         action: async () => {
-          await expect(listingDetailPage.contactActionButton).toBeVisible({ timeout: 15_000 });
-          await listingDetailPage.clickContactSeller();
-          await listingDetailPage.expectSellerSectionInViewport();
+          await listingDetailPage.clickContactAndExpectSellerVisible();
           await listingDetailPage.revealSellerPhone();
           await listingDetailPage.expectPageView();
         },

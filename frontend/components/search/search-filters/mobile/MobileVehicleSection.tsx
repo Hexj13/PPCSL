@@ -231,7 +231,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
     return t('searchFilters.fromToRangeSummary', { from: a || dash, to: b || dash });
   }, [filters.horsepower_gte, filters.horsepower_lte, t]);
 
-  const sellerSummary = sellerTypeOptions.find((o) => o.value === filters.seller_type)?.label ?? '';
+  const sellerSummary = summarizeMulti(filters.seller_types, sellerTypeOptions, t);
 
   const handleMileageBlur = useCallback(
     (key: string, value: string) => {

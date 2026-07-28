@@ -76,6 +76,7 @@ export class AdminPage {
     } catch {
       // tab may already be active
     }
+    await this.expectPromotionsTabContentVisible();
   }
 
   async expectPromotionsTabContentVisible(): Promise<void> {

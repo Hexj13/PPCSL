@@ -30,7 +30,7 @@ export interface FilterState {
   equipment_match_mode: 'full' | 'partial';
   available_in_credit: boolean;
   down_payment_amount_gte: string;
-  seller_type: string;
+  seller_types: string[];
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
   tire_vehicle_type: '' | 'car' | 'truck' | 'moto';
