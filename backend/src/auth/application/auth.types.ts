@@ -21,6 +21,7 @@ export type RegisterResponse = UserWithoutPassword & {
 export type UserProfileResponse = Omit<UserWithoutPassword, 'board_slug'> & {
   boardSlug: string | null;
   hasPassword: boolean;
+  weeklyViewsDigestAvailable: boolean;
   emailVerificationSent?: boolean;
 };
 

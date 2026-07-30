@@ -11,13 +11,12 @@ import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
 import { PromotionHistory } from '../../../../listings/entities/promotion-history.entity';
 import { normalizeRuntimeEnv, resolveConfig } from '../config';
+import { CipautoHttpClient } from '../http/cipauto-http-client';
 import { RegistryStore } from '../storage/registry';
 import type { RuntimeEnv } from '../types';
 
 const COD_PRODUS_RE = /Cod\s+[Pp]rodus\s*:(?:\s|&nbsp;)*\s*([A-Za-z0-9]+)/;
-const CIPAUTO_BASE = 'https://cipauto.md';
 const REQUEST_DELAY_MS = 1500;
-const REQUEST_TIMEOUT_MS = 15000;
 const S3_PLP_PREFIX = 'parsing-plp/';
 
 function normalizeKeyRelative(p: string): string {
@@ -116,28 +115,25 @@ type VerifyResult =
   | { closed: true; reason: 'http_404' | 'http_410' | 'sold_template' }
   | { closed: false; reason: 'still_active' | 'http_error' | 'unknown' };
 
-async function verifyCipautoStatus(sourceId: string): Promise<VerifyResult> {
-  const url = `${CIPAUTO_BASE}/vehicul/${sourceId}`;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+async function verifyCipautoStatus(
+  http: CipautoHttpClient,
+  baseUrl: string,
+  sourceId: string,
+): Promise<VerifyResult> {
+  const url = `${baseUrl.replace(/\/+$/, '')}/vehicul/${sourceId}`;
 
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      signal: controller.signal,
-      redirect: 'follow',
-    });
+    const response = await http.getText(url, { throwOnHttpError: false, retries: 1 });
 
     if (response.status === 404 || response.status === 410) {
       return { closed: true, reason: response.status === 404 ? 'http_404' : 'http_410' };
     }
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
       return { closed: false, reason: 'http_error' };
     }
 
-    const html = await response.text();
-    const text = html
+    const text = response.data
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -154,8 +150,6 @@ async function verifyCipautoStatus(sourceId: string): Promise<VerifyResult> {
     return { closed: false, reason: 'still_active' };
   } catch {
     return { closed: false, reason: 'unknown' };
-  } finally {
-    clearTimeout(timeout);
   }
 }
 
@@ -330,7 +324,9 @@ async function auditStaleListings() {
 
   console.log(`[audit] Found ${listings.length} Kupito listings for user ${userId}`);
 
-  const { registryPath } = resolveConfig(env);
+  const config = resolveConfig(env);
+  const { registryPath } = config;
+  const http = new CipautoHttpClient(config);
   const registry = new RegistryStore(registryPath);
   const registryItems = registry.getAll();
 
@@ -420,23 +416,28 @@ async function auditStaleListings() {
   } else if (stale.length > 0 && !skipVerify) {
     console.log(`=== PHASE 2: VERIFYING ${stale.length} CANDIDATES ON CIPAUTO ===`);
 
-    for (let i = 0; i < stale.length; i++) {
-      const { listing, sourceId } = stale[i];
-      process.stdout.write(`  [${i + 1}/${stale.length}] ${sourceId} ... `);
+    try {
+      await http.start();
+      for (let i = 0; i < stale.length; i++) {
+        const { listing, sourceId } = stale[i];
+        process.stdout.write(`  [${i + 1}/${stale.length}] ${sourceId} ... `);
 
-      const result = await verifyCipautoStatus(sourceId);
+        const result = await verifyCipautoStatus(http, config.cipautoBaseUrl, sourceId);
 
-      if (result.closed) {
-        confirmedClosed.push({ listing, sourceId, reason: result.reason });
-        console.log(`CLOSED (${result.reason})`);
-      } else {
-        falsePositives.push({ listing, sourceId, reason: result.reason });
-        console.log(`STILL LIVE (${result.reason})`);
+        if (result.closed) {
+          confirmedClosed.push({ listing, sourceId, reason: result.reason });
+          console.log(`CLOSED (${result.reason})`);
+        } else {
+          falsePositives.push({ listing, sourceId, reason: result.reason });
+          console.log(`STILL LIVE (${result.reason})`);
+        }
+
+        if (i < stale.length - 1) {
+          await sleep(REQUEST_DELAY_MS);
+        }
       }
-
-      if (i < stale.length - 1) {
-        await sleep(REQUEST_DELAY_MS);
-      }
+    } finally {
+      await http.close();
     }
 
     console.log('');

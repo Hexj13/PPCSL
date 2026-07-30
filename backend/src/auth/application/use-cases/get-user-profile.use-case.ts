@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { isWeeklyViewsDigestEnabled } from '../../../common/env';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
 import { UsersService } from '../../../users/application/users.service';
 import { UserProfileResponse } from '../auth.types';
@@ -15,6 +16,11 @@ export class GetUserProfileUseCase {
     const result = removePasswordFromUser(user);
     const { board_slug: _s, ...rest } = result;
     void _s;
-    return { ...rest, boardSlug, hasPassword };
+    return {
+      ...rest,
+      boardSlug,
+      hasPassword,
+      weeklyViewsDigestAvailable: isWeeklyViewsDigestEnabled(),
+    };
   }
 }

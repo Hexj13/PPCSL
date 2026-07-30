@@ -278,6 +278,7 @@ export interface User {
   partnerListingProgress?: number;
   hidePartnerPromoBanner?: boolean;
   hasPassword?: boolean;
+  weeklyViewsDigestAvailable?: boolean;
 }
 
 export interface RegisterResponse extends User {

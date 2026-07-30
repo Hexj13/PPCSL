@@ -2,7 +2,7 @@
 
 import type { EmailNotificationField as NotificationField } from '@/app/[locale]/profile/utils';
 import {
-  EMAIL_NOTIFICATION_FIELDS,
+  getActiveEmailNotificationFields,
   canInteractWithEmailNotifications,
   validateEmail,
 } from '@/app/[locale]/profile/utils';
@@ -13,6 +13,7 @@ type ProfileEmailSectionProps = {
   user: User;
   formData: UpdateProfileDto;
   emailForChange: string;
+  weeklyViewsDigestAvailable: boolean;
   t: (key: string) => string;
   onChange: (field: keyof UpdateProfileDto, value: string | boolean) => void;
   onEmailChange: (value: string) => void;
@@ -22,6 +23,7 @@ export function ProfileEmailSection({
   user,
   formData,
   emailForChange,
+  weeklyViewsDigestAvailable,
   t,
   onChange,
   onEmailChange,
@@ -36,19 +38,25 @@ export function ProfileEmailSection({
     onChange('emailNotifications', checked);
     if (checked) {
       onChange('emailNotificationListingRefreshReminders', true);
-      onChange('emailNotificationWeeklyViewsDigest', true);
+      if (weeklyViewsDigestAvailable) {
+        onChange('emailNotificationWeeklyViewsDigest', true);
+      }
       onChange('emailNotificationSecurityAlerts', true);
       return;
     }
     onChange('emailNotificationListingRefreshReminders', false);
-    onChange('emailNotificationWeeklyViewsDigest', false);
+    if (weeklyViewsDigestAvailable) {
+      onChange('emailNotificationWeeklyViewsDigest', false);
+    }
     onChange('emailNotificationSecurityAlerts', false);
   };
 
   const toggleNotificationField = (field: NotificationField, checked: boolean) => {
     if (detailsDisabled) return;
     onChange(field, checked);
-    const nextHasEnabledNotification = EMAIL_NOTIFICATION_FIELDS.some((notificationField) =>
+    const nextHasEnabledNotification = getActiveEmailNotificationFields(
+      weeklyViewsDigestAvailable,
+    ).some((notificationField) =>
       notificationField === field ? checked : formData[notificationField] === true,
     );
     onChange('emailNotifications', nextHasEnabledNotification);
@@ -225,11 +233,13 @@ export function ProfileEmailSection({
             label={t('profile.receiveListingRefreshReminders')}
             labelId="email-notification-listing-refresh-reminders-label"
           />
-          <EmailNotificationCheckbox
-            field="emailNotificationWeeklyViewsDigest"
-            label={t('profile.receiveWeeklyViewsDigest')}
-            labelId="email-notification-weekly-views-digest-label"
-          />
+          {weeklyViewsDigestAvailable && (
+            <EmailNotificationCheckbox
+              field="emailNotificationWeeklyViewsDigest"
+              label={t('profile.receiveWeeklyViewsDigest')}
+              labelId="email-notification-weekly-views-digest-label"
+            />
+          )}
           <EmailNotificationCheckbox
             field="emailNotificationSecurityAlerts"
             label={t('profile.receiveSystemAndSecurityNotifications')}

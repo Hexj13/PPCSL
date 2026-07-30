@@ -740,6 +740,18 @@ If you run **CipAuto** or **999.md** import CLI from Render Shell, the parser ke
 
 On first deploy after this change, copy an existing `cipauto-registry.json` into the new location or run `npm run cipauto:seed-registry -- --env prod <userId>` once. See `docs/parsing/cipauto-import.md`.
 
+### 3.9b. CipAuto FlareSolverr (Cloudflare)
+
+If `cipauto.md` returns Cloudflare managed challenges (HTTP 403 “Just a moment...”), run FlareSolverr next to the backend:
+
+1. Create a Render **Private Service** (Docker) from `ghcr.io/flaresolverr/flaresolverr:v3.5.0` in the **same workspace and region** as `kupito-backend`.
+2. Set `HOST=0.0.0.0`, `PORT=8191`, `LOG_LEVEL=info`. Health check path: `/health`. Do **not** attach a public URL.
+3. On `kupito-backend`, set `CIPAUTO_FLARESOLVERR_URL=http://<flaresolverr-service-name>:8191` (and optionally `CIPAUTO_FLARESOLVERR_TIMEOUT_MS=60000`).
+4. Prefer `ADMIN_PARSING_MAX_CONCURRENT_RUNS=1` until you confirm Chrome memory headroom.
+5. Locally: `docker compose up -d flaresolverr` from `core/`, then `CIPAUTO_FLARESOLVERR_URL=http://127.0.0.1:8191`.
+
+HTML PLP/PDP/audit/availability probes for CipAuto go through FlareSolverr when the env is set. Do not paste browser cookies from another machine — clearance cookies are IP-bound. Never expose FlareSolverr to the public internet.
+
 ### 3.10. Telegram support bot (optional)
 
 Bug-report bot: users write to the bot in Telegram; messages are forwarded to a support chat. Requires Redis (for rate limit).

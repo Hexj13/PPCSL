@@ -7,12 +7,32 @@ import {
 describe('profile email notification helpers', () => {
   it('enables all email notification flags together', () => {
     expect(
-      enableAllEmailNotifications({
-        emailNotifications: false,
-        emailNotificationListingRefreshReminders: false,
-        emailNotificationWeeklyViewsDigest: false,
-        emailNotificationSecurityAlerts: false,
-      }),
+      enableAllEmailNotifications(
+        {
+          emailNotifications: false,
+          emailNotificationListingRefreshReminders: false,
+          emailNotificationWeeklyViewsDigest: false,
+          emailNotificationSecurityAlerts: false,
+        },
+        false,
+      ),
+    ).toEqual({
+      emailNotifications: true,
+      emailNotificationListingRefreshReminders: true,
+      emailNotificationWeeklyViewsDigest: false,
+      emailNotificationSecurityAlerts: true,
+    });
+
+    expect(
+      enableAllEmailNotifications(
+        {
+          emailNotifications: false,
+          emailNotificationListingRefreshReminders: false,
+          emailNotificationWeeklyViewsDigest: false,
+          emailNotificationSecurityAlerts: false,
+        },
+        true,
+      ),
     ).toEqual({
       emailNotifications: true,
       emailNotificationListingRefreshReminders: true,

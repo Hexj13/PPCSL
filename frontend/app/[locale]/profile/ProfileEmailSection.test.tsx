@@ -40,6 +40,7 @@ describe('ProfileEmailSection', () => {
           emailNotificationSecurityAlerts: false,
         }}
         emailForChange="new@example.com"
+        weeklyViewsDigestAvailable={false}
         t={t}
         onChange={jest.fn()}
         onEmailChange={jest.fn()}
@@ -66,13 +67,14 @@ describe('ProfileEmailSection', () => {
           emailNotificationSecurityAlerts: false,
         }}
         emailForChange=""
+        weeklyViewsDigestAvailable={false}
         t={t}
         onChange={jest.fn()}
         onEmailChange={jest.fn()}
       />,
     );
 
-    const [masterInput, listingRemindersInput, weeklyDigestInput, securityAlertsInput] = screen
+    const [masterInput, listingRemindersInput, securityAlertsInput] = screen
       .getAllByRole('checkbox', { hidden: true })
       .filter((element): element is HTMLInputElement => element instanceof HTMLInputElement);
 
@@ -86,15 +88,11 @@ describe('ProfileEmailSection', () => {
       'aria-checked',
       'true',
     );
-    expect(weeklyDigestInput).toBeDisabled();
-    expect(screen.getByRole('checkbox', { name: 'Weekly digest' })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    );
     expect(securityAlertsInput).toBeDisabled();
     expect(screen.getByRole('checkbox', { name: 'System and security' })).toHaveAttribute(
       'aria-checked',
       'true',
     );
+    expect(screen.queryByRole('checkbox', { name: 'Weekly digest' })).not.toBeInTheDocument();
   });
 });

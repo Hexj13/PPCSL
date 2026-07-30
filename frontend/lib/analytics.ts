@@ -2,7 +2,7 @@
 
 import type { Listing } from '@/lib/api';
 
-import { localStorageGetItem } from './browser-local-storage';
+import { isAnalyticsConsentGranted } from './cookie-consent';
 import { loadSiteConfigSync } from './site-config';
 import { formatTireSize, getCountry, getTireModelDisplayLabel, isTireListing } from './utils';
 
@@ -16,21 +16,8 @@ function checkConsent(): boolean {
   if (typeof window === 'undefined') return false;
   if (consentCache !== null) return consentCache;
 
-  const consentKey = 'cookie_consent';
-  const stored = localStorageGetItem(consentKey);
-  if (!stored) {
-    consentCache = false;
-    return false;
-  }
-
-  try {
-    const parsed = JSON.parse(stored);
-    consentCache = parsed.analytics === 'granted';
-    return consentCache;
-  } catch {
-    consentCache = false;
-    return false;
-  }
+  consentCache = isAnalyticsConsentGranted();
+  return consentCache;
 }
 
 let currencyCache: string | null = null;
@@ -407,14 +394,6 @@ export const analytics = {
     });
   },
 
-  quickFilter: (brand: string, model?: string) => {
-    trackEvent('quick_filter_click', {
-      filter_type: model ? 'brand_model' : 'brand',
-      brand: brand,
-      model: model,
-    });
-  },
-
   similarBlockImpression: (listingId: string, similarCount: number) => {
     trackEvent('similar_block_impression', {
       listing_id: listingId,
@@ -427,12 +406,6 @@ export const analytics = {
       listing_id: listingId,
       clicked_listing_id: clickedListingId,
       position,
-    });
-  },
-
-  similarScroll: (listingId: string) => {
-    trackEvent('similar_scroll', {
-      listing_id: listingId,
     });
   },
 

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
+import { isWeeklyViewsDigestEnabled } from '../../../common/env';
 import {
   handleDuplicateKeyError,
   removePasswordFromUser,
@@ -70,7 +71,8 @@ export class RegisterUserUseCase {
 
     const hasEmailNotifications = cleanedUserData.emailNotifications === true;
     cleanedUserData.emailNotificationListingRefreshReminders = hasEmailNotifications;
-    cleanedUserData.emailNotificationWeeklyViewsDigest = hasEmailNotifications;
+    cleanedUserData.emailNotificationWeeklyViewsDigest =
+      hasEmailNotifications && isWeeklyViewsDigestEnabled();
     cleanedUserData.emailNotificationSecurityAlerts = hasEmailNotifications;
 
     const finalUserData = cleanUserData(cleanedUserData) as Partial<User>;

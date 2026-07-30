@@ -2,33 +2,26 @@ import * as cheerio from 'cheerio';
 import type { AnyNode } from 'domhandler';
 
 import { Currency } from '../../../../common/types';
-import { requestText } from '../../partner-import-shared/utils/http';
 import { isProbablyVideoUrl } from '../../partner-import-shared/utils/video-url';
+import type { CipautoHttpClient } from '../http/cipauto-http-client';
 import type { CipautoConfig, ParsedPdpData, ParsedPdpEquipmentOption } from '../types';
 
 import { extractCipautoPostIdFromImageUrl, extractSourceListingId } from './plp-parser';
 
 export class PdpParser {
-  constructor(private readonly config: CipautoConfig) {}
+  constructor(
+    private readonly config: CipautoConfig,
+    private readonly http: CipautoHttpClient,
+  ) {}
 
   async parse(originalUrl: string): Promise<ParsedPdpData> {
     const { roUrl, ruUrl } = buildCipautoBilingualPdpUrls(originalUrl);
     let htmlRo: string;
     try {
-      const { data } = await requestText({
-        url: roUrl,
-        method: 'GET',
-        timeoutMs: this.config.requestTimeoutMs,
-        retries: this.config.maxRetries,
-      });
+      const { data } = await this.http.getText(roUrl);
       htmlRo = data;
     } catch {
-      const { data } = await requestText({
-        url: originalUrl,
-        method: 'GET',
-        timeoutMs: this.config.requestTimeoutMs,
-        retries: this.config.maxRetries,
-      });
+      const { data } = await this.http.getText(originalUrl);
       htmlRo = data;
     }
 
@@ -42,12 +35,7 @@ export class PdpParser {
     parsed.description = descRo ?? parsed.description;
 
     try {
-      const { data: htmlRu } = await requestText({
-        url: ruUrl,
-        method: 'GET',
-        timeoutMs: this.config.requestTimeoutMs,
-        retries: this.config.maxRetries,
-      });
+      const { data: htmlRu } = await this.http.getText(ruUrl);
       const descRu = readDescription(cheerio.load(htmlRu));
       if (descRu) {
         parsed.description_ru = descRu;

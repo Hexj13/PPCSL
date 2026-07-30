@@ -14,6 +14,7 @@ import {
   resolveConfig as resolveCipautoConfig,
   normalizeRuntimeEnv,
 } from '../../cipauto-import/config';
+import { CipautoHttpClient } from '../../cipauto-import/http/cipauto-http-client';
 import { PdpParser } from '../../cipauto-import/parsers/pdp-parser';
 import type { ParsedPdpData } from '../listing-types';
 import {
@@ -152,63 +153,73 @@ async function main(): Promise<void> {
 
   console.log(`[partner:check-urls] Found ${listings.length} listings with saved canonical URL`);
 
-  const pdpCipauto = partner === 'cipauto' ? new PdpParser(cipautoCfg) : null;
+  const cipautoHttp = partner === 'cipauto' ? new CipautoHttpClient(cipautoCfg) : null;
+  const pdpCipauto = cipautoHttp ? new PdpParser(cipautoCfg, cipautoHttp) : null;
   const pdp999 = partner === '999md' ? new PdpParser999(md999Cfg) : null;
   const pdpAutooutlet = partner === 'autooutlet' ? new AutooutletPdpParser(autooutletCfg) : null;
 
   const rows: CheckRow[] = [];
 
-  for (const listing of listings) {
-    const url = listing.partner_listing_canonical_url?.trim() ?? '';
-    if (!url) {
-      continue;
+  try {
+    if (cipautoHttp) {
+      await cipautoHttp.start();
     }
-    if (dryRun) {
-      rows.push({
-        kupitoListingId: listing.id,
-        partner_listing_external_key: listing.partner_listing_external_key,
-        url,
-        outcome: 'active',
-        detail: 'dry_run',
-      });
-      continue;
-    }
-    try {
-      let parsed: ParsedPdpData;
-      if (pdpCipauto) {
-        parsed = await pdpCipauto.parse(url);
-      } else if (pdp999) {
-        parsed = await pdp999.parse(url);
-      } else if (pdpAutooutlet) {
-        parsed = await pdpAutooutlet.parse(url);
-      } else {
-        throw new Error('Parser not initialized');
+    for (const listing of listings) {
+      const url = listing.partner_listing_canonical_url?.trim() ?? '';
+      if (!url) {
+        continue;
       }
-      const outcome: CheckOutcome =
-        partner === '999md'
-          ? classify999Outcome(parsed)
-          : parsed.sourceStatus === 'closed'
-            ? 'closed'
-            : 'active';
-      rows.push({
-        kupitoListingId: listing.id,
-        partner_listing_external_key: listing.partner_listing_external_key,
-        url,
-        outcome,
-        sourceStatus: parsed.sourceStatus,
-        sourceStatusReason: parsed.sourceStatusReason,
-      });
-    } catch (e) {
-      rows.push({
-        kupitoListingId: listing.id,
-        partner_listing_external_key: listing.partner_listing_external_key,
-        url,
-        outcome: 'error',
-        detail: String(e),
-      });
+      if (dryRun) {
+        rows.push({
+          kupitoListingId: listing.id,
+          partner_listing_external_key: listing.partner_listing_external_key,
+          url,
+          outcome: 'active',
+          detail: 'dry_run',
+        });
+        continue;
+      }
+      try {
+        let parsed: ParsedPdpData;
+        if (pdpCipauto) {
+          parsed = await pdpCipauto.parse(url);
+        } else if (pdp999) {
+          parsed = await pdp999.parse(url);
+        } else if (pdpAutooutlet) {
+          parsed = await pdpAutooutlet.parse(url);
+        } else {
+          throw new Error('Parser not initialized');
+        }
+        const outcome: CheckOutcome =
+          partner === '999md'
+            ? classify999Outcome(parsed)
+            : parsed.sourceStatus === 'closed'
+              ? 'closed'
+              : 'active';
+        rows.push({
+          kupitoListingId: listing.id,
+          partner_listing_external_key: listing.partner_listing_external_key,
+          url,
+          outcome,
+          sourceStatus: parsed.sourceStatus,
+          sourceStatusReason: parsed.sourceStatusReason,
+        });
+      } catch (e) {
+        rows.push({
+          kupitoListingId: listing.id,
+          partner_listing_external_key: listing.partner_listing_external_key,
+          url,
+          outcome: 'error',
+          detail: String(e),
+        });
+      }
+      if (delayMs > 0) {
+        await sleep(delayMs);
+      }
     }
-    if (delayMs > 0) {
-      await sleep(delayMs);
+  } finally {
+    if (cipautoHttp) {
+      await cipautoHttp.close();
     }
   }
 

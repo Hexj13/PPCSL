@@ -7,6 +7,7 @@ import { finishOAuthSession } from '@/app/[locale]/sign/finishOAuthSession';
 import { mountGisIconButton } from '@/app/[locale]/sign/gisIconButtonMount';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
+import { analytics } from '@/lib/analytics';
 import type { GoogleSignInDto, User } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { waitForAuthSubmitLoaderMinDisplay } from '@/lib/auth-submit-loader';
@@ -265,6 +266,11 @@ export function useGoogleAuth(options: {
           const me = await authApi.me(quietAuthRequest);
           const syncedUser = me.data;
           if (!isMountedRef.current) return;
+          if (authResult.data.isNewUser) {
+            analytics.signUp('google');
+          } else {
+            analytics.login('google');
+          }
           await finishSessionRef.current(
             syncedUser,
             authResult.data.isNewUser,

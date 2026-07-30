@@ -52,6 +52,7 @@ import {
   normalizeRuntimeEnv,
   resolveConfig,
 } from './config';
+import { CipautoHttpClient } from './http/cipauto-http-client';
 import { PdpParser } from './parsers/pdp-parser';
 import { PlpParser } from './parsers/plp-parser';
 import { RegistryStore } from './storage/registry';
@@ -191,7 +192,8 @@ async function runScan(options: ScanCommandOptions): Promise<void> {
 
   const config = resolveConfig(options.env);
   const registry = new RegistryStore(config.registryPath);
-  const plpParser = new PlpParser(config);
+  const http = new CipautoHttpClient(config);
+  const plpParser = new PlpParser(config, http);
 
   const pageFrom = options.pageFrom ?? 1;
   const requestedPageTo = options.pageTo ?? options.pages;
@@ -206,92 +208,97 @@ async function runScan(options: ScanCommandOptions): Promise<void> {
   let detectedMaxPages: number | undefined;
   let lastScannedPage = pageFrom - 1;
 
-  for (let page = pageFrom; page <= requestedPageTo; page++) {
-    if (shouldStop) {
-      break;
+  try {
+    await http.start();
+    for (let page = pageFrom; page <= requestedPageTo; page++) {
+      if (shouldStop) {
+        break;
+      }
+      const startedAt = Date.now();
+      const parsed = await plpParser.parseCatalogPage(page);
+      pagesScanned += 1;
+      lastScannedPage = page;
+      cardsFound += parsed.items.length;
+      if (parsed.maxPages && (!detectedMaxPages || parsed.maxPages > detectedMaxPages)) {
+        detectedMaxPages = parsed.maxPages;
+      }
+
+      let pageNew = 0;
+      let pageDuplicates = 0;
+      const seenAt = new Date().toISOString();
+
+      for (const item of parsed.items) {
+        if (seenSourceIds.has(item.sourceListingId)) {
+          pageDuplicates += 1;
+          duplicates += 1;
+          continue;
+        }
+
+        seenSourceIds.add(item.sourceListingId);
+        const existing = registry.findExistingPlpItem(item);
+        const knownSourceId = existing?.sourceListingId ?? item.sourceListingId;
+
+        if (knownBefore.has(knownSourceId) || knownBefore.has(item.sourceListingId)) {
+          pageDuplicates += 1;
+          duplicates += 1;
+        } else {
+          knownBefore.add(knownSourceId);
+          pageNew += 1;
+          newItems += 1;
+        }
+        knownBefore.add(item.sourceListingId);
+
+        if (existing?.kupitoListingId) {
+          existingListings += 1;
+        } else {
+          readyForImport += 1;
+        }
+
+        if (!options.dryRun) {
+          registry.upsertPlpItem(item, seenAt);
+        }
+      }
+
+      const elapsedSec = ((Date.now() - startedAt) / 1000).toFixed(1);
+      logger.info(
+        'SCAN',
+        `[PAGE ${page}] found=${parsed.items.length} new=${pageNew} duplicates=${pageDuplicates} maxPages=${parsed.maxPages ?? '-'} elapsed=${elapsedSec}s`,
+      );
+
+      if (detectedMaxPages && page >= detectedMaxPages) {
+        break;
+      }
+
+      if (page < requestedPageTo) {
+        await sleep(options.delay);
+      }
     }
-    const startedAt = Date.now();
-    const parsed = await plpParser.parseCatalogPage(page);
-    pagesScanned += 1;
-    lastScannedPage = page;
-    cardsFound += parsed.items.length;
-    if (parsed.maxPages && (!detectedMaxPages || parsed.maxPages > detectedMaxPages)) {
-      detectedMaxPages = parsed.maxPages;
+
+    const closeValid =
+      !options.dryRun &&
+      pageFrom === 1 &&
+      typeof detectedMaxPages === 'number' &&
+      detectedMaxPages > 0 &&
+      lastScannedPage >= detectedMaxPages;
+    const finalized = finalizeRegistryAfterPlpScan({
+      items: registry.getAll(),
+      seenSourceIds,
+      closeValid,
+      now: new Date().toISOString(),
+    });
+
+    if (!options.dryRun) {
+      registry.replaceAllItems(finalized.items);
+      registry.writeCurrentPlpSnapshot(config.currentPlpPath);
     }
 
-    let pageNew = 0;
-    let pageDuplicates = 0;
-    const seenAt = new Date().toISOString();
-
-    for (const item of parsed.items) {
-      if (seenSourceIds.has(item.sourceListingId)) {
-        pageDuplicates += 1;
-        duplicates += 1;
-        continue;
-      }
-
-      seenSourceIds.add(item.sourceListingId);
-      const existing = registry.findExistingPlpItem(item);
-      const knownSourceId = existing?.sourceListingId ?? item.sourceListingId;
-
-      if (knownBefore.has(knownSourceId) || knownBefore.has(item.sourceListingId)) {
-        pageDuplicates += 1;
-        duplicates += 1;
-      } else {
-        knownBefore.add(knownSourceId);
-        pageNew += 1;
-        newItems += 1;
-      }
-      knownBefore.add(item.sourceListingId);
-
-      if (existing?.kupitoListingId) {
-        existingListings += 1;
-      } else {
-        readyForImport += 1;
-      }
-
-      if (!options.dryRun) {
-        registry.upsertPlpItem(item, seenAt);
-      }
-    }
-
-    const elapsedSec = ((Date.now() - startedAt) / 1000).toFixed(1);
     logger.info(
       'SCAN',
-      `[PAGE ${page}] found=${parsed.items.length} new=${pageNew} duplicates=${pageDuplicates} maxPages=${parsed.maxPages ?? '-'} elapsed=${elapsedSec}s`,
+      `[DONE] pagesScanned=${pagesScanned} cardsFound=${cardsFound} new=${newItems} duplicates=${duplicates} existingListings=${existingListings} readyForImport=${readyForImport} missingCandidates=${finalized.missingCandidates} closeEstimate=${finalized.closeEstimate} closeValid=${closeValid ? 1 : 0} activeItems=${finalized.activeItems} closedItems=${finalized.closedItems} dryRun=${Boolean(options.dryRun)}`,
     );
-
-    if (detectedMaxPages && page >= detectedMaxPages) {
-      break;
-    }
-
-    if (page < requestedPageTo) {
-      await sleep(options.delay);
-    }
+  } finally {
+    await http.close();
   }
-
-  const closeValid =
-    !options.dryRun &&
-    pageFrom === 1 &&
-    typeof detectedMaxPages === 'number' &&
-    detectedMaxPages > 0 &&
-    lastScannedPage >= detectedMaxPages;
-  const finalized = finalizeRegistryAfterPlpScan({
-    items: registry.getAll(),
-    seenSourceIds,
-    closeValid,
-    now: new Date().toISOString(),
-  });
-
-  if (!options.dryRun) {
-    registry.replaceAllItems(finalized.items);
-    registry.writeCurrentPlpSnapshot(config.currentPlpPath);
-  }
-
-  logger.info(
-    'SCAN',
-    `[DONE] pagesScanned=${pagesScanned} cardsFound=${cardsFound} new=${newItems} duplicates=${duplicates} existingListings=${existingListings} readyForImport=${readyForImport} missingCandidates=${finalized.missingCandidates} closeEstimate=${finalized.closeEstimate} closeValid=${closeValid ? 1 : 0} activeItems=${finalized.activeItems} closedItems=${finalized.closedItems} dryRun=${Boolean(options.dryRun)}`,
-  );
 }
 
 async function runImport(options: ImportCommandOptions): Promise<void> {
@@ -310,7 +317,8 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
         log: (payload) => logger.info('IMPORT', JSON.stringify(payload)),
       })
     : undefined;
-  const pdpParser = new PdpParser(config);
+  const http = new CipautoHttpClient(config);
+  const pdpParser = new PdpParser(config, http);
   const uploadClient = authClient ? new UploadClient(config, authClient) : undefined;
   const startedAt = new Date().toISOString();
   const targetStatus = mapCliStatusToListingStatus(options.status);
@@ -353,6 +361,7 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
 
   let processed = 0;
   try {
+    await http.start();
     for (const item of runnableCandidates) {
       if (shouldStop) {
         break;
@@ -375,6 +384,7 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
       await sleep(options.delay);
     }
   } finally {
+    await http.close();
     if (options.checkUserDuplicatesBeforeCreate && !options.dryRun && AppDataSource.isInitialized) {
       await AppDataSource.destroy();
     }

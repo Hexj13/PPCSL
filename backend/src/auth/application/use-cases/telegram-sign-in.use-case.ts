@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 
 import * as constants from '../../../common/constants';
+import { isWeeklyViewsDigestEnabled } from '../../../common/env';
 import { UserType } from '../../../common/types';
 import { handleDuplicateKeyError } from '../../../common/utils/error-handling.utils';
 import { logUserActionFailure, logUserEvent } from '../../../common/utils/log-user-event';
@@ -166,7 +167,7 @@ export class TelegramSignInUseCase {
         registration_ip: ip ?? null,
         emailNotifications: true,
         emailNotificationListingRefreshReminders: true,
-        emailNotificationWeeklyViewsDigest: true,
+        emailNotificationWeeklyViewsDigest: isWeeklyViewsDigestEnabled(),
         emailNotificationSecurityAlerts: true,
         ...(normalizedRequestLocale === 'ro' || normalizedRequestLocale === 'ru'
           ? { preferredLocale: normalizedRequestLocale }

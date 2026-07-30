@@ -627,62 +627,73 @@ describe('AuthService', () => {
     });
 
     it('should log email notification enable events when preferences are saved', async () => {
+      const previousDigestFlag = process.env.WEEKLY_VIEWS_DIGEST_ENABLED;
+      process.env.WEEKLY_VIEWS_DIGEST_ENABLED = 'true';
       const loggerSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
-      const userWithDisabledNotifications = {
-        ...mockUser,
-        emailNotifications: false,
-        emailNotificationListingRefreshReminders: false,
-        emailNotificationWeeklyViewsDigest: false,
-        emailNotificationSecurityAlerts: false,
-      };
-      const updatedUser = {
-        ...userWithDisabledNotifications,
-        emailNotifications: true,
-        emailNotificationListingRefreshReminders: true,
-        emailNotificationWeeklyViewsDigest: true,
-        emailNotificationSecurityAlerts: true,
-      };
-      usersService.findOneById.mockResolvedValue(userWithDisabledNotifications as unknown as User);
-      usersService.update.mockResolvedValue(updatedUser as unknown as User);
+      try {
+        const userWithDisabledNotifications = {
+          ...mockUser,
+          emailNotifications: false,
+          emailNotificationListingRefreshReminders: false,
+          emailNotificationWeeklyViewsDigest: false,
+          emailNotificationSecurityAlerts: false,
+        };
+        const updatedUser = {
+          ...userWithDisabledNotifications,
+          emailNotifications: true,
+          emailNotificationListingRefreshReminders: true,
+          emailNotificationWeeklyViewsDigest: true,
+          emailNotificationSecurityAlerts: true,
+        };
+        usersService.findOneById.mockResolvedValue(
+          userWithDisabledNotifications as unknown as User,
+        );
+        usersService.update.mockResolvedValue(updatedUser as unknown as User);
 
-      await service.updateProfile('1', {
-        emailNotifications: true,
-        emailNotificationListingRefreshReminders: true,
-        emailNotificationWeeklyViewsDigest: true,
-        emailNotificationSecurityAlerts: true,
-      });
+        await service.updateProfile('1', {
+          emailNotifications: true,
+          emailNotificationListingRefreshReminders: true,
+          emailNotificationWeeklyViewsDigest: true,
+          emailNotificationSecurityAlerts: true,
+        });
 
-      const events = getLoggedEvents(loggerSpy);
-      expect(events).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            event: 'email_notifications_toggled',
-            userId: '1',
-            enabled: true,
-            previousEnabled: false,
-          }),
-          expect.objectContaining({
-            event: 'email_listing_refresh_reminders_toggled',
-            userId: '1',
-            enabled: true,
-            previousEnabled: false,
-          }),
-          expect.objectContaining({
-            event: 'email_weekly_views_digest_toggled',
-            userId: '1',
-            enabled: true,
-            previousEnabled: false,
-          }),
-          expect.objectContaining({
-            event: 'email_security_alerts_toggled',
-            userId: '1',
-            enabled: true,
-            previousEnabled: false,
-          }),
-        ]),
-      );
-
-      loggerSpy.mockRestore();
+        const events = getLoggedEvents(loggerSpy);
+        expect(events).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              event: 'email_notifications_toggled',
+              userId: '1',
+              enabled: true,
+              previousEnabled: false,
+            }),
+            expect.objectContaining({
+              event: 'email_listing_refresh_reminders_toggled',
+              userId: '1',
+              enabled: true,
+              previousEnabled: false,
+            }),
+            expect.objectContaining({
+              event: 'email_weekly_views_digest_toggled',
+              userId: '1',
+              enabled: true,
+              previousEnabled: false,
+            }),
+            expect.objectContaining({
+              event: 'email_security_alerts_toggled',
+              userId: '1',
+              enabled: true,
+              previousEnabled: false,
+            }),
+          ]),
+        );
+      } finally {
+        loggerSpy.mockRestore();
+        if (previousDigestFlag === undefined) {
+          delete process.env.WEEKLY_VIEWS_DIGEST_ENABLED;
+        } else {
+          process.env.WEEKLY_VIEWS_DIGEST_ENABLED = previousDigestFlag;
+        }
+      }
     });
 
     it('should log email notification disable events when preferences are saved', async () => {

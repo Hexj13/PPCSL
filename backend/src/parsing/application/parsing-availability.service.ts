@@ -1,4 +1,8 @@
+import { randomUUID } from 'crypto';
+
 import { Injectable, Logger } from '@nestjs/common';
+
+import { FlareSolverrClient } from '../../common/infrastructure/flaresolverr-client';
 
 import { getParserCatalogItem, type ParserCatalogItem } from './parser-catalog';
 
@@ -28,25 +32,30 @@ export class ParsingAvailabilityService {
     const base = this.resolveSourceBase(probe);
     const timeoutMs = this.resolveTimeoutMs(probe.timeoutMs);
     const total = params.pageTo - params.pageFrom + 1;
+    const flare = await this.createFlareProbeSession(params.parserCode);
     let ok = 0;
-    for (let page = params.pageFrom; page <= params.pageTo; page++) {
-      const path =
-        page <= 1
-          ? probe.plpFirstPagePath
-          : probe.plpPagePathTemplate.replace('{page}', String(page));
-      const url = this.joinUrl(base, path);
-      try {
-        const res = await fetch(url, {
-          method: 'GET',
-          redirect: 'follow',
-          signal: AbortSignal.timeout(timeoutMs),
-        });
-        if (res.ok) {
-          ok += 1;
+    try {
+      for (let page = params.pageFrom; page <= params.pageTo; page++) {
+        const path =
+          page <= 1
+            ? probe.plpFirstPagePath
+            : probe.plpPagePathTemplate.replace('{page}', String(page));
+        const url = this.joinUrl(base, path);
+        try {
+          const reachable = await this.probeUrl({
+            url,
+            timeoutMs,
+            flare,
+          });
+          if (reachable) {
+            ok += 1;
+          }
+        } catch (error) {
+          this.logger.warn(`Availability probe failed for ${url}: ${String(error)}`);
         }
-      } catch (error) {
-        this.logger.warn(`Availability probe failed for ${url}: ${String(error)}`);
       }
+    } finally {
+      await this.destroyFlareProbeSession(flare);
     }
     const summary = `${ok}/${total} pages reachable`;
     return { ok, total, summary };
@@ -71,20 +80,73 @@ export class ParsingAvailabilityService {
     const base = this.resolveSourceBase(probe);
     const timeoutMs = this.resolveTimeoutMs(probe.timeoutMs);
     const url = this.joinUrl(base, probe.plpFirstPagePath || '/');
+    const flare = await this.createFlareProbeSession(params.parserCode);
     try {
-      const res = await fetch(url, {
-        method: 'GET',
-        redirect: 'follow',
-        signal: AbortSignal.timeout(timeoutMs),
+      const reachable = await this.probeUrl({
+        url,
+        timeoutMs,
+        flare,
       });
-      const ok = res.ok ? 1 : 0;
+      const ok = reachable ? 1 : 0;
       return { ok, total: 1, summary: ok ? 'source reachable' : 'source unreachable' };
     } catch (error) {
       this.logger.warn(
         `Parser source availability probe failed for parser=${params.parserCode}: ${String(error)}`,
       );
       return { ok: 0, total: 1, summary: 'source unreachable' };
+    } finally {
+      await this.destroyFlareProbeSession(flare);
     }
+  }
+
+  private async probeUrl(params: {
+    url: string;
+    timeoutMs: number;
+    flare: FlareProbeSession | null;
+  }): Promise<boolean> {
+    if (params.flare) {
+      const maxTimeout = Number(process.env.CIPAUTO_FLARESOLVERR_TIMEOUT_MS ?? params.timeoutMs);
+      const result = await params.flare.client.requestGet({
+        url: params.url,
+        session: params.flare.sessionId,
+        maxTimeout:
+          Number.isFinite(maxTimeout) && maxTimeout >= 1000 ? maxTimeout : params.timeoutMs,
+      });
+      return result.status >= 200 && result.status < 300;
+    }
+
+    const res = await fetch(params.url, {
+      method: 'GET',
+      redirect: 'follow',
+      signal: AbortSignal.timeout(params.timeoutMs),
+    });
+    return res.ok;
+  }
+
+  private async createFlareProbeSession(parserCode: string): Promise<FlareProbeSession | null> {
+    const flareUrl =
+      parserCode === 'cipauto' ? process.env.CIPAUTO_FLARESOLVERR_URL?.trim() || '' : '';
+    if (!flareUrl) {
+      return null;
+    }
+    try {
+      const client = new FlareSolverrClient(flareUrl);
+      const sessionId = `probe-${process.pid}-${randomUUID()}`;
+      await client.createSession(sessionId);
+      return { client, sessionId };
+    } catch (error) {
+      this.logger.warn(
+        `FlareSolverr probe session unavailable for parser=${parserCode}: ${String(error)}`,
+      );
+      return null;
+    }
+  }
+
+  private async destroyFlareProbeSession(flare: FlareProbeSession | null): Promise<void> {
+    if (!flare) {
+      return;
+    }
+    await flare.client.destroySession(flare.sessionId);
   }
 
   private requireParserCatalogItem(parserCode: string): ParserCatalogItem {
@@ -125,3 +187,8 @@ export class ParsingAvailabilityService {
     return getParserCatalogItem(parserCode)?.availabilityProbe;
   }
 }
+
+type FlareProbeSession = {
+  client: FlareSolverrClient;
+  sessionId: string;
+};

@@ -84,6 +84,7 @@ Important variables:
 - `ADMIN_PARSING_SCHEDULER_ENABLED`
 - `ADMIN_PARSING_CANCEL_GRACE_MS`
 - `PARSING_RUNTIME_DIR` (and optional `CIPAUTO_*` / `AUTOOUTLET_*` / `SITE999MD_*` path overrides) — same semantics as partner import CLIs; forwarded into parser child processes when set
+- `CIPAUTO_FLARESOLVERR_URL` / `CIPAUTO_FLARESOLVERR_TIMEOUT_MS` — optional FlareSolverr base URL and timeout for CipAuto HTML fetches (see platform `docs/parsing/cipauto-import.md`). Inherited by spawned CLI children via `process.env`.
 
 Optional parser-specific CLI overrides:
 

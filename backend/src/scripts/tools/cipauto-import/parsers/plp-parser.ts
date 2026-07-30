@@ -1,8 +1,8 @@
 import * as cheerio from 'cheerio';
 import type { AnyNode } from 'domhandler';
 
-import { requestText } from '../../partner-import-shared/utils/http';
 import { extractVehiculListingPathId } from '../../partner-import-shared/vehicul-listing-path-id';
+import type { CipautoHttpClient } from '../http/cipauto-http-client';
 import type { CipautoConfig, ParsedPlpItem } from '../types';
 
 interface ParsePlpPageResult {
@@ -11,16 +11,14 @@ interface ParsePlpPageResult {
 }
 
 export class PlpParser {
-  constructor(private readonly config: CipautoConfig) {}
+  constructor(
+    private readonly config: CipautoConfig,
+    private readonly http: CipautoHttpClient,
+  ) {}
 
   async parseCatalogPage(page: number): Promise<ParsePlpPageResult> {
     const url = buildCatalogUrl(this.config.cipautoBaseUrl, page);
-    const { data: html } = await requestText({
-      url,
-      method: 'GET',
-      timeoutMs: this.config.requestTimeoutMs,
-      retries: this.config.maxRetries,
-    });
+    const { data: html } = await this.http.getText(url);
     return parsePlpHtml(html);
   }
 }

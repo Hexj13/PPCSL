@@ -123,4 +123,6 @@ export interface CipautoConfig extends KupitoImportClientConfig {
   registryPath: string;
   currentPlpPath: string;
   reportsDir: string;
+  flareSolverrUrl?: string;
+  flareSolverrTimeoutMs: number;
 }

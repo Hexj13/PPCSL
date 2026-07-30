@@ -329,11 +329,13 @@ export function useProfilePage() {
       )
     ) {
       emailNotificationsInteractionLockedRef.current = true;
-      setFormData((prev) => enableAllEmailNotifications(prev));
+      setFormData((prev) =>
+        enableAllEmailNotifications(prev, user?.weeklyViewsDigestAvailable === true),
+      );
     }
 
     previousEmailForChangeRef.current = emailForChange;
-  }, [emailForChange]);
+  }, [emailForChange, user?.weeklyViewsDigestAvailable]);
 
   const handleChange = useCallback((field: keyof UpdateProfileDto, value: string | boolean) => {
     if (

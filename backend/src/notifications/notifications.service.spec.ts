@@ -57,6 +57,30 @@ describe('NotificationsService', () => {
     );
   });
 
+  it('does not send weekly views digest when feature is disabled', async () => {
+    const previous = process.env.WEEKLY_VIEWS_DIGEST_ENABLED;
+    delete process.env.WEEKLY_VIEWS_DIGEST_ENABLED;
+    try {
+      const emailService = { sendWeeklyViewsDigest: jest.fn() };
+      const service = new NotificationsService(
+        {} as never,
+        {} as never,
+        {} as never,
+        emailService as never,
+      );
+
+      await service.sendWeeklyViewsDigest();
+
+      expect(emailService.sendWeeklyViewsDigest).not.toHaveBeenCalled();
+    } finally {
+      if (previous === undefined) {
+        delete process.env.WEEKLY_VIEWS_DIGEST_ENABLED;
+      } else {
+        process.env.WEEKLY_VIEWS_DIGEST_ENABLED = previous;
+      }
+    }
+  });
+
   it('should query only verified emails for weekly digest', async () => {
     const queryBuilder = createQueryBuilderMock();
     const usersRepository = {

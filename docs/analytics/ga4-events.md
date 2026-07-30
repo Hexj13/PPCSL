@@ -12,7 +12,7 @@ tags:
 
 ## Overview
 
-This document describes the current state of Google Analytics 4 integration. Events from `analytics.ts` check consent via `checkConsent()` (localStorage cache), while components (`GoogleAnalytics`, `ConversionEventTrigger`) use `useCookieConsent` (cookie-first with localStorage fallback cache).
+This document describes the current state of Google Analytics 4 integration. GA4 loads via direct `gtag.js` using `NEXT_PUBLIC_GA_ID` (`GoogleAnalytics.tsx`). GTM container `GTM-K527X5WK` is also loaded on the page but must not duplicate GA4 page_view tags while `gtag('config')` is active. Consent is shared through `lib/cookie-consent.ts` (cookie-first, localStorage fallback): `analytics.ts` `checkConsent()` and `useCookieConsent` both use `readConsentPreferences()` / `isAnalyticsConsentGranted()`.
 
 **Related documents:**
 
@@ -79,17 +79,6 @@ This document describes the current state of Google Analytics 4 integration. Eve
 **Used in:** `SearchFilters.tsx`  
 **Parameters:** `search_term`, plus filter fields from `filters` (brand, model, city, etc.)
 
-#### quick_filter_click
-
-**Description:** Click on quick filter (popular brands/models)  
-**Method:** `analytics.quickFilter(brand, model?)`  
-**Used in:** `SearchFilters.tsx`  
-**Parameters:**
-
-- `filter_type` — `'brand'` or `'brand_model'`
-- `brand` — brand name
-- `model` — model name (optional)
-
 #### save_filter
 
 **Description:** Save search filter  
@@ -106,11 +95,11 @@ This document describes the current state of Google Analytics 4 integration. Eve
 
 **Used in:**
 
-- `SearchFilters.tsx` — vehicle type switch and filter selection from categories
+- `SearchFilters.tsx` / `PopularFilters.tsx` — vehicle type switch, popular brands/models/body types, and filter selection from categories
 - Tracks brand, model, city selection from "Popular"/"Other" categories
 - Sends category info when selecting from a category
 
-**Content types:** `brand`, `model`, `city`, `body_type`, `transmission`, `vehicle_type`
+**Content types:** `brand`, `model`, `city`, `body_type`, `transmission`, `vehicle_type`, `popular_body_type`, and related popular filter ids
 
 ### Authentication
 
@@ -118,13 +107,15 @@ This document describes the current state of Google Analytics 4 integration. Eve
 
 **Description:** Sign in  
 **Method:** `analytics.login(method)`  
-**Methods:** `email`, `phone`, `google`, `telegram`
+**Methods:** `email`, `phone`, `google`, `telegram`  
+**Used in:** `useLoginPage.ts` (email/phone), `useTelegramAuth.ts`, `useGoogleAuth.ts`
 
 #### sign_up
 
 **Description:** Registration  
 **Method:** `analytics.signUp(method)`  
-**Methods:** `email`, `phone`, `google`, `telegram`
+**Methods:** `email`, `phone`, `google`, `telegram`  
+**Used in:** `useVerifyPhonePage.ts`, `useTelegramAuth.ts` (`isNewUser`), `useGoogleAuth.ts` (`isNewUser`)
 
 ### Conversions
 
@@ -153,12 +144,6 @@ This document describes the current state of Google Analytics 4 integration. Eve
 **Method:** `analytics.similarCardClick(listingId, clickedListingId, position)`  
 **Used in:** `SimilarListings.tsx`
 
-#### similar_scroll
-
-**Description:** Scroll in similar block  
-**Method:** `analytics.similarScroll(listingId)`  
-**Used in:** `SimilarListings.tsx`
-
 #### similar_favorite_toggle
 
 **Description:** Toggle favorite in similar block  
@@ -170,7 +155,7 @@ This document describes the current state of Google Analytics 4 integration. Eve
 
 #### page_view
 
-**Description:** Sent on route change via `gtag('config', gaId, { page_path: pathname })` in `GoogleAnalytics.tsx`; only when `consent === 'granted'` and in production
+**Description:** Sent on route change via `gtag('config', gaId, { page_path: pathname })` in `GoogleAnalytics.tsx`; only when `consent === 'granted'`, in production, after deferred idle (~2.5s), and after `gtag.js` has loaded.
 
 ### Base GA4 events
 
@@ -292,22 +277,22 @@ This document describes the current state of Google Analytics 4 integration. Eve
 #### GoogleAnalyticsConsent.tsx
 
 **Location:** `core/frontend/components/analytics/GoogleAnalyticsConsent.tsx`  
-**Role:** Initialize `dataLayer` and `gtag` before GA load; sets default consent `analytics_storage: 'denied'`, `ad_storage: 'denied'`  
-**Load:** `strategy="beforeInteractive"` — runs before page interactive  
-**Important:** must be included in `layout.tsx` **before** `GoogleAnalytics` for consent (GDPR) to work
+**Role:** Initialize `dataLayer` and stub `gtag` in production; sets default Consent Mode `analytics_storage: 'denied'`, `ad_storage: 'denied'`  
+**Load:** `strategy="afterInteractive"`; skipped on localhost / private IPs  
+**Important:** must be included in `layout.tsx` **before** `GoogleAnalytics` so Consent Mode defaults apply before events
 
 #### GoogleAnalytics.tsx
 
 **Location:** `core/frontend/components/analytics/GoogleAnalytics.tsx`  
-**Role:** Load gtag.js and send `page_view` on `pathname` change; update `consent` via `gtag('consent', 'update')` when user choice changes  
-**Conditions:** load only in production (not localhost/127.0.0.1/private networks); script not loaded and `config` not called until `useCookieConsent` returns `granted`  
-**Uses:** `process.env.NEXT_PUBLIC_GA_ID`, hook `useCookieConsent`, `invokeGtag` for `config`, `consent` update, and script `onLoad` `gtag('js', …)`
+**Role:** Load `gtag.js` from `NEXT_PUBLIC_GA_ID`; send SPA `page_view` via `gtag('config')` on `pathname` change; update Consent Mode via `gtag('consent', 'update', { analytics_storage, ad_storage })` when the user choice is known  
+**Conditions:** `NEXT_PUBLIC_GA_ID` set, production hostname, deferred idle (~2.5s), script loaded, `useCookieConsent` returns `granted` for config  
+**Uses:** hook `useCookieConsent`, `invokeGtag`
 
 #### GoogleTagManager.tsx
 
 **Location:** `core/frontend/components/analytics/GoogleTagManager.tsx`  
-**Role:** Load GTM container in production; `GoogleTagManagerNoscript` — iframe for noscript  
-**Config:** `GTM_ID` hardcoded in component; for multi-platform consider moving to `NEXT_PUBLIC_GTM_ID`
+**Role:** Load GTM container in production after deferred idle (~2.5s); `GoogleTagManagerNoscript` — iframe for noscript  
+**Config:** `GTM_ID` (`GTM-K527X5WK`) hardcoded in component. Do not add a GA4 Configuration tag with automatic page_view in GTM while the app loads `gtag.js` via `NEXT_PUBLIC_GA_ID`, or page views will be double-counted.
 
 #### ConversionEvent.tsx / ConversionEventTrigger.tsx
 
@@ -319,8 +304,14 @@ This document describes the current state of Google Analytics 4 integration. Eve
 
 **Location:** `core/frontend/lib/analytics.ts`  
 **Role:** Central utility for sending events  
-**Methods:** All event tracking methods; `trackEvent` and `trackEventDeferred` route calls through `invokeGtag`  
+**Methods:** All event tracking methods; `trackEvent` and `trackEventDeferred` route calls through `invokeGtag` after consent  
 **`invokeGtag`:** Wraps `gtag` invocations so missing `gtag`, synchronous throws, or promise-like return values do not break the app (no-op when `gtag` is absent; errors swallowed; optional `then` chained with empty handlers).
+
+#### cookie-consent.ts
+
+**Location:** `core/frontend/lib/cookie-consent.ts`  
+**Role:** Shared consent read/write helpers — cookie-first `readConsentPreferences()`, `isAnalyticsConsentGranted()`, parse/expiry, cookie helpers  
+**Used by:** `analytics.ts` (`checkConsent`), `useCookieConsent`
 
 #### PageScrollTracker.tsx
 
@@ -338,7 +329,7 @@ This document describes the current state of Google Analytics 4 integration. Eve
 #### useCookieConsent.ts
 
 **Location:** `core/frontend/hooks/useCookieConsent.ts`  
-**Role:** Read and update consent using cookie-first strategy (`cookie_consent` cookie), with localStorage as fallback cache; on `updateConsent` uses `invokeGtag` for `gtag('consent', 'update', …)` and pushes `consent_update` to `dataLayer`  
+**Role:** React wrapper over `lib/cookie-consent.ts`; reads via `readConsentPreferences()`; on `updateConsent` writes cookie + localStorage, uses `invokeGtag` for `gtag('consent', 'update', …)`, and pushes `consent_update` to `dataLayer`  
 **Returns:** `consent`, `isLoading`, `hasConsent`, `grantConsent`, `denyConsent`
 
 #### usePageScroll.ts
@@ -351,10 +342,11 @@ This document describes the current state of Google Analytics 4 integration. Eve
 
 ### Consent check
 
-- **analytics.ts:** before each `trackEvent`, `checkConsent()` is called — checks localStorage cache key `cookie_consent` and uses `parsed.analytics === 'granted'`.
-- **GoogleAnalyticsConsent:** before GA load sets `gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' })` so nothing is sent until user choice.
-- **useCookieConsent:** on choice change writes consent cookie (primary) and updates localStorage cache (best effort), then calls `invokeGtag(() => gtag('consent', 'update', { analytics_storage, ad_storage }))`; `CookieConsent` uses this hook for UI.
-- **Order in layout.tsx:** `GoogleTagManager` → `GoogleTagManagerNoscript` → `GoogleAnalyticsConsent` → `GoogleAnalytics` (Consent before GA required).
+- **Shared helper (`lib/cookie-consent.ts`):** `readConsentPreferences()` reads `cookie_consent` cookie first, then localStorage; expired/invalid values are treated as absent.
+- **analytics.ts:** before each `trackEvent`, `checkConsent()` caches `isAnalyticsConsentGranted()` (same cookie-first source as the UI).
+- **GoogleAnalyticsConsent:** in production sets stub `gtag` and `gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' })` so Consent Mode blocks storage until user choice.
+- **useCookieConsent:** on choice change writes consent cookie (primary) and localStorage mirror, then calls `invokeGtag(() => gtag('consent', 'update', { analytics_storage, ad_storage }))` and pushes `consent_update`; `CookieConsent` uses this hook for UI.
+- **Order in layout.tsx:** `GoogleTagManager` → `GoogleTagManagerNoscript` → `GoogleAnalyticsConsent` → `GoogleAnalytics` (Consent stub before gtag.js / SPA page_view).
 
 ### Event structure
 
@@ -439,8 +431,9 @@ Form `/complete-profile` is shown after phone verification via SMS and asks for 
 
 ## Notes
 
-1. `page_view` is sent on route change via `gtag('config')` in `GoogleAnalytics.tsx` (with consent and in production)
-2. All events check user consent before sending
+1. `page_view` is sent on route change via `gtag('config')` in `GoogleAnalytics.tsx` (with consent, production, deferred idle, and loaded `gtag.js`)
+2. All custom events check user consent via shared cookie-first helpers before calling `gtag`
 3. Event structure follows GA4 E-commerce standards
 4. Error tracking (Exception events) is in a separate document (Sentry). Sentry provides more detailed error info than GA4 exception events
 5. GA4, GTM, Sentry configuration for platforms — [platform-guide.md](../guides/platform-guide.md#6-analytics-and-monitoring-configuration-ga-gtm-sentry)
+6. Require `NEXT_PUBLIC_GA_ID` on the frontend service; without it `GoogleAnalytics` returns null and no hits reach GA4

@@ -452,6 +452,7 @@ export default function ProfilePage() {
             user={user}
             formData={formData}
             emailForChange={emailForChange}
+            weeklyViewsDigestAvailable={user.weeklyViewsDigestAvailable === true}
             t={t}
             onChange={handleChange}
             onEmailChange={setEmailForChange}

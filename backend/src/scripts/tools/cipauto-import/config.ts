@@ -52,5 +52,7 @@ export function resolveConfig(
     maxRetries: Number(process.env.CIPAUTO_MAX_RETRIES ?? 3),
     defaultDelayMs: Number(process.env.CIPAUTO_DEFAULT_DELAY_MS ?? 3000),
     imageStepDelayMs: Number(process.env.CIPAUTO_IMAGE_DELAY_MS ?? 1000),
+    flareSolverrUrl: process.env.CIPAUTO_FLARESOLVERR_URL?.trim() || undefined,
+    flareSolverrTimeoutMs: Number(process.env.CIPAUTO_FLARESOLVERR_TIMEOUT_MS ?? 60000),
   };
 }

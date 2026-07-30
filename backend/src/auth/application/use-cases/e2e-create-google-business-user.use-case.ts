@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
+import { isWeeklyViewsDigestEnabled } from '../../../common/env';
 import { UserType } from '../../../common/types';
 import { logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
@@ -49,7 +50,7 @@ export class E2eCreateGoogleBusinessUserUseCase {
         password: null,
         emailNotifications: true,
         emailNotificationListingRefreshReminders: true,
-        emailNotificationWeeklyViewsDigest: true,
+        emailNotificationWeeklyViewsDigest: isWeeklyViewsDigestEnabled(),
         emailNotificationSecurityAlerts: true,
       }) as Partial<User>,
     );

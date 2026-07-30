@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
+import { isWeeklyViewsDigestEnabled } from '../../../common/env';
 import { logUserActionFailure, logUserEvent } from '../../../common/utils/log-user-event';
 import { UsersService } from '../../../users/application/users.service';
 import { EmailService } from '../../infrastructure/services/email.service';
@@ -142,6 +143,7 @@ export class UpdateProfileUseCase {
       ...result,
       boardSlug,
       hasPassword,
+      weeklyViewsDigestAvailable: isWeeklyViewsDigestEnabled(),
       ...(shouldSendVerificationEmail ? { emailVerificationSent } : {}),
     };
   }

@@ -8,6 +8,7 @@ import {
   LISTING_REFRESH_REMINDER_INTERVAL_MS,
   WEEKLY_VIEWS_DIGEST_WINDOW_MS,
 } from '../common/constants';
+import { isWeeklyViewsDigestEnabled } from '../common/env';
 import { ListingStatus } from '../common/types';
 import { ListingView } from '../listings/entities/listing-view.entity';
 import { Listing } from '../listings/entities/listing.entity';
@@ -110,6 +111,10 @@ export class NotificationsService {
 
   @Cron('0 11 * * MON')
   async sendWeeklyViewsDigest(): Promise<void> {
+    if (!isWeeklyViewsDigestEnabled()) {
+      return;
+    }
+
     const periodEnd = new Date();
     const periodStart = new Date(periodEnd.getTime() - WEEKLY_VIEWS_DIGEST_WINDOW_MS);
     let lastSeenId: string | null = null;

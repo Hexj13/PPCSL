@@ -1,10 +1,12 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import Script from 'next/script';
 import { useEffect, useState } from 'react';
 
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { useDeferredLoadAfterIdle } from '@/hooks/useDeferredThirdParty';
+import { invokeGtag } from '@/lib/analytics';
 
 const isProduction = () => {
   if (typeof window === 'undefined') return false;
@@ -19,10 +21,12 @@ const isProduction = () => {
 };
 
 export function GoogleAnalytics() {
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
   const pathname = usePathname();
   const { consent, isLoading } = useCookieConsent();
   const deferredReady = useDeferredLoadAfterIdle(2500);
   const [isProd, setIsProd] = useState(false);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
   useEffect(() => {
     setIsProd(isProduction());
@@ -31,22 +35,54 @@ export function GoogleAnalytics() {
   useEffect(() => {
     if (
       !isProd ||
-      !deferredReady ||
+      !gaId ||
+      !isScriptLoaded ||
+      typeof window === 'undefined' ||
+      !window.gtag ||
       isLoading ||
-      consent !== 'granted' ||
-      typeof window === 'undefined'
-    ) {
+      consent !== 'granted'
+    )
       return;
-    }
+    invokeGtag(() => window.gtag('config', gaId, { page_path: pathname }));
+  }, [pathname, gaId, isProd, isScriptLoaded, consent, isLoading]);
 
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({
-      event: 'page_view',
-      page_path: pathname,
-    });
-  }, [pathname, isProd, deferredReady, consent, isLoading]);
+  useEffect(() => {
+    if (
+      !isProd ||
+      !gaId ||
+      !isScriptLoaded ||
+      typeof window === 'undefined' ||
+      !window.gtag ||
+      isLoading ||
+      consent === null
+    )
+      return;
 
-  return null;
+    const analyticsStorage = consent === 'granted' ? 'granted' : 'denied';
+
+    invokeGtag(() =>
+      window.gtag('consent', 'update', {
+        analytics_storage: analyticsStorage,
+        ad_storage: analyticsStorage,
+      }),
+    );
+  }, [consent, isLoading, gaId, isProd, isScriptLoaded]);
+
+  if (!gaId || !isProd || !deferredReady) return null;
+
+  return (
+    <Script
+      id="google-analytics-gtag"
+      strategy="afterInteractive"
+      src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+      onLoad={() => {
+        if (typeof window !== 'undefined' && window.gtag) {
+          invokeGtag(() => window.gtag('js', new Date()));
+          setIsScriptLoaded(true);
+        }
+      }}
+    />
+  );
 }
 
 declare global {

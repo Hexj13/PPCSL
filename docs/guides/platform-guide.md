@@ -751,9 +751,9 @@ All settings are configured **only via environment variables**. Each platform ha
 
 ### Google Analytics
 
-- **Preferred:** configure the GA4 tag inside the GTM container (no separate `gtag.js` on the page).
-- **`GoogleAnalytics.tsx`:** after idle + granted consent, pushes SPA `page_view` events to `dataLayer` for GTM. Consent defaults stay in `GoogleAnalyticsConsent.tsx`.
-- **`NEXT_PUBLIC_GA_ID`:** optional / legacy; not required for the current GTM-only load path.
+- **Load path:** direct `gtag.js` via `NEXT_PUBLIC_GA_ID` in `GoogleAnalytics.tsx` (required on production frontend).
+- **`GoogleAnalytics.tsx`:** after idle + script load + granted consent, calls `gtag('config', gaId, { page_path })` for SPA page views; updates Consent Mode when consent is known. Consent defaults stay in `GoogleAnalyticsConsent.tsx`.
+- **GTM:** container still loads; keep it free of a competing GA4 Configuration tag with automatic page_view to avoid double counting.
 
 ### Google Tag Manager
 
@@ -771,6 +771,7 @@ Detailed setup and integration: [SENTRY.md](./SENTRY.md).
 ### Example (Moldova, Frontend)
 
 ```env
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 NEXT_PUBLIC_SENTRY_DSN=https://md-frontend@sentry.io/123456
 SENTRY_ORG=kupito
 SENTRY_PROJECT=kupito-frontend
@@ -778,8 +779,8 @@ SENTRY_PROJECT=kupito-frontend
 
 ### Checklist for new platform
 
-- [ ] GA4: separate property, wired via GTM; verify events in GTM Preview / GA4 DebugView
-- [ ] GTM (optional): container and/or `NEXT_PUBLIC_GTM_ID`
+- [ ] GA4: separate property; set `NEXT_PUBLIC_GA_ID`; verify `gtag/js` + collect hits and GA4 Realtime / DebugView
+- [ ] GTM (optional): container and/or `NEXT_PUBLIC_GTM_ID` — no duplicate GA4 auto page_view while gtag.js is enabled
 - [ ] Sentry: Frontend + Backend projects, DSN and env in both; see [SENTRY.md](./SENTRY.md) if needed
 
 ### Important

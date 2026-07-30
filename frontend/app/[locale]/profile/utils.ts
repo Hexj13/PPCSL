@@ -24,16 +24,26 @@ export const EMAIL_NOTIFICATION_FIELDS = [
 
 export type EmailNotificationField = (typeof EMAIL_NOTIFICATION_FIELDS)[number];
 
+export const getActiveEmailNotificationFields = (
+  weeklyViewsDigestAvailable: boolean,
+): readonly EmailNotificationField[] =>
+  weeklyViewsDigestAvailable
+    ? EMAIL_NOTIFICATION_FIELDS
+    : EMAIL_NOTIFICATION_FIELDS.filter((field) => field !== 'emailNotificationWeeklyViewsDigest');
+
 export const canInteractWithEmailNotifications = (email: string): boolean => {
   const trimmedEmail = email.trim();
   return Boolean(trimmedEmail) && validateEmail(trimmedEmail);
 };
 
-export const enableAllEmailNotifications = (formData: UpdateProfileDto): UpdateProfileDto => ({
+export const enableAllEmailNotifications = (
+  formData: UpdateProfileDto,
+  weeklyViewsDigestAvailable: boolean,
+): UpdateProfileDto => ({
   ...formData,
   emailNotifications: true,
   emailNotificationListingRefreshReminders: true,
-  emailNotificationWeeklyViewsDigest: true,
+  emailNotificationWeeklyViewsDigest: weeklyViewsDigestAvailable,
   emailNotificationSecurityAlerts: true,
 });
 
@@ -64,6 +74,8 @@ export const validateCompanyWebsiteUrl = (value: string): boolean => {
 };
 
 export const initializeFormData = (user: User | null): UpdateProfileDto => {
+  const weeklyViewsDigestAvailable = user?.weeklyViewsDigestAvailable === true;
+
   if (!user) {
     return {
       firstName: '',
@@ -91,7 +103,9 @@ export const initializeFormData = (user: User | null): UpdateProfileDto => {
     emailNotificationListingRefreshReminders: convertToBoolean(
       user.emailNotificationListingRefreshReminders,
     ),
-    emailNotificationWeeklyViewsDigest: convertToBoolean(user.emailNotificationWeeklyViewsDigest),
+    emailNotificationWeeklyViewsDigest: weeklyViewsDigestAvailable
+      ? convertToBoolean(user.emailNotificationWeeklyViewsDigest)
+      : false,
     emailNotificationSecurityAlerts: convertToBoolean(user.emailNotificationSecurityAlerts),
     viber: convertToBoolean(user.viber),
     whatsapp: convertToBoolean(user.whatsapp),

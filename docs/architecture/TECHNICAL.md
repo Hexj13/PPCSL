@@ -215,6 +215,10 @@ PROMOTION_ACCESS=disabled
 MAX_PROMOTIONS_PER_USER=10
 CRON_SECRET=your-secret-key-here
 
+# Weekly listing views email digest (optional) — off when unset
+# true enables the Monday cron send and the profile UI toggle (exposed as weeklyViewsDigestAvailable in GET /api/auth/me)
+# WEEKLY_VIEWS_DIGEST_ENABLED=true
+
 # Infocar partner integration (optional)
 INFOCAR_SECRET_KEY=<secret-from-infocar>
 # Required for report URL with encrypted VIN (GET /api/listings/:id/report-url). If unset, endpoint returns 404.
@@ -243,7 +247,7 @@ NEXT_PUBLIC_COUNTRY=<country>
 # Google Search Console Verification (optional)
 NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
 
-# Google Analytics Measurement ID (optional; configure GA4 inside GTM, not via a direct gtag.js load)
+# Google Analytics Measurement ID (required for GA4 hits via gtag.js)
 # NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 
 # Listing views visibility (optional)
@@ -1022,8 +1026,9 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 3. Create property: "Your Platform Website"
 4. Create data stream: Web → `https://your-domain.com`
 5. Copy Measurement ID (format: `G-XXXXXXXXXX`)
-6. Configure the GA4 tag inside Google Tag Manager (GTM container `GTM-K527X5WK`); do not load a separate `gtag.js` on the page
-7. `GoogleAnalytics.tsx` pushes consented SPA `page_view` events to `dataLayer` after idle; consent defaults stay in `GoogleAnalyticsConsent.tsx`
+6. Set `NEXT_PUBLIC_GA_ID` on the frontend service (baked at build time)
+7. `GoogleAnalytics.tsx` loads `gtag.js` after idle and sends consented SPA `page_view` via `gtag('config')`; consent defaults stay in `GoogleAnalyticsConsent.tsx`
+8. GTM container `GTM-K527X5WK` may stay loaded; do not add a duplicate GA4 auto page_view tag there while direct `gtag.js` is enabled
 
 #### Google Analytics Features
 

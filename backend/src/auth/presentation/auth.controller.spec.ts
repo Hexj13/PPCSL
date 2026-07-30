@@ -323,12 +323,18 @@ describe('AuthController', () => {
         ...profile,
         boardSlug: _bs ?? null,
         hasPassword: true,
+        weeklyViewsDigestAvailable: false,
       } as Awaited<ReturnType<AuthService['getUserProfile']>>);
 
       const result = await controller.getProfile(req as unknown as AuthenticatedRequest);
 
       expect(authService.getUserProfile).toHaveBeenCalledWith('user-1');
-      expect(result).toEqual({ ...profile, boardSlug: _bs ?? null, hasPassword: true });
+      expect(result).toEqual({
+        ...profile,
+        boardSlug: _bs ?? null,
+        hasPassword: true,
+        weeklyViewsDigestAvailable: false,
+      });
     });
   });
 
@@ -754,6 +760,7 @@ describe('AuthController', () => {
         preferredLocale: mockUser.preferredLocale,
         boardSlug: mockUser.board_slug,
         hasPassword: true,
+        weeklyViewsDigestAvailable: false,
         isPlatformPartner: mockUser.isPlatformPartner,
         hidePartnerPromoBanner: mockUser.hidePartnerPromoBanner,
         freePromotionBalance: mockUser.freePromotionBalance,

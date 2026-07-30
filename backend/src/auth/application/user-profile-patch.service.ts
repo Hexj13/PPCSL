@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
+import { isWeeklyViewsDigestEnabled } from '../../common/env';
 import { UsersService } from '../../users/application/users.service';
 import { User } from '../../users/entities/user.entity';
 import { SmsService } from '../infrastructure/services/sms.service';
@@ -122,7 +123,9 @@ export class UserProfilePatchService {
     if (cleanedData.emailNotificationListingRefreshReminders === undefined) {
       delete cleanedData.emailNotificationListingRefreshReminders;
     }
-    if (cleanedData.emailNotificationWeeklyViewsDigest === undefined) {
+    if (!isWeeklyViewsDigestEnabled()) {
+      cleanedData.emailNotificationWeeklyViewsDigest = false;
+    } else if (cleanedData.emailNotificationWeeklyViewsDigest === undefined) {
       delete cleanedData.emailNotificationWeeklyViewsDigest;
     }
     if (cleanedData.emailNotificationSecurityAlerts === undefined) {

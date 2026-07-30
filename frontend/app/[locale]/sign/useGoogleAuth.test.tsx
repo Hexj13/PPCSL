@@ -60,6 +60,16 @@ jest.mock('@/lib/toast', () => ({
   toast: { error: jest.fn(), success: jest.fn() },
 }));
 
+const mockAnalyticsLogin = jest.fn();
+const mockAnalyticsSignUp = jest.fn();
+
+jest.mock('@/lib/analytics', () => ({
+  analytics: {
+    login: (...args: unknown[]) => mockAnalyticsLogin(...args),
+    signUp: (...args: unknown[]) => mockAnalyticsSignUp(...args),
+  },
+}));
+
 type GoogleSignInResponseSlice = {
   isNewUser: boolean;
   requiresPhoneVerification: boolean;
@@ -219,6 +229,8 @@ describe('useGoogleAuth', () => {
     mockLocalStorageRemoveItem.mockReset();
     mockLocationReplace.mockReset();
     jest.clearAllMocks();
+    mockAnalyticsLogin.mockReset();
+    mockAnalyticsSignUp.mockReset();
     (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockImplementation(async () => ({
       data: {
         isNewUser: false,
@@ -447,6 +459,45 @@ describe('useGoogleAuth', () => {
           path.includes('selectedType=Business'),
       ).toBe(true);
     });
+
+    expect(mockAnalyticsSignUp).toHaveBeenCalledWith('google');
+    expect(mockAnalyticsLogin).not.toHaveBeenCalled();
+  });
+
+  it('tracks analytics.login for returning Google users', async () => {
+    (authApi.googleSignIn as unknown as GoogleSignInFnMock).mockResolvedValueOnce({
+      data: {
+        isNewUser: false,
+        requiresPhoneVerification: false,
+        user: { id: '1' },
+      },
+    });
+    (authApi.me as unknown as AuthMeFnMock).mockResolvedValue({
+      data: { id: '1', phoneVerified: true },
+    });
+
+    render(
+      <Tree>
+        <Harness />
+      </Tree>,
+    );
+
+    await waitFor(() => {
+      expect(window.google?.accounts?.id.initialize).toHaveBeenCalled();
+    });
+
+    const init = (window.google!.accounts!.id.initialize as jest.Mock).mock.calls[0][0] as {
+      callback: (resp: { credential: string }) => void;
+    };
+
+    await act(async () => {
+      await init.callback({ credential: 'tok' });
+    });
+
+    await waitFor(() => {
+      expect(mockAnalyticsLogin).toHaveBeenCalledWith('google');
+    });
+    expect(mockAnalyticsSignUp).not.toHaveBeenCalled();
   });
 
   it('does not add google_register markers when backend returns existing user', async () => {

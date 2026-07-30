@@ -3,52 +3,15 @@
 import { useEffect, useState } from 'react';
 
 import { invalidateConsentCache, invokeGtag } from '@/lib/analytics';
+import { isStorageAccessError, localStorageSetItem } from '@/lib/browser-local-storage';
 import {
-  isStorageAccessError,
-  localStorageGetItem,
-  localStorageRemoveItem,
-  localStorageSetItem,
-} from '@/lib/browser-local-storage';
-
-type ConsentStatus = 'granted' | 'denied' | null;
-
-const CONSENT_STORAGE_KEY = 'cookie_consent';
-const CONSENT_EXPIRY_DAYS = 365;
-
-interface ConsentPreferences {
-  analytics: ConsentStatus;
-  timestamp: number;
-}
-
-function readCookieValue(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  const prefix = `${name}=`;
-  const cookies = document.cookie.split(';');
-  for (const rawCookie of cookies) {
-    const cookie = rawCookie.trim();
-    if (cookie.startsWith(prefix)) {
-      return decodeURIComponent(cookie.slice(prefix.length));
-    }
-  }
-  return null;
-}
-
-function writeCookieValue(name: string, value: string, expiryDays: number): void {
-  if (typeof document === 'undefined') return;
-  const expires = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
-}
-
-function parseConsent(raw: string | null): ConsentPreferences | null {
-  if (!raw) return null;
-  const parsed: ConsentPreferences = JSON.parse(raw);
-  const now = Date.now();
-  const expiryTime = parsed.timestamp + CONSENT_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
-  if (now >= expiryTime) {
-    return null;
-  }
-  return parsed;
-}
+  CONSENT_EXPIRY_DAYS,
+  CONSENT_STORAGE_KEY,
+  type ConsentPreferences,
+  type ConsentStatus,
+  readConsentPreferences,
+  writeCookieValue,
+} from '@/lib/cookie-consent';
 
 export function useCookieConsent() {
   const [consent, setConsent] = useState<ConsentPreferences | null>(null);
@@ -58,19 +21,7 @@ export function useCookieConsent() {
     if (typeof window === 'undefined') return;
 
     try {
-      const cookieStored = readCookieValue(CONSENT_STORAGE_KEY);
-      const parsedFromCookie = parseConsent(cookieStored);
-      if (parsedFromCookie) {
-        setConsent(parsedFromCookie);
-      } else {
-        const stored = localStorageGetItem(CONSENT_STORAGE_KEY);
-        const parsedFromStorage = parseConsent(stored);
-        if (parsedFromStorage) {
-          setConsent(parsedFromStorage);
-        } else {
-          localStorageRemoveItem(CONSENT_STORAGE_KEY);
-        }
-      }
+      setConsent(readConsentPreferences());
     } catch (error) {
       if (!isStorageAccessError(error)) {
         console.error('Error reading cookie consent:', error);
