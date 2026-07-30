@@ -207,6 +207,8 @@ async function runScan(options: ScanCommandOptions): Promise<void> {
   let readyForImport = 0;
   let detectedMaxPages: number | undefined;
   let lastScannedPage = pageFrom - 1;
+  let consecutiveEmptyPages = 0;
+  const emptyPageStopLimit = 2;
 
   try {
     await http.start();
@@ -264,6 +266,22 @@ async function runScan(options: ScanCommandOptions): Promise<void> {
         'SCAN',
         `[PAGE ${page}] found=${parsed.items.length} new=${pageNew} duplicates=${pageDuplicates} maxPages=${parsed.maxPages ?? '-'} elapsed=${elapsedSec}s`,
       );
+
+      if (parsed.items.length === 0) {
+        if (page === 1) {
+          throw new Error('CipAuto catalog page 1 returned 0 cards.');
+        }
+        consecutiveEmptyPages += 1;
+        if (!detectedMaxPages && consecutiveEmptyPages >= emptyPageStopLimit) {
+          logger.warn(
+            'SCAN',
+            `Stopping after ${consecutiveEmptyPages} consecutive empty pages (maxPages unknown).`,
+          );
+          break;
+        }
+      } else {
+        consecutiveEmptyPages = 0;
+      }
 
       if (detectedMaxPages && page >= detectedMaxPages) {
         break;

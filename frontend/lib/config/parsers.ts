@@ -93,7 +93,7 @@ export const parsersConfig: ParserConfigItem[] = [
     availabilityProbe: {
       sourceUrl: 'https://cipauto.md',
       sourceUrlEnvVar: 'CIPAUTO_BASE_URL',
-      plpFirstPagePath: '/catalog-auto/',
+      plpFirstPagePath: '/catalog-auto/?sort=newest',
       plpPagePathTemplate: '/catalog-auto/page/{page}/?sort=newest',
       defaultPageProbeCount: 3,
       timeoutMs: 15000,

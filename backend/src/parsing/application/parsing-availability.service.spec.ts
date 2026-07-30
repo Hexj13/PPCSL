@@ -32,28 +32,57 @@ describe('ParsingAvailabilityService', () => {
     expect(global.fetch).toHaveBeenCalled();
   });
 
-  it('uses FlareSolverr for cipauto when CIPAUTO_FLARESOLVERR_URL is set', async () => {
+  it('prefers direct fetch even when FlareSolverr is configured', async () => {
     process.env.CIPAUTO_FLARESOLVERR_URL = 'http://127.0.0.1:8191';
-    const bodies: Array<Record<string, unknown>> = [];
-    global.fetch = jest.fn(async (_input: unknown, init?: RequestInit) => {
-      const body = JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>;
-      bodies.push(body);
-      if (body.cmd === 'sessions.create' || body.cmd === 'sessions.destroy') {
+    const flareBodies: Array<Record<string, unknown>> = [];
+    global.fetch = jest.fn(async (input: unknown, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('127.0.0.1:8191')) {
+        const body = JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>;
+        flareBodies.push(body);
         return new Response(JSON.stringify({ status: 'ok' }), { status: 200 });
       }
-      return new Response(
-        JSON.stringify({
-          status: 'ok',
-          solution: { status: 200, response: '<html>catalog</html>' },
-        }),
-        { status: 200 },
-      );
+      return new Response('<html>catalog</html>', { status: 200 });
     }) as typeof fetch;
+
     const result = await service.probeCatalogPages({
       parserCode: 'cipauto',
       pageFrom: 1,
       pageTo: 1,
     });
+
+    expect(result.ok).toBe(1);
+    expect(flareBodies).toEqual([]);
+  });
+
+  it('falls back to FlareSolverr when direct fetch hits a Cloudflare challenge', async () => {
+    process.env.CIPAUTO_FLARESOLVERR_URL = 'http://127.0.0.1:8191';
+    const bodies: Array<Record<string, unknown>> = [];
+    global.fetch = jest.fn(async (input: unknown, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('127.0.0.1:8191')) {
+        const body = JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>;
+        bodies.push(body);
+        if (body.cmd === 'sessions.create' || body.cmd === 'sessions.destroy') {
+          return new Response(JSON.stringify({ status: 'ok' }), { status: 200 });
+        }
+        return new Response(
+          JSON.stringify({
+            status: 'ok',
+            solution: { status: 200, response: '<html>catalog</html>' },
+          }),
+          { status: 200 },
+        );
+      }
+      return new Response('<html>Just a moment...</html>', { status: 403 });
+    }) as typeof fetch;
+
+    const result = await service.probeCatalogPages({
+      parserCode: 'cipauto',
+      pageFrom: 1,
+      pageTo: 1,
+    });
+
     expect(result.ok).toBe(1);
     expect(bodies[0]).toEqual(
       expect.objectContaining({

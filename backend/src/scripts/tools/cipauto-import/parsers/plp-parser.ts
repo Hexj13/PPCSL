@@ -26,16 +26,11 @@ export class PlpParser {
 export function parsePlpHtml(html: string): ParsePlpPageResult {
   const $ = cheerio.load(html);
   const jsonLdItems = extractFromJsonLd($);
-  if (jsonLdItems.length > 0) {
-    return {
-      items: dedupeBySourceId(jsonLdItems),
-      maxPages: readMaxPagesFromWindowData(html),
-    };
-  }
-  const cardItems = extractFromCards($);
+  const items =
+    jsonLdItems.length > 0 ? dedupeBySourceId(jsonLdItems) : dedupeBySourceId(extractFromCards($));
   return {
-    items: dedupeBySourceId(cardItems),
-    maxPages: readMaxPagesFromWindowData(html),
+    items,
+    maxPages: readMaxPages($, html, items.length),
   };
 }
 
@@ -170,11 +165,54 @@ function dedupeBySourceId(items: ParsedPlpItem[]): ParsedPlpItem[] {
   return [...map.values()];
 }
 
+function readMaxPages($: cheerio.CheerioAPI, html: string, itemCount: number): number | undefined {
+  return (
+    readMaxPagesFromWindowData(html) ??
+    readMaxPagesFromPagination($) ??
+    readMaxPagesFromTotalCount($, itemCount)
+  );
+}
+
 function readMaxPagesFromWindowData(html: string): number | undefined {
   const match = html.match(/window\.vehiclesData\.maxPages\s*=\s*(\d+)/i);
   if (!match) return undefined;
   const value = Number(match[1]);
   return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function readMaxPagesFromPagination($: cheerio.CheerioAPI): number | undefined {
+  const root = $('#vehicles-pagination, .vehicles-pagination').first();
+  let max = 0;
+
+  const collect = (selector: string, readValue: (el: AnyNode) => number) => {
+    const nodes = root.length > 0 ? root.find(selector) : $(selector);
+    nodes.each((_, element) => {
+      const value = readValue(element);
+      if (Number.isFinite(value) && value > max) {
+        max = value;
+      }
+    });
+  };
+
+  collect('[data-page]', (element) => Number($(element).attr('data-page')));
+  collect('.page-numbers.current', (element) => Number($(element).text().trim()));
+
+  return max > 0 ? max : undefined;
+}
+
+function readMaxPagesFromTotalCount($: cheerio.CheerioAPI, itemCount: number): number | undefined {
+  if (itemCount <= 0) return undefined;
+
+  const hasMorePages =
+    $('#vehicles-pagination .page-numbers.next:not(.disabled)').length > 0 ||
+    $('link[rel="next"]').length > 0;
+  if (!hasMorePages) return undefined;
+
+  const raw = $('#vehicles-count').first().text().trim();
+  const total = Number(raw.replace(/[^\d]/g, ''));
+  if (!Number.isFinite(total) || total <= 0) return undefined;
+
+  return Math.max(1, Math.ceil(total / itemCount));
 }
 
 function readJsonLdImageUrl(value: unknown): string | undefined {
