@@ -114,6 +114,7 @@ program
   .option('--resume')
   .option('--dry-run')
   .option('--remove-closed')
+  .option('--force-close', 'accepted for admin PDP parity; no close-guard on this parser')
   .option('--only-failed')
   .option('--update-existing')
   .option('--source-id <value>')
@@ -277,12 +278,17 @@ function writeCurrentPlpSnapshotByLogin(
   const filePath = path.join(config.currentPlpDir, fileName);
   const now = new Date().toISOString();
   const byId = Object.fromEntries(items.map((item) => [item.sourceListingId, item]));
+  const errorItemsCount = items.filter((item) => {
+    const errorValue = (item as { error?: unknown }).error;
+    return typeof errorValue === 'string' && errorValue.trim().length > 0;
+  }).length;
   const snapshot = {
     login: normalizedLogin,
     items: byId,
     meta: {
       lastUpdatedAt: now,
       totalItems: items.length,
+      errorItemsCount,
       missingCandidateSourceIds: scopedSnapshotMeta.missingCandidateSourceIds,
       closeEstimateSourceIds: scopedSnapshotMeta.closeEstimateSourceIds,
     },

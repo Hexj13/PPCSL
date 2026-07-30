@@ -336,6 +336,7 @@ export class ParsingOrchestratorService {
     city: string;
     delayMs: number;
     removeClosed?: boolean;
+    forceClose?: boolean;
     checkUserDuplicatesBeforeCreate?: boolean;
     autoCreateBrands?: boolean;
     autoCreateModels?: boolean;
@@ -383,6 +384,7 @@ export class ParsingOrchestratorService {
       city: params.city,
       delayMs: params.delayMs,
       removeClosed: Boolean(params.removeClosed),
+      forceClose: Boolean(params.forceClose),
       checkUserDuplicatesBeforeCreate: Boolean(params.checkUserDuplicatesBeforeCreate),
       autoCreateBrands,
       autoCreateModels,
@@ -745,29 +747,28 @@ export class ParsingOrchestratorService {
   }
 
   private async listAllPlpFilesViaStorage(): Promise<ParserPlpFileInfo[]> {
-    const result: ParserPlpFileInfo[] = [];
     const parsers = getParserCatalog().filter((p) => p.supportedRunTypes.includes('plp'));
+    const loadTasks: Array<() => Promise<ParserPlpFileInfo | null>> = [];
 
     for (const parser of parsers) {
       if (parser.scanInputMode === 'profile_login') {
         const files = await this.plpStorage.listFiles('999md/current-plp/');
         for (const relPath of files) {
-          const content = await this.plpStorage.downloadFile(relPath);
-          if (content === null) {
-            continue;
-          }
-          const fileName = path.basename(relPath);
-          const meta = await this.plpStorage.getFileMetadata(relPath);
-          result.push(
-            buildPlpFileInfoFromContent(
+          loadTasks.push(async () => {
+            const content = await this.plpStorage.downloadFile(relPath);
+            if (content === null) {
+              return null;
+            }
+            const fileName = path.basename(relPath);
+            return buildPlpFileInfoFromContent(
               parser.code,
               parser.label,
               fileName,
               fileName,
               content,
-              meta?.size ?? content.length,
-            ),
-          );
+              Buffer.byteLength(content, 'utf8'),
+            );
+          });
         }
         continue;
       }
@@ -775,25 +776,25 @@ export class ParsingOrchestratorService {
         continue;
       }
       const s3Path = resolveS3RelativePath(parser.code, 'default');
-      const content = await this.plpStorage.downloadFile(s3Path);
-      if (content === null) {
-        continue;
-      }
-      const meta = await this.plpStorage.getFileMetadata(s3Path);
       const fileName = path.basename(parser.plpDataPath);
-      result.push(
-        buildPlpFileInfoFromContent(
+      loadTasks.push(async () => {
+        const content = await this.plpStorage.downloadFile(s3Path);
+        if (content === null) {
+          return null;
+        }
+        return buildPlpFileInfoFromContent(
           parser.code,
           parser.label,
           fileName,
           'default',
           content,
-          meta?.size ?? content.length,
-        ),
-      );
+          Buffer.byteLength(content, 'utf8'),
+        );
+      });
     }
 
-    return sortPlpFileInfoList(result);
+    const loaded = await Promise.all(loadTasks.map((task) => task()));
+    return sortPlpFileInfoList(loaded.filter((item): item is ParserPlpFileInfo => item !== null));
   }
 
   async getPlpFileContentByKey(

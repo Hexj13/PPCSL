@@ -113,14 +113,16 @@ export class MyListingsPage {
 
   async expectListingPriceOnCard(listingId: string, price: string): Promise<void> {
     const formattedPrice = formatPrice(Number(price));
+    await dismissCookieConsentIfVisible(this.page);
+    await this.filterByActiveStatus();
+    await this.expectPageView();
+    const card = this.cardForListing(listingId);
+    await expect(card).toBeVisible({ timeout: 30_000 });
+    await card.scrollIntoViewIfNeeded();
     let reloaded = false;
     await expect
       .poll(
         async () => {
-          const card = this.cardForListing(listingId);
-          if (!(await card.isVisible().catch(() => false))) {
-            return false;
-          }
           const text = await card.textContent();
           if (text?.includes(formattedPrice)) {
             return true;
@@ -128,7 +130,10 @@ export class MyListingsPage {
           if (!reloaded) {
             reloaded = true;
             await this.page.reload({ waitUntil: 'domcontentloaded' });
+            await this.filterByActiveStatus();
             await this.expectPageView();
+            await expect(card).toBeVisible({ timeout: 30_000 });
+            await card.scrollIntoViewIfNeeded();
           }
           return false;
         },
@@ -223,12 +228,41 @@ export class MyListingsPage {
   async filterByActiveStatus(): Promise<void> {
     const filter = this.page.getByTestId('my-listings-status-filter-active');
     await expect(filter).toBeVisible({ timeout: 30_000 });
-    await filter.click();
+    const isAlreadyActive = await filter.evaluate((element) =>
+      element.className.includes('bg-primary-500/10'),
+    );
+    if (!isAlreadyActive) {
+      const listingsResponse = this.page.waitForResponse(
+        (response) =>
+          response.url().includes('/api/listings/my?') &&
+          response.url().includes('status=Active') &&
+          response.request().method() === 'GET' &&
+          response.ok(),
+        { timeout: 45_000 },
+      );
+      await filter.click();
+      await listingsResponse;
+    }
+    await expect
+      .poll(
+        async () => {
+          const loading = await this.page
+            .locator('.animate-pulse')
+            .first()
+            .isVisible()
+            .catch(() => false);
+          return !loading;
+        },
+        { timeout: 45_000 },
+      )
+      .toBe(true);
   }
 
   async openFirstEditForm(): Promise<void> {
     await this.filterByActiveStatus();
-    const editLink = this.page.locator(`[data-testid^="${this.testIds.editLinkPrefix}"]`).first();
+    const card = this.page.locator('[data-testid^="my-listings-card-"]').first();
+    await expect(card).toBeVisible({ timeout: 30_000 });
+    const editLink = card.locator(`[data-testid^="${this.testIds.editLinkPrefix}"]`);
     await expect(editLink).toBeVisible({ timeout: 30_000 });
     const href = await editLink.getAttribute('href');
     assert.ok(href, 'Expected edit link href');

@@ -4,7 +4,7 @@ import type { MouseEventHandler } from 'react';
 
 import type { ParserRun, ParserSchedule, PlpFileInfo } from '@/lib/api/admin-parsing';
 import { formatAdminTableDateTime } from '@/lib/utils';
-import { HintTooltip } from '@/ui';
+import { HintTooltip, Spinner } from '@/ui';
 
 import { AdminActionButton } from './AdminButtons';
 import {
@@ -49,6 +49,7 @@ interface ParsingSchedulesTableProps {
   getParserLabel: (_parserCode: string) => string;
   getTranslatedParsingValue: (_group: string, _value: string | null | undefined) => string;
   openScheduleActionsMenuId: string | null;
+  scheduleRunNowPendingId?: string | null;
   onScheduleActionsClick: (_args: { schedule: ParserSchedule; top: number; left: number }) => void;
   onScheduleActionsClose: () => void;
 }
@@ -205,6 +206,7 @@ export function ParsingSchedulesTable({
   getParserLabel,
   getTranslatedParsingValue,
   openScheduleActionsMenuId,
+  scheduleRunNowPendingId = null,
   onScheduleActionsClick,
   onScheduleActionsClose,
 }: ParsingSchedulesTableProps) {
@@ -324,11 +326,17 @@ export function ParsingSchedulesTable({
                     data-admin-actions-trigger
                     aria-haspopup="menu"
                     aria-expanded={openScheduleActionsMenuId === s.id}
+                    aria-busy={scheduleRunNowPendingId === s.id}
                     aria-label={t('admin.parsing.colActions')}
                     className={tablePrimaryButtonClassName}
+                    disabled={scheduleRunNowPendingId === s.id}
                     onClick={makeScheduleActionsClickHandler(s)}
                   >
-                    <span>{t('admin.parsing.colActions')}</span>
+                    {scheduleRunNowPendingId === s.id ? (
+                      <Spinner size="sm" inline />
+                    ) : (
+                      <span>{t('admin.parsing.colActions')}</span>
+                    )}
                   </AdminActionButton>
                 </div>
               </td>

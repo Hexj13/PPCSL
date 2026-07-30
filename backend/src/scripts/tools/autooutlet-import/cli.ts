@@ -109,6 +109,7 @@ program
   .option('--resume')
   .option('--dry-run')
   .option('--remove-closed')
+  .option('--force-close', 'accepted for admin PDP parity; no close-guard on this parser')
   .option('--only-failed')
   .option('--update-existing')
   .option('--source-id <value>')

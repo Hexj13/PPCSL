@@ -57,13 +57,17 @@ export function buildPlpFileInfoFromContent(
             ? Number(meta.totalItems)
             : null;
       itemsCount = metaItemsCount ?? itemList.length;
-      errorItemsCount = itemList.filter((item) => {
-        if (!item || typeof item !== 'object') {
-          return false;
-        }
-        const errorValue = (item as { error?: unknown }).error;
-        return typeof errorValue === 'string' && errorValue.trim().length > 0;
-      }).length;
+      if (typeof meta.errorItemsCount === 'number') {
+        errorItemsCount = Number(meta.errorItemsCount);
+      } else {
+        errorItemsCount = itemList.filter((item) => {
+          if (!item || typeof item !== 'object') {
+            return false;
+          }
+          const errorValue = (item as { error?: unknown }).error;
+          return typeof errorValue === 'string' && errorValue.trim().length > 0;
+        }).length;
+      }
       missingCandidatesCount =
         typeof meta.missingCandidatesCount === 'number' ? Number(meta.missingCandidatesCount) : 0;
     } catch {

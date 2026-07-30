@@ -1,6 +1,6 @@
 'use client';
 
-import { Pagination, PlayIcon, RefreshIcon } from '@/ui';
+import { Pagination, PlayIcon, RefreshIcon, Spinner } from '@/ui';
 
 import { AdminActionButton } from '../AdminButtons';
 import { ParsingPlpFilesTable, ParsingRunsTable } from '../ParsingTabTables';
@@ -21,6 +21,7 @@ export function ParsingTabPlpPanel(c: ParsingTabControllerState) {
     plpFilesList,
     onPlpRunsListRefresh,
     onPlpFilesRefresh,
+    plpFilesRefreshing,
     plpListRefreshCooldown,
     openPlpFileActionsMenu,
     setOpenPlpFileActionsMenu,
@@ -35,6 +36,8 @@ export function ParsingTabPlpPanel(c: ParsingTabControllerState) {
     getTranslatedParsingValue,
   } = catalog;
 
+  const plpFilesBusy = plpFilesRefreshing || plpFilesList.loading;
+
   return (
     <div>
       <div className="space-y-3">
@@ -42,35 +45,44 @@ export function ParsingTabPlpPanel(c: ParsingTabControllerState) {
           <h2 className="text-xl font-bold text-primary-900">{t('admin.parsing.plpFilesTitle')}</h2>
           <AdminActionButton
             className="w-full sm:w-auto"
-            variant={plpFilesList.loading ? 'secondary' : 'primary'}
+            variant={plpFilesBusy ? 'secondary' : 'primary'}
             onClick={() => void onPlpFilesRefresh()}
-            disabled={plpFilesList.loading}
-            aria-busy={plpFilesList.loading}
+            disabled={plpFilesBusy}
+            aria-busy={plpFilesBusy}
           >
-            <RefreshIcon className="w-5 h-5 shrink-0" aria-hidden />
+            {plpFilesBusy ? (
+              <Spinner size="sm" inline />
+            ) : (
+              <RefreshIcon className="w-5 h-5 shrink-0" aria-hidden />
+            )}
             {t('admin.parsing.refresh')}
           </AdminActionButton>
         </div>
-        <ParsingPlpFilesTable
-          rows={plpFilesList.data}
-          loading={plpFilesList.loading}
-          t={t}
-          tableHeaderClassName={tableHeaderClassName}
-          tableCenteredCellClassName={tableCenteredCellClassName}
-          tableCenteredSecondaryCellClassName={tableCenteredSecondaryCellClassName}
-          tablePrimaryButtonClassName={tablePrimaryButtonClassName}
-          openPlpFileActionsMenuKey={
-            openPlpFileActionsMenu
-              ? `${openPlpFileActionsMenu.file.parserCode}:${openPlpFileActionsMenu.file.fileKey}`
-              : null
-          }
-          onPlpFileActionsClose={() => setOpenPlpFileActionsMenu(null)}
-          onPlpFileActionsClick={({ file, top, left }) => {
-            setOpenRunActionsMenu(null);
-            setOpenScheduleActionsMenu(null);
-            setOpenPlpFileActionsMenu({ file, top, left });
-          }}
-        />
+        <div
+          className={plpFilesBusy && plpFilesList.data.length > 0 ? 'opacity-60' : undefined}
+          aria-busy={plpFilesBusy}
+        >
+          <ParsingPlpFilesTable
+            rows={plpFilesList.data}
+            loading={plpFilesList.loading && plpFilesList.data.length === 0}
+            t={t}
+            tableHeaderClassName={tableHeaderClassName}
+            tableCenteredCellClassName={tableCenteredCellClassName}
+            tableCenteredSecondaryCellClassName={tableCenteredSecondaryCellClassName}
+            tablePrimaryButtonClassName={tablePrimaryButtonClassName}
+            openPlpFileActionsMenuKey={
+              openPlpFileActionsMenu
+                ? `${openPlpFileActionsMenu.file.parserCode}:${openPlpFileActionsMenu.file.fileKey}`
+                : null
+            }
+            onPlpFileActionsClose={() => setOpenPlpFileActionsMenu(null)}
+            onPlpFileActionsClick={({ file, top, left }) => {
+              setOpenRunActionsMenu(null);
+              setOpenScheduleActionsMenu(null);
+              setOpenPlpFileActionsMenu({ file, top, left });
+            }}
+          />
+        </div>
         {(plpFilesList.meta?.totalPages ?? 0) > 1 && (
           <Pagination
             currentPage={plpFilesList.page}

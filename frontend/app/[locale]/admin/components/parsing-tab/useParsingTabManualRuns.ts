@@ -130,6 +130,7 @@ export function useParsingTabManualRuns({
         city: pdpForm.city.trim(),
         delayMs: pdpForm.delayMs,
         removeClosed: pdpForm.removeClosed,
+        forceClose: pdpForm.forceClose,
         checkUserDuplicatesBeforeCreate: pdpForm.checkUserDuplicatesBeforeCreate,
         autoCreateBrands: pdpForm.autoCreateBrands,
         autoCreateModels: pdpForm.autoCreateModels,

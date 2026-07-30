@@ -64,6 +64,7 @@ export function useParsingTabSchedules({
 
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [scheduleCreating, setScheduleCreating] = useState(false);
+  const [scheduleRunNowPendingId, setScheduleRunNowPendingId] = useState<string | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<ParserSchedule | null>(null);
 
   const resetScheduleFormForCreate = useCallback(() => {
@@ -98,6 +99,7 @@ export function useParsingTabSchedules({
         pdpCity: getDefaultPdpCity(parserCode, cities),
         pdpDelayMs: pdpDefaults.delayMs,
         pdpRemoveClosed: pdpDefaults.removeClosed,
+        pdpForceClose: false,
         pdpOnlyFailed: pdpDefaults.onlyFailed,
         pdpUpdateExisting: pdpDefaults.updateExisting,
         pdpCheckUserDuplicatesBeforeCreate: false,
@@ -223,6 +225,11 @@ export function useParsingTabSchedules({
 
   const runScheduleNow = useCallback(
     async (row: ParserSchedule) => {
+      if (scheduleRunNowPendingId) {
+        toast.error(t('admin.parsing.runNowInProgress'));
+        return;
+      }
+      setScheduleRunNowPendingId(row.id);
       try {
         const res = await adminApi.runScheduleNow(row.id);
         if (res.data.runId) {
@@ -235,9 +242,11 @@ export function useParsingTabSchedules({
         pdpRunsReload(true);
       } catch {
         toast.error(t('admin.parsing.runNowError'));
+      } finally {
+        setScheduleRunNowPendingId(null);
       }
     },
-    [pdpRunsReload, plpRunsReload, schedulesReload, t],
+    [pdpRunsReload, plpRunsReload, scheduleRunNowPendingId, schedulesReload, t],
   );
 
   const scheduleSubmitDisabled =
@@ -255,6 +264,7 @@ export function useParsingTabSchedules({
   return {
     scheduleModalOpen,
     scheduleCreating,
+    scheduleRunNowPendingId,
     editingSchedule,
     openScheduleCreateModal,
     openScheduleEditModal,

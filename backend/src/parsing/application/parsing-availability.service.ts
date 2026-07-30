@@ -9,81 +9,58 @@ import {
 
 import { getParserCatalogItem, type ParserCatalogItem } from './parser-catalog';
 
+const PROBE_CACHE_TTL_MS = 2 * 60 * 1000;
+const PROBE_BODY_SCAN_LIMIT = 128_000;
+
+type SiteProbeResult = { ok: number; total: number; summary: string };
+
 @Injectable()
 export class ParsingAvailabilityService {
   private readonly logger = new Logger(ParsingAvailabilityService.name);
-
-  getDefaultCatalogPageProbeCount(parserCode: string): number {
-    const probe = this.resolveProbeConfig(parserCode);
-    const value = Number(probe?.defaultPageProbeCount ?? 1);
-    if (!Number.isFinite(value) || value < 1) {
-      return 1;
-    }
-    return value;
-  }
-
-  async probeCatalogPages(params: {
-    parserCode: string;
-    pageFrom: number;
-    pageTo: number;
-  }): Promise<{ ok: number; total: number; summary: string }> {
-    const parser = this.requireParserCatalogItem(params.parserCode);
-    const probe = parser.availabilityProbe;
-    if (!probe?.plpFirstPagePath || !probe.plpPagePathTemplate) {
-      return this.probeParserSource({ parserCode: params.parserCode, kind: 'plp' });
-    }
-    const base = this.resolveSourceBase(probe);
-    const timeoutMs = this.resolveTimeoutMs(probe.timeoutMs);
-    const total = params.pageTo - params.pageFrom + 1;
-    const flareHolder: FlareProbeHolder = { session: null, createAttempted: false };
-    let ok = 0;
-    try {
-      for (let page = params.pageFrom; page <= params.pageTo; page++) {
-        const path =
-          page <= 1
-            ? probe.plpFirstPagePath
-            : probe.plpPagePathTemplate.replace('{page}', String(page));
-        const url = this.joinUrl(base, path);
-        try {
-          const reachable = await this.probeUrl({
-            url,
-            timeoutMs,
-            parserCode: params.parserCode,
-            flareHolder,
-          });
-          if (reachable) {
-            ok += 1;
-          }
-        } catch (error) {
-          this.logger.warn(`Availability probe failed for ${url}: ${String(error)}`);
-        }
-      }
-    } finally {
-      await this.destroyFlareProbeSession(flareHolder.session);
-    }
-    const summary = `${ok}/${total} pages reachable`;
-    return { ok, total, summary };
-  }
+  private readonly probeCache = new Map<string, { expiresAt: number; result: SiteProbeResult }>();
+  private readonly probeInflight = new Map<string, Promise<SiteProbeResult>>();
 
   async probeParserSource(params: {
     parserCode: string;
     kind: 'plp' | 'pdp';
-  }): Promise<{ ok: number; total: number; summary: string }> {
+  }): Promise<SiteProbeResult> {
+    const cached = this.probeCache.get(params.parserCode);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.result;
+    }
+
+    const inflight = this.probeInflight.get(params.parserCode);
+    if (inflight) {
+      return inflight;
+    }
+
+    const promise = this.runSiteProbe(params)
+      .then((result) => {
+        const ttlMs = result.ok > 0 ? PROBE_CACHE_TTL_MS : 15_000;
+        this.probeCache.set(params.parserCode, {
+          expiresAt: Date.now() + ttlMs,
+          result,
+        });
+        return result;
+      })
+      .finally(() => {
+        this.probeInflight.delete(params.parserCode);
+      });
+    this.probeInflight.set(params.parserCode, promise);
+    return promise;
+  }
+
+  private async runSiteProbe(params: {
+    parserCode: string;
+    kind: 'plp' | 'pdp';
+  }): Promise<SiteProbeResult> {
     const parser = this.requireParserCatalogItem(params.parserCode);
     const probe = parser.availabilityProbe;
     if (!probe) {
       return { ok: 0, total: 1, summary: 'probe not configured' };
     }
-    if (params.kind === 'plp') {
-      return this.probeCatalogPages({
-        parserCode: params.parserCode,
-        pageFrom: 1,
-        pageTo: 1,
-      });
-    }
-    const base = this.resolveSourceBase(probe);
+    const url = this.resolveSourceBase(probe);
     const timeoutMs = this.resolveTimeoutMs(probe.timeoutMs);
-    const url = this.joinUrl(base, probe.plpFirstPagePath || '/');
     const flareHolder: FlareProbeHolder = { session: null, createAttempted: false };
     try {
       const reachable = await this.probeUrl({
@@ -96,7 +73,7 @@ export class ParsingAvailabilityService {
       return { ok, total: 1, summary: ok ? 'source reachable' : 'source unreachable' };
     } catch (error) {
       this.logger.warn(
-        `Parser source availability probe failed for parser=${params.parserCode}: ${String(error)}`,
+        `Parser source availability probe failed for parser=${params.parserCode} kind=${params.kind}: ${String(error)}`,
       );
       return { ok: 0, total: 1, summary: 'source unreachable' };
     } finally {
@@ -144,14 +121,43 @@ export class ParsingAvailabilityService {
         redirect: 'follow',
         signal: AbortSignal.timeout(timeoutMs),
       });
-      const text = await res.text();
-      if (res.ok && !isCloudflareChallengeHtml(text)) {
+      if (!res.ok) {
+        return 'retry_with_flare';
+      }
+      const text = await this.readResponseTextLimited(res, PROBE_BODY_SCAN_LIMIT);
+      if (!isCloudflareChallengeHtml(text)) {
         return 'ok';
       }
       return 'retry_with_flare';
     } catch {
       return 'retry_with_flare';
     }
+  }
+
+  private async readResponseTextLimited(res: Response, limit: number): Promise<string> {
+    if (!res.body) {
+      const text = await res.text();
+      return text.length > limit ? text.slice(0, limit) : text;
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let result = '';
+    try {
+      while (result.length < limit) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        result += decoder.decode(value, { stream: true });
+        if (result.length >= limit) {
+          result = result.slice(0, limit);
+          break;
+        }
+      }
+    } finally {
+      await reader.cancel().catch(() => undefined);
+    }
+    return result;
   }
 
   private async ensureFlareProbeSession(
@@ -219,18 +225,6 @@ export class ParsingAvailabilityService {
       return 15000;
     }
     return timeout;
-  }
-
-  private joinUrl(base: string, pathValue: string): string {
-    return new URL(pathValue, this.ensureTrailingSlash(base)).toString();
-  }
-
-  private ensureTrailingSlash(url: string): string {
-    return url.endsWith('/') ? url : `${url}/`;
-  }
-
-  private resolveProbeConfig(parserCode: string): ParserCatalogItem['availabilityProbe'] {
-    return getParserCatalogItem(parserCode)?.availabilityProbe;
   }
 }
 

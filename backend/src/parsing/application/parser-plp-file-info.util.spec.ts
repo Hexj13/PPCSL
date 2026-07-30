@@ -56,6 +56,19 @@ describe('buildPlpFileInfoFromContent', () => {
     expect(info.fileSizeBytes).toBe(1234);
   });
 
+  it('prefers meta.errorItemsCount over scanning items', () => {
+    const content = JSON.stringify({
+      meta: { errorItemsCount: 7, activeItemsCount: 2 },
+      items: {
+        a: { error: 'boom' },
+        b: {},
+      },
+    });
+    const info = buildPlpFileInfoFromContent('cipauto', 'CipAuto', 'f.json', 'default', content, 0);
+    expect(info.errorItemsCount).toBe(7);
+    expect(info.itemsCount).toBe(2);
+  });
+
   it('prefers meta.activeItemsCount over item list length', () => {
     const content = JSON.stringify({
       meta: { activeItemsCount: 10 },

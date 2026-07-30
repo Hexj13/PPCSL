@@ -51,6 +51,9 @@ export function buildActivePlpSnapshot<TItem extends BaseRegistryItem<string>>(
     (item) => normalizeSourceStatus(item) === 'missing_candidate',
   ).length;
   const closedItemsCount = items.filter((item) => normalizeSourceStatus(item) === 'closed').length;
+  const errorItemsCount = activeItems.filter(
+    (item) => typeof item.error === 'string' && item.error.trim().length > 0,
+  ).length;
   const { missingCandidateSourceIds, closeEstimateSourceIds } =
     collectMonoMissingSnapshotMeta(items);
 
@@ -65,6 +68,7 @@ export function buildActivePlpSnapshot<TItem extends BaseRegistryItem<string>>(
       activeItemsCount: activeItems.length,
       missingCandidatesCount,
       closedItemsCount,
+      errorItemsCount,
       missingCandidateSourceIds,
       closeEstimateSourceIds,
     },

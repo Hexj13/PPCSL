@@ -7,8 +7,8 @@ export function isCloudflareChallengeHtml(html: string): boolean {
   return (
     lower.includes('just a moment') ||
     lower.includes('cf-chl') ||
-    lower.includes('challenge-platform') ||
-    lower.includes('cdn-cgi/challenge-platform')
+    lower.includes('cdn-cgi/challenge-platform/h/') ||
+    /cdn-cgi\/challenge-platform\/(?!scripts\/jsd(?:\/|$))/.test(lower)
   );
 }
 

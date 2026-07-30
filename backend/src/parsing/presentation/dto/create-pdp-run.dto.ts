@@ -37,6 +37,10 @@ export class CreatePdpRunDto {
 
   @IsOptional()
   @IsBoolean()
+  forceClose?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   onlyFailed?: boolean;
 
   @IsOptional()

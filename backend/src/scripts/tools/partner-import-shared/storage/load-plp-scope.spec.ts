@@ -65,6 +65,17 @@ describe('buildActivePlpSnapshot', () => {
     expect(snapshot.meta.missingCandidateSourceIds).toEqual(['missing']);
     expect(snapshot.meta.closeEstimateSourceIds).toEqual(['missing']);
     expect(snapshot.meta.missingCandidatesCount).toBe(1);
+    expect(snapshot.meta.errorItemsCount).toBe(0);
+  });
+
+  it('counts active items with error in meta.errorItemsCount', () => {
+    const items: Item[] = [
+      buildItem({ sourceListingId: 'ok', sourceStatus: 'active' }),
+      buildItem({ sourceListingId: 'bad', sourceStatus: 'active', error: 'fail' }),
+    ];
+    const snapshot = buildActivePlpSnapshot(items);
+    expect(snapshot.meta.errorItemsCount).toBe(1);
+    expect(snapshot.meta.activeItemsCount).toBe(2);
   });
 });
 

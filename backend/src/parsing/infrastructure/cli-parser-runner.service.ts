@@ -82,6 +82,7 @@ export class CliParserRunnerService {
     resume?: boolean;
     dryRun?: boolean;
     removeClosed?: boolean;
+    forceClose?: boolean;
     onlyFailed?: boolean;
     updateExisting?: boolean;
     registrationType: string;
@@ -162,6 +163,7 @@ export class CliParserRunnerService {
     resume?: boolean;
     dryRun?: boolean;
     removeClosed?: boolean;
+    forceClose?: boolean;
     onlyFailed?: boolean;
     updateExisting?: boolean;
     registrationType: string;
@@ -201,6 +203,9 @@ export class CliParserRunnerService {
     }
     if (params.removeClosed) {
       parts.push('--remove-closed');
+    }
+    if (params.forceClose) {
+      parts.push('--force-close');
     }
     if (params.onlyFailed) {
       parts.push('--only-failed');

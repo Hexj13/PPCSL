@@ -92,6 +92,7 @@ export function scheduleFormStateFromParserSchedule(
     pdpDelayMs: Number(cfg.delayMs ?? pdpDefaults.delayMs),
     pdpRemoveClosed:
       schedule.run_type === 'pdp' ? Boolean(cfg.removeClosed) : pdpDefaults.removeClosed,
+    pdpForceClose: schedule.run_type === 'pdp' ? Boolean(cfg.forceClose) : false,
     pdpOnlyFailed: Boolean(cfg.onlyFailed),
     pdpUpdateExisting: Boolean(cfg.updateExisting),
     pdpCheckUserDuplicatesBeforeCreate: Boolean(cfg.checkUserDuplicatesBeforeCreate),

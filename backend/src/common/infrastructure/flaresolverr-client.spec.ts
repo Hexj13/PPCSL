@@ -11,10 +11,23 @@ describe('isCloudflareChallengeHtml', () => {
     expect(isCloudflareChallengeHtml('<title>Just a moment...</title>')).toBe(true);
     expect(isCloudflareChallengeHtml('cdn-cgi/challenge-platform/h/b')).toBe(true);
     expect(isCloudflareChallengeHtml('cf-chl-opt')).toBe(true);
+    expect(
+      isCloudflareChallengeHtml(
+        '<script src="/cdn-cgi/challenge-platform/challenge-platform.js"></script>',
+      ),
+    ).toBe(true);
   });
 
   it('returns false for normal HTML', () => {
     expect(isCloudflareChallengeHtml('<html><body>Catalog</body></html>')).toBe(false);
+  });
+
+  it('ignores Cloudflare JSD script on successfully served pages', () => {
+    expect(
+      isCloudflareChallengeHtml(
+        `<html lang="ro-RO"><body>Catalog<script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js"></script></body></html>`,
+      ),
+    ).toBe(false);
   });
 });
 

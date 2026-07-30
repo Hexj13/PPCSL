@@ -142,6 +142,7 @@ export interface CreatePdpRunPayload {
   city: string;
   delayMs?: number;
   removeClosed?: boolean;
+  forceClose?: boolean;
   checkUserDuplicatesBeforeCreate?: boolean;
   autoCreateBrands?: boolean;
   autoCreateModels?: boolean;

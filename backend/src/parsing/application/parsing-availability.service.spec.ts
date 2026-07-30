@@ -11,6 +11,7 @@ describe('ParsingAvailabilityService', () => {
     service = new ParsingAvailabilityService();
     process.env = { ...originalEnv };
     delete process.env.CIPAUTO_FLARESOLVERR_URL;
+    delete process.env.CIPAUTO_BASE_URL;
   });
 
   afterEach(() => {
@@ -19,17 +20,32 @@ describe('ParsingAvailabilityService', () => {
     jest.resetAllMocks();
   });
 
-  it('uses direct fetch when FlareSolverr is not configured', async () => {
+  it('probes sourceUrl once per parser and reuses cache for plp/pdp', async () => {
     global.fetch = jest
       .fn<() => Promise<Response>>()
-      .mockResolvedValue(new Response('ok', { status: 200 }));
-    const result = await service.probeCatalogPages({
-      parserCode: 'cipauto',
-      pageFrom: 1,
-      pageTo: 1,
-    });
+      .mockImplementation(async () => new Response('ok', { status: 200 }));
+
+    const plp = await service.probeParserSource({ parserCode: 'cipauto', kind: 'plp' });
+    const pdp = await service.probeParserSource({ parserCode: 'cipauto', kind: 'pdp' });
+
+    expect(plp).toEqual({ ok: 1, total: 1, summary: 'source reachable' });
+    expect(pdp).toEqual({ ok: 1, total: 1, summary: 'source reachable' });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(String((global.fetch as jest.Mock).mock.calls[0]?.[0])).toBe('https://cipauto.md');
+  });
+
+  it('uses sourceUrlEnvVar when set', async () => {
+    process.env.CIPAUTO_BASE_URL = 'https://cipauto.example.test';
+    global.fetch = jest
+      .fn<() => Promise<Response>>()
+      .mockImplementation(async () => new Response('ok', { status: 200 }));
+
+    const result = await service.probeParserSource({ parserCode: 'cipauto', kind: 'plp' });
+
     expect(result.ok).toBe(1);
-    expect(global.fetch).toHaveBeenCalled();
+    expect(String((global.fetch as jest.Mock).mock.calls[0]?.[0])).toBe(
+      'https://cipauto.example.test',
+    );
   });
 
   it('prefers direct fetch even when FlareSolverr is configured', async () => {
@@ -45,10 +61,9 @@ describe('ParsingAvailabilityService', () => {
       return new Response('<html>catalog</html>', { status: 200 });
     }) as typeof fetch;
 
-    const result = await service.probeCatalogPages({
+    const result = await service.probeParserSource({
       parserCode: 'cipauto',
-      pageFrom: 1,
-      pageTo: 1,
+      kind: 'plp',
     });
 
     expect(result.ok).toBe(1);
@@ -77,10 +92,9 @@ describe('ParsingAvailabilityService', () => {
       return new Response('<html>Just a moment...</html>', { status: 403 });
     }) as typeof fetch;
 
-    const result = await service.probeCatalogPages({
+    const result = await service.probeParserSource({
       parserCode: 'cipauto',
-      pageFrom: 1,
-      pageTo: 1,
+      kind: 'plp',
     });
 
     expect(result.ok).toBe(1);
@@ -102,13 +116,22 @@ describe('ParsingAvailabilityService', () => {
     process.env.CIPAUTO_FLARESOLVERR_URL = 'http://127.0.0.1:8191';
     global.fetch = jest
       .fn<() => Promise<Response>>()
-      .mockResolvedValue(new Response('ok', { status: 200 }));
+      .mockImplementation(async () => new Response('ok', { status: 200 }));
     const result = await service.probeParserSource({
       parserCode: '999md',
       kind: 'pdp',
     });
     expect(result.ok).toBe(1);
     const calledUrl = String((global.fetch as jest.Mock).mock.calls[0]?.[0] ?? '');
+    expect(calledUrl).toBe('https://999.md');
     expect(calledUrl).not.toContain('127.0.0.1:8191');
+  });
+
+  it('returns unreachable when direct fetch fails and FlareSolverr is unavailable', async () => {
+    global.fetch = jest.fn<() => Promise<Response>>().mockRejectedValue(new Error('network down'));
+
+    const result = await service.probeParserSource({ parserCode: 'cipauto', kind: 'pdp' });
+
+    expect(result).toEqual({ ok: 0, total: 1, summary: 'source unreachable' });
   });
 });

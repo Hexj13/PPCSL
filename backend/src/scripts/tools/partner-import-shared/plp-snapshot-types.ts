@@ -4,6 +4,7 @@ export interface PlpSnapshotMeta {
   activeItemsCount: number;
   missingCandidatesCount: number;
   closedItemsCount: number;
+  errorItemsCount: number;
   missingCandidateSourceIds?: string[];
   closeEstimateSourceIds?: string[];
 }

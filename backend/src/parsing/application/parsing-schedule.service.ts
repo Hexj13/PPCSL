@@ -70,6 +70,7 @@ export class ParsingScheduleService {
       .skip((params.page - 1) * params.limit)
       .take(params.limit)
       .getMany();
+    this.reconcileListedSiteAvailability(data);
     return {
       data,
       meta: buildPaginationMeta(total, params.page, params.limit),
@@ -207,7 +208,7 @@ export class ParsingScheduleService {
       params.ip,
       params.userAgent,
     );
-    await this.refreshScheduleAvailability(saved.id);
+    this.scheduleAvailabilityRefresh(saved.id);
     return this.getSchedule(saved.id);
   }
 
@@ -313,7 +314,7 @@ export class ParsingScheduleService {
       params.ip,
       params.userAgent,
     );
-    await this.refreshScheduleAvailability(saved.id);
+    this.scheduleAvailabilityRefresh(saved.id);
     return saved;
   }
 
@@ -395,7 +396,6 @@ export class ParsingScheduleService {
     this.logger.log(
       `[SCHEDULE][run-now] scheduleId=${sch.id} parser=${sch.parser_code} runType=${sch.run_type} adminUserId=${params.adminUserId}`,
     );
-    await this.refreshScheduleAvailability(sch.id);
     const run = await this.orchestrator.createRunFromSchedule(sch);
     this.logger.log(
       `[SCHEDULE][run-now-result] scheduleId=${sch.id} runId=${run?.id ?? '-'} parser=${sch.parser_code} runType=${sch.run_type}`,
@@ -412,7 +412,16 @@ export class ParsingScheduleService {
       params.ip,
       params.userAgent,
     );
+    this.scheduleAvailabilityRefresh(sch.id);
     return { runId: run?.id ?? null };
+  }
+
+  private scheduleAvailabilityRefresh(scheduleId: string): void {
+    void this.refreshScheduleAvailability(scheduleId).catch((error: unknown) => {
+      this.logger.warn(
+        `[SCHEDULE][availability-refresh-bg-failed] scheduleId=${scheduleId} error=${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
   }
 
   async refreshScheduleAvailability(scheduleId: string): Promise<void> {
@@ -425,48 +434,29 @@ export class ParsingScheduleService {
     this.logger.log(
       `[SCHEDULE][availability-refresh] scheduleId=${sch.id} parser=${sch.parser_code} runType=${sch.run_type}`,
     );
-    const cfg = sch.config_snapshot;
-    let probe: { ok: number; total: number; summary: string };
-    if (sch.run_type === 'plp') {
-      const scanMode = String(cfg.scanMode ?? 'first_n');
-      if (scanMode === 'range' && cfg.pageFrom != null && cfg.pageTo != null) {
-        const from = Number(cfg.pageFrom);
-        const to = Number(cfg.pageTo);
-        probe = await this.availability.probeCatalogPages({
-          parserCode: sch.parser_code,
-          pageFrom: from,
-          pageTo: to,
-        });
-      } else {
-        const n = Number(cfg.pages ?? 1);
-        const defaultProbePages = this.availability.getDefaultCatalogPageProbeCount(
-          sch.parser_code,
-        );
-        probe = await this.availability.probeCatalogPages({
-          parserCode: sch.parser_code,
-          pageFrom: 1,
-          pageTo: Math.min(n, defaultProbePages),
-        });
-      }
-    } else {
-      probe = await this.availability.probeParserSource({
-        parserCode: sch.parser_code,
-        kind: 'pdp',
-      });
+    const probe = await this.availability.probeParserSource({
+      parserCode: sch.parser_code,
+      kind: sch.run_type === 'pdp' ? 'pdp' : 'plp',
+    });
+    const checkedAt = new Date();
+    const status = probe.ok > 0 && probe.ok === probe.total ? 'available' : 'unavailable';
+    const siblings = await this.scheduleRepo
+      .createQueryBuilder('s')
+      .where('s.deleted_at IS NULL')
+      .andWhere('s.parser_code = :parserCode', { parserCode: sch.parser_code })
+      .andWhere('s.target_env = :targetEnv', { targetEnv: sch.target_env })
+      .andWhere('s.status = :status', { status: 'active' })
+      .getMany();
+    const toSave = siblings.length > 0 ? siblings : [sch];
+    for (const row of toSave) {
+      row.resource_availability_checked_at = checkedAt;
+      row.resource_availability_scope = { siteProbe: probe };
+      row.resource_availability_status = status;
+      row.resource_availability_summary = probe.summary;
     }
-    sch.resource_availability_checked_at = new Date();
-    sch.resource_availability_scope = { pageProbe: probe };
-    if (probe.ok === probe.total) {
-      sch.resource_availability_status = 'available';
-    } else if (probe.ok === 0) {
-      sch.resource_availability_status = 'unavailable';
-    } else {
-      sch.resource_availability_status = 'partial';
-    }
-    sch.resource_availability_summary = probe.summary;
-    await this.scheduleRepo.save(sch);
+    await this.scheduleRepo.save(toSave);
     this.logger.log(
-      `[SCHEDULE][availability-result] scheduleId=${sch.id} status=${sch.resource_availability_status ?? '-'} summary="${sch.resource_availability_summary ?? ''}"`,
+      `[SCHEDULE][availability-result] scheduleId=${sch.id} parser=${sch.parser_code} status=${status} summary="${probe.summary}" syncedSchedules=${toSave.length}`,
     );
   }
 
@@ -542,6 +532,48 @@ export class ParsingScheduleService {
       .orderBy('s.resource_availability_checked_at', 'ASC', 'NULLS FIRST')
       .take(limit)
       .getMany();
+  }
+
+  private reconcileListedSiteAvailability(rows: ParserSchedule[]): void {
+    const groups = new Map<string, ParserSchedule[]>();
+    for (const row of rows) {
+      const key = `${row.parser_code}\0${row.target_env}`;
+      const group = groups.get(key);
+      if (group) {
+        group.push(row);
+      } else {
+        groups.set(key, [row]);
+      }
+    }
+    for (const group of groups.values()) {
+      if (group.length < 2) {
+        continue;
+      }
+      const withCheck = group
+        .filter((row) => row.resource_availability_checked_at != null)
+        .sort(
+          (a, b) =>
+            (b.resource_availability_checked_at?.getTime() ?? 0) -
+            (a.resource_availability_checked_at?.getTime() ?? 0),
+        );
+      if (withCheck.length === 0) {
+        this.scheduleAvailabilityRefresh(group[0].id);
+        continue;
+      }
+      const canonical = withCheck[0];
+      const inconsistent = group.some(
+        (row) => row.resource_availability_status !== canonical.resource_availability_status,
+      );
+      for (const row of group) {
+        row.resource_availability_status = canonical.resource_availability_status;
+        row.resource_availability_summary = canonical.resource_availability_summary;
+        row.resource_availability_checked_at = canonical.resource_availability_checked_at;
+        row.resource_availability_scope = canonical.resource_availability_scope;
+      }
+      if (inconsistent) {
+        this.scheduleAvailabilityRefresh(canonical.id);
+      }
+    }
   }
 
   private async assertPlpScheduleFileRules(params: {

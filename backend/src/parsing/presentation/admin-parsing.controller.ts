@@ -286,6 +286,7 @@ export class AdminParsingController {
       city: dto.city,
       delayMs: dto.delayMs ?? 3000,
       removeClosed: dto.removeClosed,
+      forceClose: dto.forceClose,
       checkUserDuplicatesBeforeCreate: dto.checkUserDuplicatesBeforeCreate,
       autoCreateBrands: dto.autoCreateBrands,
       autoCreateModels: dto.autoCreateModels,

@@ -75,6 +75,7 @@ export class ParsingPdpRunExecutor {
     }
     const delayMs = Number(cfg.delayMs ?? defaults.delayMs ?? 3000);
     const removeClosed = Boolean(cfg.removeClosed ?? defaults.removeClosed ?? false);
+    const forceClose = Boolean(cfg.forceClose ?? false);
     const cfgSnap = cfg as Record<string, unknown>;
     const legacyAuto = Boolean(cfgSnap.autoCreateBrandsModels);
     const autoCreateBrands = Boolean(
@@ -100,7 +101,7 @@ export class ParsingPdpRunExecutor {
       throw new Error('PDP run requires assigned_user_id');
     }
     this.logger.log(
-      `[PDP][start] runId=${runId} parser=${claimedRun.parser_code} assignedUserId=${userId} targetEnv=${targetEnv} status=${listingStatus} limit=${limit ?? '-'} resume=${resume} dryRun=${dryRun} removeClosed=${removeClosed} onlyFailed=${onlyFailed} updateExisting=${updateExisting} autoCreateBrands=${autoCreateBrands} autoCreateModels=${autoCreateModels} registrationType=${registrationType} defaultHp=${defaultHp} city=${city} delayMs=${delayMs}`,
+      `[PDP][start] runId=${runId} parser=${claimedRun.parser_code} assignedUserId=${userId} targetEnv=${targetEnv} status=${listingStatus} limit=${limit ?? '-'} resume=${resume} dryRun=${dryRun} removeClosed=${removeClosed} forceClose=${forceClose} onlyFailed=${onlyFailed} updateExisting=${updateExisting} autoCreateBrands=${autoCreateBrands} autoCreateModels=${autoCreateModels} registrationType=${registrationType} defaultHp=${defaultHp} city=${city} delayMs=${delayMs}`,
     );
     const handle = this.cliRunner.runImport({
       parserCode: claimedRun.parser_code,
@@ -111,6 +112,7 @@ export class ParsingPdpRunExecutor {
       resume,
       dryRun,
       removeClosed,
+      forceClose,
       onlyFailed,
       updateExisting,
       registrationType,

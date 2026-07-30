@@ -57,6 +57,17 @@ describe('ParsingScheduleService', () => {
     );
     const scheduleRepo = {
       findOne: jest.fn(),
+      find: jest.fn().mockResolvedValue([]),
+      createQueryBuilder: jest.fn().mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getCount: jest.fn().mockResolvedValue(0),
+        getMany: jest.fn().mockResolvedValue([]),
+      }),
       save: jest.fn(),
       manager,
     } as unknown as Repository<ParserSchedule>;
@@ -68,8 +79,6 @@ describe('ParsingScheduleService', () => {
       createRunFromSchedule: jest.fn(),
     } as unknown as ParsingOrchestratorService;
     const availability = {
-      probeCatalogPages: jest.fn().mockResolvedValue({ ok: 1, total: 1, summary: 'ok' }),
-      getDefaultCatalogPageProbeCount: jest.fn(),
       probeParserSource: jest.fn().mockResolvedValue({ ok: 1, total: 1, summary: 'ok' }),
     } as unknown as ParsingAvailabilityService;
     const plpFileService = {
@@ -87,7 +96,7 @@ describe('ParsingScheduleService', () => {
       availability,
     );
 
-    return { service, scheduleRepo, orchestrator, manager, claimedRepo };
+    return { service, scheduleRepo, orchestrator, manager, claimedRepo, availability };
   };
 
   it('deactivates schedule without deleting it', async () => {
@@ -137,22 +146,144 @@ describe('ParsingScheduleService', () => {
     await expect(service.getSchedule(schedule.id)).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('runScheduleNow creates run and returns run id', async () => {
-    const { service, scheduleRepo, orchestrator } = createDeps();
+  it('runScheduleNow creates run and returns run id without awaiting availability probe', async () => {
+    const { service, scheduleRepo, orchestrator, availability } = createDeps();
     const schedule = createSchedule({ status: 'deactivated' });
-    (scheduleRepo.findOne as jest.Mock)
-      .mockResolvedValueOnce(schedule)
-      .mockResolvedValueOnce(schedule);
+    (scheduleRepo.findOne as jest.Mock).mockResolvedValue(schedule);
     (scheduleRepo.save as jest.Mock).mockImplementation(async (value: ParserSchedule) => value);
     (orchestrator.createRunFromSchedule as jest.Mock).mockResolvedValue({ id: 'run-1' });
+    let resolveProbe!: (_value: { ok: number; total: number; summary: string }) => void;
+    (availability.probeParserSource as jest.Mock).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveProbe = resolve;
+        }),
+    );
 
-    const result = await service.runScheduleNow({
+    const resultPromise = service.runScheduleNow({
       id: schedule.id,
       adminUserId: 'admin-2',
     });
 
+    await expect(resultPromise).resolves.toEqual({ runId: 'run-1' });
     expect(orchestrator.createRunFromSchedule).toHaveBeenCalledWith(schedule);
-    expect(result).toEqual({ runId: 'run-1' });
+    expect(availability.probeParserSource).toHaveBeenCalled();
+
+    resolveProbe({ ok: 1, total: 1, summary: 'ok' });
+    await Promise.resolve();
+  });
+
+  it('refreshScheduleAvailability probes site once and syncs sibling schedules', async () => {
+    const { service, scheduleRepo, availability } = createDeps();
+    const schedule = createSchedule({
+      run_type: 'plp',
+      config_snapshot: { scanMode: 'first_n', pages: 20 },
+    });
+    const sibling = createSchedule({
+      id: 'schedule-2',
+      run_type: 'pdp',
+      resource_availability_status: 'unavailable',
+    });
+    (scheduleRepo.findOne as jest.Mock).mockResolvedValue(schedule);
+    const qb = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([schedule, sibling]),
+    };
+    (scheduleRepo.createQueryBuilder as jest.Mock).mockReturnValue(qb);
+    (scheduleRepo.save as jest.Mock).mockImplementation(async (value: ParserSchedule[]) => value);
+    (availability.probeParserSource as jest.Mock).mockResolvedValue({
+      ok: 1,
+      total: 1,
+      summary: 'source reachable',
+    });
+
+    await service.refreshScheduleAvailability(schedule.id);
+
+    expect(availability.probeParserSource).toHaveBeenCalledTimes(1);
+    expect(availability.probeParserSource).toHaveBeenCalledWith({
+      parserCode: 'cipauto',
+      kind: 'plp',
+    });
+    expect(schedule.resource_availability_status).toBe('available');
+    expect(sibling.resource_availability_status).toBe('available');
+    expect(schedule.resource_availability_summary).toBe('source reachable');
+    expect(schedule.resource_availability_scope).toEqual({
+      siteProbe: { ok: 1, total: 1, summary: 'source reachable' },
+    });
+    expect(scheduleRepo.save).toHaveBeenCalledWith([schedule, sibling]);
+  });
+
+  it('refreshScheduleAvailability marks unavailable when site probe fails', async () => {
+    const { service, scheduleRepo, availability } = createDeps();
+    const schedule = createSchedule({ run_type: 'pdp' });
+    (scheduleRepo.findOne as jest.Mock).mockResolvedValue(schedule);
+    const qb = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([schedule]),
+    };
+    (scheduleRepo.createQueryBuilder as jest.Mock).mockReturnValue(qb);
+    (scheduleRepo.save as jest.Mock).mockImplementation(async (value: ParserSchedule[]) => value);
+    (availability.probeParserSource as jest.Mock).mockResolvedValue({
+      ok: 0,
+      total: 1,
+      summary: 'source unreachable',
+    });
+
+    await service.refreshScheduleAvailability(schedule.id);
+
+    expect(schedule.resource_availability_status).toBe('unavailable');
+    expect(schedule.resource_availability_summary).toBe('source unreachable');
+  });
+
+  it('listSchedules normalizes divergent availability for the same parser', async () => {
+    const { service, scheduleRepo, availability } = createDeps();
+    const newer = createSchedule({
+      id: 'schedule-pdp',
+      run_type: 'pdp',
+      resource_availability_status: 'available',
+      resource_availability_summary: 'source reachable',
+      resource_availability_checked_at: new Date('2026-07-30T14:00:00.000Z'),
+    });
+    const older = createSchedule({
+      id: 'schedule-plp',
+      run_type: 'plp',
+      resource_availability_status: 'unavailable',
+      resource_availability_summary: 'source unreachable',
+      resource_availability_checked_at: new Date('2026-07-30T13:00:00.000Z'),
+    });
+    const listQb = {
+      where: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getCount: jest.fn().mockResolvedValue(2),
+      getMany: jest.fn().mockResolvedValue([older, newer]),
+    };
+    const refreshQb = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([older, newer]),
+    };
+    (scheduleRepo.createQueryBuilder as jest.Mock)
+      .mockReturnValueOnce(listQb)
+      .mockReturnValue(refreshQb);
+    (scheduleRepo.findOne as jest.Mock).mockResolvedValue(newer);
+    (scheduleRepo.save as jest.Mock).mockImplementation(async (value: ParserSchedule[]) => value);
+    (availability.probeParserSource as jest.Mock).mockResolvedValue({
+      ok: 1,
+      total: 1,
+      summary: 'source reachable',
+    });
+
+    const result = await service.listSchedules({ page: 1, limit: 50 });
+
+    expect(result.data[0].resource_availability_status).toBe('available');
+    expect(result.data[1].resource_availability_status).toBe('available');
+    await Promise.resolve();
+    expect(availability.probeParserSource).toHaveBeenCalled();
   });
 
   it('claims overdue schedule once and moves next run to future slot', async () => {

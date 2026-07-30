@@ -77,7 +77,16 @@ export class ComparePage {
   }
 
   async expectTableVisible(): Promise<void> {
-    await expect(this.page.getByTestId(this.testIds.table)).toBeVisible();
+    await expect
+      .poll(
+        async () =>
+          this.page
+            .getByTestId(this.testIds.table)
+            .isVisible()
+            .catch(() => false),
+        { timeout: 30_000 },
+      )
+      .toBe(true);
   }
 
   async expectListingInTable(listingId: string): Promise<void> {

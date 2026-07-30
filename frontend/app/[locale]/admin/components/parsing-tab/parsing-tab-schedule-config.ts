@@ -52,6 +52,7 @@ export function buildScheduleConfigSnapshot(
     city: scheduleForm.pdpCity.trim(),
     delayMs: scheduleForm.pdpDelayMs,
     removeClosed: scheduleForm.pdpRemoveClosed,
+    forceClose: scheduleForm.pdpForceClose,
     checkUserDuplicatesBeforeCreate: scheduleForm.pdpCheckUserDuplicatesBeforeCreate,
     autoCreateBrands: scheduleForm.pdpAutoCreateBrands,
     autoCreateModels: scheduleForm.pdpAutoCreateModels,

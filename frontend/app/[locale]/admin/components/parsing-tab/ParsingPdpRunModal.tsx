@@ -2,7 +2,7 @@
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { Modal } from '@/components/modals/Modal';
-import { Checkbox, PlayIcon, InfoBlock } from '@/ui';
+import { Checkbox, PlayIcon, InfoBlock, Spinner } from '@/ui';
 
 import { AdminActionButton } from '../AdminButtons';
 
@@ -59,6 +59,7 @@ export function ParsingPdpRunModal(c: ParsingTabControllerState) {
                     resume: pdpDefaults.resume,
                     dryRun: pdpDefaults.dryRun,
                     removeClosed: pdpDefaults.removeClosed,
+                    forceClose: false,
                     onlyFailed: pdpDefaults.onlyFailed,
                     updateExisting: pdpDefaults.updateExisting,
                     checkUserDuplicatesBeforeCreate: false,
@@ -205,12 +206,31 @@ export function ParsingPdpRunModal(c: ParsingTabControllerState) {
           />
           <Checkbox
             checked={pdpForm.removeClosed}
-            onChange={(checked) => setPdpForm((s) => ({ ...s, removeClosed: checked }))}
+            onChange={(checked) =>
+              setPdpForm((s) => ({
+                ...s,
+                removeClosed: checked,
+                forceClose: checked ? s.forceClose : false,
+              }))
+            }
             label={
               <ParsingCheckboxLabelWithHint
                 labelKey="admin.parsing.fieldRemoveClosed"
                 hintKey="admin.parsing.fieldRemoveClosedHint"
                 hintAriaKey="admin.parsing.fieldRemoveClosedHintButton"
+              />
+            }
+            size="sm"
+          />
+          <Checkbox
+            checked={pdpForm.forceClose}
+            onChange={(checked) => setPdpForm((s) => ({ ...s, forceClose: checked }))}
+            disabled={!pdpForm.removeClosed}
+            label={
+              <ParsingCheckboxLabelWithHint
+                labelKey="admin.parsing.fieldForceClose"
+                hintKey="admin.parsing.fieldForceCloseHint"
+                hintAriaKey="admin.parsing.fieldForceCloseHintButton"
               />
             }
             size="sm"
@@ -292,7 +312,11 @@ export function ParsingPdpRunModal(c: ParsingTabControllerState) {
             aria-busy={pdpSubmitting}
             onClick={() => void submitPdp()}
           >
-            <PlayIcon className="w-5 h-5 shrink-0" aria-hidden />
+            {pdpSubmitting ? (
+              <Spinner size="sm" inline />
+            ) : (
+              <PlayIcon className="w-5 h-5 shrink-0" aria-hidden />
+            )}
             {t('admin.parsing.submitRun')}
           </AdminActionButton>
         </div>

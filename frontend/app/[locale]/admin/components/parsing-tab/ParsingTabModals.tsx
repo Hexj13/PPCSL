@@ -146,6 +146,7 @@ export function ParsingTabModals(c: ParsingTabControllerState) {
                 {
                   id: 'run-now',
                   label: t('admin.parsing.runNow'),
+                  disabled: Boolean(schedules.scheduleRunNowPendingId),
                   onSelect: () => {
                     setOpenScheduleActionsMenu(null);
                     void schedules.runScheduleNow(scheduleActionsTarget);

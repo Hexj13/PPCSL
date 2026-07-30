@@ -33,6 +33,7 @@ export type PdpFormState = {
   resume: boolean;
   dryRun: boolean;
   removeClosed: boolean;
+  forceClose: boolean;
   onlyFailed: boolean;
   updateExisting: boolean;
   checkUserDuplicatesBeforeCreate: boolean;
@@ -67,6 +68,7 @@ export type ScheduleFormState = {
   pdpCity: string;
   pdpDelayMs: number;
   pdpRemoveClosed: boolean;
+  pdpForceClose: boolean;
   pdpOnlyFailed: boolean;
   pdpUpdateExisting: boolean;
   pdpCheckUserDuplicatesBeforeCreate: boolean;

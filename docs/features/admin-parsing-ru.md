@@ -84,7 +84,7 @@ tags:
 
 ### Что показывает
 
-- список PLP-файлов (`/api/admin/parsing/plp-files`): колонки parser, имя файла, последнее обновление, число объявлений, ошибки, «missing» (кандидаты на пропуск/недоступность по данным файла), действия
+- список PLP-файлов (`/api/admin/parsing/plp-files`): колонки parser, имя файла, последнее обновление, число объявлений, ошибки, «missing» (кандидаты на пропуск/недоступность по данным файла), действия. Список загружает снимки параллельно и предпочитает счётчики из `meta` файла (в т.ч. `errorItemsCount`, если есть).
 - историю PLP-запусков (`/api/admin/parsing/plp-runs`)
 
 Обе таблицы paginated.
@@ -160,6 +160,7 @@ tags:
 - `city` (обязательно)
 - `delayMs`
 - `removeClosed` — тот же смысл, что в PLP (закрытие на платформе при недоступности на источнике vs только регистр)
+- `forceClose` — обойти защиту `maxClose` / `MAX_CLOSE` (например лимит ~50 кандидатов) и закрыть все нужные объявления; в UI доступен только при включённом `removeClosed`; в CLI это `--force-close`
 - `checkUserDuplicatesBeforeCreate` — перед `createListing` проверять дубликаты по правилам парсера (см. `parsing-framework.md` и парсерные доки в `docs/parsing/`)
 - `autoCreateBrands`, `autoCreateModels` — при отсутствии марки/модели в каталоге создавать их через admin API (`POST /api/admin/brands`, `POST /api/admin/vehicle-models`) и продолжать импорт в этом же запуске; учётка импорта должна быть Admin
 
@@ -211,6 +212,7 @@ tags:
 - `city`
 - `delayMs`
 - `removeClosed`
+- `forceClose` — тот же смысл, что в ручном PDP (`--force-close`)
 - `checkUserDuplicatesBeforeCreate`
 - `autoCreateBrands`, `autoCreateModels` (для совместимости со старыми снапшотами также читается legacy `autoCreateBrandsModels`)
 - `dataSource: plp_registry`
@@ -317,13 +319,13 @@ Timezone по умолчанию: `Europe/Chisinau`.
 
 ### Availability
 
-Backend дергает каталоговые URL парсера методом **HTTP GET** (набор страниц зависит от `availabilityProbe` в `config/parsers.ts` и от `runType` расписания: для PLP возможен обход нескольких страниц каталога, для PDP — упрощённая проверка). Успех страницы — HTTP «ok» ответа.
+Backend проверяет доступность сайта-источника одним **HTTP GET** по `availabilityProbe.sourceUrl` (или override из `sourceUrlEnvVar` в `config/parsers.ts`). Для CipAuto при Cloudflare-блоке возможен retry через FlareSolverr (`CIPAUTO_FLARESOLVERR_URL`). PLP и PDP используют одну и ту же проверку сайта. Успех — HTTP «ok» ответа.
 
 Статусы:
 
 - `available`
-- `partial`
 - `unavailable`
+- `partial` (legacy; больше не записывается новой проверкой, может остаться до следующего refresh)
 - `unchecked` (тип поддерживается, но обычно приходит `null` пока проверка не была выполнена)
 
 Поля в schedule:
@@ -333,12 +335,13 @@ Backend дергает каталоговые URL парсера методом 
 - `resource_availability_summary`
 - `resource_availability_scope`
 
-Проверка availability выполняется:
+Проверка availability выполняется в фоне (ответ API не ждёт probe) при:
 
-- при создании schedule
-- при обновлении schedule
-- при `run now`
-- в batch cron
+- создании schedule
+- обновлении schedule
+- `run now`
+
+а также в batch cron для активных schedule.
 
 ## Модель данных (фактическая)
 

@@ -45,6 +45,7 @@ export function useParsingTabLists({
   } | null>(null);
   const [plpListRefreshCooldown, setPlpListRefreshCooldown] = useState(false);
   const [pdpListRefreshCooldown, setPdpListRefreshCooldown] = useState(false);
+  const [plpFilesRefreshing, setPlpFilesRefreshing] = useState(false);
   const plpListRefreshCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pdpListRefreshCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -133,11 +134,21 @@ export function useParsingTabLists({
   }, [pdpRuns, t]);
 
   const onPlpFilesRefresh = useCallback(async () => {
-    const ok = await plpFilesList.reloadAsync(true);
-    if (ok === false) {
-      toast.error(t('admin.parsing.plpFilesLoadError'));
+    if (plpFilesRefreshing) {
+      return;
     }
-  }, [plpFilesList, t]);
+    setPlpFilesRefreshing(true);
+    try {
+      const ok = await plpFilesList.reloadAsync(true);
+      if (ok === true) {
+        toast.success(t('admin.parsing.plpFilesRefreshSuccess'));
+      } else if (ok === false) {
+        toast.error(t('admin.parsing.plpFilesLoadError'));
+      }
+    } finally {
+      setPlpFilesRefreshing(false);
+    }
+  }, [plpFilesList, plpFilesRefreshing, t]);
 
   useEffect(() => {
     return () => {
@@ -248,6 +259,7 @@ export function useParsingTabLists({
     onPlpRunsListRefresh,
     onPdpRunsListRefresh,
     onPlpFilesRefresh,
+    plpFilesRefreshing,
     plpListRefreshCooldown,
     pdpListRefreshCooldown,
     cancelRun,

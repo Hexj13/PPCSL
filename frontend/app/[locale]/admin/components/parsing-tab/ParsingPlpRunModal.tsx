@@ -2,7 +2,7 @@
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { Modal } from '@/components/modals/Modal';
-import { Checkbox, PlayIcon } from '@/ui';
+import { Checkbox, PlayIcon, Spinner } from '@/ui';
 
 import { AdminActionButton } from '../AdminButtons';
 
@@ -188,7 +188,11 @@ export function ParsingPlpRunModal(c: ParsingTabControllerState) {
             aria-busy={plpSubmitting}
             onClick={() => void submitPlp()}
           >
-            <PlayIcon className="w-5 h-5 shrink-0" aria-hidden />
+            {plpSubmitting ? (
+              <Spinner size="sm" inline />
+            ) : (
+              <PlayIcon className="w-5 h-5 shrink-0" aria-hidden />
+            )}
             {t('admin.parsing.submitRun')}
           </AdminActionButton>
         </div>

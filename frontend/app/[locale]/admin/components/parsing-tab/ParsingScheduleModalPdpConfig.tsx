@@ -84,12 +84,31 @@ export function ParsingScheduleModalPdpConfig(c: ParsingTabControllerState) {
       <div className="space-y-3">
         <Checkbox
           checked={scheduleForm.pdpRemoveClosed}
-          onChange={(checked) => setScheduleForm((s) => ({ ...s, pdpRemoveClosed: checked }))}
+          onChange={(checked) =>
+            setScheduleForm((s) => ({
+              ...s,
+              pdpRemoveClosed: checked,
+              pdpForceClose: checked ? s.pdpForceClose : false,
+            }))
+          }
           label={
             <ParsingCheckboxLabelWithHint
               labelKey="admin.parsing.fieldRemoveClosed"
               hintKey="admin.parsing.fieldRemoveClosedHint"
               hintAriaKey="admin.parsing.fieldRemoveClosedHintButton"
+            />
+          }
+          size="sm"
+        />
+        <Checkbox
+          checked={scheduleForm.pdpForceClose}
+          onChange={(checked) => setScheduleForm((s) => ({ ...s, pdpForceClose: checked }))}
+          disabled={!scheduleForm.pdpRemoveClosed}
+          label={
+            <ParsingCheckboxLabelWithHint
+              labelKey="admin.parsing.fieldForceClose"
+              hintKey="admin.parsing.fieldForceCloseHint"
+              hintAriaKey="admin.parsing.fieldForceCloseHintButton"
             />
           }
           size="sm"

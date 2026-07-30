@@ -57,7 +57,8 @@ Parser artifacts on disk live under `PARSING_RUNTIME_DIR` (default `<backend cwd
 
 - Stored on `parser_schedules` with a persisted `cron_expression`, optional `frequency_preset`, and `timezone` (default `Europe/Chisinau`).
 - **Frequency presets** (mapped to cron in `parsing-schedule-presets.ts`): `every_n_hours` (bounded interval), `every_n_days` (interval 1–30 days plus run time), `daily`, `weekly`, `custom` (admin-supplied cron).
-- **Resource availability:** `ParsingAvailabilityService` issues HTTP `GET` requests against catalog `availabilityProbe` URLs (direct fetch first). For CipAuto, if the direct response is blocked by Cloudflare, the probe retries via FlareSolverr when `CIPAUTO_FLARESOLVERR_URL` is set. PLP schedules probe multiple catalog pages when the probe defines PLP path templates; PDP schedules use a PLP-oriented probe path for a lightweight reachability check. Results (`available` / `partial` / `unavailable`) and a short summary are stored on the schedule and refreshed on create/update, on **Run now**, and periodically for active schedules (batch job).
+- **Resource availability:** `ParsingAvailabilityService` issues a single HTTP `GET` against the parser `availabilityProbe.sourceUrl` (or `sourceUrlEnvVar` override; direct fetch first). For CipAuto, if the direct response is blocked by Cloudflare, the probe retries via FlareSolverr when `CIPAUTO_FLARESOLVERR_URL` is set. PLP and PDP schedules use the same site-level check. Results (`available` / `unavailable`) and a short summary are stored on the schedule and refreshed in the background after create/update and **Run now** (the HTTP response does not wait for the probe), and periodically for active schedules (batch job). Legacy `partial` values may remain until the next refresh.
+- **Admin PLP files list:** `GET /api/admin/parsing/plp-files` loads snapshot files in parallel and prefers counts from snapshot `meta` (including `errorItemsCount` when present).
 
 ## Configuration
 

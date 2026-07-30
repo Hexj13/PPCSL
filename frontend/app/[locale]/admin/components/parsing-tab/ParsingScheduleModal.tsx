@@ -2,7 +2,7 @@
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { Modal } from '@/components/modals/Modal';
-import { ClockIcon, InfoBlock } from '@/ui';
+import { ClockIcon, InfoBlock, Spinner } from '@/ui';
 
 import { AdminActionButton } from '../AdminButtons';
 
@@ -112,6 +112,7 @@ export function ParsingScheduleModal(c: ParsingTabControllerState) {
                     pdpCity: getDefaultPdpCity(value, cities),
                     pdpDelayMs: pdpDefaults.delayMs,
                     pdpRemoveClosed: pdpDefaults.removeClosed,
+                    pdpForceClose: false,
                     pdpOnlyFailed: pdpDefaults.onlyFailed,
                     pdpUpdateExisting: pdpDefaults.updateExisting,
                     pdpCheckUserDuplicatesBeforeCreate: false,
@@ -309,6 +310,7 @@ export function ParsingScheduleModal(c: ParsingTabControllerState) {
             aria-busy={scheduleCreating}
             onClick={() => void submitSchedule()}
           >
+            {scheduleCreating ? <Spinner size="sm" inline /> : null}
             {editingSchedule
               ? t('admin.parsing.submitScheduleSave')
               : t('admin.parsing.submitSchedule')}

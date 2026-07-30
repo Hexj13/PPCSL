@@ -55,6 +55,7 @@ export function ParsingTabSchedulerPanel(c: ParsingTabControllerState) {
         getParserLabel={getParserLabel}
         getTranslatedParsingValue={getTranslatedParsingValue}
         openScheduleActionsMenuId={openScheduleActionsMenu?.id ?? null}
+        scheduleRunNowPendingId={schedules.scheduleRunNowPendingId}
         onScheduleActionsClose={() => setOpenScheduleActionsMenu(null)}
         onScheduleActionsClick={({ schedule, top, left }) => {
           setOpenRunActionsMenu(null);
