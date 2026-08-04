@@ -1,12 +1,24 @@
+export interface PlatformSeedCurrencyWeight {
+  value: 'EUR' | 'MDL' | 'ALL';
+  weight: number;
+}
+
 export interface PlatformSeedConfig {
+  /** Stored on listings as city nameEn (canonical key for FE getCityName). */
   cities: string[];
   descriptions: string[];
   truckDescriptions: string[];
   motoDescriptions: string[];
   phonePrefix: string;
+  adminPhone: string;
+  userPhone: (index: number) => string;
   testUserFirstName: string;
   testUserLastName: string;
   testCompanyName: string;
+  preferredLocale: string;
+  /** Secondary/local currency rate vs EUR (used when listing currency is not EUR). */
+  localCurrencyPerEur: number;
+  currencyWeights: PlatformSeedCurrencyWeight[];
   transmissionLabels: {
     automatic: string;
     manual: string;
@@ -16,7 +28,7 @@ export interface PlatformSeedConfig {
 
 const config: PlatformSeedConfig = {
   cities: [
-    'Tiranë',
+    'Tirana',
     'Durrës',
     'Vlorë',
     'Shkodër',
@@ -86,9 +98,17 @@ const config: PlatformSeedConfig = {
   ],
 
   phonePrefix: '+355',
+  adminPhone: '+355691111111',
+  userPhone: (index: number) => `+3556912345${String(index).padStart(2, '0')}`,
   testUserFirstName: 'Test',
   testUserLastName: 'Përdorues',
   testCompanyName: 'Kompani Test',
+  preferredLocale: 'sq',
+  localCurrencyPerEur: 100,
+  currencyWeights: [
+    { value: 'EUR', weight: 80 },
+    { value: 'ALL', weight: 20 },
+  ],
 
   transmissionLabels: {
     automatic: 'Automatike',

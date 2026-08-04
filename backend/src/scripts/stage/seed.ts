@@ -34,7 +34,6 @@ const { cities, descriptions, truckDescriptions, motoDescriptions } = platformCo
 
 const STAGE_ADMIN_PASSWORD = 'GGGgggTEST777';
 const MAX_ACTIVE_LISTINGS_PER_USER = 50;
-const MDL_PER_EUR = 19.5;
 
 type VehicleType = 'car' | 'truck' | 'moto';
 type BrandTier = 'budget' | 'mid' | 'premium' | 'luxury';
@@ -49,6 +48,13 @@ type DriveTypeValue = (typeof DriveType)[keyof typeof DriveType];
 type ConditionTypeValue = (typeof ConditionType)[keyof typeof ConditionType];
 type RegistrationTypeValue = (typeof RegistrationType)[keyof typeof RegistrationType];
 type CurrencyValue = (typeof Currency)[keyof typeof Currency];
+
+const currencyWeights: Array<WeightedOption<CurrencyValue>> = platformConfig.currencyWeights.map(
+  (item) => ({
+    value: item.value as CurrencyValue,
+    weight: item.weight,
+  }),
+);
 
 const colorWeights: Array<WeightedOption<string>> = [
   { value: 'black', weight: 16 },
@@ -295,11 +301,6 @@ const registrationWeights: Array<WeightedOption<RegistrationTypeValue>> = [
   { value: RegistrationType.NotCleared, weight: 8 },
 ];
 
-const currencyWeights: Array<WeightedOption<CurrencyValue>> = [
-  { value: Currency.EUR, weight: 85 },
-  { value: Currency.MDL, weight: 15 },
-];
-
 function getSeedImages(): string[] {
   const seedImagesDir = path.join(process.cwd(), 'uploads', 'seed-images');
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
@@ -540,8 +541,8 @@ function calculatePrice(
 
   const normalizedEur = Math.max(floorEurByType[vehicleType], eurPrice);
 
-  if (currency === Currency.MDL) {
-    return roundToNearest(normalizedEur * MDL_PER_EUR, 100);
+  if (currency !== Currency.EUR) {
+    return roundToNearest(normalizedEur * platformConfig.localCurrencyPerEur, 100);
   }
 
   return roundToNearest(normalizedEur, 50);
@@ -587,9 +588,10 @@ async function createUsers(count: number = 3): Promise<User[]> {
         password: hashedPassword,
         firstName: `${platformConfig.testUserFirstName}${i}`,
         lastName: platformConfig.testUserLastName,
-        phone: `${platformConfig.phonePrefix}7012345${i}`,
+        phone: platformConfig.userPhone(i),
         type: isBusiness ? UserTypeEnum.Business : UserTypeEnum.Individual,
         companyName: isBusiness ? `${platformConfig.testCompanyName} ${i}` : null,
+        preferredLocale: platformConfig.preferredLocale,
         viber: i % 2 === 0,
         whatsapp: i % 2 === 1,
         telegram: i % 3 === 0,
@@ -621,9 +623,9 @@ async function getOrCreateAdminUser() {
       password: hashedPassword,
       firstName: 'Admin',
       lastName: 'User',
-      phone: `${platformConfig.phonePrefix}70111111`,
+      phone: platformConfig.adminPhone,
       phoneVerified: true,
-      preferredLocale: 'ro',
+      preferredLocale: platformConfig.preferredLocale,
       type: UserTypeEnum.Admin,
       active: true,
     });
@@ -632,9 +634,9 @@ async function getOrCreateAdminUser() {
   } else {
     admin.type = UserTypeEnum.Admin;
     admin.active = true;
-    admin.phone = `${platformConfig.phonePrefix}70111111`;
+    admin.phone = platformConfig.adminPhone;
     admin.phoneVerified = true;
-    admin.preferredLocale = 'ro';
+    admin.preferredLocale = platformConfig.preferredLocale;
     admin.password = await bcrypt.hash(STAGE_ADMIN_PASSWORD, 10);
     admin = await userRepo.save(admin);
     console.log('✅ Updated admin user');

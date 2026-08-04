@@ -1,18 +1,6 @@
-export interface PlatformSeedConfig {
-  cities: string[];
-  descriptions: string[];
-  truckDescriptions: string[];
-  motoDescriptions: string[];
-  phonePrefix: string;
-  testUserFirstName: string;
-  testUserLastName: string;
-  testCompanyName: string;
-  transmissionLabels: {
-    automatic: string;
-    manual: string;
-    cvt: string;
-  };
-}
+export type { PlatformSeedConfig, PlatformSeedCurrencyWeight } from '../al/config';
+
+import type { PlatformSeedConfig } from '../al/config';
 
 const config: PlatformSeedConfig = {
   cities: [
@@ -119,9 +107,17 @@ const config: PlatformSeedConfig = {
   ],
 
   phonePrefix: '+373',
+  adminPhone: '+37370111111',
+  userPhone: (index: number) => `+3737012345${index}`,
   testUserFirstName: 'Test',
   testUserLastName: 'Utilizator',
   testCompanyName: 'Companie Test',
+  preferredLocale: 'ro',
+  localCurrencyPerEur: 19.5,
+  currencyWeights: [
+    { value: 'EUR', weight: 85 },
+    { value: 'MDL', weight: 15 },
+  ],
 
   transmissionLabels: {
     automatic: 'Automată',

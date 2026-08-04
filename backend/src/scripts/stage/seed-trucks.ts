@@ -180,7 +180,7 @@ async function seedTrucks(activeCount: number = 50) {
   const fuelTypes = [FuelType.Diesel, FuelType.Petrol];
   const transmissionTypes = [TransmissionType.Manual, TransmissionType.Automatic];
   const driveTypes = Object.values(DriveType);
-  const currencies = Object.values(Currency);
+  const currencies = platformConfig.currencyWeights.map((item) => item.value);
   const currentYear = new Date().getFullYear();
   const truckBodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE.truck] as BodyType[];
   const conditionTypes = Object.values(ConditionType);

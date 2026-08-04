@@ -258,6 +258,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/test/jest-unit.setup.ts"
+    ],
     "coverageThreshold": {
       "global": {
         "branches": 52,

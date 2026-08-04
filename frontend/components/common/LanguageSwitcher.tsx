@@ -25,6 +25,7 @@ const LOCALE_FLAG_EMOJI: Readonly<Record<string, string>> = {
   ro: '🇷🇴',
   ru: '🇷🇺',
   en: '🇬🇧',
+  sq: '🇦🇱',
 };
 
 export function LanguageSwitcher({

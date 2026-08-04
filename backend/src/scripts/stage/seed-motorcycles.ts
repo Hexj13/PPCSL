@@ -128,7 +128,7 @@ async function seedMotorcycles(activeCount: number = 50) {
   const motoBodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE.moto] as BodyType[];
   const conditionTypes = Object.values(ConditionType);
   const registrationTypes = Object.values(RegistrationType);
-  const currencies = Object.values(Currency);
+  const currencies = platformConfig.currencyWeights.map((item) => item.value);
 
   const seedImages = getSeedImages();
   if (seedImages.length === 0) {

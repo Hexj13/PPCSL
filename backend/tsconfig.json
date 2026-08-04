@@ -9,6 +9,8 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2021",
     "lib": ["ES2021"],
+    "baseUrl": "./",
+    "typeRoots": ["./node_modules/@types"],
     "types": ["node"],
     "sourceMap": true,
     "rootDir": "./src",
@@ -30,7 +32,6 @@
     "paths": {
       "@/*": ["./src/*"],
       "@constants": ["./src/common/constants.ts"],
-      "@types": ["./src/common/types.ts"],
       "@common/*": ["./src/common/*"]
     }
   },

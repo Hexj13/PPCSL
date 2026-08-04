@@ -8,20 +8,15 @@ import {
   SearchFilterPriceIcon,
 } from '@/components/search/search-filters/search-filter-field-icons';
 import { buildCityOptions } from '@/lib/options/city-options';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import type { Currency } from '@/lib/types';
-import { CurrencyEnum } from '@/lib/types';
-import { sortOptionsByLabel } from '@/lib/utils';
+import { getCountry } from '@/lib/utils';
 import { Checkbox } from '@/ui';
 
 import { ListingFormTextInput } from './ListingFormTextInput';
 import { MobileSelectField } from './MobileSelectField';
 import { RequiredAsterisk } from './RequiredAsterisk';
 import type { ListingFormSectionProps } from './types';
-
-const CURRENCY_OPTIONS = sortOptionsByLabel([
-  { value: CurrencyEnum.EUR, label: 'EUR' },
-  { value: CurrencyEnum.MDL, label: 'MDL' },
-]);
 
 export function PriceAndLocationSection({
   formData,
@@ -33,6 +28,14 @@ export function PriceAndLocationSection({
   handleWheel,
 }: ListingFormSectionProps) {
   const { locale } = useI18n();
+  const currencyOptions = useMemo(
+    () =>
+      loadSiteConfigSync(getCountry()).currencies.map((code) => ({
+        value: code,
+        label: code,
+      })),
+    [],
+  );
   const cityOptions = useMemo(
     () =>
       buildCityOptions({
@@ -91,7 +94,7 @@ export function PriceAndLocationSection({
               className="w-full"
               autoPosition={true}
               menuMaxHeight={300}
-              options={CURRENCY_OPTIONS}
+              options={currencyOptions}
               dataTestId="listing-create-currency-select"
             />
           </div>
