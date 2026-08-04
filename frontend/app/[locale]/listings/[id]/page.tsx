@@ -13,6 +13,7 @@ import {
 import {
   getListingPlainDescriptionForSchema,
   getListingDescriptionForLocale,
+  localeToDescriptionLocale,
 } from '@/lib/listingDescriptionLocale';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import {
@@ -207,7 +208,7 @@ function getSellerJsonLd(listing: Listing): Record<string, unknown> | undefined 
 function buildTireProductJsonLd(
   listing: Listing,
   tFn: (_key: string, _params?: Record<string, string | number>) => string,
-  descriptionLocale: 'ro' | 'ru',
+  descriptionLocale: string,
   locale: Locale,
 ): Record<string, unknown> {
   const tire = listing.tire!;
@@ -258,7 +259,7 @@ function buildTireProductJsonLd(
 function buildListingJsonLd(
   listing: Listing,
   tFn: (_key: string, _params?: Record<string, string | number>) => string,
-  descriptionLocale: 'ro' | 'ru',
+  descriptionLocale: string,
   locale: Locale,
 ): Record<string, unknown> {
   if (isTireListing(listing) && listing.tire) {
@@ -337,16 +338,12 @@ function stripHtml(input: string): string {
 function buildListingOgDescription(
   listing: Listing,
   fallback: string,
-  descriptionLocale: 'ro' | 'ru',
+  descriptionLocale: string,
 ): string {
   const html = getListingDescriptionForLocale(listing, descriptionLocale);
   const raw = html ? stripHtml(html) : '';
   if (raw.length >= 60) return raw.slice(0, 180);
   return fallback;
-}
-
-function localeToDescriptionLocale(locale: Locale): 'ro' | 'ru' {
-  return locale === 'ru' ? 'ru' : 'ro';
 }
 
 export async function generateMetadata({

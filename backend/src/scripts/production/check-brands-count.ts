@@ -4,7 +4,7 @@ import { AppDataSource } from '../../data-source';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['production', 'stage', 'development', 'test']);
-checkPlatform(['md']);
+checkPlatform(['md', 'al']);
 
 async function checkBrandsCount() {
   console.log('🔍 Checking brands count...\n');

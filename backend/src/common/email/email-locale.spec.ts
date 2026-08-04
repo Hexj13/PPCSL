@@ -13,6 +13,7 @@ describe('email-locale', () => {
       expect(resolveEmailLocale('RO')).toBe('ro');
       expect(resolveEmailLocale(' ru ')).toBe('ru');
       expect(resolveEmailLocale('en')).toBe('en');
+      expect(resolveEmailLocale('SQ')).toBe('sq');
     });
   });
 

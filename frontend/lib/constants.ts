@@ -2,7 +2,7 @@ export const userTypes = ['Individual', 'Business', 'Admin'] as const;
 
 export const listingStatuses = ['Active', 'Paused', 'Closed'] as const;
 
-export const currencies = ['EUR', 'MDL'] as const;
+export const currencies = ['EUR', 'MDL', 'ALL'] as const;
 
 export const LISTING_GRID_PAGE_SIZE = 20;
 
@@ -152,6 +152,7 @@ export const ListingStatus = {
 export const Currency = {
   EUR: currencies[0],
   MDL: currencies[1],
+  ALL: currencies[2],
 } as const;
 
 export const FuelType = {

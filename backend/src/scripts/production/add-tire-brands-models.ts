@@ -8,7 +8,7 @@ import { runTireCatalogSeed } from '../data/tire-catalog-seed';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['production', 'stage', 'development', 'test']);
-checkPlatform(['md']);
+checkPlatform(['md', 'al']);
 
 async function main() {
   console.log('🚀 Tire brands/models seed (production)\n');

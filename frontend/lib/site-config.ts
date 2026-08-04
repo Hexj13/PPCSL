@@ -52,6 +52,8 @@ export interface SiteConfig {
     descriptionKey?: string;
   }>;
   reportProvider?: ReportProviderConfig;
+  /** UI locales mapped to description_ro / description_ru columns. Default: ['ro','ru']. */
+  descriptionLocales?: readonly [string, string];
 }
 
 let config: SiteConfig | null = null;
@@ -112,6 +114,7 @@ const defaultConfig: SiteConfig = {
       ru: 'common.languageRu',
     },
   },
+  descriptionLocales: ['ro', 'ru'],
 };
 
 export function loadSiteConfigSync(country: string): SiteConfig {

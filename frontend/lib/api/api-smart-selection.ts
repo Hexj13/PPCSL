@@ -1,3 +1,4 @@
+import type { Currency as CurrencyCode } from '@/lib/types';
 import type { SmartSelectionAnswers } from '@/lib/smart-selection/types';
 
 import { api } from './api-client';
@@ -7,7 +8,7 @@ export type CreateSmartSelectionPayload = {
   purposes: SmartSelectionAnswers['purposes'];
   drivingMode: NonNullable<SmartSelectionAnswers['drivingMode']>;
   budgetPreset: NonNullable<SmartSelectionAnswers['budgetPreset']>;
-  currency: 'EUR' | 'MDL';
+  currency: CurrencyCode;
   flexibleBudget: boolean;
   size: NonNullable<SmartSelectionAnswers['size']>;
   bodyTypes: SmartSelectionAnswers['bodyTypes'];

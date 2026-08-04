@@ -6,8 +6,13 @@ import { RichTextEditor } from '@/components/common/RichTextEditor';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
-
-export type ListingDescriptionLang = 'ro' | 'ru';
+import {
+  getDescriptionLocales,
+  localeToDescriptionLocale,
+} from '@/lib/listingDescriptionLocale';
+import { resolveLocaleRouting } from '@/lib/locale-routing';
+import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 
 interface DescriptionFieldWithLanguageTabsProps {
   descriptionRo: string;
@@ -16,6 +21,18 @@ interface DescriptionFieldWithLanguageTabsProps {
   onRuChange: (_value: string) => void;
   placeholder: string;
   editorTestId?: string;
+}
+
+function slotLabelKey(slotLocale: string): string {
+  try {
+    const routing = resolveLocaleRouting(loadSiteConfigSync(getCountry()));
+    return (
+      routing.languageSwitcherTranslationKeys[slotLocale] ??
+      `common.language${slotLocale.charAt(0).toUpperCase()}${slotLocale.slice(1)}`
+    );
+  } catch {
+    return `common.language${slotLocale.charAt(0).toUpperCase()}${slotLocale.slice(1)}`;
+  }
 }
 
 export function DescriptionFieldWithLanguageTabs({
@@ -28,20 +45,23 @@ export function DescriptionFieldWithLanguageTabs({
 }: DescriptionFieldWithLanguageTabsProps) {
   const { t } = useTranslation();
   const { locale } = useI18n();
-  const [activeLang, setActiveLang] = useState<ListingDescriptionLang>(() =>
-    locale === 'ru' ? 'ru' : 'ro',
-  );
+  const [slot0, slot1] = getDescriptionLocales();
+  const [activeLang, setActiveLang] = useState<string>(() => localeToDescriptionLocale(locale));
 
   useEffect(() => {
-    setActiveLang(locale === 'ru' ? 'ru' : 'ro');
+    setActiveLang(localeToDescriptionLocale(locale));
   }, [locale]);
 
-  const roTabRef = useRef<HTMLButtonElement>(null);
-  const ruTabRef = useRef<HTMLButtonElement>(null);
+  const slot0TabRef = useRef<HTMLButtonElement>(null);
+  const slot1TabRef = useRef<HTMLButtonElement>(null);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const tabRefs = { [slot0]: slot0TabRef, [slot1]: slot1TabRef } as Record<
+    string,
+    React.RefObject<HTMLButtonElement | null>
+  >;
   const { indicatorRef, indicatorStyle } = useTabIndicator(
     activeLang,
-    { ro: roTabRef, ru: ruTabRef },
+    tabRefs,
     tabsContainerRef,
     activeLang,
   );
@@ -53,6 +73,8 @@ export function DescriptionFieldWithLanguageTabs({
         : 'text-primary-700 hover-only:hover:text-primary-900 hover-only:hover:bg-primary-500/10'
     }`;
 
+  const isSlot0 = activeLang === slot0;
+
   return (
     <div className="mb-4">
       <label className="block text-sm font-semibold mb-2 text-primary-700">
@@ -62,22 +84,22 @@ export function DescriptionFieldWithLanguageTabs({
         <div ref={tabsContainerRef} className="relative overflow-x-auto scrollbar-hide">
           <div className="relative flex gap-1 min-w-max">
             <button
-              ref={roTabRef}
+              ref={slot0TabRef}
               type="button"
               data-testid="listing-form-description-tab-ro"
-              onClick={() => setActiveLang('ro')}
-              className={tabButtonClass(activeLang === 'ro')}
+              onClick={() => setActiveLang(slot0)}
+              className={tabButtonClass(isSlot0)}
             >
-              {t('common.languageRo')}
+              {t(slotLabelKey(slot0))}
             </button>
             <button
-              ref={ruTabRef}
+              ref={slot1TabRef}
               type="button"
               data-testid="listing-form-description-tab-ru"
-              onClick={() => setActiveLang('ru')}
-              className={tabButtonClass(activeLang === 'ru')}
+              onClick={() => setActiveLang(slot1)}
+              className={tabButtonClass(!isSlot0)}
             >
-              {t('common.languageRu')}
+              {t(slotLabelKey(slot1))}
             </button>
             <div
               ref={indicatorRef}
@@ -93,8 +115,8 @@ export function DescriptionFieldWithLanguageTabs({
       <div data-testid={editorTestId}>
         <RichTextEditor
           key={activeLang}
-          value={activeLang === 'ro' ? descriptionRo : descriptionRu}
-          onChange={activeLang === 'ro' ? onRoChange : onRuChange}
+          value={isSlot0 ? descriptionRo : descriptionRu}
+          onChange={isSlot0 ? onRoChange : onRuChange}
           placeholder={placeholder}
           maxLength={5000}
           rows={14}

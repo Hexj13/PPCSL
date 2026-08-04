@@ -5,6 +5,8 @@ import { Injectable } from '@nestjs/common';
 
 type Translations = Record<string, string | Record<string, unknown>>;
 
+const SUPPORTED_LOCALES = ['ro', 'ru', 'en', 'sq'] as const;
+
 @Injectable()
 export class I18nService {
   private translations: Map<string, Translations> = new Map();
@@ -12,11 +14,12 @@ export class I18nService {
 
   constructor() {
     const envLocale = process.env.DEFAULT_LOCALE?.toLowerCase();
-    this.defaultLocale = envLocale && ['ro', 'ru', 'en'].includes(envLocale) ? envLocale : 'ro';
+    this.defaultLocale =
+      envLocale && (SUPPORTED_LOCALES as readonly string[]).includes(envLocale) ? envLocale : 'ro';
 
-    this.loadTranslations('ro');
-    this.loadTranslations('ru');
-    this.loadTranslations('en');
+    for (const locale of SUPPORTED_LOCALES) {
+      this.loadTranslations(locale);
+    }
   }
 
   private loadTranslations(locale: string): void {
@@ -105,7 +108,11 @@ export class I18nService {
     }
 
     const envLocale = process.env.DEFAULT_LOCALE?.toLowerCase();
-    if (envLocale && ['ro', 'ru', 'en'].includes(envLocale) && this.translations.has(envLocale)) {
+    if (
+      envLocale &&
+      (SUPPORTED_LOCALES as readonly string[]).includes(envLocale) &&
+      this.translations.has(envLocale)
+    ) {
       return envLocale;
     }
 

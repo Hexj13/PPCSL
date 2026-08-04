@@ -23,7 +23,7 @@ import { getPlatformConfig } from '../platforms';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
-checkPlatform(['md']);
+checkPlatform(['md', 'al']);
 
 const platformConfig = getPlatformConfig();
 const { cities, descriptions } = platformConfig;

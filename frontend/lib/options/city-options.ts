@@ -5,6 +5,7 @@ import { getCountry, sortByName } from '@/lib/utils';
 const POPULAR_CITY_NAMES_EN_BY_COUNTRY: Record<string, string[]> = {
   md: ['Chișinău', 'Bălți', 'Tiraspol', 'Bender', 'Orhei'],
   mk: ['Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo'],
+  al: ['Tirana', 'Durrës', 'Vlorë', 'Shkodër', 'Elbasan'],
 };
 
 export function getPopularCityNamesEn(): string[] {

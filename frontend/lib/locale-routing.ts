@@ -12,6 +12,7 @@ const DEFAULT_LANGUAGE_LABEL_KEYS: Readonly<Record<string, string>> = {
   ro: 'common.languageRo',
   ru: 'common.languageRu',
   en: 'common.languageEn',
+  sq: 'common.languageSq',
 };
 
 const MOLDOVA_DEFAULT: ResolvedLocaleRouting = {
