@@ -9,6 +9,7 @@ import {
   SearchFilterCityIcon,
   SearchFilterPriceIcon,
 } from '@/components/search/search-filters/search-filter-field-icons';
+import { getCurrencyDisplayCode } from '@/lib/constants';
 import { buildCityOptions } from '@/lib/options/city-options';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import type { Currency } from '@/lib/types';
@@ -42,7 +43,7 @@ export function TirePriceAndLocationSection({
     () =>
       loadSiteConfigSync(getCountry()).currencies.map((code) => ({
         value: code,
-        label: code,
+        label: getCurrencyDisplayCode(code),
       })),
     [],
   );

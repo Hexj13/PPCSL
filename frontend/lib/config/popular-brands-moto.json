@@ -1,101 +1,209 @@
 {
-  "market": "Moldova",
+  "market": "Albania",
   "segment": "motorcycles_used",
   "brands": [
     {
       "brand": "BMW",
       "top_models": [
-        { "model": "R 1200 GS", "most_popular": true },
-        { "model": "R 1200 RT", "most_popular": false },
-        { "model": "F 800 GS", "most_popular": false }
+        {
+          "model": "R 1200 GS",
+          "most_popular": true
+        },
+        {
+          "model": "R 1200 RT",
+          "most_popular": false
+        },
+        {
+          "model": "F 800 GS",
+          "most_popular": false
+        }
       ]
     },
     {
       "brand": "Yamaha",
       "top_models": [
-        { "model": "MT-07", "most_popular": true },
-        { "model": "YZF-R6", "most_popular": false },
-        { "model": "NMAX 125", "most_popular": false }
+        {
+          "model": "MT-07",
+          "most_popular": true
+        },
+        {
+          "model": "YZF-R6",
+          "most_popular": false
+        },
+        {
+          "model": "NMAX 125",
+          "most_popular": false
+        }
       ]
     },
     {
       "brand": "Honda",
       "top_models": [
-        { "model": "CB600F Hornet", "most_popular": true },
-        { "model": "CBR600RR", "most_popular": false },
-        { "model": "Africa Twin", "most_popular": false }
+        {
+          "model": "CB600F Hornet",
+          "most_popular": true
+        },
+        {
+          "model": "CBR600RR",
+          "most_popular": false
+        },
+        {
+          "model": "Africa Twin",
+          "most_popular": false
+        }
       ]
     },
     {
       "brand": "Kawasaki",
       "top_models": [
-        { "model": "Z750", "most_popular": true },
-        { "model": "Ninja ZX-6R", "most_popular": false },
-        { "model": "Versys 650", "most_popular": false }
+        {
+          "model": "Z750",
+          "most_popular": true
+        },
+        {
+          "model": "Ninja ZX-6R",
+          "most_popular": false
+        },
+        {
+          "model": "Versys 650",
+          "most_popular": false
+        }
       ]
     },
     {
       "brand": "Suzuki",
       "top_models": [
-        { "model": "V-Strom 650", "most_popular": true },
-        { "model": "GSX-R600", "most_popular": false },
-        { "model": "SV650", "most_popular": false }
+        {
+          "model": "V-Strom 650",
+          "most_popular": true
+        },
+        {
+          "model": "GSX-R600",
+          "most_popular": false
+        },
+        {
+          "model": "SV650",
+          "most_popular": false
+        }
       ]
     },
     {
       "brand": "KTM",
       "top_models": [
-        { "model": "1290 Super Adventure", "most_popular": true },
-        { "model": "690 Enduro R", "most_popular": false },
-        { "model": "390 Duke", "most_popular": false }
+        {
+          "model": "1290 Super Adventure",
+          "most_popular": true
+        },
+        {
+          "model": "690 Enduro R",
+          "most_popular": false
+        },
+        {
+          "model": "390 Duke",
+          "most_popular": false
+        }
       ]
     },
     {
       "brand": "CFMoto",
       "top_models": [
-        { "model": "CForce 520", "most_popular": true },
-        { "model": "650MT", "most_popular": false },
-        { "model": "NK 650", "most_popular": false }
+        {
+          "model": "CForce 520",
+          "most_popular": true
+        },
+        {
+          "model": "650MT",
+          "most_popular": false
+        },
+        {
+          "model": "NK 650",
+          "most_popular": false
+        }
       ]
     },
     {
       "brand": "Can-Am",
       "top_models": [
-        { "model": "Outlander 570", "most_popular": true },
-        { "model": "Renegade 570", "most_popular": false },
-        { "model": "Maverick Trail", "most_popular": false }
+        {
+          "model": "Outlander 570",
+          "most_popular": true
+        },
+        {
+          "model": "Renegade 570",
+          "most_popular": false
+        },
+        {
+          "model": "Maverick Trail",
+          "most_popular": false
+        }
       ]
     },
     {
       "brand": "Piaggio",
       "top_models": [
-        { "model": "Liberty 125", "most_popular": true },
-        { "model": "Beverly 300", "most_popular": false },
-        { "model": "MP3 300", "most_popular": false }
+        {
+          "model": "Liberty 125",
+          "most_popular": true
+        },
+        {
+          "model": "Beverly 300",
+          "most_popular": false
+        },
+        {
+          "model": "MP3 300",
+          "most_popular": false
+        }
       ]
     },
     {
       "brand": "Aprilia",
       "top_models": [
-        { "model": "RS 660", "most_popular": true },
-        { "model": "Tuono 660", "most_popular": false },
-        { "model": "SR 50", "most_popular": false }
+        {
+          "model": "RS 660",
+          "most_popular": true
+        },
+        {
+          "model": "Tuono 660",
+          "most_popular": false
+        },
+        {
+          "model": "SR 50",
+          "most_popular": false
+        }
       ]
     },
     {
       "brand": "Harley-Davidson",
       "top_models": [
-        { "model": "Sportster 883", "most_popular": true },
-        { "model": "Street Glide", "most_popular": false },
-        { "model": "Fat Boy", "most_popular": false }
+        {
+          "model": "Sportster 883",
+          "most_popular": true
+        },
+        {
+          "model": "Street Glide",
+          "most_popular": false
+        },
+        {
+          "model": "Fat Boy",
+          "most_popular": false
+        }
       ]
     },
     {
       "brand": "Ducati",
       "top_models": [
-        { "model": "Monster 796", "most_popular": true },
-        { "model": "Multistrada 1200", "most_popular": false },
-        { "model": "Panigale 899", "most_popular": false }
+        {
+          "model": "Monster 796",
+          "most_popular": true
+        },
+        {
+          "model": "Multistrada 1200",
+          "most_popular": false
+        },
+        {
+          "model": "Panigale 899",
+          "most_popular": false
+        }
       ]
     }
   ]

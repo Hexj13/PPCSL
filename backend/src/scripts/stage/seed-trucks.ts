@@ -8,7 +8,6 @@ import type { BodyType } from '../../common/types';
 import {
   BODY_TYPES_BY_VEHICLE_TYPE,
   ConditionType,
-  Currency,
   DriveType,
   FuelType,
   ListingStatus as ListingStatusEnum,

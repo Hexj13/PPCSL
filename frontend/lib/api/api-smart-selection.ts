@@ -1,5 +1,5 @@
-import type { Currency as CurrencyCode } from '@/lib/types';
 import type { SmartSelectionAnswers } from '@/lib/smart-selection/types';
+import type { Currency as CurrencyCode } from '@/lib/types';
 
 import { api } from './api-client';
 import type { SavedFilter } from './api-types';

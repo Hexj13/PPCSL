@@ -6,9 +6,7 @@ import { clearSavedFiltersCache } from '@/components/search/SavedFiltersList';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { smartSelectionApi } from '@/lib/api';
-import type { Currency } from '@/lib/types';
 import { loadSiteConfigSync } from '@/lib/site-config';
-import { getCountry } from '@/lib/utils';
 import {
   orderBodyTypes,
   orderDrivingModes,
@@ -30,6 +28,8 @@ import {
   type SmartSelectionAnswers,
 } from '@/lib/smart-selection/types';
 import { toast } from '@/lib/toast';
+import type { Currency } from '@/lib/types';
+import { getCountry } from '@/lib/utils';
 import { Checkbox, LoadingButton } from '@/ui';
 
 import { SmartSelectionOptionGrid } from './SmartSelectionOptionGrid';

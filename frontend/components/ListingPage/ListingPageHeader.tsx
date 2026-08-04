@@ -4,6 +4,7 @@ import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStat
 import { PriceDisplay } from '@/components/listing/PriceDisplay';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Listing } from '@/lib/api';
+import { getCurrencyDisplayCode } from '@/lib/constants';
 import { formatPrice, getVehicleType, isTireListing } from '@/lib/utils';
 import { BenefitCheckRow } from '@/ui';
 
@@ -58,7 +59,9 @@ function ListingBenefits({ listing, t }: { listing: Listing; t: TranslateFn }) {
           <BenefitCheckRow>
             {t('listingDetail.downPaymentFromLabel', {
               amount: formatPrice(listing.down_payment_amount),
-              currency: listing.currency ?? listing.defaultCurrencyCode ?? 'EUR',
+              currency: getCurrencyDisplayCode(
+                listing.currency ?? listing.defaultCurrencyCode ?? 'EUR',
+              ),
             })}
           </BenefitCheckRow>
         )}

@@ -1,4 +1,5 @@
 import type { Listing } from '@/lib/api';
+import { getCurrencyDisplayCode } from '@/lib/constants';
 
 import type { City } from './utils';
 import {
@@ -28,7 +29,7 @@ export function buildHomeBrandTitle(t: (_key: string) => string, value: string):
 
 function buildListingSeoPricePart(listing: Listing, t: (_key: string) => string): string {
   if (listing.price == null) return '';
-  return `${t('metadata.listing.pricePrefix')} ${formatPrice(listing.price, listing.currency)} ${listing.currency || ''}`.trim();
+  return `${t('metadata.listing.pricePrefix')} ${formatPrice(listing.price, listing.currency)} ${getCurrencyDisplayCode(listing.currency) || ''}`.trim();
 }
 
 function buildListingSeoCityPart(

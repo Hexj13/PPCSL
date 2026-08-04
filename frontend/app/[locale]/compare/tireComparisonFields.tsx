@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStatusBadge';
 import { TireListingPriceSuffix } from '@/components/listing/TireListingPriceSuffix';
 import type { Listing } from '@/lib/api';
+import { getCurrencyDisplayCode } from '@/lib/constants';
 import { getClientLocale } from '@/lib/i18n';
 import { formatPrice, formatTireSize, getListingHref, getTireModelDisplayLabel } from '@/lib/utils';
 
@@ -335,10 +336,10 @@ export const tireComparisonFields: ComparisonField[] = [
         ) : (
           <div className="flex flex-col items-center gap-0.5">
             <span>
-              {`${formatPrice(listing.price, listing.currency)} ${listing.currency || siteConfig?.currency || ''}`}
+              {`${formatPrice(listing.price, listing.currency)} ${getCurrencyDisplayCode(listing.currency || siteConfig?.currency || '')}`}
               {listing.approxPriceDefaultCurrency != null && listing.defaultCurrencyCode ? (
                 <span style={{ color: 'rgb(var(--gray-400-rgb))' }}>
-                  {` (≈ ${formatPrice(listing.approxPriceDefaultCurrency)} ${listing.defaultCurrencyCode})`}
+                  {` (≈ ${formatPrice(listing.approxPriceDefaultCurrency)} ${getCurrencyDisplayCode(listing.defaultCurrencyCode)})`}
                 </span>
               ) : null}
             </span>

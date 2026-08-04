@@ -155,6 +155,18 @@ export const Currency = {
   ALL: currencies[2],
 } as const;
 
+/** User-facing labels for ISO currency codes (storage/API stay ISO). */
+const CURRENCY_DISPLAY_CODES: Readonly<Record<string, string>> = {
+  ALL: 'LEK',
+};
+
+export function getCurrencyDisplayCode(code: string | null | undefined): string {
+  if (!code) {
+    return '';
+  }
+  return CURRENCY_DISPLAY_CODES[code] ?? code;
+}
+
 export const FuelType = {
   Petrol: fuelTypes[0],
   Diesel: fuelTypes[1],

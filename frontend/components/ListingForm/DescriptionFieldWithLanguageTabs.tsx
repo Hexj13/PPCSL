@@ -6,10 +6,7 @@ import { RichTextEditor } from '@/components/common/RichTextEditor';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
-import {
-  getDescriptionLocales,
-  localeToDescriptionLocale,
-} from '@/lib/listingDescriptionLocale';
+import { getDescriptionLocales, localeToDescriptionLocale } from '@/lib/listingDescriptionLocale';
 import { resolveLocaleRouting } from '@/lib/locale-routing';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
