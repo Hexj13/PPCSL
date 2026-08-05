@@ -1,11 +1,13 @@
 import { faqEn } from './faq-data-en';
-import { faqSq } from './faq-data-sq';
+import { faqRo } from './faq-data-ro';
+import { faqRu } from './faq-data-ru';
 import type { FAQConfigWithLanguages } from './faq-types';
 
 export * from './faq-types';
 
 const faqConfig: FAQConfigWithLanguages = {
-  sq: faqSq,
+  ro: faqRo,
+  ru: faqRu,
   en: faqEn,
 };
 

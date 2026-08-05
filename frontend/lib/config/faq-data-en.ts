@@ -1,24 +1,23 @@
 import type { FAQConfig } from './faq-types';
-
 export const faqEn: FAQConfig = {
   items: [
     {
       id: '1',
-      question: 'What is MakinaGuru?',
+      question: 'What is Kupito?',
       answer:
-        'MakinaGuru is a free, non-commercial platform for posting and browsing car listings in Albania. You can post a car listing for free and search existing listings.',
+        'Kupito is a free, non-commercial platform for posting and browsing car listings in Moldova. You can post a car listing for free and search existing listings.',
     },
     {
       id: '2',
-      question: 'Is MakinaGuru free to use?',
+      question: 'Is Kupito free to use?',
       answer:
-        'Yes, MakinaGuru is completely free. We do not charge commissions, fees, or any other payments for posting listings, viewing listings, or using any features.',
+        'Yes, Kupito is completely free. We do not charge commissions, fees, or any other payments for posting listings, viewing listings, or using any features.',
     },
     {
       id: '3',
       question: 'How do I register?',
       answer: [
-        'To register on MakinaGuru:',
+        'To register on Kupito:',
         '1. Open Login and registration in the top-right corner (on mobile — in the menu), then select the Register tab',
         '2. Choose whether you are an individual or a business',
         '3. Fill in the form: phone (required), password (required), messengers (optional: Viber, WhatsApp, Telegram). For a business — company name as well (required). Alternatively, sign in or register with Google or Telegram on the same page (then confirm your phone via SMS)',
@@ -115,15 +114,15 @@ export const faqEn: FAQConfig = {
     },
     {
       id: '12',
-      question: 'Does MakinaGuru take part in transactions?',
+      question: 'Does Kupito take part in transactions?',
       answer:
-        'No. MakinaGuru only connects sellers and buyers. The platform does not take part in transactions, does not charge commissions, and does not guarantee any aspect of the sale or the vehicle. All deals happen directly between the seller and the buyer.',
+        'No. Kupito only connects sellers and buyers. The platform does not take part in transactions, does not charge commissions, and does not guarantee any aspect of the sale or the vehicle. All deals happen directly between the seller and the buyer.',
     },
     {
       id: '13',
       question: 'What should I do if I find a fake or fraudulent listing?',
       answer:
-        'If you find a listing you believe is fake or fraudulent, please contact us immediately at support@makinaguru.com with details about the listing. We will review the case and take appropriate action.',
+        'If you find a listing you believe is fake or fraudulent, please contact us immediately at support@kupito.club with details about the listing. We will review the case and take appropriate action.',
     },
     {
       id: '14',
@@ -170,7 +169,7 @@ export const faqEn: FAQConfig = {
       id: '18',
       question: 'How do I search for listings?',
       answer: [
-        'To search for listings on MakinaGuru:',
+        'To search for listings on Kupito:',
         '1. Use the search field on the home page',
         '2. You can filter by:',
         '   - Make and model',
@@ -201,7 +200,7 @@ export const faqEn: FAQConfig = {
       id: '20',
       question: 'How do I compare cars?',
       answer: [
-        'To compare cars on MakinaGuru:',
+        'To compare cars on Kupito:',
         '1. Open the listing page of the car you want to compare',
         '2. Click Compare (scales icon) below Add to favorites',
         '3. You can add up to 3 cars to compare',
@@ -240,9 +239,9 @@ export const faqEn: FAQConfig = {
     },
     {
       id: '23',
-      question: 'Is there a mobile app for MakinaGuru?',
+      question: 'Is there a mobile app for Kupito?',
       answer: [
-        'MakinaGuru is a Progressive Web App (PWA), which means you can install it on your phone like a mobile app:',
+        'Kupito is a Progressive Web App (PWA), which means you can install it on your phone like a mobile app:',
         '• Android: Click Mobile App in the footer and follow the instructions',
         '• iOS: Click Mobile App in the footer and follow the instructions to add it to the home screen',
         '• The installed app works offline and provides faster access to the platform',

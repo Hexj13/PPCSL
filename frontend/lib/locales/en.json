@@ -1,10 +1,10 @@
 {
   "footer": {
-    "copyright": "© 2025-2026 MakinaGuru.com. All rights reserved.",
+    "copyright": "© 2025-2026 Kupito.club. All rights reserved.",
     "navTitle": "Navigation",
     "infoTitle": "Information",
     "legalTitle": "Legal information",
-    "about": "MakinaGuru.com is a platform for buying and selling cars in Albania. Post listings for free and find the right vehicle using the criteria and features that matter to you.",
+    "about": "Kupito.club is a platform for buying and selling cars in Moldova. Post listings for free and find the right vehicle using the criteria and features that matter to you.",
     "partnersTitle": "Our Partners",
     "faq": "Frequently Asked Questions",
     "partners": "For partners",
@@ -15,7 +15,7 @@
     "contacts": "Contacts",
     "partnerImportSalesDescription": "Car import and sales",
     "partnerInfocarDescription": "Vehicle history reports",
-    "tiktok": "MakinaGuru.com on TikTok"
+    "tiktok": "Kupito.club on TikTok"
   },
   "header": {
     "addListing": "Add Listing",
@@ -36,19 +36,19 @@
     "loginShort": "Login",
     "register": "Register",
     "loginAndRegister": "Login and registration",
-    "brandName": "MakinaGuru",
+    "brandName": "Kupito",
     "toggleMenu": "Toggle Menu",
     "more": "More"
   },
   "home": {
-    "title": "Cars for Sale in Albania",
-    "titleWithBrand": "{brand} Cars for Sale in Albania",
-    "titleWithBrandModel": "{brand} {model} Cars for Sale in Albania",
+    "title": "Cars for Sale in Moldova",
+    "titleWithBrand": "{brand} Cars for Sale in Moldova",
+    "titleWithBrandModel": "{brand} {model} Cars for Sale in Moldova",
     "titleByCategory": {
-      "car": "Cars for Sale in Albania",
-      "truck": "Commercial Vehicles for Sale in Albania",
-      "moto": "Motorcycles for Sale in Albania",
-      "tire": "Tires and Wheels for Sale in Albania"
+      "car": "Cars for Sale in Moldova",
+      "truck": "Commercial Vehicles for Sale in Moldova",
+      "moto": "Motorcycles for Sale in Moldova",
+      "tire": "Tires and Wheels for Sale in Moldova"
     },
     "heroCategory": {
       "car": "a car",
@@ -57,18 +57,18 @@
       "tire": "tires and wheels"
     },
     "subtitle": "Post your listing",
-    "subtitleBold": "MakinaGuru.com!",
+    "subtitleBold": "Kupito.club!",
     "subtitle2": ". Buy or sell {category} on ",
     "subtitle3": "for free",
-    "descriptionIntro": "Buy and sell vehicles in Albania on MakinaGuru — post listings for free, without unnecessary hassle.",
-    "descriptionDetails": "MakinaGuru.com helps sellers publish listings quickly and helps buyers find the right vehicle by brand, price, year, and other important criteria. We bring unique listings from private owners and dealers together in one convenient search, so the path from interest to a call is as short as possible.",
+    "descriptionIntro": "Buy and sell vehicles in Moldova on Kupito — post listings for free, without unnecessary hassle.",
+    "descriptionDetails": "Kupito.club helps sellers publish listings quickly and helps buyers find the right vehicle by brand, price, year, and other important criteria. We bring unique listings from private owners and dealers together in one convenient search, so the path from interest to a call is as short as possible.",
     "descriptionExpand": "Show more",
     "descriptionCollapse": "Show less",
     "popularSearches": "Popular Searches"
   },
   "listingsPage": {
-    "title": "Cars for Sale in Albania",
-    "description": "Search cars for sale in Albania. Filter by brand, model, price, year, and more on MakinaGuru."
+    "title": "Cars for Sale in Moldova",
+    "description": "Search cars for sale in Moldova. Filter by brand, model, price, year, and more on Kupito."
   },
   "common": {
     "loading": "Loading...",
@@ -163,8 +163,7 @@
     "languageEn": "English",
     "languageRo": "Română",
     "languageRu": "Русский",
-    "languageLocaleCode": "{code}",
-    "languageSq": "Shqip"
+    "languageLocaleCode": "{code}"
   },
   "errors": {
     "smsHourlyLimit": "SMS limit reached for this number. You can request a new code in one hour.",
@@ -251,14 +250,14 @@
           "type": "Essential",
           "purpose": "Stores your cookie choice (JSON with timestamp) so the site and Consent Mode stay in sync.",
           "duration": "365 days",
-          "provider": "MakinaGuru"
+          "provider": "Kupito"
         },
         "localeCookie": {
-          "name": "makinaguru-locale",
+          "name": "kupito-locale",
           "type": "Functional",
-          "purpose": "Remembers interface language (sq or en) when the language switcher is enabled.",
+          "purpose": "Remembers interface language (ro, ru, or en) when the language switcher is enabled.",
           "duration": "365 days",
-          "provider": "MakinaGuru"
+          "provider": "Kupito"
         },
         "gtm": {
           "name": "gtag.js (Google Tag)",
@@ -272,7 +271,7 @@
           "type": "Essential (local storage)",
           "purpose": "Persists authentication session state (tokens) for signed-in users; not an HTTP cookie.",
           "duration": "Until logout or expiry handled by the app",
-          "provider": "MakinaGuru"
+          "provider": "Kupito"
         }
       }
     }
@@ -296,7 +295,7 @@
     "filterLimitError": "You can save a maximum of 20 filters. Please delete one of the existing filters."
   },
   "phone": {
-    "mustStartWithPlus": "Use international format with the + prefix (e.g. +355...)",
+    "mustStartWithPlus": "Use international format with the + prefix (e.g. +373...)",
     "invalidCountry": "Unknown country calling code",
     "invalidLength": "Invalid number length for this country",
     "notMobile": "Enter a mobile number suitable for SMS (fixed-line numbers are not accepted)"
@@ -309,7 +308,7 @@
     "emailNotifications": "Receive email notifications",
     "termsLink": "terms of use",
     "phone": "Main number",
-    "phonePlaceholder": "+355691234567",
+    "phonePlaceholder": "+37370123456",
     "phoneHint": "If you also add an email, you can log in with either your phone number or email",
     "emailHint": "You can log in with this email or with your phone number",
     "phoneRequired": "Phone is required",
@@ -554,7 +553,7 @@
     "noMoreListings": "No more listings",
     "partnerPromo": {
       "titleQuestion": "Do you sell many cars?",
-      "titlePartnerLead": "Become a MakinaGuru.com ",
+      "titlePartnerLead": "Become a Kupito.club ",
       "titlePartnerEmphasis": "partner",
       "titlePartnerTail": "",
       "description": "If you post listings regularly or you are a car dealer, we are ready to offer special partnership terms.",
@@ -564,10 +563,10 @@
         "visibility": "Extra visibility on the platform"
       },
       "sideTitle": "Together — stronger",
-      "sideDescription": "Grow your business with MakinaGuru.com.",
+      "sideDescription": "Grow your business with Kupito.club.",
       "cta": "Details",
       "dismiss": "Don't show again",
-      "imageAlt": "Cars for the MakinaGuru partner program"
+      "imageAlt": "Cars for the Kupito partner program"
     },
     "selectBrand": "Select brand",
     "selectCity": "Select city",
@@ -1640,9 +1639,9 @@
       "plpFileDelete": "Delete",
       "plpFileRegistrySync": "Sync registry",
       "registrySyncModalTitle": "Registry sync",
-      "registrySyncInfo999md": "Rebuilds the 999.md import registry and partner fields on MakinaGuru listings by matching live profile listings (GraphQL) against your vehicle listings in the database (VIN first, then a strict fingerprint). Only unambiguous matches are written. Requires the same import credentials on the server as CLI import.",
-      "registrySyncInfoCipauto": "Seeds the CipAuto import registry from existing MakinaGuru listings for this partner user, using Cod produs from listing descriptions and updating partner fields. Does not read the PLP snapshot; safe to run after a fresh PLP scan.",
-      "registrySyncAssignedUserLabel": "MakinaGuru partner user (UUID)",
+      "registrySyncInfo999md": "Rebuilds the 999.md import registry and partner fields on Kupito listings by matching live profile listings (GraphQL) against your vehicle listings in the database (VIN first, then a strict fingerprint). Only unambiguous matches are written. Requires the same import credentials on the server as CLI import.",
+      "registrySyncInfoCipauto": "Seeds the CipAuto import registry from existing Kupito listings for this partner user, using Cod produs from listing descriptions and updating partner fields. Does not read the PLP snapshot; safe to run after a fresh PLP scan.",
+      "registrySyncAssignedUserLabel": "Kupito partner user (UUID)",
       "registrySyncAssignedUserHint": "Must be the partner account whose listings are matched. Prefilled when a recent PDP/PLP run used this PLP file with an assigned user.",
       "registrySyncLoginMismatch": "The login stored in this PLP file does not match the file name. Fix the snapshot or pick the correct file.",
       "registrySyncStart": "Start",
@@ -2143,16 +2142,16 @@
     "title": "Frequently Asked Questions (FAQ)",
     "userScenarios": {
       "title": "Common user scenarios",
-      "description": "Here is a brief overview of the most common scenarios for working with listings on MakinaGuru:"
+      "description": "Here is a brief overview of the most common scenarios for working with listings on Kupito:"
     },
     "contact": {
       "description": "If you have additional questions not covered here, please contact us at",
-      "email": "support@makinaguru.com"
+      "email": "support@kupito.club"
     }
   },
   "partners": {
     "title": "For partners",
-    "intro": "MakinaGuru works with car dealers and other automotive businesses that regularly publish up-to-date listings and need an additional sales channel. The partner program helps automate listing publication, improve listing visibility, and present your company on the platform in a more structured way.",
+    "intro": "Kupito works with car dealers and other automotive businesses that regularly publish up-to-date listings and need an additional sales channel. The partner program helps automate listing publication, improve listing visibility, and present your company on the platform in a more structured way.",
     "howToBecome": {
       "title": "Joining the partner program",
       "items": [
@@ -2167,7 +2166,7 @@
         "Automatic listing synchronization with your website or other platforms, with no manual data duplication.",
         "Free promotion bonuses for regular publication: every 20 new listings adds 1 free promotion to the profile balance, which can be used to promote selected listings.",
         "A partner label on listing pages and on the seller's public listings board.",
-        "Placement of your company logo and link in the MakinaGuru footer.",
+        "Placement of your company logo and link in the Kupito footer.",
         "A more convenient channel for keeping an up-to-date vehicle catalog on the platform."
       ]
     },
@@ -2191,25 +2190,25 @@
       "title": "Mutual expectations",
       "items": [
         "Partnership is based on accurate listing information, timely data updates, and respectful communication with platform users.",
-        "We welcome mentions of MakinaGuru on partner websites and social media, as well as referrals to customers who may benefit from listing a vehicle on the platform."
+        "We welcome mentions of Kupito on partner websites and social media, as well as referrals to customers who may benefit from listing a vehicle on the platform."
       ]
     },
     "contactCta": "Contact us"
   },
   "investors": {
     "title": "For investors",
-    "intro": "MakinaGuru.com is building a technology platform for automotive listings, focused on a convenient user experience, listing automation, and the ability to scale into new markets.",
+    "intro": "Kupito.club is building a technology platform for automotive listings, focused on a convenient user experience, listing automation, and the ability to scale into new markets.",
     "about": {
       "title": "About the project",
       "paragraphs": [
         "In many markets, the experience of searching for and publishing vehicle listings remains fragmented: users lack a convenient interface, clear information, and modern tools for working with listings.",
-        "MakinaGuru.com is designed as a reusable product and technical foundation that can be adapted to local markets, languages, listing rules, partner integrations, and demand patterns."
+        "Kupito.club is designed as a reusable product and technical foundation that can be adapted to local markets, languages, listing rules, partner integrations, and demand patterns."
       ]
     },
     "done": {
       "title": "What we have so far",
       "items": [
-        "A live platform in Albania as the first market for product validation",
+        "A live platform in Moldova as the first market for product validation",
         "A modern interface for searching, viewing, and managing listings",
         "Initial partners from the automotive market",
         "Automatic listing synchronization with external sources",
@@ -2249,7 +2248,7 @@
     "strategy": {
       "title": "Growth strategy",
       "items": [
-        "Strengthening the product and user journeys in Albania",
+        "Strengthening the product and user journeys in Moldova",
         "Gradually scaling marketing and organic acquisition",
         "Growing the partner network of dealers and professional sellers",
         "Preparing a repeatable launch model for new markets"
@@ -2258,13 +2257,7 @@
     "scaling": {
       "title": "Scaling",
       "lead": "After the product and commercial model are validated, launches may be considered in markets with similar demand patterns and similar issues in the automotive listings segment:",
-      "items": [
-        "Eastern Europe",
-        "Balkans",
-        "Latin America",
-        "Africa",
-        "Asia"
-      ]
+      "items": ["Eastern Europe", "Balkans", "Latin America", "Africa", "Asia"]
     },
     "whyNow": {
       "title": "Why now",
@@ -2288,11 +2281,11 @@
   },
   "contacts": {
     "title": "Contacts",
-    "intro": "We are the makinaguru.com development team and we are always ready to help. Contact us through any of the channels below.",
+    "intro": "We are the kupito.club development team and we are always ready to help. Contact us through any of the channels below.",
     "email": "Email",
     "telegram": "Telegram bot",
     "whatsapp": "WhatsApp Business",
-    "whatsappValue": "MakinaGuru.com (business account)",
+    "whatsappValue": "Kupito.club (business account)",
     "copyTitle": "Copy",
     "openInNewTab": "Open in new tab",
     "openEmail": "Open email client"
@@ -2335,7 +2328,7 @@
     "registrationSuccess": "You have registered successfully",
     "registrationEmailVerificationSent": "We sent a confirmation email to the address you provided.",
     "phoneRequiredTitle": "Verify your phone number",
-    "phoneRequiredDescription": "To continue using MakinaGuru, confirm your phone number via SMS. This helps protect your account.",
+    "phoneRequiredDescription": "To continue using Kupito, confirm your phone number via SMS. This helps protect your account.",
     "phoneRequiredCurrent": "Number to verify",
     "phoneRequiredContinue": "Confirm",
     "businessOnboardingTitle": "Company details",
@@ -2343,8 +2336,8 @@
   },
   "pwa": {
     "install": "Install App",
-    "installTitle": "Install MakinaGuru",
-    "installDescription": "Add MakinaGuru to your phone for faster access:",
+    "installTitle": "Install Kupito",
+    "installDescription": "Add Kupito to your phone for faster access:",
     "mobileApp": "Mobile App",
     "installIOS": "iOS App",
     "installAndroid": "Android App",
@@ -2353,19 +2346,19 @@
     "installInstructions": "Installation Instructions",
     "iosTab": "iOS",
     "androidTab": "Android",
-    "iosStep0": "Open Safari browser on your iPhone or iPad and go to makinaguru.com",
+    "iosStep0": "Open Safari browser on your iPhone or iPad and go to kupito.club",
     "iosStep1": "Tap the share button (square icon with arrow up) at the bottom of the screen",
     "iosStep2": "Among the options, select 'Add to Home Screen'",
     "iosStep3": "Confirm by tapping 'Add' in the top right corner. The app will appear on your home screen",
-    "androidStep0": "Open Chrome browser on your Android phone and go to makinaguru.com",
+    "androidStep0": "Open Chrome browser on your Android phone and go to kupito.club",
     "androidStep1": "Tap the three dots icon (⋮) in the top right corner of the browser to open the menu",
     "androidStep2": "In the menu, select 'Add to Home Screen'",
     "androidStep3": "Confirm by tapping 'Add'. The app will appear on your home screen",
     "browserNote": "Note: Option names may differ in other browsers (Samsung Internet, Firefox, Edge, etc.)",
-    "googlePlayTitle": "MakinaGuru on Google Play",
+    "googlePlayTitle": "Kupito on Google Play",
     "googlePlayDesktopDescription": "Install the Android app from Google Play or scan the QR code with your phone.",
     "googlePlayMobileDescription": "Install the Android app from Google Play.",
-    "googlePlayQrAlt": "QR code for installing MakinaGuru from Google Play",
+    "googlePlayQrAlt": "QR code for installing Kupito from Google Play",
     "openGooglePlay": "Open Google Play",
     "googlePlayFallbackNote": "If the Google Play link is not available yet, use the browser installation instructions.",
     "offline": "No Internet",
@@ -2379,18 +2372,18 @@
   },
   "metadata": {
     "site": {
-      "defaultTitle": "Cars for Sale in Albania",
-      "defaultDescription": "Buy or sell a car on MakinaGuru! Unique listings from private owners and dealers. Post for free.",
-      "homePageDescription": "Buy or sell a car on MakinaGuru! Free to post. A platform for buying and selling cars online in Albania. Unique listings from private owners and dealers.",
-      "homePageDescriptionWithBrand": "Find {brand} cars for sale on MakinaGuru! Unique listings from private owners and dealers — selection of {brand} in Albania.",
-      "homePageDescriptionWithBrandModel": "Find {brand} {model} for sale on MakinaGuru! Unique listings from private owners and dealers — selection of {brand} {model} in Albania.",
-      "tiresDefaultTitle": "Tires for Sale in Albania",
-      "tiresHomePageDescription": "Buy or sell tires on MakinaGuru! Free tire listings in Albania: new and used, many sizes and seasons.",
-      "tiresHomePageDescriptionWithBrand": "{brand} tires for sale on MakinaGuru! Selection and prices for {brand} tires in Albania.",
-      "tiresHomePageDescriptionWithBrandModel": "{brand} {model} tires for sale on MakinaGuru! Selection and prices for {brand} {model} in Albania.",
-      "organizationDescription": "Buy or sell a car on MakinaGuru! Unique listings from private owners and dealers. A platform for buying and selling cars online in Albania.",
-      "homeTitleTemplate": "MakinaGuru.com: buy and sell {category} in Albania",
-      "homeBrandTitleTemplate": "Buy or sell {value} in Albania on MakinaGuru.com",
+      "defaultTitle": "Cars for Sale in Moldova",
+      "defaultDescription": "Buy or sell a car on Kupito! Unique listings from private owners and dealers. Post for free.",
+      "homePageDescription": "Buy or sell a car on Kupito! Free to post. A platform for buying and selling cars online in Moldova. Unique listings from private owners and dealers.",
+      "homePageDescriptionWithBrand": "Find {brand} cars for sale on Kupito! Unique listings from private owners and dealers — selection of {brand} in Moldova.",
+      "homePageDescriptionWithBrandModel": "Find {brand} {model} for sale on Kupito! Unique listings from private owners and dealers — selection of {brand} {model} in Moldova.",
+      "tiresDefaultTitle": "Tires for Sale in Moldova",
+      "tiresHomePageDescription": "Buy or sell tires on Kupito! Free tire listings in Moldova: new and used, many sizes and seasons.",
+      "tiresHomePageDescriptionWithBrand": "{brand} tires for sale on Kupito! Selection and prices for {brand} tires in Moldova.",
+      "tiresHomePageDescriptionWithBrandModel": "{brand} {model} tires for sale on Kupito! Selection and prices for {brand} {model} in Moldova.",
+      "organizationDescription": "Buy or sell a car on Kupito! Unique listings from private owners and dealers. A platform for buying and selling cars online in Moldova.",
+      "homeTitleTemplate": "Kupito.club: buy and sell {category} in Moldova",
+      "homeBrandTitleTemplate": "Buy or sell {value} in Moldova on Kupito.club",
       "categoryTitle": {
         "car": "cars",
         "truck": "commercial vehicles",
@@ -2398,128 +2391,128 @@
         "tire": "tires and wheels"
       },
       "keywords": [
-        "cars Albania",
+        "cars Moldova",
         "buy cars online",
-        "sell cars Albania",
-        "car listings Albania",
+        "sell cars Moldova",
+        "car listings Moldova",
         "unique car listings",
-        "cars from private owners Albania",
-        "car dealers Albania",
-        "cars Tirana",
-        "cars for sale Albania",
-        "car ads Tirana",
-        "used cars Albania"
+        "cars from private owners Moldova",
+        "car dealers Moldova",
+        "cars Chisinau",
+        "cars for sale Moldova",
+        "car ads Chisinau",
+        "used cars Moldova"
       ]
     },
     "login": {
       "title": "Login",
-      "description": "Log in to your MakinaGuru profile to manage your listings, view favorite cars and saved filters. Access your profile with email or phone.",
-      "ogTitle": "Login - MakinaGuru",
-      "ogDescription": "Log in to your MakinaGuru profile to manage your listings, view your favorite cars and saved search filters. Access your profile with email or phone.",
-      "ogAlt": "MakinaGuru - Login"
+      "description": "Log in to your Kupito profile to manage your listings, view favorite cars and saved filters. Access your profile with email or phone.",
+      "ogTitle": "Login - Kupito",
+      "ogDescription": "Log in to your Kupito profile to manage your listings, view your favorite cars and saved search filters. Access your profile with email or phone.",
+      "ogAlt": "Kupito - Login"
     },
     "register": {
       "title": "Register",
-      "description": "Register on MakinaGuru and start posting car sale listings for free. Create a profile for individual or business.",
-      "ogTitle": "Register - MakinaGuru",
-      "ogDescription": "Register on MakinaGuru and start posting car sale listings for free. Create a profile for individual or business and get in touch with buyers in Albania.",
-      "ogAlt": "MakinaGuru - Register"
+      "description": "Register on Kupito and start posting car sale listings for free. Create a profile for individual or business.",
+      "ogTitle": "Register - Kupito",
+      "ogDescription": "Register on Kupito and start posting car sale listings for free. Create a profile for individual or business and get in touch with buyers in Moldova.",
+      "ogAlt": "Kupito - Register"
     },
     "sign": {
       "title": "Login and registration",
-      "description": "Sign in to your MakinaGuru profile or register to manage listings, favorites, and saved filters.",
-      "ogTitle": "Login and registration - MakinaGuru",
-      "ogDescription": "Sign in to your MakinaGuru profile or register to manage listings, favorites, and saved filters.",
-      "ogAlt": "MakinaGuru - Login and registration"
+      "description": "Sign in to your Kupito profile or register to manage listings, favorites, and saved filters.",
+      "ogTitle": "Login and registration - Kupito",
+      "ogDescription": "Sign in to your Kupito profile or register to manage listings, favorites, and saved filters.",
+      "ogAlt": "Kupito - Login and registration"
     },
     "resetPassword": {
       "title": "Reset Password",
-      "description": "Reset your MakinaGuru password. Enter your phone number and follow the steps to reset your password via SMS verification.",
-      "ogTitle": "Reset Password - MakinaGuru",
-      "ogDescription": "Reset your MakinaGuru password. Enter your phone number and follow the steps to reset your password via SMS verification.",
-      "ogAlt": "MakinaGuru - Reset Password"
+      "description": "Reset your Kupito password. Enter your phone number and follow the steps to reset your password via SMS verification.",
+      "ogTitle": "Reset Password - Kupito",
+      "ogDescription": "Reset your Kupito password. Enter your phone number and follow the steps to reset your password via SMS verification.",
+      "ogAlt": "Kupito - Reset Password"
     },
     "faq": {
       "title": "Frequently Asked Questions (FAQ)",
-      "description": "Find answers to the most common questions about MakinaGuru. Learn how to post a listing, manage your listings, search and compare cars.",
-      "ogTitle": "Frequently Asked Questions (FAQ) - MakinaGuru",
-      "ogDescription": "Find answers to the most common questions about MakinaGuru. Learn how to post a listing, manage your listings, search and compare cars, and more.",
-      "ogAlt": "MakinaGuru - Frequently Asked Questions"
+      "description": "Find answers to the most common questions about Kupito. Learn how to post a listing, manage your listings, search and compare cars.",
+      "ogTitle": "Frequently Asked Questions (FAQ) - Kupito",
+      "ogDescription": "Find answers to the most common questions about Kupito. Learn how to post a listing, manage your listings, search and compare cars, and more.",
+      "ogAlt": "Kupito - Frequently Asked Questions"
     },
     "partners": {
-      "title": "For partners - MakinaGuru",
-      "description": "MakinaGuru partner program for automotive businesses: listing synchronization, additional visibility, and structured company presence on the platform.",
-      "ogTitle": "For partners - MakinaGuru",
-      "ogDescription": "MakinaGuru partner program for car dealers and automotive businesses: participation requirements, opportunities, and cooperation format.",
-      "ogAlt": "MakinaGuru - For partners"
+      "title": "For partners - Kupito",
+      "description": "Kupito partner program for automotive businesses: listing synchronization, additional visibility, and structured company presence on the platform.",
+      "ogTitle": "For partners - Kupito",
+      "ogDescription": "Kupito partner program for car dealers and automotive businesses: participation requirements, opportunities, and cooperation format.",
+      "ogAlt": "Kupito - For partners"
     },
     "investors": {
-      "title": "For investors - MakinaGuru",
-      "description": "MakinaGuru.com: technology platform for automotive listings, product development, business model, and scaling strategy.",
-      "ogTitle": "For investors - MakinaGuru",
-      "ogDescription": "Investor overview of MakinaGuru: product, current progress, business model, growth strategy, and cooperation opportunities.",
-      "ogAlt": "MakinaGuru - For investors"
+      "title": "For investors - Kupito",
+      "description": "Kupito.club: technology platform for automotive listings, product development, business model, and scaling strategy.",
+      "ogTitle": "For investors - Kupito",
+      "ogDescription": "Investor overview of Kupito: product, current progress, business model, growth strategy, and cooperation opportunities.",
+      "ogAlt": "Kupito - For investors"
     },
     "contacts": {
-      "title": "Contacts - makinaguru.com",
-      "description": "Contact the makinaguru.com team. Email, Telegram bot and WhatsApp Business.",
-      "ogTitle": "Contacts - makinaguru.com",
-      "ogDescription": "Contact the makinaguru.com development team. We are ready to help via email, Telegram or WhatsApp.",
-      "ogAlt": "makinaguru.com - Contacts"
+      "title": "Contacts - kupito.club",
+      "description": "Contact the kupito.club team. Email, Telegram bot and WhatsApp Business.",
+      "ogTitle": "Contacts - kupito.club",
+      "ogDescription": "Contact the kupito.club development team. We are ready to help via email, Telegram or WhatsApp.",
+      "ogAlt": "kupito.club - Contacts"
     },
     "cookieSettings": {
       "title": "Cookie Settings",
-      "description": "Manage your cookie preferences on MakinaGuru. Choose which cookies you want to accept.",
-      "ogTitle": "Cookie Settings - MakinaGuru",
-      "ogDescription": "Manage your cookie preferences on MakinaGuru. Choose which cookies you want to accept.",
-      "ogAlt": "MakinaGuru - Cookie Settings"
+      "description": "Manage your cookie preferences on Kupito. Choose which cookies you want to accept.",
+      "ogTitle": "Cookie Settings - Kupito",
+      "ogDescription": "Manage your cookie preferences on Kupito. Choose which cookies you want to accept.",
+      "ogAlt": "Kupito - Cookie Settings"
     },
     "terms": {
       "title": "Terms of Use",
-      "description": "Read MakinaGuru Terms of Use. Learn the rules, responsibilities, and rights when using the car listings platform.",
-      "ogTitle": "Terms of Use - MakinaGuru",
-      "ogDescription": "Read MakinaGuru Terms of Use. Learn the rules, responsibilities, and rights when using the car listings platform.",
-      "ogAlt": "MakinaGuru - Terms of Use"
+      "description": "Read Kupito Terms of Use. Learn the rules, responsibilities, and rights when using the car listings platform.",
+      "ogTitle": "Terms of Use - Kupito",
+      "ogDescription": "Read Kupito Terms of Use. Learn the rules, responsibilities, and rights when using the car listings platform.",
+      "ogAlt": "Kupito - Terms of Use"
     },
     "privacy": {
       "title": "Privacy Policy",
-      "description": "Learn how MakinaGuru collects, uses, and protects your personal data. Read our Privacy Policy and how we process data in accordance with GDPR.",
-      "ogTitle": "Privacy Policy - MakinaGuru",
-      "ogDescription": "Learn how MakinaGuru collects, uses, and protects your personal data. Read our Privacy Policy to understand how we process your data in accordance with GDPR.",
-      "ogAlt": "MakinaGuru - Privacy Policy"
+      "description": "Learn how Kupito collects, uses, and protects your personal data. Read our Privacy Policy and how we process data in accordance with GDPR.",
+      "ogTitle": "Privacy Policy - Kupito",
+      "ogDescription": "Learn how Kupito collects, uses, and protects your personal data. Read our Privacy Policy to understand how we process your data in accordance with GDPR.",
+      "ogAlt": "Kupito - Privacy Policy"
     },
     "brandLanding": {
-      "title": "Buy {brand} in Albania: used and new cars for sale",
-      "titleWithPrice": "Buy {brand} in Albania: used and new cars for sale from {price}",
-      "description": "Browse {brand} listings on MakinaGuru. Current offers in Albania.",
+      "title": "Buy {brand} in Moldova: used and new cars for sale",
+      "titleWithPrice": "Buy {brand} in Moldova: used and new cars for sale from {price}",
+      "description": "Browse {brand} listings on Kupito. Current offers in Moldova.",
       "h1": "{brand} — for sale",
       "intro": "Find unique {brand} listings from private owners and dealers.",
-      "ogAlt": "{brand} — MakinaGuru car listings"
+      "ogAlt": "{brand} — Kupito car listings"
     },
     "brandModelLanding": {
-      "title": "Buy {brand} {model} in Albania: used and new cars for sale",
-      "titleWithPrice": "Buy {brand} {model} in Albania: used and new cars for sale from {price}",
-      "description": "Browse {brand} {model} on MakinaGuru. Current prices in Albania.",
+      "title": "Buy {brand} {model} in Moldova: used and new cars for sale",
+      "titleWithPrice": "Buy {brand} {model} in Moldova: used and new cars for sale from {price}",
+      "description": "Browse {brand} {model} on Kupito. Current prices in Moldova.",
       "h1": "{brand} {model} — for sale",
-      "ogAlt": "{brand} {model} — MakinaGuru car listings"
+      "ogAlt": "{brand} {model} — Kupito car listings"
     },
     "listing": {
       "notFoundTitle": "Listing not found",
       "notFoundDescription": "The listing does not exist or is not available.",
-      "defaultDescription": "Buy or sell a car on MakinaGuru! Unique listings from private owners and dealers. Post for free.",
+      "defaultDescription": "Buy or sell a car on Kupito! Unique listings from private owners and dealers. Post for free.",
       "titlePrefix": "Buy",
       "powerUnit": "hp",
       "inCity": "in",
       "yearFormat": "{year}",
       "pricePrefix": "priced at",
-      "siteSuffix": "on MakinaGuru.com",
+      "siteSuffix": "on Kupito.club",
       "ogAltVehicle": "{brand} {model} {year} — for sale in {city}",
       "ogAltTire": "{title} — for sale in {city}",
       "keywords": {
         "cars": "cars",
         "buyCar": "buy car",
         "carsForSale": "cars for sale",
-        "moldova": "Albania"
+        "moldova": "Moldova"
       }
     }
   },

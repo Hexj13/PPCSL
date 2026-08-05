@@ -1,209 +1,101 @@
 {
-  "market": "Albania",
+  "market": "Moldova",
   "segment": "commercial_transport_used",
   "brands": [
     {
       "brand": "Mercedes-Benz",
       "top_models": [
-        {
-          "model": "Actros",
-          "most_popular": true
-        },
-        {
-          "model": "Atego",
-          "most_popular": false
-        },
-        {
-          "model": "Sprinter",
-          "most_popular": false
-        }
+        { "model": "Actros", "most_popular": true },
+        { "model": "Atego", "most_popular": false },
+        { "model": "Sprinter", "most_popular": false }
       ]
     },
     {
       "brand": "MAN",
       "top_models": [
-        {
-          "model": "TGX",
-          "most_popular": true
-        },
-        {
-          "model": "TGS",
-          "most_popular": false
-        },
-        {
-          "model": "TGM",
-          "most_popular": false
-        }
+        { "model": "TGX", "most_popular": true },
+        { "model": "TGS", "most_popular": false },
+        { "model": "TGM", "most_popular": false }
       ]
     },
     {
       "brand": "Scania",
       "top_models": [
-        {
-          "model": "R Series",
-          "most_popular": true
-        },
-        {
-          "model": "S Series",
-          "most_popular": false
-        },
-        {
-          "model": "P Series",
-          "most_popular": false
-        }
+        { "model": "R Series", "most_popular": true },
+        { "model": "S Series", "most_popular": false },
+        { "model": "P Series", "most_popular": false }
       ]
     },
     {
       "brand": "Volvo Trucks",
       "top_models": [
-        {
-          "model": "FH",
-          "most_popular": true
-        },
-        {
-          "model": "FM",
-          "most_popular": false
-        },
-        {
-          "model": "FMX",
-          "most_popular": false
-        }
+        { "model": "FH", "most_popular": true },
+        { "model": "FM", "most_popular": false },
+        { "model": "FMX", "most_popular": false }
       ]
     },
     {
       "brand": "DAF",
       "top_models": [
-        {
-          "model": "XF",
-          "most_popular": true
-        },
-        {
-          "model": "CF",
-          "most_popular": false
-        },
-        {
-          "model": "LF",
-          "most_popular": false
-        }
+        { "model": "XF", "most_popular": true },
+        { "model": "CF", "most_popular": false },
+        { "model": "LF", "most_popular": false }
       ]
     },
     {
       "brand": "Iveco",
       "top_models": [
-        {
-          "model": "Daily",
-          "most_popular": true
-        },
-        {
-          "model": "Eurocargo",
-          "most_popular": false
-        },
-        {
-          "model": "Stralis",
-          "most_popular": false
-        }
+        { "model": "Daily", "most_popular": true },
+        { "model": "Eurocargo", "most_popular": false },
+        { "model": "Stralis", "most_popular": false }
       ]
     },
     {
       "brand": "Renault Trucks",
       "top_models": [
-        {
-          "model": "T",
-          "most_popular": true
-        },
-        {
-          "model": "C",
-          "most_popular": false
-        },
-        {
-          "model": "K",
-          "most_popular": false
-        }
+        { "model": "T", "most_popular": true },
+        { "model": "C", "most_popular": false },
+        { "model": "K", "most_popular": false }
       ]
     },
     {
       "brand": "Ford Trucks",
       "top_models": [
-        {
-          "model": "Cargo 1833",
-          "most_popular": true
-        },
-        {
-          "model": "Cargo 1836",
-          "most_popular": false
-        },
-        {
-          "model": "Transit",
-          "most_popular": false
-        }
+        { "model": "Cargo 1833", "most_popular": true },
+        { "model": "Cargo 1836", "most_popular": false },
+        { "model": "Transit", "most_popular": false }
       ]
     },
     {
       "brand": "Mitsubishi Fuso",
       "top_models": [
-        {
-          "model": "Canter",
-          "most_popular": true
-        },
-        {
-          "model": "FJ",
-          "most_popular": false
-        },
-        {
-          "model": "Super Great",
-          "most_popular": false
-        }
+        { "model": "Canter", "most_popular": true },
+        { "model": "FJ", "most_popular": false },
+        { "model": "Super Great", "most_popular": false }
       ]
     },
     {
       "brand": "JCB",
       "top_models": [
-        {
-          "model": "3CX",
-          "most_popular": true
-        },
-        {
-          "model": "JS Excavator",
-          "most_popular": false
-        },
-        {
-          "model": "Loadall",
-          "most_popular": false
-        }
+        { "model": "3CX", "most_popular": true },
+        { "model": "JS Excavator", "most_popular": false },
+        { "model": "Loadall", "most_popular": false }
       ]
     },
     {
       "brand": "New Holland",
       "top_models": [
-        {
-          "model": "T7",
-          "most_popular": true
-        },
-        {
-          "model": "B110",
-          "most_popular": false
-        },
-        {
-          "model": "W170",
-          "most_popular": false
-        }
+        { "model": "T7", "most_popular": true },
+        { "model": "B110", "most_popular": false },
+        { "model": "W170", "most_popular": false }
       ]
     },
     {
       "brand": "Case",
       "top_models": [
-        {
-          "model": "Puma",
-          "most_popular": true
-        },
-        {
-          "model": "580 Backhoe",
-          "most_popular": false
-        },
-        {
-          "model": "SR Skid Steer",
-          "most_popular": false
-        }
+        { "model": "Puma", "most_popular": true },
+        { "model": "580 Backhoe", "most_popular": false },
+        { "model": "SR Skid Steer", "most_popular": false }
       ]
     }
   ]
