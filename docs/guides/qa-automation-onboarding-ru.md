@@ -10,13 +10,14 @@ tags:
 
 # Онбординг QA-автоматизатора (RU)
 
-Этот документ — стартовая точка для нового QA Automation Engineer в `kupito.club` и `PPCSL core`.
+Этот документ — стартовая точка для нового QA Automation Engineer в platform-репозиториях (`kupito.club` для Молдовы, `MakinaGuru.com` для Албании) и `PPCSL core`.
 
 ## 1) Что это за проект
 
 1. Прочитайте [architecture-overview.md](../architecture/architecture-overview.md) — общая картина системы.
 2. Прочитайте [multi-repository.md](../architecture/multi-repository.md) — как устроены `platform repo` и `core`.
-3. Прочитайте [README платформы](../../../README.md) — что живет в `kupito.club`, что копируется в `core`.
+3. Прочитайте README платформы (`kupito.club` или `MakinaGuru.com`) — что живет в platform repo, что копируется в `core` через `prepare:build`.
+4. E2E один на все платформы: правки только в `core/frontend/e2e`, прогон после `prepare:build` с нужным `COUNTRY` (см. [e2e-playwright-standards.md](./e2e-playwright-standards.md) → Multi-platform E2E).
 
 ## 2) Порядок изучения документации
 

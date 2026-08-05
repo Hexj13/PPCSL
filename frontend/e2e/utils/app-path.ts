@@ -1,10 +1,14 @@
 import { expect, type Page } from '@playwright/test';
 
+import { getE2ePlatform } from '../platform/contract';
+
 function escapeRegExpSegment(segment: string): string {
   return segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-const URL_LOCALE_PATH_PREFIXES: readonly string[] = ['ru'];
+function getUrlLocalePathPrefixes(): readonly string[] {
+  return getE2ePlatform().prefixedLocales;
+}
 
 function resolvePathname(pathnameOrUrl: string | URL): string {
   if (pathnameOrUrl instanceof URL) {
@@ -19,7 +23,7 @@ function resolvePathname(pathnameOrUrl: string | URL): string {
 
 function stripFirstMatchingUrlLocalePrefix(pathname: string): string {
   const raw = pathname || '/';
-  for (const seg of [...URL_LOCALE_PATH_PREFIXES].sort((a, b) => b.length - a.length)) {
+  for (const seg of [...getUrlLocalePathPrefixes()].sort((a, b) => b.length - a.length)) {
     const re = new RegExp(`^/${escapeRegExpSegment(seg)}(?=/|$)`, 'i');
     const m = raw.match(re);
     if (!m) continue;

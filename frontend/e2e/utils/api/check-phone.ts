@@ -1,13 +1,13 @@
 import type { APIRequestContext } from '@playwright/test';
 
-import { buildUniqueMdPhone } from '../../fixtures/env';
+import { buildUniquePlatformPhone } from '../../platform/contract';
 import { getE2eBackendApiOrigin } from '../api-origin';
 
-export async function buildAvailableMdPhone(request: APIRequestContext): Promise<string> {
+export async function buildAvailablePlatformPhone(request: APIRequestContext): Promise<string> {
   const base = getE2eBackendApiOrigin();
   const url = `${base}/api/auth/check-phone`;
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    const candidatePhone = buildUniqueMdPhone();
+    const candidatePhone = buildUniquePlatformPhone();
     const response = await request.post(url, {
       data: { phone: candidatePhone },
     });

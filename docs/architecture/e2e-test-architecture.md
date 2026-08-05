@@ -20,6 +20,13 @@ Layered architecture for Playwright E2E in `core/frontend/e2e`.
 
 ## Layers
 
+### Platform contract
+
+- Location: `core/frontend/e2e/platform`.
+- Resolves country-specific e2e defaults (`defaultLocale`, phone region, URL prefixes, locale cookie names) from synced `lib/config/site.ts` + `COUNTRY`.
+- Specs, page objects, and utils must depend on `getE2ePlatform()` / phone helpers here — not on hardcoding Moldova or Albania values.
+- Listing description tab slot0 test id stays the legacy UI id (`listing-form-description-tab-ro`) exported as `E2E_DESCRIPTION_TAB_SLOT0_TEST_ID`.
+
 ### Specs
 
 - Location: `core/frontend/e2e/specs`.
@@ -76,6 +83,8 @@ Layered architecture for Playwright E2E in `core/frontend/e2e`.
 Dependencies must stay one-way:
 
 `specs -> fixtures -> page-objects -> components`
+
+`e2e/platform` may be imported by specs, fixtures, page-objects, and utils.
 
 Utilities and test-data can be consumed by specs/page-objects, but must not depend on specs.
 

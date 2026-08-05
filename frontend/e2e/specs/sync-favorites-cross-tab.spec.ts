@@ -3,6 +3,7 @@ import { requireAuthCredentials } from '../fixtures/env';
 import { FavoritesPage } from '../page-objects/favorites.page';
 import { ListingDetailPage } from '../page-objects/listing-detail.page';
 import { SearchHomePage } from '../page-objects/search-home.page';
+import { getE2ePlatform } from '../platform/contract';
 import {
   getCurrentListingOwnership,
   removeFavoriteViaBrowserApi,
@@ -24,7 +25,8 @@ test.describe('Cross-tab favorites sync', () => {
       process.env.E2E_BASE_URL?.trim() ||
       process.env.PLAYWRIGHT_BASE_URL?.trim() ||
       'http://localhost:3000';
-    const context = await browser.newContext({ locale: 'ro-RO', baseURL });
+    const platform = getE2ePlatform();
+    const context = await browser.newContext({ locale: platform.browserLocale, baseURL });
     await applyDefaultLocaleCookiesToBrowserContext(context, baseURL);
     const pageA = await context.newPage();
     const pageB = await context.newPage();

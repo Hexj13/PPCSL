@@ -64,7 +64,10 @@ function SimilarListingCard({
   }, [listing.id, position, onCardClick]);
 
   return (
-    <div ref={cardRef} className="[&_.card]:bg-bg-darker h-full">
+    <div
+      ref={cardRef}
+      className="h-full [&_.card]:bg-bg-darker [&_.card]:shadow-none! hover-only:[&_.card]:hover:shadow-none!"
+    >
       <ListingCard listing={listing} linkPrefetch={true} />
     </div>
   );
@@ -380,7 +383,7 @@ export function SimilarListings({ listingId }: SimilarListingsProps) {
             ref={containerRef}
             role="list"
             data-testid="listing-similar-carousel"
-            className="flex items-stretch overflow-x-auto gap-4 scroll-smooth [&::-webkit-scrollbar]:hidden px-4 md:px-6"
+            className="flex items-stretch overflow-x-auto gap-4 scroll-smooth [&::-webkit-scrollbar]:hidden px-4 md:px-6 [&_.card]:shadow-none! hover-only:[&_.card]:hover:shadow-none!"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',

@@ -23,10 +23,4 @@ export function requireAuthCredentials(): AuthCredentials {
   return credentials;
 }
 
-export function buildUniqueMdPhone(): string {
-  const timePart = (Date.now() % 1000).toString().padStart(3, '0');
-  const randPart = Math.floor(Math.random() * 1000)
-    .toString()
-    .padStart(3, '0');
-  return `+37379${timePart}${randPart}`;
-}
+export { buildUniquePlatformPhone } from '../platform/contract';

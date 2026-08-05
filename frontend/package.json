@@ -123,7 +123,14 @@
       "/node_modules/",
       "/.next/",
       "/out/",
-      "/e2e/"
+      "/e2e/specs/",
+      "/e2e/page-objects/",
+      "/e2e/components/",
+      "/e2e/utils/",
+      "/e2e/fixtures/",
+      "/e2e/test-data/",
+      "/e2e/types/",
+      "/e2e/constants/"
     ],
     "coverageThreshold": {
       "global": {

@@ -26,7 +26,7 @@ function listingPageActionCardBody(params: {
   const titleBlock = (
     <span
       id={titleId}
-      className="line-clamp-2 w-full min-w-0 text-xs font-semibold leading-tight text-inherit sm:text-sm"
+      className="line-clamp-2 w-full min-w-0 break-words text-xs font-semibold leading-tight text-inherit sm:text-sm"
     >
       {title}
     </span>

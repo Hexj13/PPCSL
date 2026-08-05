@@ -242,7 +242,7 @@ export function AdvancedFilters({
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
         <div className="min-w-0">
           <MultiSelectDropdown
             values={filters.seller_types}
@@ -254,49 +254,35 @@ export function AdvancedFilters({
             showActionButtons={true}
           />
         </div>
-        <div>
-          <h3
-            className="text-sm font-medium mb-3 text-primary-900 truncate"
-            title={t('searchFilters.labels')}
-          >
-            {t('searchFilters.labels')}
-          </h3>
-          <div className="flex flex-wrap gap-4">
-            <Checkbox
-              size="md"
-              id="urgent"
-              checked={filters.urgent}
-              onChange={(checked) => onCheckboxChange('urgent', checked)}
-              label={renderSearchFilterLabelBadge(
-                t('searchFilters.urgent'),
-                FIRE_EMOJI,
-                'border-accentSecondary',
-                'before:bg-accentSecondary/10',
-              )}
-              labelClassName="font-semibold"
-            />
-            <Checkbox
-              size="md"
-              id="is_new"
-              checked={filters.is_new}
-              onChange={(checked) => onCheckboxChange('is_new', checked)}
-              label={renderSearchFilterLabelBadge(
-                vehicleType === 'moto' ? t('searchFilters.newMoto') : t('searchFilters.new'),
-                SPARKLES_EMOJI,
-                'border-newBadge',
-                'before:bg-newBadge/10',
-              )}
-              labelClassName="font-semibold"
-            />
-          </div>
+        <div className="flex min-h-12 flex-wrap items-center gap-4">
+          <Checkbox
+            size="md"
+            id="urgent"
+            checked={filters.urgent}
+            onChange={(checked) => onCheckboxChange('urgent', checked)}
+            label={renderSearchFilterLabelBadge(
+              t('searchFilters.urgent'),
+              FIRE_EMOJI,
+              'border-accentSecondary',
+              'before:bg-accentSecondary/10',
+            )}
+            labelClassName="font-semibold"
+          />
+          <Checkbox
+            size="md"
+            id="is_new"
+            checked={filters.is_new}
+            onChange={(checked) => onCheckboxChange('is_new', checked)}
+            label={renderSearchFilterLabelBadge(
+              vehicleType === 'moto' ? t('searchFilters.newMoto') : t('searchFilters.new'),
+              SPARKLES_EMOJI,
+              'border-newBadge',
+              'before:bg-newBadge/10',
+            )}
+            labelClassName="font-semibold"
+          />
         </div>
-        <div>
-          <h3
-            className="text-sm font-medium mb-3 text-primary-900 truncate"
-            title={t('searchFilters.creditSection')}
-          >
-            {t('searchFilters.creditSection')}
-          </h3>
+        <div className="flex min-h-12 items-center">
           <Checkbox
             size="md"
             id="available_in_credit"
