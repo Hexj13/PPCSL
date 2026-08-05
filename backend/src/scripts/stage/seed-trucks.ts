@@ -8,7 +8,6 @@ import type { BodyType } from '../../common/types';
 import {
   BODY_TYPES_BY_VEHICLE_TYPE,
   ConditionType,
-  Currency,
   DriveType,
   FuelType,
   ListingStatus as ListingStatusEnum,
@@ -24,7 +23,7 @@ import { getPlatformConfig } from '../platforms';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
-checkPlatform(['md']);
+checkPlatform(['md', 'al']);
 
 const platformConfig = getPlatformConfig();
 const { cities, descriptions } = platformConfig;
@@ -180,7 +179,7 @@ async function seedTrucks(activeCount: number = 50) {
   const fuelTypes = [FuelType.Diesel, FuelType.Petrol];
   const transmissionTypes = [TransmissionType.Manual, TransmissionType.Automatic];
   const driveTypes = Object.values(DriveType);
-  const currencies = Object.values(Currency);
+  const currencies = platformConfig.currencyWeights.map((item) => item.value);
   const currentYear = new Date().getFullYear();
   const truckBodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE.truck] as BodyType[];
   const conditionTypes = Object.values(ConditionType);

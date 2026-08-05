@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { ListingClosedStatusBadge } from '@/components/listing/ListingClosedStatusBadge';
 import type { Listing } from '@/lib/api';
+import { getCurrencyDisplayCode } from '@/lib/constants';
 import { getClientLocale } from '@/lib/i18n';
 import type { Locale } from '@/lib/i18n-types';
 import {
@@ -437,10 +438,10 @@ export const comparisonFields: ComparisonField[] = [
         {listing.status === 'Closed' || listing.price === undefined
           ? t('compare.notAvailable')
           : (() => {
-              const main = `${formatPrice(listing.price, listing.currency)} ${listing.currency || siteConfig?.currency || ''}`;
+              const main = `${formatPrice(listing.price, listing.currency)} ${getCurrencyDisplayCode(listing.currency || siteConfig?.currency || '')}`;
               const approx =
                 listing.approxPriceDefaultCurrency != null && listing.defaultCurrencyCode
-                  ? ` (≈ ${formatPrice(listing.approxPriceDefaultCurrency)} ${listing.defaultCurrencyCode})`
+                  ? ` (≈ ${formatPrice(listing.approxPriceDefaultCurrency)} ${getCurrencyDisplayCode(listing.defaultCurrencyCode)})`
                   : '';
               return (
                 <>

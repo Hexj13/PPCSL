@@ -75,7 +75,7 @@ export function SearchFormActions({
   return (
     <div className="mt-4 relative -mx-3 sm:mx-0 px-3 sm:px-0">
       <div className="flex flex-col lg:flex-row lg:flex-nowrap lg:justify-between gap-3 items-stretch lg:items-end">
-        <div className="w-full lg:w-[220px] lg:shrink-0 relative">
+        <div className="w-full lg:w-[280px] lg:shrink-0 relative">
           <div
             className="w-full flex justify-start items-center gap-2 pb-2 min-h-[1.5rem]"
             aria-live="polite"

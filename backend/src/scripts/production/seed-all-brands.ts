@@ -11,7 +11,7 @@ import { AppDataSource } from '../../data-source';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['production', 'stage', 'development', 'test']);
-checkPlatform(['md']);
+checkPlatform(['md', 'al']);
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

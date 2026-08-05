@@ -17,7 +17,7 @@ export function checkEnvironment(allowedEnvironments: string[]): void {
   }
 }
 
-export type Platform = 'md' | 'common';
+export type Platform = 'md' | 'al' | 'common';
 
 export function checkPlatform(allowedPlatforms: Platform[]): void {
   const currentPlatform = getCountry() as Platform;

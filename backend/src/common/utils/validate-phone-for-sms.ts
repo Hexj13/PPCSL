@@ -1,6 +1,11 @@
 import { type CountryCode, parsePhoneNumberFromString, type NumberType } from 'libphonenumber-js';
 
-const DEFAULT_COUNTRY: CountryCode = 'MD';
+import { getCountry } from '../env';
+
+const DEFAULT_COUNTRY_BY_PLATFORM: Record<string, CountryCode> = {
+  md: 'MD',
+  al: 'AL',
+};
 
 const MOBILE_SMS_TYPES: Set<NumberType> = new Set(['MOBILE', 'FIXED_LINE_OR_MOBILE']);
 
@@ -19,11 +24,15 @@ function isSmsCapableLineType(type: NumberType | undefined): boolean {
   return MOBILE_SMS_TYPES.has(type);
 }
 
+function getDefaultCountry(): CountryCode {
+  return DEFAULT_COUNTRY_BY_PLATFORM[getCountry()] ?? 'MD';
+}
+
 export type PhoneSmsValidation = { ok: true } | { ok: false; errorKey: string };
 
 export function validatePhoneForSms(raw: string): PhoneSmsValidation {
   const value = typeof raw === 'string' ? raw.trim() : '';
-  const parsed = parsePhoneNumberFromString(value, DEFAULT_COUNTRY);
+  const parsed = parsePhoneNumberFromString(value, getDefaultCountry());
   if (!parsed) {
     return {
       ok: false,

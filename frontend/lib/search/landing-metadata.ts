@@ -1,4 +1,5 @@
 import type { Listing } from '@/lib/api';
+import { getCurrencyDisplayCode } from '@/lib/constants';
 import { formatPrice } from '@/lib/utils';
 
 export function fillTemplate(template: unknown, vars: Record<string, string>): string {
@@ -26,7 +27,7 @@ export function getListingPriceLabel(listing: Listing | undefined): string | nul
     return null;
   }
 
-  return `${formatPrice(Number(price), currency)} ${currency}`;
+  return `${formatPrice(Number(price), currency)} ${getCurrencyDisplayCode(currency)}`;
 }
 
 export function buildLandingTitle(

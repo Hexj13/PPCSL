@@ -77,7 +77,7 @@ export function parseStrictUnsignedIntToken(value: unknown): number | null {
   return parseInt(s, 10);
 }
 
-export const currencies = ['EUR', 'MDL'] as const;
+export const currencies = ['EUR', 'MDL', 'ALL'] as const;
 
 export function getDefaultCurrency(): (typeof currencies)[number] {
   const envCurrency = process.env.DEFAULT_CURRENCY?.trim();
@@ -186,6 +186,7 @@ export const TireCondition = {
 export const Currency = {
   EUR: currencies[0],
   MDL: currencies[1],
+  ALL: currencies[2],
 } as const;
 
 export const FuelType = {
@@ -276,9 +277,19 @@ export const SortOrder = {
   DESC: sortOrders[1],
 } as const;
 
+function smsBrandName(): string {
+  const fromEnv = process.env.SMS_BRAND_NAME?.trim();
+  if (fromEnv) return fromEnv;
+  const country = (process.env.COUNTRY || process.env.NEXT_PUBLIC_COUNTRY || 'md')
+    .trim()
+    .toLowerCase();
+  if (country === 'al') return 'MakinaGuru';
+  return 'Kupito';
+}
+
 export const SMS_MESSAGES = {
-  VERIFICATION_CODE: (code: string) => `Kupito verification code: ${code}`,
-  PASSWORD_RESET_CODE: (code: string) => `Kupito password reset code: ${code}`,
+  VERIFICATION_CODE: (code: string) => `${smsBrandName()} verification code: ${code}`,
+  PASSWORD_RESET_CODE: (code: string) => `${smsBrandName()} password reset code: ${code}`,
 } as const;
 
 export const REFRESH_COOLDOWN_MS = 48 * 60 * 60 * 1000;

@@ -22,7 +22,28 @@ Project-specific standard for E2E tests in PPCSL frontend.
   - `core/frontend/e2e/fixtures`
   - `core/frontend/e2e/test-data`
   - `core/frontend/e2e/types`
+  - `core/frontend/e2e/platform` (multi-platform contract: locale, phone, URL prefixes)
 - Playwright config: `core/frontend/playwright.config.ts` (`testDir: ./e2e/specs`).
+
+## Multi-platform E2E (MD + AL)
+
+One Playwright suite in PPCSL runs on every platform repo (`kupito.club` = `COUNTRY=md`, `MakinaGuru.com` = `COUNTRY=al`) after `prepare:build`.
+
+Rules:
+
+- Platform values (default locale, cookie values, phone E.164 prefix, URL locale prefixes, legal H1 titles) **must** come from `getE2ePlatform()` / helpers in `e2e/platform/contract.ts` — never hardcode `ro` / `sq` / `+373` / `+355` / `ro.json` in specs or page objects.
+- Use `buildUniquePlatformPhone` / `buildAvailablePlatformPhone` (not `*MdPhone`).
+- `e2e/utils/i18n.ts` loads `{defaultLocale}.json` from the synced platform locales.
+- ESLint bans platform phone/locale literals outside `e2e/platform/**`.
+- Before merging e2e changes into PPCSL core, run at least `@p0` (preferably full suite) on **both** platforms after `prepare:build` + seed, with matching `COUNTRY` / `NEXT_PUBLIC_COUNTRY`.
+- Install browsers once: `npx playwright install chromium`.
+
+```bash
+# From a platform repo root
+npm run prepare:build
+# Ensure FE/BE are up with the same COUNTRY
+cd core/frontend && PLAYWRIGHT_SKIP_WEBSERVER=1 npm run test:e2e:p0
+```
 
 ## Runtime and commands
 
@@ -62,7 +83,8 @@ npx playwright install chromium
 - `PLAYWRIGHT_SKIP_WEBSERVER=1` to skip `webServer` when the dev server is already running
 - `E2E_USER_LOGIN` (optional; default `admin@admin.com` when unset)
 - `E2E_USER_PASSWORD` (optional; default `GGGgggTEST777` when unset — matches stage `seed.ts` admin)
-- `API_URL` or `E2E_API_URL` (optional; default `http://localhost:4000` for API helpers such as `buildAvailableMdPhone`)
+- `API_URL` or `E2E_API_URL` (optional; default `http://localhost:4000` for API helpers such as `buildAvailablePlatformPhone`)
+- `COUNTRY` / `NEXT_PUBLIC_COUNTRY` must match the platform under test (`md` or `al`); e2e reads site config + phone region from them via `getE2ePlatform()`
 - For browser-side API helpers (`e2e/utils/api-origin.ts`), only **absolute** `http(s)` URLs are used from env. Priority: `E2E_API_URL`, then `API_URL`, then `NEXT_PUBLIC_API_URL` (relative values such as `/api` are ignored so helpers do not call the wrong host).
 - Run the backend API with `SMS_OUTBOUND_DISABLED=true` (and `NODE_ENV` not `production`) when Twilio credentials are present in `.env` so Playwright flows do not trigger real outbound SMS; codes in Redis are still written; UI verification can use `000000` when the API runs with `NODE_ENV=development` or `stage`, or with `NODE_ENV=test` and `ALLOW_SMS_TEST_CODE=true` (see below).
 

@@ -1,6 +1,6 @@
 import { test } from '../fixtures/base';
 import { createRegisterProfileData } from '../test-data/auth';
-import { buildAvailableMdPhone } from '../utils/api/check-phone';
+import { buildAvailablePlatformPhone } from '../utils/api/check-phone';
 import {
   E2E_REGISTRATION_PASSWORD,
   finishRegistrationAndReachHome,
@@ -19,7 +19,7 @@ test.describe('Auth: registration @p0', () => {
     searchHomePage,
   }) => {
     test.setTimeout(180_000);
-    const phone = await buildAvailableMdPhone(request);
+    const phone = await buildAvailablePlatformPhone(request);
     const profile = createRegisterProfileData();
 
     const steps: E2EStep[] = [
@@ -56,7 +56,7 @@ test.describe('Auth: registration @p0', () => {
     searchHomePage,
   }) => {
     test.setTimeout(180_000);
-    const phone = await buildAvailableMdPhone(request);
+    const phone = await buildAvailablePlatformPhone(request);
     const profile = createRegisterProfileData();
 
     const steps: E2EStep[] = [

@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 import { HeaderNavComponent } from '../components/layout/header-nav.component';
+import { getE2ePlatform } from '../platform/contract';
 import { pathnameWithoutLocalePrefix } from '../utils/app-path';
 import { t } from '../utils/i18n';
 import { visibleSearchFiltersForm } from '../utils/search-filters-form';
@@ -29,6 +30,7 @@ export class LanguageSwitcherPage {
   }
 
   async switchToAnotherLocale(): Promise<string> {
+    const platform = getE2ePlatform();
     const beforePath = pathnameWithoutLocalePrefix(this.page.url());
     const beforeSearch = new URL(this.page.url()).search;
     await this.openMenu();
@@ -54,15 +56,15 @@ export class LanguageSwitcherPage {
       return path === beforePath && search === beforeSearch;
     });
     const cookies = await this.page.context().cookies();
-    const localeCookie = cookies.find((cookie) => cookie.name === 'kupito-locale');
+    const localeCookie = cookies.find((cookie) => cookie.name === platform.localeCookieName);
     expect(localeCookie?.value).toBeTruthy();
-    expect(localeCookie?.value).not.toBe('ro');
-    const expectedLabel =
-      localeCookie?.value === 'ru'
-        ? t('common.languageRu')
-        : localeCookie?.value === 'en'
-          ? t('common.languageEn')
-          : selectedLocale.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+    expect(localeCookie?.value).not.toBe(platform.defaultLocale);
+    const translationKey = localeCookie?.value
+      ? platform.languageSwitcherTranslationKeys[localeCookie.value]
+      : undefined;
+    const expectedLabel = translationKey
+      ? t(translationKey)
+      : selectedLocale.replace(/^[^\p{L}\p{N}]+/u, '').trim();
     await expect(this.headerNav.languageSwitcher.first()).toContainText(expectedLabel, {
       timeout: 15_000,
     });

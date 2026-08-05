@@ -28,6 +28,7 @@ import {
   type SmartSelectionAnswers,
 } from '@/lib/smart-selection/types';
 import { toast } from '@/lib/toast';
+import type { Currency } from '@/lib/types';
 import { getCountry } from '@/lib/utils';
 import { Checkbox, LoadingButton } from '@/ui';
 
@@ -73,7 +74,7 @@ export function SmartSelectionWizard() {
   const { t } = useTranslation();
   const { push: localizedPush } = useLocalizedNavigation();
   const siteConfig = useMemo(() => loadSiteConfigSync(getCountry()), []);
-  const defaultCurrency = siteConfig.currency as 'EUR' | 'MDL';
+  const defaultCurrency = siteConfig.currency as Currency;
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<SmartSelectionAnswers>(INITIAL_SMART_SELECTION_ANSWERS);

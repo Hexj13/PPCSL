@@ -5,7 +5,7 @@ import { AppDataSource } from '../../data-source';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
-checkPlatform(['md']);
+checkPlatform(['md', 'al']);
 
 const TRUCK_BRANDS_AND_MODELS: Record<string, string[]> = {
   'Renault Trucks': [

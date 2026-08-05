@@ -1,3 +1,5 @@
+import type { Currency } from '../../common/types';
+
 export const SMART_PURPOSES = [
   'city',
   'commute',
@@ -108,7 +110,7 @@ export type SmartSelectionAnswers = {
   purposes: SmartPurpose[];
   drivingMode: SmartDrivingMode;
   budgetPreset: SmartBudgetPreset;
-  currency: 'EUR' | 'MDL';
+  currency: Currency;
   flexibleBudget: boolean;
   size: SmartSize;
   bodyTypes: SmartBodyTypeChoice[];

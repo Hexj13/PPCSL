@@ -372,25 +372,28 @@ export function getCityName(
 ): string {
   if (!cityNameEn) return '';
 
-  const country = getCountry();
-
-  if (country === 'md') {
-    if (cities && cities.length > 0) {
-      const city = cities.find((c) => c.nameEn === cityNameEn);
-      if (city) {
-        if (locale === 'ro') {
-          return city.name;
-        }
-        if (locale === 'ru' && city.nameRu) {
-          return `${city.nameRu} (${city.name})`;
-        }
+  if (cities && cities.length > 0) {
+    const city = cities.find((c) => c.nameEn === cityNameEn);
+    if (city) {
+      if (locale === 'ro') {
         return city.name;
       }
+      if (locale === 'ru' && city.nameRu) {
+        return `${city.nameRu} (${city.name})`;
+      }
+      if (locale === 'en') {
+        return city.nameEn;
+      }
+      return city.name;
     }
     return cityNameEn;
   }
 
-  return getCityNameMk(cityNameEn);
+  if (getCountry() === 'mk') {
+    return getCityNameMk(cityNameEn);
+  }
+
+  return cityNameEn;
 }
 
 export function getCityNamePlain(
@@ -400,28 +403,28 @@ export function getCityNamePlain(
 ): string {
   if (!cityNameEn) return '';
 
-  const country = getCountry();
-
-  if (country === 'md') {
-    if (cities && cities.length > 0) {
-      const city = cities.find((c) => c.nameEn === cityNameEn);
-      if (city) {
-        if (locale === 'ro') {
-          return city.name;
-        }
-        if (locale === 'ru' && city.nameRu) {
-          return city.nameRu;
-        }
-        if (locale === 'en') {
-          return city.nameEn;
-        }
+  if (cities && cities.length > 0) {
+    const city = cities.find((c) => c.nameEn === cityNameEn);
+    if (city) {
+      if (locale === 'ro') {
         return city.name;
       }
+      if (locale === 'ru' && city.nameRu) {
+        return city.nameRu;
+      }
+      if (locale === 'en') {
+        return city.nameEn;
+      }
+      return city.name;
     }
     return cityNameEn;
   }
 
-  return getCityNameMk(cityNameEn);
+  if (getCountry() === 'mk') {
+    return getCityNameMk(cityNameEn);
+  }
+
+  return cityNameEn;
 }
 
 function normalizePhoneDigits(phone: string): string {
@@ -430,11 +433,13 @@ function normalizePhoneDigits(phone: string): string {
 
 function getPhoneWithCountryCode(phone: string): string {
   const digits = normalizePhoneDigits(phone);
-  if (digits.startsWith('373')) {
+  const callingCode = getCountry() === 'al' ? '355' : '373';
+  const nationalDigits = getCountry() === 'al' ? 9 : 8;
+  if (digits.startsWith(callingCode)) {
     return digits;
   }
-  if (digits.length === 8) {
-    return `373${digits}`;
+  if (digits.length === nationalDigits) {
+    return `${callingCode}${digits}`;
   }
   return digits;
 }

@@ -23,15 +23,19 @@ describe('parser-catalog', () => {
 
   describe('cliScript resolution', () => {
     const toolsDir = path.join(__dirname, '..', '..', 'scripts', 'tools');
+    const cases = parsersConfig.map((p) => [p.code, p.cliScript] as const);
 
-    it.each(parsersConfig.map((p) => [p.code, p.cliScript] as const))(
-      '%s points to an existing CLI source file (%s)',
-      (_code, cliScript) => {
+    if (cases.length === 0) {
+      it('allows an empty parser catalog for platforms without parsers', () => {
+        expect(parsersConfig).toEqual([]);
+      });
+    } else {
+      it.each(cases)('%s points to an existing CLI source file (%s)', (_code, cliScript) => {
         expect(cliScript).toMatch(/\.ts$/);
         const cliTsPath = path.join(toolsDir, cliScript);
         expect(fs.existsSync(cliTsPath)).toBe(true);
-      },
-    );
+      });
+    }
   });
 
   describe('release flags', () => {

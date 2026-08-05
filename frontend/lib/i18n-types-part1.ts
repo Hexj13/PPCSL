@@ -124,6 +124,7 @@ export interface TranslationsPart1 {
     languageEn: string;
     languageRo: string;
     languageRu: string;
+    languageSq: string;
   };
   login: {
     title: string;

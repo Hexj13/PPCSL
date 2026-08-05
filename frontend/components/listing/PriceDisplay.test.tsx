@@ -21,6 +21,13 @@ describe('PriceDisplay', () => {
     expect(screen.getByText('MDL')).toBeInTheDocument();
   });
 
+  it('should display ALL currency as LEK', () => {
+    render(<PriceDisplay price={250000} currency="ALL" />);
+    expect(screen.getByText('250 000')).toBeInTheDocument();
+    expect(screen.getByText('LEK')).toBeInTheDocument();
+    expect(screen.queryByText('ALL')).not.toBeInTheDocument();
+  });
+
   it('should show approx price when approxPrice and defaultCurrencyCode are provided', () => {
     render(
       <PriceDisplay price={12500} currency="MDL" approxPrice={650} defaultCurrencyCode="EUR" />,

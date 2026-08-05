@@ -1,27 +1,53 @@
-import { type NumberType, parsePhoneNumberFromString, type PhoneNumber } from 'libphonenumber-js';
+import {
+  type CountryCode,
+  type NumberType,
+  parsePhoneNumberFromString,
+  type PhoneNumber,
+} from 'libphonenumber-js';
 
-const DEFAULT_CC = 'MD';
+import { getCountry } from '@/lib/utils';
 
-const MD_CALLING_CODE = '373';
-const MD_NATIONAL_DIGITS = 8;
+type PhoneRegion = {
+  iso: CountryCode;
+  callingCode: string;
+  nationalDigits: number;
+  /** National groups after calling code, e.g. [2,3,3] → +373 69 123 456 */
+  displayGroups: number[];
+};
+
+const PHONE_REGIONS: Record<string, PhoneRegion> = {
+  md: { iso: 'MD', callingCode: '373', nationalDigits: 8, displayGroups: [2, 3, 3] },
+  al: { iso: 'AL', callingCode: '355', nationalDigits: 9, displayGroups: [2, 3, 4] },
+};
 
 const SMS_LINE_TYPES = new Set<NumberType>(['MOBILE', 'FIXED_LINE_OR_MOBILE']);
 
-function formatMdInternational(parsed: PhoneNumber): string | null {
-  if (parsed.country !== 'MD' || parsed.countryCallingCode !== MD_CALLING_CODE) {
+function getPhoneRegion(): PhoneRegion {
+  return PHONE_REGIONS[getCountry()] ?? PHONE_REGIONS.md;
+}
+
+function formatRegionalInternational(parsed: PhoneNumber, region: PhoneRegion): string | null {
+  if (parsed.country !== region.iso || parsed.countryCallingCode !== region.callingCode) {
     return null;
   }
   const nn = String(parsed.nationalNumber);
-  if (nn.length !== MD_NATIONAL_DIGITS) {
+  if (nn.length !== region.nationalDigits) {
     return null;
   }
-  return `+${MD_CALLING_CODE} ${nn.slice(0, 2)} ${nn.slice(2, 5)} ${nn.slice(5, 8)}`;
+  const parts: string[] = [];
+  let offset = 0;
+  for (const size of region.displayGroups) {
+    parts.push(nn.slice(offset, offset + size));
+    offset += size;
+  }
+  return `+${region.callingCode} ${parts.join(' ')}`;
 }
 
 export function sanitizePhoneInput(raw: string): string {
   if (raw === '') {
     return '';
   }
+  const region = getPhoneRegion();
   let value = raw.replace(/[^\d+]/g, '');
   const plusCount = (value.match(/\+/g) || []).length;
   if (plusCount > 1) {
@@ -32,12 +58,12 @@ export function sanitizePhoneInput(raw: string): string {
     if (value.startsWith('00')) {
       value = '+' + value.slice(2);
     } else if (value.startsWith('0')) {
-      value = '+373' + value.substring(1);
+      value = `+${region.callingCode}` + value.substring(1);
     } else {
       value = '+' + value.replace(/\+/g, '');
     }
   } else if (value.startsWith('+0')) {
-    value = '+373' + value.substring(2);
+    value = `+${region.callingCode}` + value.substring(2);
   }
 
   if (value.length > 20) {
@@ -69,26 +95,29 @@ export function formatPhoneOnBlur(raw: string): string {
   if (!trimmed) {
     return '';
   }
-  const parsed = parsePhoneNumberFromString(trimmed, DEFAULT_CC);
+  const region = getPhoneRegion();
+  const parsed = parsePhoneNumberFromString(trimmed, region.iso);
   if (!parsed?.isValid()) {
     return trimmed;
   }
-  return formatMdInternational(parsed) ?? parsed.formatInternational();
+  return formatRegionalInternational(parsed, region) ?? parsed.formatInternational();
 }
 
 export function formatPhoneForDisplay(raw: string | null | undefined): string {
   if (!raw) {
     return '';
   }
+  const region = getPhoneRegion();
   const trimmed = raw.trim();
   const starCount = (trimmed.match(/\*/g) || []).length;
   if (starCount > 0) {
     const synthetic = trimmed.replace(/\s/g, '').replace(/\*/g, '0');
-    const maskedParsed = parsePhoneNumberFromString(synthetic, DEFAULT_CC);
+    const maskedParsed = parsePhoneNumberFromString(synthetic, region.iso);
     if (!maskedParsed?.isValid()) {
       return trimmed;
     }
-    const fullDisplay = formatMdInternational(maskedParsed) ?? maskedParsed.formatInternational();
+    const fullDisplay =
+      formatRegionalInternational(maskedParsed, region) ?? maskedParsed.formatInternational();
     let replaced = 0;
     const chars = [...fullDisplay];
     for (let i = chars.length - 1; i >= 0 && replaced < starCount; i -= 1) {
@@ -99,16 +128,17 @@ export function formatPhoneForDisplay(raw: string | null | undefined): string {
     }
     return chars.join('');
   }
-  const parsed = parsePhoneNumberFromString(trimmed, DEFAULT_CC);
+  const parsed = parsePhoneNumberFromString(trimmed, region.iso);
   if (parsed?.isValid()) {
-    return formatMdInternational(parsed) ?? parsed.formatInternational();
+    return formatRegionalInternational(parsed, region) ?? parsed.formatInternational();
   }
   return raw;
 }
 
 export function compactE164Phone(raw: string): string {
+  const region = getPhoneRegion();
   const cleaned = raw.replace(/\s/g, '').trim();
-  const parsed = parsePhoneNumberFromString(cleaned, DEFAULT_CC);
+  const parsed = parsePhoneNumberFromString(cleaned, region.iso);
   if (parsed?.isValid()) {
     return parsed.number;
   }
@@ -119,8 +149,9 @@ export function validatePhone(phone: string, t: (key: string) => string): string
   if (!phone) {
     return '';
   }
+  const region = getPhoneRegion();
   const trimmed = phone.trim();
-  const parsed = parsePhoneNumberFromString(trimmed, DEFAULT_CC);
+  const parsed = parsePhoneNumberFromString(trimmed, region.iso);
   if (!parsed) {
     return trimmed.startsWith('+') ? t('phone.invalidCountry') : t('phone.mustStartWithPlus');
   }

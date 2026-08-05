@@ -3,6 +3,7 @@ import path from 'node:path';
 import { expect, type Page } from '@playwright/test';
 
 import { BottomSheetComponent } from '../components/common/bottom-sheet.component';
+import { E2E_DESCRIPTION_TAB_SLOT0_TEST_ID } from '../platform/contract';
 import { createRandomListingPrice } from '../test-data/listings';
 import { expectPagePath } from '../utils/app-path';
 import { forceDefaultCanonicalLocaleCookies } from '../utils/e2e-locale';
@@ -46,7 +47,7 @@ export class ListingCreatePage {
     downPaymentInput: 'listing-form-down-payment',
     urgentCheckbox: 'listing-form-urgent',
     isNewCheckbox: 'listing-form-is-new',
-    descriptionTabRo: 'listing-form-description-tab-ro',
+    descriptionTabSlot0: E2E_DESCRIPTION_TAB_SLOT0_TEST_ID,
     descriptionEditor: 'listing-form-description-editor',
     photosInput: 'listing-form-photos-input',
     photosTrigger: 'listing-form-photos-trigger',
@@ -112,7 +113,7 @@ export class ListingCreatePage {
   private async pickDropdownOption(testId: string, pick: 'first' | 'last'): Promise<void> {
     const trigger = this.page.getByTestId(testId);
     const options = this.page.locator(`[data-testid^="${testId}-option-"]`);
-    const target = pick === 'first' ? options.first() : options.last();
+    let target = pick === 'first' ? options.first() : options.last();
     await trigger.scrollIntoViewIfNeeded();
     await trigger.click();
     if (await pageUsesMobileLayout(this.page)) {
@@ -126,25 +127,34 @@ export class ListingCreatePage {
         return;
       }
       await expect(target).toBeVisible({ timeout: 15_000 });
-    }
-    await expect(target).toBeVisible({ timeout: 15_000 });
-    if ((await pageUsesMobileLayout(this.page)) && (await target.isDisabled())) {
-      await this.page.locator(`[data-testid^="${testId}-option-"]:not([disabled])`).first().click();
-    }
-    await expect(target).toBeEnabled({ timeout: 15_000 });
-    await target.scrollIntoViewIfNeeded();
-    const targetLabel = (await target.innerText()).trim();
-    await target.click();
-    if (await pageUsesMobileLayout(this.page)) {
-      const dialog = this.page.locator(
-        '[role="dialog"][aria-modal="true"][aria-labelledby="bottom-sheet-title"]',
-      );
+      // MobileSelectField disables non-selected options once a draft value exists.
+      if (await target.isDisabled()) {
+        target = this.page.locator(`[data-testid^="${testId}-option-"]:not([disabled])`).first();
+      }
+      await expect(target).toBeEnabled({ timeout: 15_000 });
+      await target.scrollIntoViewIfNeeded();
+      const targetLabel = (await target.innerText()).trim();
+      // Option click toggles selection — only click when not already selected.
+      const alreadySelected = await target.evaluate((el) => el.className.includes('font-semibold'));
+      if (!alreadySelected) {
+        await target.click();
+      }
+      await expect
+        .poll(async () => target.evaluate((el) => el.className.includes('font-semibold')), {
+          timeout: 15_000,
+        })
+        .toBe(true);
       await dialog.locator('button.btn-primary').click();
       await expect(dialog).toBeHidden({ timeout: 15_000 });
       if (targetLabel) {
         await expect(trigger).toContainText(targetLabel, { timeout: 15_000 });
       }
+      return;
     }
+    await expect(target).toBeVisible({ timeout: 15_000 });
+    await expect(target).toBeEnabled({ timeout: 15_000 });
+    await target.scrollIntoViewIfNeeded();
+    await target.click();
   }
 
   async selectFirstDropdownOption(testId: string): Promise<void> {
@@ -212,7 +222,7 @@ export class ListingCreatePage {
   async fillLongDescription(): Promise<void> {
     const paragraph = '<p>E2E long description paragraph with enough text to exceed collapse.</p>';
     const longHtml = Array.from({ length: 24 }, () => paragraph).join('');
-    await this.page.getByTestId(this.testIds.descriptionTabRo).click();
+    await this.page.getByTestId(this.testIds.descriptionTabSlot0).click();
     const descriptionEditor = this.page
       .getByTestId(this.testIds.descriptionEditor)
       .locator('[contenteditable="true"]');
@@ -238,7 +248,7 @@ export class ListingCreatePage {
     await this.page.getByTestId(this.testIds.mileageInput).fill('98000');
     await this.setCheckboxCheckedById('listing-urgent', this.testIds.urgentCheckbox, true);
     await this.setCheckboxCheckedById('listing-is-new', this.testIds.isNewCheckbox, true);
-    await this.page.getByTestId(this.testIds.descriptionTabRo).click();
+    await this.page.getByTestId(this.testIds.descriptionTabSlot0).click();
     const descriptionEditor = this.page
       .getByTestId(this.testIds.descriptionEditor)
       .locator('[contenteditable="true"]');

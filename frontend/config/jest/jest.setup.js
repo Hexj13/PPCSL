@@ -1,6 +1,12 @@
 require('@testing-library/jest-dom');
 require('@testing-library/jest-dom/jest-globals');
 
+// Unit tests use Moldova fixtures (phones, cities, parsers). Platform repos may set COUNTRY=al.
+if (!process.env.JEST_PRESERVE_COUNTRY) {
+  process.env.COUNTRY = 'md';
+  process.env.NEXT_PUBLIC_COUNTRY = 'md';
+}
+
 // Auto-import React for JSX
 global.React = require('react');
 

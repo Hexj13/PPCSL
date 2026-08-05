@@ -3,6 +3,10 @@ import path from 'node:path';
 
 import { expect, type Page } from '@playwright/test';
 
+import { loadLegalConfigSync } from '@/lib/content/legal';
+
+import { getE2ePlatform } from '../platform/contract';
+
 import { pathnameWithoutLocalePrefix } from './app-path';
 import { t } from './i18n';
 
@@ -24,19 +28,38 @@ function loadEnInvestorsTitle(): string {
   return title;
 }
 
-const STATIC_PAGE_EXPECTATIONS: Record<string, StaticPageExpectation> = {
-  '/terms': { headingText: 'Termeni și condiții' },
-  '/privacy': { headingText: 'Politica de confidențialitate' },
-  '/faq': { headingKey: 'faq.title' },
-  '/contacts': { headingKey: 'contacts.title' },
-  '/partners': { headingKey: 'partners.title' },
-  '/investors': { headingText: loadEnInvestorsTitle() },
-  '/cookie-settings': { headingKey: 'cookieSettings.title' },
-  '/offline': { headingKey: 'pwa.offline', skipHeaderFooter: true },
-};
+function loadLegalDocumentTitle(doc: 'terms' | 'privacy'): string {
+  const platform = getE2ePlatform();
+  const legal = loadLegalConfigSync(platform.country);
+  const docs = legal?.[doc];
+  if (!docs) {
+    throw new Error(`Missing legal ${doc} config for E2E static page expectation`);
+  }
+  const localized = docs[platform.defaultLocale] ?? docs.en;
+  const title = localized?.title;
+  if (!title) {
+    throw new Error(
+      `Missing legal ${doc} title for locale ${platform.defaultLocale} (E2E static page)`,
+    );
+  }
+  return title;
+}
+
+function getStaticPageExpectations(): Record<string, StaticPageExpectation> {
+  return {
+    '/terms': { headingText: loadLegalDocumentTitle('terms') },
+    '/privacy': { headingText: loadLegalDocumentTitle('privacy') },
+    '/faq': { headingKey: 'faq.title' },
+    '/contacts': { headingKey: 'contacts.title' },
+    '/partners': { headingKey: 'partners.title' },
+    '/investors': { headingText: loadEnInvestorsTitle() },
+    '/cookie-settings': { headingKey: 'cookieSettings.title' },
+    '/offline': { headingKey: 'pwa.offline', skipHeaderFooter: true },
+  };
+}
 
 export async function expectStaticPageView(page: Page, route: string): Promise<void> {
-  const expectation = STATIC_PAGE_EXPECTATIONS[route];
+  const expectation = getStaticPageExpectations()[route];
   if (!expectation) {
     throw new Error(`Missing static page expectation for route: ${route}`);
   }

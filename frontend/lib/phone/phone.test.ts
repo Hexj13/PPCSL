@@ -152,3 +152,21 @@ describe('validatePhone', () => {
     expect(r).toBe(en.mustStartWithPlus);
   });
 });
+
+describe('phone (Albania)', () => {
+  beforeEach(() => {
+    process.env.COUNTRY = 'al';
+    process.env.NEXT_PUBLIC_COUNTRY = 'al';
+  });
+
+  afterEach(() => {
+    process.env.COUNTRY = 'md';
+    process.env.NEXT_PUBLIC_COUNTRY = 'md';
+  });
+
+  it('prefixes local Albanian numbers with +355', () => {
+    expect(sanitizePhoneInput('0691234567')).toBe('+355691234567');
+    expect(compactE164Phone('+355691234567')).toBe('+355691234567');
+    expect(formatPhoneForDisplay('+355691234567')).toBe('+355 69 123 4567');
+  });
+});

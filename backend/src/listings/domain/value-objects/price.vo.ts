@@ -1,6 +1,7 @@
+import * as constants from '../../../common/constants';
 import type { Currency } from '../../../common/types';
 
-const VALID_CURRENCIES: Currency[] = ['EUR', 'MDL'];
+const VALID_CURRENCIES: readonly Currency[] = constants.currencies;
 const MIN_AMOUNT = 0;
 const MAX_AMOUNT = 999_999_999;
 

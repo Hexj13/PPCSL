@@ -194,7 +194,8 @@ describe('Saved Filters API Integration Tests', () => {
         .expect(400);
 
       expect(response).toSatisfyApiSpec();
-      expect(response.body.message).toContain('maximum');
+      expect(String(response.body.message).toLowerCase()).toMatch(/maximum|maksimum|максимум/);
+      expect(String(response.body.message)).toContain('20');
     });
 
     it('should return 401 when not authenticated', async () => {

@@ -241,6 +241,49 @@ export default [
     },
   },
   {
+    files: ['e2e/**/*.{ts,tsx}'],
+    ignores: ['e2e/platform/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "Literal[value='+373']",
+          message:
+            'Do not hardcode country phone prefixes in e2e. Use getE2ePlatform() / buildUniquePlatformPhone() from e2e/platform/contract.ts.',
+        },
+        {
+          selector: "Literal[value='+355']",
+          message:
+            'Do not hardcode country phone prefixes in e2e. Use getE2ePlatform() / buildUniquePlatformPhone() from e2e/platform/contract.ts.',
+        },
+        {
+          selector: "Literal[value='/locales/ro.json']",
+          message: 'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
+        },
+        {
+          selector: "Literal[value='/locales/sq.json']",
+          message: 'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
+        },
+        {
+          selector: "Literal[value='lib/locales/ro.json']",
+          message: 'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
+        },
+        {
+          selector: "Literal[value='lib/locales/sq.json']",
+          message: 'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
+        },
+        {
+          selector: "Identifier[name='buildUniqueMdPhone']",
+          message: 'Use buildUniquePlatformPhone from e2e/platform/contract.ts instead of buildUniqueMdPhone.',
+        },
+        {
+          selector: "Identifier[name='buildAvailableMdPhone']",
+          message: 'Use buildAvailablePlatformPhone instead of buildAvailableMdPhone.',
+        },
+      ],
+    },
+  },
+  {
     files: ['e2e/**/*.spec.{ts,tsx}'],
     rules: {
       'testing-library/prefer-screen-queries': 'off',

@@ -1,11 +1,20 @@
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import { type CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 
+import { getCountry } from '../../../common/env';
 import { validatePhoneForSms } from '../../../common/utils/validate-phone-for-sms';
 
+const CALLING_CODE_BY_COUNTRY: Record<string, { iso: CountryCode; prefix: string }> = {
+  md: { iso: 'MD', prefix: '+373' },
+  al: { iso: 'AL', prefix: '+355' },
+};
+
 export class PhoneService {
-  private static readonly MD_PREFIX = '+373';
+  private getRegion(): { iso: CountryCode; prefix: string } {
+    return CALLING_CODE_BY_COUNTRY[getCountry()] ?? CALLING_CODE_BY_COUNTRY.md;
+  }
 
   normalize(phone: string): string {
+    const region = this.getRegion();
     let normalized = phone
       .trim()
       .replace(/\s+/g, '')
@@ -15,15 +24,15 @@ export class PhoneService {
       normalized = '+' + normalized.slice(2);
     }
 
-    const parsed = parsePhoneNumberFromString(normalized, 'MD');
+    const parsed = parsePhoneNumberFromString(normalized, region.iso);
     if (parsed?.isValid()) {
       return parsed.number;
     }
 
     if (normalized.startsWith('0')) {
-      normalized = PhoneService.MD_PREFIX + normalized.substring(1);
+      normalized = region.prefix + normalized.substring(1);
     } else if (!normalized.startsWith('+')) {
-      normalized = PhoneService.MD_PREFIX + normalized;
+      normalized = region.prefix + normalized;
     }
 
     return normalized;

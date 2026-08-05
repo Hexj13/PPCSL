@@ -1,5 +1,7 @@
 import type { BrowserContext, Page } from '@playwright/test';
 
+import { getE2ePlatform } from '../platform/contract';
+
 import { getE2eAppOrigin } from './api-origin';
 
 const COOKIE_MAX_AGE_SEC = 365 * 24 * 60 * 60;
@@ -20,10 +22,11 @@ export async function applyDefaultLocaleCookiesToBrowserContext(
   context: BrowserContext,
   appBaseUrl: string,
 ): Promise<void> {
+  const platform = getE2ePlatform();
   const base = cookiePayloadForAppUrl(appBaseUrl);
   await context.addCookies([
-    { ...base, name: 'kupito-locale', value: 'ro' },
-    { ...base, name: 'kupito-preferred-locale', value: 'ro' },
+    { ...base, name: platform.localeCookieName, value: platform.defaultLocale },
+    { ...base, name: platform.preferredLocaleCookieName, value: platform.defaultLocale },
   ]);
 }
 
@@ -40,9 +43,10 @@ export async function forceDefaultCanonicalLocaleCookies(page: Page): Promise<vo
   if (!origin) {
     return;
   }
+  const platform = getE2ePlatform();
   const base = cookiePayloadForAppUrl(origin);
   await page.context().addCookies([
-    { ...base, name: 'kupito-locale', value: 'ro' },
-    { ...base, name: 'kupito-preferred-locale', value: 'ro' },
+    { ...base, name: platform.localeCookieName, value: platform.defaultLocale },
+    { ...base, name: platform.preferredLocaleCookieName, value: platform.defaultLocale },
   ]);
 }

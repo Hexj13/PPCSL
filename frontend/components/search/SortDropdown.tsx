@@ -94,7 +94,7 @@ export function SortDropdown({
   );
 
   return (
-    <div className="w-full sm:min-w-[200px]">
+    <div className="w-full sm:min-w-[260px]">
       <Dropdown
         dataTestId={dataTestId}
         value={currentSortKey}
@@ -109,6 +109,7 @@ export function SortDropdown({
         placeholder={t('common.selectSorting')}
         options={sortOptions}
         autoPosition={true}
+        menuExpandToContent
         disabled={!mounted}
       />
     </div>

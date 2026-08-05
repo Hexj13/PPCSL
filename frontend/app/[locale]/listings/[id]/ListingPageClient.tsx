@@ -289,7 +289,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
   listingRef.current = listing;
   const failureScopeRef = useRef<'listing_page' | 'listing_modal'>('listing_page');
 
-  const descriptionLocale = locale === 'ru' ? 'ru' : 'ro';
+  const descriptionLocale = locale;
   const descriptionRaw = useMemo(() => {
     if (!listing || !listingHasAnyDescription(listing)) return '';
     return getListingDescriptionForLocale(listing, descriptionLocale) ?? '';

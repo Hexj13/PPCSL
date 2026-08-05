@@ -121,4 +121,29 @@ describe('LanguageSwitcher', () => {
     expect(screen.getByTestId('lang-flag-ro')).toHaveTextContent('🇷🇴');
     expect(screen.getByTestId('lang-flag-ru')).toHaveTextContent('🇷🇺');
   });
+
+  it('passes Albanian flag emoji for sq locale', () => {
+    const { resolveLocaleRouting } = require('@/lib/locale-routing') as {
+      resolveLocaleRouting: jest.Mock;
+    };
+    resolveLocaleRouting.mockReturnValueOnce({
+      defaultLocale: 'sq',
+      supportedLocales: ['sq', 'en'],
+      prefixedLocales: ['en'],
+      enableLegacyDefaultLocaleRedirect: true,
+      languageSwitcherTranslationKeys: {
+        sq: 'common.languageSq',
+        en: 'common.languageEn',
+      },
+    });
+
+    render(
+      <Tree initialLocale="sq">
+        <LanguageSwitcher />
+      </Tree>,
+    );
+
+    expect(screen.getByTestId('lang-flag-sq')).toHaveTextContent('🇦🇱');
+    expect(screen.getByTestId('lang-flag-en')).toHaveTextContent('🇬🇧');
+  });
 });

@@ -16,18 +16,19 @@ export function loadFaqSync(country: string, locale?: string): FAQConfig | null 
       return null;
     }
 
-    if ('ro' in faqData || 'ru' in faqData || 'en' in faqData) {
+    if ('ro' in faqData || 'ru' in faqData || 'en' in faqData || 'sq' in faqData) {
       const configWithLanguages = faqData as FAQConfigWithLanguages;
-      const currentLocale = locale || (country === 'md' ? 'ro' : 'ro');
+      const currentLocale = (locale || (country === 'al' ? 'sq' : 'ro')).toLowerCase();
 
-      if (currentLocale === 'ro' && configWithLanguages.ro) {
-        return configWithLanguages.ro;
-      }
-      if (currentLocale === 'ru' && configWithLanguages.ru) {
-        return configWithLanguages.ru;
+      const byLocale = configWithLanguages[currentLocale as keyof FAQConfigWithLanguages];
+      if (byLocale) {
+        return byLocale;
       }
       if (configWithLanguages.en) {
         return configWithLanguages.en;
+      }
+      if (configWithLanguages.sq) {
+        return configWithLanguages.sq;
       }
       if (configWithLanguages.ro) {
         return configWithLanguages.ro;

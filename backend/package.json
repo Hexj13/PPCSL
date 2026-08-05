@@ -1,7 +1,7 @@
 {
-  "name": "kupito-backend",
+  "name": "ppcsl-backend",
   "version": "1.0.0",
-  "description": "Backend API для Kupito",
+  "description": "PPCSL backend API",
   "author": "",
   "private": true,
   "license": "MIT",
@@ -258,6 +258,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/test/jest-unit.setup.ts"
+    ],
     "coverageThreshold": {
       "global": {
         "branches": 52,

@@ -8,7 +8,6 @@ import type { BodyType } from '../../common/types';
 import {
   BODY_TYPES_BY_VEHICLE_TYPE,
   ConditionType,
-  Currency,
   FuelType,
   ListingStatus as ListingStatusEnum,
   RegistrationType,
@@ -23,7 +22,7 @@ import { getPlatformConfig } from '../platforms';
 import { checkEnvironment, checkPlatform } from '../script-guard';
 
 checkEnvironment(['stage', 'development', 'test']);
-checkPlatform(['md']);
+checkPlatform(['md', 'al']);
 
 const platformConfig = getPlatformConfig();
 const { cities, descriptions } = platformConfig;
@@ -128,7 +127,7 @@ async function seedMotorcycles(activeCount: number = 50) {
   const motoBodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE.moto] as BodyType[];
   const conditionTypes = Object.values(ConditionType);
   const registrationTypes = Object.values(RegistrationType);
-  const currencies = Object.values(Currency);
+  const currencies = platformConfig.currencyWeights.map((item) => item.value);
 
   const seedImages = getSeedImages();
   if (seedImages.length === 0) {

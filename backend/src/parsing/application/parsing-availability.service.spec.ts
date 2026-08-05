@@ -2,6 +2,81 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 
 import { ParsingAvailabilityService } from './parsing-availability.service';
 
+jest.mock('./parser-catalog', () => {
+  const fixtureCatalog: Record<
+    string,
+    {
+      code: string;
+      label: string;
+      domain: string;
+      supportedRunTypes: Array<'plp' | 'pdp'>;
+      scanInputMode: 'pages' | 'profile_login';
+      adminAvailability: 'enabled';
+      releaseStage: 'released';
+      isVisibleInAdmin: boolean;
+      manualRunEnabled: boolean;
+      schedulerEnabled: boolean;
+      cliScript: string;
+      plpMode: 'mono' | 'multi';
+      availabilityProbe: {
+        sourceUrl: string;
+        sourceUrlEnvVar?: string;
+        plpFirstPagePath: string;
+        plpPagePathTemplate: string;
+        defaultPageProbeCount: number;
+        timeoutMs: number;
+      };
+    }
+  > = {
+    cipauto: {
+      code: 'cipauto',
+      label: 'CipAuto.md',
+      domain: 'cipauto.md',
+      supportedRunTypes: ['plp', 'pdp'],
+      scanInputMode: 'pages',
+      adminAvailability: 'enabled',
+      releaseStage: 'released',
+      isVisibleInAdmin: true,
+      manualRunEnabled: true,
+      schedulerEnabled: true,
+      cliScript: 'cipauto-import/cli.ts',
+      plpMode: 'mono',
+      availabilityProbe: {
+        sourceUrl: 'https://cipauto.md',
+        sourceUrlEnvVar: 'CIPAUTO_BASE_URL',
+        plpFirstPagePath: '/catalog-auto/?sort=newest',
+        plpPagePathTemplate: '/catalog-auto/page/{page}/?sort=newest',
+        defaultPageProbeCount: 3,
+        timeoutMs: 15000,
+      },
+    },
+    '999md': {
+      code: '999md',
+      label: '999.md',
+      domain: '999.md',
+      supportedRunTypes: ['plp', 'pdp'],
+      scanInputMode: 'profile_login',
+      adminAvailability: 'enabled',
+      releaseStage: 'released',
+      isVisibleInAdmin: true,
+      manualRunEnabled: true,
+      schedulerEnabled: true,
+      cliScript: '999md-import/cli.ts',
+      plpMode: 'multi',
+      availabilityProbe: {
+        sourceUrl: 'https://999.md',
+        plpFirstPagePath: '/ro/',
+        plpPagePathTemplate: '/ro/?probe={page}',
+        defaultPageProbeCount: 3,
+        timeoutMs: 15000,
+      },
+    },
+  };
+  return {
+    getParserCatalogItem: (code: string) => fixtureCatalog[code],
+  };
+});
+
 describe('ParsingAvailabilityService', () => {
   const originalFetch = global.fetch;
   const originalEnv = { ...process.env };

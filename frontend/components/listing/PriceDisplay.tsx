@@ -1,4 +1,5 @@
 import { useTranslation } from '@/hooks/useTranslation';
+import { getCurrencyDisplayCode } from '@/lib/constants';
 import { formatPrice } from '@/lib/utils';
 
 interface PriceDisplayProps {
@@ -43,11 +44,14 @@ export function PriceDisplay({
     large: 'text-lg md:text-xl',
   };
 
-  const approxBlock = approxPrice != null && defaultCurrencyCode && (
+  const displayCurrency = getCurrencyDisplayCode(currency);
+  const displayDefaultCurrency = getCurrencyDisplayCode(defaultCurrencyCode);
+
+  const approxBlock = approxPrice != null && displayDefaultCurrency && (
     <span className="text-sm font-normal" style={{ color: 'rgb(var(--gray-400-rgb))' }}>
       {t('listings.approxPriceWithCurrency', {
         price: formatPrice(approxPrice),
-        currency: defaultCurrencyCode,
+        currency: displayDefaultCurrency,
       })}
     </span>
   );
@@ -63,7 +67,7 @@ export function PriceDisplay({
             className={`${currencySizeClasses[size]} font-medium ${currencyClassName ?? 'text-gray-400'}`}
             style={currencyStyle}
           >
-            {currency}
+            {displayCurrency}
           </span>
         )}
         {!approxPriceBelow && approxBlock}

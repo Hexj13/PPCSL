@@ -9,19 +9,15 @@ import {
   SearchFilterCityIcon,
   SearchFilterPriceIcon,
 } from '@/components/search/search-filters/search-filter-field-icons';
+import { getCurrencyDisplayCode } from '@/lib/constants';
 import { buildCityOptions } from '@/lib/options/city-options';
+import { loadSiteConfigSync } from '@/lib/site-config';
 import type { Currency } from '@/lib/types';
-import { CurrencyEnum } from '@/lib/types';
-import { sortOptionsByLabel } from '@/lib/utils';
+import { getCountry } from '@/lib/utils';
 import { Checkbox } from '@/ui';
 
 import { RequiredAsterisk } from './RequiredAsterisk';
 import type { TireListingFormData } from './tireListingFormTypes';
-
-const CURRENCY_OPTIONS = sortOptionsByLabel([
-  { value: CurrencyEnum.EUR, label: 'EUR' },
-  { value: CurrencyEnum.MDL, label: 'MDL' },
-]);
 
 interface TirePriceAndLocationSectionProps {
   formData: TireListingFormData;
@@ -43,6 +39,14 @@ export function TirePriceAndLocationSection({
   handleWheel,
 }: TirePriceAndLocationSectionProps) {
   const { locale } = useI18n();
+  const currencyOptions = useMemo(
+    () =>
+      loadSiteConfigSync(getCountry()).currencies.map((code) => ({
+        value: code,
+        label: getCurrencyDisplayCode(code),
+      })),
+    [],
+  );
   const cityOptions = useMemo(
     () =>
       buildCityOptions({
@@ -101,7 +105,7 @@ export function TirePriceAndLocationSection({
               className="w-full"
               autoPosition={true}
               menuMaxHeight={300}
-              options={CURRENCY_OPTIONS}
+              options={currencyOptions}
             />
           </div>
         </div>
