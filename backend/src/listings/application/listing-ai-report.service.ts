@@ -18,6 +18,7 @@ import { GeminiListingAiReportClient } from '../infrastructure/gemini-listing-ai
 
 import { resolveAiReportLanguage } from './listing-ai-report-language';
 import {
+  LISTING_AI_REPORT_FAIL_PREFIX,
   LISTING_AI_REPORT_LOCK_PREFIX,
   LISTING_AI_REPORT_QUOTA_PREFIX,
 } from './listing-ai-report-redis-prefixes';
@@ -39,6 +40,7 @@ import type {
 import { IListingRepository, LISTING_REPOSITORY } from './ports/listing.repository.port';
 
 const LOCK_TTL_SEC = 300;
+const FAIL_TTL_SEC = 300;
 const QUOTA_TTL_SEC = 7200;
 const DEFAULT_MAX_GEN_PER_HOUR_PROD = 5;
 
@@ -161,6 +163,26 @@ export class ListingAiReportService {
 
     const snapshot = buildListingAiInputSnapshot(listing, reportLanguage);
     const inputHash = computeListingAiInputHash(snapshot);
+    const failKey = `${LISTING_AI_REPORT_FAIL_PREFIX}${params.listingId}:${reportLanguage}:${inputHash}`;
+
+    try {
+      if (await this.redisService.exists(failKey)) {
+        logUserEvent(this.logger, {
+          event: 'ai_report_request',
+          userId: params.userId,
+          listingId: params.listingId,
+          reportLanguage,
+          outcome: 'unavailable',
+          reason: 'recent_generation_failure',
+        });
+        return {
+          status: 'unavailable',
+          message: MESSAGES.unavailable[reportLanguage],
+        };
+      }
+    } catch (e) {
+      this.logger.warn(`AI report fail-key check error: ${e instanceof Error ? e.message : e}`);
+    }
 
     const cached = await this.listingAiReportRepo.findOne({
       where: {
@@ -289,6 +311,7 @@ export class ListingAiReportService {
       reportLanguage,
       inputHash,
       lockKey,
+      failKey,
       quotaKey,
       quotaConsumed,
     }).catch((err) => {
@@ -316,6 +339,7 @@ export class ListingAiReportService {
     reportLanguage: AiReportLanguage;
     inputHash: string;
     lockKey: string;
+    failKey: string;
     quotaKey: string;
     quotaConsumed: boolean;
   }): Promise<void> {
@@ -415,6 +439,13 @@ export class ListingAiReportService {
           await this.redisService.decr(ctx.quotaKey);
         } catch (rollbackError) {
           void rollbackError;
+        }
+      }
+      if (!success) {
+        try {
+          await this.redisService.set(ctx.failKey, '1', FAIL_TTL_SEC);
+        } catch (failMarkError) {
+          void failMarkError;
         }
       }
       try {

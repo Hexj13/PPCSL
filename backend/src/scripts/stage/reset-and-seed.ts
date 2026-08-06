@@ -4,8 +4,10 @@ import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { ComparisonItem } from '../../comparison/entities/comparison-item.entity';
 import { AppDataSource } from '../../data-source';
 import { Favorite } from '../../favorites/entities/favorite.entity';
+import { ListingAiReport } from '../../listings/entities/listing-ai-report.entity';
 import { ListingView } from '../../listings/entities/listing-view.entity';
 import { Listing } from '../../listings/entities/listing.entity';
+import { PromotionHistory } from '../../listings/entities/promotion-history.entity';
 import { Vehicle } from '../../listings/entities/vehicle.entity';
 import { User } from '../../users/entities/user.entity';
 import { checkEnvironment } from '../script-guard';
@@ -32,6 +34,20 @@ async function clearDatabase() {
     .from(ComparisonItem)
     .execute();
   console.log(`   ✅ Deleted ${comparisonDeleteResult.affected ?? 0} comparison items\n`);
+
+  console.log('🗑️  Deleting promotion history...');
+  const promotionDeleteResult = await AppDataSource.createQueryBuilder()
+    .delete()
+    .from(PromotionHistory)
+    .execute();
+  console.log(`   ✅ Deleted ${promotionDeleteResult.affected ?? 0} promotion history rows\n`);
+
+  console.log('🗑️  Deleting listing AI reports...');
+  const aiReportDeleteResult = await AppDataSource.createQueryBuilder()
+    .delete()
+    .from(ListingAiReport)
+    .execute();
+  console.log(`   ✅ Deleted ${aiReportDeleteResult.affected ?? 0} listing AI reports\n`);
 
   console.log('🗑️  Deleting listings...');
   const allListings = await listingRepo.find();
@@ -157,6 +173,24 @@ async function clearDatabase() {
   console.log(`   - Remaining models: ${finalModels.length}`);
   console.log(`   - Remaining brands: ${finalBrands.length}`);
   console.log(`   - Remaining users: ${finalUsers.length}\n`);
+
+  const { ConfigService } = await import('@nestjs/config');
+  const { RedisService } = await import('../../common/redis.service');
+  const { CACHE_PREFIXES } = await import('../../common/utils/cache.utils');
+  const configService = new ConfigService();
+  const redisService = new RedisService(configService);
+  await redisService.onModuleInit();
+  console.log('🗑️  Clearing brands/models cache...');
+  const clearedBrandCache = await redisService.invalidateByPrefix(CACHE_PREFIXES.brands);
+  const clearedModelCache = await redisService.invalidateByPrefix(CACHE_PREFIXES.brandsModels);
+  const clearedTireBrandCache = await redisService.invalidateByPrefix(CACHE_PREFIXES.tireBrands);
+  const clearedTireModelCache = await redisService.invalidateByPrefix(
+    CACHE_PREFIXES.tireBrandsModels,
+  );
+  console.log(
+    `   ✅ Cleared cache entries: brands=${clearedBrandCache}, models=${clearedModelCache}, tireBrands=${clearedTireBrandCache}, tireModels=${clearedTireModelCache}\n`,
+  );
+  await redisService.onModuleDestroy();
 }
 
 async function main() {
@@ -171,6 +205,18 @@ async function main() {
     const { addBrandsAndModels } = await import('./add-brands');
     await addBrandsAndModels();
     console.log('');
+
+    const { ConfigService } = await import('@nestjs/config');
+    const { RedisService } = await import('../../common/redis.service');
+    const { CACHE_PREFIXES } = await import('../../common/utils/cache.utils');
+    const configService = new ConfigService();
+    const redisService = new RedisService(configService);
+    await redisService.onModuleInit();
+    await redisService.invalidateByPrefix(CACHE_PREFIXES.brands);
+    await redisService.invalidateByPrefix(CACHE_PREFIXES.brandsModels);
+    await redisService.invalidateByPrefix(CACHE_PREFIXES.tireBrands);
+    await redisService.invalidateByPrefix(CACHE_PREFIXES.tireBrandsModels);
+    await redisService.onModuleDestroy();
 
     const { seed } = await import('./seed');
     await seed();

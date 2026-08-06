@@ -163,8 +163,7 @@
     "languageEn": "English",
     "languageRo": "Română",
     "languageRu": "Русский",
-    "languageLocaleCode": "{code}",
-    "languageSq": "Shqip"
+    "languageLocaleCode": "{code}"
   },
   "errors": {
     "smsHourlyLimit": "SMS limit reached for this number. You can request a new code in one hour.",

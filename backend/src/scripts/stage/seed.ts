@@ -395,6 +395,33 @@ function getVehicleDescriptions(vehicleType: VehicleType): string[] {
   return descriptions;
 }
 
+const SEED_EQUIPMENT_POOL = [
+  'air_conditioning',
+  'navigation',
+  'parking_sensors',
+  'cruise_control',
+  'leather_seats',
+  'heated_seats',
+  'abs',
+  'esp',
+] as const;
+
+function pickSeedEquipment(vehicleType: VehicleType): string[] | null {
+  if (vehicleType === 'moto') {
+    return null;
+  }
+  const count = getRandomInt(3, Math.min(6, SEED_EQUIPMENT_POOL.length));
+  return getRandomElements([...SEED_EQUIPMENT_POOL], count);
+}
+
+function buildSeedDescription(base: string, index: number): string {
+  if (index % 7 !== 0) {
+    return base;
+  }
+  const paragraph = `<p>${base} E2E long description paragraph with enough text to exceed collapse.</p>`;
+  return Array.from({ length: 24 }, () => paragraph).join('');
+}
+
 function getDoorsByBodyType(bodyType: BodyType): number | undefined {
   if (
     bodyType === 'Sedan' ||
@@ -735,7 +762,8 @@ async function seedListingsByType(
       currency,
       currentYear,
     );
-    const description = getRandomElement(vehicleDescriptions);
+    const description = buildSeedDescription(getRandomElement(vehicleDescriptions), i);
+    const equipment = pickSeedEquipment(vehicleType);
 
     const imageCount = getRandomInt(2, 5);
     let images: string[];
@@ -799,6 +827,7 @@ async function seedListingsByType(
       city,
       status: ListingStatusEnum.Active,
       description,
+      equipment,
       user_id: user.id,
       vehicle_id: savedVehicle.id,
       images,
