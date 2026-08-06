@@ -15,14 +15,7 @@ type AllowedOrigin = {
 @Injectable()
 export class DiagnosticsService {
   private collectAllowedOrigins(): AllowedOrigin[] {
-    const origins: AllowedOrigin[] = [
-      {
-        protocol: 'https:',
-        hostname: 'cdn.kupito.club',
-        port: '',
-        pathPrefix: '/uploads/',
-      },
-    ];
+    const origins: AllowedOrigin[] = [];
     const cdn = process.env.AWS_CLOUDFRONT_URL?.trim();
     if (cdn) {
       try {

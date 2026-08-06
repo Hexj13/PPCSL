@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { useDeferredLoadAfterIdle } from '@/hooks/useDeferredThirdParty';
 
-const GTM_ID = 'GTM-K527X5WK';
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID?.trim() || '';
 
 const isProductionHostname = (hostname: string) => {
   return (
@@ -46,7 +46,11 @@ export function GoogleTagManager() {
     }
   }, [productionHostname]);
 
-  const shouldLoad = isProd && deferredReady;
+  const shouldLoad = Boolean(GTM_ID) && isProd && deferredReady;
+
+  if (!GTM_ID) {
+    return null;
+  }
 
   return (
     <div suppressHydrationWarning>

@@ -87,9 +87,17 @@ SENTRY_AUTH_TOKEN=your-auth-token
 
 ```env
 SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
-SENTRY_ENVIRONMENT=production
-SENTRY_RELEASE=1.0.0
+# Optional sampling overrides:
+# SENTRY_TRACES_SAMPLE_RATE=0.1
+# SENTRY_PROFILES_SAMPLE_RATE=0.05
 ```
+
+**Reality check (current `core/backend/src/common/sentry.config.ts`):**
+
+- Sentry `environment` is **`process.env.NODE_ENV`** (fallback `development`).
+- Sentry is **enabled only when `NODE_ENV === 'production'`**.
+- **`SENTRY_ENVIRONMENT` and `SENTRY_RELEASE` are not read** by the backend init. Setting them in the host has no effect unless the code is changed.
+- Use separate Sentry projects per platform; do not rely on an environment tag alone to isolate issues across platforms.
 
 ## Frontend integration
 
@@ -456,10 +464,13 @@ Sentry.init({
 
 #### Backend (release)
 
+Current backend `sentry.config.ts` does **not** set `release` from env. The snippet below is aspirational / future work — do not expect `SENTRY_RELEASE` to appear on events until the code is updated:
+
 ```typescript
 Sentry.init({
   // ... other options
-  release: process.env.SENTRY_RELEASE || '1.0.0',
+  // Not wired today — environment comes from NODE_ENV only
+  // release: process.env.SENTRY_RELEASE || '1.0.0',
 });
 ```
 

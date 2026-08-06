@@ -145,9 +145,23 @@ async function bootstrap() {
     },
   });
 
+  const swaggerSiteName = (() => {
+    const fromEnv = process.env.SITE_NAME?.trim() || process.env.PLATFORM_NAME?.trim();
+    if (fromEnv) return fromEnv;
+    const frontendUrl = process.env.FRONTEND_URL?.trim();
+    if (frontendUrl) {
+      try {
+        return new URL(frontendUrl).hostname;
+      } catch {
+        void 0;
+      }
+    }
+    return 'API';
+  })();
+
   const config = new DocumentBuilder()
-    .setTitle('Kupito API')
-    .setDescription('API documentation for Kupito platform')
+    .setTitle(`${swaggerSiteName} API`)
+    .setDescription(`API documentation for ${swaggerSiteName} platform`)
     .setVersion('1.0')
     .addBearerAuth(
       {

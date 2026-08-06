@@ -15,6 +15,7 @@ import {
   getListingDescriptionForLocale,
   localeToDescriptionLocale,
 } from '@/lib/listingDescriptionLocale';
+import { isSiteNoindex } from '@/lib/robots-metadata';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import {
   absoluteUrlWithLocalePrefix,
@@ -444,13 +445,13 @@ export async function generateMetadata({
       t.metadata.listing.keywords.moldova,
     ].filter(Boolean),
     alternates,
-    ...(listing.status === 'Closed' && {
+    ...((listing.status === 'Closed' || isSiteNoindex()) && {
       robots: {
         index: false,
-        follow: true,
+        follow: listing.status === 'Closed' && !isSiteNoindex(),
         googleBot: {
           index: false,
-          follow: true,
+          follow: listing.status === 'Closed' && !isSiteNoindex(),
         },
       },
     }),
@@ -467,7 +468,7 @@ export async function generateMetadata({
           alt: ogImageAlt,
         },
       ],
-      siteName: 'Kupito',
+      siteName: siteConfig.name,
       locale: siteConfig.locale,
     },
     twitter: {

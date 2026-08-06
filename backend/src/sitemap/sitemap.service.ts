@@ -12,7 +12,14 @@ import { TireBrand } from '../tires/entities/tire-brand.entity';
 import { TireModel } from '../tires/entities/tire-model.entity';
 import { User } from '../users/entities/user.entity';
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://kupito.club').replace(/\/$/, '');
+function resolveSiteUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) {
+    throw new Error('NEXT_PUBLIC_SITE_URL must be set for sitemap generation');
+  }
+  return raw.replace(/\/$/, '');
+}
+
 const CACHE_TTL = 3600;
 const CACHE_PREFIX = 'sitemap:v4:';
 
@@ -101,18 +108,18 @@ export class SitemapService {
     const now = this.today();
 
     const sitemaps: { loc: string; lastmod: string }[] = [
-      { loc: `${SITE_URL}/sitemaps/pages.xml`, lastmod: now },
+      { loc: `${resolveSiteUrl()}/sitemaps/pages.xml`, lastmod: now },
       ...BRAND_SITEMAP_VEHICLE_TYPES.map((vt) => ({
-        loc: `${SITE_URL}/sitemaps/brands-${vt}.xml`,
+        loc: `${resolveSiteUrl()}/sitemaps/brands-${vt}.xml`,
         lastmod: now,
       })),
-      { loc: `${SITE_URL}/sitemaps/tires.xml`, lastmod: now },
-      { loc: `${SITE_URL}/sitemaps/sellers.xml`, lastmod: now },
+      { loc: `${resolveSiteUrl()}/sitemaps/tires.xml`, lastmod: now },
+      { loc: `${resolveSiteUrl()}/sitemaps/sellers.xml`, lastmod: now },
     ];
 
     for (const month of months) {
       sitemaps.push({
-        loc: `${SITE_URL}/sitemaps/listings-${month}.xml`,
+        loc: `${resolveSiteUrl()}/sitemaps/listings-${month}.xml`,
         lastmod: now,
       });
     }
@@ -167,14 +174,19 @@ export class SitemapService {
 
     const now = this.today();
     const urls: SitemapUrl[] = [
-      { loc: SITE_URL, lastmod: now, changefreq: 'daily', priority: 1.0 },
-      { loc: `${SITE_URL}/listings`, lastmod: now, changefreq: 'daily', priority: 0.9 },
-      { loc: `${SITE_URL}/terms`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
-      { loc: `${SITE_URL}/privacy`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
-      { loc: `${SITE_URL}/faq`, lastmod: now, changefreq: 'monthly', priority: 0.4 },
-      { loc: `${SITE_URL}/partners`, lastmod: now, changefreq: 'monthly', priority: 0.4 },
-      { loc: `${SITE_URL}/contacts`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
-      { loc: `${SITE_URL}/cookie-settings`, lastmod: now, changefreq: 'monthly', priority: 0.2 },
+      { loc: resolveSiteUrl(), lastmod: now, changefreq: 'daily', priority: 1.0 },
+      { loc: `${resolveSiteUrl()}/listings`, lastmod: now, changefreq: 'daily', priority: 0.9 },
+      { loc: `${resolveSiteUrl()}/terms`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
+      { loc: `${resolveSiteUrl()}/privacy`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
+      { loc: `${resolveSiteUrl()}/faq`, lastmod: now, changefreq: 'monthly', priority: 0.4 },
+      { loc: `${resolveSiteUrl()}/partners`, lastmod: now, changefreq: 'monthly', priority: 0.4 },
+      { loc: `${resolveSiteUrl()}/contacts`, lastmod: now, changefreq: 'monthly', priority: 0.3 },
+      {
+        loc: `${resolveSiteUrl()}/cookie-settings`,
+        lastmod: now,
+        changefreq: 'monthly',
+        priority: 0.2,
+      },
     ];
 
     const xml = this.buildUrlset(urls);
@@ -189,7 +201,7 @@ export class SitemapService {
     const now = this.today();
     const urls: SitemapUrl[] = [
       {
-        loc: `${SITE_URL}/?category=tire`,
+        loc: `${resolveSiteUrl()}/?category=tire`,
         lastmod: now,
         changefreq: 'daily',
         priority: 0.85,
@@ -204,7 +216,7 @@ export class SitemapService {
 
     for (const b of tireBrands) {
       urls.push({
-        loc: `${SITE_URL}/?category=tire&tire_brand_ids=${encodeURIComponent(b.id)}`,
+        loc: `${resolveSiteUrl()}/?category=tire&tire_brand_ids=${encodeURIComponent(b.id)}`,
         lastmod: now,
         changefreq: 'daily',
         priority: 0.75,
@@ -228,7 +240,7 @@ export class SitemapService {
         tire_model_ids: m.id,
       });
       urls.push({
-        loc: `${SITE_URL}/?${qs.toString()}`,
+        loc: `${resolveSiteUrl()}/?${qs.toString()}`,
         lastmod: now,
         changefreq: 'weekly',
         priority: 0.65,
@@ -295,7 +307,7 @@ export class SitemapService {
       for (const vt of types) {
         const param = vt !== 'car' ? `?vehicleType=${vt}` : '';
         grouped[vt].push({
-          loc: `${SITE_URL}/${slug}${param}`,
+          loc: `${resolveSiteUrl()}/${slug}${param}`,
           lastmod: now,
           changefreq: 'daily',
           priority: 0.8,
@@ -312,7 +324,7 @@ export class SitemapService {
       for (const vt of this.modelBrandSitemapVehicleTypes(model)) {
         const param = vt !== 'car' ? `?vehicleType=${vt}` : '';
         grouped[vt].push({
-          loc: `${SITE_URL}/${brandSlug}/${modelSlug}${param}`,
+          loc: `${resolveSiteUrl()}/${brandSlug}/${modelSlug}${param}`,
           lastmod: now,
           changefreq: 'daily',
           priority: 0.7,
@@ -397,7 +409,7 @@ export class SitemapService {
     );
 
     const urls: SitemapUrl[] = rows.map((r) => ({
-      loc: `${SITE_URL}/board/${r.board_slug}`,
+      loc: `${resolveSiteUrl()}/board/${r.board_slug}`,
       lastmod: r.last_updated.split('T')[0].split(' ')[0],
       changefreq: 'daily',
       priority: 0.6,
@@ -439,7 +451,7 @@ export class SitemapService {
 
       for (const l of batch) {
         const pathSeg = listingPublicPathSegment(l.slug, l.id);
-        const roLoc = `${SITE_URL}/listings/${pathSeg}`;
+        const roLoc = `${resolveSiteUrl()}/listings/${pathSeg}`;
         const lastmod = l.updated_at.toISOString().split('T')[0];
         urlEntries.push(
           this.buildUrlXmlEntry({

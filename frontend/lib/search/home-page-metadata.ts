@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import type { SearchMetadataResponse } from '@/lib/api';
 import { POPULAR_BRANDS, POPULAR_MODELS_BY_BRAND } from '@/lib/content/popular-brands';
 import type { Locale, Translations } from '@/lib/i18n';
+import { isSiteNoindex } from '@/lib/robots-metadata';
 import {
   appendTireCanonicalParams,
   isIndexableVehicleTypeParam,
@@ -189,13 +190,14 @@ export function buildHomeMetadata(
     title: { absolute: fullTitle },
     description,
     keywords: [title, ...t.metadata.site.keywords],
-    robots: hasNonIndexableParams
-      ? {
-          index: false,
-          follow: false,
-          googleBot: { index: false, follow: false },
-        }
-      : undefined,
+    robots:
+      hasNonIndexableParams || isSiteNoindex()
+        ? {
+            index: false,
+            follow: false,
+            googleBot: { index: false, follow: false },
+          }
+        : undefined,
     openGraph: {
       type: 'website',
       url: ogUrl,

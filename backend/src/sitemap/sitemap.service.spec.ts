@@ -26,6 +26,7 @@ const mockQueryBuilder = () => ({
 
 describe('SitemapService', () => {
   let service: SitemapService;
+  const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
   const qb = mockQueryBuilder();
 
@@ -61,6 +62,7 @@ describe('SitemapService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://kupito.club';
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -76,6 +78,14 @@ describe('SitemapService', () => {
     }).compile();
 
     service = module.get<SitemapService>(SitemapService);
+  });
+
+  afterAll(() => {
+    if (originalSiteUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+    } else {
+      process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
+    }
   });
 
   it('should be defined', () => {

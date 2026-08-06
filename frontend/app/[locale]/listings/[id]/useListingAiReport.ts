@@ -67,7 +67,8 @@ export function useListingAiReport(options: {
     aiReportPollInFlightRef.current = true;
     const ac = new AbortController();
     aiReportAbortRef.current = ac;
-    const reportLanguage: 'ru' | 'ro' = locale === 'ru' ? 'ru' : 'ro';
+    const reportLanguage =
+      locale === 'ru' || locale === 'ro' || locale === 'en' || locale === 'sq' ? locale : 'en';
     const maxWaitMs = 180_000;
     const started = Date.now();
     let delayMs = 1500;

@@ -18,6 +18,14 @@ After migrating guests from legacy `localStorage` tokens to cookies, users were 
 
 For cookies to be sent from the browser, the page origin must be allowed by backend CORS (`CORS_ORIGINS` or `FRONTEND_URL` in Nest) and the frontend must call the API with credentials (`NEXT_PUBLIC_API_URL` must match the API origin you use in the browser).
 
+### Render `*.onrender.com` and the Public Suffix List
+
+Auth cookies are **host-only** with `sameSite: 'lax'`. That works when the site and API share a registrable domain (e.g. `https://example.com` + `https://api.example.com`).
+
+`onrender.com` is on the [Public Suffix List](https://publicsuffix.org/), so two services such as `platform-frontend.onrender.com` and `platform-backend.onrender.com` are **cross-site**. Host-only Lax cookies set by the API are **not** sent on credentialed requests from the frontend. Telegram Login Widget `/setdomain` is likewise limited to one domain per bot and cannot cover both Render subdomains usefully.
+
+**Implication:** smoke-test pages and `/health` on Render URLs if needed, but **auth acceptance (login, Google, Telegram, session survival) requires custom domains** attached to both frontend and API. Keep `NEXT_PUBLIC_NOINDEX=true` until that cutover. See [platform-checklist.md](./platform-checklist.md) §13.
+
 ## Client refresh behavior
 
 - **`initAuth`** (auth store, invoked from `AuthProvider` on load and after cross-tab `storage` on auth keys) is idempotent: concurrent calls share one in-flight promise.

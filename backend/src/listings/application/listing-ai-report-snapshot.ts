@@ -98,6 +98,7 @@ export function descriptionForReportLanguage(
       null
     );
   }
+  // ro / en / sq and other non-ru: prefer slot 0 (description_ro), then slot 1
   return (
     listing.description_ro?.trim() ||
     listing.description_ru?.trim() ||

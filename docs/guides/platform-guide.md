@@ -753,18 +753,18 @@ All settings are configured **only via environment variables**. Each platform ha
 
 - **Load path:** direct `gtag.js` via `NEXT_PUBLIC_GA_ID` in `GoogleAnalytics.tsx` (required on production frontend).
 - **`GoogleAnalytics.tsx`:** after idle + script load + granted consent, calls `gtag('config', gaId, { page_path })` for SPA page views; updates Consent Mode when consent is known. Consent defaults stay in `GoogleAnalyticsConsent.tsx`.
-- **GTM:** container still loads; keep it free of a competing GA4 Configuration tag with automatic page_view to avoid double counting.
+- **GTM:** optional; if `NEXT_PUBLIC_GTM_ID` is set, keep that container free of a competing GA4 Configuration tag with automatic page_view to avoid double counting.
 
 ### Google Tag Manager
 
-- **Current:** `GTM_ID` is hardcoded in `GoogleTagManager.tsx`. For multi-platform, move to `NEXT_PUBLIC_GTM_ID`.
+- **Config:** `NEXT_PUBLIC_GTM_ID` in `GoogleTagManager.tsx` / `GoogleTagManagerNoscript.tsx`. Empty or unset → GTM does not load (components return `null`).
 - **Order in layout:** `GoogleTagManager` → `GoogleAnalyticsConsent` → `GoogleAnalytics`.
-- GTM loads after idle (`lazyOnload`).
+- GTM loads after idle (`lazyOnload`), only on a production hostname.
 
 ### Sentry (variables)
 
 - **Frontend:** `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
-- **Backend:** `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`
+- **Backend:** `SENTRY_DSN` (required for events). Sentry `environment` comes from **`NODE_ENV`** in `sentry.config.ts`. `SENTRY_ENVIRONMENT` and `SENTRY_RELEASE` are **not** read by the current backend init.
 
 Detailed setup and integration: [SENTRY.md](./SENTRY.md).
 
@@ -772,6 +772,7 @@ Detailed setup and integration: [SENTRY.md](./SENTRY.md).
 
 ```env
 NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_GTM_ID=GTM-XXXXXXXX
 NEXT_PUBLIC_SENTRY_DSN=https://md-frontend@sentry.io/123456
 SENTRY_ORG=kupito
 SENTRY_PROJECT=kupito-frontend
@@ -780,13 +781,13 @@ SENTRY_PROJECT=kupito-frontend
 ### Checklist for new platform
 
 - [ ] GA4: separate property; set `NEXT_PUBLIC_GA_ID`; verify `gtag/js` + collect hits and GA4 Realtime / DebugView
-- [ ] GTM (optional): container and/or `NEXT_PUBLIC_GTM_ID` — no duplicate GA4 auto page_view while gtag.js is enabled
-- [ ] Sentry: Frontend + Backend projects, DSN and env in both; see [SENTRY.md](./SENTRY.md) if needed
+- [ ] GTM (optional): set `NEXT_PUBLIC_GTM_ID` for this platform’s container — no duplicate GA4 auto page_view while gtag.js is enabled; leave unset to skip GTM
+- [ ] Sentry: Frontend + Backend projects, DSN and `NODE_ENV=production` on backend; see [SENTRY.md](./SENTRY.md) if needed
 
 ### Important
 
 - Do not use one GA/Sentry project for multiple platforms.
-- No fallback: core does not set default values.
+- No fallback: core does not set default GA/GTM/Sentry IDs.
 
 **See also:** [ga4-events.md](../analytics/ga4-events.md), [SENTRY.md](./SENTRY.md), [platform-checklist.md](./platform-checklist.md).
 

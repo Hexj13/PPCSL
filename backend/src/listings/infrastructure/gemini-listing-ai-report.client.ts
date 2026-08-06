@@ -146,14 +146,73 @@ const REPORT_SCHEMA: ResponseSchema = {
 } as ResponseSchema;
 
 function buildSystemInstruction(reportLanguage: AiReportLanguage): string {
-  const langName = reportLanguage === 'ru' ? 'Russian (ru)' : 'Romanian (ro)';
+  const langNameByCode: Record<AiReportLanguage, string> = {
+    ru: 'Russian (ru)',
+    ro: 'Romanian (ro)',
+    en: 'English (en)',
+    sq: 'Albanian (sq)',
+  };
+  const langName = langNameByCode[reportLanguage];
+
+  const qualityLabels: Record<AiReportLanguage, { dataCompleteness: string; safeChoice: string }> =
+    {
+      ru: { dataCompleteness: 'Полнота данных', safeChoice: 'Безопасный выбор' },
+      ro: { dataCompleteness: 'Completitudinea datelor', safeChoice: 'Alegere sigură' },
+      en: { dataCompleteness: 'Data completeness', safeChoice: 'Safe choice' },
+      sq: { dataCompleteness: 'Plotësia e të dhënave', safeChoice: 'Zgjedhje e sigurt' },
+    };
+  const vehicleLabels: Record<
+    AiReportLanguage,
+    {
+      mileage: string;
+      equipment: string;
+      reliability: string;
+      liquidity: string;
+      popularity: string;
+    }
+  > = {
+    ru: {
+      mileage: 'Пробег',
+      equipment: 'Комплектация авто',
+      reliability: 'Надёжность модели',
+      liquidity: 'Ликвидность',
+      popularity: 'Популярность на рынке',
+    },
+    ro: {
+      mileage: 'Kilometraj',
+      equipment: 'Echipare',
+      reliability: 'Fiabilitatea modelului',
+      liquidity: 'Lichiditate',
+      popularity: 'Popularitate pe piață',
+    },
+    en: {
+      mileage: 'Mileage',
+      equipment: 'Equipment',
+      reliability: 'Model reliability',
+      liquidity: 'Liquidity',
+      popularity: 'Market popularity',
+    },
+    sq: {
+      mileage: 'Kilometrazhi',
+      equipment: 'Pajisjet',
+      reliability: 'Besueshmëria e modelit',
+      liquidity: 'Likuiditeti',
+      popularity: 'Popullariteti në treg',
+    },
+  };
+  const q = qualityLabels[reportLanguage];
+  const v = vehicleLabels[reportLanguage];
+  const mustBeInTargetLang =
+    reportLanguage === 'en'
+      ? 'User-visible text MUST be in English.'
+      : `Do NOT use English for user-visible text fields — write them in ${langName}.`;
 
   return [
     '# Role',
     'You are an expert vehicle evaluator analyzing car marketplace listings. Your goal is to provide a structured, objective, and highly factual AI report.',
     '',
     '# Core Guidelines',
-    `- **Language:** ALL user-visible text fields in the JSON report (including modelContext, summary, strengths, weaknesses, buyingChecks, questionsForSeller, redFlags, qualityScore.summary, qualityScore.items.*.summary, vehicleScore.summary, and vehicleScore.items.*.summary) MUST be strictly in ${langName}. Do NOT use English.`,
+    `- **Language:** ALL user-visible text fields in the JSON report (including modelContext, summary, strengths, weaknesses, buyingChecks, questionsForSeller, redFlags, qualityScore.summary, qualityScore.items.*.summary, vehicleScore.summary, and vehicleScore.items.*.summary) MUST be strictly in ${langName}. ${mustBeInTargetLang}`,
     '- **Format:** Return ONLY valid JSON matching the provided schema. No markdown, no extra text.',
     '- **Tone:** Short, factual, dry, business-like, neutral. No fluff, hype, or emotional wording.',
     '- **No Advice:** Do NOT recommend buying or avoiding the car. Do not use purchase imperatives ("buy", "take it", "best deal", "avoid").',
@@ -174,21 +233,21 @@ function buildSystemInstruction(reportLanguage: AiReportLanguage): string {
     '# Quality Score Definitions',
     'Evaluate listing quality on a 0–100 scale. 0–39 weak, 40–69 average, 70–84 good, 85–100 excellent.',
     '- **overallScore:** Arithmetic mean of all five criterion scores, rounded to the nearest integer.',
-    '- **dataCompleteness:** Measures DATA COMPLETENESS ONLY. Use `data_completeness.score_hint` as the main anchor. Explain `important_missing_fields`. Do NOT judge writing style or seller trust here. Label MUST be exactly "Полнота данных" (ru) or "Completitudinea datelor" (ro).',
+    `- **dataCompleteness:** Measures DATA COMPLETENESS ONLY. Use \`data_completeness.score_hint\` as the main anchor. Explain \`important_missing_fields\`. Do NOT judge writing style or seller trust here. Label MUST be exactly "${q.dataCompleteness}".`,
     '- **mediaQuality:** Quantity of photos (`images_count`) and presence of video (`has_video`). Do NOT claim visual quality or angles, just sufficiency of media count.',
     '- **descriptionQuality:** Informativeness, specificity, and usefulness of the description text about condition/service/equipment.',
     '- **priceAdequacy:** Price plausibility vs year/mileage/model from input ONLY. You do NOT have live market data. If price looks generally plausible for the specs, score high and state it looks adequate. Do NOT imply a real market comparison.',
-    '- **safeChoice:** Measures trustworthiness and internal consistency for a cautious buyer. Use consistency between title/description/specs/price, and absence of suspicious gaps. Score 100 = safer choice to explore further; Score 0 = many gaps warrant extra caution. Label MUST be exactly "Безопасный выбор" (ru) or "Alegere sigură" (ro). Do NOT use words like "risk", "риск", "danger", "опасно", "unsafe", or "risky".',
+    `- **safeChoice:** Measures trustworthiness and internal consistency for a cautious buyer. Use consistency between title/description/specs/price, and absence of suspicious gaps. Score 100 = safer choice to explore further; Score 0 = many gaps warrant extra caution. Label MUST be exactly "${q.safeChoice}". Do NOT use words like "risk", "риск", "danger", "опасно", "unsafe", or "risky".`,
     '- **Separation:** `dataCompleteness` and `safeChoice` must NOT overlap. One is just missing fields, the other is trustworthiness of present data.',
     '',
     '# Vehicle Score Definitions',
     'Evaluate the vehicle characteristics on a 0–100 scale. 0–39 weak, 40–69 average, 70–84 good, 85–100 excellent.',
     '- **overallScore:** Arithmetic mean of all five criterion scores, rounded to the nearest integer.',
-    '- **mileage:** Evaluate mileage vs year. Lower relative mileage = higher score. Label MUST be exactly "Пробег" (ru) or "Kilometraj" (ro).',
-    '- **equipment:** Evaluate richness of options/equipment. More options = higher score. Label MUST be exactly "Комплектация авто" (ru) or "Echipare" (ro).',
-    '- **reliability:** General model reliability based on widely known facts about this generation/engine. Label MUST be exactly "Надёжность модели" (ru) or "Fiabilitatea modelului" (ro).',
-    '- **liquidity:** Ease of resale / market liquidity for this model. Label MUST be exactly "Ликвидность" (ru) or "Lichiditate" (ro).',
-    '- **popularity:** Market demand and popularity in the region. Label MUST be exactly "Популярность на рынке" (ru) or "Popularitate pe piață" (ro).',
+    `- **mileage:** Evaluate mileage vs year. Lower relative mileage = higher score. Label MUST be exactly "${v.mileage}".`,
+    `- **equipment:** Evaluate richness of options/equipment. More options = higher score. Label MUST be exactly "${v.equipment}".`,
+    `- **reliability:** General model reliability based on widely known facts about this generation/engine. Label MUST be exactly "${v.reliability}".`,
+    `- **liquidity:** Ease of resale / market liquidity for this model. Label MUST be exactly "${v.liquidity}".`,
+    `- **popularity:** Market demand and popularity in the region. Label MUST be exactly "${v.popularity}".`,
   ].join('\n');
 }
 

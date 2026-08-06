@@ -1,6 +1,6 @@
 # Telegram Login (Login Widget) и cookies сессии
 
-Краткая инструкция для операторов платформы (Moldova / kupito).
+Краткая инструкция для операторов платформы (отдельный бот и `/setdomain` на каждую платформу).
 
 Вход реализован через **Telegram Login Widget**: Telegram возвращает данные пользователя
 (`id`, `first_name`, `last_name`, `username`, `photo_url`, `auth_date`, `hash`), а бэкенд
@@ -11,7 +11,7 @@
 **Backend (`core/backend` или сервис API):**
 
 - `TELEGRAM_BOT_TOKEN` — токен бота из BotFather. Используется для проверки `hash` Login Widget
-  (`secret = SHA256(bot_token)`) и для support webhook `/api/telegram/webhook`.
+  (`secret = SHA256(bot_token)`) и, если настроен support webhook, для `/api/telegram/webhook`.
 - `JWT_SECRET` — секрет подписи JWT (должен совпадать с фронтом для middleware).
 - `CORS_ORIGINS` — список origin фронта через запятую, чтобы браузер отправлял `credentials` (cookies) на API.
 
@@ -26,11 +26,11 @@
 
 ## BotFather
 
-1. Используйте бота, который представляет приложение (рекомендуется тот же support-бот с узнаваемым именем и аватаром).
-2. В [@BotFather](https://t.me/BotFather) привяжите домен сайта командой `/setdomain` (например `kupito.club`).
-   Без привязанного домена popup Login не завершится.
+1. Создайте (или выберите) бота для **Login Widget** этой платформы.
+2. В [@BotFather](https://t.me/BotFather) привяжите домен сайта командой `/setdomain` (например `example.com`). **Один домен на бота** — нельзя повесить два продакшен-домена разных платформ на один и тот же bot id. Без привязанного домена popup Login не завершится.
+3. **Login Widget и support-бот — отдельные решения.** Widget только аутентифицирует; support-бот дополнительно требует `TELEGRAM_SUPPORT_CHAT_ID` и webhook и отвечает пользователям. Можно использовать один токен для обоих на одной платформе, но это не обязательно — разные боты тоже нормальны. Не смешивайте `/setdomain` и support-конфиг чужой платформы.
 
-Webhook поддержки (`/api/telegram/webhook`) остаётся отдельным механизмом и использует тот же `TELEGRAM_BOT_TOKEN`.
+Webhook поддержки (`/api/telegram/webhook`) остаётся отдельным механизмом; если используете тот же бот, нужен тот же `TELEGRAM_BOT_TOKEN`.
 
 ## Поведение в приложении
 

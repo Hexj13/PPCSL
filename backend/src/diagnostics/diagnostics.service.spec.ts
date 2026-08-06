@@ -16,14 +16,25 @@ describe('DiagnosticsService', () => {
 
   it('rejects disallowed host', async () => {
     process.env.API_URL = 'https://kupito.onrender.com';
+    delete process.env.AWS_CLOUDFRONT_URL;
     const service = new DiagnosticsService();
     await expect(service.getImageHeadStatus('https://evil.example/uploads/a.webp')).rejects.toThrow(
       BadRequestException,
     );
   });
 
+  it('rejects CDN host when AWS_CLOUDFRONT_URL is unset', async () => {
+    process.env.API_URL = 'https://kupito.onrender.com';
+    delete process.env.AWS_CLOUDFRONT_URL;
+    const service = new DiagnosticsService();
+    await expect(
+      service.getImageHeadStatus('https://cdn.kupito.club/uploads/a.webp'),
+    ).rejects.toThrow(BadRequestException);
+  });
+
   it('rejects path outside uploads on CDN host', async () => {
     process.env.API_URL = 'https://kupito.onrender.com';
+    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.kupito.club';
     const service = new DiagnosticsService();
     await expect(
       service.getImageHeadStatus('https://cdn.kupito.club/other/a.webp'),
@@ -32,6 +43,7 @@ describe('DiagnosticsService', () => {
 
   it('returns status from HEAD on allowed CDN URL', async () => {
     process.env.API_URL = 'https://kupito.onrender.com';
+    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.kupito.club';
     global.fetch = jest.fn().mockResolvedValue({ status: 200 });
     const service = new DiagnosticsService();
     const result = await service.getImageHeadStatus(
@@ -80,6 +92,7 @@ describe('DiagnosticsService', () => {
 
   it('maps AbortError from HEAD to timeout reason', async () => {
     process.env.API_URL = 'https://kupito.onrender.com';
+    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.kupito.club';
     global.fetch = jest
       .fn()
       .mockRejectedValue(Object.assign(new Error('aborted'), { name: 'AbortError' }));
@@ -92,6 +105,7 @@ describe('DiagnosticsService', () => {
 
   it('maps generic fetch failure to network reason', async () => {
     process.env.API_URL = 'https://kupito.onrender.com';
+    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.kupito.club';
     global.fetch = jest.fn().mockRejectedValue(new Error('socket'));
     const service = new DiagnosticsService();
     const result = await service.getImageHeadStatus(

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 import type { PlateDetection } from './plate-detector.types';
 
-const MASK_TEXT = 'kupito.club';
 const MASK_FILL = '#D1D5DB';
 const MASK_TEXT_COLOR = 'rgba(26, 69, 52, 0.22)';
 const PADDING_PERCENT = 0.02;
@@ -12,6 +12,19 @@ const FONT_SIZE_FACTOR = 0.55;
 const FONT_SIZE_MIN = 10;
 const FONT_SIZE_MAX = 64;
 
+function resolveMaskText(configService: ConfigService): string {
+  const watermarkDomain = configService.get<string>('WATERMARK_DOMAIN')?.trim();
+  if (watermarkDomain) {
+    return watermarkDomain;
+  }
+  const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+  try {
+    return new URL(frontendUrl).hostname;
+  } catch {
+    return 'localhost';
+  }
+}
+
 export interface MaskCompositeInput {
   input: Buffer;
   top: number;
@@ -20,6 +33,12 @@ export interface MaskCompositeInput {
 
 @Injectable()
 export class PlateMaskService {
+  private readonly maskText: string;
+
+  constructor(private readonly configService: ConfigService) {
+    this.maskText = resolveMaskText(this.configService);
+  }
+
   createMaskOverlays(
     detections: PlateDetection[],
     _imageWidth: number,
@@ -37,7 +56,7 @@ export class PlateMaskService {
         Math.max(FONT_SIZE_MIN, Math.min(FONT_SIZE_MAX, maskHeight * FONT_SIZE_FACTOR)),
       );
       let svg = this.buildSvg(rectW, rectH, fontSize);
-      while (fontSize > FONT_SIZE_MIN && this.estimateTextWidth(MASK_TEXT, fontSize) > rectW) {
+      while (fontSize > FONT_SIZE_MIN && this.estimateTextWidth(this.maskText, fontSize) > rectW) {
         fontSize -= 2;
         svg = this.buildSvg(rectW, rectH, fontSize);
       }
@@ -57,7 +76,7 @@ export class PlateMaskService {
   private buildSvg(rectW: number, rectH: number, fontSize: number): string {
     return `<svg width="${rectW}" height="${rectH}" xmlns="http://www.w3.org/2000/svg">
   <rect width="${rectW}" height="${rectH}" rx="4" ry="4" fill="${MASK_FILL}"/>
-  <text x="50%" y="50%" font-family="Inter, Arial, sans-serif" font-size="${fontSize}" font-weight="600" fill="${MASK_TEXT_COLOR}" text-anchor="middle" dominant-baseline="central">${this.escapeXml(MASK_TEXT)}</text>
+  <text x="50%" y="50%" font-family="Inter, Arial, sans-serif" font-size="${fontSize}" font-weight="600" fill="${MASK_TEXT_COLOR}" text-anchor="middle" dominant-baseline="central">${this.escapeXml(this.maskText)}</text>
 </svg>`;
   }
 

@@ -20,10 +20,24 @@ describe('resolveAiReportLanguage', () => {
     ).toBe('ru');
   });
 
-  it('falls back to body then ro', () => {
+  it('recognizes en and sq from header', () => {
+    expect(resolveAiReportLanguage({ headerReportLanguage: 'en' })).toBe('en');
+    expect(resolveAiReportLanguage({ headerReportLanguage: 'sq' })).toBe('sq');
+  });
+
+  it('uses Accept-Language en when no header', () => {
     expect(
       resolveAiReportLanguage({
         acceptLanguage: 'en-US',
+        bodyLanguage: 'ro',
+      }),
+    ).toBe('en');
+  });
+
+  it('falls back to body then ro', () => {
+    expect(
+      resolveAiReportLanguage({
+        acceptLanguage: 'de-DE',
         bodyLanguage: 'ro',
       }),
     ).toBe('ro');

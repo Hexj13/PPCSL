@@ -207,6 +207,40 @@ SMTP_FROM=noreply@your-domain.com
 # Watermark Configuration (optional)
 WATERMARK_DOMAIN=your-domain.com
 # If not set, domain will be extracted from FRONTEND_URL
+# Plate-mask text uses the same resolution
+
+# Logging (optional)
+# LOG_LEVEL=info
+
+# Site / Swagger branding (optional)
+# SITE_NAME=Your Platform
+# PLATFORM_NAME=Your Platform
+
+# OAuth / social (optional)
+# GOOGLE_CLIENT_ID=
+# TELEGRAM_BOT_TOKEN=
+# TELEGRAM_SUPPORT_CHAT_ID=
+
+# Sentry (optional; environment = NODE_ENV)
+# SENTRY_DSN=
+
+# Promotions / parsing (optional)
+# PROMOTION_ACCESS=disabled
+# ADMIN_PARSING_SCHEDULER_ENABLED=false
+
+# AWS (required on ephemeral hosts such as Render)
+# AWS_ACCESS_KEY_ID=
+# AWS_SECRET_ACCESS_KEY=
+# AWS_S3_BUCKET_NAME=
+# AWS_REGION=eu-north-1
+# AWS_CLOUDFRONT_URL=https://cdn.your-domain.com
+
+# Listing video / MediaConvert (optional)
+# AWS_MEDIACONVERT_ENDPOINT=
+# AWS_MEDIACONVERT_QUEUE_ARN=
+# AWS_MEDIACONVERT_ROLE_ARN=
+# AWS_MEDIACONVERT_SNS_TOPIC_ARN=
+# LISTING_VIDEO_WATERMARK_S3_URI=
 ```
 
 **Generate JWT_SECRET:**
@@ -227,6 +261,23 @@ NEXT_PUBLIC_API_URL=https://api.your-domain.com
 # Or if API on same domain:
 # NEXT_PUBLIC_API_URL=https://your-domain.com/api
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
+NEXT_PUBLIC_COUNTRY=<country>
+
+# Analytics / Search Console (optional)
+# NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+# NEXT_PUBLIC_GTM_ID=GTM-XXXXXXXX
+# NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
+# NEXT_PUBLIC_SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+
+# Staging / pre-launch indexing
+# NEXT_PUBLIC_NOINDEX=true
+
+# CDN / image hosts (build-time; also feed CSP + remotePatterns)
+# NEXT_PUBLIC_IMAGE_CDN_URL=https://cdn.your-domain.com
+
+# OAuth (must match backend GOOGLE_CLIENT_ID / Telegram bot id)
+# NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+# NEXT_PUBLIC_TELEGRAM_CLIENT_ID=
 ```
 
 #### Set Permissions
@@ -562,8 +613,10 @@ AWS_REGION=eu-north-1
 **Optional (if using CloudFront CDN):**
 
 ```env
-AWS_CLOUDFRONT_URL=https://cdn.kupito.club
+AWS_CLOUDFRONT_URL=https://cdn.your-domain.com
 ```
+
+**Image diagnostics allowlist:** `DiagnosticsService` allows `HEAD` only for hosts from `AWS_CLOUDFRONT_URL` (path `/uploads/`) and `API_URL` (path `/api/upload/image/`). No CDN hostname is hardcoded.
 
 **Setup instructions:**
 
@@ -591,7 +644,7 @@ add a second origin and behavior to your existing CloudFront distribution:
    - Cache policy: CachingOptimized (or custom with All query strings in cache key)
    - Origin request policy: AllViewerExceptHostHeader
    - Compress objects: Yes
-3. Set frontend env: `NEXT_PUBLIC_IMAGE_CDN_URL=https://api.kupito.club`
+3. Set frontend env: `NEXT_PUBLIC_IMAGE_CDN_URL=https://api.your-domain.com` (or your CDN origin that serves optimized images)
 
 The backend already returns `Cache-Control: public, max-age=31536000, immutable`
 for optimized images, so CloudFront will cache them for up to one year.
@@ -632,18 +685,18 @@ The second response should show `cf-cache-status: HIT` (after the first `MISS`/`
 
 **CloudFront CORS for `/uploads/*` (recommended for S3 origin assets):**
 
-Browser `fetch` diagnostics and future `fetch`-based image flows need a successful CORS preflight on the static CDN host. On the CloudFront distribution that serves `AWS_CLOUDFRONT_URL` (e.g. `cdn.kupito.club`):
+Browser `fetch` diagnostics and future `fetch`-based image flows need a successful CORS preflight on the static CDN host. On the CloudFront distribution that serves `AWS_CLOUDFRONT_URL` (e.g. `cdn.your-domain.com`):
 
 1. Behaviors → select or create behavior with path pattern `/uploads/*` (or the path your S3 origin uses for listing images).
 2. Allowed HTTP methods: **GET, HEAD, OPTIONS** (OPTIONS is required for preflight).
 3. Attach a **Response headers policy** that returns CORS headers, for example AWS managed **CORS-With-Preflight** (`5cc3b908-e619-4b99-88e5-2cf7f45965bd`) or a custom policy with at least:
-   - `Access-Control-Allow-Origin: https://kupito.club` (and staging origins if needed)
+   - `Access-Control-Allow-Origin: https://your-domain.com` (and staging origins if needed)
    - `Access-Control-Allow-Methods: GET, HEAD, OPTIONS`
    - `Access-Control-Max-Age: 600`
 4. Invalidate `/uploads/*` after changes.
-5. Verify: `curl -X OPTIONS -H "Origin: https://kupito.club" -H "Access-Control-Request-Method: HEAD" "https://cdn.kupito.club/uploads/<any>.webp"` should return **200** or **204** with `Access-Control-Allow-Origin` present.
+5. Verify: `curl -X OPTIONS -H "Origin: https://your-domain.com" -H "Access-Control-Request-Method: HEAD" "https://cdn.your-domain.com/uploads/<any>.webp"` should return **200** or **204** with `Access-Control-Allow-Origin` present.
 
-Sentry image diagnostics use the backend `HEAD` proxy (`/api/diagnostics/image-status`) and do not depend on this CORS policy, but other client-side `fetch` calls to the CDN will.
+Image diagnostics allowlist in core uses only `AWS_CLOUDFRONT_URL` (path `/uploads/`) and `API_URL` (path `/api/upload/image/`) — no CDN hostname is hardcoded. Sentry image diagnostics use the backend `HEAD` proxy (`/api/diagnostics/image-status`) and do not depend on this CORS policy, but other client-side `fetch` calls to the CDN will.
 
 ### 3.5. Build Configuration
 
@@ -792,7 +845,18 @@ If you deploy the frontend as a separate service on Render.com:
 ```env
 NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
 NEXT_PUBLIC_SITE_URL=https://your-frontend-domain.com
+NEXT_PUBLIC_COUNTRY=<country>
+# NEXT_PUBLIC_NOINDEX=true
+# NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+# NEXT_PUBLIC_GTM_ID=GTM-XXXXXXXX
+# NEXT_PUBLIC_IMAGE_CDN_URL=https://cdn.your-domain.com
+# NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+# NEXT_PUBLIC_TELEGRAM_CLIENT_ID=
+# NEXT_PUBLIC_SENTRY_DSN=
+# NEXT_PUBLIC_GOOGLE_VERIFICATION=
 ```
+
+**Note:** `onrender.com` is on the Public Suffix List — host-only `sameSite=lax` auth cookies do **not** work between two `*.onrender.com` services. Use a custom domain for auth acceptance; see [AUTH_COOKIE_SESSION.md](./AUTH_COOKIE_SESSION.md).
 
 ### 3.12. Troubleshooting
 

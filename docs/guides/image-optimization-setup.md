@@ -50,30 +50,34 @@ node node_modules/typeorm/cli.js migration:run -d dist/data-source.cli.js
 ## Step 2. Add env variable on Render (Frontend)
 
 1. Open [Render Dashboard](https://dashboard.render.com)
-2. Go to **frontend** service (`kupito-frontend`)
+2. Go to the **frontend** web service for this platform
 3. **Environment** -> **Add Environment Variable**:
 
 ```
-NEXT_PUBLIC_IMAGE_CDN_URL=https://api.kupito.club
+NEXT_PUBLIC_IMAGE_CDN_URL=https://api.your-domain.com
 ```
+
+Use the hostname that serves optimized images for **this** platform (custom API domain or CDN). CSP `connect-src` and Next.js `images.remotePatterns` are built from `NEXT_PUBLIC_API_URL` and this CDN env at build time — redeploy after changes.
 
 4. Click **Save Changes**
 5. Frontend will rebuild automatically
 
 After this, `getOptimizedImageUrl()` will generate URLs like
-`https://api.kupito.club/api/upload/image/xxx.webp?quality=65&width=640`.
+`https://api.your-domain.com/api/upload/image/xxx.webp?quality=65&width=640`.
 
-### Why `api.kupito.club` and not CloudFront?
+### Why the API (or CDN) host and not a random CloudFront origin?
 
-Render is behind Cloudflare. CloudFront cannot connect to a Cloudflare-proxied
+If the API is behind Cloudflare, CloudFront cannot connect to a Cloudflare-proxied
 origin (502 errors). Using the backend's custom domain directly routes through
 Cloudflare (which provides CDN, DDoS protection, SSL) while keeping the backend's
 LRU cache and `Cache-Control: public, max-age=31536000` headers for browser caching.
+When CloudFront is the real image origin for your platform, set `NEXT_PUBLIC_IMAGE_CDN_URL`
+(and backend `AWS_CLOUDFRONT_URL`) to that distribution hostname instead.
 
 ### Verify
 
 ```bash
-curl -sI "https://api.kupito.club/api/upload/image/SOME_UUID.webp?quality=65&width=640"
+curl -sI "https://api.your-domain.com/api/upload/image/SOME_UUID.webp?quality=65&width=640"
 ```
 
 Expected: `HTTP/2 200`, `content-type: image/webp`,
@@ -92,7 +96,7 @@ For existing listings, run the script once.
 cd core/backend
 COUNTRY=md \
 DB_HOST=... DB_PORT=5432 DB_USERNAME=... DB_PASSWORD=... DB_NAME=... \
-AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_REGION=eu-north-1 AWS_S3_BUCKET_NAME=kupito-uploads \
+AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_REGION=eu-north-1 AWS_S3_BUCKET_NAME=<your-uploads-bucket> \
 npm run backfill:blurhash:cover
 ```
 

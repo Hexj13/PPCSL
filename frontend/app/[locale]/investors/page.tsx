@@ -1,8 +1,19 @@
+import {
+  getMetadataLocaleFromParams,
+  getServerTranslations,
+  type LocaleRouteParams,
+} from '@/lib/i18n';
 import type { Translations } from '@/lib/i18n-types';
-import en from '@/lib/locales/en.json';
 
 import { InvestorsPageClient } from './InvestorsPageClient';
 
-export default function InvestorsPage() {
-  return <InvestorsPageClient initialInvestors={(en as unknown as Translations).investors} />;
+export default async function InvestorsPage({ params }: { params: Promise<LocaleRouteParams> }) {
+  const locale = await getMetadataLocaleFromParams(params);
+  const translations = getServerTranslations(locale);
+  return (
+    <InvestorsPageClient
+      initialLocale={locale}
+      initialInvestors={(translations as Translations).investors}
+    />
+  );
 }

@@ -10,7 +10,7 @@ tags:
 
 # License Plate Mask — Current Implementation
 
-Automatic license plate masking on listing photo upload. When the user uploads photos with `Hide plates` enabled, the backend detects license plates with an ONNX model and overlays a gray mask with near-transparent `kupito.club` text. Processing is synchronous inside the upload request. The checkbox is disabled by default.
+Automatic license plate masking on listing photo upload. When the user uploads photos with `Hide plates` enabled, the backend detects license plates with an ONNX model and overlays a gray mask with near-transparent domain text (`WATERMARK_DOMAIN`, or the hostname from `FRONTEND_URL` when unset). Processing is synchronous inside the upload request. The checkbox is disabled by default.
 
 ---
 
@@ -59,10 +59,11 @@ Automatic license plate masking on listing photo upload. When the user uploads p
 
 - Gray rectangle fill: `#D1D5DB`
 - Rounded corners: `4px`
-- Text: `kupito.club`
+- Text: `WATERMARK_DOMAIN` if set, otherwise hostname from `FRONTEND_URL` (same resolution as the photo watermark domain)
 - Text color: `rgba(26, 69, 52, 0.22)`
 - Font stack: `Inter, Arial, sans-serif`
 - Detection box is slightly shrunk before drawing the mask to avoid overflowing the real plate bounds
+- **Burned into stored photos:** a wrong domain is not fixable by redeploy alone — set `WATERMARK_DOMAIN` (or a correct `FRONTEND_URL`) before first production uploads
 
 ### Concurrency and cleanup
 

@@ -1,4 +1,4 @@
-const GTM_ID = 'GTM-K527X5WK';
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID?.trim() || '';
 
 type GoogleTagManagerNoscriptProps = {
   title: string;
@@ -26,6 +26,10 @@ function getProductionHostname() {
 }
 
 export function GoogleTagManagerNoscript({ title }: GoogleTagManagerNoscriptProps) {
+  if (!GTM_ID) {
+    return null;
+  }
+
   const productionHostname = getProductionHostname();
   const shouldLoad = productionHostname
     ? isProductionHostname(productionHostname)

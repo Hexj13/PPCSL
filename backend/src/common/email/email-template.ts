@@ -41,6 +41,8 @@ export type EmailLayoutOptions = {
   bodyHtml: string;
   supportEmail: string;
   signatureLine?: string;
+  /** Brand name for logo alt and footer; defaults to site hostname. */
+  siteName?: string;
 };
 
 export function buildEmailLayout(options: EmailLayoutOptions): string {
@@ -50,6 +52,7 @@ export function buildEmailLayout(options: EmailLayoutOptions): string {
   const safeDocTitle = escapeHtml(options.documentTitle);
   const safeSupport = escapeHtml(options.supportEmail);
   const hostLabel = escapeHtml(base.replace(/^https?:\/\//, ''));
+  const brandLabel = escapeHtml(options.siteName?.trim() || base.replace(/^https?:\/\//, ''));
   const pre = options.preheader ? escapeHtml(options.preheader) : '';
   const signatureLine = options.signatureLine ? escapeHtml(options.signatureLine) : '';
 
@@ -74,7 +77,7 @@ export function buildEmailLayout(options: EmailLayoutOptions): string {
   <mj-body background-color="${brand.bgPage}">
     <mj-section background-color="${brand.primary}" border-top-left-radius="8px" border-top-right-radius="8px" border-left="1px solid ${brand.divider}" border-right="1px solid ${brand.divider}" border-top="1px solid ${brand.divider}" padding="24px 20px">
       <mj-column>
-        <mj-image href="${escapeHtml(base)}" src="${escapeHtml(logoUrl)}" width="110px" alt="Kupito" padding="0" />
+        <mj-image href="${escapeHtml(base)}" src="${escapeHtml(logoUrl)}" width="110px" alt="${brandLabel}" padding="0" />
       </mj-column>
     </mj-section>
     <mj-section background-color="${brand.white}" border-left="1px solid ${brand.divider}" border-right="1px solid ${brand.divider}" padding="28px 24px 4px 24px">
@@ -85,7 +88,7 @@ export function buildEmailLayout(options: EmailLayoutOptions): string {
     ${options.bodyHtml}
     <mj-section background-color="${brand.bgFooter}" border-bottom-left-radius="8px" border-bottom-right-radius="8px" border-left="1px solid ${brand.divider}" border-right="1px solid ${brand.divider}" border-bottom="1px solid ${brand.divider}" padding="20px 24px">
       <mj-column>
-        <mj-text font-size="15px" font-weight="700" line-height="20px" color="${brand.textPrimary}" padding="0 0 4px 0">Kupito.club</mj-text>
+        <mj-text font-size="15px" font-weight="700" line-height="20px" color="${brand.textPrimary}" padding="0 0 4px 0">${brandLabel}</mj-text>
         ${signatureBlock}
         <mj-text font-size="13px" line-height="20px" color="${brand.textSecondary}" padding="0 0 8px 0"><a href="mailto:${safeSupport}" style="color:${brand.primary};font-weight:700;text-decoration:none;">${safeSupport}</a></mj-text>
         <mj-text font-size="13px" line-height="20px" color="${brand.textSecondary}" padding="0"><a href="${escapeHtml(base)}" style="color:${brand.primary};font-weight:700;text-decoration:none;">${hostLabel}</a></mj-text>

@@ -184,6 +184,16 @@ FRONTEND_URL=http://localhost:3000
 # Watermark Configuration (optional)
 WATERMARK_DOMAIN=your-domain.com
 # If not set, domain will be extracted from FRONTEND_URL
+# Same value is printed on license-plate masks (PlateMaskService)
+
+# Logging (optional)
+# LOG_LEVEL=info
+# Defaults to info in production, debug otherwise (Pino)
+
+# Site / Swagger branding (optional)
+# SITE_NAME=Your Platform
+# PLATFORM_NAME=Your Platform
+# Swagger title uses SITE_NAME or PLATFORM_NAME, else FRONTEND_URL hostname
 
 # Redis Configuration (optional)
 REDIS_HOST=localhost
@@ -230,7 +240,23 @@ GEMINI_API_KEY=<google-ai-studio-api-key>
 # Production only: max new AI report generations per user per rolling hour (Redis). Unset = 5. Non-production (e.g. development): quota disabled.
 # AI_REPORT_MAX_GENERATIONS_PER_HOUR=5
 
+# OAuth / social (optional)
+# GOOGLE_CLIENT_ID=your-google-oauth-web-client-id
+# TELEGRAM_BOT_TOKEN=123456:ABC...
+
+# Sentry (optional; environment = NODE_ENV; SENTRY_ENVIRONMENT / SENTRY_RELEASE are not read)
+# SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+# SENTRY_TRACES_SAMPLE_RATE=0.1
+# SENTRY_PROFILES_SAMPLE_RATE=0.05
+
 # Listing video (optional) — same AWS S3 credentials as images; add MediaConvert endpoint/queue/role and SNS → /api/webhooks/mediaconvert for transcoding. Full checklist: ../guides/listing-video-production-setup-ru.md (operators, Russian); API behavior: ../features/listings.md
+# AWS_MEDIACONVERT_ENDPOINT=
+# AWS_MEDIACONVERT_QUEUE_ARN=
+# AWS_MEDIACONVERT_ROLE_ARN=
+# AWS_MEDIACONVERT_SNS_TOPIC_ARN=   # recommended: restrict webhook to this SNS topic
+# LISTING_VIDEO_WATERMARK_S3_URI=  # separate PNG (~140px overlay); photo watermark is wrong size
+# VIDEO_MAX_SIZE_BYTES=
+# VIDEO_MAX_DURATION_SEC=
 ```
 
 ### Frontend (`frontend/.env.local`)
@@ -250,13 +276,33 @@ NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
 # Google Analytics Measurement ID (required for GA4 hits via gtag.js)
 # NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 
+# Google Tag Manager container ID (optional; empty = GTM not loaded)
+# NEXT_PUBLIC_GTM_ID=GTM-XXXXXXXX
+
+# Staging / pre-launch: force noindex,nofollow when true
+# NEXT_PUBLIC_NOINDEX=true
+
+# Image CDN / API host for Next.js remotePatterns + CSP connect-src (optional)
+# NEXT_PUBLIC_IMAGE_CDN_URL=https://cdn.your-domain.com
+# NEXT_PUBLIC_AWS_CLOUDFRONT_URL=https://cdn.your-domain.com
+
+# OAuth client IDs (public; must match backend GOOGLE_CLIENT_ID / Telegram bot id)
+# NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+# NEXT_PUBLIC_TELEGRAM_CLIENT_ID=
+
+# Sentry (optional)
+# NEXT_PUBLIC_SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+
 # Listing views visibility (optional)
 # all: show view counts to everyone (default)
 # admin: show view counts only to Admin users
 # Set in frontend/.env.local — backend .env does not affect the Next.js client bundle.
 NEXT_PUBLIC_LISTING_VIEWS_VISIBILITY=all
-
 ```
+
+**CSP / `images.remotePatterns`:** built at build time in `next.config.js` from `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_IMAGE_CDN_URL` / `NEXT_PUBLIC_AWS_CLOUDFRONT_URL`, and `NEXT_PUBLIC_SITE_URL`. Redeploy the frontend after changing these.
+
+**Indexing:** when `NEXT_PUBLIC_NOINDEX=true`, robots metadata forces `noindex,nofollow` (staging / pre-launch).
 
 ### Promotion Feature Variables (backend runtime)
 
@@ -413,7 +459,7 @@ GET    /api/listings/:id/phones       # Full seller phone numbers (optional JWT)
 GET    /api/listings/:id/history      # Previous listings with same VIN
 GET    /api/listings/:id/report-url        # Infocar report URL (AES-256-CBC encrypted VIN, param vin); optional query locale=ro|ru
 GET    /api/listings/:id/report-redirect   # 302 redirect to Infocar (direct link for iOS); optional query locale=ro|ru
-POST   /api/listings/:id/ai-report         # Optional structured AI analysis for vehicle listings (JWT). Body optional { language?: ru|ro } (lower priority than Accept-Language / X-Report-Language). Returns { status: ready|pending|unavailable } or 429 rate_limited. Cached by listing + language + input hash; Redis lock dedupes parallel generation. User hourly quota: disabled when NODE_ENV is not production; in production see AI_REPORT_MAX_GENERATIONS_PER_HOUR (default 5).
+POST   /api/listings/:id/ai-report         # Optional structured AI analysis for vehicle listings (JWT). Body optional { language?: en|sq|ro|ru } (lower priority than Accept-Language / X-Report-Language). Report language follows UI locale (en/sq/ro/ru). Returns { status: ready|pending|unavailable } or 429 rate_limited. Cached by listing + language + input hash; Redis lock dedupes parallel generation. User hourly quota: disabled when NODE_ENV is not production; in production see AI_REPORT_MAX_GENERATIONS_PER_HOUR (default 5).
 POST   /api/listings/refresh-dates    # Refresh all user's listing dates (max once per 48h; returns 400 if too soon, throttle: 5 req/min/user)
 POST   /api/listings/cron/close-old            # Close old listings (cron job, requires x-cron-secret header)
 POST   /api/listings/cron/expire-promotions   # Expire promotions (cron job, requires x-cron-secret header)
@@ -538,6 +584,7 @@ POST /api/upload/video/from-url       # Ingest listing video from HTTPS URL (imp
 - Watermark includes: logo (15% of image size) + domain text below
 - Watermark domain is configurable via `WATERMARK_DOMAIN` environment variable
 - If `WATERMARK_DOMAIN` is not set, domain is extracted from `FRONTEND_URL` environment variable
+- License-plate mask text uses the same `WATERMARK_DOMAIN` / `FRONTEND_URL` resolution
 - Default domain: extracted from `FRONTEND_URL` (fallback)
 - Watermark opacity: 35%
 - Watermark position: bottom-right corner with 3% padding
@@ -1028,7 +1075,8 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
 5. Copy Measurement ID (format: `G-XXXXXXXXXX`)
 6. Set `NEXT_PUBLIC_GA_ID` on the frontend service (baked at build time)
 7. `GoogleAnalytics.tsx` loads `gtag.js` after idle and sends consented SPA `page_view` via `gtag('config')`; consent defaults stay in `GoogleAnalyticsConsent.tsx`
-8. GTM container `GTM-K527X5WK` may stay loaded; do not add a duplicate GA4 auto page_view tag there while direct `gtag.js` is enabled
+8. Optional GTM: set `NEXT_PUBLIC_GTM_ID` for this platform (empty = no GTM); do not add a duplicate GA4 auto page_view tag in GTM while direct `gtag.js` is enabled
+9. For staging / pre-launch, set `NEXT_PUBLIC_NOINDEX=true` until acceptance on the real domain
 
 #### Google Analytics Features
 
@@ -1176,7 +1224,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - Listing grid updates deferred to prevent blocking during data fetching
 - Next.js built-in bundle optimization (removed custom webpack splitChunks configuration)
 - **Image optimization with Next.js Image component:**
-  - Automatic optimization for external images via `remotePatterns` configuration
+  - Automatic optimization for external images via `remotePatterns` built from `NEXT_PUBLIC_API_URL` and CDN env (`NEXT_PUBLIC_IMAGE_CDN_URL` / `NEXT_PUBLIC_AWS_CLOUDFRONT_URL`); CSP `connect-src` uses the same hosts
   - Conditional `unoptimized` prop for localhost images in development
   - Proper `sizes` attribute for responsive image loading - Next.js automatically generates appropriate image sizes for mobile and desktop
   - Optimized quality settings: 75% for listing cards (responsive srcset up to 1080px via `listing-card-image.ts`), 70% for management cards (900px), 75% for detail pages (1200px)
@@ -1286,7 +1334,7 @@ Or use `npm run dev` in root - it will start both servers.
 
 ## Additional Resources
 
-- **API Documentation:** Swagger available at `/api/docs` (when running in non-production)
+- **API Documentation:** Swagger available at `/api/docs` (when running in non-production). Title/description use `SITE_NAME` or `PLATFORM_NAME`, else the hostname from `FRONTEND_URL`
 - **Project README:** See [README.md](../../README.md) in project root
 - **Deployment Guide:** See [DEPLOYMENT.md](../guides/DEPLOYMENT.md) for production deployment
 - **Feature docs:** [seller-listings-board.md](../features/seller-listings-board.md), [paid-promotion.md](../features/paid-promotion.md), [image-preview.md](../features/image-preview.md), [smart-selection.md](../features/smart-selection.md), [ui-components.md](../features/ui-components.md), [TODO.md](../features/TODO.md)
@@ -1442,10 +1490,15 @@ For deploying kupito.club backend on Render.com, configure the following:
 - `AWS_SECRET_ACCESS_KEY` - AWS S3 secret key (required for file storage)
 - `AWS_S3_BUCKET_NAME` - S3 bucket name
 - `AWS_REGION` - AWS region (e.g., `eu-north-1`)
-- Optional listing video: MediaConvert account endpoint, queue ARN, role ARN, webhook SNS → `POST /api/webhooks/mediaconvert`, plus optional `AWS_CLOUDFRONT_URL`, `LISTING_VIDEO_WATERMARK_S3_URI`, `VIDEO_MAX_SIZE_BYTES`, `VIDEO_MAX_DURATION_SEC` — see [listing-video-production-setup-ru.md](../guides/listing-video-production-setup-ru.md) (operators, Russian) and [listings.md](../features/listings.md)
+- Optional listing video: MediaConvert account endpoint, queue ARN, role ARN, webhook SNS → `POST /api/webhooks/mediaconvert`, plus recommended `AWS_MEDIACONVERT_SNS_TOPIC_ARN`, optional `AWS_CLOUDFRONT_URL`, `LISTING_VIDEO_WATERMARK_S3_URI`, `VIDEO_MAX_SIZE_BYTES`, `VIDEO_MAX_DURATION_SEC` — see [listing-video-production-setup-ru.md](../guides/listing-video-production-setup-ru.md) (operators, Russian) and [listings.md](../features/listings.md)
+- `LOG_LEVEL` - Optional Pino level (defaults to `info` in production, `debug` otherwise)
+- `WATERMARK_DOMAIN` - Domain text on photo watermarks and plate masks (else hostname from `FRONTEND_URL`)
+- `SENTRY_DSN` - Backend Sentry DSN; Sentry `environment` is `NODE_ENV` (`SENTRY_ENVIRONMENT` / `SENTRY_RELEASE` are not read)
 - `REDIS_HOST` - Redis host (if using external Redis)
 - `REDIS_PORT` - Redis port (if using external Redis)
 - `ONNXRUNTIME_NODE_INSTALL` - Set to `skip` on Render (or inline in the Build Command). Skips `onnxruntime-node` postinstall NuGet downloads for optional GPU binaries; plate masking uses CPU only. Without it, backend `npm ci` may fail with `ETIMEDOUT` to `api.nuget.org`.
+
+**Frontend (same deploy family):** also set `NEXT_PUBLIC_NOINDEX=true` while testing on Render URLs / before SEO cutover; CSP and `images.remotePatterns` are derived from `NEXT_PUBLIC_API_URL` and CDN env at build time.
 
 **Build Command:**
 

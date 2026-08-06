@@ -137,6 +137,14 @@ const QUALITY_CRITERION_LABELS: Record<
     dataCompleteness: 'Completitudinea datelor',
     safeChoice: 'Alegere sigură',
   },
+  en: {
+    dataCompleteness: 'Data completeness',
+    safeChoice: 'Safe choice',
+  },
+  sq: {
+    dataCompleteness: 'Plotësia e të dhënave',
+    safeChoice: 'Zgjedhje e sigurt',
+  },
 };
 
 const SAFE_CHOICE_WORDING_REPLACEMENTS: Array<[RegExp, string]> = [

@@ -23,19 +23,30 @@ assets/
 │   ├── partners/         # Footer partner logos
 │   └── pwa192.png        # PWA icon
 └── backend/watermark/
-    └── logo.png          # Watermark for photos
+    └── logo.png          # Watermark for photos (~200x200)
 ```
+
+Listing **video** watermark is **not** under `assets/backend/watermark/`. Upload a separate PNG to the media bucket and set `LISTING_VIDEO_WATERMARK_S3_URI` (MediaConvert overlay width is 140 px). The photo watermark is the wrong size for video.
 
 ## How it works
 
 1. **Source:** Files in `assets/` are the source of truth (platform repo root).
-2. **Copy:** Copied to `core/` during `npm run prepare:build`.
+2. **Copy:** Copied to `core/` during `npm run prepare:build` (`scripts/sync-platform-to-core.cjs`).
 3. **Usage:** Core uses the copied resources.
 
 ```bash
 assets/frontend/public/*     → core/frontend/public/
 assets/backend/watermark/   → core/backend/assets/watermark/
 ```
+
+### App Router icons (`core/frontend/app/`)
+
+Next.js also serves `app/favicon.ico` and `app/icon.png` via file conventions. The sync script copies:
+
+- `assets/frontend/public/favicon.ico` → `core/frontend/app/favicon.ico`
+- `assets/frontend/public/favicon-64.png` → `core/frontend/app/icon.png`
+
+Keep those source files in the platform overlay so both `public/` and `app/` stay on-brand after `prepare:build`.
 
 ## Required files
 
@@ -49,7 +60,11 @@ assets/backend/watermark/   → core/backend/assets/watermark/
 
 ### Backend (`backend/watermark/`)
 
-- `logo.png` — PNG with transparent background, ~200x200px, light color
+- `logo.png` — PNG with transparent background, ~200x200px, light color (photos / plate composite only)
+
+### Video (S3, not the overlay folder)
+
+- Separate PNG for `LISTING_VIDEO_WATERMARK_S3_URI` when listing video is enabled
 
 ## Detailed checklist
 

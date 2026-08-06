@@ -1,4 +1,4 @@
-export type AiReportLanguage = 'ru' | 'ro';
+export type AiReportLanguage = 'ru' | 'ro' | 'en' | 'sq';
 
 export const AI_LISTING_REPORT_SCHEMA_VERSION = 7;
 

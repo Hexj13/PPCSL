@@ -160,7 +160,7 @@ export class UploadService {
         const url = new URL(frontendUrl);
         this.watermarkDomain = url.hostname;
       } catch {
-        this.watermarkDomain = 'kupito.club';
+        this.watermarkDomain = 'localhost';
       }
     }
 

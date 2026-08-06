@@ -5,7 +5,11 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
-import type { Translations } from '@/lib/i18n-types';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { Locale, Translations } from '@/lib/i18n-types';
+import { resolveLocaleRouting } from '@/lib/locale-routing';
+import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 
 const SECTION_IDS = [
   'about',
@@ -18,8 +22,6 @@ const SECTION_IDS = [
   'whyNow',
   'offer',
 ] as const;
-
-type InvestorsPageLocale = 'en' | 'ro' | 'ru';
 
 type InvestorsBundle = Translations['investors'];
 
@@ -35,12 +37,6 @@ const investorsDropdownButtonClass =
   'header-language-switcher bg-transparent! text-primary-900! font-medium text-sm hover-only:hover:text-primary-700! active:text-primary-700! transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:text-primary-900! hover-only:hover:[&_span]:text-primary-700! [&_svg]:text-primary-900! hover-only:hover:[&_svg]:text-primary-700!';
 
 const SECONDARY_TEXT_STYLE = { color: 'rgb(var(--text-secondary-rgb))' } as const;
-
-const LOCALE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'en', label: 'English' },
-  { value: 'ro', label: 'Română' },
-  { value: 'ru', label: 'Русский' },
-];
 
 function hasLead(block: InvestorsBlock): block is InvestorsBlock & { lead: string } {
   return typeof block.lead === 'string' && block.lead.length > 0;
@@ -66,26 +62,47 @@ const languageIcon = (
   </svg>
 );
 
-export function InvestorsPageClient({ initialInvestors }: { initialInvestors: InvestorsBundle }) {
+export function InvestorsPageClient({
+  initialLocale,
+  initialInvestors,
+}: {
+  initialLocale: Locale;
+  initialInvestors: InvestorsBundle;
+}) {
   const { href } = useLocalizedNavigation();
-  const cache = useRef<Map<InvestorsPageLocale, InvestorsBundle>>(
-    new Map([['en', initialInvestors]]),
-  );
-  const [locale, setLocale] = useState<InvestorsPageLocale>('en');
+  const { t } = useTranslation();
+  const site = useMemo(() => loadSiteConfigSync(getCountry()), []);
+  const routing = useMemo(() => resolveLocaleRouting(site), [site]);
+  const supported = routing.supportedLocales;
+
+  const cache = useRef<Map<string, InvestorsBundle>>(new Map([[initialLocale, initialInvestors]]));
+  const [locale, setLocale] = useState<string>(initialLocale);
   const [content, setContent] = useState<InvestorsBundle>(initialInvestors);
   const [isLoadingLocale, setIsLoadingLocale] = useState(false);
 
+  const localeOptions = useMemo(
+    () =>
+      supported.map((value) => {
+        const low = value.toLowerCase();
+        const key = routing.languageSwitcherTranslationKeys[low] ?? 'common.languageLocaleCode';
+        const label =
+          key === 'common.languageLocaleCode' ? t(key, { code: value.toUpperCase() }) : t(key);
+        return { value: low, label };
+      }),
+    [routing.languageSwitcherTranslationKeys, supported, t],
+  );
+
   const currentLabel = useMemo(
-    () => LOCALE_OPTIONS.find((o) => o.value === locale)?.label ?? 'English',
-    [locale],
+    () => localeOptions.find((o) => o.value === locale)?.label ?? locale.toUpperCase(),
+    [locale, localeOptions],
   );
 
   const handleLocaleChange = useCallback(
     (value: string) => {
-      if (value !== 'en' && value !== 'ro' && value !== 'ru') {
+      const next = value.toLowerCase();
+      if (!supported.map((s) => s.toLowerCase()).includes(next)) {
         return;
       }
-      const next: InvestorsPageLocale = value;
       if (next === locale || isLoadingLocale) {
         return;
       }
@@ -113,29 +130,31 @@ export function InvestorsPageClient({ initialInvestors }: { initialInvestors: In
           setIsLoadingLocale(false);
         });
     },
-    [locale, isLoadingLocale],
+    [locale, isLoadingLocale, supported],
   );
 
   return (
     <div className="max-w-4xl mx-auto pt-4 md:pt-6">
       <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-primary-900">{content.title}</h1>
-      <div className="mb-8 inline-flex max-w-full">
-        <Dropdown
-          className="w-fit"
-          value={locale}
-          onChange={handleLocaleChange}
-          options={LOCALE_OPTIONS}
-          placeholder={currentLabel}
-          buttonClassName={investorsDropdownButtonClass}
-          autoPosition={true}
-          searchable={false}
-          rightIcon={languageIcon}
-          menuSelectedStyle="checkmark"
-          menuExpandToContent
-          disabled={isLoadingLocale}
-          dataTestId="investors-page-language"
-        />
-      </div>
+      {localeOptions.length > 1 ? (
+        <div className="mb-8 inline-flex max-w-full">
+          <Dropdown
+            className="w-fit"
+            value={locale}
+            onChange={handleLocaleChange}
+            options={localeOptions}
+            placeholder={currentLabel}
+            buttonClassName={investorsDropdownButtonClass}
+            autoPosition={true}
+            searchable={false}
+            rightIcon={languageIcon}
+            menuSelectedStyle="checkmark"
+            menuExpandToContent
+            disabled={isLoadingLocale}
+            dataTestId="investors-page-language"
+          />
+        </div>
+      ) : null}
       <p className="text-base md:text-lg mb-10" style={SECONDARY_TEXT_STYLE}>
         {content.intro}
       </p>

@@ -9,6 +9,8 @@ import {
   Unique,
 } from 'typeorm';
 
+import type { AiReportLanguage } from '../application/listing-ai-report.types';
+
 import { Listing } from './listing.entity';
 
 @Entity('listing_ai_reports')
@@ -26,7 +28,7 @@ export class ListingAiReport {
   listing: Listing;
 
   @Column({ type: 'varchar', length: 2 })
-  report_language: 'ru' | 'ro';
+  report_language: AiReportLanguage;
 
   @Column({ type: 'varchar', length: 64 })
   input_hash: string;

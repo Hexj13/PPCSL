@@ -127,7 +127,10 @@ export const listingsApi = {
       },
     });
   },
-  postAiReport: (id: string, options?: { signal?: AbortSignal; reportLanguage?: 'ru' | 'ro' }) =>
+  postAiReport: (
+    id: string,
+    options?: { signal?: AbortSignal; reportLanguage?: 'ru' | 'ro' | 'en' | 'sq' },
+  ) =>
     api.post<ListingAiReportPostResponse>(
       `/api/listings/${id}/ai-report`,
       {},

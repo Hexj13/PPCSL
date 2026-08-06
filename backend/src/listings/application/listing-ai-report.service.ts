@@ -48,20 +48,28 @@ const MESSAGES = {
   rate_limited: {
     ru: 'Вы временно исчерпали лимит AI-анализов. Попробуйте позже.',
     ro: 'Ați atins limita temporară de analize AI. Încercați mai târziu.',
+    en: 'You have temporarily reached the AI analysis limit. Please try again later.',
+    sq: 'Keni arritur përkohësisht limitin e analizave AI. Provoni përsëri më vonë.',
   },
   unavailable: {
     ru: 'AI-анализ временно недоступен. Попробуйте позже.',
     ro: 'Analiza AI este temporar indisponibilă. Încercați mai târziu.',
+    en: 'AI analysis is temporarily unavailable. Please try again later.',
+    sq: 'Analiza AI është përkohësisht e padisponueshme. Provoni përsëri më vonë.',
   },
   tire: {
     ru: 'AI-анализ доступен только для объявлений об автомобилях.',
     ro: 'Analiza AI este disponibilă doar pentru anunțuri de vehicule.',
+    en: 'AI analysis is available only for vehicle listings.',
+    sq: 'Analiza AI është e disponueshme vetëm për njoftimet e automjeteve.',
   },
   closed: {
     ru: 'AI-анализ недоступен для закрытых объявлений.',
     ro: 'Analiza AI nu este disponibilă pentru anunțuri închise.',
+    en: 'AI analysis is not available for closed listings.',
+    sq: 'Analiza AI nuk është e disponueshme për njoftimet e mbyllura.',
   },
-} as const;
+} as const satisfies Record<string, Record<AiReportLanguage, string>>;
 
 function quotaBucketKey(userId: string): string {
   const bucket = Math.floor(Date.now() / 3_600_000);

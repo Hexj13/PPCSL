@@ -12,7 +12,7 @@ tags:
 
 ## Overview
 
-This document describes the current state of Google Analytics 4 integration. GA4 loads via direct `gtag.js` using `NEXT_PUBLIC_GA_ID` (`GoogleAnalytics.tsx`). GTM container `GTM-K527X5WK` is also loaded on the page but must not duplicate GA4 page_view tags while `gtag('config')` is active. Consent is shared through `lib/cookie-consent.ts` (cookie-first, localStorage fallback): `analytics.ts` `checkConsent()` and `useCookieConsent` both use `readConsentPreferences()` / `isAnalyticsConsentGranted()`.
+This document describes the current state of Google Analytics 4 integration. GA4 loads via direct `gtag.js` using `NEXT_PUBLIC_GA_ID` (`GoogleAnalytics.tsx`). Optional GTM loads via `NEXT_PUBLIC_GTM_ID` (`GoogleTagManager.tsx`); empty or unset → no GTM. If GTM is enabled, its container must not duplicate GA4 page_view tags while `gtag('config')` is active. Consent is shared through `lib/cookie-consent.ts` (cookie-first, localStorage fallback): `analytics.ts` `checkConsent()` and `useCookieConsent` both use `readConsentPreferences()` / `isAnalyticsConsentGranted()`.
 
 **Related documents:**
 
@@ -292,7 +292,7 @@ This document describes the current state of Google Analytics 4 integration. GA4
 
 **Location:** `core/frontend/components/analytics/GoogleTagManager.tsx`  
 **Role:** Load GTM container in production after deferred idle (~2.5s); `GoogleTagManagerNoscript` — iframe for noscript  
-**Config:** `GTM_ID` (`GTM-K527X5WK`) hardcoded in component. Do not add a GA4 Configuration tag with automatic page_view in GTM while the app loads `gtag.js` via `NEXT_PUBLIC_GA_ID`, or page views will be double-counted.
+**Config:** `NEXT_PUBLIC_GTM_ID` (empty/unset → component returns `null`, no container). Do not add a GA4 Configuration tag with automatic page_view in GTM while the app loads `gtag.js` via `NEXT_PUBLIC_GA_ID`, or page views will be double-counted.
 
 #### ConversionEvent.tsx / ConversionEventTrigger.tsx
 

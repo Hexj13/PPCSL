@@ -16,6 +16,17 @@ if (!process.env.JEST_PRESERVE_COUNTRY) {
   process.env.DEFAULT_LOCALE = 'ro';
 }
 
+/**
+ * data-source options are evaluated at import (often before dotenv), so TypeORM
+ * uses Kupito defaults. Redis is resolved later via ConfigModule and would pick
+ * up platform .env (e.g. MakinaGuru :6380), poisoning brand IDs in cache.
+ * Pin Redis to Kupito unless explicitly preserved.
+ */
+if (!process.env.JEST_PRESERVE_DB) {
+  process.env.REDIS_HOST = 'localhost';
+  process.env.REDIS_PORT = '6379';
+}
+
 beforeAll(async () => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'test';
   process.env.ALLOW_SMS_TEST_CODE = 'true';

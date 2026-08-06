@@ -27,9 +27,24 @@ describe('email-template', () => {
       });
       expect(html).toContain('<!doctype html>');
       expect(html).toContain('Arial, Helvetica, sans-serif');
-      expect(html).toContain('Kupito.club');
+      expect(html).toContain('kupito.club');
+      expect(html).toContain('alt="kupito.club"');
       expect(html).toContain('Platform for posting car sale listings in Moldova');
       expect(html).toContain('support@kupito.club');
+    });
+
+    it('uses siteName when provided', () => {
+      const html = buildEmailLayout({
+        siteBaseUrl: 'https://makinaguru.com',
+        siteName: 'MakinaGuru',
+        documentTitle: 'T',
+        heading: 'H',
+        bodyHtml: '',
+        supportEmail: 'support@makinaguru.com',
+      });
+      expect(html).toContain('alt="MakinaGuru"');
+      expect(html).toContain('MakinaGuru');
+      expect(html).toContain('makinaguru.com');
     });
   });
 

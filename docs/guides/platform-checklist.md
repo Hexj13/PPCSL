@@ -10,15 +10,17 @@ tags:
 
 # Platform creation checklist
 
-Short checklist for creating a new platform based on PPCSL core.
+Checklist for launching a new platform on PPCSL core.
+
+Written against the second platform launch (MakinaGuru, Albania) after Kupito (Moldova). Items marked **gotcha** cost real debugging time — read them before you hit them.
 
 ## Before you start
-
-Read these documents:
 
 - [multi-repository.md](../architecture/multi-repository.md) — Overall architecture
 - [scripts-architecture.md](../architecture/scripts-architecture.md) — Scripts architecture
 - [known-issues.md](../architecture/known-issues.md) — Known issues
+- [platform-guide.md](./platform-guide.md) — Where to make changes, analytics config
+- [DEPLOYMENT.md](./DEPLOYMENT.md) — Render and Namecheap steps
 
 ---
 
@@ -32,17 +34,50 @@ platform-repo/
 │   └── backend/
 │       └── watermark/        # Watermark for photos
 ├── config/
-│   └── site.ts               # Platform config
+│   ├── site.ts               # Platform config
+│   ├── legal.ts              # Terms + Privacy content
+│   ├── faq.ts, faq-data-*.ts # FAQ content
+│   └── parsers.ts            # Partner parser catalog (empty = none)
 ├── locales/
-│   └── {lang}.json           # Translations
+│   ├── {lang}.json           # Frontend translations
+│   └── backend/{lang}.json   # Backend translations
 ├── theme/
 │   └── colors.ts             # Color scheme
 ├── core/                      # PPCSL submodule
-│   └── backend/src/scripts/platforms/{country}/  # Platform configs in core
-│       └── config.ts         # Cities, descriptions, phones
 ├── package.json
 └── README.md
 ```
+
+`npm run prepare:build` (see `scripts/sync-platform-to-core.cjs`) copies the overlay over `core/`, **replacing whole files** — it is not a merge. Anything not present in the overlay keeps the core version.
+
+---
+
+## Which resources are separate per platform
+
+Rule of thumb: **separate anything with state, quota, branding, or access scope. Share only billing and ownership.**
+
+| Resource | Separate? | Notes |
+|---|---|---|
+| PostgreSQL, Redis | **Separate** | Never share between platforms |
+| S3 bucket | **Separate bucket** | Not a folder — see gotcha below |
+| GA4 property | **Separate** | Platform rule: never one property for two platforms |
+| GTM container | **Separate** | Requires `NEXT_PUBLIC_GTM_ID` |
+| Search Console | **Separate** resource | |
+| Google Cloud project | **Separate**, same billing account | Holds OAuth client + Gemini key |
+| Gemini API key | **Separate** | Quotas are per Cloud project |
+| Sentry projects | **Separate** (frontend + backend), same org | See gotcha below |
+| Twilio | **Subaccount** under the same parent | Own Messaging Service per country |
+| SMTP / mailbox | **Separate** | Own domain, own SPF/DKIM/DMARC |
+| Google account | **Shared** | One login can own many properties; separate account only for a separate legal entity |
+| AWS account | **Shared** | Separate IAM user per platform |
+| Render workspace | **Shared** | Separate services |
+| FXRatesAPI key | **Shared is fine** | One request per day; no quota concern |
+
+**Gotcha — S3 must be a separate bucket, not a prefix.** Object keys are flat (`uploads/{uuid}.webp`) and there is no tenant prefix setting; the bucket name is the only separation point (`AWS_S3_BUCKET_NAME` in `core/backend/src/upload/upload.service.ts`). Also `src/scripts/production/upload-robots-txt.ts` writes `robots.txt` to the **bucket root**, so a shared bucket means one platform overwrites the other's `robots.txt`.
+
+**Gotcha — Sentry needs separate projects, not just environments.** All platforms run the same core code, and Sentry groups issues by stack trace fingerprint. In a shared project, identical exceptions from different platforms merge into one issue and resolving it closes it for both. `SENTRY_ENVIRONMENT` is a filter, not a grouping boundary.
+
+**Gotcha — Gemini quotas are per Cloud project.** A shared key means a traffic spike on one platform returns 429 on the other, and spend cannot be attributed. Remember to attach billing to the new project or the key stays on the free tier.
 
 ---
 
@@ -55,215 +90,290 @@ platform-repo/
 - [ ] PPCSL core added as submodule
 - [ ] Folder structure created (`assets/`, `config/`, `locales/`, `theme/`)
 
-### 2. Configuration (`config/site.ts`)
+### 2. Long lead time — start these first
 
-- [ ] `country` code set (e.g. `md` for Moldova)
-- [ ] Platform `name` set
-- [ ] `domain` set (e.g. `kupito.club`)
-- [ ] `locale` set (e.g. `ro-MD`)
-- [ ] `currency` set (e.g. `MDL`)
-- [ ] `currencies` set
-- [ ] `countryCode` for phones set (e.g. `MD`)
-- [ ] `supportEmail` set
+External parties gate these; everything else waits on nobody.
+
+- [ ] **Twilio sender ID for the country** — some countries require alphanumeric sender registration, which takes weeks. Fall back to a plain number (`TWILIO_FROM_NUMBER`) if not ready
+- [ ] **Mailbox for `support@` and `noreply@`** plus SMTP credentials
+- [ ] Any partner agreements (vehicle history provider, etc.)
+
+### 3. Configuration (`config/site.ts`)
+
+- [ ] `country` code set
+- [ ] Platform `name` set — used as OG `siteName` and in emails
+- [ ] `domain` set
+- [ ] `locale` set
+- [ ] `localeRouting` set (default locale, supported locales, prefixed locales)
+- [ ] `currency` and `currencies` set
+- [ ] `countryCode` for phones set
+- [ ] `supportEmail` set — **must be a real mailbox**, it appears in FAQ, legal texts and email footers
 - [ ] `siteUrl` set
 - [ ] `assetVersion` updated when public assets change
-- [ ] `footerPartners` configured if the footer shows partner logos or links
+- [ ] `footerPartners` configured, or left empty to hide the block
+- [ ] `socialLinks` configured, or left empty to hide the block
+- [ ] `reportProvider` — omit entirely to hide the vehicle-history section
 
-### 3. Translations (`locales/{lang}.json`)
+### 4. Content (`locales/`, `config/legal.ts`, `config/faq*.ts`)
 
-- [ ] Translation file created for primary language
-- [ ] All keys translated (structure matches across `ro.json`, `ru.json`, `en.json` where the platform ships English)
-- [ ] Legal documents translated (Terms, Privacy)
-- [ ] FAQ translated
-- [ ] SMS messages translated (in `core/backend/src/common/constants.ts`)
-- [ ] Structure verified (same keys in every shipped frontend locale file)
+There is **no admin panel or database** for FAQ, footer and legal pages — all of it is overlay files synced by `prepare:build`. No seeding required.
 
-### 4. Theme (`theme/colors.ts`)
+- [ ] Frontend translations for every supported locale
+- [ ] Backend translations in `locales/backend/`
+- [ ] Legal documents (Terms, Privacy) in `config/legal.ts` for every locale
+- [ ] FAQ content in `config/faq-data-{lang}.ts` and wired in `config/faq.ts`
+- [ ] Subprocessor list in the privacy policy matches the services actually used
+- [ ] Cookie table matches the cookies actually set
+- [ ] Key structure identical across shipped locale files
 
-- [ ] `colors.ts` copied from Moldova or created new
-- [ ] Colors adjusted if needed
+Footer links themselves are hardcoded in `core/frontend/components/layout/Footer/FooterSitemap.tsx`; the overlay supplies labels only.
+
+### 5. Theme (`theme/colors.ts`)
+
+- [ ] Colors set
 - [ ] TailwindCSS compatibility verified
 
-### 5. Graphics (`assets/`)
+### 6. Graphics (`assets/`)
 
-#### Frontend (`assets/frontend/public/`)
+Frontend (`assets/frontend/public/`):
 
-- [ ] Logo `logo.png` created
-- [ ] `logo-desktop.png` created
-- [ ] `logo-mobile.png` created
-- [ ] Favicons created (16, 32, 64, 192, 512px)
-- [ ] `favicon.ico` created
-- [ ] PWA icon `pwa192.png` created
-- [ ] Open Graph image `og-image.jpg` (1200x630px)
-- [ ] `opengraph-image.png` (1200x630px)
-- [ ] `partners/` assets added for every `footerPartners[].logoSrc` entry
+- [ ] `logo.png`, `logo-desktop.*`, `logo-mobile.*`
+- [ ] Favicons (16, 32, 64, 192, 512px) and `favicon.ico`
+- [ ] PWA icon `pwa192.png`
+- [ ] `og-image.jpg` and `opengraph-image.png` (1200x630)
+- [ ] `partners/` assets for every `footerPartners[].logoSrc`
 
-#### Backend (`assets/backend/watermark/`)
+Backend (`assets/backend/watermark/`):
 
-- [ ] Watermark logo `logo.png` (PNG with transparent background, ~200x200px, white/light)
+- [ ] Watermark `logo.png` (transparent PNG, ~200x200, light)
+- [ ] A separate PNG for the video overlay, if listing video is enabled — uploaded to the bucket and referenced by `LISTING_VIDEO_WATERMARK_S3_URI`. The photo watermark is the wrong size; the overlay is inserted 140 px wide
 
-### 6. Data generation scripts (`scripts/{country}/`)
+**Gotcha — App Router icons need the same branding.** `sync-platform-to-core.cjs` copies `assets/frontend/public` into `core/frontend/public` and also syncs `favicon.ico` → `core/frontend/app/favicon.ico` and `favicon-64.png` → `core/frontend/app/icon.png`. Ensure those source files exist in the overlay. Page metadata also sets `icons` from `public/` in `app/[locale]/layout.tsx`; `manifest.ts` uses `siteConfig`; `opengraph-image.tsx` reads `public/opengraph-image.png`.
 
+### 7. Cities and country data
+
+- [ ] City list added to `core/backend/src/cities/data/{country}.ts` and registered in `CITIES_BY_COUNTRY` (`core/backend/src/cities/cities.service.ts`)
+- [ ] Sort locale added to `SORT_LOCALE_BY_COUNTRY`
+- [ ] Phone prefix supported in `core/backend/src/auth/.../phone.service.ts`
 - [ ] Platform config in core: `core/backend/src/scripts/platforms/{country}/config.ts`
-  - [ ] Country cities
-  - [ ] Descriptions in local language
-  - [ ] Phone prefix (e.g. `+373` for Moldova)
-  - [ ] Test user names
-  - [ ] Transmission labels in local language
-- [ ] Seed/reset-and-seed etc. run with `COUNTRY={country}` (scripts in core, config in platforms/{country})
 
-### 7. Package.json
+Cities come from code and are cached in Redis — nothing to seed.
 
-- [ ] `name` set
-- [ ] `description` set
-- [ ] `prepare:build` script updated:
-  ```json
-  "prepare:build": "mkdir -p core/frontend/lib/locales && rm -rf core/frontend/lib/locales/backend && cp locales/ro.json locales/ru.json locales/en.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/ && cp -r theme core/frontend/lib/ && cp -r config core/frontend/lib/ && cp -r assets/frontend/public/* core/frontend/public/ && cp -r assets/backend/watermark core/backend/assets/"
-  ```
-- [ ] Run scripts added:
-  ```json
-  "seed": "COUNTRY={country} npm run prepare:build && cd core/backend && COUNTRY={country} npx ts-node -r tsconfig-paths/register src/scripts/stage/seed.ts",
-  "reset-and-seed": "COUNTRY={country} npm run prepare:build && cd core/backend && COUNTRY={country} npx ts-node -r tsconfig-paths/register src/scripts/stage/reset-and-seed.ts",
-  "add-brands": "cd core/backend && npx ts-node -r tsconfig-paths/register src/scripts/stage/add-brands.ts"
-  ```
+**Gotcha — `COUNTRY` has a silent fallback to `md`** (`core/backend/src/common/env.ts`). Forget the variable and the platform quietly serves Moldovan cities and Moldovan defaults with no error. Verify on the listing form right after the first deploy.
 
-### 8. Environment variables (`.env`)
+### 8. Parsers (`config/parsers.ts`)
 
-#### Backend
+- [ ] `parsersConfig` set to `[]` if the platform has no partner importers
 
-- [ ] `DATABASE_URL` (PostgreSQL)
-- [ ] `REDIS_URL`
-- [ ] `JWT_SECRET`
-- [ ] `JWT_REFRESH_SECRET`
-- [ ] `FRONTEND_URL` (e.g. `https://kupito.club`)
-- [ ] `AWS_ACCESS_KEY_ID`
-- [ ] `AWS_SECRET_ACCESS_KEY`
-- [ ] `AWS_S3_BUCKET_NAME` (shared or separate?)
-- [ ] `AWS_REGION`
-- [ ] `CLOUDFRONT_URL`
-- [ ] `WATERMARK_DOMAIN` (e.g. `kupito.club`)
-- [ ] `TWILIO_ACCOUNT_SID`
-- [ ] `TWILIO_AUTH_TOKEN`
-- [ ] `TWILIO_MESSAGING_SERVICE_SID` or `TWILIO_PHONE_NUMBER`
-- [ ] `INFOCAR_SECRET_KEY` (optional; for Infocar signed report URL, see [infocar-history-section.md](../features/infocar-history-section.md))
+An empty catalog is what isolates other platforms' parsers: the admin list, manual runs, schedules and CLI spawning all go through it.
 
-#### Frontend
+- [ ] `ADMIN_PARSING_SCHEDULER_ENABLED=false` when there are no parsers — the scheduler defaults to **enabled** (`core/backend/src/parsing/application/parsing-env.ts`)
 
-- [ ] `NEXT_PUBLIC_API_URL`
-- [ ] `NEXT_PUBLIC_SITE_URL`
-- [ ] `NEXT_PUBLIC_COUNTRY` (e.g. `md`)
-- [ ] `NEXT_PUBLIC_GOOGLE_ANALYTICS_ID`
-- [ ] `NEXT_PUBLIC_GOOGLE_VERIFICATION`
+Known limits when the catalog is empty: the Parsing tab is still visible, sync runs resolve the CLI by code without checking the catalog (only reachable with rows already in the DB), and new schedules default to `Europe/Chisinau`.
 
-### 9. External services
+### 9. Features that need an explicit decision
 
-#### Google
+Each of these is visible or reachable by default and fails confusingly if left unconfigured.
 
-- [ ] Google account for platform created
-- [ ] Google Analytics configured
-- [ ] Google Search Console configured
-- [ ] Measurement ID obtained
-- [ ] Verification code obtained
+- [ ] **Listing video** — **there is no flag to hide it.** `PhotosSection.tsx` renders the uploader unconditionally and neither `site.ts` nor any env var gates it, so without AWS MediaConvert users upload a clip and hit `errors.video.transcodingUnavailable`. Either configure MediaConvert (`AWS_MEDIACONVERT_ENDPOINT`, `_QUEUE_ARN`, `_ROLE_ARN`, EventBridge → SNS → `POST /api/webhooks/mediaconvert`, plus `mediaconvert:CreateJob/GetJob/DescribeEndpoints` on the app's IAM user) or add the flag to core. Set `AWS_MEDIACONVERT_SNS_TOPIC_ARN` as well: without it the webhook accepts validly signed events from **any** SNS topic. A separate PNG in the bucket via `LISTING_VIDEO_WATERMARK_S3_URI` puts the logo on clips — the photo watermark is the wrong size, the overlay is inserted 140 px wide. Full walkthrough: [listing-video-production-setup-ru.md](./listing-video-production-setup-ru.md)
+- [ ] **Telegram** — the login widget and the support bot are separate decisions. The widget needs a bot in BotFather with `/setdomain` (**one domain per bot**), `NEXT_PUBLIC_TELEGRAM_CLIENT_ID` and `TELEGRAM_BOT_TOKEN`; it sends no messages, so platform locales do not matter. The support bot additionally needs `TELEGRAM_SUPPORT_CHAT_ID` and a webhook, and replies in **ro + ru only** (`core/backend/src/telegram/telegram.service.ts`) regardless of platform locales
+- [ ] **Google sign-in** — set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_ID` to the **same** Web client ID, and list the production origins (apex and `www`) under Authorized JavaScript origins. The `Cross-Origin-Opener-Policy: same-origin-allow-popups` header and the CSP entries for `accounts.google.com` are already in core
+- [ ] **Promotions** — set `PROMOTION_ACCESS` explicitly (`disabled` / `admin` / `all`). There is no payment provider in the project; promotions are an internal mechanic
+- [ ] **Vehicle history** — omit `reportProvider` from `site.ts` to keep the section hidden. See the gotcha in section 15
+- [ ] **Email** — decide before launch. Password reset does not work without SMTP, which leaves locked-out users with no recovery path
 
-#### Twilio
+### 10. Environment variables
 
-- [ ] Twilio account created/configured
-- [ ] Phone number or Messaging Service set up
-- [ ] Credentials obtained (SID, Auth Token)
-- [ ] SMS sending tested
+Validated at build/startup (`core/scripts/check-env.js`, `core/backend/src/common/env.validation.ts`): `COUNTRY`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL`, `JWT_SECRET` (min 16), `CRON_SECRET` (min 8), `DB_*`, `REDIS_HOST`, `REDIS_PORT`, `FRONTEND_URL`; plus `GOOGLE_CLIENT_ID` when `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is set, and `TELEGRAM_BOT_TOKEN` when `NEXT_PUBLIC_TELEGRAM_CLIENT_ID` is set.
 
-#### AWS S3 (if separate bucket)
+Backend:
 
-- [ ] S3 bucket created
-- [ ] Permissions configured
-- [ ] CloudFront distribution created
-- [ ] CORS configured
+```
+COUNTRY, DEFAULT_LOCALE, DEFAULT_CURRENCY
+NODE_ENV=production
+JWT_SECRET, CRON_SECRET
+DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME
+REDIS_HOST, REDIS_PORT
+FRONTEND_URL, API_URL
+NEXT_PUBLIC_SITE_URL              # yes, on the backend too — used by the sitemap
+AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, AWS_REGION
+AWS_CLOUDFRONT_URL                # if using a CDN
+WATERMARK_DOMAIN
+TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN
+TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM_NUMBER
+SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, SUPPORT_EMAIL
+GOOGLE_CLIENT_ID
+GEMINI_API_KEY
+FXRATESAPI_API_KEY
+SENTRY_DSN                        # environment comes from NODE_ENV; SENTRY_ENVIRONMENT is ignored
+LOG_LEVEL                         # optional, defaults to info in production
+ADMIN_PARSING_SCHEDULER_ENABLED
+PROMOTION_ACCESS
+TELEGRAM_BOT_TOKEN
+AWS_MEDIACONVERT_ENDPOINT, AWS_MEDIACONVERT_QUEUE_ARN, AWS_MEDIACONVERT_ROLE_ARN
+AWS_MEDIACONVERT_SNS_TOPIC_ARN     # recommended when video is enabled
+LISTING_VIDEO_WATERMARK_S3_URI    # separate PNG; photo watermark wrong size (140px overlay)
+SITE_NAME or PLATFORM_NAME        # Swagger title branding
+ONNXRUNTIME_NODE_INSTALL=skip     # Render build
+GITHUB_PAT                        # Render build, private core submodule
+```
 
-#### Domain & DNS (Namecheap)
+Frontend:
 
-- [ ] Domain purchased
-- [ ] DNS records set (A, CNAME)
+```
+NEXT_PUBLIC_COUNTRY
+NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_API_URL
+NEXT_PUBLIC_GA_ID, NEXT_PUBLIC_GTM_ID      # GTM empty = not loaded
+NEXT_PUBLIC_NOINDEX                       # true = noindex/nofollow for staging
+NEXT_PUBLIC_GOOGLE_VERIFICATION, NEXT_PUBLIC_GOOGLE_CLIENT_ID
+NEXT_PUBLIC_TELEGRAM_CLIENT_ID
+NEXT_PUBLIC_SENTRY_DSN, SENTRY_ORG, SENTRY_PROJECT, SENTRY_AUTH_TOKEN
+NEXT_PUBLIC_IMAGE_CDN_URL                 # if using a CDN; also feeds CSP + remotePatterns
+```
 
-### 10. Deployment (Render.com)
+**Gotcha — `SMTP_FROM` and `SUPPORT_EMAIL` default to `kupito.club`** (`core/backend/src/common/email/email.service.ts`). Set them explicitly.
 
-- [ ] PostgreSQL service created
-- [ ] Redis service created
-- [ ] Backend service created
-  - [ ] Env variables set
-  - [ ] Build command set
-  - [ ] Start command set
-- [ ] Frontend service created
-  - [ ] Env variables set
-  - [ ] Build command set
-  - [ ] Start command set
-- [ ] Custom domain connected
-- [ ] SSL certificate configured (automatic)
+**Logging needs no per-platform work.** Pino writes line-delimited JSON to stdout (`core/backend/src/common/logger/logger.module.ts`) and the host collects it per service; application events go through `log-user-event.ts` and carry nothing platform-specific. Phones, emails, tokens and cookies are stripped before anything reaches Sentry (`sentry-event-sanitize.utils.ts`). `/metrics` is behind `CRON_SECRET`.
 
-### 11. CI/CD
+**Plate masking and photo watermarks need no extra assets beyond the overlay logo.** The 28 MB `plate-detector.onnx` is committed to core and arrives with the submodule; `ONNXRUNTIME_NODE_INSTALL=skip` only skips the optional GPU binaries, and detection runs on CPU. Do watch the instance size — the model and `sharp` sit in memory. The watermark image comes from the platform overlay (`assets/backend/watermark/logo.png`, synced by `prepare:build`). Domain text on the photo watermark **and** on plate masks comes from `WATERMARK_DOMAIN`, falling back to the `FRONTEND_URL` hostname when unset. Wrong domain text is burned into stored photos — set it before first production uploads.
 
-- [ ] `.github/workflows/ci.yml` created
-- [ ] GitHub Actions configured
-- [ ] Secrets added in GitHub
-- [ ] Workflow tested
+**The SMS sender name already switches on `COUNTRY`** (`core/backend/src/common/constants.ts`), with `SMS_BRAND_NAME` as an override. Like the cities and the description locales, it silently falls back to the first platform when `COUNTRY` is unset — that one variable is worth verifying first when anything looks Moldovan.
 
-### 12. Local testing
+**Gotcha — exchange rates silently stop** if `DEFAULT_CURRENCY` is not `EUR`: the refresh use case logs a warning and returns without fetching, because FXRatesAPI is called with EUR as base.
 
-- [ ] `npm run prepare:build` run
-- [ ] Dependencies installed (`npm install` in core/backend and core/frontend)
-- [ ] Database running (PostgreSQL, Redis)
-- [ ] `npm run add-brands` run (universal brands)
-- [ ] `npm run seed` run (local data)
-- [ ] Backend running (`npm run dev`)
-- [ ] Frontend running (`npm run dev`)
-- [ ] Site verified locally
-- [ ] Registration/login verified
-- [ ] Phone verification tested (Twilio)
-- [ ] Photo upload tested (S3)
-- [ ] Photo watermark verified
+### 11. External services
 
-### 13. Production deploy
+Google (same account, new entities):
 
-- [ ] Backend deployed on Render.com
-- [ ] Frontend deployed on Render.com
-- [ ] Production verified
-- [ ] Monitoring and logs configured
-- [ ] DB backups configured
-- [ ] Cron jobs configured if needed
+- [ ] GA4 property → `NEXT_PUBLIC_GA_ID`
+- [ ] Search Console resource → `NEXT_PUBLIC_GOOGLE_VERIFICATION`
+- [ ] Cloud project on the same billing account → OAuth Web Client (origins on the new domain) and Gemini API key
+- [ ] Billing attached to the new Cloud project
+- [ ] GTM container → `NEXT_PUBLIC_GTM_ID`; do not add a GA4 auto page_view tag while `gtag.js` is active
 
-### 14. SEO & Analytics
+Sentry:
 
-- [ ] Site added to Google Search Console
-- [ ] Sitemap submitted
-- [ ] Indexing verified
-- [ ] Google Analytics configured
-- [ ] Event tracking verified
+- [ ] `{platform}-frontend` and `{platform}-backend` projects in the existing org
 
-### 15. Legal documents
+Twilio:
 
-- [ ] Terms of Service translated
-- [ ] Privacy Policy translated
-- [ ] Contacts and info verified
-- [ ] Compliance with country law verified
+- [ ] Subaccount created; own SID and auth token
+- [ ] Messaging Service for the target country
+- [ ] SMS delivery tested
+
+AWS:
+
+- [ ] Bucket `{platform}-uploads` created, public-read policy, CORS for the site origin
+- [ ] IAM user scoped to that bucket only
+- [ ] CloudFront distribution if using a CDN
+
+### 12. Deployment (Render)
+
+- [ ] PostgreSQL and Key Value (Redis) created, same region as the services
+- [ ] Backend web service — build, start and pre-deploy commands copied from an existing platform (submodule checkout + `prepare:build` + `migration:run:prod`)
+- [ ] Frontend web service
+- [ ] Env variables set on both
+- [ ] Brands seeded: `npm run seed:all-brands:prod`
+- [ ] Admin created: `npm run make-admin:prod -- --email ... --password ...`
+
+Cron: schedules run **in-process** via `@Cron` decorators (exchange rates, closing old listings, expiring promotions, token cleanup, notifications). External Render Cron Jobs are only needed on the free tier where services sleep.
+
+### 13. Smoke test on the Render URLs
+
+**Nothing that needs a login can be tested here.** Auth cookies are set host-only with `sameSite: 'lax'` (`core/backend/src/auth/application/services/auth-token-issuer.service.ts`). On the production domain that is fine, because the site and its `api.` subdomain are same-site. But `onrender.com` is on the Public Suffix List, so two `*.onrender.com` services are cross-site and the cookies never reach the frontend. The Telegram widget is blocked too, since a bot has a single `/setdomain`. Both are fixed only by attaching the custom domain.
+
+So attach the domain early and keep indexing disabled until acceptance passes. There is no staging environment by default.
+
+- [ ] `NEXT_PUBLIC_NOINDEX=true` while testing
+- [ ] Home page and `/health` respond; no crashes in the logs
+- [ ] Cities are the new country's — proves `COUNTRY` was picked up
+- [ ] Footer pages open in every supported locale
+- [ ] No parsing scheduler ticks in the logs
+
+### 14. Domain, then full acceptance
+
+- [ ] Custom domains added in Render (apex, `www`, `api`)
+- [ ] DNS records in Namecheap; parking A records and URL redirects removed
+- [ ] Mail records: MX, SPF, DKIM, DMARC
+- [ ] SSL issued
+- [ ] Env switched to the production URLs and frontend redeployed (`NEXT_PUBLIC_*` are build-time), **keeping `NEXT_PUBLIC_NOINDEX=true`**
+
+Then, on the real domain:
+
+- [ ] Phone signup, SMS arrives
+- [ ] Google sign-in, Telegram sign-in, admin login; the session survives navigation
+- [ ] Listing form description tabs are labelled with the platform's `descriptionLocales` and open on the current UI language; both texts save and render on the listing page
+- [ ] The listing AI report answers in the UI language
+- [ ] If video is enabled: a clip leaves `processing`, carries the platform watermark, and its poster renders. The SNS subscription can only be confirmed once the domain is live, so create it after cutover and look for `listing_video_webhook_subscription_confirmed` in the logs
+- [ ] Photo upload works; watermark and plate mask show the correct domain
+- [ ] Sharing a listing shows the correct site name in the preview
+- [ ] Password reset email arrives and is not marked spam
+- [ ] GA4 Realtime receives hits; no requests to another platform's GTM container
+- [ ] No CORS errors in the console
+
+Only then remove `NEXT_PUBLIC_NOINDEX`, redeploy, submit the sitemap to Search Console, and confirm `/robots.txt` and `/sitemap.xml` carry the new domain.
+
+### 15. Changing core for a new platform
+
+Core was originally written for a single platform, so some values are still hardcoded. Expect to find more. Known ones that should still be checked against `siteConfig` or env:
+
+- OG `siteName` on the listing page (`core/frontend/app/[locale]/listings/[id]/page.tsx`) — every other page already uses `siteConfig.name`
+- `/investors` page locales (`InvestorsPageClient.tsx`) — verify supported locales match the platform
+- Telegram contact handle (`core/frontend/app/[locale]/contacts/page.tsx`)
+- Vehicle-history provider: locale type is `'ro' | 'ru'` and `isReportProviderConfigured()` hard-requires the `ro` key in `baseUrls` and `demoUrls`, so filling other locales alone will not enable the section
+
+**Already driven by env / site config (do not treat as hardcoded launch blockers):**
+
+- Plate mask + photo watermark domain text — `WATERMARK_DOMAIN` / `FRONTEND_URL`
+- GTM container id — `NEXT_PUBLIC_GTM_ID` (empty = no GTM)
+- CSP `connect-src` and `images.remotePatterns` — built from `NEXT_PUBLIC_API_URL` and CDN env in `next.config.js`
+- Image diagnostics allowlist — `AWS_CLOUDFRONT_URL` + `API_URL` only (`diagnostics.service.ts`)
+- Listing AI report language — UI locale `en` / `sq` / `ro` / `ru`
+- Swagger title — `SITE_NAME` / `PLATFORM_NAME` / `FRONTEND_URL` hostname
+- Email layout brand label — `siteName` / site base URL passed into `email-template.ts`
+
+The listing description tabs are **not** in this list: they already read `descriptionLocales` from `site.ts` and label themselves from `languageSwitcherTranslationKeys`. The DB columns stay `description_ro` / `description_ru`, but they are just slot 0 and slot 1. Do set `descriptionLocales` — the fallback is `['ro', 'ru']`.
+
+Fallback values pointing at another platform are the dangerous subset, because everything looks fine until the variable is missing: sitemap base URL, watermark domain, S3 bucket name.
+
+Do **not** rename internal cookie names (`kupito_*`) or the locale storage key — invisible to users, and renaming logs everyone out.
+
+#### Impact on existing platforms
+
+A core change reaches other platforms only when someone bumps the submodule pointer in their repository — `.gitmodules` pins a commit and builds do not use `--remote`. That delay is a trap: set the variables **before merging into core**, because the person who bumps the pointer may not know about your change.
+
+Before merging a core change that moves a hardcoded value into env:
+
+- [ ] Set the new variable on every existing platform (e.g. `NEXT_PUBLIC_GTM_ID`)
+- [ ] Verify existing platforms set explicitly any variable whose fallback you are removing — especially `AWS_S3_BUCKET_NAME`, `NEXT_PUBLIC_SITE_URL`, `WATERMARK_DOMAIN`
+- [ ] Note behaviour changes that need no env work but are user-visible, and confirm them with the platform owner
+- [ ] Run `lint` and `test` in both `core/frontend` and `core/backend`
+
+### 16. CI/CD
+
+- [ ] `.github/workflows/ci.yml` present
+- [ ] `PAT_TOKEN` secret for the private core submodule
+- [ ] `API_URL` secret for the frontend build
+- [ ] Optional deploy hooks
+- [ ] Workflow green
+
+### 17. Legal
+
+- [ ] Terms and Privacy translated and country-appropriate
+- [ ] Subprocessors listed match reality
+- [ ] Contacts verified
+- [ ] Compliance with local law reviewed
 
 ---
 
 ## After launch
 
-### Regular tasks
-
-- [ ] Log monitoring
-- [ ] SMS (Twilio) checks
-- [ ] Photo upload (S3) checks
+- [ ] Verify the first exchange rate row appears the next day, with no `DEFAULT_CURRENCY` warning in logs
+- [ ] Log and Sentry monitoring
+- [ ] SMS and photo upload spot checks
 - [ ] Database backups
-- [ ] Core updates (git submodule update)
+- [ ] Core updates (bump the submodule deliberately, not automatically)
 - [ ] Dependency updates
-
-### Support
-
-- [ ] Team documentation
-- [ ] Deploy instructions
-- [ ] Update instructions
-- [ ] Support contacts
 
 ---
 
@@ -273,20 +383,11 @@ platform-repo/
 # Clone repo with submodule
 git clone --recurse-submodules <repo-url>
 
-# Update submodule
-git submodule update --remote
+# Update submodule to the pinned commit
+git submodule update --init --recursive
 
-# Prepare for build
+# Prepare for build (sync overlay into core)
 npm run prepare:build
-
-# Generate brands (universal)
-npm run add-brands
-
-# Generate local data
-npm run seed
-
-# Reset and full seed
-npm run reset-and-seed
 
 # Run locally
 npm run dev
@@ -296,13 +397,9 @@ npm run dev
 
 ## Links
 
-- [PPCSL Core Repository](https://github.com/your-org/ppcsl)
 - [Multi-Repository](../architecture/multi-repository.md)
 - [Scripts Architecture](../architecture/scripts-architecture.md)
 - [Known Issues](../architecture/known-issues.md)
 - [Platform Guide](./platform-guide.md)
 - [Deployment](./DEPLOYMENT.md)
-
----
-
-**Good luck with your new platform!**
+- [Parsers multiplatform migration](../architecture/parsers-multiplatform-migration.md)

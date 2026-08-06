@@ -10,6 +10,105 @@ function withOptionalBundleAnalyzer(config) {
   return withBundleAnalyzer(config);
 }
 
+function hostnameFromEnvUrl(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  try {
+    const u = new URL(raw.trim());
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    return { protocol: u.protocol.replace(':', ''), hostname: u.hostname, port: u.port };
+  } catch {
+    return null;
+  }
+}
+
+function buildImageRemotePatterns() {
+  const patterns = [
+    {
+      protocol: 'http',
+      hostname: 'localhost',
+      port: '4000',
+      pathname: '/uploads/**',
+    },
+    {
+      protocol: 'http',
+      hostname: 'localhost',
+      port: '4000',
+      pathname: '/api/upload/image/**',
+    },
+  ];
+
+  const seen = new Set();
+  const pushUnique = (entry) => {
+    const key = `${entry.protocol}|${entry.hostname}|${entry.port || ''}|${entry.pathname}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    patterns.push(entry);
+  };
+
+  const api = hostnameFromEnvUrl(process.env.NEXT_PUBLIC_API_URL);
+  if (api && api.hostname !== 'localhost') {
+    pushUnique({
+      protocol: api.protocol,
+      hostname: api.hostname,
+      ...(api.port ? { port: api.port } : {}),
+      pathname: '/uploads/**',
+    });
+    pushUnique({
+      protocol: api.protocol,
+      hostname: api.hostname,
+      ...(api.port ? { port: api.port } : {}),
+      pathname: '/api/upload/image/**',
+    });
+  }
+
+  const cdn = hostnameFromEnvUrl(
+    process.env.NEXT_PUBLIC_IMAGE_CDN_URL || process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL,
+  );
+  if (cdn) {
+    pushUnique({
+      protocol: cdn.protocol,
+      hostname: cdn.hostname,
+      ...(cdn.port ? { port: cdn.port } : {}),
+      pathname: '/**',
+    });
+  }
+
+  const site = hostnameFromEnvUrl(process.env.NEXT_PUBLIC_SITE_URL);
+  if (site && site.hostname !== 'localhost') {
+    pushUnique({
+      protocol: site.protocol,
+      hostname: site.hostname,
+      ...(site.port ? { port: site.port } : {}),
+      pathname: '/**',
+    });
+  }
+
+  return patterns;
+}
+
+function buildConnectSrcDirective() {
+  const hosts = new Set(["'self'"]);
+  for (const raw of [
+    process.env.NEXT_PUBLIC_API_URL,
+    process.env.NEXT_PUBLIC_IMAGE_CDN_URL,
+    process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+  ]) {
+    const parsed = hostnameFromEnvUrl(raw);
+    if (!parsed) continue;
+    const origin =
+      parsed.port && parsed.port !== '80' && parsed.port !== '443'
+        ? `${parsed.protocol}://${parsed.hostname}:${parsed.port}`
+        : `${parsed.protocol}://${parsed.hostname}`;
+    hosts.add(origin);
+  }
+  hosts.add('https://www.google-analytics.com');
+  hosts.add('https://accounts.google.com');
+  hosts.add('https://oauth.telegram.org');
+  hosts.add('https://*.sentry.io');
+  return `connect-src ${[...hosts].join(' ')}`;
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -50,40 +149,7 @@ const nextConfig = {
   images: {
     loader: 'custom',
     loaderFile: './lib/cdn-image-loader.ts',
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '4000',
-        pathname: '/uploads/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '4000',
-        pathname: '/api/upload/image/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cdn.kupito.club',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.kupito.club',
-        pathname: '/uploads/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.kupito.club',
-        pathname: '/api/upload/image/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'kupito.club',
-        pathname: '/**',
-      },
-    ],
+    remotePatterns: buildImageRemotePatterns(),
     minimumCacheTTL: 86400,
     qualities: [65, 68, 70, 75],
     formats: ['image/avif', 'image/webp'],
@@ -119,7 +185,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: http://localhost:4000",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://api.kupito.club https://cdn.kupito.club https://www.google-analytics.com https://accounts.google.com https://oauth.telegram.org https://*.sentry.io",
+              buildConnectSrcDirective(),
               "frame-src 'self' https://www.googletagmanager.com https://accounts.google.com https://oauth.telegram.org",
               "object-src 'none'",
               "base-uri 'self'",

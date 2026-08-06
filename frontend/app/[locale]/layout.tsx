@@ -29,6 +29,7 @@ import {
   type LocaleRouteParams,
 } from '@/lib/i18n';
 import { resolveLocaleRouting } from '@/lib/locale-routing';
+import { buildSiteRobotsMetadata } from '@/lib/robots-metadata';
 import { loadSiteConfig, loadSiteConfigSync } from '@/lib/site-config';
 import { loadThemeSync } from '@/lib/theme';
 import { absoluteUrlWithLocalePrefix } from '@/lib/url-locale';
@@ -109,17 +110,13 @@ export async function generateMetadata({
         },
       ],
     },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
+    robots: buildSiteRobotsMetadata({
+      googleBotExtra: {
         'max-video-preview': -1,
         'max-image-preview': 'large',
         'max-snippet': -1,
       },
-    },
+    }),
     verification: {
       google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
     },
