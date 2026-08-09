@@ -38,8 +38,10 @@ These scripts are **blocked from running in production** and can only be execute
 
 #### Brand and Model Scripts
 
-- `add-brands.ts` - Add basic brands and models
-- `seed-all-brands.ts` - Run all brand and model seeding scripts sequentially (optimized for low memory usage)
+- `add-brands.ts` - Add basic brands and models (legacy; prefer catalog seed)
+- `seed-vehicle-catalog.ts` - Upsert brands/models from `src/scripts/data/vehicle-catalog.json` (source of truth). Run: `npm run seed:vehicle-catalog` / `seed:vehicle-catalog:prod`
+- `export-vehicle-catalog-from-api.ts` (tools) - Refresh `vehicle-catalog.json` from a live API (default `https://api.kupito.club`). Run: `npm run export:vehicle-catalog`
+- `seed-all-brands.ts` - Seeds from `vehicle-catalog.json` (same as `seed:vehicle-catalog`); regional `add-*-models` scripts remain for manual use only
 - `add-grand-models.ts` - Add Grand versions and extended models
 - `add-historical-models.ts` - Add historical models
 - `add-models-to-brand.ts` - Add models to existing brand
@@ -132,37 +134,31 @@ npm run clear-database
 
 #### Seeding All Brands and Models
 
-The `seed:all-brands` script runs all brand and model seeding scripts sequentially with memory optimizations:
+`seed:all-brands` / `seed:all-brands:prod` upsert from the committed snapshot
+[`src/scripts/data/vehicle-catalog.json`](../src/scripts/data/vehicle-catalog.json)
+(exported from a live platform API, typically Kupito production).
 
 ```bash
-# Basic usage (runs all scripts with 8 second delays between them)
+# Basic usage
 npm run seed:all-brands
 
-# Skip duplicate check to save memory
+# Same upsert without the post-pass duplicate scan
 npm run seed:all-brands -- --skip-duplicates
 
-# Skip heavy scripts (American, Japanese, Commercial, Historical models)
-npm run seed:all-brands -- --skip-heavy
+# Refresh the snapshot from Kupito (or another API), then commit the JSON
+npm run export:vehicle-catalog
+npm run export:vehicle-catalog -- --api-url https://api.kupito.club
 
-# Custom delay between scripts (in milliseconds, default: 8000)
-SCRIPT_DELAY_MS=10000 npm run seed:all-brands
-
-# Combine options
-SCRIPT_DELAY_MS=10000 npm run seed:all-brands -- --skip-duplicates --skip-heavy
+# Seed only the catalog (same data path as seed:all-brands)
+npm run seed:vehicle-catalog
 ```
 
 **Options:**
 
-- `--skip-duplicates` - Skip duplicate checking (saves memory)
-- `--skip-heavy` - Skip heavy scripts (American, Japanese, Commercial, Historical models)
-- `SCRIPT_DELAY_MS` - Delay between scripts in milliseconds (default: 8000ms)
+- `--skip-duplicates` - Skip the post-seed duplicate name scan
+- `--skip-heavy` - Ignored (kept for CLI compatibility; regional heavy scripts are no longer chained)
 
-**Note:** The script is optimized for low memory usage with:
-
-- Automatic garbage collection between operations
-- Increased delays between scripts (8 seconds by default)
-- Smaller batch sizes for duplicate checking
-- Memory-efficient database queries
+**Note:** Legacy regional scripts (`add-brands`, `add-german-models`, …) remain available for one-off manual runs but are **not** invoked by `seed:all-brands`. To capture manual admin additions from production, re-run `export:vehicle-catalog` and commit the updated JSON.
 
 ### Running Production Scripts
 
@@ -255,20 +251,16 @@ This script:
 
 ##### Seeding All Brands and Models
 
-Run all brand and model seeding scripts sequentially (production-safe version):
+Upserts from `src/scripts/data/vehicle-catalog.json` (production-safe):
 
 ```bash
-# Basic usage (runs all scripts with 8 second delays)
 npm run seed:all-brands:prod
 
-# Skip duplicate check to save memory
+# Skip post-seed duplicate name scan
 npm run seed:all-brands:prod -- --skip-duplicates
 
-# Skip heavy scripts (American, Japanese, Commercial, Historical models)
-npm run seed:all-brands:prod -- --skip-heavy
-
-# Custom delay between scripts (in milliseconds)
-SCRIPT_DELAY_MS=10000 npm run seed:all-brands:prod
+# Refresh snapshot from Kupito before committing / deploying
+npm run export:vehicle-catalog
 ```
 
 ##### Adding Truck Brands and Models

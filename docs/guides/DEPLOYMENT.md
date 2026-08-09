@@ -720,7 +720,8 @@ cd core/backend && npm run migration:run:prod
 
 ### 3.7. Loading Brands and Models (REQUIRED)
 
-After migrations, you need to load brands and models into the database.
+After migrations, load brands and models from the committed catalog snapshot
+(`core/backend/src/scripts/data/vehicle-catalog.json`).
 
 1. Go to Render Dashboard → Your Service → **Shell**
 2. Run:
@@ -729,7 +730,14 @@ After migrations, you need to load brands and models into the database.
 cd core/backend && npm run seed:all-brands:prod
 ```
 
-This will load all brands and models and automatically clear the Redis cache.
+This upserts all brands/models from the JSON catalog and clears the Redis brands cache.
+
+To refresh the catalog from a live platform (e.g. after manual admin edits on Kupito), from a local checkout:
+
+```bash
+cd core/backend && npm run export:vehicle-catalog
+# commit vehicle-catalog.json, deploy, then re-run seed:all-brands:prod
+```
 
 ### 3.8. Create Admin User
 
