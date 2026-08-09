@@ -4,6 +4,7 @@ import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
 import { AppDataSource } from '../../data-source';
 import { checkEnvironment } from '../script-guard';
+
 import { seedVehicleCatalog } from './seed-vehicle-catalog';
 
 checkEnvironment(['stage', 'development', 'test']);

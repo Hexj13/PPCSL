@@ -3,8 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { ConfigService } from '@nestjs/config';
-
-import { Repository } from 'typeorm';
+import type { Repository } from 'typeorm';
 
 import { Brand } from '../../brands/entities/brand.entity';
 import { VehicleModel } from '../../brands/entities/vehicle-model.entity';
@@ -39,9 +38,7 @@ function forceGarbageCollection(): void {
 function loadCatalog(): VehicleCatalog {
   const catalogPath = path.join(__dirname, '..', 'data', VEHICLE_CATALOG_FILENAME);
   if (!fs.existsSync(catalogPath)) {
-    throw new Error(
-      `Catalog file not found: ${catalogPath}. Run: npm run export:vehicle-catalog`,
-    );
+    throw new Error(`Catalog file not found: ${catalogPath}. Run: npm run export:vehicle-catalog`);
   }
   const raw = fs.readFileSync(catalogPath, 'utf8');
   const catalog = JSON.parse(raw) as VehicleCatalog;

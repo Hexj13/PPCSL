@@ -189,8 +189,8 @@ export default [
       '**/*.stories.{ts,tsx}',
       '**/design-system/**',
       '**/color-palette/**',
-      'app/design-system/**',
-      'app/color-palette/**',
+      'app/[locale]/design-system/**',
+      'app/[locale]/color-palette/**',
     ],
     languageOptions: {
       globals: {
