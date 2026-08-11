@@ -16,7 +16,11 @@ import { CipautoHttpClient } from '../http/cipauto-http-client';
 import { RegistryStore } from '../storage/registry';
 import type { RuntimeEnv } from '../types';
 
-const COD_PRODUS_RE = /Cod\s+[Pp]rodus\s*:(?:\s|&nbsp;)*\s*([A-Za-z0-9]+)/;
+import {
+  buildActiveSourceLookup,
+  resolveListingAgainstActiveSources,
+} from './audit-stale-plp-match';
+
 const REQUEST_DELAY_MS = 1500;
 const S3_PLP_PREFIX = 'parsing-plp/';
 
@@ -158,20 +162,11 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function extractCodProdus(listing: Listing): string | null {
-  for (const field of [listing.description, listing.description_ro, listing.description_ru]) {
-    if (!field) continue;
-    const match = field.match(COD_PRODUS_RE);
-    if (match) return match[1];
-  }
-  return null;
-}
-
 function formatListing(listing: Listing, sourceId?: string): string {
   const brand = listing.vehicle?.brand?.name || '?';
   const model = listing.vehicle?.model?.name || '?';
   const year = listing.vehicle?.year || '?';
-  const sid = sourceId ? sourceId.padEnd(8) : '??'.padEnd(8);
+  const sid = sourceId ? sourceId.padEnd(28) : '??'.padEnd(28);
   return `${listing.id}  ${sid}  ${listing.status.padEnd(8)}  ${brand} ${model} ${year}  €${listing.price}`;
 }
 
@@ -307,7 +302,7 @@ async function auditStaleListings() {
   const registry = new RegistryStore(registryPath);
   const registryItems = registry.getAll();
 
-  let activeSourceIds: Set<string>;
+  let activeSourceIds: string[];
   let activeSource: 'plp-file' | 'registry';
 
   if (plpFilePath) {
@@ -317,21 +312,20 @@ async function auditStaleListings() {
     console.log(`[audit] Loading PLP snapshot from: ${resolvedPath}`);
     const raw = await readPlpSnapshotJson(plpFilePath);
     const parsed = JSON.parse(raw) as { items?: Record<string, unknown> };
-    const sourceIds = Object.keys(parsed.items ?? {}).map((id) => id.toLowerCase());
-    activeSourceIds = new Set(sourceIds);
+    activeSourceIds = Object.keys(parsed.items ?? {}).map((id) => id.toLowerCase());
     activeSource = 'plp-file';
-    console.log(`[audit] PLP snapshot: ${activeSourceIds.size} active sourceIds\n`);
+    console.log(`[audit] PLP snapshot: ${activeSourceIds.length} active sourceIds\n`);
   } else {
-    activeSourceIds = new Set(
-      registryItems
-        .filter((item) => item.sourceStatus === 'active')
-        .map((item) => item.sourceListingId.toLowerCase()),
-    );
+    activeSourceIds = registryItems
+      .filter((item) => item.sourceStatus === 'active')
+      .map((item) => item.sourceListingId.toLowerCase());
     activeSource = 'registry';
     console.log(
-      `[audit] Registry: ${registryItems.length} total, ${activeSourceIds.size} active in PLP\n`,
+      `[audit] Registry: ${registryItems.length} total, ${activeSourceIds.length} active in PLP\n`,
     );
   }
+
+  const activeLookup = buildActiveSourceLookup(activeSourceIds);
 
   const matched: { listing: Listing; sourceId: string }[] = [];
   const stale: { listing: Listing; sourceId: string }[] = [];
@@ -344,19 +338,21 @@ async function auditStaleListings() {
       continue;
     }
 
-    const rawCod = extractCodProdus(listing);
-    if (!rawCod) {
+    const { matchedSourceId, displaySourceId } = resolveListingAgainstActiveSources(
+      listing,
+      activeLookup,
+    );
+    if (!displaySourceId) {
       noCod.push(listing);
       continue;
     }
-    const sourceId = rawCod.toLowerCase();
 
     if (verifyAll) {
-      stale.push({ listing, sourceId });
-    } else if (activeSourceIds.has(sourceId)) {
-      matched.push({ listing, sourceId });
+      stale.push({ listing, sourceId: matchedSourceId ?? displaySourceId });
+    } else if (matchedSourceId) {
+      matched.push({ listing, sourceId: matchedSourceId });
     } else {
-      stale.push({ listing, sourceId });
+      stale.push({ listing, sourceId: displaySourceId });
     }
   }
 
@@ -366,7 +362,7 @@ async function auditStaleListings() {
   }
   console.log(`  Active & in PLP:       ${matched.length} (ok)`);
   console.log(`  Active & NOT in PLP:   ${stale.length} (need verification)`);
-  console.log(`  No Cod Produs:         ${noCod.length} (manual review)`);
+  console.log(`  No source key:         ${noCod.length} (manual review)`);
   console.log(`  Already closed:        ${alreadyClosed.length}`);
   console.log('');
 
@@ -446,7 +442,7 @@ async function auditStaleListings() {
   }
 
   if (noCod.length > 0) {
-    console.log(`=== NO COD PRODUS — MANUAL REVIEW (${noCod.length}) ===`);
+    console.log(`=== NO SOURCE KEY — MANUAL REVIEW (${noCod.length}) ===`);
     for (const listing of noCod) {
       console.log(`  ${formatListing(listing)}`);
     }
