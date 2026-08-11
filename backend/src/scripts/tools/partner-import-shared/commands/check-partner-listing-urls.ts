@@ -7,6 +7,7 @@ import { ListingCategory } from '../../../../common/constants';
 import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
 import { normalizeRuntimeEnv } from '../../cipauto-import/config';
+import { readFlagValue } from '../cli-args';
 import {
   createPartnerSourceVerifier,
   isPartnerCode,
@@ -49,33 +50,38 @@ function parseArgs(): {
   let delayMs = 2000;
   for (let i = 0; i < args.length; i += 1) {
     const a = args[i];
-    if (a === '--partner' && args[i + 1]) {
-      partner = String(args[i + 1]) as PartnerCode;
-      i += 1;
+    const partnerFlag = readFlagValue(args, i, '--partner');
+    if (partnerFlag) {
+      partner = partnerFlag.value as PartnerCode;
+      i = partnerFlag.nextIndex;
       continue;
     }
-    if (a === '--userId' && args[i + 1]) {
-      userId = String(args[i + 1]);
-      i += 1;
+    const userIdFlag = readFlagValue(args, i, '--userId');
+    if (userIdFlag) {
+      userId = userIdFlag.value;
+      i = userIdFlag.nextIndex;
       continue;
     }
-    if (a === '--env' && args[i + 1]) {
-      env = normalizeRuntimeEnv(args[i + 1]);
-      i += 1;
+    const envFlag = readFlagValue(args, i, '--env');
+    if (envFlag) {
+      env = normalizeRuntimeEnv(envFlag.value);
+      i = envFlag.nextIndex;
       continue;
     }
     if (a === '--dry-run') {
       dryRun = true;
       continue;
     }
-    if (a === '--limit' && args[i + 1]) {
-      limit = Math.max(1, Math.floor(Number(args[i + 1])));
-      i += 1;
+    const limitFlag = readFlagValue(args, i, '--limit');
+    if (limitFlag) {
+      limit = Math.max(1, Math.floor(Number(limitFlag.value)));
+      i = limitFlag.nextIndex;
       continue;
     }
-    if (a === '--delay' && args[i + 1]) {
-      delayMs = Math.max(0, Math.floor(Number(args[i + 1])));
-      i += 1;
+    const delayFlag = readFlagValue(args, i, '--delay');
+    if (delayFlag) {
+      delayMs = Math.max(0, Math.floor(Number(delayFlag.value)));
+      i = delayFlag.nextIndex;
       continue;
     }
   }
@@ -114,14 +120,18 @@ async function main(): Promise<void> {
   console.log(`[partner:check-urls] Found ${listings.length} listings with saved canonical URL`);
 
   const rows: CheckRow[] = [];
+  const candidates = listings.filter((listing) =>
+    Boolean(listing.partner_listing_canonical_url?.trim()),
+  );
+  const total = candidates.length;
 
   try {
     await verifier.start();
-    for (const listing of listings) {
+    for (let index = 0; index < candidates.length; index += 1) {
+      const listing = candidates[index];
       const url = listing.partner_listing_canonical_url?.trim() ?? '';
-      if (!url) {
-        continue;
-      }
+      const progress = `[${index + 1}/${total}]`;
+      const key = listing.partner_listing_external_key ?? '';
       if (dryRun) {
         rows.push({
           kupitoListingId: listing.id,
@@ -130,8 +140,10 @@ async function main(): Promise<void> {
           outcome: 'active',
           detail: 'dry_run',
         });
+        console.log(`[partner:check-urls] ${progress} dry_run id=${listing.id} key=${key}`);
         continue;
       }
+      console.log(`[partner:check-urls] ${progress} checking id=${listing.id} key=${key}`);
       const checked = await verifier.checkUrl(url);
       rows.push({
         kupitoListingId: listing.id,
@@ -142,6 +154,10 @@ async function main(): Promise<void> {
         sourceStatusReason: checked.sourceStatusReason,
         detail: checked.detail,
       });
+      console.log(
+        `[partner:check-urls] ${progress} ${checked.outcome}` +
+          (checked.detail ? ` detail=${checked.detail}` : ''),
+      );
       if (delayMs > 0) {
         await sleep(delayMs);
       }

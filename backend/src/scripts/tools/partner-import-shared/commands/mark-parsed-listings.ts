@@ -16,6 +16,7 @@ import {
   resolveConfig as resolveCipautoConfig,
 } from '../../cipauto-import/config';
 import { RegistryStore as CipautoRegistryStore } from '../../cipauto-import/storage/registry';
+import { readFlagValue } from '../cli-args';
 import {
   isPartnerCode,
   resolvePartnerSourceCode,
@@ -39,24 +40,28 @@ function parseArgs(): {
   let dryRun = false;
   for (let i = 0; i < args.length; i += 1) {
     const a = args[i];
-    if (a === '--partner' && args[i + 1]) {
-      partner = String(args[i + 1]) as PartnerCode;
-      i += 1;
+    const partnerFlag = readFlagValue(args, i, '--partner');
+    if (partnerFlag) {
+      partner = partnerFlag.value as PartnerCode;
+      i = partnerFlag.nextIndex;
       continue;
     }
-    if (a === '--userId' && args[i + 1]) {
-      userId = String(args[i + 1]);
-      i += 1;
+    const userIdFlag = readFlagValue(args, i, '--userId');
+    if (userIdFlag) {
+      userId = userIdFlag.value;
+      i = userIdFlag.nextIndex;
       continue;
     }
-    if (a === '--env' && args[i + 1]) {
-      env = normalizeRuntimeEnv(args[i + 1]);
-      i += 1;
+    const envFlag = readFlagValue(args, i, '--env');
+    if (envFlag) {
+      env = normalizeRuntimeEnv(envFlag.value);
+      i = envFlag.nextIndex;
       continue;
     }
-    if (a === '--plp-file' && args[i + 1]) {
-      plpFile = String(args[i + 1]);
-      i += 1;
+    const plpFileFlag = readFlagValue(args, i, '--plp-file');
+    if (plpFileFlag) {
+      plpFile = plpFileFlag.value;
+      i = plpFileFlag.nextIndex;
       continue;
     }
     if (a === '--dry-run') {

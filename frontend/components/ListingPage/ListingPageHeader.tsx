@@ -38,7 +38,9 @@ function ListingPrice({ listing }: { listing: Listing }) {
 }
 
 function ListingBenefits({ listing, t }: { listing: Listing; t: TranslateFn }) {
+  const hasAvailability = listing.availability === 'OnOrder' || listing.availability === 'InStock';
   const showBenefits =
+    hasAvailability ||
     listing.negotiable ||
     listing.available_in_credit ||
     (listing.available_in_credit &&
@@ -49,6 +51,11 @@ function ListingBenefits({ listing, t }: { listing: Listing; t: TranslateFn }) {
 
   return (
     <div className="flex flex-col gap-1.5 text-primary-900 text-[14px] leading-relaxed">
+      {hasAvailability && (
+        <BenefitCheckRow>
+          {t(`vehicleOptions.availability.${listing.availability}`)}
+        </BenefitCheckRow>
+      )}
       {listing.negotiable && <BenefitCheckRow>{t('listingDetail.negotiable')}</BenefitCheckRow>}
       {listing.available_in_credit && (
         <BenefitCheckRow>{t('listingDetail.availableInCredit')}</BenefitCheckRow>
@@ -142,6 +149,8 @@ export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
     listing.price !== undefined;
   const showMeta =
     tirePriceScopeLine ||
+    listing.availability === 'OnOrder' ||
+    listing.availability === 'InStock' ||
     listing.negotiable ||
     (!isTireListing(listing) && listing.available_in_credit) ||
     listing.status === 'Closed' ||

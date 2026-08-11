@@ -180,9 +180,49 @@ describe('ParsingAvailabilityService', () => {
       }),
     );
     expect(bodies.some((body) => body.cmd === 'request.get')).toBe(true);
+    expect(bodies.find((body) => body.cmd === 'request.get')).toEqual(
+      expect.objectContaining({
+        cmd: 'request.get',
+        url: 'https://cipauto.md',
+        maxTimeout: 60_000,
+      }),
+    );
     expect(bodies[bodies.length - 1]).toEqual(
       expect.objectContaining({
         cmd: 'sessions.destroy',
+      }),
+    );
+  });
+
+  it('uses CIPAUTO_FLARESOLVERR_TIMEOUT_MS for FlareSolverr probe timeout', async () => {
+    process.env.CIPAUTO_FLARESOLVERR_URL = 'http://127.0.0.1:8191';
+    process.env.CIPAUTO_FLARESOLVERR_TIMEOUT_MS = '45000';
+    const bodies: Array<Record<string, unknown>> = [];
+    global.fetch = jest.fn(async (input: unknown, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('127.0.0.1:8191')) {
+        const body = JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>;
+        bodies.push(body);
+        if (body.cmd === 'sessions.create' || body.cmd === 'sessions.destroy') {
+          return new Response(JSON.stringify({ status: 'ok' }), { status: 200 });
+        }
+        return new Response(
+          JSON.stringify({
+            status: 'ok',
+            solution: { status: 200, response: '<html>catalog</html>' },
+          }),
+          { status: 200 },
+        );
+      }
+      return new Response('<html>Just a moment...</html>', { status: 403 });
+    }) as typeof fetch;
+
+    await service.probeParserSource({ parserCode: 'cipauto', kind: 'plp' });
+
+    expect(bodies.find((body) => body.cmd === 'request.get')).toEqual(
+      expect.objectContaining({
+        cmd: 'request.get',
+        maxTimeout: 45_000,
       }),
     );
   });

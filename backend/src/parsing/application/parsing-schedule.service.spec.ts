@@ -146,31 +146,21 @@ describe('ParsingScheduleService', () => {
     await expect(service.getSchedule(schedule.id)).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('runScheduleNow creates run and returns run id without awaiting availability probe', async () => {
+  it('runScheduleNow creates run and returns run id without probing availability', async () => {
     const { service, scheduleRepo, orchestrator, availability } = createDeps();
     const schedule = createSchedule({ status: 'deactivated' });
     (scheduleRepo.findOne as jest.Mock).mockResolvedValue(schedule);
     (scheduleRepo.save as jest.Mock).mockImplementation(async (value: ParserSchedule) => value);
     (orchestrator.createRunFromSchedule as jest.Mock).mockResolvedValue({ id: 'run-1' });
-    let resolveProbe!: (_value: { ok: number; total: number; summary: string }) => void;
-    (availability.probeParserSource as jest.Mock).mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveProbe = resolve;
-        }),
-    );
 
-    const resultPromise = service.runScheduleNow({
-      id: schedule.id,
-      adminUserId: 'admin-2',
-    });
-
-    await expect(resultPromise).resolves.toEqual({ runId: 'run-1' });
+    await expect(
+      service.runScheduleNow({
+        id: schedule.id,
+        adminUserId: 'admin-2',
+      }),
+    ).resolves.toEqual({ runId: 'run-1' });
     expect(orchestrator.createRunFromSchedule).toHaveBeenCalledWith(schedule);
-    expect(availability.probeParserSource).toHaveBeenCalled();
-
-    resolveProbe({ ok: 1, total: 1, summary: 'ok' });
-    await Promise.resolve();
+    expect(availability.probeParserSource).not.toHaveBeenCalled();
   });
 
   it('refreshScheduleAvailability probes site once and syncs sibling schedules', async () => {

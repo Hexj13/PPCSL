@@ -412,7 +412,6 @@ export class ParsingScheduleService {
       params.ip,
       params.userAgent,
     );
-    this.scheduleAvailabilityRefresh(sch.id);
     return { runId: run?.id ?? null };
   }
 

@@ -11,6 +11,7 @@ import { getParserCatalogItem, type ParserCatalogItem } from './parser-catalog';
 
 const PROBE_CACHE_TTL_MS = 2 * 60 * 1000;
 const PROBE_BODY_SCAN_LIMIT = 128_000;
+const DEFAULT_FLARE_PROBE_TIMEOUT_MS = 60_000;
 
 type SiteProbeResult = { ok: number; total: number; summary: string };
 
@@ -98,12 +99,11 @@ export class ParsingAvailabilityService {
     }
 
     try {
-      const maxTimeout = Number(process.env.CIPAUTO_FLARESOLVERR_TIMEOUT_MS ?? params.timeoutMs);
+      const maxTimeout = this.resolveFlareTimeoutMs(params.timeoutMs);
       const result = await flare.client.requestGet({
         url: params.url,
         session: flare.sessionId,
-        maxTimeout:
-          Number.isFinite(maxTimeout) && maxTimeout >= 1000 ? maxTimeout : params.timeoutMs,
+        maxTimeout,
       });
       return result.status >= 200 && result.status < 300;
     } catch (error) {
@@ -225,6 +225,14 @@ export class ParsingAvailabilityService {
       return 15000;
     }
     return timeout;
+  }
+
+  private resolveFlareTimeoutMs(fallbackTimeoutMs: number): number {
+    const fromEnv = Number(process.env.CIPAUTO_FLARESOLVERR_TIMEOUT_MS);
+    if (Number.isFinite(fromEnv) && fromEnv >= 1000) {
+      return fromEnv;
+    }
+    return Math.max(fallbackTimeoutMs, DEFAULT_FLARE_PROBE_TIMEOUT_MS);
   }
 }
 
