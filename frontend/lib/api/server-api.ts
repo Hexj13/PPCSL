@@ -130,6 +130,29 @@ export const fetchCities = cache(async (): Promise<City[]> => {
   }
 });
 
+export type ModelIndexItem = {
+  brand: string;
+  model: string;
+  listingCount: number;
+};
+
+export type ModelIndexResponse = {
+  generatedAt: string;
+  items: ModelIndexItem[];
+};
+
+export const fetchModelIndex = cache(async (): Promise<ModelIndexResponse> => {
+  try {
+    const response = await fetch(`${API_URL}/api/listings/model-index`, {
+      next: { revalidate: 3600 },
+    });
+    if (!response.ok) return { generatedAt: '', items: [] };
+    return response.json();
+  } catch {
+    return { generatedAt: '', items: [] };
+  }
+});
+
 export const getListings = cache(
   async (
     searchParams: Record<string, string | string[] | undefined> = {},

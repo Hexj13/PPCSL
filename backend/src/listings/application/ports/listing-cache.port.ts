@@ -1,3 +1,4 @@
+import type { ModelIndexData } from '../../domain/model-index.types';
 import type { PopularListingsData } from '../../domain/popular-listings.types';
 import type { Listing } from '../../entities/listing.entity';
 
@@ -22,4 +23,6 @@ export interface IListingCache {
   setSimilarResults(listingId: string, listings: Listing[]): Promise<void>;
   getPopularListings(): Promise<PopularListingsData | null>;
   setPopularListings(data: PopularListingsData): Promise<void>;
+  getModelIndex(): Promise<ModelIndexData | null>;
+  setModelIndex(data: ModelIndexData): Promise<void>;
 }

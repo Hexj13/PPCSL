@@ -46,6 +46,17 @@ export function FooterSitemap() {
     <>
       <FooterColumn title={t('footer.navTitle')}>
         <li>
+          <Link
+            href={user ? href('/listings/new') : buildSignInHref('/listings/new')}
+            className={FOOTER_LINK_CLASSES}
+            suppressHydrationWarning
+          >
+            <span className={FOOTER_LINK_LABEL_CLASSES} suppressHydrationWarning>
+              {t('header.createListing')}
+            </span>
+          </Link>
+        </li>
+        <li>
           <HeaderListingsNavLink
             className={FOOTER_LINK_CLASSES}
             labelClassName={FOOTER_LINK_LABEL_CLASSES}

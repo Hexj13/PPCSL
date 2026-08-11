@@ -24,6 +24,7 @@ import {
   decodeSearchCursor,
   encodeSearchCursor,
 } from '../../application/utils/search-cursor.utils';
+import type { ModelIndexItem } from '../../domain/model-index.types';
 import {
   POPULAR_BODY_TYPES_CAR,
   type PopularBodyTypeCar,
@@ -918,5 +919,41 @@ export class TypeOrmListingRepository implements IListingRepository {
     const items = parsed.slice(0, 4);
     const otherCount = parsed.slice(4).reduce((sum, item) => sum + item.count, 0);
     return { items, otherCount, total };
+  }
+
+  async getModelIndexAggregates(): Promise<ModelIndexItem[]> {
+    const carBodyTypes = [...BODY_TYPES_BY_VEHICLE_TYPE.car];
+    type Row = {
+      brand_name: string;
+      model_name: string;
+      listing_count: string;
+    };
+
+    const rows = (await this.repository.manager.query(
+      `
+      SELECT
+        b.name AS brand_name,
+        vm.name AS model_name,
+        COUNT(*)::int AS listing_count
+      FROM listings l
+      INNER JOIN vehicles v ON v.id = l.vehicle_id
+      INNER JOIN brands b ON b.id = v.brand_id
+      INNER JOIN vehicle_models vm ON vm.id = v.model_id
+      WHERE l.status = 'Active'
+        AND l.category = 'vehicle'
+        AND v.body_type::text = ANY($1)
+        AND b.is_archived = false
+        AND vm.is_archived = false
+      GROUP BY b.name, vm.name
+      ORDER BY b.name ASC, vm.name ASC
+      `,
+      [carBodyTypes],
+    )) as Row[];
+
+    return rows.map((row) => ({
+      brand: row.brand_name,
+      model: row.model_name,
+      listingCount: Number(row.listing_count),
+    }));
   }
 }

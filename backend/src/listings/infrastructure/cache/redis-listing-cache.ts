@@ -9,6 +9,7 @@ import {
 } from '../../../common/utils/cache.utils';
 import { IListingCache } from '../../application/ports/listing-cache.port';
 import { SearchCriteria } from '../../application/ports/listing.repository.port';
+import type { ModelIndexData } from '../../domain/model-index.types';
 import type { PopularListingsData } from '../../domain/popular-listings.types';
 import { Listing } from '../../entities/listing.entity';
 
@@ -113,5 +114,17 @@ export class RedisListingCache implements IListingCache {
 
   async setPopularListings(data: PopularListingsData): Promise<void> {
     await this.redisService.setJson(this.popularListingsKey(), data, CACHE_TTL.listings.popular);
+  }
+
+  private modelIndexKey(): string {
+    return generateCacheKey({ prefix: CACHE_PREFIXES.listingsModelIndex, parts: ['v1', 'car'] });
+  }
+
+  async getModelIndex(): Promise<ModelIndexData | null> {
+    return this.redisService.getJson<ModelIndexData>(this.modelIndexKey());
+  }
+
+  async setModelIndex(data: ModelIndexData): Promise<void> {
+    await this.redisService.setJson(this.modelIndexKey(), data, CACHE_TTL.listings.modelIndex);
   }
 }

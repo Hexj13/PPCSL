@@ -5,7 +5,14 @@ import { Repository } from 'typeorm';
 import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
 import { RedisService } from '../common/redis.service';
+import {
+  brandRangeSlug,
+  isModelCatalogEnabled,
+  MODEL_CATALOG_RANGES,
+  type ModelCatalogRange,
+} from '../common/utils/model-catalog-ranges';
 import { createSlug } from '../common/utils/slug.utils';
+import { GetModelIndexUseCase } from '../listings/application/use-cases/get-model-index.use-case';
 import { listingPublicPathSegment } from '../listings/application/utils/listing-url-slug.utils';
 import { Listing } from '../listings/entities/listing.entity';
 import { TireBrand } from '../tires/entities/tire-brand.entity';
@@ -51,6 +58,7 @@ export class SitemapService {
     @InjectRepository(TireModel)
     private readonly tireModelRepo: Repository<TireModel>,
     private readonly redis: RedisService,
+    private readonly getModelIndexUseCase: GetModelIndexUseCase,
   ) {}
 
   private prefixedAlternateLoc(roLoc: string, locale: string): string {
@@ -189,9 +197,33 @@ export class SitemapService {
       },
     ];
 
+    if (isModelCatalogEnabled()) {
+      for (const range of await this.getNonEmptyModelCatalogRanges()) {
+        urls.push({
+          loc: `${resolveSiteUrl()}/catalog/models/${range}`,
+          lastmod: now,
+          changefreq: 'weekly',
+          priority: 0.5,
+        });
+      }
+    }
+
     const xml = this.buildUrlset(urls);
     await this.saveToCache('pages', xml);
     return xml;
+  }
+
+  private async getNonEmptyModelCatalogRanges(): Promise<ModelCatalogRange[]> {
+    try {
+      const { items } = await this.getModelIndexUseCase.execute();
+      const present = new Set<ModelCatalogRange>();
+      for (const item of items) {
+        present.add(brandRangeSlug(item.brand));
+      }
+      return MODEL_CATALOG_RANGES.filter((range) => present.has(range));
+    } catch {
+      return [];
+    }
   }
 
   async getTiresSitemap(): Promise<string> {

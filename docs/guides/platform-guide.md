@@ -278,6 +278,8 @@ const config: SiteConfig = {
 
 The header and footer `LanguageSwitcher` is shown only when `NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER` is set to `true` in the frontend environment and `supportedLocales` has more than one entry.
 
+The whole footer catalog block (“Popular car manufacturers” + “Car models” letter ranges) and the `/catalog/models/{range}` pages are shown only when `NEXT_PUBLIC_ENABLE_MODEL_CATALOG=true` on the frontend. Set the same variable on the backend so non-empty ranges are included in `/sitemaps/pages.xml`. Leave the variable unset (or not `true`) on platforms that do not yet have enough Active listings.
+
 Frontend routing (PPCSL): pages live under `app/[locale]/...`. The Next.js proxy (`proxy.ts`) rewrites unprefixed URLs to `/<defaultLocale>/...` internally and leaves prefixed locales (for example `/ru/...`) unchanged. Locale for SSR metadata and translations comes from the `[locale]` path segment (not from `cookies()` / `headers()`), so document responses are not forced into `Cache-Control: no-store` solely because of locale resolution. Preferred-locale cookies are still used only in the proxy for redirects onto a prefixed path.
 
 When the switcher is enabled, the Next.js middleware may redirect a path **without** a locale prefix to a prefixed URL (for example `/ru/...`) using cookies: **`kupito-locale`** (explicit choice from the UI) takes precedence over **`kupito-preferred-locale`** (first-visit hint). If `kupito-locale` is the `defaultLocale`, that redirect does not run to the prefixed locale even when the preferred cookie suggests one.

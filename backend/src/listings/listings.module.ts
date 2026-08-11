@@ -37,6 +37,7 @@ import { GetListingHistoryUseCase } from './application/use-cases/get-listing-hi
 import { GetListingPhonesUseCase } from './application/use-cases/get-listing-phones.use-case';
 import { GetListingVinUseCase } from './application/use-cases/get-listing-vin.use-case';
 import { GetListingUseCase } from './application/use-cases/get-listing.use-case';
+import { GetModelIndexUseCase } from './application/use-cases/get-model-index.use-case';
 import { GetPopularListingsUseCase } from './application/use-cases/get-popular-listings.use-case';
 import { GetPromotionAccessUseCase } from './application/use-cases/get-promotion-access.use-case';
 import { GetPromotionHistoryUseCase } from './application/use-cases/get-promotion-history.use-case';
@@ -134,6 +135,7 @@ import { MediaConvertService } from './video/mediaconvert.service';
     FindSimilarUseCase,
     GetListingUseCase,
     GetPopularListingsUseCase,
+    GetModelIndexUseCase,
     UpdateListingUseCase,
     GetUserListingsUseCase,
     GetUserListingsStatusCountsUseCase,
@@ -167,6 +169,7 @@ import { MediaConvertService } from './video/mediaconvert.service';
   exports: [
     ListingsService,
     SearchListingsUseCase,
+    GetModelIndexUseCase,
     ListingPublicViewMapper,
     LISTING_CACHE,
     TypeOrmModule,

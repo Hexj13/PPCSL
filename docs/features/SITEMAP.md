@@ -55,6 +55,7 @@ The path **`/sitemaps/brands.xml`** is **not** served (404). Older setups must r
 | Type                 | Included | File                 | Notes                                                              |
 | -------------------- | -------- | -------------------- | ------------------------------------------------------------------ |
 | Static pages         | Yes      | pages.xml            | `/`, `/listings`, `/terms`, `/privacy`, `/faq`, `/partners`, `/contacts`, `/cookie-settings` (`/investors` is excluded; see next row) |
+| Model catalog ranges | Conditional | pages.xml         | `/catalog/models/{a-b…y-z}` — only when `NEXT_PUBLIC_ENABLE_MODEL_CATALOG=true` on the **backend**, and only for letter ranges that currently have at least one Active car brand+model pair |
 | Investor page        | No       | —                    | `/investors` is a normal route but **omitted** from `pages.xml`; `app/investors/layout.tsx` sets `robots` to **noindex, nofollow** so it is not meant for organic search. |
 | Brand pages          | Yes      | brands-*.xml         | Split by `vehicleType`: `car` / `truck` / `moto` (see below)        |
 | Brand+Model pages    | Yes      | brands-*.xml         | Bucket from first model `vehicle_types` entry, else `car`          |
@@ -79,8 +80,11 @@ Each indexable URL is emitted **once** per child sitemap as a `<url>` entry. The
 | `/partners`        | 0.4      | monthly    |
 | `/contacts`        | 0.3      | monthly    |
 | `/cookie-settings` | 0.2      | monthly    |
+| `/catalog/models/{range}` | 0.5 | weekly | Only if `NEXT_PUBLIC_ENABLE_MODEL_CATALOG=true` and the range has Active car listings |
 
 `/investors` is intentionally **not** in this urlset (same omission in `sitemap.txt` extraction).
+
+**Model catalog flag:** Set `NEXT_PUBLIC_ENABLE_MODEL_CATALOG=true` on both frontend (footer catalog block with popular manufacturers and letter ranges + `/catalog/models/*` pages) and backend (sitemap entries). When unset or not exactly `true`, the whole footer catalog block is hidden, catalog routes return 404, and `pages.xml` omits catalog URLs. Use this to keep the feature off on platforms that do not yet have enough listings.
 
 ### Brand and Model URLs (`brands-car.xml`, `brands-truck.xml`, `brands-moto.xml`)
 

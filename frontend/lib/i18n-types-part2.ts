@@ -476,6 +476,11 @@ export interface TranslationsPart2 {
     openInNewTab: string;
     openEmail: string;
   };
+  modelCatalog: {
+    title: string;
+    description: string;
+    empty: string;
+  };
   verifyEmail: {
     title: string;
     pleaseWait: string;

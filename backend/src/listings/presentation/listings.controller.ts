@@ -32,6 +32,7 @@ import { CronSecretGuard } from '../../common/guards/cron-secret.guard';
 import { parseLimitQuery, parsePageQuery } from '../../common/utils/pagination.utils';
 import { buildVisitorHash } from '../../common/utils/visitor-identity.util';
 import { ListingAiReportService } from '../application/listing-ai-report.service';
+import { GetModelIndexUseCase } from '../application/use-cases/get-model-index.use-case';
 import { GetPopularListingsUseCase } from '../application/use-cases/get-popular-listings.use-case';
 import { ListingsService } from '../listings.service';
 
@@ -56,6 +57,7 @@ export class ListingsController {
     private readonly listingsService: ListingsService,
     private readonly listingAiReportService: ListingAiReportService,
     private readonly getPopularListingsUseCase: GetPopularListingsUseCase,
+    private readonly getModelIndexUseCase: GetModelIndexUseCase,
   ) {}
 
   @ApiOperation({ summary: 'Get popular car models and market statistics' })
@@ -72,6 +74,22 @@ export class ListingsController {
   @Get('popular')
   getPopular() {
     return this.getPopularListingsUseCase.execute();
+  }
+
+  @ApiOperation({ summary: 'Get active brand+model index for car catalog pages' })
+  @ApiResponse({
+    status: 200,
+    description: 'Distinct brand and model pairs that have Active car listings',
+  })
+  @Throttle({
+    default: {
+      limit: process.env.NODE_ENV === 'production' ? 200 : 10000,
+      ttl: 60000,
+    },
+  })
+  @Get('model-index')
+  getModelIndex() {
+    return this.getModelIndexUseCase.execute();
   }
 
   @ApiOperation({ summary: 'Search listings' })

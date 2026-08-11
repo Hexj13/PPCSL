@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Brand } from '../brands/entities/brand.entity';
 import { VehicleModel } from '../brands/entities/vehicle-model.entity';
 import { RedisService } from '../common/redis.service';
+import { GetModelIndexUseCase } from '../listings/application/use-cases/get-model-index.use-case';
 import { Listing } from '../listings/entities/listing.entity';
 import { TireBrand } from '../tires/entities/tire-brand.entity';
 import { TireModel } from '../tires/entities/tire-model.entity';
@@ -60,9 +61,14 @@ describe('SitemapService', () => {
     set: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockGetModelIndexUseCase = {
+    execute: jest.fn().mockResolvedValue({ generatedAt: '2026-08-11T00:00:00.000Z', items: [] }),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     process.env.NEXT_PUBLIC_SITE_URL = 'https://kupito.club';
+    delete process.env.NEXT_PUBLIC_ENABLE_MODEL_CATALOG;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -74,6 +80,7 @@ describe('SitemapService', () => {
         { provide: getRepositoryToken(TireBrand), useValue: mockTireBrandRepo },
         { provide: getRepositoryToken(TireModel), useValue: mockTireModelRepo },
         { provide: RedisService, useValue: mockRedis },
+        { provide: GetModelIndexUseCase, useValue: mockGetModelIndexUseCase },
       ],
     }).compile();
 
@@ -115,6 +122,24 @@ describe('SitemapService', () => {
       expect(xml).toContain('https://kupito.club/ru/listings"');
       expect(xml).toContain('https://kupito.club/en/listings"');
       expect(xml).toContain('<priority>1</priority>');
+      expect(xml).not.toContain('/catalog/models/');
+    });
+
+    it('includes non-empty model catalog ranges when feature flag is enabled', async () => {
+      process.env.NEXT_PUBLIC_ENABLE_MODEL_CATALOG = 'true';
+      mockGetModelIndexUseCase.execute.mockResolvedValueOnce({
+        generatedAt: '2026-08-11T00:00:00.000Z',
+        items: [
+          { brand: 'BMW', model: 'X5', listingCount: 2 },
+          { brand: 'Toyota', model: 'Corolla', listingCount: 1 },
+        ],
+      });
+
+      const xml = await service.getPagesSitemap();
+
+      expect(xml).toContain('/catalog/models/a-b</loc>');
+      expect(xml).toContain('/catalog/models/t-v</loc>');
+      expect(xml).not.toContain('/catalog/models/y-z</loc>');
     });
 
     it('should return cached result when available', async () => {

@@ -1,3 +1,4 @@
+import type { ModelIndexItem } from '../../domain/model-index.types';
 import type { PopularListingsData } from '../../domain/popular-listings.types';
 import type { Listing } from '../../entities/listing.entity';
 
@@ -94,4 +95,5 @@ export interface IListingRepository {
   ): Promise<Listing[]>;
   saveWithActiveLimit(listing: Listing, userId: string, limit: number): Promise<Listing>;
   getPopularListingsAggregates(): Promise<Omit<PopularListingsData, 'generatedAt'>>;
+  getModelIndexAggregates(): Promise<ModelIndexItem[]>;
 }

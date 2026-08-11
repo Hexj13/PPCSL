@@ -24,6 +24,7 @@ export const BRAND_LANDING_RESERVED_SEGMENTS = new Set([
   'ru',
   'sitemap.xml',
   'sitemaps',
+  'catalog',
   'terms',
   'verify-email',
   'verify-phone',

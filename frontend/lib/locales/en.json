@@ -15,7 +15,9 @@
     "contacts": "Contacts",
     "partnerImportSalesDescription": "Car import and sales",
     "partnerInfocarDescription": "Vehicle history reports",
-    "tiktok": "Kupito.club on TikTok"
+    "tiktok": "Kupito.club on TikTok",
+    "popularManufacturers": "Popular car manufacturers:",
+    "carModels": "Car models:"
   },
   "header": {
     "addListing": "Add Listing",
@@ -2262,13 +2264,7 @@
     "scaling": {
       "title": "Scaling",
       "lead": "After the product and commercial model are validated, launches may be considered in markets with similar demand patterns and similar issues in the automotive listings segment:",
-      "items": [
-        "Eastern Europe",
-        "Balkans",
-        "Latin America",
-        "Africa",
-        "Asia"
-      ]
+      "items": ["Eastern Europe", "Balkans", "Latin America", "Africa", "Asia"]
     },
     "whyNow": {
       "title": "Why now",
@@ -2300,6 +2296,11 @@
     "copyTitle": "Copy",
     "openInNewTab": "Open in new tab",
     "openEmail": "Open email client"
+  },
+  "modelCatalog": {
+    "title": "Car models: {range}",
+    "description": "Catalog of car brands and models in the {range} range with active listings on Kupito.club.",
+    "empty": "There are no active listings in this range yet."
   },
   "verifyEmail": {
     "title": "Email Verification",

@@ -10,6 +10,7 @@ import type { AuthenticatedRequest } from '../../common/express-augmentation';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { ListingAiReportService } from '../application/listing-ai-report.service';
+import { GetModelIndexUseCase } from '../application/use-cases/get-model-index.use-case';
 import { GetPopularListingsUseCase } from '../application/use-cases/get-popular-listings.use-case';
 import { Listing } from '../entities/listing.entity';
 import { ListingsService } from '../listings.service';
@@ -58,6 +59,10 @@ describe('ListingsController', () => {
       execute: jest.fn(),
     };
 
+    const mockGetModelIndexUseCase = {
+      execute: jest.fn(),
+    };
+
     const mockListingsService = {
       findAll: jest.fn(),
       getUserListings: jest.fn(),
@@ -94,6 +99,10 @@ describe('ListingsController', () => {
         {
           provide: GetPopularListingsUseCase,
           useValue: mockGetPopularListingsUseCase,
+        },
+        {
+          provide: GetModelIndexUseCase,
+          useValue: mockGetModelIndexUseCase,
         },
       ],
     })

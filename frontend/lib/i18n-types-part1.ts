@@ -15,6 +15,8 @@ export interface TranslationsPart1 {
     contacts: string;
     partnerImportSalesDescription: string;
     partnerInfocarDescription: string;
+    popularManufacturers: string;
+    carModels: string;
   };
   header: {
     addListing: string;

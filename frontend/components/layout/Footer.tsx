@@ -2,6 +2,7 @@
 
 import { FooterAbout } from './Footer/FooterAbout';
 import { FooterBottomBar } from './Footer/FooterBottomBar';
+import { FooterCatalogLinks } from './Footer/FooterCatalogLinks';
 import { FooterPartners } from './Footer/FooterPartners';
 import { FooterSitemap } from './Footer/FooterSitemap';
 
@@ -15,6 +16,7 @@ export function Footer() {
           <FooterSitemap />
         </div>
       </div>
+      <FooterCatalogLinks />
       <FooterBottomBar />
     </footer>
   );

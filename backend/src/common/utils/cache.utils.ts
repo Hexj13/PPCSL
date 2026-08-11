@@ -35,6 +35,7 @@ export interface CacheTTL {
     userListings: number;
     similar: number;
     popular: number;
+    modelIndex: number;
   };
   brands: {
     all: number;
@@ -56,6 +57,7 @@ export const CACHE_TTL: CacheTTL = {
     userListings: 180,
     similar: 120,
     popular: 3600,
+    modelIndex: 3600,
   },
   brands: {
     all: 86400,
@@ -77,6 +79,7 @@ export const CACHE_PREFIXES = {
   listingsUser: 'cache:listings:user',
   listingsSimilar: 'cache:listings:similar',
   listingsPopular: 'cache:listings:popular',
+  listingsModelIndex: 'cache:listings:model-index',
   brands: 'cache:brands',
   brandsModels: 'cache:brands:models',
   tireBrands: 'cache:tire-brands',
