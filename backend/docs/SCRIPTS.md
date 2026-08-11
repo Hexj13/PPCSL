@@ -412,7 +412,7 @@ Parser implementation lives in the core submodule (`src/scripts/tools/cipauto-im
 | `npm run 999md:seed-registry`                                | Seed 999.md registry + partner keys from Kupito DB + 999 PLP/PDP (dedup after lost registry) |
 | `npm run partner:check-urls`                                 | PDP check for listings with saved `partner_listing_canonical_url` (JSON+CSV report)          |
 | `npm run partner:mark-parsed`                                | Set `listings.is_parsed=true` from registry/PLP for a partner user (any status)              |
-| `npm run partner:reopen-parsed`                              | Reopen Closed `is_parsed` listings still active on source (does not touch `last_updated_at`) |
+| `npm run partner:reopen-parsed`                              | Reopen Closed `is_parsed` listings still active on source; optional `--plp-only` (does not touch `last_updated_at`) |
 | `npm run cipauto:audit-stale`                                | Find and close listings removed from CipAuto                |
 | `npm run autooutlet:audit-stale`                             | Find and close listings not in AutoOutlet PLP snapshot / verify PDP |
 | `npm run 999md:dealer-audit`                                 | Brand/model audit report vs live Kupito API                 |
@@ -477,8 +477,10 @@ npm run partner:mark-parsed -- --partner cipauto|999md|autooutlet --userId=<UUID
 
 Finds `Closed` listings with `is_parsed = true` and a saved `partner_listing_canonical_url`, verifies each PDP is still active on the source, and reopens matches as `Active` (`closed_at = null` only). **Does not change** `last_updated_at` / `last_published_at` / `created_at`, so restored ads keep their previous sort position. Stops when the user’s Active limit would be exceeded (Business 1000 / Individual 100). URLs whose host does not match the partner host are reported as `skip_error` without a network request. After real reopens the `cache:listings*` Redis namespace is invalidated. Always run `--dry-run` first.
 
+Use `--plp-only` to reopen only listings that match the current PLP snapshot (default partner `currentPlpPath` / `currentPlpDir`, or explicit `--plp-file`). For `cipauto`, matching uses the same rules as `cipauto:audit-stale` (external key, canonical `/vehicul/...` slug, Cod Produs / unique slug prefix). For `autooutlet` and `999md`, matching is exact `partner_listing_external_key` against PLP keys. Without `--plp-only`, live PDPs outside the current catalog can be reopened.
+
 ```bash
-npm run partner:reopen-parsed -- --partner cipauto|999md|autooutlet --userId=<UUID> [--env local|prod] [--dry-run] [--limit N] [--delay ms]
+npm run partner:reopen-parsed -- --partner cipauto|999md|autooutlet --userId=<UUID> [--env local|prod] [--plp-only] [--plp-file <path>] [--dry-run] [--limit N] [--delay ms]
 ```
 
 #### CipAuto stale listings audit (`audit-stale-listings`)

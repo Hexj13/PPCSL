@@ -8,7 +8,17 @@ import { ListingStatus } from '../../../../common/types';
 import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
 import { User } from '../../../../users/entities/user.entity';
-import { normalizeRuntimeEnv } from '../../cipauto-import/config';
+import { resolveMd999Config } from '../../999md-import/config';
+import { resolveConfig as resolveAutooutletConfig } from '../../autooutlet-import/config';
+import {
+  buildActiveSourceLookup,
+  resolveListingAgainstActiveSources,
+  type ActiveSourceLookup,
+} from '../../cipauto-import/commands/audit-stale-plp-match';
+import {
+  normalizeRuntimeEnv,
+  resolveConfig as resolveCipautoConfig,
+} from '../../cipauto-import/config';
 import { readFlagValue } from '../cli-args';
 import { invalidateListingCaches } from '../listing-cache-invalidation';
 import {
@@ -17,6 +27,7 @@ import {
   type PartnerCode,
   type SourceCheckOutcome,
 } from '../partner-listing-source-verifier';
+import { loadSourceIdsFromPlpFile } from '../storage/load-plp-source-ids';
 import { sleep } from '../utils/sleep';
 
 interface ReopenRow {
@@ -39,11 +50,78 @@ function csvEscape(value: string): string {
   return value;
 }
 
+function listCurrentPlpFiles(dir: string): string[] {
+  if (!fs.existsSync(dir)) {
+    return [];
+  }
+  return fs
+    .readdirSync(dir)
+    .filter((name) => name.endsWith('.json'))
+    .map((name) => path.join(dir, name));
+}
+
+function resolveDefaultPlpPaths(
+  partner: PartnerCode,
+  env: ReturnType<typeof normalizeRuntimeEnv>,
+): string[] {
+  if (partner === 'cipauto') {
+    return [
+      resolveCipautoConfig(env, { requireAuth: false, requireImportSecret: false }).currentPlpPath,
+    ];
+  }
+  if (partner === 'autooutlet') {
+    return [
+      resolveAutooutletConfig(env, { requireAuth: false, requireImportSecret: false })
+        .currentPlpPath,
+    ];
+  }
+  return listCurrentPlpFiles(
+    resolveMd999Config(env, { requireAuth: false, requireImportSecret: false }).currentPlpDir,
+  );
+}
+
+function resolvePlpPaths(plpFile: string | undefined, defaultPlpPaths: string[]): string[] {
+  if (plpFile) {
+    return [path.isAbsolute(plpFile) ? plpFile : path.resolve(process.cwd(), plpFile)];
+  }
+  return defaultPlpPaths;
+}
+
+function loadPlpSourceIds(plpPaths: string[], explicitPath: boolean): string[] {
+  const ids = new Set<string>();
+  for (const plpPath of plpPaths) {
+    if (!fs.existsSync(plpPath)) {
+      if (explicitPath) {
+        throw new Error(`PLP snapshot not found at ${plpPath}`);
+      }
+      continue;
+    }
+    for (const id of loadSourceIdsFromPlpFile(plpPath)) {
+      ids.add(id.toLowerCase());
+    }
+  }
+  return [...ids];
+}
+
+function listingMatchesPlp(
+  partner: PartnerCode,
+  listing: Listing,
+  lookup: ActiveSourceLookup,
+): boolean {
+  if (partner === 'cipauto') {
+    return resolveListingAgainstActiveSources(listing, lookup).matchedSourceId != null;
+  }
+  const key = listing.partner_listing_external_key?.trim().toLowerCase();
+  return Boolean(key && lookup.exact.has(key));
+}
+
 function parseArgs(): {
   partner: PartnerCode | '';
   userId: string;
   env: ReturnType<typeof normalizeRuntimeEnv>;
   dryRun: boolean;
+  plpOnly: boolean;
+  plpFile?: string;
   limit?: number;
   delayMs: number;
 } {
@@ -52,6 +130,8 @@ function parseArgs(): {
   let userId = '';
   let env = normalizeRuntimeEnv(undefined);
   let dryRun = false;
+  let plpOnly = false;
+  let plpFile: string | undefined;
   let limit: number | undefined;
   let delayMs = 2000;
   for (let i = 0; i < args.length; i += 1) {
@@ -78,6 +158,16 @@ function parseArgs(): {
       dryRun = true;
       continue;
     }
+    if (a === '--plp-only') {
+      plpOnly = true;
+      continue;
+    }
+    const plpFileFlag = readFlagValue(args, i, '--plp-file');
+    if (plpFileFlag) {
+      plpFile = plpFileFlag.value;
+      i = plpFileFlag.nextIndex;
+      continue;
+    }
     const limitFlag = readFlagValue(args, i, '--limit');
     if (limitFlag) {
       limit = Math.max(1, Math.floor(Number(limitFlag.value)));
@@ -91,24 +181,40 @@ function parseArgs(): {
       continue;
     }
   }
-  return { partner, userId, env, dryRun, limit, delayMs };
+  return { partner, userId, env, dryRun, plpOnly, plpFile, limit, delayMs };
 }
 
 async function main(): Promise<void> {
   const parsed = parseArgs();
-  const { userId, env, dryRun, limit, delayMs } = parsed;
+  const { userId, env, dryRun, plpOnly, plpFile, limit, delayMs } = parsed;
   const partner = parsed.partner;
   if (!userId || !isPartnerCode(partner)) {
     console.error(
-      'Usage: npm run partner:reopen-parsed -- --partner cipauto|999md|autooutlet --userId=<UUID> [--env local|prod] [--dry-run] [--limit N] [--delay ms]',
+      'Usage: npm run partner:reopen-parsed -- --partner cipauto|999md|autooutlet --userId=<UUID> [--env local|prod] [--plp-only] [--plp-file <path>] [--dry-run] [--limit N] [--delay ms]',
     );
     process.exit(1);
   }
 
   const verifier = createPartnerSourceVerifier(partner, env);
 
+  let plpLookup: ActiveSourceLookup | null = null;
+  let plpPaths: string[] = [];
+  let plpIdCount = 0;
+  if (plpOnly) {
+    plpPaths = resolvePlpPaths(plpFile, resolveDefaultPlpPaths(partner, env));
+    const plpSourceIds = loadPlpSourceIds(plpPaths, Boolean(plpFile));
+    if (plpSourceIds.length === 0) {
+      throw new Error(
+        `No PLP sourceIds found for --plp-only (paths=${JSON.stringify(plpPaths)}). Pass --plp-file <path>.`,
+      );
+    }
+    plpLookup = buildActiveSourceLookup(plpSourceIds);
+    plpIdCount = plpSourceIds.length;
+  }
+
   console.log(
-    `[partner:reopen-parsed] Connecting DB partner=${partner} userId=${userId} env=${env} dryRun=${dryRun}`,
+    `[partner:reopen-parsed] Connecting DB partner=${partner} userId=${userId} env=${env} dryRun=${dryRun} plpOnly=${plpOnly}` +
+      (plpOnly ? ` plpIds=${plpIdCount} plpPaths=${JSON.stringify(plpPaths)}` : ''),
   );
   await AppDataSource.initialize();
 
@@ -140,16 +246,21 @@ async function main(): Promise<void> {
   }
   const listings = await qb.getMany();
 
+  const withUrl = listings.filter((listing) =>
+    Boolean(listing.partner_listing_canonical_url?.trim()),
+  );
+  const candidates = plpLookup
+    ? withUrl.filter((listing) => listingMatchesPlp(partner, listing, plpLookup))
+    : withUrl;
+  const filteredOutNotInPlp = plpLookup ? withUrl.length - candidates.length : 0;
+
   console.log(
-    `[partner:reopen-parsed] Candidates=${listings.length} activeNow=${activeCount} activeLimit=${activeLimit} remainingSlots=${remainingSlots}`,
+    `[partner:reopen-parsed] Candidates=${candidates.length} beforePlpFilter=${withUrl.length} filteredOutNotInPlp=${filteredOutNotInPlp} activeNow=${activeCount} activeLimit=${activeLimit} remainingSlots=${remainingSlots}`,
   );
 
   const rows: ReopenRow[] = [];
   const reopenedIds: string[] = [];
   let hitLimit = false;
-  const candidates = listings.filter((listing) =>
-    Boolean(listing.partner_listing_canonical_url?.trim()),
-  );
   const total = candidates.length;
 
   try {
@@ -285,7 +396,11 @@ async function main(): Promise<void> {
     userId,
     env: String(env),
     dryRun,
-    candidates: listings.length,
+    plpOnly,
+    plpIds: plpIdCount,
+    candidates: candidates.length,
+    beforePlpFilter: withUrl.length,
+    filteredOutNotInPlp,
     activeNow: activeCount,
     activeLimit,
     reopened: rows.filter((r) => r.action === 'reopen').length,
