@@ -91,6 +91,7 @@ export class LoginUserUseCase {
   private getSocialSignInErrorKey(authProvider: string): string {
     if (authProvider === 'google') return 'errors.useGoogleSignIn';
     if (authProvider === 'telegram') return 'errors.useTelegramSignIn';
+    if (authProvider === 'facebook') return 'errors.useFacebookSignIn';
     return 'errors.useSocialSignIn';
   }
 }

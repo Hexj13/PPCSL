@@ -183,7 +183,11 @@
     "telegramAuthExpired": "Telegram session expired. Please sign in again.",
     "telegramSignInUnavailable": "Telegram sign-in is temporarily unavailable.",
     "useTelegramSignIn": "Use Telegram sign-in for this account.",
-    "useSocialSignIn": "Use social sign-in for this account."
+    "useSocialSignIn": "Use social sign-in for this account.",
+    "facebookSignInFailed": "Facebook sign-in failed. Please try again.",
+    "facebookEmailRequired": "Facebook did not provide an email. Add an email in Facebook and try again, or sign in another way.",
+    "facebookEmailAlreadyExists": "An account with this email already exists. Sign in using its current method.",
+    "useFacebookSignIn": "Use Facebook sign-in for this account."
   },
   "cookieSettings": {
     "loading": "Loading...",
@@ -372,7 +376,8 @@
     "oauthConsentTermsLink": "Terms of Use",
     "oauthConsentConjunction": " and ",
     "oauthConsentPrivacyLink": "Privacy Policy",
-    "oauthConsentSuffix": "."
+    "oauthConsentSuffix": ".",
+    "continueWithFacebook": "Continue with Facebook"
   },
   "resetPassword": {
     "title": "Reset Password",
@@ -2257,7 +2262,13 @@
     "scaling": {
       "title": "Scaling",
       "lead": "After the product and commercial model are validated, launches may be considered in markets with similar demand patterns and similar issues in the automotive listings segment:",
-      "items": ["Eastern Europe", "Balkans", "Latin America", "Africa", "Asia"]
+      "items": [
+        "Eastern Europe",
+        "Balkans",
+        "Latin America",
+        "Africa",
+        "Asia"
+      ]
     },
     "whyNow": {
       "title": "Why now",

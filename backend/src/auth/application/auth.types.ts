@@ -12,7 +12,10 @@ type UserMethodKeys =
 
 type UserDataKeys = Exclude<keyof User, UserMethodKeys>;
 
-export type UserWithoutPassword = Omit<Pick<User, UserDataKeys>, 'password'>;
+export type UserWithoutPassword = Omit<
+  Pick<User, UserDataKeys>,
+  'password' | 'googleId' | 'telegramId' | 'telegramUsername' | 'facebookId' | 'authProvider'
+>;
 
 export type RegisterResponse = UserWithoutPassword & {
   emailVerificationSent: boolean;
@@ -51,6 +54,11 @@ export type GoogleSignInResponse = LoginResponse & {
 };
 
 export type TelegramSignInResponse = LoginResponse & {
+  requiresPhoneVerification: boolean;
+  isNewUser: boolean;
+};
+
+export type FacebookSignInResponse = LoginResponse & {
   requiresPhoneVerification: boolean;
   isNewUser: boolean;
 };

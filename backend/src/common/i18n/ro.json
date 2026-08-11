@@ -31,6 +31,7 @@
     "companyNameMaxLength": "Numele companiei nu poate depăși 100 de caractere",
     "companyWebsiteUrl": "URL-ul trebuie să înceapă cu http sau https și să fie valid",
     "userTypeEnum": "Tipul utilizatorului trebuie să fie Individual sau Business",
+    "facebookAccessTokenMaxLength": "Tokenul de acces Facebook este prea lung",
     "cannotRegisterAsAdmin": "Nu vă puteți înregistra ca administrator",
     "phoneRequiredField": "Telefonul este obligatoriu",
     "termsMustBeAccepted": "Trebuie să acceptați termenii de utilizare",
@@ -223,7 +224,11 @@
       "uploadNotInitialized": "Încărcarea video nu a fost pornită corect.",
       "uploadIdMismatch": "Sesiunea de încărcare video nu se potrivește.",
       "importDownloadFailed": "Nu s-a putut descărca videoclipul de la URL-ul furnizat."
-    }
+    },
+    "facebookSignInFailed": "Autentificarea Facebook a eșuat. Încearcă din nou.",
+    "facebookEmailRequired": "Facebook nu a furnizat un email. Adaugă un email în Facebook și încearcă din nou sau autentifică-te altfel.",
+    "facebookEmailAlreadyExists": "Există deja un cont cu acest email. Autentifică-te folosind metoda lui actuală.",
+    "useFacebookSignIn": "Pentru acest cont, folosiți autentificarea Facebook."
   },
   "vehicleOptions": {
     "transmission": {

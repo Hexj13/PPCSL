@@ -22,6 +22,8 @@ const baseSchema = z.object({
   ENABLE_UPLOAD_QUEUE: z.string().optional(),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
   OTEL_SERVICE_NAME: z.string().optional(),
+  FACEBOOK_APP_ID: z.string().optional(),
+  FACEBOOK_APP_SECRET: z.string().optional(),
 });
 
 const productionSchema = baseSchema.extend({
@@ -32,6 +34,17 @@ const productionSchema = baseSchema.extend({
   REDIS_HOST: z.string().min(1),
   REDIS_PORT: z.string().min(1),
 });
+
+function assertFacebookEnvPair(config: Record<string, unknown>): void {
+  const appId = typeof config.FACEBOOK_APP_ID === 'string' ? config.FACEBOOK_APP_ID.trim() : '';
+  const appSecret =
+    typeof config.FACEBOOK_APP_SECRET === 'string' ? config.FACEBOOK_APP_SECRET.trim() : '';
+  if ((appId || appSecret) && !(appId && appSecret)) {
+    throw new Error(
+      'Environment validation failed: FACEBOOK_APP_ID and FACEBOOK_APP_SECRET must be set together',
+    );
+  }
+}
 
 export function validateEnv(config: Record<string, unknown>): Record<string, unknown> {
   const nodeEnv = (config.NODE_ENV as string | undefined) ?? process.env.NODE_ENV ?? 'development';
@@ -44,6 +57,7 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
         .join('; ');
       throw new Error(`Environment validation failed: ${details}`);
     }
+    assertFacebookEnvPair(config);
     if (config.DB_SYNC === 'true') {
       throw new Error('Environment validation failed: DB_SYNC must not be true in production');
     }
@@ -56,5 +70,6 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
   }
 
   baseSchema.parse(config);
+  assertFacebookEnvPair(config);
   return config;
 }

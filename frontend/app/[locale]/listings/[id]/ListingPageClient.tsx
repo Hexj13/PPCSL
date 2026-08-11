@@ -385,7 +385,7 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
     <>
       <div className={LISTING_DETAIL_PAGE_ROOT_CLASS} data-testid="listing-detail-page">
         <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-8 lg:gap-6">
-          <div className="space-y-6 min-w-0 order-1" data-testid="listing-detail-gallery">
+          <div className="space-y-6 min-w-0" data-testid="listing-detail-gallery">
             <ListingPageImages
               ref={previewRef}
               images={galleryImages}
@@ -400,16 +400,12 @@ function ListingPageMainContent(props: UseListingPageClientReturn) {
               imageBlurHashes={listing.image_blur_hashes}
               navigationBlurDataUrl={navigationBlurDataUrl}
             />
+            <div data-testid="listing-detail-breadcrumbs">
+              <ListingPageBreadcrumbs listing={listing} />
+            </div>
           </div>
 
-          <div
-            className="order-2 lg:order-3 lg:col-span-2"
-            data-testid="listing-detail-breadcrumbs"
-          >
-            <ListingPageBreadcrumbs listing={listing} />
-          </div>
-
-          <div className="space-y-6 min-w-0 order-3 lg:order-2" data-testid="listing-detail-header">
+          <div className="space-y-6 min-w-0" data-testid="listing-detail-header">
             <ListingPageHeader listing={listing} title={h1Title} />
             {listingPageShowsHeaderDivider(listing) && (
               <div className="border-t border-primary-500/20" />

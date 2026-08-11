@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useRef, type KeyboardEvent } from 'react';
 
 import { LoginForm } from '@/app/[locale]/login/LoginForm';
 import { useLoginPage } from '@/app/[locale]/login/useLoginPage';
@@ -10,8 +10,7 @@ import { RegisterPanel } from '@/app/[locale]/register/RegisterPanel';
 import { useRegisterPage } from '@/app/[locale]/register/useRegisterPage';
 import { AuthOAuthOutsideCard } from '@/app/[locale]/sign/AuthOAuthOutsideCard';
 import { isTelegramDevMockEnabled } from '@/app/[locale]/sign/telegramDevMock';
-import { useGoogleAuth } from '@/app/[locale]/sign/useGoogleAuth';
-import { useTelegramAuth } from '@/app/[locale]/sign/useTelegramAuth';
+import { useSignPageSocialAuth } from '@/app/[locale]/sign/useSignPageSocialAuth';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -38,52 +37,33 @@ export function SignPageContent() {
     tabsContainerRef,
   );
 
-  const [gisReady, setGisReady] = useState(false);
-  const [telegramScriptReady, setTelegramScriptReady] = useState(false);
-  const googleClientIdConfigured = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
-  const telegramClientIdConfigured =
-    Boolean(process.env.NEXT_PUBLIC_TELEGRAM_CLIENT_ID?.trim()) || isTelegramDevMockEnabled();
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
-      setGisReady(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.Telegram?.Login?.auth) {
-      setTelegramScriptReady(true);
-    }
-  }, []);
-
   const registerPage = useRegisterPage();
-  const googleAuth = useGoogleAuth({
+  const {
+    googleClientIdConfigured,
+    telegramClientIdConfigured,
+    facebookClientIdConfigured,
+    googleAuth,
+    telegramAuth,
+    facebookAuth,
+    socialBusy,
+    setGisReady,
+    setTelegramScriptReady,
+    setFacebookScriptReady,
+  } = useSignPageSocialAuth({
     tab,
     preferredNewUserType: tab === 'register' ? registerPage.formData.type : undefined,
-    gisScriptLoaded: gisReady,
     locale,
-  });
-  const telegramAuth = useTelegramAuth({
-    tab,
-    preferredNewUserType: tab === 'register' ? registerPage.formData.type : undefined,
-    telegramScriptLoaded: telegramScriptReady,
-    locale,
-  });
-  const login = useLoginPage({
-    suppressSignedInReturnNavigation:
-      googleAuth.isGoogleBusy || telegramAuth.isTelegramBusy || registerPage.loading,
   });
 
-  const isAlreadySignedInRedirecting =
-    login.isInitialized && !!login.user && !googleAuth.isGoogleBusy && !telegramAuth.isTelegramBusy;
-  const authSubmitBusy =
-    login.loading ||
-    isAlreadySignedInRedirecting ||
-    googleAuth.isGoogleBusy ||
-    telegramAuth.isTelegramBusy;
+  const login = useLoginPage({
+    suppressSignedInReturnNavigation: socialBusy || registerPage.loading,
+  });
+
+  const isAlreadySignedInRedirecting = login.isInitialized && !!login.user && !socialBusy;
+  const authSubmitBusy = login.loading || isAlreadySignedInRedirecting || socialBusy;
   const loginSubmitBusy = login.loading || isAlreadySignedInRedirecting;
   const googleDisabled = authSubmitBusy;
-  const registerAuthBusy = googleAuth.isGoogleBusy || telegramAuth.isTelegramBusy;
+  const registerAuthBusy = socialBusy;
 
   const handleTabClick = (next: AuthTab) => {
     if (next === tab) return;
@@ -124,6 +104,14 @@ export function SignPageContent() {
           src="https://accounts.google.com/gsi/client"
           strategy="afterInteractive"
           onReady={() => setGisReady(true)}
+        />
+      ) : null}
+      {facebookClientIdConfigured ? (
+        <Script
+          src="https://connect.facebook.net/en_US/sdk.js"
+          strategy="afterInteractive"
+          onReady={() => setFacebookScriptReady(true)}
+          onError={() => setFacebookScriptReady(true)}
         />
       ) : null}
       <h1 className="text-3xl md:text-4xl font-extrabold mb-6 text-center text-primary-900">
@@ -236,8 +224,10 @@ export function SignPageContent() {
       <AuthOAuthOutsideCard
         googleClientIdConfigured={googleClientIdConfigured}
         telegramClientIdConfigured={telegramClientIdConfigured}
+        facebookClientIdConfigured={facebookClientIdConfigured}
         googleAuth={googleAuth}
         telegramAuth={telegramAuth}
+        facebookAuth={facebookAuth}
         googleDisabled={googleDisabled}
         authSubmitBusy={authSubmitBusy}
       />

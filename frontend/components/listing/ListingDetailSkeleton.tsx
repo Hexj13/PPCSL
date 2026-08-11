@@ -18,14 +18,14 @@ export function ListingDetailPageSkeleton({ breadcrumb }: { breadcrumb: ReactNod
   return (
     <div className={LISTING_DETAIL_PAGE_ROOT_CLASS} data-testid="listing-detail-page">
       <div className={LISTING_DETAIL_TOP_GRID_CLASS}>
-        <div className="space-y-6 min-w-0 order-1">
+        <div className="space-y-6 min-w-0">
           <div>
             <MainImageSkeleton />
             <ThumbnailsSkeleton />
           </div>
+          {breadcrumb}
         </div>
-        <div className="order-2 lg:order-3 lg:col-span-2">{breadcrumb}</div>
-        <div className="space-y-6 min-w-0 order-3 lg:order-2">
+        <div className="space-y-6 min-w-0">
           <div>
             <TitleSkeleton />
             <PriceSkeleton />

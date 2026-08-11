@@ -40,6 +40,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - **[platform-checklist.md](./guides/platform-checklist.md)** — **Checklist for new platforms**
 - [platform-guide.md](./guides/platform-guide.md) — Setup and development (GA, GTM, Sentry)
 - [GOOGLE_OAUTH_SETUP_RU.md](./guides/GOOGLE_OAUTH_SETUP_RU.md) — Google Sign-In (GIS), cookies, env (Russian operators)
+- [FACEBOOK_LOGIN_SETUP_RU.md](./guides/FACEBOOK_LOGIN_SETUP_RU.md) — Facebook Login, cookies, env (Russian operators)
 - [TELEGRAM_AUTH_SETUP_RU.md](./guides/TELEGRAM_AUTH_SETUP_RU.md) — Telegram Login Widget, cookies, env (Russian operators)
 - [AUTH_COOKIE_SESSION.md](./guides/AUTH_COOKIE_SESSION.md) — Cookie-only auth JSON, env alignment, one-time re-login note
 - [listing-video-production-setup-ru.md](./guides/listing-video-production-setup-ru.md) — Listing video on production (AWS, Render; Russian operators)

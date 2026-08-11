@@ -42,6 +42,7 @@ export interface ThemeColors {
   newBadge: string;
   brand: {
     telegram: string;
+    facebook: string;
   };
   semantic: {
     success: string;
@@ -99,6 +100,7 @@ const defaultTheme: ThemeColors = {
   newBadge: '#6AA4C6',
   brand: {
     telegram: '#229ED9',
+    facebook: '#1877F2',
   },
   semantic: {
     success: '#28A745',

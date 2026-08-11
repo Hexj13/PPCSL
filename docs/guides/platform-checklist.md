@@ -178,13 +178,14 @@ Each of these is visible or reachable by default and fails confusingly if left u
 - [ ] **Listing video** — **there is no flag to hide it.** `PhotosSection.tsx` renders the uploader unconditionally and neither `site.ts` nor any env var gates it, so without AWS MediaConvert users upload a clip and hit `errors.video.transcodingUnavailable`. Either configure MediaConvert (`AWS_MEDIACONVERT_ENDPOINT`, `_QUEUE_ARN`, `_ROLE_ARN`, EventBridge → SNS → `POST /api/webhooks/mediaconvert`, plus `mediaconvert:CreateJob/GetJob/DescribeEndpoints` on the app's IAM user) or add the flag to core. Set `AWS_MEDIACONVERT_SNS_TOPIC_ARN` as well: without it the webhook accepts validly signed events from **any** SNS topic. A separate PNG in the bucket via `LISTING_VIDEO_WATERMARK_S3_URI` puts the logo on clips — the photo watermark is the wrong size, the overlay is inserted 140 px wide. Full walkthrough: [listing-video-production-setup-ru.md](./listing-video-production-setup-ru.md)
 - [ ] **Telegram** — the login widget and the support bot are separate decisions. The widget needs a bot in BotFather with `/setdomain` (**one domain per bot**), `NEXT_PUBLIC_TELEGRAM_CLIENT_ID` and `TELEGRAM_BOT_TOKEN`; it sends no messages, so platform locales do not matter. The support bot additionally needs `TELEGRAM_SUPPORT_CHAT_ID` and a webhook, and replies in **ro + ru only** (`core/backend/src/telegram/telegram.service.ts`) regardless of platform locales
 - [ ] **Google sign-in** — set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_ID` to the **same** Web client ID, and list the production origins (apex and `www`) under Authorized JavaScript origins. The `Cross-Origin-Opener-Policy: same-origin-allow-popups` header and the CSP entries for `accounts.google.com` are already in core
+- [ ] **Facebook Login** — set `NEXT_PUBLIC_FACEBOOK_APP_ID`, `FACEBOOK_APP_ID`, and `FACEBOOK_APP_SECRET`; configure App Domains / JavaScript SDK domains in Meta Developer Console; Live mode + App Review for `email` as required. See [FACEBOOK_LOGIN_SETUP_RU.md](./FACEBOOK_LOGIN_SETUP_RU.md). CSP entries for `connect.facebook.net` / `www.facebook.com` / `graph.facebook.com` are in core
 - [ ] **Promotions** — set `PROMOTION_ACCESS` explicitly (`disabled` / `admin` / `all`). There is no payment provider in the project; promotions are an internal mechanic
 - [ ] **Vehicle history** — omit `reportProvider` from `site.ts` to keep the section hidden. See the gotcha in section 15
 - [ ] **Email** — decide before launch. Password reset does not work without SMTP, which leaves locked-out users with no recovery path
 
 ### 10. Environment variables
 
-Validated at build/startup (`core/scripts/check-env.js`, `core/backend/src/common/env.validation.ts`): `COUNTRY`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL`, `JWT_SECRET` (min 16), `CRON_SECRET` (min 8), `DB_*`, `REDIS_HOST`, `REDIS_PORT`, `FRONTEND_URL`; plus `GOOGLE_CLIENT_ID` when `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is set, and `TELEGRAM_BOT_TOKEN` when `NEXT_PUBLIC_TELEGRAM_CLIENT_ID` is set.
+Validated at build/startup (`core/scripts/check-env.js`, `core/backend/src/common/env.validation.ts`): `COUNTRY`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL`, `JWT_SECRET` (min 16), `CRON_SECRET` (min 8), `DB_*`, `REDIS_HOST`, `REDIS_PORT`, `FRONTEND_URL`; plus `GOOGLE_CLIENT_ID` when `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is set and `TELEGRAM_BOT_TOKEN` when `NEXT_PUBLIC_TELEGRAM_CLIENT_ID` is set. Facebook backend validation requires `FACEBOOK_APP_ID` and `FACEBOOK_APP_SECRET` together; combined builds also require `FACEBOOK_APP_ID` to match `NEXT_PUBLIC_FACEBOOK_APP_ID` when both are present. Frontend-only builds do not require the app secret.
 
 Backend:
 
@@ -203,6 +204,8 @@ TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN
 TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM_NUMBER
 SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, SUPPORT_EMAIL
 GOOGLE_CLIENT_ID
+FACEBOOK_APP_ID
+FACEBOOK_APP_SECRET
 GEMINI_API_KEY
 FXRATESAPI_API_KEY
 SENTRY_DSN                        # environment comes from NODE_ENV; SENTRY_ENVIRONMENT is ignored
@@ -301,7 +304,7 @@ So attach the domain early and keep indexing disabled until acceptance passes. T
 Then, on the real domain:
 
 - [ ] Phone signup, SMS arrives
-- [ ] Google sign-in, Telegram sign-in, admin login; the session survives navigation
+- [ ] Google sign-in, Facebook Login, Telegram sign-in, admin login; the session survives navigation
 - [ ] Listing form description tabs are labelled with the platform's `descriptionLocales` and open on the current UI language; both texts save and render on the listing page
 - [ ] The listing AI report answers in the UI language
 - [ ] If video is enabled: a clip leaves `processing`, carries the platform watermark, and its poster renders. The SNS subscription can only be confirmed once the domain is live, so create it after cutover and look for `listing_video_webhook_subscription_confirmed` in the logs

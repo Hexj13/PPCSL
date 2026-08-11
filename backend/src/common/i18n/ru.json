@@ -31,6 +31,7 @@
     "companyNameMaxLength": "Название компании не может быть длиннее 100 символов",
     "companyWebsiteUrl": "URL должен начинаться с http или https и быть корректным",
     "userTypeEnum": "Тип пользователя должен быть Individual или Business",
+    "facebookAccessTokenMaxLength": "Токен доступа Facebook слишком длинный",
     "cannotRegisterAsAdmin": "Нельзя зарегистрироваться как администратор",
     "phoneRequiredField": "Телефон обязателен",
     "termsMustBeAccepted": "Необходимо принять условия использования",
@@ -223,7 +224,11 @@
       "uploadNotInitialized": "Загрузка видео не была корректно начата.",
       "uploadIdMismatch": "Сессия загрузки видео не совпадает.",
       "importDownloadFailed": "Не удалось скачать видео по указанному URL."
-    }
+    },
+    "facebookSignInFailed": "Не удалось войти через Facebook. Попробуйте ещё раз.",
+    "facebookEmailRequired": "Facebook не передал email. Добавьте email в Facebook и попробуйте снова или войдите другим способом.",
+    "facebookEmailAlreadyExists": "Аккаунт с таким email уже существует. Войдите в него текущим способом.",
+    "useFacebookSignIn": "Для этого аккаунта используйте вход через Facebook."
   },
   "vehicleOptions": {
     "transmission": {

@@ -130,6 +130,22 @@ export class UsersService {
     await this.usersRepository.update(userId, { telegramId: null, telegramUsername: null });
   }
 
+  async findByFacebookId(facebookId: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { facebookId, active: true },
+    });
+  }
+
+  async findByFacebookIdAny(facebookId: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { facebookId },
+    });
+  }
+
+  async releaseFacebookIdentity(userId: string): Promise<void> {
+    await this.usersRepository.update(userId, { facebookId: null });
+  }
+
   async findByPhone(phone: string): Promise<User | null> {
     return this.usersRepository.findOne({
       where: { phone, active: true },

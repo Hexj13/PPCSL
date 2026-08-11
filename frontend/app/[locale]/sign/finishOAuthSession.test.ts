@@ -112,4 +112,23 @@ describe('finishOAuthSession', () => {
     expect(path.includes('selectedType=Business')).toBe(true);
     expect(path.includes('returnUrl=%2Flistings')).toBe(true);
   });
+
+  it('redirects new Facebook OAuth users requiring phone verification with facebook_register source', async () => {
+    await finishOAuthSession({
+      syncedUser: { id: '1', phoneVerified: false, type: 'Individual' },
+      isNewUser: true,
+      requiresPhoneVerification: true,
+      preferredNewUserType: 'Individual',
+      phoneRequiredSource: 'facebook_register',
+      searchParams: new URLSearchParams(),
+      submitStartedAt: null,
+      setAuth,
+      replace,
+      t,
+    });
+
+    const path = String(replace.mock.calls[0]?.[0] ?? '');
+    expect(path.includes('mode=phone_required')).toBe(true);
+    expect(path.includes('source=facebook_register')).toBe(true);
+  });
 });

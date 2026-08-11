@@ -15,6 +15,7 @@ import { ConfirmEmailChangeUseCase } from './use-cases/confirm-email-change.use-
 import { DeleteAccountUseCase } from './use-cases/delete-account.use-case';
 import { DismissPartnerPromoBannerUseCase } from './use-cases/dismiss-partner-promo-banner.use-case';
 import { GoogleSignInUseCase } from './use-cases/google-sign-in.use-case';
+import { FacebookSignInUseCase } from './use-cases/facebook-sign-in.use-case';
 import { TelegramSignInUseCase } from './use-cases/telegram-sign-in.use-case';
 import { GetUserProfileUseCase } from './use-cases/get-user-profile.use-case';
 import { LoginUserUseCase } from './use-cases/login-user.use-case';
@@ -251,6 +252,10 @@ describe('AuthService', () => {
         },
         {
           provide: GoogleSignInUseCase,
+          useValue: { execute: jest.fn() },
+        },
+        {
+          provide: FacebookSignInUseCase,
           useValue: { execute: jest.fn() },
         },
         {

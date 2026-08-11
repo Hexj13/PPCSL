@@ -23,6 +23,9 @@ describe('DeleteAccountUseCase', () => {
     companyName: null,
     companyWebsiteUrl: null,
     googleId: 'google-sub-1',
+    telegramId: 'telegram-sub-1',
+    telegramUsername: 'test-user',
+    facebookId: 'facebook-sub-1',
     active: true,
     type: UserType.Individual,
     deactivate: User.prototype.deactivate,
@@ -49,7 +52,7 @@ describe('DeleteAccountUseCase', () => {
     useCase = module.get(DeleteAccountUseCase);
   });
 
-  it('clears googleId when deleting an account', async () => {
+  it('clears social identities when deleting an account', async () => {
     usersService.findOneById.mockResolvedValue(activeUser);
     usersService.update.mockResolvedValue(activeUser);
 
@@ -59,6 +62,9 @@ describe('DeleteAccountUseCase', () => {
       activeUser.id,
       expect.objectContaining({
         googleId: null,
+        telegramId: null,
+        telegramUsername: null,
+        facebookId: null,
         email: null,
         phone: null,
         active: false,

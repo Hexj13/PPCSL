@@ -51,6 +51,7 @@ import { ChangeEmailConfirmDto, ChangeEmailRequestDto } from './dto/change-email
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from './dto/change-phone.dto';
 import { DevTelegramSignInDto } from './dto/dev-telegram-sign-in.dto';
+import { FacebookSignInDto } from './dto/facebook-sign-in.dto';
 import { GoogleSignInDto } from './dto/google-sign-in.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -287,6 +288,22 @@ export class AuthController {
   ) {
     const ip = this.ipBlockService.getClientIp(req);
     const result = await this.authService.googleSignIn(dto, ip, this.getRequestLocale(req));
+    this.authTokenIssuer.attachLoginCookies(res, result);
+    return this.authTokenIssuer.cookieAuthJsonBody(result);
+  }
+
+  @ApiOperation({ summary: 'Sign in or register with Facebook' })
+  @Throttle(getThrottleLimit(5, 200))
+  @UseGuards(IpBlockGuard)
+  @HttpCode(200)
+  @Post('facebook')
+  async facebookSignIn(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+    @Body() dto: FacebookSignInDto,
+  ) {
+    const ip = this.ipBlockService.getClientIp(req);
+    const result = await this.authService.facebookSignIn(dto, ip, this.getRequestLocale(req));
     this.authTokenIssuer.attachLoginCookies(res, result);
     return this.authTokenIssuer.cookieAuthJsonBody(result);
   }

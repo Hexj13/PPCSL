@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 
-export type OAuthConsentProvider = 'google' | 'telegram';
+export type OAuthConsentProvider = 'google' | 'telegram' | 'facebook';
 
 type AuthOAuthConsentProps = {
   disabled?: boolean;

@@ -39,6 +39,9 @@ export class DeleteAccountUseCase {
       companyName: user.companyName,
       companyWebsiteUrl: user.companyWebsiteUrl,
       googleId: user.googleId,
+      telegramId: user.telegramId,
+      telegramUsername: user.telegramUsername,
+      facebookId: user.facebookId,
       active: user.active,
     });
 

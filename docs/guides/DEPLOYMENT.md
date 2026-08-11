@@ -218,6 +218,8 @@ WATERMARK_DOMAIN=your-domain.com
 
 # OAuth / social (optional)
 # GOOGLE_CLIENT_ID=
+# FACEBOOK_APP_ID=
+# FACEBOOK_APP_SECRET=
 # TELEGRAM_BOT_TOKEN=
 # TELEGRAM_SUPPORT_CHAT_ID=
 
@@ -275,8 +277,9 @@ NEXT_PUBLIC_COUNTRY=<country>
 # CDN / image hosts (build-time; also feed CSP + remotePatterns)
 # NEXT_PUBLIC_IMAGE_CDN_URL=https://cdn.your-domain.com
 
-# OAuth (must match backend GOOGLE_CLIENT_ID / Telegram bot id)
+# OAuth (must match backend GOOGLE_CLIENT_ID / Facebook App ID / Telegram bot id)
 # NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+# NEXT_PUBLIC_FACEBOOK_APP_ID=
 # NEXT_PUBLIC_TELEGRAM_CLIENT_ID=
 ```
 
@@ -834,6 +837,8 @@ Use POST (GET returns 404). To remove: `curl -X POST "https://api.telegram.org/b
 **Behaviour:** POST `/api/telegram/webhook` receives Telegram updates. Replies to the user are in Romanian + Russian (one message, separator `—`). Rate limit: 20 messages per hour per user (Redis key `telegram:ratelimit:{userId}`). If `TELEGRAM_BOT_TOKEN` or `TELEGRAM_SUPPORT_CHAT_ID` are not set, the bot does nothing and the webhook still returns 200.
 
 **Telegram Sign-In (Login Widget):** For Telegram Sign-In on `/sign`, bind the site domain in BotFather (`/setdomain`) and set `NEXT_PUBLIC_TELEGRAM_CLIENT_ID` (numeric bot id) on the frontend and `TELEGRAM_BOT_TOKEN` on the backend. The backend verifies the Login Widget payload via HMAC-SHA256 with the bot token and checks `auth_date` freshness; the same `TELEGRAM_BOT_TOKEN` is reused for the support webhook. Telegram does not return a phone number, so new users always go through phone verification. See [TELEGRAM_AUTH_SETUP_RU.md](./TELEGRAM_AUTH_SETUP_RU.md).
+
+**Facebook Login:** Set `NEXT_PUBLIC_FACEBOOK_APP_ID` on the frontend and `FACEBOOK_APP_ID` + `FACEBOOK_APP_SECRET` on the backend (same App ID). Configure App Domains / JavaScript SDK domains in Meta Developer Console; Live mode and App Review for `email` as required. New users always go through SMS phone verification. See [FACEBOOK_LOGIN_SETUP_RU.md](./FACEBOOK_LOGIN_SETUP_RU.md).
 
 ### 3.11. Frontend Service Setup (if deployed separately)
 

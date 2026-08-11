@@ -16,6 +16,7 @@ import { DeleteAccountUseCase } from './application/use-cases/delete-account.use
 import { DevTelegramSignInUseCase } from './application/use-cases/dev-telegram-sign-in.use-case';
 import { DismissPartnerPromoBannerUseCase } from './application/use-cases/dismiss-partner-promo-banner.use-case';
 import { E2eCreateGoogleBusinessUserUseCase } from './application/use-cases/e2e-create-google-business-user.use-case';
+import { FacebookSignInUseCase } from './application/use-cases/facebook-sign-in.use-case';
 import { GetUserProfileUseCase } from './application/use-cases/get-user-profile.use-case';
 import { GoogleSignInUseCase } from './application/use-cases/google-sign-in.use-case';
 import { LoginUserUseCase } from './application/use-cases/login-user.use-case';
@@ -42,6 +43,7 @@ import { OptionalJwtAuthGuard } from './infrastructure/guards/optional-jwt-auth.
 import { PhoneVerifiedGuard } from './infrastructure/guards/phone-verified.guard';
 import { AuthPhoneRateLimitService } from './infrastructure/services/auth-phone-rate-limit.service';
 import { EmailService } from './infrastructure/services/email.service';
+import { FacebookTokenVerifierService } from './infrastructure/services/facebook-token-verifier.service';
 import { GoogleTokenVerifierService } from './infrastructure/services/google-token-verifier.service';
 import { IpBlockService } from './infrastructure/services/ip-block.service';
 import { RefreshTokenService } from './infrastructure/services/refresh-token.service';
@@ -86,6 +88,7 @@ import { AuthController } from './presentation/auth.controller';
     OptionalJwtAuthGuard,
     PhoneVerifiedGuard,
     GoogleTokenVerifierService,
+    FacebookTokenVerifierService,
     TelegramAuthVerifierService,
     IpBlockService,
     AuthPhoneRateLimitService,
@@ -98,6 +101,7 @@ import { AuthController } from './presentation/auth.controller';
     LoginUserUseCase,
     RefreshTokensUseCase,
     GoogleSignInUseCase,
+    FacebookSignInUseCase,
     TelegramSignInUseCase,
     ResetPasswordUseCase,
     DeleteAccountUseCase,

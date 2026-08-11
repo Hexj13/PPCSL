@@ -9,6 +9,8 @@ import type {
   ChangePhoneVerifyDto,
   GoogleSignInDto,
   GoogleSignInResponse,
+  FacebookSignInDto,
+  FacebookSignInResponse,
   TelegramSignInDto,
   TelegramSignInResponse,
   DevTelegramSignInDto,
@@ -48,6 +50,11 @@ export const authApi = {
   refreshQuiet: (data?: RefreshTokenDto) => refreshAuthSession(data ?? {}),
   googleSignIn: (data: GoogleSignInDto, config?: AxiosRequestConfig) =>
     api.post<GoogleSignInResponse>('/api/auth/google', data, {
+      ...config,
+      headers: { ...quietAuthHeaders, ...config?.headers },
+    }),
+  facebookSignIn: (data: FacebookSignInDto, config?: AxiosRequestConfig) =>
+    api.post<FacebookSignInResponse>('/api/auth/facebook', data, {
       ...config,
       headers: { ...quietAuthHeaders, ...config?.headers },
     }),

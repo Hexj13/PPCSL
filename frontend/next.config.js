@@ -105,6 +105,9 @@ function buildConnectSrcDirective() {
   hosts.add('https://www.google-analytics.com');
   hosts.add('https://accounts.google.com');
   hosts.add('https://oauth.telegram.org');
+  hosts.add('https://connect.facebook.net');
+  hosts.add('https://www.facebook.com');
+  hosts.add('https://graph.facebook.com');
   hosts.add('https://*.sentry.io');
   return `connect-src ${[...hosts].join(' ')}`;
 }
@@ -181,12 +184,12 @@ const nextConfig = {
             key: 'Content-Security-Policy-Report-Only',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com https://oauth.telegram.org",
+              "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com https://oauth.telegram.org https://connect.facebook.net",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: http://localhost:4000",
               "font-src 'self' data: https://fonts.gstatic.com",
               buildConnectSrcDirective(),
-              "frame-src 'self' https://www.googletagmanager.com https://accounts.google.com https://oauth.telegram.org",
+              "frame-src 'self' https://www.googletagmanager.com https://accounts.google.com https://oauth.telegram.org https://www.facebook.com https://connect.facebook.net",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",

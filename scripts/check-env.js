@@ -37,6 +37,17 @@ const BUILD_TELEGRAM_PAIR_OK = {
   },
 };
 
+const BUILD_FACEBOOK_CONFIG_OK = {
+  name: "FACEBOOK_APP_ID/FACEBOOK_APP_SECRET pair and matching NEXT_PUBLIC_FACEBOOK_APP_ID",
+  check: () => {
+    const pub = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim();
+    const appId = process.env.FACEBOOK_APP_ID?.trim();
+    const appSecret = process.env.FACEBOOK_APP_SECRET?.trim();
+    if (!appId && !appSecret) return true;
+    return Boolean(appId && appSecret && (!pub || pub === appId));
+  },
+};
+
 const RUNTIME_REQUIRED_PRODUCTION = [
   { name: "JWT_SECRET", get: () => process.env.JWT_SECRET },
   { name: "DB_HOST", get: () => process.env.DB_HOST },
@@ -58,6 +69,7 @@ function runBuildChecks() {
     }
     if (!BUILD_GOOGLE_PAIR_OK.check()) missing.push(BUILD_GOOGLE_PAIR_OK.name);
     if (!BUILD_TELEGRAM_PAIR_OK.check()) missing.push(BUILD_TELEGRAM_PAIR_OK.name);
+    if (!BUILD_FACEBOOK_CONFIG_OK.check()) missing.push(BUILD_FACEBOOK_CONFIG_OK.name);
   }
   return missing;
 }

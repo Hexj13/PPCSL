@@ -40,6 +40,7 @@ function renderOAuthOutsideCard({
     <AuthOAuthOutsideCard
       googleClientIdConfigured={true}
       telegramClientIdConfigured={false}
+      facebookClientIdConfigured={false}
       googleAuth={{
         isButtonReady,
         isButtonRenderTimedOut,
@@ -53,6 +54,12 @@ function renderOAuthOutsideCard({
         isTelegramBusy: false,
         signInWithDevMock: jest.fn(),
         signInWithTelegram: jest.fn(),
+      }}
+      facebookAuth={{
+        clientIdConfigured: false,
+        libraryStatus: 'unavailable',
+        isFacebookBusy: false,
+        signInWithFacebook: jest.fn(),
       }}
       googleDisabled={false}
       authSubmitBusy={false}

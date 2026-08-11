@@ -18,7 +18,10 @@ import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-ur
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 
-export type OAuthPhoneRequiredSource = 'google_register' | 'telegram_register';
+export type OAuthPhoneRequiredSource =
+  | 'google_register'
+  | 'telegram_register'
+  | 'facebook_register';
 
 export type FinishOAuthSessionOptions = {
   syncedUser: User;

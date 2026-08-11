@@ -25,12 +25,34 @@ export function handleDuplicateKeyError(
   throw error;
 }
 
-export function removePasswordFromUser<T extends { password?: string | null }>(
+type UserAuthData = {
+  password?: string | null;
+  googleId?: string | null;
+  telegramId?: string | null;
+  telegramUsername?: string | null;
+  facebookId?: string | null;
+  authProvider?: string;
+};
+
+export function removePasswordFromUser<T extends UserAuthData>(
   user: T,
-): Omit<T, 'password'> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password: _, ...userWithoutPassword } = user;
-  return userWithoutPassword;
+): Omit<T, keyof UserAuthData> {
+  const {
+    password,
+    googleId,
+    telegramId,
+    telegramUsername,
+    facebookId,
+    authProvider,
+    ...safeUser
+  } = user;
+  void password;
+  void googleId;
+  void telegramId;
+  void telegramUsername;
+  void facebookId;
+  void authProvider;
+  return safeUser;
 }
 
 export function handleUploadError(

@@ -21,7 +21,7 @@ const legal: LegalConfig = {
           {
             term: 'Registered User',
             definition:
-              'A user who has created a profile on the Platform by verifying their phone number (via SMS or, where offered, via Telegram Sign-In with a verified phone from Telegram) and either setting a password or using Google Sign-In or Telegram Sign-In where offered. An email address is optional and may be added later in the profile.',
+              'A user who has created a profile on the Platform by verifying their phone number (via SMS or, where offered, via Telegram Sign-In with a verified phone from Telegram) and either setting a password or using Google Sign-In, Facebook Login, or Telegram Sign-In where offered. An email address is optional and may be added later in the profile.',
           },
           {
             term: 'Listing',
@@ -288,7 +288,7 @@ const legal: LegalConfig = {
           {
             term: 'Utilizator înregistrat',
             definition:
-              'Un utilizator care a creat un profil pe Platformă prin verificarea numărului de telefon (prin SMS sau, unde este disponibil, prin autentificarea Telegram cu număr verificat de la Telegram) și fie setarea unei parole, fie folosind autentificarea Google sau Telegram, unde este disponibilă. Adresa de email este opțională și poate fi adăugată ulterior în profil.',
+              'Un utilizator care a creat un profil pe Platformă prin verificarea numărului de telefon (prin SMS sau, unde este disponibil, prin autentificarea Telegram cu număr verificat de la Telegram) și fie setarea unei parole, fie folosind autentificarea Google, Facebook Login sau Telegram, unde este disponibilă. Adresa de email este opțională și poate fi adăugată ulterior în profil.',
           },
           {
             term: 'Anunț',
@@ -558,7 +558,7 @@ const legal: LegalConfig = {
           {
             term: 'Зарегистрированный пользователь',
             definition:
-              'Пользователь, создавший профиль на Платформе путём подтверждения номера телефона (через SMS или, где предлагается, через вход Telegram с подтверждённым номером от Telegram) и либо установки пароля, либо входа через Google Sign-In или Telegram Sign-In, где это предлагается. Адрес электронной почты необязателен и может быть добавлен позже в профиле.',
+              'Пользователь, создавший профиль на Платформе путём подтверждения номера телефона (через SMS или, где предлагается, через вход Telegram с подтверждённым номером от Telegram) и либо установки пароля, либо входа через Google Sign-In, Facebook Login или Telegram Sign-In, где это предлагается. Адрес электронной почты необязателен и может быть добавлен позже в профиле.',
           },
           {
             term: 'Объявление',
@@ -1017,6 +1017,7 @@ const legal: LegalConfig = {
             '• Google Analytics: Pentru analizarea utilizării Platformei și îmbunătățirea serviciilor. Google Analytics colectează date statistice anonime despre vizite. Pentru mai multe informații, consultați Politica de confidențialitate Google: https://policies.google.com/privacy',
             '• Google AI (Gemini): Când sunteți autentificat și folosiți opțional „Analiză AI” pentru un anunț de vehicul, Platforma trimite către serviciul de inteligență artificială generativă Google informațiile din anunț deja afișate pe pagină (titlu, descriere, caracteristici tehnice și coduri de echipament—nu telefonul sau e-mailul vânzătorului) pentru a genera o analiză informativă. Pentru detalii, consultați Politica de confidențialitate Google: https://policies.google.com/privacy',
             '• Twilio: Pentru trimiterea mesajelor SMS pentru verificarea numărului de telefon. Twilio accesează doar numărul de telefon necesar pentru trimiterea SMS. Pentru mai multe informații, consultați Politica de confidențialitate Twilio: https://www.twilio.com/legal/privacy',
+            '• Meta (Facebook Login): Când autentificarea Facebook este activată, Platforma poate primi de la Meta identificatorul contului Facebook, emailul și numele profilului necesare pentru autentificare sau înregistrare. Pentru mai multe informații, consultați Politica de confidențialitate Meta: https://www.facebook.com/privacy/policy/',
             '• Furnizor de servicii media în cloud (UE): pentru stocarea, procesarea/transcodarea și livrarea fotografiilor și a videoclipurilor opționale din anunțuri printr-o rețea de distribuție a conținutului; furnizorul este ales în baza unor standarde recunoscute de securitate și conformitate (inclusiv ISO 27001, SOC 2) și angajamente GDPR.',
             '• Furnizori de hosting: Pentru stocarea și prelucrarea datelor pe servere situate în Republica Moldova',
             '• Serviciu terț de cursuri valutare: folosit pentru cursuri zilnice pentru afișarea prețurilor aproximative în valuta implicită a platformei; nu sunt trimise date cu caracter personal către acel serviciu.',
@@ -1114,7 +1115,7 @@ const legal: LegalConfig = {
             '• Cookies funcționale: Aceste cookies permit funcționalitate îmbunătățită și personalizare',
             '• Cookies analitice: Google Analytics și Google Tag Manager folosesc cookies pentru a analiza utilizarea Platformei. Aceste cookies ne ajută să înțelegem modul în care utilizatorii folosesc Platforma',
             '10.2. Stocare locală (localStorage):',
-            '• Folosim cookie-uri httpOnly pentru tokenurile de sesiune de autentificare (acces și reîmprospătare); autentificarea Google poate încărca scriptul Google Identity Services pe pagina de autentificare când este activată; autentificarea Telegram poate încărca scriptul Telegram Login (OIDC) de la oauth.telegram.org când este activată; la consimțământul utilizatorului, numărul de telefon verificat poate fi primit de la Telegram în cadrul autentificării',
+            '• Folosim cookie-uri httpOnly pentru tokenurile de sesiune de autentificare (acces și reîmprospătare); autentificarea Google poate încărca scriptul Google Identity Services pe pagina de autentificare când este activată; autentificarea Facebook Login poate încărca SDK-ul Meta (connect.facebook.net) pe pagina de autentificare când este activată; autentificarea Telegram poate încărca scriptul Telegram Login (OIDC) de la oauth.telegram.org când este activată; la consimțământul utilizatorului, numărul de telefon verificat poate fi primit de la Telegram în cadrul autentificării',
             '• Folosim localStorage pentru favorite, comparație (până la limitele menționate) și alte preferințe; pentru utilizatorii autentificați, sursa principală pentru aceste date este baza de date',
             '• Pentru oaspeți, anumite acțiuni (favorite, comparație, filtru salvat) pot fi păstrate temporar în memoria locală a browserului și migrate pe server după autentificare sau înregistrare',
             '10.3. Stocare de sesiune (sessionStorage):',
@@ -1147,7 +1148,7 @@ const legal: LegalConfig = {
           title: '11. Transferul internațional de date',
           content: [
             'Datele dvs. personale sunt prelucrate și stocate pe servere situate în Republica Moldova.',
-            'Unii parteneri terți (Google Analytics, Twilio și furnizorul de servicii media în cloud în UE) pot prelucra date pe servere situate în afara Republicii Moldova. Acești parteneri sunt obligați să vă protejeze datele în conformitate cu politicile lor de confidențialitate și contractele corespunzătoare de prelucrare a datelor.',
+            'Unii parteneri terți (Google Analytics, Twilio, Meta și furnizorul de servicii media în cloud în UE) pot prelucra date pe servere situate în afara Republicii Moldova. Acești parteneri sunt obligați să vă protejeze datele în conformitate cu politicile lor de confidențialitate și contractele corespunzătoare de prelucrare a datelor.',
             'Pentru transferurile internaționale de date cu caracter personal către destinatari din afara Republicii Moldova (inclusiv către Statele Unite ale Americii, când este cazul), ne bazăm pe garanții adecvate prevăzute de legea aplicabilă, inclusiv pe Clauze contractuale standard (SCC) adoptate de Comisia Europeană, împreună cu măsuri tehnice și organizaționale suplimentare acolo unde este necesar.',
             'Google Analytics poate prelucra date pe servere în afara Republicii Moldova. Documentația Google poate menționa și alte cadre sau certificări (de exemplu EU-U.S. Data Privacy Framework); acestea nu înlocuiesc obligațiile noastre și mecanismele de transfer aplicabile în Republica Moldova.',
             'Twilio poate prelucra date în afara Republicii Moldova atunci când este necesar tehnic pentru trimiterea SMS; prelucrarea este guvernată de documentația Twilio și de acordurile aplicabile privind protecția datelor, inclusiv mecanisme de transfer precum SCC acolo unde este relevant.',
@@ -1388,6 +1389,7 @@ const legal: LegalConfig = {
             "• Google Analytics: For analyzing Platform usage and improving services. Google Analytics collects anonymous statistical data about visits. For more information, see Google's Privacy Policy: https://policies.google.com/privacy",
             '• Google AI (Gemini): When you are signed in and use the optional "AI analysis" on a vehicle listing, the Platform sends listing information already shown on that page (such as title, description, vehicle attributes, and equipment codes—not seller phone or email) to Google\'s generative AI to produce an informational analysis. For more information, see Google\'s Privacy Policy: https://policies.google.com/privacy',
             "• Twilio: For sending SMS messages to verify phone numbers. Twilio only has access to the phone number necessary for sending SMS. For more information, see Twilio's Privacy Policy: https://www.twilio.com/legal/privacy",
+            "• Meta (Facebook Login): When Facebook Login is enabled, the Platform may receive from Meta the Facebook account identifier, email, and profile name needed for sign-in or registration. For more information, see Meta's Privacy Policy: https://www.facebook.com/privacy/policy/",
             '• EU cloud media services provider: for storing, processing/transcoding, and delivering listing photos and optional listing videos through a content delivery network; the provider is selected based on recognized security and compliance standards (including ISO 27001, SOC 2) and GDPR commitments.',
             '• Hosting providers: For storing and processing data on servers located in the Republic of Moldova',
             '• Third-party exchange rate service: used for daily rates to display approximate prices in the platform default currency; no personal data is sent to that service.',
@@ -1485,7 +1487,7 @@ const legal: LegalConfig = {
             '• Functional cookies: These cookies provide enhanced functionality and personalization',
             '• Analytical cookies: Google Analytics and Google Tag Manager use cookies to analyze Platform usage. These cookies help us understand how users use the Platform',
             '10.2. Local storage (localStorage):',
-            '• We use httpOnly cookies for authentication session tokens (access and refresh); Google Sign-In may load the Google Identity Services script on the sign-in page when enabled; Telegram Sign-In may load the Telegram Login (OIDC) script from oauth.telegram.org when enabled; with user consent, a verified phone number may be received from Telegram during sign-in',
+            '• We use httpOnly cookies for authentication session tokens (access and refresh); Google Sign-In may load the Google Identity Services script on the sign-in page when enabled; Facebook Login may load the Meta JavaScript SDK (connect.facebook.net) on the sign-in page when enabled; Telegram Sign-In may load the Telegram Login (OIDC) script from oauth.telegram.org when enabled; with user consent, a verified phone number may be received from Telegram during sign-in',
             '• We use localStorage for favorites, comparison (within the limits described), and other preferences; for signed-in users, the primary source for this data is the database',
             "• For guests, certain actions (favorites, comparison, saved filter) may be kept temporarily in the browser's local storage and migrated to the server after login or registration",
             '10.3. Session storage (sessionStorage):',
@@ -1518,7 +1520,7 @@ const legal: LegalConfig = {
           title: '11. International Data Transfer',
           content: [
             'Your personal data is processed and stored on servers located in the Republic of Moldova.',
-            'Some third-party partners (Google Analytics, Twilio, and our EU-based cloud media services provider) may process data on servers located outside the Republic of Moldova. These partners are obligated to protect your data in accordance with their privacy policies and corresponding data processing agreements.',
+            'Some third-party partners (Google Analytics, Twilio, Meta, and our EU-based cloud media services provider) may process data on servers located outside the Republic of Moldova. These partners are obligated to protect your data in accordance with their privacy policies and corresponding data processing agreements.',
             'For international transfers of personal data to recipients outside the Republic of Moldova (including to the United States where applicable), we rely on appropriate safeguards under applicable law, including Standard Contractual Clauses (SCC) approved by the European Commission, together with supplementary technical and organizational measures where necessary.',
             'Google Analytics may process data outside the Republic of Moldova. Google documentation may reference additional frameworks or certifications (such as the EU-U.S. Data Privacy Framework); these do not replace our obligations and the transfer mechanisms applicable in the Republic of Moldova.',
             'Twilio may process data outside the Republic of Moldova where technically necessary to deliver SMS; processing is governed by Twilio documentation and applicable data protection agreements, including transfer mechanisms such as SCC where relevant.',
@@ -1759,6 +1761,7 @@ const legal: LegalConfig = {
             '• Google Analytics: Для анализа использования Платформы и улучшения услуг. Google Analytics собирает анонимные статистические данные о посещениях. Для получения дополнительной информации см. Политику конфиденциальности Google: https://policies.google.com/privacy',
             '• Google AI (Gemini): Когда вы авторизованы и по своему выбору запрашиваете «AI-анализ» по объявлению о транспортном средстве, Платформа передаёт в генеративный сервис Google уже отображаемые на странице данные объявления (заголовок, описание, характеристики и коды комплектации — без телефона и e-mail продавца) для формирования информационного анализа. Подробнее см. Политику конфиденциальности Google: https://policies.google.com/privacy',
             '• Twilio: Для отправки SMS-сообщений для проверки номера телефона. Twilio получает доступ только к номеру телефона, необходимому для отправки SMS. Для получения дополнительной информации см. Политику конфиденциальности Twilio: https://www.twilio.com/legal/privacy',
+            '• Meta (Facebook Login): Когда включён Facebook Login, Платформа может получать от Meta идентификатор аккаунта Facebook, email и имя профиля, необходимые для входа или регистрации. Для получения дополнительной информации см. Политику конфиденциальности Meta: https://www.facebook.com/privacy/policy/',
             '• Поставщик облачных медиа-сервисов в ЕС: для хранения, обработки/транскодирования и доставки фотографий и опционального видео из объявлений через сеть доставки контента; поставщик выбирается с учётом признанных стандартов безопасности и соответствия (включая ISO 27001, SOC 2) и обязательств по GDPR.',
             '• Хостинг-провайдеры: Для хранения и обработки данных на серверах, расположенных в Республике Молдова',
             '• Сторонний сервис курсов валют: используется для ежедневных курсов для отображения приблизительных цен в валюте платформы по умолчанию; персональные данные в этот сервис не передаются.',
@@ -1856,7 +1859,7 @@ const legal: LegalConfig = {
             '• Функциональные cookies: Эти cookies обеспечивают расширенную функциональность и персонализацию',
             '• Аналитические cookies: Google Analytics и Google Tag Manager используют cookies для анализа использования Платформы. Эти cookies помогают нам понять, как пользователи используют Платформу',
             '10.2. Локальное хранилище (localStorage):',
-            '• Мы используем httpOnly cookie для токенов сессии (access и refresh); вход через Google Sign-In может загружать скрипт Google Identity Services на странице входа, если он включён; вход через Telegram Sign-In может загружать скрипт Telegram Login (OIDC) с oauth.telegram.org, если он включён; с согласия пользователя подтверждённый номер телефона может быть получен от Telegram при входе',
+            '• Мы используем httpOnly cookie для токенов сессии (access и refresh); вход через Google Sign-In может загружать скрипт Google Identity Services на странице входа, если он включён; вход через Facebook Login может загружать JavaScript SDK Meta (connect.facebook.net) на странице входа, если он включён; вход через Telegram Sign-In может загружать скрипт Telegram Login (OIDC) с oauth.telegram.org, если он включён; с согласия пользователя подтверждённый номер телефона может быть получен от Telegram при входе',
             '• Мы используем localStorage для избранного, сравнения (в указанных пределах) и других предпочтений; для авторизованных пользователей основным источником этих данных является база данных',
             '• Для гостей отдельные действия (избранное, сравнение, сохранённый фильтр) могут временно храниться в локальной памяти браузера и переноситься на сервер после входа или регистрации',
             '10.3. Хранилище сессии (sessionStorage):',
@@ -1889,7 +1892,7 @@ const legal: LegalConfig = {
           title: '11. Международная передача данных',
           content: [
             'Ваши персональные данные обрабатываются и хранятся на серверах, расположенных в Республике Молдова.',
-            'Некоторые сторонние партнёры (Google Analytics, Twilio и наш поставщик облачных медиа-сервисов в ЕС) могут обрабатывать данные на серверах за пределами Республики Молдова. Эти партнёры обязаны защищать ваши данные в соответствии с их политиками конфиденциальности и соответствующими договорами об обработке данных.',
+            'Некоторые сторонние партнёры (Google Analytics, Twilio, Meta и наш поставщик облачных медиа-сервисов в ЕС) могут обрабатывать данные на серверах за пределами Республики Молдова. Эти партнёры обязаны защищать ваши данные в соответствии с их политиками конфиденциальности и соответствующими договорами об обработке данных.',
             'При международной передаче персональных данных получателям за пределами Республики Молдова (включая США, когда это применимо) мы опираемся на надлежащие гарантии в соответствии с применимым законодательством, в том числе на стандартные договорные условия (SCC), утверждённые Европейской Комиссией, а при необходимости — на дополнительные технические и организационные меры.',
             'Google Analytics может обрабатывать данные за пределами Республики Молдова. В документации Google могут упоминаться иные рамки или сертификации (например EU-U.S. Data Privacy Framework); они не заменяют наши обязательства и применимые в Республике Молдова механизмы передачи.',
             'Twilio может обрабатывать данные за пределами Республики Молдова, когда это технически необходимо для доставки SMS; обработка регулируется документацией Twilio и применимыми соглашениями о защите данных, включая механизмы передачи, такие как SCC, где это уместно.',

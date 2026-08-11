@@ -3,6 +3,7 @@
 import type { RefObject } from 'react';
 
 import { AuthOAuthConsent, type OAuthConsentProvider } from '@/app/[locale]/sign/AuthOAuthConsent';
+import { FacebookSignInButton } from '@/app/[locale]/sign/FacebookSignInButton';
 import { GoogleSignInButton } from '@/app/[locale]/sign/GoogleSignInButton';
 import { OAuthSignInButtonSkeleton } from '@/app/[locale]/sign/OAuthSignInButtonSkeleton';
 import { TelegramSignInButton } from '@/app/[locale]/sign/TelegramSignInButton';
@@ -24,11 +25,20 @@ type TelegramAuthProps = {
   signInWithTelegram: () => void;
 };
 
+type FacebookAuthProps = {
+  clientIdConfigured: boolean;
+  libraryStatus: 'probing' | 'ready' | 'unavailable';
+  isFacebookBusy: boolean;
+  signInWithFacebook: () => void;
+};
+
 type AuthOAuthOutsideCardProps = {
   googleClientIdConfigured: boolean;
   telegramClientIdConfigured: boolean;
+  facebookClientIdConfigured: boolean;
   googleAuth: GoogleAuthProps;
   telegramAuth: TelegramAuthProps;
+  facebookAuth: FacebookAuthProps;
   googleDisabled: boolean;
   authSubmitBusy: boolean;
 };
@@ -100,11 +110,49 @@ function TelegramOAuthSlot({
   );
 }
 
+function FacebookOAuthSlot({
+  facebookAuth,
+  facebookLoading,
+  authSubmitBusy,
+}: {
+  facebookAuth: FacebookAuthProps;
+  facebookLoading: boolean;
+  authSubmitBusy: boolean;
+}) {
+  return (
+    <div
+      className="relative h-10 w-10 min-w-[40px] max-w-[40px] shrink-0 overflow-hidden rounded"
+      data-testid="auth-facebook-outside-card"
+    >
+      {facebookLoading ? (
+        <div className="pointer-events-none absolute inset-0 z-10">
+          <OAuthSignInButtonSkeleton testId="auth-facebook-skeleton" />
+        </div>
+      ) : null}
+      <div
+        className={`absolute inset-0 flex h-10 w-10 ${facebookLoading ? 'invisible pointer-events-none' : ''}`}
+        aria-hidden={facebookLoading}
+        data-testid={facebookLoading ? 'auth-facebook-probe' : undefined}
+      >
+        <FacebookSignInButton
+          clientIdConfigured={facebookAuth.clientIdConfigured}
+          libraryStatus={facebookAuth.libraryStatus}
+          disabled={authSubmitBusy}
+          loading={facebookAuth.isFacebookBusy}
+          onFacebookClick={facebookAuth.signInWithFacebook}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function AuthOAuthOutsideCard({
   googleClientIdConfigured,
   telegramClientIdConfigured,
+  facebookClientIdConfigured,
   googleAuth,
   telegramAuth,
+  facebookAuth,
   googleDisabled,
   authSubmitBusy,
 }: AuthOAuthOutsideCardProps) {
@@ -117,13 +165,20 @@ export function AuthOAuthOutsideCard({
     (telegramAuth.libraryStatus === 'ready' || telegramAuth.libraryStatus === 'mock');
   const showTelegramBlock =
     telegramClientIdConfigured && telegramAuth.libraryStatus !== 'unavailable';
-  const showOAuthSection = showGoogle || showTelegram || telegramLoading;
+  const facebookLoading = facebookClientIdConfigured && facebookAuth.libraryStatus === 'probing';
+  const showFacebookBlock =
+    facebookClientIdConfigured && facebookAuth.libraryStatus !== 'unavailable';
+  const showOAuthSection =
+    showGoogle || showTelegram || telegramLoading || showFacebookBlock || facebookLoading;
   const consentProviders: OAuthConsentProvider[] = [];
   if (showGoogle) {
     consentProviders.push('google');
   }
   if (showTelegramBlock) {
     consentProviders.push('telegram');
+  }
+  if (showFacebookBlock) {
+    consentProviders.push('facebook');
   }
 
   if (!showOAuthSection) {
@@ -145,6 +200,13 @@ export function AuthOAuthOutsideCard({
           <TelegramOAuthSlot
             telegramAuth={telegramAuth}
             telegramLoading={telegramLoading}
+            authSubmitBusy={authSubmitBusy}
+          />
+        ) : null}
+        {showFacebookBlock ? (
+          <FacebookOAuthSlot
+            facebookAuth={facebookAuth}
+            facebookLoading={facebookLoading}
             authSubmitBusy={authSubmitBusy}
           />
         ) : null}

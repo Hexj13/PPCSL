@@ -185,6 +185,17 @@ export interface GoogleSignInResponse extends LoginResponse {
   isNewUser: boolean;
 }
 
+export interface FacebookSignInDto {
+  accessToken: string;
+  type?: 'Individual' | 'Business';
+  termsAccepted?: boolean;
+}
+
+export interface FacebookSignInResponse extends LoginResponse {
+  requiresPhoneVerification: boolean;
+  isNewUser: boolean;
+}
+
 export interface TelegramSignInDto {
   id: number;
   first_name?: string;

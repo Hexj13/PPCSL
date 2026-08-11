@@ -44,8 +44,11 @@ export class User {
   @Column({ type: 'varchar', nullable: true, name: 'telegram_username' })
   telegramUsername: string | null;
 
+  @Column({ type: 'varchar', nullable: true, name: 'facebook_id' })
+  facebookId: string | null;
+
   @Column({ type: 'varchar', length: 16, default: 'local', name: 'auth_provider' })
-  authProvider: 'local' | 'google' | 'telegram';
+  authProvider: 'local' | 'google' | 'telegram' | 'facebook';
 
   @Column({ type: 'varchar', select: false, nullable: true })
   password: string | null;
@@ -170,6 +173,7 @@ export class User {
     this.googleId = null;
     this.telegramId = null;
     this.telegramUsername = null;
+    this.facebookId = null;
     this.active = false;
   }
 

@@ -33,6 +33,7 @@ export {
   EyeIcon,
   EyeSlashIcon,
   TelegramIcon,
+  FacebookIcon,
   GoogleIcon,
 } from './icons';
 export { BenefitCheckRow, type BenefitCheckRowProps } from './BenefitCheckRow';

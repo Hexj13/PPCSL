@@ -7,6 +7,7 @@ import { SmsService } from '../infrastructure/services/sms.service';
 import { ChangeEmailConfirmDto, ChangeEmailRequestDto } from '../presentation/dto/change-email.dto';
 import { ChangePasswordDto } from '../presentation/dto/change-password.dto';
 import { ChangePhoneRequestDto, ChangePhoneVerifyDto } from '../presentation/dto/change-phone.dto';
+import { FacebookSignInDto } from '../presentation/dto/facebook-sign-in.dto';
 import { GoogleSignInDto } from '../presentation/dto/google-sign-in.dto';
 import { LoginDto } from '../presentation/dto/login.dto';
 import { RegisterDto } from '../presentation/dto/register.dto';
@@ -23,12 +24,14 @@ import {
   LoginResponse,
   GoogleSignInResponse,
   TelegramSignInResponse,
+  FacebookSignInResponse,
 } from './auth.types';
 import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
 import { CheckPhoneAvailabilityUseCase } from './use-cases/check-phone-availability.use-case';
 import { ConfirmEmailChangeUseCase } from './use-cases/confirm-email-change.use-case';
 import { DeleteAccountUseCase } from './use-cases/delete-account.use-case';
 import { DismissPartnerPromoBannerUseCase } from './use-cases/dismiss-partner-promo-banner.use-case';
+import { FacebookSignInUseCase } from './use-cases/facebook-sign-in.use-case';
 import { GetUserProfileUseCase } from './use-cases/get-user-profile.use-case';
 import { GoogleSignInUseCase } from './use-cases/google-sign-in.use-case';
 import { LoginUserUseCase } from './use-cases/login-user.use-case';
@@ -54,6 +57,7 @@ export type {
   LoginResponse,
   GoogleSignInResponse,
   TelegramSignInResponse,
+  FacebookSignInResponse,
 } from './auth.types';
 
 @Injectable()
@@ -84,6 +88,7 @@ export class AuthService {
     private changePasswordUseCase: ChangePasswordUseCase,
     private dismissPartnerPromoBannerUseCase: DismissPartnerPromoBannerUseCase,
     private googleSignInUseCase: GoogleSignInUseCase,
+    private facebookSignInUseCase: FacebookSignInUseCase,
     private telegramSignInUseCase: TelegramSignInUseCase,
   ) {}
 
@@ -105,6 +110,14 @@ export class AuthService {
     requestLocale?: string,
   ): Promise<GoogleSignInResponse> {
     return this.googleSignInUseCase.execute(dto, ip, requestLocale);
+  }
+
+  async facebookSignIn(
+    dto: FacebookSignInDto,
+    ip?: string,
+    requestLocale?: string,
+  ): Promise<FacebookSignInResponse> {
+    return this.facebookSignInUseCase.execute(dto, ip, requestLocale);
   }
 
   async telegramSignIn(

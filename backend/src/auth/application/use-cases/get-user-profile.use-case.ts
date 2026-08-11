@@ -14,8 +14,8 @@ export class GetUserProfileUseCase {
     const boardSlug = await this.usersService.ensureBoardSlug(userId, user);
     const hasPassword = Boolean(user.password);
     const result = removePasswordFromUser(user);
-    const { board_slug: _s, ...rest } = result;
-    void _s;
+    const { board_slug, ...rest } = result;
+    void board_slug;
     return {
       ...rest,
       boardSlug,

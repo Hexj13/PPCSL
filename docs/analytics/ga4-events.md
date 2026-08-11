@@ -107,15 +107,17 @@ This document describes the current state of Google Analytics 4 integration. GA4
 
 **Description:** Sign in  
 **Method:** `analytics.login(method)`  
-**Methods:** `email`, `phone`, `google`, `telegram`  
-**Used in:** `useLoginPage.ts` (email/phone), `useTelegramAuth.ts`, `useGoogleAuth.ts`
+**Methods:** `email`, `phone`, `google`, `telegram`, `facebook`
+
+**Used in:** `useLoginPage.ts` (email/phone), `useTelegramAuth.ts`, `useGoogleAuth.ts`, `useFacebookAuth.ts`
 
 #### sign_up
 
 **Description:** Registration  
 **Method:** `analytics.signUp(method)`  
-**Methods:** `email`, `phone`, `google`, `telegram`  
-**Used in:** `useVerifyPhonePage.ts`, `useTelegramAuth.ts` (`isNewUser`), `useGoogleAuth.ts` (`isNewUser`)
+**Methods:** `email`, `phone`, `google`, `telegram`, `facebook`
+
+**Used in:** `useVerifyPhonePage.ts`, `useTelegramAuth.ts` (`isNewUser`), `useGoogleAuth.ts` (`isNewUser`), `useFacebookAuth.ts` (`isNewUser`)
 
 ### Conversions
 

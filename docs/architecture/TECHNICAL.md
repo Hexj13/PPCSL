@@ -243,6 +243,8 @@ GEMINI_API_KEY=<google-ai-studio-api-key>
 
 # OAuth / social (optional)
 # GOOGLE_CLIENT_ID=your-google-oauth-web-client-id
+# FACEBOOK_APP_ID=
+# FACEBOOK_APP_SECRET=
 # TELEGRAM_BOT_TOKEN=123456:ABC...
 
 # Sentry (optional; environment = NODE_ENV; SENTRY_ENVIRONMENT / SENTRY_RELEASE are not read)
@@ -287,8 +289,9 @@ NEXT_PUBLIC_GOOGLE_VERIFICATION=your-verification-code
 # NEXT_PUBLIC_IMAGE_CDN_URL=https://cdn.your-domain.com
 # NEXT_PUBLIC_AWS_CLOUDFRONT_URL=https://cdn.your-domain.com
 
-# OAuth client IDs (public; must match backend GOOGLE_CLIENT_ID / Telegram bot id)
+# OAuth client IDs (public; must match backend GOOGLE_CLIENT_ID / Facebook App ID / Telegram bot id)
 # NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+# NEXT_PUBLIC_FACEBOOK_APP_ID=
 # NEXT_PUBLIC_TELEGRAM_CLIENT_ID=
 
 # Sentry (optional)
@@ -420,6 +423,7 @@ POST /api/auth/register              # Register new user
 POST /api/auth/login                  # Login (sets httpOnly session cookies; JSON returns user only)
 POST /api/auth/refresh                # Refresh session (rotates refresh token in cookies; JSON returns user only)
 POST /api/auth/google                 # Google Sign-In (GIS idToken)
+POST /api/auth/facebook               # Facebook Login (access token)
 POST /api/auth/telegram               # Telegram Sign-In (Login Widget payload + HMAC verification)
 GET  /api/auth/me                     # Get current user profile (includes hasPassword; password hash never returned)
 PATCH /api/auth/profile              # Update user profile (response includes hasPassword)

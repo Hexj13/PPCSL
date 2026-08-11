@@ -22,4 +22,23 @@ describe('validateEnv', () => {
   it('allows production when ALLOW_SMS_TEST_CODE is unset', () => {
     expect(() => validateEnv({ ...productionBase })).not.toThrow();
   });
+
+  it('rejects incomplete Facebook credentials', () => {
+    expect(() =>
+      validateEnv({
+        ...productionBase,
+        FACEBOOK_APP_ID: 'app-id',
+      }),
+    ).toThrow(/FACEBOOK_APP_ID and FACEBOOK_APP_SECRET must be set together/);
+  });
+
+  it('allows complete Facebook credentials', () => {
+    expect(() =>
+      validateEnv({
+        ...productionBase,
+        FACEBOOK_APP_ID: 'app-id',
+        FACEBOOK_APP_SECRET: 'app-secret',
+      }),
+    ).not.toThrow();
+  });
 });

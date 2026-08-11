@@ -31,6 +31,7 @@
     "companyNameMaxLength": "Company name cannot be longer than 100 characters",
     "companyWebsiteUrl": "URL must start with http or https and be a valid address",
     "userTypeEnum": "User type must be Individual or Business",
+    "facebookAccessTokenMaxLength": "Facebook access token is too long",
     "cannotRegisterAsAdmin": "You cannot register as administrator",
     "phoneRequiredField": "Phone is required",
     "termsMustBeAccepted": "You must accept the terms of use",
@@ -228,7 +229,11 @@
       "uploadNotInitialized": "Video upload was not started correctly.",
       "uploadIdMismatch": "Video upload session does not match.",
       "importDownloadFailed": "Could not download video from the provided URL."
-    }
+    },
+    "facebookSignInFailed": "Facebook sign-in failed. Please try again.",
+    "facebookEmailRequired": "Facebook did not provide an email. Add an email in Facebook and try again, or sign in another way.",
+    "facebookEmailAlreadyExists": "An account with this email already exists. Sign in using its current method.",
+    "useFacebookSignIn": "Use Facebook sign-in for this account."
   },
   "vehicleOptions": {
     "transmission": {
