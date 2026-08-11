@@ -390,6 +390,7 @@ export class CreateListingUseCase {
       partner_source_code: partnerSource ?? null,
       partner_listing_external_key: partnerKey ?? null,
       partner_listing_canonical_url: partnerCanonicalUrl,
+      is_parsed: hasPartnerSource && hasPartnerKey,
       video: stagedVideo,
     });
     if (!listing.available_in_credit) {

@@ -10,6 +10,7 @@ import { IsNull } from 'typeorm';
 import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
 import { PromotionHistory } from '../../../../listings/entities/promotion-history.entity';
+import { invalidateListingCaches } from '../../partner-import-shared/listing-cache-invalidation';
 import { normalizeRuntimeEnv, resolveConfig } from '../config';
 import { CipautoHttpClient } from '../http/cipauto-http-client';
 import { RegistryStore } from '../storage/registry';
@@ -208,30 +209,6 @@ async function closeListingsProperly(listings: { listing: Listing }[]): Promise<
   }
 
   return closed;
-}
-
-async function invalidateRedisCache(): Promise<void> {
-  const redisHost = process.env.REDIS_HOST || 'localhost';
-  const redisPort = Number(process.env.REDIS_PORT || 6379);
-
-  try {
-    const { createClient } = await import('redis');
-    const client = createClient({ url: `redis://${redisHost}:${redisPort}` });
-    await client.connect();
-
-    const keys = await client.keys('listings:search:*');
-    if (keys.length > 0) {
-      await client.del(keys);
-      console.log(`[audit] Invalidated ${keys.length} search cache keys.`);
-    } else {
-      console.log(`[audit] No search cache keys to invalidate.`);
-    }
-
-    await client.disconnect();
-  } catch (error) {
-    console.warn(`[audit] Could not invalidate Redis cache: ${error}`);
-    console.warn(`[audit] Run "npm run clear-cache:listings" manually after closing.`);
-  }
 }
 
 function parseAuditStaleArgv(): {
@@ -487,7 +464,7 @@ async function auditStaleListings() {
     const closed = await closeListingsProperly(confirmedClosed);
     console.log(`[audit] Closed ${closed} listings (status, promotions, promo history).`);
 
-    await invalidateRedisCache();
+    await invalidateListingCaches('[audit]');
   } else if (confirmedClosed.length > 0) {
     console.log(
       `[audit] To close these ${confirmedClosed.length} listings, re-run with --close flag.`,

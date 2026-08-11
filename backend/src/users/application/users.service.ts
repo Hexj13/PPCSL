@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { resolveActiveListingLimit } from '../../common/constants';
 import { User } from '../entities/user.entity';
 
 function phoneToSlugBase(phone: string | null): string {
@@ -188,7 +189,7 @@ export class UsersService {
 
   async getListingLimit(userId: string): Promise<number> {
     const user = await this.findOne(userId);
-    return user.type === 'Business' ? 1000 : 100;
+    return resolveActiveListingLimit(user.type);
   }
 
   async update(id: string, updateData: Partial<User>): Promise<User> {

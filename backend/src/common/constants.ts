@@ -292,6 +292,13 @@ export const SMS_MESSAGES = {
   PASSWORD_RESET_CODE: (code: string) => `${smsBrandName()} password reset code: ${code}`,
 } as const;
 
+export const ACTIVE_LISTING_LIMIT_BUSINESS = 1000;
+export const ACTIVE_LISTING_LIMIT_INDIVIDUAL = 100;
+
+export function resolveActiveListingLimit(userType: string | null | undefined): number {
+  return userType === 'Business' ? ACTIVE_LISTING_LIMIT_BUSINESS : ACTIVE_LISTING_LIMIT_INDIVIDUAL;
+}
+
 export const REFRESH_COOLDOWN_MS = 48 * 60 * 60 * 1000;
 export const LISTING_REFRESH_REMINDER_INTERVAL_MS = 14 * 24 * 60 * 60 * 1000;
 export const WEEKLY_VIEWS_DIGEST_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;

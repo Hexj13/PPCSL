@@ -625,7 +625,10 @@ export class UpdateListingUseCase {
     Partial<
       Pick<
         Listing,
-        'partner_source_code' | 'partner_listing_external_key' | 'partner_listing_canonical_url'
+        | 'partner_source_code'
+        | 'partner_listing_external_key'
+        | 'partner_listing_canonical_url'
+        | 'is_parsed'
       >
     >
   > {
@@ -682,6 +685,7 @@ export class UpdateListingUseCase {
       return {
         ...keyPatch,
         partner_listing_canonical_url: null,
+        is_parsed: false,
       };
     }
 
@@ -716,9 +720,16 @@ export class UpdateListingUseCase {
     const out: Partial<
       Pick<
         Listing,
-        'partner_source_code' | 'partner_listing_external_key' | 'partner_listing_canonical_url'
+        | 'partner_source_code'
+        | 'partner_listing_external_key'
+        | 'partner_listing_canonical_url'
+        | 'is_parsed'
       >
     > = { ...keyPatch };
+
+    if (mergedSrc && mergedKey) {
+      out.is_parsed = true;
+    }
 
     if (urlTouched) {
       out.partner_listing_canonical_url = urlNorm ?? null;

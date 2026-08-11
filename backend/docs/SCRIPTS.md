@@ -411,6 +411,8 @@ Parser implementation lives in the core submodule (`src/scripts/tools/cipauto-im
 | `npm run autooutlet:seed-registry`                           | Seed AutoOutlet registry + partner keys from DB (Cod Produs / URL / partner key) |
 | `npm run 999md:seed-registry`                                | Seed 999.md registry + partner keys from Kupito DB + 999 PLP/PDP (dedup after lost registry) |
 | `npm run partner:check-urls`                                 | PDP check for listings with saved `partner_listing_canonical_url` (JSON+CSV report)          |
+| `npm run partner:mark-parsed`                                | Set `listings.is_parsed=true` from registry/PLP for a partner user (any status)              |
+| `npm run partner:reopen-parsed`                              | Reopen Closed `is_parsed` listings still active on source (does not touch `last_updated_at`) |
 | `npm run cipauto:audit-stale`                                | Find and close listings removed from CipAuto                |
 | `npm run autooutlet:audit-stale`                             | Find and close listings not in AutoOutlet PLP snapshot / verify PDP |
 | `npm run 999md:dealer-audit`                                 | Brand/model audit report vs live Kupito API                 |
@@ -461,6 +463,24 @@ Reads vehicle listings for a user that already have `partner_source_code` and a 
 npm run partner:check-urls -- --partner cipauto|999md|autooutlet --userId=<UUID> [--env local|prod] [--dry-run] [--limit N] [--delay ms]
 ```
 
+#### Mark parsed listings (`partner:mark-parsed`)
+
+Sets `listings.is_parsed = true` for a partner user from the parser registry and the current PLP snapshots. Matches by `kupitoListingId` from the registry and/or `partner_source_code` + `partner_listing_external_key`. Status is not filtered (`Active` / `Paused` / `Closed`). Does not change `last_updated_at` or any other field. Use after a fresh PLP scan when backfill by `partner_source_code` is not enough (legacy rows).
+
+Snapshot defaults per partner: `cipauto` and `autooutlet` read the single `currentPlpPath` file, `999md` reads every `*.json` in `currentPlpDir` (one file per scanned login). A missing default snapshot is skipped (registry-only run); an explicit `--plp-file` that does not exist is an error.
+
+```bash
+npm run partner:mark-parsed -- --partner cipauto|999md|autooutlet --userId=<UUID> [--env local|prod] [--plp-file <path>] [--dry-run]
+```
+
+#### Reopen parsed listings (`partner:reopen-parsed`)
+
+Finds `Closed` listings with `is_parsed = true` and a saved `partner_listing_canonical_url`, verifies each PDP is still active on the source, and reopens matches as `Active` (`closed_at = null` only). **Does not change** `last_updated_at` / `last_published_at` / `created_at`, so restored ads keep their previous sort position. Stops when the user’s Active limit would be exceeded (Business 1000 / Individual 100). URLs whose host does not match the partner host are reported as `skip_error` without a network request. After real reopens the `cache:listings*` Redis namespace is invalidated. Always run `--dry-run` first.
+
+```bash
+npm run partner:reopen-parsed -- --partner cipauto|999md|autooutlet --userId=<UUID> [--env local|prod] [--dry-run] [--limit N] [--delay ms]
+```
+
 #### CipAuto stale listings audit (`audit-stale-listings`)
 
 Identifies Kupito listings that no longer exist on CipAuto. Works in two phases:
@@ -505,7 +525,7 @@ The `--close` flag performs a full listing close matching the application behavi
 
 - Sets `status = Closed`, `closed_at`, resets all promotion fields (`is_promoted`, `promoted_until`, `promoted_started_at`, `promoted_paused_at`)
 - Ends open promotion history records for promoted listings
-- Invalidates Redis search cache (`listings:search:*`) after all closures
+- Invalidates the Redis listing cache namespace (`cache:listings*`) after all closures
 
 **When to run:** After PLP scans are established, periodically or when the listing count diverges between Kupito and CipAuto.
 

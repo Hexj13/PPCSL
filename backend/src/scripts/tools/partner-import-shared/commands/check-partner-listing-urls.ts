@@ -6,33 +6,20 @@ import * as path from 'path';
 import { ListingCategory } from '../../../../common/constants';
 import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
-import { resolveMd999Config } from '../../999md-import/config';
-import { PdpParser999 } from '../../999md-import/parsers/pdp-parser';
-import { resolveConfig as resolveAutooutletConfig } from '../../autooutlet-import/config';
-import { PdpParser as AutooutletPdpParser } from '../../autooutlet-import/parsers/pdp-parser';
+import { normalizeRuntimeEnv } from '../../cipauto-import/config';
 import {
-  resolveConfig as resolveCipautoConfig,
-  normalizeRuntimeEnv,
-} from '../../cipauto-import/config';
-import { CipautoHttpClient } from '../../cipauto-import/http/cipauto-http-client';
-import { PdpParser } from '../../cipauto-import/parsers/pdp-parser';
-import type { ParsedPdpData } from '../listing-types';
-import {
-  PARTNER_SOURCE_CODE_AUTOOUTLET,
-  PARTNER_SOURCE_CODE_CIPAUTO,
-  PARTNER_SOURCE_CODE_999MD,
-} from '../partner-source-codes';
+  createPartnerSourceVerifier,
+  isPartnerCode,
+  type PartnerCode,
+  type SourceCheckOutcome,
+} from '../partner-listing-source-verifier';
 import { sleep } from '../utils/sleep';
-
-type PartnerCode = 'cipauto' | '999md' | 'autooutlet';
-
-type CheckOutcome = 'active' | 'closed' | 'error';
 
 interface CheckRow {
   kupitoListingId: string;
   partner_listing_external_key: string | null;
   url: string;
-  outcome: CheckOutcome;
+  outcome: SourceCheckOutcome;
   sourceStatus?: string;
   sourceStatusReason?: string;
   detail?: string;
@@ -95,45 +82,18 @@ function parseArgs(): {
   return { partner, userId, env, dryRun, limit, delayMs };
 }
 
-function classify999Outcome(parsed: ParsedPdpData): CheckOutcome {
-  if (parsed.sourceStatus === 'closed') {
-    return 'closed';
-  }
-  return 'active';
-}
-
 async function main(): Promise<void> {
   const parsed = parseArgs();
   const { userId, env, dryRun, limit, delayMs } = parsed;
   const partner = parsed.partner;
-  if (!userId || (partner !== 'cipauto' && partner !== '999md' && partner !== 'autooutlet')) {
+  if (!userId || !isPartnerCode(partner)) {
     console.error(
       'Usage: npm run partner:check-urls -- --partner cipauto|999md|autooutlet --userId <UUID> [--env local|prod] [--dry-run] [--limit N] [--delay ms]',
     );
     process.exit(1);
   }
 
-  const partnerSource =
-    partner === 'cipauto'
-      ? PARTNER_SOURCE_CODE_CIPAUTO
-      : partner === '999md'
-        ? PARTNER_SOURCE_CODE_999MD
-        : PARTNER_SOURCE_CODE_AUTOOUTLET;
-  const cipautoCfg = resolveCipautoConfig(env, { requireAuth: false, requireImportSecret: false });
-  const md999Cfg = resolveMd999Config(env, {
-    requireAuth: false,
-    requireImportSecret: false,
-  });
-  const autooutletCfg = resolveAutooutletConfig(env, {
-    requireAuth: false,
-    requireImportSecret: false,
-  });
-  const reportsDir =
-    partner === 'cipauto'
-      ? cipautoCfg.reportsDir
-      : partner === '999md'
-        ? md999Cfg.reportsDir
-        : autooutletCfg.reportsDir;
+  const verifier = createPartnerSourceVerifier(partner, env);
 
   console.log(`[partner:check-urls] Connecting DB partner=${partner} userId=${userId} env=${env}`);
   await AppDataSource.initialize();
@@ -142,7 +102,7 @@ async function main(): Promise<void> {
   let qb = listingRepo
     .createQueryBuilder('l')
     .where('l.user_id = :userId', { userId })
-    .andWhere('l.partner_source_code = :psc', { psc: partnerSource })
+    .andWhere('l.partner_source_code = :psc', { psc: verifier.partnerSourceCode })
     .andWhere('l.category = :cat', { cat: ListingCategory.Vehicle })
     .andWhere('l.partner_listing_canonical_url IS NOT NULL')
     .orderBy('l.created_at', 'ASC');
@@ -153,17 +113,10 @@ async function main(): Promise<void> {
 
   console.log(`[partner:check-urls] Found ${listings.length} listings with saved canonical URL`);
 
-  const cipautoHttp = partner === 'cipauto' ? new CipautoHttpClient(cipautoCfg) : null;
-  const pdpCipauto = cipautoHttp ? new PdpParser(cipautoCfg, cipautoHttp) : null;
-  const pdp999 = partner === '999md' ? new PdpParser999(md999Cfg) : null;
-  const pdpAutooutlet = partner === 'autooutlet' ? new AutooutletPdpParser(autooutletCfg) : null;
-
   const rows: CheckRow[] = [];
 
   try {
-    if (cipautoHttp) {
-      await cipautoHttp.start();
-    }
+    await verifier.start();
     for (const listing of listings) {
       const url = listing.partner_listing_canonical_url?.trim() ?? '';
       if (!url) {
@@ -179,48 +132,22 @@ async function main(): Promise<void> {
         });
         continue;
       }
-      try {
-        let parsed: ParsedPdpData;
-        if (pdpCipauto) {
-          parsed = await pdpCipauto.parse(url);
-        } else if (pdp999) {
-          parsed = await pdp999.parse(url);
-        } else if (pdpAutooutlet) {
-          parsed = await pdpAutooutlet.parse(url);
-        } else {
-          throw new Error('Parser not initialized');
-        }
-        const outcome: CheckOutcome =
-          partner === '999md'
-            ? classify999Outcome(parsed)
-            : parsed.sourceStatus === 'closed'
-              ? 'closed'
-              : 'active';
-        rows.push({
-          kupitoListingId: listing.id,
-          partner_listing_external_key: listing.partner_listing_external_key,
-          url,
-          outcome,
-          sourceStatus: parsed.sourceStatus,
-          sourceStatusReason: parsed.sourceStatusReason,
-        });
-      } catch (e) {
-        rows.push({
-          kupitoListingId: listing.id,
-          partner_listing_external_key: listing.partner_listing_external_key,
-          url,
-          outcome: 'error',
-          detail: String(e),
-        });
-      }
+      const checked = await verifier.checkUrl(url);
+      rows.push({
+        kupitoListingId: listing.id,
+        partner_listing_external_key: listing.partner_listing_external_key,
+        url,
+        outcome: checked.outcome,
+        sourceStatus: checked.sourceStatus,
+        sourceStatusReason: checked.sourceStatusReason,
+        detail: checked.detail,
+      });
       if (delayMs > 0) {
         await sleep(delayMs);
       }
     }
   } finally {
-    if (cipautoHttp) {
-      await cipautoHttp.close();
-    }
+    await verifier.close();
   }
 
   const summary = {
@@ -234,9 +161,9 @@ async function main(): Promise<void> {
     error: rows.filter((r) => r.outcome === 'error').length,
   };
 
-  fs.mkdirSync(reportsDir, { recursive: true });
+  fs.mkdirSync(verifier.reportsDir, { recursive: true });
   const ts = new Date().toISOString().replace(/[:.]/g, '-');
-  const base = path.join(reportsDir, `partner-url-check-${partner}-${ts}`);
+  const base = path.join(verifier.reportsDir, `partner-url-check-${partner}-${ts}`);
   const jsonPath = `${base}.json`;
   const csvPath = `${base}.csv`;
   fs.writeFileSync(jsonPath, JSON.stringify({ summary, rows }, null, 2), 'utf-8');

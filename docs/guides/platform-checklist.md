@@ -318,7 +318,7 @@ Only then remove `NEXT_PUBLIC_NOINDEX`, redeploy, submit the sitemap to Search C
 Core was originally written for a single platform, so some values are still hardcoded. Expect to find more. Known ones that should still be checked against `siteConfig` or env:
 
 - OG `siteName` on the listing page (`core/frontend/app/[locale]/listings/[id]/page.tsx`) — every other page already uses `siteConfig.name`
-- `/investors` page locales (`InvestorsPageClient.tsx`) — verify supported locales match the platform
+- `/investors` page locales (`InvestorsPageClient.tsx`) — content follows the URL locale; the page language dropdown navigates to the matching locale path (same supported locales as the site switcher)
 - Telegram contact handle (`core/frontend/app/[locale]/contacts/page.tsx`)
 - Vehicle-history provider: locale type is `'ro' | 'ru'` and `isReportProviderConfigured()` hard-requires the `ro` key in `baseUrls` and `demoUrls`, so filling other locales alone will not enable the section
 

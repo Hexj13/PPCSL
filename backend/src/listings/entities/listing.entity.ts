@@ -138,6 +138,9 @@ export class Listing {
   @Column({ type: 'boolean', default: false })
   is_new: boolean;
 
+  @Column({ name: 'is_parsed', type: 'boolean', default: false })
+  is_parsed: boolean;
+
   @Column({ type: 'varchar', nullable: true, length: 17 })
   vin: string | null;
 

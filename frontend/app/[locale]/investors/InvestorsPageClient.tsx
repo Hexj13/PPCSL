@@ -1,14 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { startTransition, useCallback, useMemo } from 'react';
 
 import { Dropdown } from '@/components/common/Dropdown';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
-import type { Locale, Translations } from '@/lib/i18n-types';
+import { authApi } from '@/lib/api';
+import { setStoredLocale, type Locale } from '@/lib/i18n';
+import type { Translations } from '@/lib/i18n-types';
 import { resolveLocaleRouting } from '@/lib/locale-routing';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { useAuthStore } from '@/lib/store';
+import { localePrefixPath } from '@/lib/url-locale';
 import { getCountry } from '@/lib/utils';
 
 const SECTION_IDS = [
@@ -71,66 +76,49 @@ export function InvestorsPageClient({
 }) {
   const { href } = useLocalizedNavigation();
   const { t } = useTranslation();
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
   const site = useMemo(() => loadSiteConfigSync(getCountry()), []);
   const routing = useMemo(() => resolveLocaleRouting(site), [site]);
-  const supported = routing.supportedLocales;
-
-  const cache = useRef<Map<string, InvestorsBundle>>(new Map([[initialLocale, initialInvestors]]));
-  const [locale, setLocale] = useState<string>(initialLocale);
-  const [content, setContent] = useState<InvestorsBundle>(initialInvestors);
-  const [isLoadingLocale, setIsLoadingLocale] = useState(false);
+  const content = initialInvestors;
 
   const localeOptions = useMemo(
     () =>
-      supported.map((value) => {
+      routing.supportedLocales.map((value) => {
         const low = value.toLowerCase();
         const key = routing.languageSwitcherTranslationKeys[low] ?? 'common.languageLocaleCode';
         const label =
           key === 'common.languageLocaleCode' ? t(key, { code: value.toUpperCase() }) : t(key);
         return { value: low, label };
       }),
-    [routing.languageSwitcherTranslationKeys, supported, t],
+    [routing.languageSwitcherTranslationKeys, routing.supportedLocales, t],
   );
 
   const currentLabel = useMemo(
-    () => localeOptions.find((o) => o.value === locale)?.label ?? locale.toUpperCase(),
-    [locale, localeOptions],
+    () =>
+      localeOptions.find((o) => o.value === initialLocale)?.label ?? initialLocale.toUpperCase(),
+    [initialLocale, localeOptions],
   );
 
   const handleLocaleChange = useCallback(
     (value: string) => {
-      const next = value.toLowerCase();
-      if (!supported.map((s) => s.toLowerCase()).includes(next)) {
+      const localeValue = value.toLowerCase() as Locale;
+      if (localeValue === initialLocale) {
         return;
       }
-      if (next === locale || isLoadingLocale) {
+      if (!routing.supportedLocales.map((s) => s.toLowerCase()).includes(localeValue)) {
         return;
       }
-      const hit = cache.current.get(next);
-      if (hit) {
-        setLocale(next);
-        setContent(hit);
-        return;
+      setStoredLocale(localeValue);
+      startTransition(() => {
+        router.push(localePrefixPath('/investors', localeValue));
+        router.refresh();
+      });
+      if (user) {
+        void authApi.updateProfile({ preferredLocale: localeValue }).catch(() => {});
       }
-      setIsLoadingLocale(true);
-      void import(`@/lib/locales/${next}.json`)
-        .then((mod: { default: Translations }) => {
-          const inv = mod.default.investors;
-          if (!inv) {
-            return;
-          }
-          cache.current.set(next, inv);
-          setLocale(next);
-          setContent(inv);
-        })
-        .catch(() => {
-          // Silently ignore locale load failure; UI stays on the current locale.
-        })
-        .finally(() => {
-          setIsLoadingLocale(false);
-        });
     },
-    [locale, isLoadingLocale, supported],
+    [initialLocale, routing.supportedLocales, router, user],
   );
 
   return (
@@ -140,7 +128,7 @@ export function InvestorsPageClient({
         <div className="mb-8 inline-flex max-w-full">
           <Dropdown
             className="w-fit"
-            value={locale}
+            value={initialLocale}
             onChange={handleLocaleChange}
             options={localeOptions}
             placeholder={currentLabel}
@@ -150,7 +138,6 @@ export function InvestorsPageClient({
             rightIcon={languageIcon}
             menuSelectedStyle="checkmark"
             menuExpandToContent
-            disabled={isLoadingLocale}
             dataTestId="investors-page-language"
           />
         </div>

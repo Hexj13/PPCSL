@@ -48,6 +48,7 @@ Core application framework for creating car marketplace platforms for different 
   - Non-promoted listings older than 90 days are closed automatically
   - Promoted listings with active promotion are not closed automatically
   - Promoted listings with expired promotion are closed automatically on the next cron run
+  - Listings with `is_parsed = true` (created by partner import) are **never** closed by this cron; partner stale cleanup uses `--remove-closed` / `audit-stale` instead
 - **Paid Promotion Feature (MVP):** Users can promote their listings for higher visibility
   - Promoted listings appear first in search results
   - Visual highlighting with green border and "Promoted" tag
@@ -667,7 +668,7 @@ GET /metrics                         # Prometheus metrics (text/plain). Requires
 - `last_updated_at` - Updated only when:
   - Listing is created
   - User clicks "Refresh dates" button (updates all active listings)
-  - Used for automatic closing after 90 days
+  - Used for automatic closing after 90 days (skipped when `is_parsed = true`)
   - Used for "newest/oldest" sort on main search, board, and favorites (so sort order matches the date shown on listing cards)
 - `last_edited_at` - Updated when listing content is edited (price, description, images, etc.)
 - `last_published_at` - Updated when listing status changes to Active:
@@ -684,6 +685,7 @@ GET /metrics                         # Prometheus metrics (text/plain). Requires
 - `power_kw` - Integer, nullable (power in kilowatts)
 - `equipment` - Simple array, nullable. Array of equipment keys; the available set depends on vehicle type (car / truck / moto). Keys and categories are defined in `core/frontend/lib/options/vehicle-equipment.ts`. Create/edit form and search filter UI group options by category (Comfort, Safety, Lighting, Multimedia, Driver assistance, Other). On the listing detail page, `buildListingEquipmentDisplay` (`equipment-display.ts`) uses the same categories when the listing has at least 10 equipment keys spanning at least 3 categories; otherwise it shows a single two-column flat list. Translations: `vehicleOptions.equipment.<key>` and `vehicleOptions.equipmentCategories.<category>` in frontend locales.
 - `availability` - Enum `InStock` | `OnOrder`, default `InStock` (vehicle listings)
+- `is_parsed` - Boolean, default false. Set when a listing is created via partner import (partner keys present), when an admin attaches partner keys through listing update (cleared together with the keys), or by `partner:mark-parsed`. The 90-day auto-close cron skips these rows; source-driven close uses partner `--remove-closed` / `audit-stale`.
 
 **Vehicles Table:**
 

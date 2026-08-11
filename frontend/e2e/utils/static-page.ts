@@ -1,6 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
 import { expect, type Page } from '@playwright/test';
 
 import { loadLegalConfigSync } from '@/lib/content/legal';
@@ -15,18 +12,6 @@ type StaticPageExpectation = {
   headingText?: string;
   skipHeaderFooter?: boolean;
 };
-
-function loadEnInvestorsTitle(): string {
-  const localePath = path.resolve(process.cwd(), 'lib/locales/en.json');
-  const locale = JSON.parse(fs.readFileSync(localePath, 'utf8')) as {
-    investors?: { title?: string };
-  };
-  const title = locale.investors?.title;
-  if (!title) {
-    throw new Error('Missing investors.title in en locale for E2E static page expectation');
-  }
-  return title;
-}
 
 function loadLegalDocumentTitle(doc: 'terms' | 'privacy'): string {
   const platform = getE2ePlatform();
@@ -52,7 +37,7 @@ function getStaticPageExpectations(): Record<string, StaticPageExpectation> {
     '/faq': { headingKey: 'faq.title' },
     '/contacts': { headingKey: 'contacts.title' },
     '/partners': { headingKey: 'partners.title' },
-    '/investors': { headingText: loadEnInvestorsTitle() },
+    '/investors': { headingKey: 'investors.title' },
     '/cookie-settings': { headingKey: 'cookieSettings.title' },
     '/offline': { headingKey: 'pwa.offline', skipHeaderFooter: true },
   };

@@ -104,4 +104,20 @@ describe('AutoCloseOldListingsUseCase', () => {
     });
     expect(result.closed).toBe(1);
   });
+
+  it('excludes is_parsed listings from promo find and close queries', async () => {
+    await useCase.execute();
+
+    expect(listingsRepository.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          is_parsed: false,
+        }),
+      }),
+    );
+
+    const selectChain = listingsRepository.createQueryBuilder('l');
+    expect(selectChain.andWhere).toHaveBeenCalledWith('l.is_parsed = false');
+    expect(updateChain.andWhere).toHaveBeenCalledWith('is_parsed = false');
+  });
 });

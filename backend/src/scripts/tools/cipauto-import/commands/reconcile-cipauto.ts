@@ -10,6 +10,7 @@ import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
 import { PromotionHistory } from '../../../../listings/entities/promotion-history.entity';
 import { User } from '../../../../users/entities/user.entity';
+import { invalidateListingCaches } from '../../partner-import-shared/listing-cache-invalidation';
 import { PARTNER_SOURCE_CODE_CIPAUTO } from '../../partner-import-shared/partner-source-codes';
 import { normalizeRuntimeEnv, resolveConfig } from '../config';
 import { extractCipautoPostIdFromImageUrl } from '../parsers/plp-parser';
@@ -781,28 +782,6 @@ async function backfillMetadata(actions: ReconcileAction[]): Promise<number> {
   return updated;
 }
 
-async function invalidateRedisCache(): Promise<void> {
-  const redisHost = process.env.REDIS_HOST || 'localhost';
-  const redisPort = Number(process.env.REDIS_PORT || 6379);
-
-  try {
-    const { createClient } = await import('redis');
-    const client = createClient({ url: `redis://${redisHost}:${redisPort}` });
-    await client.connect();
-    const keys = await client.keys('listings:search:*');
-    if (keys.length > 0) {
-      await client.del(keys);
-      console.log(`[reconcile] Invalidated ${keys.length} search cache keys.`);
-    } else {
-      console.log('[reconcile] No search cache keys to invalidate.');
-    }
-    await client.disconnect();
-  } catch (error) {
-    console.warn(`[reconcile] Could not invalidate Redis cache: ${error}`);
-    console.warn('[reconcile] Run "npm run clear-cache:listings" manually.');
-  }
-}
-
 function printPlan(plan: ReconcilePlan, listings: ReconcileListingInput[]): void {
   console.log('=== CIPAUTO RECONCILE PLAN ===');
   console.log(`  PLP live postIds:        ${plan.livePostIds}`);
@@ -959,7 +938,7 @@ async function reconcileCipauto(): Promise<void> {
     `[reconcile] Applied: closed=${closed} reopened=${reopened} released=${released} backfilled=${backfilled}`,
   );
   console.log(`[reconcile] Report file=${reportPath}`);
-  await invalidateRedisCache();
+  await invalidateListingCaches('[reconcile]');
   await AppDataSource.destroy();
 }
 

@@ -65,7 +65,7 @@ The apply step:
 - Reopens one keeper listing for each live `postId` group where all Kupito listings are closed.
 - Closes active duplicate listings for live `postId` groups.
 - Backfills `partner_source_code`, `partner_listing_external_key`, and canonical URL on keeper listings.
-- Invalidates `listings:search:*` Redis keys when Redis is reachable.
+- Invalidates the `cache:listings*` Redis namespace when Redis is reachable.
 
 ## 5. Import Remaining Listings
 

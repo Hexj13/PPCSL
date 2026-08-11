@@ -118,6 +118,8 @@
     "999md:report": "ts-node -r ./scripts/partner-import-cli-preload.cjs -r tsconfig-paths/register src/scripts/tools/999md-import/cli.ts report",
     "999md:seed-registry": "ts-node -r ./scripts/partner-import-cli-preload.cjs -r tsconfig-paths/register src/scripts/tools/999md-import/commands/seed-registry.ts",
     "partner:check-urls": "ts-node -r ./scripts/partner-import-cli-preload.cjs -r tsconfig-paths/register src/scripts/tools/partner-import-shared/commands/check-partner-listing-urls.ts",
+    "partner:mark-parsed": "ts-node -r ./scripts/partner-import-cli-preload.cjs -r tsconfig-paths/register src/scripts/tools/partner-import-shared/commands/mark-parsed-listings.ts",
+    "partner:reopen-parsed": "ts-node -r ./scripts/partner-import-cli-preload.cjs -r tsconfig-paths/register src/scripts/tools/partner-import-shared/commands/reopen-parsed-listings.ts",
     "999md:dealer-audit": "ts-node -r ./scripts/partner-import-cli-preload.cjs -r tsconfig-paths/register src/scripts/tools/999md-import/tools/dealer-brand-model-audit.ts",
     "check-duplicates": "ts-node -r tsconfig-paths/register src/scripts/stage/check-duplicates.ts",
     "check-brand-model-name-duplicates": "ts-node -r tsconfig-paths/register src/scripts/stage/check-brand-model-name-duplicates.ts",

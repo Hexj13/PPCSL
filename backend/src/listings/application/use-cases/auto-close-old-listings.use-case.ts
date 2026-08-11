@@ -39,6 +39,7 @@ export class AutoCloseOldListingsUseCase {
             status: ListingStatusEnum.Active,
             last_updated_at: LessThanOrEqual(ninetyDaysAgo),
             is_promoted: true,
+            is_parsed: false,
             promoted_until: LessThan(now),
           },
           select: ['id'],
@@ -52,6 +53,7 @@ export class AutoCloseOldListingsUseCase {
           .createQueryBuilder('l')
           .select(['l.id', 'l.video'])
           .where('l.status = :status', { status: ListingStatusEnum.Active })
+          .andWhere('l.is_parsed = false')
           .andWhere('l.last_updated_at <= :ninetyDaysAgo', { ninetyDaysAgo })
           .andWhere(
             '(l.is_promoted = false OR (l.is_promoted = true AND l.promoted_until IS NOT NULL AND l.promoted_until < :now))',
@@ -80,6 +82,7 @@ export class AutoCloseOldListingsUseCase {
             video: null,
           })
           .where('status = :status', { status: ListingStatusEnum.Active })
+          .andWhere('is_parsed = false')
           .andWhere('last_updated_at <= :ninetyDaysAgo', { ninetyDaysAgo })
           .andWhere(
             '(is_promoted = false OR (is_promoted = true AND promoted_until IS NOT NULL AND promoted_until < :now))',
