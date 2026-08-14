@@ -33,7 +33,9 @@ Map slow statements to handlers:
 
 | Symptom / pattern | Likely code path |
 |-------------------|------------------|
-| `Listing` search shape, high call count | [`SearchListingsUseCase`](../../backend/src/listings/application/use-cases/search-listings.use-case.ts), [`TypeOrmListingRepository.search`](../../backend/src/listings/infrastructure/persistence/typeorm-listing.repository.ts) |
+| `Listing` search shape, high call count | [`SearchListingsUseCase`](../../backend/src/listings/application/use-cases/search-listings.use-case.ts), [`TypeOrmListingRepository.search`](../../backend/src/listings/infrastructure/persistence/typeorm-listing.repository.ts) (card projection via `applyListingCardSelects` / `applyTireCardSelects`; no `REPEATABLE READ`) |
+| Similar listings (`LIMIT 80` / `200`) | [`FindSimilarUseCase`](../../backend/src/listings/application/use-cases/find-similar.use-case.ts), `findSimilarCandidates` / `findSimilarTireCandidates` |
+| Owner / cabinet listing lists | [`GetActiveUserListingsUseCase`](../../backend/src/listings/application/use-cases/get-active-user-listings.use-case.ts), [`GetUserListingsUseCase`](../../backend/src/listings/application/use-cases/get-user-listings.use-case.ts) (`applyOwnerListingCardSelects`) |
 | Single listing by id | [`GetListingUseCase`](../../backend/src/listings/application/use-cases/get-listing.use-case.ts), [`findById`](../../backend/src/listings/infrastructure/persistence/typeorm-listing.repository.ts) |
 | `VehicleModel` full table volume | [`SitemapService.computeAllBrandsSitemaps`](../../backend/src/sitemap/sitemap.service.ts), or [`BrandsService`](../../backend/src/brands/brands.service.ts) model loaders |
 | `User` lookups | Auth and [`UsersService.ensureBoardSlug`](../../backend/src/users/application/users.service.ts) |

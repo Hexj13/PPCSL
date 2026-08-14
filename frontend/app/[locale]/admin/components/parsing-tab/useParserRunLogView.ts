@@ -26,6 +26,7 @@ export function useParserRunLogView({
 }: UseParserRunLogViewOptions) {
   const [pollRunId, setPollRunId] = useState<string | null>(null);
   const [logLines, setLogLines] = useState<string[]>([]);
+  const [retentionExpired, setRetentionExpired] = useState(false);
   const logSeqRef = useRef(0);
 
   const hasLogContent = logLines.some((line) => typeof line === 'string' && line.trim().length > 0);
@@ -34,21 +35,28 @@ export function useParserRunLogView({
     setPollRunId(null);
     logSeqRef.current = 0;
     setLogLines([]);
+    setRetentionExpired(false);
   }, []);
 
   const loadRunLogs = useCallback(
     async (run: ParserRun) => {
       logSeqRef.current = 0;
       setLogLines([]);
+      setRetentionExpired(false);
       if (!isRunActive(run.status)) {
         setPollRunId(null);
         try {
-          const { lines, lastSeq } = await fetchParserRunLogLines(run.id);
+          const {
+            lines,
+            lastSeq,
+            retentionExpired: expired,
+          } = await fetchParserRunLogLines(run.id);
           if (!sessionOpenRef.current) {
             return;
           }
           logSeqRef.current = lastSeq;
           setLogLines(lines);
+          setRetentionExpired(expired);
         } catch {
           if (sessionOpenRef.current) {
             toast.error(logsLoadErrorKey);
@@ -64,6 +72,7 @@ export function useParserRunLogView({
   const startPollingRunLogs = useCallback((runId: string) => {
     logSeqRef.current = 0;
     setLogLines([]);
+    setRetentionExpired(false);
     setPollRunId(runId);
   }, []);
 
@@ -92,6 +101,7 @@ export function useParserRunLogView({
     setLogLines,
     logSeqRef,
     hasLogContent,
+    retentionExpired,
     resetLogView,
     loadRunLogs,
     startPollingRunLogs,

@@ -47,6 +47,7 @@ import { GetUserListingsUseCase } from './application/use-cases/get-user-listing
 import { HasPromotionHistoryUseCase } from './application/use-cases/has-promotion-history.use-case';
 import { PauseListingUseCase } from './application/use-cases/pause-listing.use-case';
 import { PublishListingUseCase } from './application/use-cases/publish-listing.use-case';
+import { PurgeOldListingViewsUseCase } from './application/use-cases/purge-old-listing-views.use-case';
 import { RefreshAllDatesUseCase } from './application/use-cases/refresh-all-dates.use-case';
 import { SearchListingsUseCase } from './application/use-cases/search-listings.use-case';
 import { TogglePromotionUseCase } from './application/use-cases/toggle-promotion.use-case';
@@ -156,6 +157,7 @@ import { MediaConvertService } from './video/mediaconvert.service';
     UpdatePromotionHistoryEndDateUseCase,
     CloseAllUserListingsUseCase,
     AutoCloseOldListingsUseCase,
+    PurgeOldListingViewsUseCase,
     ExpirePromotionsUseCase,
     PopularListingsRefreshService,
     CronSecretGuard,

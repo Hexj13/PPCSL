@@ -69,6 +69,8 @@ describe('User', () => {
         lastName: 'B',
         companyName: 'C',
         companyWebsiteUrl: 'https://c.com',
+        registration_ip: '1.1.1.1',
+        last_login_ip: '8.8.8.8',
         active: true,
       });
       user.deactivate();
@@ -80,6 +82,8 @@ describe('User', () => {
       expect(user.companyName).toBeNull();
       expect(user.companyWebsiteUrl).toBeNull();
       expect(user.googleId).toBeNull();
+      expect(user.registration_ip).toBeNull();
+      expect(user.last_login_ip).toBeNull();
       expect(user.active).toBe(false);
     });
   });

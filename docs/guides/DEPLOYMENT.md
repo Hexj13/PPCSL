@@ -490,7 +490,7 @@ pm2 status
 
 ### Step 10: Database Backups
 
-See [technical.md](../architecture/technical.md#database) section for backup setup.
+See [postgres-backup-restore.md](../operations/postgres-backup-restore.md) for Render PITR, logical exports, and `pg_dump`. Self-hosted cron scripts remain in [TECHNICAL.md](../architecture/TECHNICAL.md#backups).
 
 ---
 
@@ -569,7 +569,13 @@ DB_PORT=5432
 DB_USERNAME=<your-database-username>
 DB_NAME=<your-database-name>
 DB_PASSWORD=<your-database-password>
+# Internal Render hostname: DB_SSL=false (production default is SSL on)
+DB_SSL=false
+# Optional; default 500. Production slow queries go to Sentry without bind parameters.
+# DB_SLOW_QUERY_MS=500
 ```
+
+Use the **internal** database host when the backend is in the same region. Restrict Postgres Access Control (do not leave `0.0.0.0/0`). Restore and PITR: [postgres-backup-restore.md](../operations/postgres-backup-restore.md).
 
 **Application Configuration:**
 

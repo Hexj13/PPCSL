@@ -174,6 +174,8 @@ export class User {
     this.telegramId = null;
     this.telegramUsername = null;
     this.facebookId = null;
+    this.registration_ip = null;
+    this.last_login_ip = null;
     this.active = false;
   }
 

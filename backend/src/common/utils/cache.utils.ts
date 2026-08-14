@@ -77,7 +77,7 @@ export const CACHE_PREFIXES = {
   listingsSearch: 'cache:listings:search',
   listingsSearchCount: 'cache:listings:search:count',
   listingsUser: 'cache:listings:user',
-  listingsSimilar: 'cache:listings:similar',
+  listingsSimilar: 'cache:listings:similar:v2',
   listingsPopular: 'cache:listings:popular',
   listingsModelIndex: 'cache:listings:model-index',
   brands: 'cache:brands',

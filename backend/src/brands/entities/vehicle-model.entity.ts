@@ -12,8 +12,6 @@ import { Brand } from './brand.entity';
 
 @Entity('vehicle_models')
 @Index(['brand_id'])
-@Index(['order'])
-@Index(['is_archived'])
 @Index(['brand_id', 'is_archived'])
 export class VehicleModel {
   @PrimaryGeneratedColumn('uuid')

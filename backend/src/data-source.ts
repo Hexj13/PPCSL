@@ -1,10 +1,11 @@
-import type { DataSourceOptions } from 'typeorm';
+import type { DataSourceOptions, LoggerOptions } from 'typeorm';
 import { DataSource } from 'typeorm';
 
 import { AdminAuditLog } from './admin/entities/admin-audit-log.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { Brand } from './brands/entities/brand.entity';
 import { VehicleModel } from './brands/entities/vehicle-model.entity';
+import { TypeormSlowQueryLogger } from './common/typeorm-slow-query.logger';
 import { ComparisonItem } from './comparison/entities/comparison-item.entity';
 import { ExchangeRate } from './exchange-rates/entities/exchange-rate.entity';
 import { Favorite } from './favorites/entities/favorite.entity';
@@ -22,18 +23,39 @@ import { TireModel } from './tires/entities/tire-model.entity';
 import { Tire } from './tires/entities/tire.entity';
 import { User } from './users/entities/user.entity';
 
-function resolveTypeOrmQueryLogging(): boolean {
-  if (process.env.NODE_ENV !== 'development') {
+function resolvePostgresSsl(): boolean | { rejectUnauthorized: false } {
+  const raw = process.env.DB_SSL?.trim().toLowerCase();
+  if (raw === 'true' || raw === '1' || raw === 'yes') {
+    return { rejectUnauthorized: false };
+  }
+  if (raw === 'false' || raw === '0' || raw === 'no') {
     return false;
+  }
+  return process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false;
+}
+
+function resolveTypeOrmLogging(): LoggerOptions {
+  if (process.env.NODE_ENV === 'production') {
+    return ['warn', 'error'];
+  }
+  if (process.env.NODE_ENV !== 'development') {
+    return ['error'];
   }
   const raw = String(process.env.KUPITO_TYPEORM_QUERY_LOG ?? 'true')
     .trim()
     .toLowerCase();
   if (raw === '0' || raw === 'false' || raw === 'no' || raw === 'off') {
-    return false;
+    return ['error'];
   }
   return true;
 }
+
+function resolveSlowQueryMs(): number {
+  const parsed = parseInt(process.env.DB_SLOW_QUERY_MS || '500', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
+}
+
+const typeOrmLogging = resolveTypeOrmLogging();
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
@@ -65,8 +87,11 @@ export const dataSourceOptions: DataSourceOptions = {
     TireModel,
     Tire,
   ],
+  ssl: resolvePostgresSsl(),
   synchronize: process.env.DB_SYNC === 'true' || process.env.NODE_ENV === 'test',
-  logging: resolveTypeOrmQueryLogging(),
+  logging: typeOrmLogging,
+  logger: new TypeormSlowQueryLogger(typeOrmLogging),
+  maxQueryExecutionTime: resolveSlowQueryMs(),
   migrations: process.env.NODE_ENV === 'test' ? [] : ['dist/migrations/*.js'],
   extra: {
     max: parseInt(process.env.DB_POOL_MAX || '20'),
@@ -74,6 +99,10 @@ export const dataSourceOptions: DataSourceOptions = {
     idleTimeoutMillis: parseInt(process.env.DB_POOL_IDLE_TIMEOUT || '30000'),
     connectionTimeoutMillis: parseInt(process.env.DB_POOL_CONNECTION_TIMEOUT || '10000'),
     statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT_MS || '30000'),
+    idle_in_transaction_session_timeout: parseInt(
+      process.env.DB_IDLE_IN_TRANSACTION_TIMEOUT_MS || '30000',
+      10,
+    ),
   },
 };
 

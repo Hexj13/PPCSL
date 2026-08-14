@@ -37,7 +37,12 @@ import { getVehicleTypeFromBodyType } from '../../domain/utils/vehicle-type.util
 import { Listing } from '../../entities/listing.entity';
 import { applyCitiesFilter } from '../utils/query-filters.utils';
 
-import { applyListingCardSelects, getListingCardPage } from './listing-card-query.utils';
+import {
+  applyListingCardSelects,
+  applyTireCardSelects,
+  getListingCardEntities,
+  getListingCardPage,
+} from './listing-card-query.utils';
 import { ACTIVELY_PROMOTED_SQL } from './listing-list-projection';
 
 @Injectable()
@@ -88,69 +93,64 @@ export class TypeOrmListingRepository implements IListingRepository {
     const useKeyset = keysetColumn !== null;
     const skip = useKeyset && cursorPayload ? 0 : (page - 1) * limit;
 
-    return this.repository.manager.transaction('REPEATABLE READ', async (manager) => {
-      const scopedRepository = manager.getRepository(Listing);
+    const baseQb = this.buildSearchQuery(criteria);
+    const total = criteria.knownTotal !== undefined ? criteria.knownTotal : await baseQb.getCount();
 
-      const baseQb = this.buildSearchQuery(criteria, scopedRepository);
-      const total =
-        criteria.knownTotal !== undefined ? criteria.knownTotal : await baseQb.getCount();
+    const queryBuilder = baseQb.clone();
 
-      const queryBuilder = baseQb.clone();
-
-      queryBuilder.addSelect(ACTIVELY_PROMOTED_SQL, 'actively_promoted');
-      queryBuilder.orderBy('actively_promoted', 'DESC');
-      if (dateSortColumn === 'year' && listCategory !== 'tire') {
-        queryBuilder.addOrderBy('vehicle.year', order);
-      } else if (dateSortColumn === 'views') {
-        queryBuilder.addOrderBy('listing.views', order);
-      } else if (
-        dateSortColumn === 'price' &&
-        criteria.defaultCurrency !== undefined &&
-        criteria.priceSortRates !== undefined
-      ) {
-        const { expression, params } = buildPriceInDefaultCurrencyOrderExpression(
-          criteria.defaultCurrency,
-          criteria.priceSortRates,
-        );
-        for (const [key, value] of Object.entries(params)) {
-          queryBuilder.setParameter(key, value);
-        }
-        queryBuilder.addSelect(expression, 'price_in_default_currency');
-        queryBuilder.addOrderBy('price_in_default_currency', order);
-      } else {
-        queryBuilder.addOrderBy(`listing.${dateSortColumn}`, order);
+    queryBuilder.addSelect(ACTIVELY_PROMOTED_SQL, 'actively_promoted');
+    queryBuilder.orderBy('actively_promoted', 'DESC');
+    if (dateSortColumn === 'year' && listCategory !== 'tire') {
+      queryBuilder.addOrderBy('vehicle.year', order);
+    } else if (dateSortColumn === 'views') {
+      queryBuilder.addOrderBy('listing.views', order);
+    } else if (
+      dateSortColumn === 'price' &&
+      criteria.defaultCurrency !== undefined &&
+      criteria.priceSortRates !== undefined
+    ) {
+      const { expression, params } = buildPriceInDefaultCurrencyOrderExpression(
+        criteria.defaultCurrency,
+        criteria.priceSortRates,
+      );
+      for (const [key, value] of Object.entries(params)) {
+        queryBuilder.setParameter(key, value);
       }
-      queryBuilder.addOrderBy('listing.id', 'ASC');
+      queryBuilder.addSelect(expression, 'price_in_default_currency');
+      queryBuilder.addOrderBy('price_in_default_currency', order);
+    } else {
+      queryBuilder.addOrderBy(`listing.${dateSortColumn}`, order);
+    }
+    queryBuilder.addOrderBy('listing.id', 'ASC');
 
-      if (useKeyset && cursorPayload && keysetColumn) {
-        const cmp = order === 'ASC' ? '>' : '<';
-        const sortValue =
-          keysetColumn === 'listing.last_updated_at'
-            ? new Date(cursorPayload.sortValue)
-            : cursorPayload.sortValue;
-        queryBuilder.andWhere(
-          `(${ACTIVELY_PROMOTED_SQL} < :cursorPromoted
+    if (useKeyset && cursorPayload && keysetColumn) {
+      const cmp = order === 'ASC' ? '>' : '<';
+      const sortValue =
+        keysetColumn === 'listing.last_updated_at'
+          ? new Date(cursorPayload.sortValue)
+          : cursorPayload.sortValue;
+      queryBuilder.andWhere(
+        `(${ACTIVELY_PROMOTED_SQL} < :cursorPromoted
             OR (${ACTIVELY_PROMOTED_SQL} = :cursorPromoted AND ${keysetColumn} ${cmp} :cursorSortValue)
             OR (${ACTIVELY_PROMOTED_SQL} = :cursorPromoted AND ${keysetColumn} = :cursorSortValue AND listing.id > :cursorId))`,
-          {
-            cursorPromoted: cursorPayload.promoted,
-            cursorSortValue: sortValue,
-            cursorId: cursorPayload.id,
-          },
-        );
-      }
+        {
+          cursorPromoted: cursorPayload.promoted,
+          cursorSortValue: sortValue,
+          cursorId: cursorPayload.id,
+        },
+      );
+    }
 
-      const fetchLimit = useKeyset ? limit + 1 : limit;
-      const data = await getListingCardPage(queryBuilder, skip, fetchLimit);
-      let nextCursor: string | undefined;
-      if (useKeyset && keysetColumn && data.length > limit) {
-        const last = data[limit - 1];
-        nextCursor = this.buildCursor(last, keysetColumn);
-        data.splice(limit);
-      }
+    const fetchLimit = useKeyset ? limit + 1 : limit;
+    const data = await getListingCardPage(queryBuilder, skip, fetchLimit);
+    let nextCursor: string | undefined;
+    if (useKeyset && keysetColumn && data.length > limit) {
+      const last = data[limit - 1];
+      nextCursor = this.buildCursor(last, keysetColumn);
+      data.splice(limit);
+    }
 
-      return { data, total, nextCursor };
-    });
+    return { data, total, nextCursor };
   }
 
   private buildCursor(listing: Listing, keysetColumn: string): string {
@@ -256,12 +256,7 @@ export class TypeOrmListingRepository implements IListingRepository {
       vehicle_type = getVehicleTypeFromBodyType(body_type);
     }
 
-    const queryBuilder = this.repository
-      .createQueryBuilder('listing')
-      .leftJoinAndSelect('listing.vehicle', 'vehicle')
-      .leftJoinAndSelect('vehicle.brand', 'brand')
-      .leftJoinAndSelect('vehicle.model', 'model')
-      .leftJoinAndSelect('listing.user', 'user')
+    const queryBuilder = applyListingCardSelects(this.repository.createQueryBuilder('listing'))
       .where('listing.status = :status', { status: ListingStatusEnum.Active })
       .andWhere('listing.id != :currentId', { currentId });
 
@@ -296,7 +291,7 @@ export class TypeOrmListingRepository implements IListingRepository {
       .addOrderBy('listing.last_updated_at', 'DESC')
       .limit(80);
 
-    return queryBuilder.getMany();
+    return getListingCardEntities(queryBuilder);
   }
 
   private async findSimilarTireCandidates(
@@ -347,12 +342,7 @@ export class TypeOrmListingRepository implements IListingRepository {
     }
 
     const buildTireSimilarQuery = (restrictVehicleType: boolean) => {
-      const qb = this.repository
-        .createQueryBuilder('listing')
-        .leftJoinAndSelect('listing.tire', 'tire')
-        .leftJoinAndSelect('tire.brand', 'tireBrand')
-        .leftJoinAndSelect('tire.model', 'tireModel')
-        .leftJoinAndSelect('listing.user', 'user')
+      const qb = applyTireCardSelects(this.repository.createQueryBuilder('listing'))
         .where('listing.status = :status', { status: ListingStatusEnum.Active })
         .andWhere('listing.id != :currentId', { currentId })
         .andWhere('listing.category = :tireCategory', { tireCategory: ListingCategory.Tire })
@@ -377,11 +367,11 @@ export class TypeOrmListingRepository implements IListingRepository {
       return qb;
     };
 
-    const strict = await buildTireSimilarQuery(true).getMany();
+    const strict = await getListingCardEntities(buildTireSimilarQuery(true));
     if (strict.length > 0) {
       return strict;
     }
-    return buildTireSimilarQuery(false).getMany();
+    return getListingCardEntities(buildTireSimilarQuery(false));
   }
 
   private buildSearchQuery(
@@ -525,64 +515,7 @@ export class TypeOrmListingRepository implements IListingRepository {
     searchDto: SearchCriteria,
     repository: Repository<Listing> = this.repository,
   ) {
-    const qb = repository
-      .createQueryBuilder('listing')
-      .select([
-        'listing.id',
-        'listing.title',
-        'listing.price',
-        'listing.currency',
-        'listing.city',
-        'listing.status',
-        'listing.images',
-        'listing.cover_blur_hash',
-        'listing.urgent',
-        'listing.is_new',
-        'listing.is_promoted',
-        'listing.promoted_until',
-        'listing.views',
-        'listing.condition',
-        'listing.registration_type',
-        'listing.equipment',
-        'listing.category',
-        'listing.created_at',
-        'listing.last_updated_at',
-        'listing.slug',
-        'listing.video',
-      ])
-      .leftJoin('listing.tire', 'tire')
-      .addSelect([
-        'tire.id',
-        'tire.brand_id',
-        'tire.model_id',
-        'tire.tire_vehicle_type',
-        'tire.season',
-        'tire.condition',
-        'tire.width_mm',
-        'tire.aspect_ratio',
-        'tire.diameter_inch',
-        'tire.quantity',
-        'tire.studded',
-        'tire.run_flat',
-        'tire.reinforced_xl',
-        'tire.spare_donut',
-        'tire.tubeless',
-        'tire.acoustic',
-      ])
-      .leftJoin('tire.brand', 'tireBrand')
-      .addSelect(['tireBrand.id', 'tireBrand.name', 'tireBrand.logoUrl'])
-      .leftJoin('tire.model', 'tireModel')
-      .addSelect(['tireModel.id', 'tireModel.name', 'tireModel.is_other'])
-      .leftJoin('listing.user', 'user')
-      .addSelect([
-        'user.id',
-        'user.type',
-        'user.phone',
-        'user.firstName',
-        'user.lastName',
-        'user.companyName',
-        'user.companyWebsiteUrl',
-      ])
+    const qb = applyTireCardSelects(repository.createQueryBuilder('listing'))
       .where('listing.status = :status', { status: ListingStatusEnum.Active })
       .andWhere('listing.category = :tireListCategory', {
         tireListCategory: ListingCategory.Tire,

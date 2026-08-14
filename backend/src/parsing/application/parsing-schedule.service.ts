@@ -447,13 +447,32 @@ export class ParsingScheduleService {
       .andWhere('s.status = :status', { status: 'active' })
       .getMany();
     const toSave = siblings.length > 0 ? siblings : [sch];
+    const changed: ParserSchedule[] = [];
+    const unchangedIds: string[] = [];
     for (const row of toSave) {
-      row.resource_availability_checked_at = checkedAt;
-      row.resource_availability_scope = { siteProbe: probe };
-      row.resource_availability_status = status;
-      row.resource_availability_summary = probe.summary;
+      const statusChanged = row.resource_availability_status !== status;
+      const summaryChanged = row.resource_availability_summary !== probe.summary;
+      if (statusChanged || summaryChanged) {
+        row.resource_availability_checked_at = checkedAt;
+        row.resource_availability_scope = { siteProbe: probe };
+        row.resource_availability_status = status;
+        row.resource_availability_summary = probe.summary;
+        changed.push(row);
+      } else {
+        unchangedIds.push(row.id);
+      }
     }
-    await this.scheduleRepo.save(toSave);
+    if (changed.length > 0) {
+      await this.scheduleRepo.save(changed);
+    }
+    if (unchangedIds.length > 0) {
+      await this.scheduleRepo
+        .createQueryBuilder()
+        .update(ParserSchedule)
+        .set({ resource_availability_checked_at: checkedAt })
+        .where('id IN (:...unchangedIds)', { unchangedIds })
+        .execute();
+    }
     this.logger.log(
       `[SCHEDULE][availability-result] scheduleId=${sch.id} parser=${sch.parser_code} status=${status} summary="${probe.summary}" syncedSchedules=${toSave.length}`,
     );

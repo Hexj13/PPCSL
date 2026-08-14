@@ -22,6 +22,8 @@ export const LISTING_CARD_LISTING_FIELDS = [
 
 export const LISTING_CARD_VEHICLE_FIELDS = [
   'vehicle.id',
+  'vehicle.brand_id',
+  'vehicle.model_id',
   'vehicle.year',
   'vehicle.fuel',
   'vehicle.transmission',
@@ -45,6 +47,37 @@ export const LISTING_CARD_USER_FIELDS = [
   'user.lastName',
   'user.companyName',
   'user.companyWebsiteUrl',
+] as const;
+
+export const LISTING_CARD_TIRE_FIELDS = [
+  'tire.id',
+  'tire.brand_id',
+  'tire.model_id',
+  'tire.tire_vehicle_type',
+  'tire.season',
+  'tire.condition',
+  'tire.width_mm',
+  'tire.aspect_ratio',
+  'tire.diameter_inch',
+  'tire.quantity',
+  'tire.studded',
+  'tire.run_flat',
+  'tire.reinforced_xl',
+  'tire.spare_donut',
+  'tire.tubeless',
+  'tire.acoustic',
+] as const;
+
+export const LISTING_CARD_TIRE_BRAND_FIELDS = [
+  'tireBrand.id',
+  'tireBrand.name',
+  'tireBrand.logoUrl',
+] as const;
+
+export const LISTING_CARD_TIRE_MODEL_FIELDS = [
+  'tireModel.id',
+  'tireModel.name',
+  'tireModel.is_other',
 ] as const;
 
 export const LISTING_HAS_VIDEO_SELECT = `(CASE WHEN listing.video IS NOT NULL AND listing.video::text <> 'null' AND listing.video::text <> '{}' THEN true ELSE false END)`;

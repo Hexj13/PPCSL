@@ -15,6 +15,8 @@ const baseSchema = z.object({
   UPLOAD_DELETE_TOKEN_SECRET: z.string().optional(),
   ALLOW_SMS_TEST_CODE: z.string().optional(),
   DB_SYNC: z.string().optional(),
+  DB_SSL: z.string().optional(),
+  DB_SLOW_QUERY_MS: z.string().optional(),
   SENTRY_TRACES_SAMPLE_RATE: z.string().optional(),
   SENTRY_PROFILES_SAMPLE_RATE: z.string().optional(),
   LOG_LEVEL: z.string().optional(),

@@ -14,7 +14,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 
 - **Structure and principles:** [documentation-architecture.md](./documentation-architecture.md) | **Migration report:** [docs/documentation-refactor-report.md](../../docs/documentation-refactor-report.md) (in platform repo)
 - **Reference:** [reference/](./reference/) — [popular-brands-sync](./reference/popular-brands-sync.md), [platform-assets](./reference/platform-assets.md), [brands-models master plan](./reference/brands-models-master-plan.md), [SEO audit](./reference/seo-audit.md), analytics
-- **Operations:** [operations/](./operations/) — [SMTP email setup](./operations/smtp-email-setup.md) ([RU](./operations/smtp-email-setup-ru.md)), [User action logging](./operations/user-action-logging.md), [Sentry launch checklist](./operations/sentry-launch-checklist.md), [Postgres query baseline](./operations/postgres-query-baseline.md), deploy, monitoring
+- **Operations:** [operations/](./operations/) — [SMTP email setup](./operations/smtp-email-setup.md) ([RU](./operations/smtp-email-setup-ru.md)), [User action logging](./operations/user-action-logging.md), [Sentry launch checklist](./operations/sentry-launch-checklist.md), [Postgres query baseline](./operations/postgres-query-baseline.md), [Postgres backup and restore](./operations/postgres-backup-restore.md), deploy, monitoring
 - **ADR:** [architecture/adr/](./architecture/adr/) — architecture decision records
 
 ## Documentation structure

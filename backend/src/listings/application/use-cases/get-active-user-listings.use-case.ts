@@ -5,6 +5,10 @@ import { Repository } from 'typeorm';
 import { ListingStatus as ListingStatusEnum } from '../../../common/types';
 import { ExchangeRatesService } from '../../../exchange-rates/exchange-rates.service';
 import { Listing } from '../../entities/listing.entity';
+import {
+  applyOwnerListingCardSelects,
+  getListingCardPage,
+} from '../../infrastructure/persistence/listing-card-query.utils';
 import { stripListingVideosForListResponse } from '../utils/listing-video-public.util';
 
 export const MAX_ACTIVE_LISTINGS_LIMIT = 50;
@@ -24,13 +28,13 @@ export class GetActiveUserListingsUseCase {
         ? Math.min(Math.floor(limit), MAX_ACTIVE_LISTINGS_LIMIT)
         : 20;
 
-    const listings = await this.listingsRepository.find({
-      where: { user_id: userId, status: ListingStatusEnum.Active },
-      relations: ['vehicle', 'vehicle.brand', 'vehicle.model', 'tire', 'tire.brand', 'tire.model'],
-      order: { is_promoted: 'DESC', created_at: 'DESC' },
-      skip: (safePage - 1) * safeLimit,
-      take: safeLimit,
-    });
+    const qb = applyOwnerListingCardSelects(this.listingsRepository.createQueryBuilder('listing'))
+      .where('listing.user_id = :userId', { userId })
+      .andWhere('listing.status = :status', { status: ListingStatusEnum.Active })
+      .orderBy('listing.is_promoted', 'DESC')
+      .addOrderBy('listing.created_at', 'DESC');
+
+    const listings = await getListingCardPage(qb, (safePage - 1) * safeLimit, safeLimit);
     stripListingVideosForListResponse(listings);
     return this.exchangeRatesService.enrichListingsWithApproxPrice(listings);
   }

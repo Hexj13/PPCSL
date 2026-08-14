@@ -1772,6 +1772,7 @@
       "submitScheduleSave": "Save",
       "logsTitle": "Execution log",
       "logsEmpty": "No log available.",
+      "logsRetentionExpired": "Logs older than 30 days are deleted.",
       "reportTitle": "Execution report",
       "fileTitle": "Current PLP file",
       "fileEmpty": "PLP file is unavailable.",

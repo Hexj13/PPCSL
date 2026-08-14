@@ -19,6 +19,8 @@ Deploy, monitoring, runbooks.
 - [../guides/SENTRY.md](../guides/SENTRY.md) — Sentry setup and monitoring
 - [sentry-launch-checklist.md](./sentry-launch-checklist.md) — Sentry launch readiness
 - [user-action-logging.md](./user-action-logging.md) — structured user-action logs (INFO success, WARN `errors.*` failures on allowlisted routes)
+- [postgres-query-baseline.md](./postgres-query-baseline.md) — slow queries, pool, EXPLAIN
+- [postgres-backup-restore.md](./postgres-backup-restore.md) — Render PITR, logical exports, `pg_dump` restore drill
 
 Platform-specific: see platform repo `docs/deployment/`, `docs/sentry/`.
 

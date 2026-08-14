@@ -170,6 +170,13 @@ DB_USERNAME=kupito
 DB_PASSWORD=kupito123
 DB_NAME=kupito
 
+# TLS to Postgres: true/false. Unset: enabled in production, disabled locally.
+# Use false when DB_HOST is the Render internal hostname.
+# DB_SSL=false
+
+# Log/Sentry-warn SQL slower than this many ms (default 500)
+# DB_SLOW_QUERY_MS=500
+
 # Database Connection Pooling (optional)
 DB_POOL_MAX=20
 DB_POOL_MIN=0
@@ -713,7 +720,13 @@ GET /metrics                         # Prometheus metrics (text/plain). Requires
 - Managed by the `parsing` module. Schema and indexes are described in `docs/features/parsing-framework.md`.
 - `parser_runs` — individual PLP/PDP runs with status, env, actor, and timing.
 - `parser_schedules` — recurring schedules with frequency presets (`every_n_hours`, `every_n_days`, `daily`, `weekly`, `custom`) and persisted cron.
-- `parser_log_chunks` — sequenced log lines from CLI runner stdout/stderr.
+- `parser_log_chunks` — sequenced log lines from CLI runner stdout/stderr. Retention: 30 days for completed runs; see [parsing-framework.md](../features/parsing-framework.md).
+
+**Technical data retention**
+
+- `listing_views` — per-view rows; 12 months (`PurgeOldListingViewsUseCase`, daily 03:00, monitor `listing-views-retention`).
+- `admin_audit_log` — admin actions including `ip` / `user_agent`; 12 months (`AdminAuditRetentionService`, daily 04:00, monitor `admin-audit-log-retention`).
+- `users.registration_ip` / `users.last_login_ip` — cleared in `User.deactivate()`.
 
 #### Triggers
 
@@ -748,8 +761,14 @@ GET /metrics                         # Prometheus metrics (text/plain). Requires
 - **Min connections:** 0 (configurable via `DB_POOL_MIN`)
 - **Idle timeout:** 30 seconds
 - **Connection timeout:** 10 seconds
+- **Statement timeout:** 30 seconds (`DB_STATEMENT_TIMEOUT_MS`)
+- **Idle-in-transaction timeout:** 30 seconds (`DB_IDLE_IN_TRANSACTION_TIMEOUT_MS`)
+
+Listing search (`TypeOrmListingRepository.search`) runs `getCount` and the page query in autocommit (no `REPEATABLE READ` wrapper). `total` and the page can differ by one row under concurrent writes; Redis search cache already allows that.
 
 ### Backups
+
+Managed Render Postgres PITR, logical exports, and the local `pg_dump` restore drill: [postgres-backup-restore.md](../operations/postgres-backup-restore.md).
 
 #### TypeScript Script (Development)
 
@@ -1484,7 +1503,9 @@ For deploying kupito.club backend on Render.com, configure the following:
 - `GITHUB_PAT` - Personal Access Token with `repo` scope for accessing private PPCSL submodule
 - `NODE_ENV` - Set to `production`
 - `PORT` - Automatically set by Render (use `process.env.PORT || 4000` in code)
-- `DB_HOST` - PostgreSQL database host
+- `DB_HOST` - PostgreSQL database host (use the **internal** Render hostname in the same region)
+- `DB_SSL` - `true` / `false`; unset enables SSL in production. Set `false` for Render internal Postgres.
+- `DB_SLOW_QUERY_MS` - TypeORM slow-query threshold in ms (default `500`); production warns to Sentry without SQL bind parameters
 - `DB_PORT` - PostgreSQL port (usually `5432`)
 - `DB_USERNAME` - Database username
 - `DB_PASSWORD` - Database password

@@ -12,6 +12,7 @@ export function ParsingRunLogsModal(c: ParsingTabControllerState) {
     logsModalRun,
     hasLogContent,
     logLines,
+    retentionExpired,
     logsSearchQuery,
     setLogsSearchQuery,
     closeLogsModal,
@@ -33,7 +34,9 @@ export function ParsingRunLogsModal(c: ParsingTabControllerState) {
           copyLabel={t('admin.parsing.logsTitle')}
         />
       ) : (
-        <InfoBlock>{t('admin.parsing.logsEmpty')}</InfoBlock>
+        <InfoBlock>
+          {t(retentionExpired ? 'admin.parsing.logsRetentionExpired' : 'admin.parsing.logsEmpty')}
+        </InfoBlock>
       )}
     </Modal>
   );

@@ -38,6 +38,7 @@ import { GetUserListingsUseCase } from './application/use-cases/get-user-listing
 import { HasPromotionHistoryUseCase } from './application/use-cases/has-promotion-history.use-case';
 import { PauseListingUseCase } from './application/use-cases/pause-listing.use-case';
 import { PublishListingUseCase } from './application/use-cases/publish-listing.use-case';
+import { PurgeOldListingViewsUseCase } from './application/use-cases/purge-old-listing-views.use-case';
 import { RefreshAllDatesUseCase } from './application/use-cases/refresh-all-dates.use-case';
 import { SearchListingsUseCase } from './application/use-cases/search-listings.use-case';
 import { TogglePromotionUseCase } from './application/use-cases/toggle-promotion.use-case';
@@ -106,6 +107,7 @@ export class ListingsService {
     private readonly updatePromotionHistoryEndDateUseCase: UpdatePromotionHistoryEndDateUseCase,
     private readonly closeAllUserListingsUseCase: CloseAllUserListingsUseCase,
     private readonly autoCloseOldListingsUseCase: AutoCloseOldListingsUseCase,
+    private readonly purgeOldListingViewsUseCase: PurgeOldListingViewsUseCase,
     private readonly expirePromotionsUseCase: ExpirePromotionsUseCase,
     private readonly usersService: UsersService,
   ) {}
@@ -254,6 +256,23 @@ export class ListingsService {
   @Cron(CronExpression.EVERY_HOUR)
   async expirePromotions(): Promise<{ expired: number }> {
     return this.expirePromotionsUseCase.execute();
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async purgeOldListingViews(): Promise<{ deleted: number }> {
+    const Sentry = await import('@sentry/node');
+    return Sentry.withMonitor(
+      'listing-views-retention',
+      async () => this.purgeOldListingViewsUseCase.execute(),
+      {
+        schedule: {
+          type: 'crontab',
+          value: '0 3 * * *',
+        },
+        checkinMargin: 5,
+        maxRuntime: 10,
+      },
+    );
   }
 
   async getUserListings(

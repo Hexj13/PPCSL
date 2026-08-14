@@ -202,7 +202,7 @@ export const adminParsingApi = {
     );
   },
   getRunLogsFull: (id: string, options?: { quiet?: boolean }) =>
-    api.get<{ lines: string[]; lastSeq: number }>(
+    api.get<{ lines: string[]; lastSeq: number; retentionExpired: boolean }>(
       `/api/admin/parsing/runs/${id}/logs/full`,
       options?.quiet ? quietAdminParsingPollConfig : undefined,
     ),

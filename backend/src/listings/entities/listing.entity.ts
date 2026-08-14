@@ -37,12 +37,10 @@ const ListingStatusClosed = 'Closed' as const;
 @Index(['status', 'last_updated_at'])
 @Index(['price'])
 @Index(['created_at'])
-@Index(['views'])
 @Index(['category'])
 @Index(['category', 'status'])
 @Index(['vin'], { where: '"vin" IS NOT NULL' })
 @Index(['urgent'], { where: '"urgent" = true' })
-@Index(['currency'])
 export class Listing {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -204,6 +204,42 @@ describe('ParsingScheduleService', () => {
     expect(scheduleRepo.save).toHaveBeenCalledWith([schedule, sibling]);
   });
 
+  it('refreshScheduleAvailability only updates checked_at when status and summary are unchanged', async () => {
+    const { service, scheduleRepo, availability } = createDeps();
+    const schedule = createSchedule({
+      resource_availability_status: 'available',
+      resource_availability_summary: 'source reachable',
+    });
+    (scheduleRepo.findOne as jest.Mock).mockResolvedValue(schedule);
+    const selectQb = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([schedule]),
+    };
+    const updateQb = {
+      update: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
+    (scheduleRepo.createQueryBuilder as jest.Mock)
+      .mockReturnValueOnce(selectQb)
+      .mockReturnValue(updateQb);
+    (availability.probeParserSource as jest.Mock).mockResolvedValue({
+      ok: 1,
+      total: 1,
+      summary: 'source reachable',
+    });
+
+    await service.refreshScheduleAvailability(schedule.id);
+
+    expect(scheduleRepo.save).not.toHaveBeenCalled();
+    expect(updateQb.where).toHaveBeenCalledWith('id IN (:...unchangedIds)', {
+      unchangedIds: [schedule.id],
+    });
+    expect(updateQb.execute).toHaveBeenCalled();
+  });
+
   it('refreshScheduleAvailability marks unavailable when site probe fails', async () => {
     const { service, scheduleRepo, availability } = createDeps();
     const schedule = createSchedule({ run_type: 'pdp' });
@@ -256,6 +292,9 @@ describe('ParsingScheduleService', () => {
       where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
       getMany: jest.fn().mockResolvedValue([older, newer]),
+      update: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue({ affected: 1 }),
     };
     (scheduleRepo.createQueryBuilder as jest.Mock)
       .mockReturnValueOnce(listQb)

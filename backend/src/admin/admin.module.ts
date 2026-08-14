@@ -9,6 +9,7 @@ import { ListingsModule } from '../listings/listings.module';
 import { TiresModule } from '../tires/tires.module';
 import { UsersModule } from '../users/users.module';
 
+import { AdminAuditRetentionService } from './admin-audit-retention.service';
 import { AdminAuditService } from './admin-audit.service';
 import { AdminBrandsModelsService } from './admin-brands-models.service';
 import { AdminListingsService } from './admin-listings.service';
@@ -39,6 +40,7 @@ import { AdminAuditLog } from './entities/admin-audit-log.entity';
     AdminPromotionsService,
     DeleteAllBrandsService,
     AdminAuditService,
+    AdminAuditRetentionService,
     AdminBrandsModelsService,
     AdminTireBrandsModelsService,
   ],

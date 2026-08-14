@@ -38,6 +38,7 @@ import { GetUserListingsUseCase } from './application/use-cases/get-user-listing
 import { HasPromotionHistoryUseCase } from './application/use-cases/has-promotion-history.use-case';
 import { PauseListingUseCase } from './application/use-cases/pause-listing.use-case';
 import { PublishListingUseCase } from './application/use-cases/publish-listing.use-case';
+import { PurgeOldListingViewsUseCase } from './application/use-cases/purge-old-listing-views.use-case';
 import { RefreshAllDatesUseCase } from './application/use-cases/refresh-all-dates.use-case';
 import { SearchListingsUseCase } from './application/use-cases/search-listings.use-case';
 import { TogglePromotionUseCase } from './application/use-cases/toggle-promotion.use-case';
@@ -122,6 +123,7 @@ describe('ListingsService', () => {
   let mockUpdatePromotionHistoryEndDateUseCase: { execute: jest.Mock };
   let mockCloseAllUserListingsUseCase: { execute: jest.Mock };
   let mockAutoCloseOldListingsUseCase: { execute: jest.Mock };
+  let mockPurgeOldListingViewsUseCase: { execute: jest.Mock };
   let mockExpirePromotionsUseCase: { execute: jest.Mock };
 
   const mockVehicle: Vehicle = {
@@ -252,6 +254,7 @@ describe('ListingsService', () => {
     mockUpdatePromotionHistoryEndDateUseCase = { execute: jest.fn().mockResolvedValue(undefined) };
     mockCloseAllUserListingsUseCase = { execute: jest.fn() };
     mockAutoCloseOldListingsUseCase = { execute: jest.fn().mockResolvedValue({ closed: 0 }) };
+    mockPurgeOldListingViewsUseCase = { execute: jest.fn().mockResolvedValue({ deleted: 0 }) };
     mockExpirePromotionsUseCase = { execute: jest.fn().mockResolvedValue({ expired: 0 }) };
 
     const mockI18nService = {
@@ -319,6 +322,7 @@ describe('ListingsService', () => {
         },
         { provide: CloseAllUserListingsUseCase, useValue: mockCloseAllUserListingsUseCase },
         { provide: AutoCloseOldListingsUseCase, useValue: mockAutoCloseOldListingsUseCase },
+        { provide: PurgeOldListingViewsUseCase, useValue: mockPurgeOldListingViewsUseCase },
         { provide: ExpirePromotionsUseCase, useValue: mockExpirePromotionsUseCase },
         {
           provide: getRepositoryToken(Listing),

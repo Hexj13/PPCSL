@@ -14,11 +14,12 @@ export function useParsingTabRunModals() {
 
   const [logsModalRun, setLogsModalRun] = useState<ParserRun | null>(null);
   const logsModalOpenRef = useRef(false);
-  const { logLines, hasLogContent, resetLogView, loadRunLogs } = useParserRunLogView({
-    sessionOpenRef: logsModalOpenRef,
-    logsLoadErrorKey: t('admin.parsing.logsLoadError'),
-    onRunUpdate: setLogsModalRun,
-  });
+  const { logLines, hasLogContent, retentionExpired, resetLogView, loadRunLogs } =
+    useParserRunLogView({
+      sessionOpenRef: logsModalOpenRef,
+      logsLoadErrorKey: t('admin.parsing.logsLoadError'),
+      onRunUpdate: setLogsModalRun,
+    });
 
   const [reportModalRun, setReportModalRun] = useState<ParserRun | null>(null);
   const [reportJson, setReportJson] = useState('');
@@ -115,6 +116,7 @@ export function useParsingTabRunModals() {
     logsModalRun,
     logLines,
     hasLogContent,
+    retentionExpired,
     logsSearchQuery,
     setLogsSearchQuery,
     openLogs,

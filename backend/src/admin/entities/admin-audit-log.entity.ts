@@ -48,10 +48,6 @@ export type AuditEntityType =
   | 'PARSER_SCHEDULE';
 
 @Entity('admin_audit_log')
-@Index(['actor_user_id'])
-@Index(['entity_type'])
-@Index(['entity_id'])
-@Index(['action'])
 @Index(['created_at'])
 export class AdminAuditLog {
   @PrimaryGeneratedColumn('uuid')

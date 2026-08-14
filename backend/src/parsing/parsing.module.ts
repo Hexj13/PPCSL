@@ -7,6 +7,7 @@ import { UsersModule } from '../users/users.module';
 
 import { ParserPlpFileService } from './application/parser-plp-file.service';
 import { ParserRunLogWriter } from './application/parser-run-log-writer.service';
+import { ParserRunRetentionService } from './application/parser-run-retention.service';
 import { ParsingAvailabilityService } from './application/parsing-availability.service';
 import { ParsingOrchestratorService } from './application/parsing-orchestrator.service';
 import { ParsingPdpRunExecutor } from './application/parsing-pdp-run-executor.service';
@@ -45,6 +46,7 @@ import { AdminParsingController } from './presentation/admin-parsing.controller'
     ParsingOrchestratorService,
     ParsingScheduleService,
     ParsingScheduleCronService,
+    ParserRunRetentionService,
   ],
 })
 export class ParsingModule {}

@@ -31,6 +31,7 @@ import {
   toLoginFileSlug,
 } from './parser-plp-path.util';
 import { ParserRunLogWriter } from './parser-run-log-writer.service';
+import { isParserRunLogRetentionExpired } from './parser-run-retention.service';
 import { resolveParsingCancelGraceMs, resolveParsingTargetEnv } from './parsing-env';
 import { ParsingPdpRunExecutor } from './parsing-pdp-run-executor.service';
 import { ParsingPlpRunExecutor } from './parsing-plp-run-executor.service';
@@ -42,6 +43,7 @@ import { ParsingSyncRunExecutor } from './parsing-sync-run-executor.service';
 export type ParserRunLogsFullView = {
   lines: string[];
   lastSeq: number;
+  retentionExpired: boolean;
 };
 
 export type ParserRunLogsPollView = {
@@ -107,7 +109,7 @@ export class ParsingOrchestratorService {
   }
 
   async getRunLogsFull(runId: string): Promise<ParserRunLogsFullView> {
-    await this.getRun(runId);
+    const run = await this.getRun(runId);
     const chunks = await this.logChunkRepo.find({
       where: { run_id: runId },
       order: { seq: 'ASC' },
@@ -115,6 +117,7 @@ export class ParsingOrchestratorService {
     return {
       lines: ParsingOrchestratorService.logChunksToLines(chunks),
       lastSeq: chunks.length > 0 ? chunks[chunks.length - 1]!.seq : 0,
+      retentionExpired: isParserRunLogRetentionExpired(run, chunks.length),
     };
   }
 
