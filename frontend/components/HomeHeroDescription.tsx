@@ -120,7 +120,7 @@ export function HomeHeroDescription({
   };
 
   return (
-    <div className="mt-4 max-w-4xl text-base font-medium leading-relaxed text-text-secondary">
+    <div className="max-w-4xl text-base font-medium leading-relaxed text-primary-900">
       <div
         className="overflow-hidden transition-[height] duration-300 ease-out motion-reduce:transition-none"
         style={{ height: descriptionHeight === null ? 'auto' : `${descriptionHeight}px` }}

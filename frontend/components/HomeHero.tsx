@@ -27,7 +27,7 @@ export function HomeHero({
   className,
   ...props
 }: HomeHeroProps) {
-  const rootClassName = ['mb-8', className].filter(Boolean).join(' ');
+  const rootClassName = ['mb-6 md:mb-8', className].filter(Boolean).join(' ');
   const hasDescription =
     descriptionIntro !== undefined &&
     descriptionDetails !== undefined &&
@@ -37,20 +37,26 @@ export function HomeHero({
   return (
     <div className={rootClassName} {...props}>
       <h1 className="text-[30px] font-extrabold mb-4 leading-tight text-primary-900">{title}</h1>
-      <h2 className="text-[18px] md:text-[20px] font-medium leading-relaxed tracking-wide text-primary-900">
-        <span>{subtitle}</span>
-        <span className="text-primary-500 font-bold"> {subtitle3}</span>
-        <span>{subtitle2}</span>
-        <span className="text-primary-500 font-bold">{subtitleBold}</span>
-      </h2>
-      {hasDescription && (
-        <HomeHeroDescription
-          descriptionIntro={descriptionIntro}
-          descriptionDetails={descriptionDetails}
-          expandLabel={expandLabel}
-          collapseLabel={collapseLabel}
-        />
-      )}
+      <ul className="list-disc pl-5 text-base font-medium leading-relaxed tracking-wide text-primary-900 marker:text-primary-700">
+        <li>
+          <h2 className="text-base font-medium leading-relaxed tracking-wide text-primary-900">
+            <span>{subtitle}</span>
+            <span className="text-primary-500 font-bold"> {subtitle3}</span>
+            <span>{subtitle2}</span>
+            <span className="text-primary-500 font-bold">{subtitleBold}</span>
+          </h2>
+        </li>
+        {hasDescription && (
+          <li>
+            <HomeHeroDescription
+              descriptionIntro={descriptionIntro}
+              descriptionDetails={descriptionDetails}
+              expandLabel={expandLabel}
+              collapseLabel={collapseLabel}
+            />
+          </li>
+        )}
+      </ul>
     </div>
   );
 }
