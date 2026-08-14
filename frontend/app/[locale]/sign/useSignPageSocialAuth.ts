@@ -13,6 +13,7 @@ export function useSignPageSocialAuth(options: {
   tab: AuthTab;
   preferredNewUserType?: 'Individual' | 'Business';
   locale: string;
+  returnUrl?: string | null;
 }) {
   const [gisReady, setGisReady] = useState(false);
   const [telegramScriptReady, setTelegramScriptReady] = useState(false);
@@ -46,17 +47,20 @@ export function useSignPageSocialAuth(options: {
     preferredNewUserType: options.preferredNewUserType,
     gisScriptLoaded: gisReady,
     locale: options.locale,
+    returnUrl: options.returnUrl,
   });
   const telegramAuth = useTelegramAuth({
     tab: options.tab,
     preferredNewUserType: options.preferredNewUserType,
     telegramScriptLoaded: telegramScriptReady,
     locale: options.locale,
+    returnUrl: options.returnUrl,
   });
   const facebookAuth = useFacebookAuth({
     tab: options.tab,
     preferredNewUserType: options.preferredNewUserType,
     facebookScriptLoaded: facebookScriptReady,
+    returnUrl: options.returnUrl,
   });
 
   const socialBusy =

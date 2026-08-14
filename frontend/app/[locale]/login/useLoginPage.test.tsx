@@ -20,10 +20,6 @@ jest.mock('@/hooks/useLocalizedNavigation', () => ({
   }),
 }));
 
-jest.mock('next/navigation', () => ({
-  useSearchParams: () => new URLSearchParams(),
-}));
-
 jest.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
@@ -176,6 +172,24 @@ describe('useLoginPage post-auth navigation', () => {
 
     await waitFor(() => {
       expect(mockReplace).not.toHaveBeenCalled();
+    });
+  });
+
+  it('replaces to the provided returnUrl after verified login', async () => {
+    const { result } = renderHook(() => useLoginPage({ returnUrl: '/favorites' }));
+
+    await act(async () => {
+      result.current.setFormData({ login: 'user@example.com', password: 'Secret123!' });
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit({
+        preventDefault: jest.fn(),
+      } as unknown as React.FormEvent);
+    });
+
+    await waitFor(() => {
+      expect(lastReplacePath()).toBe('/favorites');
     });
   });
 });

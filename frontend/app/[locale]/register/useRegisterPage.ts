@@ -1,6 +1,5 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
 import { getPasswordValidationRules, validatePassword } from '@/app/[locale]/reset-password/utils';
@@ -12,7 +11,6 @@ import type { RegisterDto } from '@/lib/api';
 import { authApi } from '@/lib/api';
 import { savePendingRegistration } from '@/lib/pending-registration';
 import { compactE164Phone, finalizePhoneFromRawInput, sanitizePhoneInput } from '@/lib/phone';
-import { getReturnUrlFromSearchParams } from '@/lib/return-url';
 import { toast } from '@/lib/toast';
 
 import { getRegisterSubmitErrorMessage, validatePhone } from './utils';
@@ -79,12 +77,11 @@ function getFilledFields(formData: RegisterFormState): Record<string, boolean> {
 
 export type RegisterPageHandle = ReturnType<typeof useRegisterPage>;
 
-export function useRegisterPage() {
+export function useRegisterPage(options?: { returnUrl?: string | null }) {
   const { push } = useLocalizedNavigation();
-  const searchParams = useSearchParams();
   const { t } = useTranslation();
   const showApiError = useApiErrorToast();
-  const returnUrl = getReturnUrlFromSearchParams(searchParams);
+  const returnUrl = options?.returnUrl ?? null;
   const [formData, setFormData] = useState<RegisterFormState>(initialFormState);
   const [loading, setLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');

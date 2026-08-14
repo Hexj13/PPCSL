@@ -15,7 +15,7 @@ export const authOAuthIconButtonIconClass = 'h-5 w-5 shrink-0';
 
 export const authOAuthIconButtonSkeletonClass = [
   'h-10 w-10 shrink-0',
-  authOAuthButtonBorderClass,
   'bg-bg-secondary/40',
   'rounded',
+  'animate-pulse',
 ].join(' ');

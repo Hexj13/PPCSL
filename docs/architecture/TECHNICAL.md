@@ -244,7 +244,7 @@ INFOCAR_SECRET_KEY=<secret-from-infocar>
 
 # Google Gemini (optional) — listing AI analysis (POST /api/listings/:id/ai-report). If GEMINI_API_KEY is unset, the endpoint returns status unavailable.
 GEMINI_API_KEY=<google-ai-studio-api-key>
-# Optional: GEMINI_MODEL (default gemini-3.5-flash). GEMINI_MODEL_FALLBACK (default gemini-3.1-flash-lite) is used when the primary model returns transient errors (e.g. 503 / overload).
+# Optional: GEMINI_MODEL (default gemini-3.6-flash). GEMINI_MODEL_FALLBACK (default gemini-3.5-flash-lite) is used when the primary model returns transient errors (e.g. 503 / overload).
 # Production only: max new AI report generations per user per rolling hour (Redis). Unset = 5. Non-production (e.g. development): quota disabled.
 # AI_REPORT_MAX_GENERATIONS_PER_HOUR=5
 

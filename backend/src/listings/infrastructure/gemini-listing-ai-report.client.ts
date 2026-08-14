@@ -5,8 +5,8 @@ import { ConfigService } from '@nestjs/config';
 import type { ListingAiInputSnapshot } from '../application/listing-ai-report-snapshot';
 import type { AiReportLanguage } from '../application/listing-ai-report.types';
 
-const DEFAULT_GEMINI_PRIMARY_MODEL = 'gemini-3.5-flash';
-const DEFAULT_GEMINI_FALLBACK_MODEL = 'gemini-3.1-flash-lite';
+const DEFAULT_GEMINI_PRIMARY_MODEL = 'gemini-3.6-flash';
+const DEFAULT_GEMINI_FALLBACK_MODEL = 'gemini-3.5-flash-lite';
 const AI_PROMPT_OMITTED_SNAPSHOT_FIELDS = [
   'listingId',
   'reportSchemaVersion',
@@ -284,7 +284,6 @@ export class GeminiListingAiReportClient {
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: REPORT_SCHEMA,
-        temperature: 0.35,
         maxOutputTokens: 6144,
       },
       systemInstruction: buildSystemInstruction(reportLanguage),

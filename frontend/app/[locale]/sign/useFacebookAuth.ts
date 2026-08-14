@@ -1,6 +1,5 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { finishOAuthSession } from '@/app/[locale]/sign/finishOAuthSession';
@@ -97,11 +96,12 @@ export function useFacebookAuth(options: {
   tab: 'login' | 'register';
   preferredNewUserType?: FacebookSignInDto['type'];
   facebookScriptLoaded: boolean;
+  returnUrl?: string | null;
 }) {
   const { t } = useTranslation();
   const { replace } = useLocalizedNavigation();
   const setAuth = useAuthStore((state) => state.setAuth);
-  const searchParams = useSearchParams();
+  const returnUrl = options.returnUrl ?? null;
   const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim() || '';
   const [isFacebookAuthInFlight, setIsFacebookAuthInFlight] = useState(false);
   const [libraryStatus, setLibraryStatus] = useState<FacebookLibraryStatus>(
@@ -167,14 +167,14 @@ export function useFacebookAuth(options: {
         requiresPhoneVerification,
         preferredNewUserType,
         phoneRequiredSource: 'facebook_register',
-        searchParams,
+        returnUrl,
         submitStartedAt: submitStartedAtRef.current,
         setAuth,
         replace,
         t,
       });
     },
-    [searchParams, replace, setAuth, t],
+    [returnUrl, replace, setAuth, t],
   );
 
   useEffect(() => {

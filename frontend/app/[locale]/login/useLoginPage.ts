@@ -1,6 +1,5 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { isAuthRoutePathname } from '@/components/layout/header-flow-paths';
@@ -22,7 +21,7 @@ import {
   sanitizePhoneInput,
 } from '@/lib/phone';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
-import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
+import { sanitizeReturnUrl } from '@/lib/return-url';
 import { useAuthStore } from '@/lib/store';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
@@ -106,14 +105,16 @@ async function processPendingSavedFilter(
   }
 }
 
-export function useLoginPage(options?: { suppressSignedInReturnNavigation?: boolean }) {
+export function useLoginPage(options?: {
+  suppressSignedInReturnNavigation?: boolean;
+  returnUrl?: string | null;
+}) {
   const suppressExternalSignedInNav = options?.suppressSignedInReturnNavigation ?? false;
   const { replace } = useLocalizedNavigation();
-  const searchParams = useSearchParams();
   const { user, isInitialized, setAuth } = useAuthStore();
   const { t } = useTranslation();
   const [referrerReturnUrl, setReferrerReturnUrl] = useState<string | null>(null);
-  const queryReturnUrl = getReturnUrlFromSearchParams(searchParams);
+  const queryReturnUrl = sanitizeReturnUrl(options?.returnUrl) ?? null;
   const resolvedReturnUrl = queryReturnUrl ?? referrerReturnUrl;
   const suppressSignedInReturnNavigationRef = useRef(false);
 

@@ -1,5 +1,3 @@
-import type { ReadonlyURLSearchParams } from 'next/navigation';
-
 import { processPendingSavedFilter } from '@/app/[locale]/complete-profile/utils';
 import type { User } from '@/lib/api';
 import { waitForAuthSubmitLoaderMinDisplay } from '@/lib/auth-submit-loader';
@@ -14,7 +12,7 @@ import {
 import { getClientLocale } from '@/lib/i18n';
 import { saveOAuthPhoneRequiredContext } from '@/lib/oauth-phone-required-context';
 import { buildPostAuthRedirect } from '@/lib/post-auth-redirect';
-import { getReturnUrlFromSearchParams, sanitizeReturnUrl } from '@/lib/return-url';
+import { sanitizeReturnUrl } from '@/lib/return-url';
 import { syncPartnerPromoDismissAfterAuth } from '@/lib/sync-partner-promo-dismiss';
 import { syncPendingFavoritesAfterAuth } from '@/lib/sync-pending-favorites';
 
@@ -29,7 +27,7 @@ export type FinishOAuthSessionOptions = {
   requiresPhoneVerification: boolean;
   preferredNewUserType?: 'Individual' | 'Business';
   phoneRequiredSource: OAuthPhoneRequiredSource;
-  searchParams: ReadonlyURLSearchParams;
+  returnUrl: string | null;
   submitStartedAt: number | null;
   setAuth: (user: User) => void;
   replace: (path: string) => void;
@@ -42,7 +40,7 @@ export async function finishOAuthSession({
   requiresPhoneVerification,
   preferredNewUserType,
   phoneRequiredSource,
-  searchParams,
+  returnUrl,
   submitStartedAt,
   setAuth,
   replace,
@@ -58,12 +56,11 @@ export async function finishOAuthSession({
     releaseComparisonHold();
   }
 
-  const returnUrl = getReturnUrlFromSearchParams(searchParams);
+  const resolvedReturnUrl = sanitizeReturnUrl(returnUrl);
   const locale = getClientLocale();
   setAuth(postAuthUser);
 
   if (requiresPhoneVerification) {
-    const safeReturn = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
     const extraParams: Record<string, string> = {};
     if (isNewUser) {
       extraParams.source = phoneRequiredSource;
@@ -72,7 +69,7 @@ export async function finishOAuthSession({
     }
     const path = buildCompleteProfileHref({
       mode: 'phone_required',
-      returnUrl: safeReturn ? buildPostAuthRedirect(safeReturn, locale) : null,
+      returnUrl: resolvedReturnUrl ? buildPostAuthRedirect(resolvedReturnUrl, locale) : null,
       extraParams: Object.keys(extraParams).length > 0 ? extraParams : undefined,
     });
     await waitForAuthSubmitLoaderMinDisplay(submitStartedAt);
@@ -82,12 +79,10 @@ export async function finishOAuthSession({
 
   await waitForAuthSubmitLoaderMinDisplay(submitStartedAt);
   if (isNewUser) {
-    const safeReturn = returnUrl ? sanitizeReturnUrl(returnUrl) : null;
-    replace(buildPostAuthRedirect(buildStandardCompleteProfileHref(safeReturn), locale));
+    replace(buildPostAuthRedirect(buildStandardCompleteProfileHref(resolvedReturnUrl), locale));
     return;
   }
-  const filterHandled = await processPendingSavedFilter(t, returnUrl, replace);
+  const filterHandled = await processPendingSavedFilter(t, resolvedReturnUrl, replace);
   if (filterHandled) return;
-  const dest = (returnUrl ? sanitizeReturnUrl(returnUrl) : null) ?? '/';
-  replace(buildPostAuthRedirect(dest, locale));
+  replace(buildPostAuthRedirect(resolvedReturnUrl ?? '/', locale));
 }

@@ -3,7 +3,6 @@
  */
 
 const mockPathname = jest.fn(() => '/ru/sign');
-let mockSearchParams = new URLSearchParams();
 const mockLocalStorageGetItem = jest.fn(() => null as string | null);
 const mockLocalStorageRemoveItem = jest.fn();
 const mockLocationReplace = jest.fn();
@@ -34,7 +33,6 @@ jest.mock('@/lib/auth-submit-loader', () => ({
 }));
 
 jest.mock('next/navigation', () => ({
-  useSearchParams: () => mockSearchParams,
   usePathname: () => mockPathname(),
 }));
 
@@ -170,7 +168,7 @@ function HarnessWithTab({
   return <div ref={containerRef} data-testid="gis-root" />;
 }
 
-function Harness() {
+function Harness({ returnUrl }: { returnUrl?: string | null }) {
   const {
     containerRef,
     isButtonReady,
@@ -178,7 +176,7 @@ function Harness() {
     isGoogleAuthInFlight,
     isGoogleBusy,
     markGoogleSignInIntent,
-  } = useGoogleAuth({ tab: 'login' });
+  } = useGoogleAuth({ tab: 'login', returnUrl });
   return (
     <>
       <div ref={containerRef} data-testid="gis-root" />
@@ -223,7 +221,6 @@ describe('useGoogleAuth', () => {
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-google-client';
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = 'true';
     resetGisInitStateForTests();
-    mockSearchParams = new URLSearchParams();
     mockLocalStorageGetItem.mockReset();
     mockLocalStorageGetItem.mockReturnValue(null);
     mockLocalStorageRemoveItem.mockReset();
@@ -1015,7 +1012,6 @@ describe('useGoogleAuth', () => {
 
   it('saves pendingSavedFilter after Google login when phone is verified', async () => {
     const pendingFilters = { brand_ids: ['brand-1'], vehicleType: 'car' };
-    mockSearchParams = new URLSearchParams('returnUrl=%2Ffavorites%3Ftab%3Dfilters');
     mockLocalStorageGetItem.mockImplementation((key: string) => {
       if (key === 'pendingSavedFilter') {
         return JSON.stringify(pendingFilters);
@@ -1025,7 +1021,7 @@ describe('useGoogleAuth', () => {
 
     render(
       <Tree>
-        <Harness />
+        <Harness returnUrl="/favorites?tab=filters" />
       </Tree>,
     );
 

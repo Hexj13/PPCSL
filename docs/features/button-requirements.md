@@ -205,7 +205,7 @@ This document describes visual requirements and standards for all buttons in the
 **Visual specs:**
 
 - Uses `LoadingButton` component
-- Spinner shown instead of text
+- Spinner overlaid on the original label so width/height stay the same
 - Button becomes disabled automatically
 - Show delay: `200ms`
 - Min display time: `1000ms`

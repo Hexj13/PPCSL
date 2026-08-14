@@ -1,6 +1,5 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { finishOAuthSession } from '@/app/[locale]/sign/finishOAuthSession';
@@ -110,11 +109,12 @@ export function useGoogleAuth(options: {
   preferredNewUserType?: GoogleSignInDto['type'];
   gisScriptLoaded?: boolean;
   locale?: string;
+  returnUrl?: string | null;
 }) {
   const { t } = useTranslation();
   const { replace } = useLocalizedNavigation();
   const setAuth = useAuthStore((state) => state.setAuth);
-  const searchParams = useSearchParams();
+  const returnUrl = options.returnUrl ?? null;
   const [canRenderButton, setCanRenderButton] = useState(false);
   const [isButtonReady, setIsButtonReady] = useState(false);
   const [isButtonRenderTimedOut, setIsButtonRenderTimedOut] = useState(false);
@@ -408,14 +408,14 @@ export function useGoogleAuth(options: {
         requiresPhoneVerification,
         preferredNewUserType,
         phoneRequiredSource: 'google_register',
-        searchParams,
+        returnUrl,
         submitStartedAt: submitStartedAtRef.current,
         setAuth,
         replace,
         t,
       });
     },
-    [searchParams, replace, setAuth, t],
+    [returnUrl, replace, setAuth, t],
   );
 
   useEffect(() => {

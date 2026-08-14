@@ -1,6 +1,5 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { finishOAuthSession } from '@/app/[locale]/sign/finishOAuthSession';
@@ -92,11 +91,12 @@ export function useTelegramAuth(options: {
   preferredNewUserType?: TelegramSignInDto['type'];
   telegramScriptLoaded: boolean;
   locale: string;
+  returnUrl?: string | null;
 }) {
   const { t } = useTranslation();
   const { replace } = useLocalizedNavigation();
   const setAuth = useAuthStore((state) => state.setAuth);
-  const searchParams = useSearchParams();
+  const returnUrl = options.returnUrl ?? null;
   const devMockEnabled = isTelegramDevMockEnabled();
   const clientId = parseTelegramClientId(process.env.NEXT_PUBLIC_TELEGRAM_CLIENT_ID);
   const [isTelegramAuthInFlight, setIsTelegramAuthInFlight] = useState(false);
@@ -199,7 +199,7 @@ export function useTelegramAuth(options: {
           requiresPhoneVerification: authResult.data.requiresPhoneVerification,
           preferredNewUserType,
           phoneRequiredSource: 'telegram_register',
-          searchParams,
+          returnUrl,
           submitStartedAt: submitStartedAtRef.current,
           setAuth,
           replace,
@@ -220,7 +220,7 @@ export function useTelegramAuth(options: {
         toast.error(getTelegramSignInErrorMessage(error, t));
       }
     },
-    [getDebugContext, replace, resetTelegramBusyState, searchParams, setAuth, t],
+    [getDebugContext, replace, resetTelegramBusyState, returnUrl, setAuth, t],
   );
 
   const signInWithDevMock = useCallback(() => {

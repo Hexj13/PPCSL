@@ -41,10 +41,16 @@ function ManagedLoadingButton({
   return (
     <button
       disabled={isDisabled}
-      className={`flex items-center justify-center ${showSpinnerElement ? '' : 'gap-2'} ${className ?? ''} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      aria-busy={showLoading || undefined}
+      className={`relative flex items-center justify-center gap-2 ${className ?? ''} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       {...props}
     >
-      {showSpinnerElement ? <Spinner size={spinnerSize ?? 'sm'} inline /> : children}
+      <span className={showSpinnerElement ? 'invisible' : undefined}>{children}</span>
+      {showSpinnerElement ? (
+        <span className="absolute inset-0 flex items-center justify-center">
+          <Spinner size={spinnerSize ?? 'sm'} inline />
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -69,10 +75,16 @@ export function LoadingButton({
     return (
       <button
         disabled={isDisabled}
-        className={`flex items-center justify-center ${showSpinnerElement ? '' : 'gap-2'} ${className} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        aria-busy={loading || undefined}
+        className={`relative flex items-center justify-center gap-2 ${className} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         {...props}
       >
-        {showSpinnerElement ? <Spinner size={spinnerSize} inline /> : children}
+        <span className={showSpinnerElement ? 'invisible' : undefined}>{children}</span>
+        {showSpinnerElement ? (
+          <span className="absolute inset-0 flex items-center justify-center">
+            <Spinner size={spinnerSize} inline />
+          </span>
+        ) : null}
       </button>
     );
   }

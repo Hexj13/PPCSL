@@ -47,7 +47,6 @@ jest.mock('next/script', () => ({
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ replace: jest.fn() }),
-  useSearchParams: () => new URLSearchParams(),
   usePathname: () => '/ru/sign',
 }));
 
@@ -156,5 +155,12 @@ describe('SignPageContent', () => {
 
     expect(screen.getByTestId('auth-google-outside-card')).toBeInTheDocument();
     expect(screen.getByTestId('auth-google-skeleton')).toBeInTheDocument();
+  });
+
+  it('selects the register tab from the tab prop', () => {
+    render(<SignPageContent tab="register" />);
+
+    expect(screen.getByTestId('auth-tab-register')).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByTestId('auth-panel-register')).toHaveClass('block');
   });
 });

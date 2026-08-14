@@ -1,8 +1,8 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Script from 'next/script';
-import { useRef, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
 import { LoginForm } from '@/app/[locale]/login/LoginForm';
 import { useLoginPage } from '@/app/[locale]/login/useLoginPage';
@@ -15,17 +15,27 @@ import { useI18n } from '@/components/providers/I18nProvider';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
 import { useTranslation } from '@/hooks/useTranslation';
 import { analytics } from '@/lib/analytics';
-import { buildSignPageHref, getReturnUrlFromSearchParams } from '@/lib/return-url';
+import { buildSignPageHref } from '@/lib/return-url';
 
 export type AuthTab = 'login' | 'register';
 
-export function SignPageContent() {
+type SignPageContentProps = {
+  tab?: AuthTab;
+  returnUrl?: string | null;
+};
+
+export function SignPageContent({
+  tab: initialTab = 'login',
+  returnUrl = null,
+}: SignPageContentProps) {
   const { t } = useTranslation();
   const { locale } = useI18n();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const returnUrl = getReturnUrlFromSearchParams(searchParams);
-  const tab: AuthTab = searchParams.get('tab') === 'register' ? 'register' : 'login';
+  const [tab, setTab] = useState<AuthTab>(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   const loginTabRef = useRef<HTMLButtonElement>(null);
   const registerTabRef = useRef<HTMLButtonElement>(null);
@@ -37,7 +47,7 @@ export function SignPageContent() {
     tabsContainerRef,
   );
 
-  const registerPage = useRegisterPage();
+  const registerPage = useRegisterPage({ returnUrl });
   const {
     googleClientIdConfigured,
     telegramClientIdConfigured,
@@ -53,10 +63,12 @@ export function SignPageContent() {
     tab,
     preferredNewUserType: tab === 'register' ? registerPage.formData.type : undefined,
     locale,
+    returnUrl,
   });
 
   const login = useLoginPage({
     suppressSignedInReturnNavigation: socialBusy || registerPage.loading,
+    returnUrl,
   });
 
   const isAlreadySignedInRedirecting = login.isInitialized && !!login.user && !socialBusy;
@@ -69,6 +81,7 @@ export function SignPageContent() {
     if (next === tab) return;
     if (authSubmitBusy) return;
     analytics.authTabSelect(next);
+    setTab(next);
     const href = buildSignPageHref({ tab: next, returnUrl });
     router.replace(href, { scroll: false });
   };

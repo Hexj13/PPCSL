@@ -164,9 +164,9 @@ Exported from `core/frontend/hooks/useLoadingState.ts` to avoid duplicating timi
 **Behavior:**
 
 - Use `useLoadingState` with `showDelay: 200ms` and `minDisplayTime: 1000ms`
-- During loading show only the spinner (text hidden)
+- During loading keep `children` in the layout (`invisible`) and overlay the spinner
 - When not loading, show only `children` (regular button text)
-- The button must be disabled while loading
+- The button must be disabled while loading (`aria-busy` while the spinner is shown)
 - The spinner must stay visible for at least 1 second
 
 **Requirement 2.2 (required):** no layout shift inside the button
@@ -425,9 +425,9 @@ Define and implement a single standard:
 - Replace manual logic with `LoadingButton`:
   - `loading` is driven by the same state as now (business logic unchanged)
 - Inside the button:
-  - during loading only the spinner appears (small, inline), text is hidden
+  - during loading the spinner is overlaid (small, inline) and label text stays in layout (`invisible`)
   - when not loading only the text (`children`) is shown
-  - the button is disabled during loading
+  - the button is disabled during loading (`aria-busy`)
 - The button does not change width/height when entering loading:
   - any "jump" is considered a bug
   - the spinner is centered absolutely, while text becomes invisible to preserve size
@@ -447,6 +447,7 @@ Define and implement a single standard:
 - Google auth uses its own loading state in the Google button area. It must not turn the email/phone submit button into a spinner.
 - After the backend session is issued, write the synced user into the global auth store before navigation so the next client route has current auth state.
 - Use localized router replacement after successful auth; keep hard redirects only for auth exit flows that must leave protected pages immediately.
+- The `/sign` page renders the real login/register card immediately. Skeletons appear only on OAuth icon buttons while Google/Telegram/Facebook SDKs load. Do not wrap the form in a full-card Suspense fallback.
 
 ### Example D: Toast must not appear at the same time as the button loader
 
@@ -600,7 +601,7 @@ To avoid scattering `200/1000` across the codebase:
 
 - `LoadingButton` ✅ (5 tests):
   - ✅ Renders children when not loading (P0)
-  - ✅ Shows only the spinner while loading, without text (P0)
+  - ✅ Shows the spinner while loading and keeps children in the layout (P0)
   - ✅ Does not change size when loading toggles on/off (P1)
   - ✅ Blocks repeated clicks while loading (P0)
   - ✅ Applies the `disabled` prop (P1)

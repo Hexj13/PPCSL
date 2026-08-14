@@ -33,7 +33,8 @@ describe('LoadingButton', () => {
       const button = screen.getByRole('button');
       const spinner = within(button).getByTestId('spinner');
       expect(spinner).toBeInTheDocument();
-      expect(screen.queryByText('Click me')).not.toBeInTheDocument();
+      expect(screen.getByText('Click me')).toBeInTheDocument();
+      expect(button).toHaveAttribute('aria-busy', 'true');
     });
   });
 
@@ -42,6 +43,7 @@ describe('LoadingButton', () => {
 
     const button = screen.getByRole('button');
     const initialHeight = button.getBoundingClientRect().height;
+    const initialWidth = button.getBoundingClientRect().width;
 
     rerender(<LoadingButton loading={true}>Click me</LoadingButton>);
 
@@ -49,9 +51,10 @@ describe('LoadingButton', () => {
       jest.advanceTimersByTime(200);
     });
 
-    const loadingHeight = button.getBoundingClientRect().height;
+    const loadingBox = button.getBoundingClientRect();
 
-    expect(loadingHeight).toBe(initialHeight);
+    expect(loadingBox.height).toBe(initialHeight);
+    expect(loadingBox.width).toBe(initialWidth);
   });
 
   it('should block repeated clicks during loading', () => {
