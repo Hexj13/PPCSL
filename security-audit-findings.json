@@ -1,0 +1,74 @@
+[
+  {
+    "severity": "HIGH",
+    "location": "backend/src/listings/video/listing-video.service.ts:151",
+    "title": "Staged Video Token HMAC Verified with Non-Timing-Safe String Comparison",
+    "description": "The parseStagedVideoToken method verifies the HMAC signature of staged video tokens using a plain JavaScript strict inequality operator (signature !== this.signStagedVideoPayload(encodedPayload)). This is susceptible to timing side-channel attacks. In contrast, the upload delete token verification in upload.service.ts:578-585 correctly uses crypto.timingSafeEqual for the same purpose.",
+    "impact": "An attacker who can observe response timing differences (e.g. same-network or repeated requests) could progressively recover the HMAC signature byte-by-byte. A forged staged video token would allow: (1) bypassing the video upload flow to attach arbitrary S3 keys as listing video references, (2) replaying previously consumed staged video tokens, (3) setting the video status of any listing the user owns without going through the proper upload/transcode pipeline.",
+    "attack_path": "1. Authenticated user initiates staged video upload to obtain a valid token structure. 2. Attacker measures response time of POST /api/listings/video/staged-status with crafted tokens, varying one character at a time. 3. Over many requests (feasible due to the SkipThrottle or generous throttle limits), the attacker reconstructs the valid HMAC signature for an arbitrary payload. 4. Attacker crafts a token with kind='ready' and arbitrary video S3 keys, consuming it during listing creation to reference attacker-controlled content.",
+    "evidence": [
+      "backend/src/listings/video/listing-video.service.ts:151 — signature !== this.signStagedVideoPayload(encodedPayload)",
+      "backend/src/upload/upload.service.ts:578-585 — correct usage of timingSafeEqual for delete token"
+    ],
+    "remediation": "Replace the !== comparison with crypto.timingSafeEqual, matching the pattern already used in upload.service.ts verifyDeleteToken. Convert both the provided and expected signatures to Buffers, check length equality first, then use timingSafeEqual."
+  },
+  {
+    "severity": "HIGH",
+    "location": "backend/src/listings/video/mediaconvert-webhook.controller.ts:110-116",
+    "title": "MediaConvert SNS Webhook Accepts Any AWS Topic When Topic ARN Env Var Is Unset",
+    "description": "The isExpectedTopic() method returns true for ANY SNS topic ARN when the AWS_MEDIACONVERT_SNS_TOPIC_ARN environment variable is not configured. The webhook endpoint at POST /api/webhooks/mediaconvert is completely unauthenticated (no JwtAuthGuard or AdminGuard). The SNS message validator library (sns-validator) validates that a message was legitimately published through AWS SNS, but any AWS account holder can create an SNS topic and publish valid, signature-verified messages.",
+    "impact": "An attacker with an AWS account can send crafted SNS Notification messages to the webhook endpoint. If the target listing's video jobId can be guessed or enumerated (e.g. from a previous upload-init response or an information leak), the attacker can: (1) force any listing's video status to 'failed' by sending a status: 'ERROR' event with a matching jobId, causing denial of service for video features. (2) The attacker can also trigger the SubscriptionConfirmation flow, causing the server to make outbound HTTP requests to the SubscribeURL (limited to SNS endpoints due to certificate validation).",
+    "attack_path": "1. Attacker identifies the webhook URL (public API endpoint, discoverable via Swagger/OpenAPI docs). 2. Attacker creates an SNS topic in their own AWS account. 3. Attacker publishes a SubscriptionConfirmation message to get the server to subscribe. 4. Attacker publishes Notification messages with detail-type: 'MediaConvert Job State Change', a valid listingId, and status: 'ERROR'. 5. If the listing has a video in 'processing' state with a known jobId, its video status is set to 'failed'.",
+    "evidence": [
+      "backend/src/listings/video/mediaconvert-webhook.controller.ts:110-116 — isExpectedTopic returns true when env var is empty",
+      "backend/src/listings/video/mediaconvert-webhook.controller.ts:28-29 — no @UseGuards decorator on the handler",
+      "backend/src/listings/video/listing-video.service.ts:1098-1125 — ERROR/CANCELED events processed without verifying job exists in MediaConvert"
+    ],
+    "remediation": "1. Make AWS_MEDIACONVERT_SNS_TOPIC_ARN required in production — throw on startup if not configured. 2. Change isExpectedTopic to return false (deny-by-default) when the expected ARN is not configured. 3. Consider adding a shared-secret query parameter or custom header to the webhook URL as an additional layer of defense."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/parsing/application/parsing-orchestrator.service.ts:799-823 and backend/src/parsing/application/parser-plp-path.util.ts:36-47",
+    "title": "Path Traversal in PLP File Read and Delete via Unsanitized parserCode/fileKey",
+    "description": "The getPlpFileContentByKey and deletePlpFile methods in ParsingOrchestratorService pass parserCode and fileKey directly to resolveS3RelativePath without validating that parserCode exists in the parser catalog. For unknown parser codes, the path is built as `${parserCode}/${fileKey}.json` without any traversal sanitization. Since NestJS/Express decodes %2F in URL path parameters via decodeURIComponent, an admin can inject path traversal sequences (../) via URL-encoded slashes (%2F) in the parserCode parameter.",
+    "impact": "An authenticated admin user can read or delete arbitrary .json files on the server filesystem outside the intended parsing runtime directory. This could expose sensitive configuration files (e.g., package.json, tsconfig.json, nest-cli.json, or application config files with credentials), or cause denial of service by deleting critical JSON configuration files.",
+    "attack_path": "1. Admin sends GET /api/admin/parsing/parsers/..%2F..%2F..%2F..%2Fapp/plp-files/package/download. 2. parserCode decodes to '../../../../app', fileKey = 'package'. 3. resolveS3RelativePath returns '../../../../app/package.json'. 4. plpStorage.downloadFile joins with localRuntimeRoot, resolving outside the intended directory. 5. Server returns contents of /app/package.json (or equivalent resolved path). 6. Similarly, DELETE requests can remove arbitrary .json files.",
+    "evidence": [
+      "backend/src/parsing/application/parsing-orchestrator.service.ts:807 — resolveS3RelativePath called without catalog validation",
+      "backend/src/parsing/application/parser-plp-path.util.ts:46 — fallback path: return `${parserCode}/${fileKey}.json`",
+      "backend/src/parsing/infrastructure/plp-storage.service.ts:58 — path.join(this.localRuntimeRoot, relativePath) resolves .. traversal",
+      "backend/src/parsing/presentation/admin-parsing.controller.ts:100-105 — downloadPlpFile passes raw parserCode/fileKey"
+    ],
+    "remediation": "1. In getPlpFileContentByKey and deletePlpFile, validate that parserCode exists in the parser catalog before proceeding (throw NotFoundException if not found). 2. Add path traversal checks in resolveS3RelativePath: reject any relativePath containing '..' segments after path.normalize(). 3. Consider using path.resolve and verifying the result starts with the expected base directory."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/admin/admin.controller.ts:149-152 and backend/src/admin/delete-all-brands.service.ts",
+    "title": "Destructive DeleteAllBrands Operation Bypasses Audit Logging",
+    "description": "The DELETE /api/admin/brands/all endpoint cascades deletion of ALL brands, models, vehicles, listings, listing views, and favorites in the database. Unlike all other admin mutation endpoints (createBrand, updateBrand, archiveBrand, etc.), this destructive operation does not write any entry to the admin_audit_log table and does not capture the admin user who performed the action. The controller handler also does not pass req.user context to the service.",
+    "impact": "A complete wipe of all brand/listing data can be performed by any admin with no accountability trail in the audit log. In a post-incident investigation, there would be no record of who initiated this destructive action or when it occurred (beyond standard application logs). This violates the principle of least privilege and complete audit trail for admin operations.",
+    "attack_path": "1. Compromised or rogue admin account sends DELETE /api/admin/brands/all. 2. All brands, models, vehicles, listings, listing views, and favorites are deleted in a cascade. 3. No audit_log entry is created — only application-level Logger.log statements exist. 4. Investigation cannot determine which admin performed the action from the audit table.",
+    "evidence": [
+      "backend/src/admin/admin.controller.ts:149-152 — deleteAllBrands() handler has no @Req() parameter, no audit context passed",
+      "backend/src/admin/delete-all-brands.service.ts — no injection of AdminAuditService, no audit log calls",
+      "backend/src/admin/admin-brands-models.service.ts:195-201 — createBrand correctly logs to auditService for comparison"
+    ],
+    "remediation": "1. Inject AdminAuditService into DeleteAllBrandsService and log the operation with actor context. 2. Pass req.user from the controller to the service. 3. Consider adding a confirmation mechanism (e.g., confirmation token or two-step process) for such a destructive operation. 4. Consider restricting this endpoint to a super-admin role or removing it from production."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/admin/admin-listings.service.ts:184-197 and backend/src/admin/admin.controller.ts:459-465",
+    "title": "Admin Listing Status Changes and Promotion Toggles Have No Audit Trail",
+    "description": "The updateListingStatus method (PATCH /api/admin/listings/:id/status) allows admins to change any listing's status to Active/Paused/Closed without creating an audit log entry. The controller handler does not pass the requesting admin's identity to the service. Similarly, toggleListingPromotion in AdminPromotionsService does not write audit entries when toggling promotion status. The toggleUserStatus endpoint (PATCH /api/admin/users/:id/toggle-status) also lacks audit logging for user activation/deactivation.",
+    "impact": "Critical admin operations on listings and users — status changes, promotion grants, and user deactivation — are untracked in the structured audit log. A malicious or compromised admin could silently close competitor listings, grant unauthorized promotions, or deactivate user accounts with no audit trail. Other admin operations like brand/model CRUD properly use AdminAuditService.",
+    "attack_path": "1. Admin sends PATCH /api/admin/listings/:id/status with {status:'Closed'} to close a competitor's listing. 2. No audit_log entry is created — the action is invisible in the admin audit table. 3. Admin sends PATCH /api/admin/listings/:id/promote to grant free promotion to a colluding user. 4. Admin sends PATCH /api/admin/users/:id/toggle-status to deactivate a user. 5. None of these actions appear in admin_audit_log.",
+    "evidence": [
+      "backend/src/admin/admin-listings.service.ts:184-197 — updateListingStatus has no audit logging",
+      "backend/src/admin/admin.controller.ts:459-465 — controller does not inject @Req() or pass actor context",
+      "backend/src/admin/admin-promotions.service.ts:31-89 — toggleListingPromotion has no audit logging",
+      "backend/src/admin/admin-users.service.ts:279-303 — toggleUserStatus has no logUserEvent or audit call",
+      "backend/src/admin/admin.controller.ts:588-591 — toggleUserStatus handler has no @Req() parameter"
+    ],
+    "remediation": "1. Add @Req() parameter to the affected controller handlers and pass req.user.id to the services. 2. Inject AdminAuditService into AdminListingsService and AdminPromotionsService. 3. Log LISTING_STATUS_UPDATE, LISTING_PROMOTION_TOGGLE, and USER_STATUS_TOGGLE actions with before/after snapshots. 4. Add logUserEvent calls to toggleUserStatus matching the pattern used in updateUserPartnerSettings."
+  }
+]

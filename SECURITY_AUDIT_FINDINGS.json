@@ -1,0 +1,139 @@
+[
+  {
+    "severity": "HIGH",
+    "location": "backend/src/common/utils/html-sanitizer.ts",
+    "title": "Regex-based HTML sanitizer bypass via nested/malformed tags leads to Stored XSS",
+    "description": "The backend HTML sanitizer uses regex-based stripping for dangerous tags (script, iframe, etc.) instead of a proper DOM parser. The regex `<script[^>]*>.*?<\\/script>` uses `.*?` (non-greedy) with the `s` flag, which can be defeated by nested tags: `<script<script>>alert(1)</script</script>>`. Additionally, the sanitizer strips dangerous tags first, then filters remaining tags by allowlist. This ordering means a payload like `<scr<script></script>ipt>alert(1)</script>` will have the inner `<script></script>` removed, reconstructing the outer `<script>alert(1)</script>`. The sanitized HTML is stored in the database and served to all users viewing the listing description, rendered via `dangerouslySetInnerHTML` on the frontend after DOMPurify sanitization. While the frontend applies DOMPurify as a second layer (mitigating client-side exploitation in browsers that render the frontend), the backend API also returns this HTML directly in JSON responses, which third-party consumers or SSR pre-rendering could trust without re-sanitization.",
+    "impact": "Stored XSS in listing descriptions. An attacker crafts a listing with a malicious description that, when viewed by other users through API consumers that do not apply secondary client-side sanitization, executes arbitrary JavaScript. Even with the frontend DOMPurify layer, any API consumer, mobile app, or integration that trusts the backend-sanitized HTML is vulnerable.",
+    "attack_path": "1. Attacker creates/updates a listing with description containing nested script tags designed to bypass regex sanitization. 2. Backend regex sanitizer fails to remove the reconstructed <script> tag. 3. Malicious HTML is stored in database. 4. When other users or API consumers fetch the listing, the stored XSS payload is delivered. 5. Frontend has DOMPurify as a defense-in-depth layer, but API consumers without this layer are directly impacted.",
+    "evidence": [
+      "backend/src/common/utils/html-sanitizer.ts:100-105",
+      "backend/src/listings/application/use-cases/update-listing.use-case.ts:45",
+      "backend/src/listings/application/use-cases/create-listing.use-case.ts:81",
+      "frontend/components/ListingPage/ListingPageDescription.tsx:102-104"
+    ],
+    "remediation": "Replace the regex-based HTML sanitizer with a proper DOM-based sanitization library (e.g., sanitize-html, DOMPurify on server via jsdom). Regex-based HTML sanitization is fundamentally unreliable against mutation-based bypass techniques."
+  },
+  {
+    "severity": "HIGH",
+    "location": "backend/src/auth/presentation/auth.controller.ts:255",
+    "title": "E2E endpoint creates authenticated users without credentials; NODE_ENV gate relies on unvalidated runtime variable",
+    "description": "The endpoint `POST /api/auth/e2e/google-business-user` creates a fully authenticated business user with verified phone and email, and returns valid session cookies — all without any authentication. The only guard is `process.env.NODE_ENV !== 'production' && !== 'stage'`. NODE_ENV is not protected by NestJS guards or middleware — it's checked in application code via `assertAllowed()`. If NODE_ENV is misconfigured, missing, or set to any value other than 'production'/'stage' (e.g., 'staging', 'prod', 'Production'), the endpoint is accessible. There is no authentication guard on this route.",
+    "impact": "Unauthenticated account creation and instant authentication bypass. An attacker can create unlimited verified business accounts and receive valid JWTs, gaining full access to the platform if the environment variable check is ever misconfigured.",
+    "attack_path": "1. Attacker sends POST /api/auth/e2e/google-business-user with empty body. 2. If NODE_ENV is not exactly 'production' or 'stage' (e.g., unset, 'Production', 'staging'), the guard passes. 3. A new user with verified phone/email is created. 4. Attacker receives valid access_token and refresh_token cookies. 5. Attacker has full authenticated access.",
+    "evidence": [
+      "backend/src/auth/presentation/auth.controller.ts:249-260",
+      "backend/src/auth/application/use-cases/e2e-create-google-business-user.use-case.ts:24-28"
+    ],
+    "remediation": "Remove the E2E endpoint entirely from production builds or gate it behind an explicit feature flag and an authentication guard. Never rely solely on NODE_ENV string comparison for security-critical access control."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "docker-compose.yml:6-8",
+    "title": "Default database credentials with exposed ports in docker-compose",
+    "description": "The docker-compose.yml exposes PostgreSQL on port 5432 and Redis on port 6379 to all interfaces (0.0.0.0) with hardcoded default credentials (kupito/kupito123). These same credentials are used in the .env.example and CI workflow. If docker-compose is used in any environment accessible from a network (e.g., a shared development server or misconfigured cloud VM), the database is accessible without authentication barriers beyond the weak default password.",
+    "impact": "Direct database access allowing full data exfiltration (user PII, passwords, listings) and data manipulation for anyone with network access to the host.",
+    "attack_path": "1. Attacker scans for open port 5432 on the host. 2. Connects with psql using kupito/kupito123. 3. Full access to all data in the kupito database.",
+    "evidence": [
+      "docker-compose.yml:6-8",
+      "docker-compose.yml:9",
+      "docker-compose.yml:21",
+      "backend/.env.example:5-6"
+    ],
+    "remediation": "Bind exposed ports to 127.0.0.1 (e.g., '127.0.0.1:5432:5432'). Use environment variables for credentials instead of hardcoding them. Add a .env file not checked into VCS for actual credentials."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/auth/infrastructure/strategies/jwt.strategy.ts:43",
+    "title": "Fallback to hardcoded JWT secret in non-production environments",
+    "description": "When JWT_SECRET is not set and NODE_ENV is not 'production', the JWT strategy falls back to the hardcoded string 'default-dev-secret'. This means all non-production deployments (staging, test, any env where JWT_SECRET is not explicitly set) share a known, guessable JWT signing secret. An attacker who knows this (it's in the source code) can forge valid JWTs for any user.",
+    "impact": "Complete authentication bypass on any deployment where JWT_SECRET is not explicitly configured and NODE_ENV is not 'production'. Attacker can forge JWT tokens to impersonate any user including admins.",
+    "attack_path": "1. Attacker reads the source code and notes the fallback secret 'default-dev-secret'. 2. Attacker targets a staging/test/dev deployment. 3. Attacker crafts a JWT with {sub: '<admin-user-id>', type: 'Business', phoneVerified: true} signed with 'default-dev-secret'. 4. Attacker sends requests with this forged JWT. 5. Full admin access on the target deployment.",
+    "evidence": [
+      "backend/src/auth/infrastructure/strategies/jwt.strategy.ts:43",
+      "backend/src/auth/infrastructure/strategies/jwt.strategy.ts:33-34"
+    ],
+    "remediation": "Fail hard in all environments if JWT_SECRET is not set rather than falling back to a default. At minimum, make the fallback secret random per-startup."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/auth/infrastructure/services/sms-test-code.utils.ts:1",
+    "title": "SMS verification bypass with hardcoded test code '000000' in staging environment",
+    "description": "The SMS verification system accepts a hardcoded test code '000000' when NODE_ENV is 'development' or 'stage'. The 'stage' environment unconditionally allows this bypass regardless of the ALLOW_SMS_TEST_CODE flag (unlike 'test' which checks the flag). This means any staging deployment allows phone verification to be bypassed with the well-known code '000000'.",
+    "impact": "Phone verification bypass on staging deployments. An attacker can verify any phone number using code '000000', bypassing the phone verification gate and gaining access to features that require verified phones.",
+    "attack_path": "1. Attacker targets a staging deployment (NODE_ENV=stage). 2. Sends POST /api/auth/send-sms with any phone number. 3. Sends POST /api/auth/verify-sms with code '000000'. 4. Phone is marked as verified. 5. Attacker bypasses phone verification gate.",
+    "evidence": [
+      "backend/src/auth/infrastructure/services/sms-test-code.utils.ts:1-17",
+      "backend/src/auth/infrastructure/services/sms.service.ts:160-166",
+      "backend/src/auth/infrastructure/services/sms.service.ts:222-228"
+    ],
+    "remediation": "Require the ALLOW_SMS_TEST_CODE flag to be explicitly set in staging environments too, rather than unconditionally allowing the test code. Consider using a random per-deployment test code instead of a hardcoded one."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/common/guards/cron-secret.guard.ts:11",
+    "title": "Metrics endpoint unprotected when CRON_SECRET is unset (non-production)",
+    "description": "The CronSecretGuard protecting the /metrics endpoint throws ForbiddenException when `!expectedSecret || secret !== expectedSecret`. However, in non-production environments, CRON_SECRET is optional (validated as z.string().optional()). If CRON_SECRET is not set, the condition `!expectedSecret` is true and access is denied — this is correct behavior. However, the MetricsController at /metrics exposes internal application metrics (Prometheus format) and is only guarded by this secret-based check with no authentication. In production, if CRON_SECRET leaks or is weak (only min 8 chars required), any external actor can scrape internal metrics.",
+    "impact": "Information disclosure of internal application metrics (request counts, error rates, response times, potentially business metrics) to anyone who knows the CRON_SECRET.",
+    "attack_path": "1. Attacker obtains or brute-forces the CRON_SECRET (minimum 8 characters). 2. Sends GET /metrics with X-Cron-Secret header. 3. Receives full Prometheus metrics dump with internal application data.",
+    "evidence": [
+      "backend/src/common/guards/cron-secret.guard.ts:6-17",
+      "backend/src/common/metrics/metrics.controller.ts:9-10",
+      "backend/src/common/config/env.validation.ts:30"
+    ],
+    "remediation": "Add network-level restrictions (IP allowlist) for the /metrics endpoint in addition to the secret. Increase minimum CRON_SECRET length. Consider using a separate, longer metrics scraping secret."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/common/utils/html-sanitizer.ts:134",
+    "title": "Attribute allowlist regex in HTML sanitizer allows unquoted event handlers to survive",
+    "description": "The sanitizer's attribute regex `/(\\ w+)(?:=[\"']([^\"']*)[\\ \"'])?/g` only matches attributes with quoted values. Event handlers written with unquoted values (e.g., `<div onfocus=alert(1)>`) would not match the value capture group but the attribute name would pass through. Although there's a separate `sanitized.replace(/on\\w+\\s*=\\s*[\"'][^\"']*[\"']/gi, '')` cleanup pass, it only removes event handlers with quoted values. An unquoted event handler like `<p onfocus=alert(1) tabindex=1>` would survive both the attribute regex (which doesn't match unquoted values) and the event handler cleanup (which requires quotes). The frontend's DOMPurify provides defense-in-depth.",
+    "impact": "Potential stored XSS via event handler attributes in listing descriptions that bypass the backend regex sanitizer. Impact is mitigated by the frontend DOMPurify layer for browser-based users, but API consumers without secondary sanitization are vulnerable.",
+    "attack_path": "1. Attacker submits listing description with `<p onfocus=alert(document.cookie) tabindex=1>click me</p>`. 2. Backend regex sanitizer allows <p> tags (in allowlist) and the unquoted onfocus attribute survives the quoted-only cleanup regex. 3. Stored in database. 4. API consumers rendering this HTML without DOMPurify execute the event handler.",
+    "evidence": [
+      "backend/src/common/utils/html-sanitizer.ts:134",
+      "backend/src/common/utils/html-sanitizer.ts:153"
+    ],
+    "remediation": "Update the event handler removal regex to handle unquoted attributes: `/on\\w+\\s*=\\s*(?:[\"'][^\"']*[\"']|\\S+)/gi`. Better yet, use a DOM-based sanitizer."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": ".github/workflows/ci.yml:179-236",
+    "title": "PAT_TOKEN with repo+workflow scope used in CI creates privilege escalation risk",
+    "description": "The CI workflow uses a Personal Access Token (PAT_TOKEN) with repo + workflow scope to clone another repository, create branches, push commits, and open PRs via the GitHub API. This PAT is stored as a repository secret and is available to any workflow triggered by PRs from forks. A malicious PR could modify the CI workflow to exfiltrate the PAT_TOKEN, which grants write access to both the current repository and the target repository (kupito.club).",
+    "impact": "If a malicious PR is accepted or if the CI runs on untrusted PR branches, the PAT_TOKEN can be exfiltrated, granting write access to multiple repositories. This could lead to supply chain attacks by injecting malicious code into the deployment repository.",
+    "attack_path": "1. Attacker forks the repository. 2. Modifies the CI workflow to exfiltrate PAT_TOKEN (e.g., send to external server). 3. Opens a PR. 4. If CI runs on the PR (which it does for pull_request events on main/develop), the secret may be accessible depending on GitHub's fork security settings. 5. Attacker obtains PAT with repo+workflow scope.",
+    "evidence": [
+      ".github/workflows/ci.yml:179",
+      ".github/workflows/ci.yml:188-189"
+    ],
+    "remediation": "Use a GitHub App token with minimal permissions instead of a PAT. Restrict the sync-to-locales job to only run on push events (not pull_request). The current `if: github.ref == 'refs/heads/main' && github.event_name == 'push'` condition is good but the PAT is still exposed as a repository secret to all workflows."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/main.ts:30",
+    "title": "Unconditional 'trust proxy' enables IP spoofing for rate limiting bypass",
+    "description": "The application unconditionally sets `app.set('trust proxy', true)` which trusts ALL proxy headers (X-Forwarded-For, X-Forwarded-Proto, etc.). This means any client can spoof their IP address by setting the X-Forwarded-For header. Since the application uses IP-based rate limiting (ThrottlerModule) and IP-based brute force protection (IpBlockGuard), an attacker can bypass these protections by rotating X-Forwarded-For values.",
+    "impact": "Bypass of all IP-based rate limiting and brute force protection. Attacker can perform unlimited login attempts, SMS sending, registration, and other rate-limited operations by spoofing different source IPs.",
+    "attack_path": "1. Attacker sends requests with spoofed X-Forwarded-For headers (e.g., random IPs). 2. Each request appears to come from a different IP. 3. Rate limiting (600 req/min) and IP block guard (failed login attempts) are bypassed. 4. Attacker can brute-force passwords, send unlimited SMS, or perform other rate-limited operations.",
+    "evidence": [
+      "backend/src/main.ts:30",
+      "backend/src/app.module.ts:48-53",
+      "backend/src/auth/infrastructure/services/ip-block.service.ts"
+    ],
+    "remediation": "Set 'trust proxy' to the specific number of trusted proxies (e.g., `app.set('trust proxy', 1)` for a single reverse proxy) or use the IP addresses/subnets of known proxy infrastructure. When deployed behind Render's proxy, use `'trust proxy', 1`."
+  },
+  {
+    "severity": "MEDIUM",
+    "location": "backend/src/auth/application/services/auth-token-issuer.service.ts:70",
+    "title": "Access token cookie not marked Secure in non-production, and Secure flag depends solely on NODE_ENV",
+    "description": "The access token cookie's Secure flag is set only when `NODE_ENV === 'production'`. In staging environments (NODE_ENV=stage), the cookie is sent over HTTP connections without encryption. Combined with the cookie containing a valid JWT, this means authentication tokens can be intercepted via network sniffing on staging/pre-production environments.",
+    "impact": "Session hijacking on non-production deployments served over HTTP. An attacker on the same network can intercept the authentication cookie and impersonate the user.",
+    "attack_path": "1. Target a staging deployment where NODE_ENV=stage. 2. Perform network sniffing (MITM, shared WiFi). 3. Intercept the kupito_access_token cookie sent over HTTP. 4. Use the stolen JWT to authenticate as the victim.",
+    "evidence": [
+      "backend/src/auth/application/services/auth-token-issuer.service.ts:69-70",
+      "backend/src/auth/application/services/auth-token-issuer.service.ts:71-80"
+    ],
+    "remediation": "Set the Secure flag based on whether the deployment uses HTTPS rather than relying on NODE_ENV. For staging environments served over HTTPS, the Secure flag should be true."
+  }
+]
