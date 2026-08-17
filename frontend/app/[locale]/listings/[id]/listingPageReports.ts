@@ -3,11 +3,7 @@ import type { Locale } from '@/lib/i18n-types';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry, isVinMasked } from '@/lib/utils';
 
-type ReportLocale = 'ro' | 'ru';
-
-function normalizeReportLocale(locale: Locale): ReportLocale {
-  return locale === 'ru' ? 'ru' : 'ro';
-}
+const DEFAULT_PARTNER_QUERY_PARAM = 'from';
 
 function getReportProviderConfig() {
   const siteConfig = loadSiteConfigSync(getCountry());
@@ -19,28 +15,47 @@ function appendQueryParam(url: string, key: string, value: string): string {
   return `${url}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 }
 
+function pickLocalizedUrl(urls: Record<string, string>, locale: Locale): string | null {
+  const language = locale.split('-')[0];
+  const candidates = [locale, language, 'en', 'ro'];
+  for (const key of candidates) {
+    const value = urls[key]?.trim();
+    if (value) {
+      return value;
+    }
+  }
+  return null;
+}
+
+function hasNonEmptyUrl(urls: Record<string, string> | undefined): boolean {
+  if (!urls) {
+    return false;
+  }
+  return Object.values(urls).some((value) => Boolean(value?.trim()));
+}
+
 export function getReportBaseUrl(locale: Locale): string | null {
   const reportProvider = getReportProviderConfig();
   if (!reportProvider) {
     return null;
   }
 
-  const partnerFrom = reportProvider.partnerFrom.trim();
-  if (!partnerFrom) {
-    return null;
-  }
-
-  const normalizedLocale = normalizeReportLocale(locale);
-  const baseUrl = reportProvider.baseUrls[normalizedLocale] ?? reportProvider.baseUrls.ro ?? null;
+  const baseUrl = pickLocalizedUrl(reportProvider.baseUrls, locale);
   if (!baseUrl) {
     return null;
   }
 
-  if (baseUrl.includes('from=')) {
+  const partnerFrom = reportProvider.partnerFrom?.trim();
+  if (!partnerFrom) {
     return baseUrl;
   }
 
-  return appendQueryParam(baseUrl, 'from', partnerFrom);
+  const partnerQueryParam = reportProvider.partnerQueryParam?.trim() || DEFAULT_PARTNER_QUERY_PARAM;
+  if (baseUrl.includes(`${partnerQueryParam}=`)) {
+    return baseUrl;
+  }
+
+  return appendQueryParam(baseUrl, partnerQueryParam, partnerFrom);
 }
 
 export function getReportDemoUrl(locale: Locale): string | null {
@@ -49,8 +64,7 @@ export function getReportDemoUrl(locale: Locale): string | null {
     return null;
   }
 
-  const normalizedLocale = normalizeReportLocale(locale);
-  return reportProvider.demoUrls[normalizedLocale] ?? reportProvider.demoUrls.ro ?? null;
+  return pickLocalizedUrl(reportProvider.demoUrls, locale);
 }
 
 function isReportProviderConfigured(): boolean {
@@ -59,19 +73,7 @@ function isReportProviderConfigured(): boolean {
     return false;
   }
 
-  if (!reportProvider.partnerFrom.trim()) {
-    return false;
-  }
-
-  if (!reportProvider.baseUrls.ro?.trim()) {
-    return false;
-  }
-
-  if (!reportProvider.demoUrls.ro?.trim()) {
-    return false;
-  }
-
-  return true;
+  return hasNonEmptyUrl(reportProvider.baseUrls) && hasNonEmptyUrl(reportProvider.demoUrls);
 }
 
 export function getReportUrl(listing: Listing, locale: Locale = 'ro'): string | null {
@@ -82,8 +84,7 @@ export function getReportUrl(listing: Listing, locale: Locale = 'ro'): string | 
 
   const vin = listing.vin?.trim();
   if (vin && !isVinMasked(vin)) {
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}vin=${encodeURIComponent(vin)}`;
+    return appendQueryParam(baseUrl, 'vin', vin);
   }
 
   return baseUrl;

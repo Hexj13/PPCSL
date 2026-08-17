@@ -134,4 +134,60 @@ describe('shouldShowReportSection', () => {
       false,
     );
   });
+
+  it('should return true for Active listing when only en URLs are configured', () => {
+    mockedLoadSiteConfigSync.mockReturnValue({
+      reportProvider: {
+        baseUrls: { en: 'https://www.carvertical.com/en' },
+        demoUrls: { en: 'https://www.carvertical.com/en/sample-report' },
+      },
+    } as never);
+    expect(shouldShowReportSection(listing({ status: 'Active' }))).toBe(true);
+  });
+});
+
+describe('carVertical report URLs', () => {
+  const carVerticalProvider = {
+    baseUrls: {
+      en: 'https://www.carvertical.com/en',
+      sq: 'https://www.carvertical.com/en',
+    },
+    demoUrls: {
+      en: 'https://www.carvertical.com/en/sample-report',
+      sq: 'https://www.carvertical.com/en/sample-report',
+    },
+  };
+
+  beforeEach(() => {
+    mockedLoadSiteConfigSync.mockReturnValue({
+      reportProvider: carVerticalProvider,
+    } as never);
+  });
+
+  it('should append plaintext VIN without an affiliate param', () => {
+    const listingWithVin = listing({ status: 'Active', vin: 'WBA21FL020CV09474' });
+    expect(getReportUrl(listingWithVin, 'en')).toBe(
+      'https://www.carvertical.com/en?vin=WBA21FL020CV09474',
+    );
+    expect(getReportUrl(listingWithVin, 'sq')).toBe(
+      'https://www.carvertical.com/en?vin=WBA21FL020CV09474',
+    );
+  });
+
+  it('should fall back to en URLs when locale keys are missing', () => {
+    mockedLoadSiteConfigSync.mockReturnValue({
+      reportProvider: {
+        baseUrls: { en: 'https://www.carvertical.com/en' },
+        demoUrls: { en: 'https://www.carvertical.com/en/sample-report' },
+      },
+    } as never);
+    const listingWithVin = listing({ status: 'Active', vin: 'ABC123' });
+    expect(getReportUrl(listingWithVin, 'sq')).toBe('https://www.carvertical.com/en?vin=ABC123');
+  });
+
+  it('should omit vin when it is absent', () => {
+    expect(getReportUrl(listing({ status: 'Active' }), 'en')).toBe(
+      'https://www.carvertical.com/en',
+    );
+  });
 });

@@ -18,6 +18,7 @@ const DEFAULT_REPORT_BASE: Record<ReportProviderLocale, string> = {
 };
 
 const DEFAULT_PARTNER_FROM = 'kupito';
+const DEFAULT_PARTNER_PARAM = 'from';
 
 function encryptVin(vin: string, secretKey: string): string {
   const normalizedVin = vin.trim();
@@ -28,29 +29,32 @@ function encryptVin(vin: string, secretKey: string): string {
   return base64urlEncode(Buffer.concat([iv, encrypted]));
 }
 
+function appendQueryParam(url: string, key: string, value: string): string {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+}
+
 @Injectable()
 export class InfocarReportUrlProvider implements IReportUrlProvider {
   constructor(private readonly configService: ConfigService) {}
 
   isEnabled(): boolean {
-    return Boolean(
-      this.getSecretKey() &&
-      this.getPartnerFrom() &&
-      this.getBaseUrl('ro') &&
-      this.getBaseUrl('ru'),
-    );
+    if (this.getSecretKey()) {
+      return Boolean(this.getPartnerFrom());
+    }
+
+    return Boolean(this.getBaseUrl('ro') || this.getBaseUrl('ru'));
   }
 
   async generateUrl(vin: string, locale: ReportProviderLocale): Promise<string> {
-    const secretKey = this.getSecretKey();
     const baseUrl = this.getConfiguredBaseUrl(locale);
-    if (!secretKey || !baseUrl) {
+    if (!baseUrl) {
       throw new Error('Report provider is not configured');
     }
 
-    const encodedVin = encryptVin(vin, secretKey);
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}vin=${encodeURIComponent(encodedVin)}`;
+    const secretKey = this.getSecretKey();
+    const vinValue = secretKey ? encryptVin(vin, secretKey) : vin.trim();
+    return appendQueryParam(baseUrl, 'vin', vinValue);
   }
 
   getFallbackUrl(locale: ReportProviderLocale): string {
@@ -58,18 +62,23 @@ export class InfocarReportUrlProvider implements IReportUrlProvider {
   }
 
   private getConfiguredBaseUrl(locale: ReportProviderLocale): string {
-    const baseUrl = this.getBaseUrl(locale) || DEFAULT_REPORT_BASE[locale];
-    const partnerFrom = this.getPartnerFrom() || DEFAULT_PARTNER_FROM;
-    if (!baseUrl || !partnerFrom) {
+    const explicitBase = this.getBaseUrl(locale);
+    const baseUrl = explicitBase || (this.getSecretKey() ? DEFAULT_REPORT_BASE[locale] : '');
+    if (!baseUrl) {
       return '';
     }
 
-    if (baseUrl.includes('from=')) {
+    const partnerParam = this.getPartnerParam();
+    const partnerFrom = this.getPartnerFrom() || (explicitBase ? '' : DEFAULT_PARTNER_FROM);
+    if (!partnerFrom) {
       return baseUrl;
     }
 
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}from=${encodeURIComponent(partnerFrom)}`;
+    if (baseUrl.includes(`${partnerParam}=`)) {
+      return baseUrl;
+    }
+
+    return appendQueryParam(baseUrl, partnerParam, partnerFrom);
   }
 
   private getBaseUrl(locale: ReportProviderLocale): string {
@@ -86,6 +95,13 @@ export class InfocarReportUrlProvider implements IReportUrlProvider {
 
   private getPartnerFrom(): string {
     return this.getEnvValue('REPORT_PROVIDER_PARTNER_FROM', 'INFOCAR_PARTNER_FROM')?.trim() || '';
+  }
+
+  private getPartnerParam(): string {
+    return (
+      this.configService.get<string>('REPORT_PROVIDER_PARTNER_PARAM')?.trim() ||
+      DEFAULT_PARTNER_PARAM
+    );
   }
 
   private getEnvValue(primaryKey: string, legacyKey: string): string | undefined {

@@ -145,32 +145,47 @@ export class GetListingUseCase {
       return;
     }
 
-    if (userId) {
-      const existingView = await this.listingViewsRepository.findOne({
-        where: { listing_id: listingId, user_id: userId },
-      });
-      if (existingView) {
-        return;
-      }
-      const view = this.listingViewsRepository.create({
-        listing_id: listingId,
-        user_id: userId,
-      });
-      await this.listingViewsRepository.save(view);
-      await this.listingViewsCounterService.recordPendingView(listingId);
-    } else if (visitorId) {
-      const existingView = await this.listingViewsRepository.findOne({
-        where: { listing_id: listingId, visitor_id: visitorId },
-      });
-      if (existingView) {
-        return;
-      }
-      const view = this.listingViewsRepository.create({
-        listing_id: listingId,
-        visitor_id: visitorId,
-      });
-      await this.listingViewsRepository.save(view);
+    const values = userId
+      ? { listing_id: listingId, user_id: userId }
+      : { listing_id: listingId, visitor_id: visitorId! };
+
+    const existingView = await this.listingViewsRepository.findOne({ where: values });
+    if (existingView) {
+      return;
+    }
+
+    const inserted = await this.insertViewIfAbsent(values);
+    if (inserted) {
       await this.listingViewsCounterService.recordPendingView(listingId);
     }
   }
+
+  private async insertViewIfAbsent(values: {
+    listing_id: string;
+    user_id?: string;
+    visitor_id?: string;
+  }): Promise<boolean> {
+    try {
+      const result = await this.listingViewsRepository
+        .createQueryBuilder()
+        .insert()
+        .into(ListingView)
+        .values(values)
+        .orIgnore()
+        .returning('id')
+        .execute();
+
+      return Array.isArray(result.raw) && result.raw.length > 0;
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        return false;
+      }
+      throw error;
+    }
+  }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  const candidate = error as { code?: string; driverError?: { code?: string } };
+  return candidate?.code === '23505' || candidate?.driverError?.code === '23505';
 }

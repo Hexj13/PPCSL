@@ -55,6 +55,8 @@ const OPTIMIZED_DELIVERY_EFFORT = 3;
 
 const VIDEO_PART_SIZE_BYTES = 5 * 1024 * 1024;
 const PRESIGNED_PART_TTL_SECONDS = 3600;
+const WATERMARK_TEXT_CHAR_WIDTH_FACTOR = 0.7;
+const WATERMARK_MIN_FONT_SIZE = 10;
 
 export function buildPublicMediaUrl(filePath: string): string {
   const path = filePath.startsWith('/') ? filePath : `/${filePath}`;
@@ -245,6 +247,10 @@ export class UploadService {
     throw new BadRequestException('errors.animatedImagesNotSupported');
   }
 
+  private estimateWatermarkTextWidth(text: string, fontSize: number): number {
+    return text.length * fontSize * WATERMARK_TEXT_CHAR_WIDTH_FACTOR;
+  }
+
   private async getWatermarkComposites(
     width: number,
     height: number,
@@ -307,11 +313,25 @@ export class UploadService {
         .png()
         .toBuffer();
 
-      const textSize = Math.min(width, height) * 0.03;
+      let textSize = Math.min(width, height) * 0.03;
+      const maxTextBoxWidth = Math.max(1, width - padding * 2);
+      const measureTextBoxWidth = (fontSize: number): number => {
+        const horizontalPadding = Math.round(fontSize * 0.5);
+        const estimatedTextWidth =
+          this.estimateWatermarkTextWidth(this.watermarkDomain, fontSize) + horizontalPadding * 2;
+        return Math.max(estimatedTextWidth, actualWatermarkWidth);
+      };
+
+      while (
+        textSize > WATERMARK_MIN_FONT_SIZE &&
+        measureTextBoxWidth(textSize) > maxTextBoxWidth
+      ) {
+        textSize -= 1;
+      }
+
       const textHeight = Math.round(textSize * 1.5);
       const textSpacing = Math.round(textSize * 0.3);
-      const textPadding = Math.round(textSize * 0.5);
-      const textWidth = actualWatermarkWidth + textPadding * 2;
+      const textWidth = Math.round(Math.min(maxTextBoxWidth, measureTextBoxWidth(textSize)));
 
       const textSvg = `
         <svg width="${textWidth}" height="${textHeight}" xmlns="http://www.w3.org/2000/svg">
@@ -329,11 +349,17 @@ export class UploadService {
       `;
 
       const textBuffer = Buffer.from(textSvg);
-      const textX = Math.round(width - textWidth - padding);
+      const textX = Math.max(Math.round(padding), Math.round(width - textWidth - padding));
       const textCenterX = textX + textWidth / 2;
-      const logoX = Math.round(textCenterX - actualWatermarkWidth / 2);
-      const logoY = Math.round(height - actualWatermarkHeight - textHeight - textSpacing - padding);
-      const textY = Math.round(height - textHeight - padding);
+      const logoX = Math.max(
+        0,
+        Math.min(Math.round(textCenterX - actualWatermarkWidth / 2), width - actualWatermarkWidth),
+      );
+      const logoY = Math.max(
+        0,
+        Math.round(height - actualWatermarkHeight - textHeight - textSpacing - padding),
+      );
+      const textY = Math.max(0, Math.round(height - textHeight - padding));
 
       return [
         {

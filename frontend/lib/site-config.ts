@@ -1,7 +1,10 @@
 export interface ReportProviderConfig {
   baseUrls: Record<string, string>;
   demoUrls: Record<string, string>;
-  partnerFrom: string;
+  /** Affiliate id. Omit to link without tracking (e.g. carVertical before joining the program). */
+  partnerFrom?: string;
+  /** Query key for the affiliate id. Default `from` (Infocar). CarVertical uses `a`. */
+  partnerQueryParam?: string;
 }
 
 export interface LocaleRoutingConfig {
