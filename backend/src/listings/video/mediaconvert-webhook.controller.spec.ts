@@ -24,6 +24,17 @@ describe('MediaConvertWebhookController', () => {
     expect(listingVideo.handleMediaConvertJobEvent).not.toHaveBeenCalled();
   });
 
+  it('parses SNS text/plain body as a JSON string', async () => {
+    const req = {
+      body: JSON.stringify({
+        Type: 'SubscriptionConfirmation',
+        TopicArn: 'arn:aws:sns:eu-north-1:111111111111:expected',
+      }),
+    };
+    const result = await controller.handleMediaConvert(req as never);
+    expect(result).toEqual({ ok: true });
+  });
+
   it('rejects SNS messages from unexpected topics when topic ARN is configured', () => {
     configService.get.mockReturnValue('arn:aws:sns:eu-north-1:111111111111:expected');
 

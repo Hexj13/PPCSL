@@ -7,7 +7,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import type { NextFunction, Request, Response } from 'express';
-import { json, urlencoded } from 'express';
+import { json, text, urlencoded } from 'express';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 
@@ -29,6 +29,9 @@ async function bootstrap() {
   app.enableShutdownHooks();
   app.set('trust proxy', true);
 
+  // SNS HTTPS notifications use text/plain; json() would skip the body and break
+  // /api/webhooks/mediaconvert confirmation + job events.
+  app.use('/api/webhooks/mediaconvert', text({ type: '*/*', limit: '1mb' }));
   app.use(json({ limit: '1mb' }));
   app.use(urlencoded({ extended: true, limit: '1mb' }));
   app.use(

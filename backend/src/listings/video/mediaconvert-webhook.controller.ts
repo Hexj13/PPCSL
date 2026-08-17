@@ -7,6 +7,19 @@ import SNSMessageValidator from 'sns-validator';
 
 import { ListingVideoService } from './listing-video.service';
 
+function readSnsWebhookBody(req: RawBodyRequest<Request>): string {
+  if (req.rawBody && Buffer.isBuffer(req.rawBody) && req.rawBody.length > 0) {
+    return req.rawBody.toString('utf8');
+  }
+  if (typeof req.body === 'string') {
+    return req.body;
+  }
+  if (req.body && typeof req.body === 'object') {
+    return JSON.stringify(req.body);
+  }
+  return '';
+}
+
 @ApiTags('webhooks')
 @Controller('api/webhooks')
 export class MediaConvertWebhookController {
@@ -28,10 +41,7 @@ export class MediaConvertWebhookController {
   @Post('mediaconvert')
   @HttpCode(200)
   async handleMediaConvert(@Req() req: RawBodyRequest<Request>): Promise<{ ok: boolean }> {
-    const raw =
-      req.rawBody && Buffer.isBuffer(req.rawBody)
-        ? req.rawBody.toString('utf8')
-        : JSON.stringify(req.body);
+    const raw = readSnsWebhookBody(req);
 
     let parsed: Record<string, unknown>;
     try {
