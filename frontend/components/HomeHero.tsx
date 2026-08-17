@@ -2,6 +2,9 @@ import type { ComponentProps } from 'react';
 
 import { HomeHeroDescription } from './HomeHeroDescription';
 
+const HERO_LIST_ITEM_CLASS_NAME =
+  "relative before:absolute before:left-[-1.05rem] before:top-[0.55em] before:h-1.5 before:w-1.5 before:rounded-full before:bg-primary-700 before:content-['']";
+
 export interface HomeHeroProps extends ComponentProps<'div'> {
   title: string;
   subtitle: string;
@@ -37,8 +40,8 @@ export function HomeHero({
   return (
     <div className={rootClassName} {...props}>
       <h1 className="text-[30px] font-extrabold mb-4 leading-tight text-primary-900">{title}</h1>
-      <ul className="list-disc pl-5 text-base font-medium leading-relaxed tracking-wide text-primary-900 marker:text-primary-700">
-        <li>
+      <ul className="list-none pl-5 text-base font-medium leading-relaxed tracking-wide text-primary-900">
+        <li className={HERO_LIST_ITEM_CLASS_NAME}>
           <h2 className="text-base font-medium leading-relaxed tracking-wide text-primary-900">
             <span>{subtitle}</span>
             <span className="text-primary-500 font-bold"> {subtitle3}</span>
@@ -47,7 +50,7 @@ export function HomeHero({
           </h2>
         </li>
         {hasDescription && (
-          <li>
+          <li className={HERO_LIST_ITEM_CLASS_NAME}>
             <HomeHeroDescription
               descriptionIntro={descriptionIntro}
               descriptionDetails={descriptionDetails}
