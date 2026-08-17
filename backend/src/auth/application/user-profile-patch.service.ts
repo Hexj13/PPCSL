@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
+import type { PreferredUiLocale } from '../../common/constants';
 import { isWeeklyViewsDigestEnabled } from '../../common/env';
 import { UsersService } from '../../users/application/users.service';
 import { User } from '../../users/entities/user.entity';
@@ -19,7 +20,7 @@ export type UserProfilePatchFields = {
   viber?: boolean;
   whatsapp?: boolean;
   telegram?: boolean;
-  preferredLocale?: 'ro' | 'ru' | 'en' | null;
+  preferredLocale?: PreferredUiLocale | null;
   phone?: string | null;
   phoneVerified?: boolean;
   type?: 'Individual' | 'Business';

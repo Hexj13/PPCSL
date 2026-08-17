@@ -11,6 +11,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 
+import { preferredUiLocales, type PreferredUiLocale } from '../../../common/constants';
 import { IsName } from '../../../common/decorators/is-name.decorator';
 import { IsPhone } from '../../../common/decorators/is-phone.decorator';
 
@@ -156,11 +157,11 @@ export class UpdateProfileDto {
   type?: 'Individual' | 'Business';
 
   @ApiPropertyOptional({
-    example: 'ro',
-    description: 'Preferred UI locale (ro, ru, or en)',
-    enum: ['ro', 'ru', 'en'],
+    example: 'en',
+    description: 'Preferred UI locale (ro, ru, en, or sq)',
+    enum: preferredUiLocales,
   })
   @IsOptional()
-  @IsIn(['ro', 'ru', 'en'], { message: 'errors.invalidPreferredLocale' })
-  preferredLocale?: 'ro' | 'ru' | 'en';
+  @IsIn(preferredUiLocales, { message: 'errors.invalidPreferredLocale' })
+  preferredLocale?: PreferredUiLocale;
 }

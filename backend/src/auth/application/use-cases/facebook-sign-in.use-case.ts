@@ -86,7 +86,7 @@ export class FacebookSignInUseCase {
         emailNotificationListingRefreshReminders: true,
         emailNotificationWeeklyViewsDigest: isWeeklyViewsDigestEnabled(),
         emailNotificationSecurityAlerts: true,
-        ...(normalizedRequestLocale === 'ro' || normalizedRequestLocale === 'ru'
+        ...(constants.isPreferredUiLocale(normalizedRequestLocale)
           ? { preferredLocale: normalizedRequestLocale }
           : {}),
       }) as Partial<User>;

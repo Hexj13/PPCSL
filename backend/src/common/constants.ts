@@ -1,5 +1,11 @@
 export const userTypes = ['Individual', 'Business', 'Admin'] as const;
 
+export const preferredUiLocales = ['ro', 'ru', 'en', 'sq'] as const;
+export type PreferredUiLocale = (typeof preferredUiLocales)[number];
+export function isPreferredUiLocale(value: string | undefined | null): value is PreferredUiLocale {
+  return !!value && (preferredUiLocales as readonly string[]).includes(value);
+}
+
 export const listingStatuses = ['Active', 'Paused', 'Closed'] as const;
 
 export const listingCategories = ['vehicle', 'tire'] as const;

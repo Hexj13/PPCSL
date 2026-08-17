@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
+import { isPreferredUiLocale } from '../../../common/constants';
 import { isWeeklyViewsDigestEnabled } from '../../../common/env';
 import {
   handleDuplicateKeyError,
@@ -77,7 +78,7 @@ export class RegisterUserUseCase {
 
     const finalUserData = cleanUserData(cleanedUserData) as Partial<User>;
     const normalizedRequestLocale = requestLocale?.trim().toLowerCase();
-    if (normalizedRequestLocale === 'ro' || normalizedRequestLocale === 'ru') {
+    if (isPreferredUiLocale(normalizedRequestLocale)) {
       finalUserData.preferredLocale = normalizedRequestLocale;
     }
 

@@ -1,5 +1,6 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 
+import { isPreferredUiLocale } from '../../../common/constants';
 import { UserType } from '../../../common/types';
 import { removePasswordFromUser } from '../../../common/utils/error-handling.utils';
 import { logUserEvent } from '../../../common/utils/log-user-event';
@@ -26,8 +27,7 @@ export class LoginUserUseCase {
 
     const normalizedRequestLocale = requestLocale?.trim().toLowerCase();
     const preferredLocalePatch =
-      !user.preferredLocale &&
-      (normalizedRequestLocale === 'ro' || normalizedRequestLocale === 'ru')
+      !user.preferredLocale && isPreferredUiLocale(normalizedRequestLocale)
         ? { preferredLocale: normalizedRequestLocale }
         : {};
 
