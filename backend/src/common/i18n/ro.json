@@ -240,7 +240,8 @@
   },
   "emails": {
     "footer": {
-      "tagline": "Platformă pentru publicarea anunțurilor de vânzare auto în Moldova"
+      "tagline": "Platformă pentru publicarea anunțurilor de vânzare auto în Moldova",
+      "copyright": "© 2025-2026 Kupito.club. Toate drepturile rezervate."
     },
     "listingStatus": {
       "Active": "Activ",

@@ -245,7 +245,8 @@
   },
   "emails": {
     "footer": {
-      "tagline": "Platform for posting car sale listings in Moldova"
+      "tagline": "Platform for posting car sale listings in Moldova",
+      "copyright": "© 2025-2026 Kupito.club. All rights reserved."
     },
     "listingStatus": {
       "Active": "Active",
