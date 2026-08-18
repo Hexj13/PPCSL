@@ -21,25 +21,21 @@ function shouldSuppressWebKitStacklessXdNoise(event: Sentry.Event): boolean {
 
 function initSentry() {
   if (!dsn || !isProduction) return;
-  const isMobileViewport = typeof window !== 'undefined' && window.innerWidth < 768;
   Sentry.init({
     dsn,
     environment: 'production',
     sendDefaultPii: false,
-    tracesSampleRate: 0.1,
+    tracesSampleRate: 0.05,
     debug: false,
     enableLogs: false,
     beforeSend(event, hint) {
       if (shouldSuppressWebKitStacklessXdNoise(event)) return null;
       return sentryBeforeSend(event, hint);
     },
-    replaysOnErrorSampleRate: 1.0,
-    replaysSessionSampleRate: isMobileViewport ? 0.05 : 0.1,
+    replaysOnErrorSampleRate: 0.2,
+    replaysSessionSampleRate: 0,
     integrations: [
-      Sentry.browserTracingIntegration({
-        enableInp: true,
-        enableLongTask: true,
-      }),
+      Sentry.browserTracingIntegration(),
       Sentry.replayIntegration({
         maskAllText: true,
         maskAllInputs: true,

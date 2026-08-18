@@ -2,7 +2,6 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { IBrandsCache, BRANDS_CACHE } from '../brands/application/ports/brands-cache.port';
-import { ListingCategory } from '../common/constants';
 import { logUserEvent } from '../common/utils/log-user-event';
 import { UsersService } from '../users/application/users.service';
 
@@ -44,7 +43,6 @@ import { SearchListingsUseCase } from './application/use-cases/search-listings.u
 import { TogglePromotionUseCase } from './application/use-cases/toggle-promotion.use-case';
 import { UpdateListingUseCase } from './application/use-cases/update-listing.use-case';
 import { UpdatePromotionHistoryEndDateUseCase } from './application/use-cases/update-promotion-history-end-date.use-case';
-import { getVehicleTypeFromBodyType } from './domain/utils/vehicle-type.utils';
 import { Listing } from './entities/listing.entity';
 import { PromotionSource } from './entities/promotion-history.entity';
 import { CreateListingDto } from './presentation/dto/create-listing.dto';
@@ -155,47 +153,13 @@ export class ListingsService {
       listingId: savedListing.id,
       ownerUserId: savedListing.user_id,
     });
-    const Sentry = await import('@sentry/node');
-    let vehicle_type: string =
-      savedListing.vehicle?.model?.vehicle_types?.[0] ||
-      (savedListing.vehicle?.body_type
-        ? getVehicleTypeFromBodyType(savedListing.vehicle.body_type)
-        : undefined) ||
-      'unknown';
-    if (savedListing.category === ListingCategory.Tire) {
-      vehicle_type = savedListing.tire?.tire_vehicle_type ?? 'unknown';
-    }
-    Sentry.metrics.count('listings.created', 1, {
-      attributes: {
-        status: savedListing.status,
-        currency: savedListing.currency,
-        vehicle_type: vehicle_type,
-        is_promoted: savedListing.is_promoted || false,
-      },
-    });
     return partnerReward.awardedPromotions > 0
       ? Object.assign(savedListing, { partnerReward })
       : savedListing;
   }
 
   async findAll(searchDto: SearchListingsDto) {
-    const result = await this.searchListingsUseCase.execute(searchDto);
-    const Sentry = await import('@sentry/node');
-    Sentry.metrics.count('listings.searches', 1, {
-      attributes: {
-        has_filters: !!(
-          searchDto.brand_ids ||
-          searchDto.model_ids ||
-          searchDto.vehicleType ||
-          searchDto.price_gte ||
-          searchDto.price_lte
-        ),
-        results_count: result.meta.total,
-        page: result.meta.page,
-        vehicle_type: searchDto.vehicleType || 'all',
-      },
-    });
-    return result;
+    return this.searchListingsUseCase.execute(searchDto);
   }
 
   async findOne(

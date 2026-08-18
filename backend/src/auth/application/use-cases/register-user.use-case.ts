@@ -99,15 +99,6 @@ export class RegisterUserUseCase {
         }
       }
 
-      const Sentry = await import('@sentry/node');
-      Sentry.metrics.count('users.registered', 1, {
-        attributes: {
-          user_type: registerDto.type,
-          has_email: !!user.email,
-          has_phone: !!user.phone,
-        },
-      });
-
       logUserEvent(this.logger, {
         event: 'user_registered',
         userId: user.id,

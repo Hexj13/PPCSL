@@ -65,7 +65,7 @@ Search in Sentry by `requestId:<uuid>` across frontend and backend projects when
 
 ## LogTape decision (go / no-go)
 
-**Status: deferred.** The codebase uses native `@sentry/nextjs` / `@sentry/node` (`captureException`, `tags`, `extra`, `enableLogs`). **LogTape** (`@logtape/logtape`, `@logtape/sentry`) is **not** integrated.
+**Status: deferred.** The codebase uses native `@sentry/nextjs` / `@sentry/node` (`captureException`, `tags`, `extra`). Sentry `enableLogs` is **off**. **LogTape** (`@logtape/logtape`, `@logtape/sentry`) is **not** integrated.
 
 Revisit only if product engineering needs unified categories + `withContext` in JS in a way that native Sentry APIs cannot satisfy after this baseline.
 

@@ -14,8 +14,8 @@ export const mockModels: VehicleModel[] = [
 ];
 
 export const mockCities: City[] = [
-  { name: 'Chișinău', nameEn: 'Chișinău', nameRu: 'Кишинёв' },
-  { name: 'Bălți', nameEn: 'Bălți', nameRu: 'Бельцы' },
+  { name: 'Chișinău', nameEn: 'Chisinau', nameRu: 'Кишинёв' },
+  { name: 'Bălți', nameEn: 'Balti', nameRu: 'Бельцы' },
   { name: 'Tiraspol', nameEn: 'Tiraspol', nameRu: 'Тирасполь' },
   { name: 'Bender', nameEn: 'Bender', nameRu: 'Бендеры' },
   { name: 'Orhei', nameEn: 'Orhei', nameRu: 'Оргеев' },

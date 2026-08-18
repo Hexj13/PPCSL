@@ -12,7 +12,7 @@ export class RedisCitiesCache implements ICitiesCache {
   private cacheKey(): string {
     return generateCacheKey({
       prefix: CACHE_PREFIXES.cities,
-      parts: [getCountry() || 'md', 'all'],
+      parts: [getCountry() || 'md', 'all', 'v2'],
     });
   }
 

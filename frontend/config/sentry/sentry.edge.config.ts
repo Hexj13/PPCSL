@@ -11,9 +11,9 @@ if (dsn && isProduction) {
     environment: 'production',
     enabled: true,
     sendDefaultPii: false,
-    tracesSampleRate: 1.0,
+    tracesSampleRate: 0.05,
     debug: false,
-    enableLogs: true,
+    enableLogs: false,
     beforeSend: sentryBeforeSend,
     ignoreErrors: [
       'NEXT_REDIRECT',

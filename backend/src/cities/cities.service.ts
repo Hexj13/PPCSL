@@ -16,6 +16,20 @@ const CITIES_BY_COUNTRY: Record<string, City[]> = {
   al: alCities,
 };
 
+const SINGERA_ALIASES = new Set(['sângera', 'sangera']);
+
+function cityMatchesName(city: City, query: string): boolean {
+  const normalized = query.toLowerCase();
+  if (
+    city.name.toLowerCase() === normalized ||
+    city.nameEn.toLowerCase() === normalized ||
+    city.nameRu?.toLowerCase() === normalized
+  ) {
+    return true;
+  }
+  return city.name === 'Sîngera' && SINGERA_ALIASES.has(normalized);
+}
+
 @Injectable()
 export class CitiesService {
   constructor(
@@ -51,10 +65,6 @@ export class CitiesService {
   }
 
   findByName(name: string): City | undefined {
-    return this.cities.find(
-      (city) =>
-        city.name.toLowerCase() === name.toLowerCase() ||
-        city.nameEn.toLowerCase() === name.toLowerCase(),
-    );
+    return this.cities.find((city) => cityMatchesName(city, name));
   }
 }

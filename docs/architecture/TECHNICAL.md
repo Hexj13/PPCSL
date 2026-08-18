@@ -256,8 +256,7 @@ GEMINI_API_KEY=<google-ai-studio-api-key>
 
 # Sentry (optional; environment = NODE_ENV; SENTRY_ENVIRONMENT / SENTRY_RELEASE are not read)
 # SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
-# SENTRY_TRACES_SAMPLE_RATE=0.1
-# SENTRY_PROFILES_SAMPLE_RATE=0.05
+# SENTRY_TRACES_SAMPLE_RATE=0.05
 
 # Listing video (optional) — same AWS S3 credentials as images; add MediaConvert endpoint/queue/role and SNS → /api/webhooks/mediaconvert for transcoding. Full checklist: ../guides/listing-video-production-setup-ru.md (operators, Russian); API behavior: ../features/listings.md
 # AWS_MEDIACONVERT_ENDPOINT=

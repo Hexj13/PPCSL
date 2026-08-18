@@ -433,6 +433,11 @@ describe('utils', () => {
     it('should return English name for en locale', () => {
       expect(getCityNamePlain('Chisinau', 'en', cities)).toBe('Chisinau');
     });
+
+    it('should resolve a stored official name to English and Russian labels', () => {
+      expect(getCityNamePlain('Chișinău', 'en', cities)).toBe('Chisinau');
+      expect(getCityNamePlain('Chișinău', 'ru', cities)).toBe('Кишинёв');
+    });
   });
 
   describe('buildHomeCategoryTitle', () => {

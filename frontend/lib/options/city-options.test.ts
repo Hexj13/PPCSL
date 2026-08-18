@@ -6,8 +6,8 @@ import { buildCityOptions, getPopularCityNamesEn } from './city-options';
 
 const mdCities: City[] = [
   { name: 'Orhei', nameEn: 'Orhei', nameRu: 'Оргеев' },
-  { name: 'Bălți', nameEn: 'Bălți', nameRu: 'Бельцы' },
-  { name: 'Chișinău', nameEn: 'Chișinău', nameRu: 'Кишинёв' },
+  { name: 'Bălți', nameEn: 'Balti', nameRu: 'Бельцы' },
+  { name: 'Chișinău', nameEn: 'Chisinau', nameRu: 'Кишинёв' },
   { name: 'Cahul', nameEn: 'Cahul', nameRu: 'Кагул' },
   { name: 'Bender', nameEn: 'Bender', nameRu: 'Бендеры' },
   { name: 'Tiraspol', nameEn: 'Tiraspol', nameRu: 'Тирасполь' },
@@ -58,6 +58,7 @@ describe('city-options', () => {
         category: 'Popular',
       });
       expect(options.some((opt) => opt.value === '__category__other')).toBe(true);
+      expect(options.find((opt) => opt.value === 'Chișinău')?.label).toBe('Chisinau');
     });
 
     it('should format Russian labels with nameRu and Romanian name', () => {

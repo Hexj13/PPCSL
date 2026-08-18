@@ -18,7 +18,6 @@ const baseSchema = z.object({
   DB_SSL: z.string().optional(),
   DB_SLOW_QUERY_MS: z.string().optional(),
   SENTRY_TRACES_SAMPLE_RATE: z.string().optional(),
-  SENTRY_PROFILES_SAMPLE_RATE: z.string().optional(),
   LOG_LEVEL: z.string().optional(),
   REDIS_URL: z.string().optional(),
   ENABLE_UPLOAD_QUEUE: z.string().optional(),

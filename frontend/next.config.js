@@ -332,7 +332,7 @@ const sentryWebpackPluginOptions = {
     treeshake: {
       removeDebugLogging: true,
     },
-    automaticVercelMonitors: true,
+    automaticVercelMonitors: false,
   },
 };
 

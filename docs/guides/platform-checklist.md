@@ -152,7 +152,7 @@ Backend (`assets/backend/watermark/`):
 
 ### 7. Cities and country data
 
-- [ ] City list added to `core/backend/src/cities/data/{country}.ts` and registered in `CITIES_BY_COUNTRY` (`core/backend/src/cities/cities.service.ts`)
+- [ ] City list added to `core/backend/src/cities/data/{country}.ts` (`name` official local spelling stored on listings, ASCII `nameEn`, optional `nameRu`) and registered in `CITIES_BY_COUNTRY` (`core/backend/src/cities/cities.service.ts`)
 - [ ] Sort locale added to `SORT_LOCALE_BY_COUNTRY`
 - [ ] Phone prefix supported in `core/backend/src/auth/.../phone.service.ts`
 - [ ] Platform config in core: `core/backend/src/scripts/platforms/{country}/config.ts`

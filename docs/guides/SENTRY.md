@@ -69,7 +69,7 @@ npm install @sentry/nextjs
 
 ```bash
 cd core/backend
-npm install @sentry/node @sentry/profiling-node
+npm install @sentry/node
 ```
 
 ### 3. Environment variables
@@ -87,17 +87,17 @@ SENTRY_AUTH_TOKEN=your-auth-token
 
 ```env
 SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
-# Optional sampling overrides:
-# SENTRY_TRACES_SAMPLE_RATE=0.1
-# SENTRY_PROFILES_SAMPLE_RATE=0.05
+# Optional sampling override (default 0.05). Health checks are never traced.
+# SENTRY_TRACES_SAMPLE_RATE=0.05
 ```
 
-**Reality check (current `core/backend/src/common/sentry.config.ts`):**
+**Reality check (current `core/backend/src/common/sentry.config.ts` and frontend Sentry init):**
 
 - Sentry `environment` is **`process.env.NODE_ENV`** (fallback `development`).
 - Sentry is **enabled only when `NODE_ENV === 'production'`**.
 - **`SENTRY_ENVIRONMENT` and `SENTRY_RELEASE` are not read** by the backend init. Setting them in the host has no effect unless the code is changed.
 - Use separate Sentry projects per platform; do not rely on an environment tag alone to isolate issues across platforms.
+- **Quota policy (small project):** errors 100%; traces 5% (health checks 0%); profiling off; Sentry logs off; session replay 0%; error replay 20%; no custom Sentry metrics. Raise `SENTRY_TRACES_SAMPLE_RATE` only if you need more performance data.
 
 ## Frontend integration
 
@@ -112,10 +112,10 @@ Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV,
   sendDefaultPii: false,
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 0.05,
   debug: false,
-  replaysOnErrorSampleRate: 1.0,
-  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 0.2,
+  replaysSessionSampleRate: 0,
   integrations: [
     Sentry.replayIntegration({
       maskAllText: true,
@@ -126,7 +126,7 @@ Sentry.init({
 });
 ```
 
-Client-side Sentry must avoid default PII collection. Session Replay should keep text and inputs masked and media blocked; only lower sampling rates should vary by viewport or environment.
+Client-side Sentry must avoid default PII collection. Session Replay records error sessions only (20%); random sessions are not recorded. Text, inputs, and media stay masked.
 
 Create `core/frontend/sentry.server.config.ts`:
 
@@ -136,11 +136,11 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV,
-  tracesSampleRate: 0.2,
+  tracesSampleRate: 0.05,
 });
 ```
 
-Server uses 0.2 (20% of transactions) to reduce memory usage: at 100% tracing every health check and request creates a full trace, which on memory-limited hosts (e.g. Render.com) can cause OOM without real traffic.
+Server and edge use 5% tracing. Health checks and high-volume routes should stay unsampled; 100% tracing on Render can OOM and blow the spans quota.
 
 Create `core/frontend/sentry.edge.config.ts`:
 
@@ -150,7 +150,7 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV,
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 0.05,
 });
 ```
 
@@ -287,14 +287,13 @@ Create `core/backend/src/common/sentry.config.ts`:
 
 ```typescript
 import * as Sentry from '@sentry/node';
-import { ProfilingIntegration } from '@sentry/profiling-node';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
-  tracesSampleRate: 1.0,
-  profilesSampleRate: 1.0,
-  integrations: [new ProfilingIntegration()],
+  tracesSampleRate: 0.05,
+  profilesSampleRate: 0,
+  enableLogs: false,
 });
 ```
 
@@ -483,20 +482,20 @@ Sentry.init({
 ```typescript
 Sentry.init({
   // ... other options
-  tracesSampleRate: 0.2,
+  tracesSampleRate: 0.05,
   integrations: [Sentry.browserTracingIntegration()],
 });
 ```
 
-On the server (sentry.server.config.ts) 0.1–0.2 is recommended to reduce memory; on the client you can use up to 1.0 if needed.
+Keep traces at 5% on client, server, and edge. Do not use 100% tracing — it created tens of millions of spans per month.
 
 #### Backend
 
 ```typescript
 Sentry.init({
   // ... other options
-  tracesSampleRate: 1.0,
-  integrations: [new ProfilingIntegration()],
+  tracesSampleRate: 0.05,
+  profilesSampleRate: 0,
 });
 ```
 

@@ -1,6 +1,5 @@
 import type { DropdownOption } from '@/components/common/dropdown-types';
-import type { City } from '@/lib/utils';
-import { getCountry, sortByName } from '@/lib/utils';
+import { findCity, getCountry, sortByName, type City } from '@/lib/utils';
 
 const POPULAR_CITY_NAMES_EN_BY_COUNTRY: Record<string, string[]> = {
   md: ['Chișinău', 'Bălți', 'Tiraspol', 'Bender', 'Orhei'],
@@ -20,13 +19,15 @@ function getCityLabel(city: City, locale: string): string {
   if (locale === 'ru' && city.nameRu) {
     return `${city.nameRu} (${city.name})`;
   }
+  if (locale === 'en') {
+    return city.nameEn;
+  }
   return city.name;
 }
 
 function orderPopularCities(cities: City[], popularNamesEn: string[]): City[] {
-  const byNameEn = new Map(cities.map((city) => [city.nameEn, city]));
   return popularNamesEn
-    .map((nameEn) => byNameEn.get(nameEn))
+    .map((nameEn) => findCity(cities, nameEn))
     .filter((city): city is City => city !== undefined);
 }
 
@@ -44,9 +45,9 @@ export function buildCityOptions({
   otherLabel,
 }: BuildCityOptionsParams): DropdownOption[] {
   const popularNamesEn = getPopularCityNamesEn();
-  const popularNamesSet = new Set(popularNamesEn);
   const popularCities = orderPopularCities(cities, popularNamesEn);
-  const otherCities = sortByName(cities.filter((city) => !popularNamesSet.has(city.nameEn)));
+  const popularCitiesSet = new Set(popularCities);
+  const otherCities = sortByName(cities.filter((city) => !popularCitiesSet.has(city)));
 
   const options: DropdownOption[] = [];
 
@@ -54,7 +55,7 @@ export function buildCityOptions({
     options.push({ value: '__category__popular', label: popularLabel, category: popularLabel });
     popularCities.forEach((city) => {
       options.push({
-        value: city.nameEn,
+        value: city.name,
         label: getCityLabel(city, locale),
         category: popularLabel,
       });
@@ -65,7 +66,7 @@ export function buildCityOptions({
     options.push({ value: '__category__other', label: otherLabel, category: otherLabel });
     otherCities.forEach((city) => {
       options.push({
-        value: city.nameEn,
+        value: city.name,
         label: getCityLabel(city, locale),
         category: otherLabel,
       });

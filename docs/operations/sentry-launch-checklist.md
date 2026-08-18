@@ -15,13 +15,11 @@ Pre-launch verification for Sentry monitoring. Setup: [SENTRY.md](../guides/SENT
 ## What's already configured
 
 - **Errors** — JavaScript errors, unhandled rejections, API errors (>= 500)
-- **Performance tracing** — 10% client, 100% server
-- **Session replay** — 100% error sessions, 10% all sessions
-- **Structured logs** — enabled
+- **Performance tracing** — 5% traces; backend drops `/health`
+- **Session replay** — 20% of error sessions; 0% of random sessions
+- **Structured logs / profiling / custom metrics** — off
 - **Event sanitization** — `beforeSend` redacts phone, email, tokens, and SMS codes in `request` / `user` / breadcrumbs (see [logging.md](../guides/logging.md))
-- **Metrics** — enabled
-- **Cron monitors:** auto-close-old-listings, ip-block-cleanup, refresh-token-cleanup, parser-log-retention, listing-views-retention, admin-audit-log-retention
-- **Business metrics:** users.registered, listings.created, listings.searches
+- **Cron monitors:** auto-close-old-listings, refresh-token-cleanup, exchange-rates-fetch, listing-views-retention, parser-log-retention, admin-audit-log-retention. IP blocks use Redis TTL; there is no `ip-block-cleanup` job.
 
 ## Before launch
 
@@ -32,7 +30,7 @@ Pre-launch verification for Sentry monitoring. Setup: [SENTRY.md](../guides/SENT
 
 ## After launch
 
-Monitor: error rate (< 1%), API latency (< 500ms p95), Web Vitals, business metrics, cron execution. Adjust sample rates for high traffic; see [SENTRY.md](../guides/SENTRY.md).
+Monitor: error rate, cron execution. Keep sample rates low; see [SENTRY.md](../guides/SENTRY.md).
 
 ## Final checklist
 

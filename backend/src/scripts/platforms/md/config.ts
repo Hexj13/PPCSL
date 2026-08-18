@@ -52,7 +52,7 @@ const config: PlatformSeedConfig = {
     'Maiac',
     'Vadul lui Vodă',
     'Costești',
-    'Sângera',
+    'Sîngera',
     'Codru',
     'Durlești',
     'Vatra',

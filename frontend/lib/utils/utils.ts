@@ -365,6 +365,25 @@ export interface City {
   nameRu?: string;
 }
 
+const SINGERA_ALIASES = new Set(['sângera', 'sangera']);
+
+export function findCity(cities: City[], query: string | undefined): City | undefined {
+  if (!query) {
+    return undefined;
+  }
+  const normalized = query.toLowerCase();
+  return cities.find((city) => {
+    if (
+      city.name.toLowerCase() === normalized ||
+      city.nameEn.toLowerCase() === normalized ||
+      city.nameRu?.toLowerCase() === normalized
+    ) {
+      return true;
+    }
+    return city.name === 'Sîngera' && SINGERA_ALIASES.has(normalized);
+  });
+}
+
 export function getCityName(
   cityNameEn: string | undefined,
   locale: string,
@@ -373,7 +392,7 @@ export function getCityName(
   if (!cityNameEn) return '';
 
   if (cities && cities.length > 0) {
-    const city = cities.find((c) => c.nameEn === cityNameEn);
+    const city = findCity(cities, cityNameEn);
     if (city) {
       if (locale === 'ro') {
         return city.name;
@@ -404,7 +423,7 @@ export function getCityNamePlain(
   if (!cityNameEn) return '';
 
   if (cities && cities.length > 0) {
-    const city = cities.find((c) => c.nameEn === cityNameEn);
+    const city = findCity(cities, cityNameEn);
     if (city) {
       if (locale === 'ro') {
         return city.name;
