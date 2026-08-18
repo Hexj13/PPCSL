@@ -8,7 +8,7 @@ export function applyCitiesFilter<T extends ObjectLiteral>(
 ): void {
   if (cities && cities.length > 0) {
     queryBuilder.andWhere(
-      cities.map((_, index) => `${alias}.city ILIKE :city_${index}`).join(' OR '),
+      `(${cities.map((_, index) => `${alias}.city ILIKE :city_${index}`).join(' OR ')})`,
       cities.reduce(
         (acc, cityValue, index) => {
           acc[`city_${index}`] = `%${cityValue}%`;
