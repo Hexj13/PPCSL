@@ -70,6 +70,9 @@ export function useListingGridScrollEffects({
     }
     sessionStorageRemoveItem('scrollToResultsAfterLoad');
     searchScrollHandledRef.current = true;
+    if (window.innerWidth >= 768 && window.scrollY > 32) {
+      return;
+    }
     requestAnimationFrame(() => {
       const el = document.getElementById('listings-results');
       if (!el) return;

@@ -50,6 +50,13 @@ export function useLoadingState({
 
   isLoadingRef.current = isLoading;
 
+  if (immediate && isLoading && !visible) {
+    setVisible(true);
+    if (visibilityStartRef.current === null) {
+      visibilityStartRef.current = Date.now();
+    }
+  }
+
   useEffect(() => {
     isMountedRef.current = true;
     return () => {

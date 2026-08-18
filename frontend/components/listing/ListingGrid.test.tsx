@@ -1,7 +1,8 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { act, render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import React from 'react';
 
+import { SKELETON_MIN_DISPLAY_SHORT_MS, useLoadingState } from '@/hooks/useLoadingState';
 import { analytics } from '@/lib/analytics';
 import type { Listing, PaginationMeta } from '@/lib/api';
 import { favoritesApi, listingsApi } from '@/lib/api';
@@ -144,9 +145,13 @@ jest.mock('@/hooks/useTranslation', () => ({
   }),
 }));
 
-jest.mock('@/hooks/useLoadingState', () => ({
-  useLoadingState: () => ({ visible: false }),
-}));
+jest.mock('@/hooks/useLoadingState', () => {
+  const actual = jest.requireActual('@/hooks/useLoadingState');
+  return {
+    ...actual,
+    useLoadingState: jest.fn(() => ({ visible: false })),
+  };
+});
 
 global.IntersectionObserver = jest
   .fn()
@@ -601,6 +606,55 @@ describe('ListingGrid', () => {
 
       await screen.findByText('No listings found');
       expect(favoritesApi.checkBatch).not.toHaveBeenCalled();
+    });
+
+    it('should not flash previous listings when filters return empty', async () => {
+      const actualLoadingState = jest.requireActual('@/hooks/useLoadingState') as {
+        useLoadingState: typeof useLoadingState;
+      };
+      (useLoadingState as jest.Mock).mockImplementation(actualLoadingState.useLoadingState);
+      jest.useFakeTimers();
+
+      try {
+        const initialData = {
+          data: [mockListing1, mockListing2],
+          meta: mockMeta,
+        };
+        (listingsApi.getAll as jest.Mock).mockImplementation((params?: { limit?: number }) => {
+          if (params && Number(params.limit) === 1) {
+            return Promise.resolve({
+              data: { data: [] as Listing[], meta: { ...mockMeta, total: 12 } },
+            });
+          }
+          return Promise.resolve({
+            data: { data: [] as Listing[], meta: { ...mockMeta, total: 0 } },
+          });
+        });
+
+        const { rerender } = render(<ListingGrid initialData={initialData} />);
+        expect(screen.getByTestId('listing-listing-1')).toBeInTheDocument();
+
+        (useSearchParams as jest.Mock).mockReturnValue({
+          get: jest.fn((key: string) => (key === 'cities' ? 'Orhei' : null)),
+          forEach: jest.fn(),
+          toString: jest.fn(() => 'cities=Orhei'),
+        });
+        rerender(<ListingGrid initialData={initialData} />);
+
+        expect(screen.queryByTestId('listing-listing-1')).not.toBeInTheDocument();
+        expect(screen.getAllByTestId('listing-skeleton').length).toBeGreaterThan(0);
+
+        await act(async () => {
+          await Promise.resolve();
+          await Promise.resolve();
+          jest.advanceTimersByTime(SKELETON_MIN_DISPLAY_SHORT_MS);
+        });
+
+        expect(screen.getByText('No listings found')).toBeInTheDocument();
+      } finally {
+        jest.useRealTimers();
+        (useLoadingState as jest.Mock).mockImplementation(() => ({ visible: false }));
+      }
     });
   });
 

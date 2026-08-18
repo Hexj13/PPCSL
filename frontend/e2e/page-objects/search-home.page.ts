@@ -219,14 +219,16 @@ export class SearchHomePage extends SearchHomeScrollPage {
     await this.expectResultsOrEmptyVisible();
   }
 
-  async submitSearch(): Promise<void> {
+  async submitSearch(options?: { preserveScroll?: boolean }): Promise<void> {
     await this.dismissOpenSortMenuIfNeeded();
     const submit = this.searchFiltersForm().getByTestId('search-submit');
     await expect(submit).toBeEnabled({ timeout: 20_000 });
-    await submit.scrollIntoViewIfNeeded();
+    if (!options?.preserveScroll) {
+      await submit.scrollIntoViewIfNeeded();
+    }
     const useMobile = await pageUsesMobileLayout(this.page);
     const listingsResponse = this.waitForListingsResponse();
-    await submit.click({ force: useMobile });
+    await submit.click({ force: useMobile || Boolean(options?.preserveScroll) });
     try {
       await listingsResponse;
     } catch {
@@ -410,8 +412,9 @@ export class SearchHomePage extends SearchHomeScrollPage {
   }
 
   async selectSortAndApply(sortKey: ListingSortKey, testId = 'search-sort-select'): Promise<void> {
-    await this.selectSort(sortKey, testId);
-    await this.submitSearch();
+    await this.selectSort(sortKey, testId, { scrollTrigger: false });
+    await this.scrollToY(0);
+    await this.submitSearch({ preserveScroll: true });
   }
 
   async clickSmartSelection(): Promise<void> {

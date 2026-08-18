@@ -58,6 +58,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   const listingsRef = useRef<Listing[]>(initialData?.data || []);
   const restoredFromStorageRef = useRef(false);
   const searchParamsString = useMemo(() => searchParams.toString(), [searchParams]);
+  const [listingsQueryKey, setListingsQueryKey] = useState(searchParamsString);
   const returningWithSavedScroll = shouldRestoreGridStateOnMount(searchParamsString);
   const { user, isInitialized } = useAuthStore();
   const {
@@ -110,6 +111,7 @@ export function ListingGrid({ initialData }: ListingGridProps) {
       setCurrentPage,
       setError,
       setHasLoadedWithFilters,
+      setListingsQueryKey,
       listingsRef,
     });
 
@@ -181,16 +183,18 @@ export function ListingGrid({ initialData }: ListingGridProps) {
     await fetchListings(currentPage + 1, true);
   }, [loadingMore, meta, currentPage, uniqueListings.length, fetchListings]);
 
-  const isFreshQueryLoad = loading && !hasLoadedWithFilters;
+  const resultsStale = searchParamsString !== listingsQueryKey && !returningWithSavedScroll;
+  const isFreshQueryLoad = resultsStale || (loading && !hasLoadedWithFilters);
   const { visible: showSkeleton } = useLoadingState({
-    isLoading: loading,
+    isLoading: loading || resultsStale,
     showDelay: isFreshQueryLoad ? 0 : SKELETON_SHOW_DELAY_MS,
     minDisplayTime: SKELETON_MIN_DISPLAY_SHORT_MS,
     immediate: isFreshQueryLoad,
   });
 
   const homeScrollRestoreActive = isHomeScrollRestoreInProgress();
-  const showSkeletonOverlay = showSkeleton && !homeScrollRestoreActive;
+  const showSkeletonOverlay =
+    (showSkeleton || resultsStale) && !(homeScrollRestoreActive && !resultsStale);
   const showContent = !showSkeletonOverlay;
   const hasMore = listingGridHasMore(meta, currentPage);
 

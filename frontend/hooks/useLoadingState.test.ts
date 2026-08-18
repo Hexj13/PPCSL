@@ -1,4 +1,5 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, render, renderHook } from '@testing-library/react';
+import React from 'react';
 
 import { useLoadingState } from './useLoadingState';
 
@@ -129,6 +130,26 @@ describe('useLoadingState', () => {
       rerender({ isLoading: true });
 
       expect(result.current.visible).toBe(true);
+    });
+
+    it('sets visible during the isLoading render when immediate is true', () => {
+      const visibles: boolean[] = [];
+
+      function Probe({ isLoading }: { isLoading: boolean }) {
+        const { visible } = useLoadingState({
+          isLoading,
+          immediate: true,
+          showDelay: 200,
+          minDisplayTime: 500,
+        });
+        visibles.push(visible);
+        return null;
+      }
+
+      const { rerender } = render(React.createElement(Probe, { isLoading: false }));
+      rerender(React.createElement(Probe, { isLoading: true }));
+
+      expect(visibles[visibles.length - 1]).toBe(true);
     });
   });
 

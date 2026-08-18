@@ -59,11 +59,11 @@
       ]
     },
     {
-      "brand": "Opel",
+      "brand": "Mercedes-Benz",
       "top_models": [
-        { "model": "Astra", "most_popular": true },
-        { "model": "Corsa", "most_popular": false },
-        { "model": "Insignia", "most_popular": false }
+        { "model": "E-Class", "most_popular": true },
+        { "model": "C-Class", "most_popular": false },
+        { "model": "GLC", "most_popular": false }
       ]
     },
     {

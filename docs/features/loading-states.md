@@ -396,12 +396,14 @@ Define and implement a single standard:
   - comparable card height
   - enough tiles so content height stays close to the real layout
 - After data arrives:
-  - the skeleton does not disappear instantly and stays visible for at least 1 second if it was shown
-  - then it is smoothly replaced by content if needed with a light fade
+  - the skeleton does not disappear instantly and stays visible for at least `SKELETON_MIN_DISPLAY_SHORT_MS` (500ms) if it was shown
+  - then it is replaced by content, or by the empty state (`listings.notFound`) when the new query has no results
+- When search params change, previous cards are hidden on the same render (`resultsStale`); they must not flash before skeletons or the empty state.
 
 **Verification:**
 
-- With a fast API response the skeleton either does not appear at all (for page/action loaders with delay), or if it appears it remains visible for at least 1 second (for MVP skeletons we show immediately but keep a minimum display time).
+- With a fast API response the skeleton either does not appear at all (for page/action loaders with delay), or if it appears it remains visible for at least `SKELETON_MIN_DISPLAY_SHORT_MS` (500ms) on the listing grid (page-level skeletons use 1000ms).
+- Changing filters to an empty result set never paints the previous cards; skeletons then empty state.
 - The footer does not jump up/down during loading.
 
 ### Example B: "My listings" page skeleton
@@ -590,12 +592,13 @@ To avoid scattering `200/1000` across the codebase:
 
 ### Unit/Component tests ✅ (P0/P1 only)
 
-- `useLoadingState` ✅ (7 tests):
+- `useLoadingState` ✅ (8 tests):
   - ✅ Does not show the indicator if loading ends before `showDelay` (P1)
   - ✅ Shows the indicator after `showDelay` (P0)
   - ✅ Keeps the indicator visible for at least `minDisplayTime` (P0)
   - ✅ Hides the indicator immediately if more than `minDisplayTime` has already passed (P1)
   - ✅ Shows the indicator immediately when `immediate=true` (P0)
+  - ✅ Sets `visible` during the `isLoading` render when `immediate=true` (P0)
   - ✅ Calls the callback after the indicator hides (P0)
   - ✅ Properly clears timers on unmount (P1)
 

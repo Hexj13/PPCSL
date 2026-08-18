@@ -147,7 +147,7 @@ export abstract class SearchHomeScrollPage {
     if (!useMobile && options?.scrollTrigger !== false) {
       await trigger.scrollIntoViewIfNeeded();
     }
-    await this.openSortDropdownMenu(trigger, menu, useMobile);
+    await this.openSortDropdownMenu(trigger, menu, useMobile || options?.scrollTrigger === false);
     await expect(option).toBeVisible({ timeout: 15_000 });
     await option.evaluate((element) => {
       (element as HTMLButtonElement).click();
@@ -302,17 +302,21 @@ export abstract class SearchHomeScrollPage {
   }
 
   async expectResultsScrolledIntoView(): Promise<void> {
+    const useMobile = await pageUsesMobileLayout(this.page);
     await expect
       .poll(
         async () =>
-          this.page.evaluate(() => {
+          this.page.evaluate((requireScrollIntoView) => {
             const el = document.getElementById('listings-results');
             const header = document.querySelector('header');
             if (!el || !header) {
               return Number.POSITIVE_INFINITY;
             }
+            if (!requireScrollIntoView && window.scrollY > 32) {
+              return 0;
+            }
             return el.getBoundingClientRect().top - header.getBoundingClientRect().bottom;
-          }),
+          }, useMobile),
         { timeout: 45_000 },
       )
       .toBeLessThan(200);

@@ -39,7 +39,7 @@ describe('useListingGridScrollEffects', () => {
     reportGridReadyMock.mockReset();
     reportBannerDecidedMock.mockReset();
     window.scrollTo = jest.fn();
-    Object.defineProperty(window, 'scrollY', { configurable: true, value: 100, writable: true });
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 0, writable: true });
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,
       value: 1280,
@@ -140,7 +140,7 @@ describe('useListingGridScrollEffects', () => {
     expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
     expect(rafCallbacks).toHaveLength(1);
     rafCallbacks.forEach((cb) => cb(0));
-    expect(window.scrollTo).toHaveBeenCalledWith({ top: 368, behavior: 'smooth' });
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 268, behavior: 'smooth' });
   });
 
   it('scrolls to listings-results when loading finishes after search', () => {
@@ -165,7 +165,7 @@ describe('useListingGridScrollEffects', () => {
     expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
     expect(rafCallbacks).toHaveLength(1);
     rafCallbacks.forEach((cb) => cb(0));
-    expect(window.scrollTo).toHaveBeenCalledWith({ top: 368, behavior: 'smooth' });
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 268, behavior: 'smooth' });
   });
 
   it('scrolls to listings-results on initial render when server data is already loaded', () => {
@@ -185,8 +185,122 @@ describe('useListingGridScrollEffects', () => {
     expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
     expect(rafCallbacks).toHaveLength(1);
     rafCallbacks.forEach((cb) => cb(0));
-    expect(window.scrollTo).toHaveBeenCalledWith({ top: 368, behavior: 'smooth' });
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 268, behavior: 'smooth' });
     expect(reportGridReadyMock).not.toHaveBeenCalled();
+  });
+
+  it('scrolls to listings-results on desktop when scrollY is within 1px of the top', () => {
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 1, writable: true });
+    setupResultsTarget();
+
+    const { rerender } = renderHook(
+      ({ isLoading, listingsCount }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount,
+          isLoading,
+        }),
+      { initialProps: { isLoading: true, listingsCount: 4 } },
+    );
+
+    rerender({ isLoading: false, listingsCount: 4 });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
+    expect(rafCallbacks).toHaveLength(1);
+    rafCallbacks.forEach((cb) => cb(0));
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 269, behavior: 'smooth' });
+  });
+
+  it('scrolls to listings-results on desktop when scrollY is still near the top', () => {
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 32, writable: true });
+    setupResultsTarget();
+
+    const { rerender } = renderHook(
+      ({ isLoading, listingsCount }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount,
+          isLoading,
+        }),
+      { initialProps: { isLoading: true, listingsCount: 4 } },
+    );
+
+    rerender({ isLoading: false, listingsCount: 4 });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
+    expect(rafCallbacks).toHaveLength(1);
+    rafCallbacks.forEach((cb) => cb(0));
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 300, behavior: 'smooth' });
+  });
+
+  it('does not scroll to listings-results on desktop when the page is not at the top', () => {
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 100, writable: true });
+    setupResultsTarget();
+
+    const { rerender } = renderHook(
+      ({ isLoading, listingsCount }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount,
+          isLoading,
+        }),
+      { initialProps: { isLoading: true, listingsCount: 4 } },
+    );
+
+    rerender({ isLoading: false, listingsCount: 4 });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
+    expect(rafCallbacks).toHaveLength(0);
+    expect(window.scrollTo).not.toHaveBeenCalled();
+  });
+
+  it('scrolls to listings-results on mobile even when the page is not at the top', () => {
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390, writable: true });
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 100, writable: true });
+    setupResultsTarget();
+
+    const { rerender } = renderHook(
+      ({ isLoading, listingsCount }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount,
+          isLoading,
+        }),
+      { initialProps: { isLoading: true, listingsCount: 4 } },
+    );
+
+    rerender({ isLoading: false, listingsCount: 4 });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
+    expect(rafCallbacks).toHaveLength(1);
+    rafCallbacks.forEach((cb) => cb(0));
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 368, behavior: 'smooth' });
+  });
+
+  it('scrolls to listings-results on desktop when the page is at the top', () => {
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
+    setupResultsTarget();
+
+    const { rerender } = renderHook(
+      ({ isLoading, listingsCount }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount,
+          isLoading,
+        }),
+      { initialProps: { isLoading: true, listingsCount: 4 } },
+    );
+
+    rerender({ isLoading: false, listingsCount: 4 });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
+    expect(rafCallbacks).toHaveLength(1);
+    rafCallbacks.forEach((cb) => cb(0));
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 268, behavior: 'smooth' });
   });
 
   it('does not scroll to listings-results when listings count increases without loading', () => {

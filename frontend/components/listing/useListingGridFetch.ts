@@ -63,6 +63,7 @@ type UseListingGridFetchArgs = {
   setCurrentPage: Dispatch<SetStateAction<number>>;
   setError: Dispatch<SetStateAction<string | null>>;
   setHasLoadedWithFilters: Dispatch<SetStateAction<boolean>>;
+  setListingsQueryKey: Dispatch<SetStateAction<string>>;
   listingsRef: MutableRef<Listing[]>;
 };
 
@@ -79,6 +80,7 @@ export function useListingGridFetch({
   setCurrentPage,
   setError,
   setHasLoadedWithFilters,
+  setListingsQueryKey,
   listingsRef,
 }: UseListingGridFetchArgs) {
   const fetchControllerRef = useRef<AbortController | null>(null);
@@ -139,6 +141,7 @@ export function useListingGridFetch({
             setMeta(finalMeta);
             setError(null);
             setHasLoadedWithFilters(true);
+            setListingsQueryKey(searchParamsString);
             dispatchAnalyticsForNewListings(allNewListings);
           });
         } else {
@@ -167,6 +170,7 @@ export function useListingGridFetch({
           setListings([]);
           setError(t('listings.loadError'));
           setHasLoadedWithFilters(true);
+          setListingsQueryKey(searchParamsString);
         }
       } finally {
         if (controller.signal.aborted) {
@@ -205,6 +209,7 @@ export function useListingGridFetch({
       setCurrentPage,
       setError,
       setHasLoadedWithFilters,
+      setListingsQueryKey,
       listingsRef,
     ],
   );
