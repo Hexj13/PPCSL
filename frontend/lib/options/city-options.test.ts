@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 
 import type { City } from '../utils/utils';
 
@@ -12,6 +12,17 @@ const mdCities: City[] = [
   { name: 'Bender', nameEn: 'Bender', nameRu: 'Бендеры' },
   { name: 'Tiraspol', nameEn: 'Tiraspol', nameRu: 'Тирасполь' },
 ];
+
+const alCities: City[] = [
+  { name: 'Tiranë', nameEn: 'Tirana' },
+  { name: 'Durrës', nameEn: 'Durres' },
+  { name: 'Vlorë', nameEn: 'Vlore' },
+  { name: 'Shkodër', nameEn: 'Shkoder' },
+  { name: 'Elbasan', nameEn: 'Elbasan' },
+  { name: 'Fier', nameEn: 'Fier' },
+];
+
+const ASCII_LATIN = /^[A-Za-z -]+$/;
 
 describe('city-options', () => {
   describe('getPopularCityNamesEn', () => {
@@ -71,6 +82,52 @@ describe('city-options', () => {
 
       const chisinau = options.find((opt) => opt.value === 'Chișinău');
       expect(chisinau?.label).toBe('Кишинёв (Chișinău)');
+    });
+  });
+
+  describe('Albania', () => {
+    beforeEach(() => {
+      process.env.COUNTRY = 'al';
+      process.env.NEXT_PUBLIC_COUNTRY = 'al';
+    });
+
+    afterEach(() => {
+      process.env.COUNTRY = 'md';
+      process.env.NEXT_PUBLIC_COUNTRY = 'md';
+    });
+
+    it('should return five popular cities in English without diacritics', () => {
+      expect(getPopularCityNamesEn()).toEqual(['Tirana', 'Durres', 'Vlore', 'Shkoder', 'Elbasan']);
+      expect(getPopularCityNamesEn().every((name) => ASCII_LATIN.test(name))).toBe(true);
+    });
+
+    it('should use English ASCII values and labels in search and form options', () => {
+      const options = buildCityOptions({
+        cities: alCities,
+        locale: 'sq',
+        popularLabel: 'Popular',
+        otherLabel: 'Other',
+      });
+
+      const selectable = options.filter((opt) => !opt.value.startsWith('__category__'));
+      const popular = selectable.filter((opt) => opt.category === 'Popular');
+
+      expect(popular.map((opt) => opt.value)).toEqual([
+        'Tirana',
+        'Durres',
+        'Vlore',
+        'Shkoder',
+        'Elbasan',
+      ]);
+      expect(popular.map((opt) => opt.label)).toEqual([
+        'Tirana',
+        'Durres',
+        'Vlore',
+        'Shkoder',
+        'Elbasan',
+      ]);
+      expect(selectable.every((opt) => ASCII_LATIN.test(opt.label))).toBe(true);
+      expect(selectable.every((opt) => ASCII_LATIN.test(opt.value))).toBe(true);
     });
   });
 });

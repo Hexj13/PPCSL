@@ -92,7 +92,10 @@ async function main(): Promise<void> {
   try {
     const email = app.get(EmailService);
     const userId = '00000000-0000-0000-0000-000000000001';
-    const locale = resolveEmailLocale(process.env.SEND_TEST_EMAIL_LOCALE ?? null);
+    const locale = resolveEmailLocale(process.env.SEND_TEST_EMAIL_LOCALE ?? null, {
+      supportedLocales: process.env.SUPPORTED_LOCALES,
+      defaultLocale: process.env.DEFAULT_LOCALE,
+    });
     const digestEnd = new Date();
     const digestStart = new Date(digestEnd);
     digestStart.setUTCDate(digestStart.getUTCDate() - 7);

@@ -1,3 +1,5 @@
+import { alCities } from '../../../cities/data/al';
+
 export interface PlatformSeedCurrencyWeight {
   value: 'EUR' | 'MDL' | 'ALL';
   weight: number;
@@ -27,48 +29,7 @@ export interface PlatformSeedConfig {
 }
 
 const config: PlatformSeedConfig = {
-  cities: [
-    'Tirana',
-    'Durrës',
-    'Vlorë',
-    'Shkodër',
-    'Elbasan',
-    'Fier',
-    'Korçë',
-    'Berat',
-    'Lushnjë',
-    'Kavajë',
-    'Gjirokastër',
-    'Sarandë',
-    'Kukës',
-    'Lezhë',
-    'Pogradec',
-    'Krujë',
-    'Peshkopi',
-    'Kuçovë',
-    'Patos',
-    'Kamëz',
-    'Fushë-Krujë',
-    'Laç',
-    'Shijak',
-    'Librazhd',
-    'Gramsh',
-    'Përmet',
-    'Tepelenë',
-    'Ballsh',
-    'Burrel',
-    'Rrëshen',
-    'Himarë',
-    'Pukë',
-    'Bajram Curri',
-    'Ersekë',
-    'Çorovodë',
-    'Delvinë',
-    'Konispol',
-    'Orikum',
-    'Vorë',
-    'Rrogozhinë',
-  ],
+  cities: alCities.map((city) => city.nameEn),
 
   descriptions: [
     'Makina në gjendje të shkëlqyer, pa defekte. Mirëmbajtje e rregullt.',

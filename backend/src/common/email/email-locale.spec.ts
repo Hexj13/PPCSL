@@ -1,4 +1,4 @@
-import { interpolateEmailTemplate, resolveEmailLocale } from './email-locale';
+import { interpolateEmailTemplate, localizedEmailPath, resolveEmailLocale } from './email-locale';
 
 describe('email-locale', () => {
   describe('resolveEmailLocale', () => {
@@ -14,6 +14,31 @@ describe('email-locale', () => {
       expect(resolveEmailLocale(' ru ')).toBe('ru');
       expect(resolveEmailLocale('en')).toBe('en');
       expect(resolveEmailLocale('SQ')).toBe('sq');
+    });
+
+    it('maps unsupported locales to DEFAULT_LOCALE when SUPPORTED_LOCALES is set', () => {
+      const options = { supportedLocales: 'sq,en', defaultLocale: 'sq' };
+      expect(resolveEmailLocale('ro', options)).toBe('sq');
+      expect(resolveEmailLocale('ru', options)).toBe('sq');
+      expect(resolveEmailLocale('de', options)).toBe('sq');
+      expect(resolveEmailLocale(null, options)).toBe('sq');
+      expect(resolveEmailLocale('en', options)).toBe('en');
+      expect(resolveEmailLocale('SQ', options)).toBe('sq');
+    });
+  });
+
+  describe('localizedEmailPath', () => {
+    it('omits the prefix for the default locale', () => {
+      expect(localizedEmailPath('/verify-email?token=abc', 'sq', 'sq')).toBe(
+        '/verify-email?token=abc',
+      );
+    });
+
+    it('prefixes non-default locales', () => {
+      expect(localizedEmailPath('/verify-email?token=abc', 'en', 'sq')).toBe(
+        '/en/verify-email?token=abc',
+      );
+      expect(localizedEmailPath('/my-listings', 'en', 'sq')).toBe('/en/my-listings');
     });
   });
 

@@ -4,7 +4,7 @@ import { findCity, getCountry, sortByName, type City } from '@/lib/utils';
 const POPULAR_CITY_NAMES_EN_BY_COUNTRY: Record<string, string[]> = {
   md: ['Chișinău', 'Bălți', 'Tiraspol', 'Bender', 'Orhei'],
   mk: ['Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo'],
-  al: ['Tirana', 'Durrës', 'Vlorë', 'Shkodër', 'Elbasan'],
+  al: ['Tirana', 'Durres', 'Vlore', 'Shkoder', 'Elbasan'],
 };
 
 export function getPopularCityNamesEn(): string[] {
@@ -12,7 +12,18 @@ export function getPopularCityNamesEn(): string[] {
   return POPULAR_CITY_NAMES_EN_BY_COUNTRY[country] ?? POPULAR_CITY_NAMES_EN_BY_COUNTRY.mk;
 }
 
+function isAlbania(): boolean {
+  return getCountry() === 'al';
+}
+
+function getCityOptionValue(city: City): string {
+  return isAlbania() ? city.nameEn : city.name;
+}
+
 function getCityLabel(city: City, locale: string): string {
+  if (isAlbania()) {
+    return city.nameEn;
+  }
   if (locale === 'ro') {
     return city.name;
   }
@@ -55,7 +66,7 @@ export function buildCityOptions({
     options.push({ value: '__category__popular', label: popularLabel, category: popularLabel });
     popularCities.forEach((city) => {
       options.push({
-        value: city.name,
+        value: getCityOptionValue(city),
         label: getCityLabel(city, locale),
         category: popularLabel,
       });
@@ -66,7 +77,7 @@ export function buildCityOptions({
     options.push({ value: '__category__other', label: otherLabel, category: otherLabel });
     otherCities.forEach((city) => {
       options.push({
-        value: city.name,
+        value: getCityOptionValue(city),
         label: getCityLabel(city, locale),
         category: otherLabel,
       });

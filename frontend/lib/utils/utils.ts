@@ -394,6 +394,9 @@ export function getCityName(
   if (cities && cities.length > 0) {
     const city = findCity(cities, cityNameEn);
     if (city) {
+      if (getCountry() === 'al') {
+        return city.nameEn;
+      }
       if (locale === 'ro') {
         return city.name;
       }
@@ -425,6 +428,9 @@ export function getCityNamePlain(
   if (cities && cities.length > 0) {
     const city = findCity(cities, cityNameEn);
     if (city) {
+      if (getCountry() === 'al') {
+        return city.nameEn;
+      }
       if (locale === 'ro') {
         return city.name;
       }

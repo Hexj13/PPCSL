@@ -12,9 +12,10 @@ import { buildSignInHref, buildSignPageHref } from '@/lib/return-url';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
 import { HeaderListingsNavLink } from './HeaderListingsNavLink';
+import { UserIcon } from './icons';
 import { MOBILE_NAV_CTA_HEIGHT_CLASSES } from './mobileNavCtaClasses';
 
-const guestLinkClasses = `text-primary-700 font-medium text-sm hover-only:hover:text-primary-900 active:text-primary-900 hover-only:hover:border-primary-900 active:border-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 rounded-lg border-2 border-primary-700 bg-primary-500/10 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base ${MOBILE_NAV_CTA_HEIGHT_CLASSES}`;
+const guestLinkClasses = `text-primary-700 font-medium text-sm hover-only:hover:text-primary-900 active:text-primary-900 transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 px-2.5 rounded-lg bg-bg-darker search-control-border select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base ${MOBILE_NAV_CTA_HEIGHT_CLASSES}`;
 
 type GuestMobileNavProps = {
   comparisonCount: number;
@@ -64,6 +65,7 @@ export function GuestMobileNav({
         onClick={handleSignClick}
         className={guestLinkClasses}
       >
+        <UserIcon className="w-4 h-4 shrink-0" />
         <span suppressHydrationWarning>{t('header.loginAndRegister')}</span>
       </Link>
       <div className="flex flex-col gap-4 border-t border-primary-700 pt-4">

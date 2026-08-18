@@ -30,6 +30,32 @@ function cityMatchesName(city: City, query: string): boolean {
   return city.name === 'Sîngera' && SINGERA_ALIASES.has(normalized);
 }
 
+function addUniqueCityValue(values: string[], seen: Set<string>, value: string): void {
+  const key = value.toLowerCase();
+  if (seen.has(key)) {
+    return;
+  }
+  seen.add(key);
+  values.push(value);
+}
+
+export function expandCityFilterValues(values: string[]): string[] {
+  const cities = CITIES_BY_COUNTRY[getCountry()] ?? mdCities;
+  const expanded: string[] = [];
+  const seen = new Set<string>();
+
+  for (const value of values) {
+    addUniqueCityValue(expanded, seen, value);
+    const city = cities.find((item) => cityMatchesName(item, value));
+    if (city) {
+      addUniqueCityValue(expanded, seen, city.name);
+      addUniqueCityValue(expanded, seen, city.nameEn);
+    }
+  }
+
+  return expanded;
+}
+
 @Injectable()
 export class CitiesService {
   constructor(

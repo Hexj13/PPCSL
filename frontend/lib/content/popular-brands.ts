@@ -59,7 +59,6 @@ const fallback: PopularBrandsByVehicleType = {
       'Ford',
       'Hyundai',
       'Mercedes-Benz',
-      'Opel',
       'Peugeot',
       'Renault',
       'Toyota',
@@ -82,7 +81,6 @@ const fallback: PopularBrandsByVehicleType = {
         'S-Class',
         'V-Class',
       ],
-      Opel: ['Astra', 'Corsa', 'Crossland', 'Grandland', 'Insignia', 'Mokka', 'Vivaro', 'Zafira'],
       Peugeot: ['2008', '208', '3008', '308', '5008', '508', 'Partner', 'Traveller'],
       Renault: [
         'Captur',

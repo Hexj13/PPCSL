@@ -7,6 +7,7 @@ import nodemailer from 'nodemailer';
 import {
   EmailLocale,
   interpolateEmailTemplate,
+  localizedEmailPath,
   resolveEmailLocale,
 } from '../../../common/email/email-locale';
 import {
@@ -27,7 +28,7 @@ const EMAIL_CHANGE_ATTEMPTS_WINDOW_SECONDS = Math.floor(EMAIL_CHANGE_ATTEMPTS_WI
 const MAX_EMAIL_CHANGE_ATTEMPTS_PER_WINDOW = 2;
 const DEFAULT_EMAIL_VERIFICATION_TTL_SECONDS = 72 * 3600;
 
-const DEFAULT_SUPPORT_EMAIL = 'support@kupito.club';
+const LOCAL_FRONTEND_HOSTS = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1']);
 
 function jwtExpiresInToSeconds(expiresIn: NonNullable<JwtSignOptions['expiresIn']>): number {
   if (typeof expiresIn === 'number' && Number.isFinite(expiresIn)) {
@@ -127,10 +128,10 @@ export class EmailService {
     email: string,
     preferredLocale?: string | null,
   ): Promise<void> {
-    const loc = resolveEmailLocale(preferredLocale);
+    const loc = this.resolveLocale(preferredLocale);
     const token = this.generateVerificationToken(userId, email);
     const siteBase = normalizeSiteBaseUrl(this.getFrontendUrl());
-    const verificationUrl = `${siteBase}/verify-email?token=${token}`;
+    const verificationUrl = this.frontendHref('/verify-email', loc, `token=${token}`);
 
     const emailSubject = this.emailT('emails.verification.subject', loc);
     const bodyHtml = [
@@ -141,14 +142,11 @@ export class EmailService {
       emailPlainParagraph(this.emailT('emails.verification.disclaimer', loc)),
     ].join('');
 
-    const emailHtml = buildEmailLayout({
-      siteBaseUrl: siteBase,
-      documentTitle: emailSubject,
+    const emailHtml = this.buildHtmlEmail(loc, siteBase, {
+      subject: emailSubject,
       heading: this.emailT('emails.verification.heading', loc),
       preheader: this.emailT('emails.verification.preheader', loc),
       bodyHtml,
-      supportEmail: this.getSupportEmail(),
-      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
 
     const emailText = this.emailT('emails.verification.textPlain', loc, { url: verificationUrl });
@@ -161,10 +159,14 @@ export class EmailService {
     newEmail: string,
     preferredLocale?: string | null,
   ): Promise<void> {
-    const loc = resolveEmailLocale(preferredLocale);
+    const loc = this.resolveLocale(preferredLocale);
     const token = this.generateEmailChangeToken(userId, newEmail);
     const siteBase = normalizeSiteBaseUrl(this.getFrontendUrl());
-    const confirmationUrl = `${siteBase}/profile/confirm-email-change?token=${token}`;
+    const confirmationUrl = this.frontendHref(
+      '/profile/confirm-email-change',
+      loc,
+      `token=${token}`,
+    );
 
     const emailSubject = this.emailT('emails.emailChange.subject', loc);
     const emailText = this.emailT('emails.emailChange.textPlain', loc, {
@@ -179,14 +181,11 @@ export class EmailService {
       emailPlainParagraph(this.emailT('emails.emailChange.disclaimer', loc)),
     ].join('');
 
-    const emailHtml = buildEmailLayout({
-      siteBaseUrl: siteBase,
-      documentTitle: emailSubject,
+    const emailHtml = this.buildHtmlEmail(loc, siteBase, {
+      subject: emailSubject,
       heading: this.emailT('emails.emailChange.heading', loc),
       preheader: this.emailT('emails.emailChange.preheader', loc),
       bodyHtml,
-      supportEmail: this.getSupportEmail(),
-      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
 
     await this.sendMail(newEmail, emailSubject, emailText, emailHtml);
@@ -235,7 +234,7 @@ export class EmailService {
     email: string,
     preferredLocale?: string | null,
   ): Promise<void> {
-    const loc = resolveEmailLocale(preferredLocale);
+    const loc = this.resolveLocale(preferredLocale);
     const subject = this.emailT('emails.passwordChanged.subject', loc);
     const siteBase = normalizeSiteBaseUrl(this.getFrontendUrl());
     const text = this.emailT('emails.passwordChanged.textPlain', loc);
@@ -243,14 +242,11 @@ export class EmailService {
       emailPlainParagraph(this.emailT('emails.passwordChanged.body1', loc)),
       emailPlainParagraph(this.emailT('emails.passwordChanged.body2', loc)),
     ].join('');
-    const html = buildEmailLayout({
-      siteBaseUrl: siteBase,
-      documentTitle: subject,
+    const html = this.buildHtmlEmail(loc, siteBase, {
+      subject,
       heading: this.emailT('emails.passwordChanged.heading', loc),
       preheader: this.emailT('emails.passwordChanged.preheader', loc),
       bodyHtml,
-      supportEmail: this.getSupportEmail(),
-      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
     await this.sendMail(email, subject, text, html);
   }
@@ -260,9 +256,9 @@ export class EmailService {
     activeListingsCount: number,
     preferredLocale?: string | null,
   ): Promise<void> {
-    const loc = resolveEmailLocale(preferredLocale);
+    const loc = this.resolveLocale(preferredLocale);
     const siteBase = normalizeSiteBaseUrl(this.getFrontendUrl());
-    const myListingsUrl = `${siteBase}/my-listings`;
+    const myListingsUrl = this.frontendHref('/my-listings', loc);
     const subject = this.emailT('emails.listingRefresh.subject', loc);
     const text = this.emailT('emails.listingRefresh.textPlain', loc, {
       count: activeListingsCount,
@@ -279,14 +275,11 @@ export class EmailService {
       emailTextParagraph(bodyHowTo),
       emailCtaButton(myListingsUrl, this.emailT('emails.listingRefresh.cta', loc)),
     ].join('');
-    const html = buildEmailLayout({
-      siteBaseUrl: siteBase,
-      documentTitle: subject,
+    const html = this.buildHtmlEmail(loc, siteBase, {
+      subject,
       heading: this.emailT('emails.listingRefresh.heading', loc),
       preheader: this.emailT('emails.listingRefresh.preheader', loc),
       bodyHtml,
-      supportEmail: this.getSupportEmail(),
-      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
     await this.sendMail(email, subject, text, html);
   }
@@ -298,9 +291,9 @@ export class EmailService {
     periodEnd: Date,
     preferredLocale?: string | null,
   ): Promise<void> {
-    const loc = resolveEmailLocale(preferredLocale);
+    const loc = this.resolveLocale(preferredLocale);
     const siteBase = normalizeSiteBaseUrl(this.getFrontendUrl());
-    const myListingsUrl = `${siteBase}/my-listings`;
+    const myListingsUrl = this.frontendHref('/my-listings', loc);
     const subject = this.emailT('emails.weeklyDigest.subject', loc);
     const period = `${periodStart.toISOString().slice(0, 10)} – ${periodEnd.toISOString().slice(0, 10)}`;
     const viewsWord = this.emailT('emails.weeklyDigest.viewsWord', loc);
@@ -338,14 +331,11 @@ export class EmailService {
       ...cards,
       emailCtaButton(myListingsUrl, this.emailT('emails.weeklyDigest.cta', loc)),
     ].join('');
-    const html = buildEmailLayout({
-      siteBaseUrl: siteBase,
-      documentTitle: subject,
+    const html = this.buildHtmlEmail(loc, siteBase, {
+      subject,
       heading: this.emailT('emails.weeklyDigest.heading', loc),
       preheader: this.emailT('emails.weeklyDigest.preheader', loc, { period }),
       bodyHtml,
-      supportEmail: this.getSupportEmail(),
-      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
     await this.sendMail(email, subject, text, html);
   }
@@ -354,7 +344,7 @@ export class EmailService {
     email: string,
     preferredLocale?: string | null,
   ): Promise<void> {
-    const loc = resolveEmailLocale(preferredLocale);
+    const loc = this.resolveLocale(preferredLocale);
     const subject = this.emailT('emails.phoneChanged.subject', loc);
     const siteBase = normalizeSiteBaseUrl(this.getFrontendUrl());
     const text = this.emailT('emails.phoneChanged.textPlain', loc);
@@ -362,14 +352,11 @@ export class EmailService {
       emailPlainParagraph(this.emailT('emails.phoneChanged.body1', loc)),
       emailPlainParagraph(this.emailT('emails.phoneChanged.body2', loc)),
     ].join('');
-    const html = buildEmailLayout({
-      siteBaseUrl: siteBase,
-      documentTitle: subject,
+    const html = this.buildHtmlEmail(loc, siteBase, {
+      subject,
       heading: this.emailT('emails.phoneChanged.heading', loc),
       preheader: this.emailT('emails.phoneChanged.preheader', loc),
       bodyHtml,
-      supportEmail: this.getSupportEmail(),
-      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
     await this.sendMail(email, subject, text, html);
   }
@@ -378,7 +365,7 @@ export class EmailService {
     email: string,
     preferredLocale?: string | null,
   ): Promise<void> {
-    const loc = resolveEmailLocale(preferredLocale);
+    const loc = this.resolveLocale(preferredLocale);
     const subject = this.emailT('emails.emailChanged.subject', loc);
     const siteBase = normalizeSiteBaseUrl(this.getFrontendUrl());
     const text = this.emailT('emails.emailChanged.textPlain', loc);
@@ -386,14 +373,11 @@ export class EmailService {
       emailPlainParagraph(this.emailT('emails.emailChanged.body1', loc)),
       emailPlainParagraph(this.emailT('emails.emailChanged.body2', loc)),
     ].join('');
-    const html = buildEmailLayout({
-      siteBaseUrl: siteBase,
-      documentTitle: subject,
+    const html = this.buildHtmlEmail(loc, siteBase, {
+      subject,
       heading: this.emailT('emails.emailChanged.heading', loc),
       preheader: this.emailT('emails.emailChanged.preheader', loc),
       bodyHtml,
-      supportEmail: this.getSupportEmail(),
-      signatureLine: this.emailT('emails.footer.tagline', loc),
     });
     await this.sendMail(email, subject, text, html);
   }
@@ -404,6 +388,53 @@ export class EmailService {
       return raw;
     }
     return interpolateEmailTemplate(raw, vars);
+  }
+
+  private resolveLocale(preferredLocale?: string | null): EmailLocale {
+    return resolveEmailLocale(preferredLocale, {
+      supportedLocales: this.getEnvValue('SUPPORTED_LOCALES'),
+      defaultLocale: this.getEnvValue('DEFAULT_LOCALE'),
+    });
+  }
+
+  private getRoutingDefaultLocale(): string {
+    return this.getEnvValue('DEFAULT_LOCALE')?.toLowerCase() || 'en';
+  }
+
+  private frontendHref(restPath: string, locale: EmailLocale, query?: string): string {
+    const base = normalizeSiteBaseUrl(this.getFrontendUrl());
+    const withQuery = query ? `${restPath}?${query}` : restPath;
+    return `${base}${localizedEmailPath(withQuery, locale, this.getRoutingDefaultLocale())}`;
+  }
+
+  private getSiteName(): string | undefined {
+    return this.getEnvValue('SITE_NAME') || this.getEnvValue('PLATFORM_NAME');
+  }
+
+  private getEmailLogoSrc(): string | undefined {
+    return this.getEnvValue('EMAIL_LOGO_PATH');
+  }
+
+  private buildHtmlEmail(
+    loc: EmailLocale,
+    siteBase: string,
+    params: { subject: string; heading: string; preheader?: string; bodyHtml: string },
+  ): string {
+    const copyright = this.emailT('emails.footer.copyright', loc);
+    const logoSrc = this.getEmailLogoSrc();
+    return buildEmailLayout({
+      siteBaseUrl: siteBase,
+      documentTitle: params.subject,
+      heading: params.heading,
+      preheader: params.preheader,
+      bodyHtml: params.bodyHtml,
+      supportEmail: this.getSupportEmail(),
+      signatureLine: this.emailT('emails.footer.tagline', loc),
+      siteName: this.getSiteName(),
+      copyrightLine: copyright === 'emails.footer.copyright' ? undefined : copyright,
+      logoSrc,
+      logoWidthPx: logoSrc ? 180 : 110,
+    });
   }
 
   private translateListingStatus(status: string, locale: EmailLocale): string {
@@ -490,8 +521,34 @@ export class EmailService {
     return this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
   }
 
+  private getFrontendHostname(): string | null {
+    try {
+      const host = new URL(this.getFrontendUrl()).hostname.toLowerCase();
+      if (!host || LOCAL_FRONTEND_HOSTS.has(host)) {
+        return null;
+      }
+      return host.replace(/^www\./, '');
+    } catch {
+      return null;
+    }
+  }
+
   private getSupportEmail(): string {
-    return this.configService.get('SUPPORT_EMAIL') || DEFAULT_SUPPORT_EMAIL;
+    const configured = this.getEnvValue('SUPPORT_EMAIL');
+    if (configured) {
+      return configured;
+    }
+    const host = this.getFrontendHostname();
+    return host ? `support@${host}` : 'support@localhost';
+  }
+
+  private getSmtpFrom(): string {
+    const configured = this.getEnvValue('SMTP_FROM');
+    if (configured) {
+      return configured;
+    }
+    const host = this.getFrontendHostname();
+    return host ? `noreply@${host}` : 'noreply@localhost';
   }
 
   private emailChangeAttemptsKey(userId: string): string {
@@ -605,7 +662,7 @@ export class EmailService {
     }
 
     try {
-      const smtpFrom = this.configService.get('SMTP_FROM') || 'noreply@kupito.club';
+      const smtpFrom = this.getSmtpFrom();
       await this.transporter.sendMail({
         from: smtpFrom,
         replyTo: this.getSupportEmail(),

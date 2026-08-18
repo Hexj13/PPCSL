@@ -17,8 +17,8 @@ describe('applyCitiesFilter', () => {
     applyCitiesFilter(qb, 'listing', ['Balti', 'Tiraspol'], undefined);
 
     expect(andWhere).toHaveBeenCalledWith(
-      '(listing.city ILIKE :city_0 OR listing.city ILIKE :city_1)',
-      { city_0: '%Balti%', city_1: '%Tiraspol%' },
+      '(listing.city ILIKE :city_0 OR listing.city ILIKE :city_1 OR listing.city ILIKE :city_2)',
+      { city_0: '%Balti%', city_1: '%Bălți%', city_2: '%Tiraspol%' },
     );
   });
 

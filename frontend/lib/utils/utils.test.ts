@@ -16,6 +16,7 @@ import {
   formatPrice,
   formatThousandsWithSpaces,
   formatTransmission,
+  getCityName,
   getCityNamePlain,
   getListingDisplayTitle,
   getTireModelDisplayLabel,
@@ -437,6 +438,30 @@ describe('utils', () => {
     it('should resolve a stored official name to English and Russian labels', () => {
       expect(getCityNamePlain('Chișinău', 'en', cities)).toBe('Chisinau');
       expect(getCityNamePlain('Chișinău', 'ru', cities)).toBe('Кишинёв');
+    });
+  });
+
+  describe('Albania city names', () => {
+    const cities = [
+      { name: 'Tiranë', nameEn: 'Tirana' },
+      { name: 'Durrës', nameEn: 'Durres' },
+    ];
+
+    beforeEach(() => {
+      process.env.COUNTRY = 'al';
+      process.env.NEXT_PUBLIC_COUNTRY = 'al';
+    });
+
+    afterEach(() => {
+      process.env.COUNTRY = 'md';
+      process.env.NEXT_PUBLIC_COUNTRY = 'md';
+    });
+
+    it('should show English names without diacritics for sq and en', () => {
+      expect(getCityName('Tiranë', 'sq', cities)).toBe('Tirana');
+      expect(getCityName('Durrës', 'en', cities)).toBe('Durres');
+      expect(getCityNamePlain('Tiranë', 'sq', cities)).toBe('Tirana');
+      expect(getCityNamePlain('Tirana', 'sq', cities)).toBe('Tirana');
     });
   });
 

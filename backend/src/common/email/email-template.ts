@@ -43,11 +43,21 @@ export type EmailLayoutOptions = {
   signatureLine?: string;
   /** Brand name for logo alt and footer; defaults to site hostname. */
   siteName?: string;
+  copyrightLine?: string;
+  /** Public path or absolute URL for the header logo. Defaults to `{siteBaseUrl}/logo.png`. */
+  logoSrc?: string;
+  logoWidthPx?: number;
 };
 
 export function buildEmailLayout(options: EmailLayoutOptions): string {
   const base = normalizeSiteBaseUrl(options.siteBaseUrl);
-  const logoUrl = `${base}/logo.png`;
+  const rawLogo = options.logoSrc?.trim();
+  const logoUrl = rawLogo
+    ? /^https?:\/\//i.test(rawLogo)
+      ? rawLogo
+      : `${base}${rawLogo.startsWith('/') ? rawLogo : `/${rawLogo}`}`
+    : `${base}/logo.png`;
+  const logoWidth = Number.isFinite(options.logoWidthPx) ? Number(options.logoWidthPx) : 110;
   const safeHeading = escapeHtml(options.heading);
   const safeDocTitle = escapeHtml(options.documentTitle);
   const safeSupport = escapeHtml(options.supportEmail);
@@ -55,9 +65,13 @@ export function buildEmailLayout(options: EmailLayoutOptions): string {
   const brandLabel = escapeHtml(options.siteName?.trim() || base.replace(/^https?:\/\//, ''));
   const pre = options.preheader ? escapeHtml(options.preheader) : '';
   const signatureLine = options.signatureLine ? escapeHtml(options.signatureLine) : '';
+  const copyrightLine = options.copyrightLine ? escapeHtml(options.copyrightLine) : '';
 
   const signatureBlock = signatureLine
     ? `<mj-text font-size="13px" line-height="20px" color="${brand.textSecondary}" padding="0 0 12px 0">${signatureLine}</mj-text>`
+    : '';
+  const copyrightBlock = copyrightLine
+    ? `<mj-text font-size="12px" line-height="18px" color="${brand.textSecondary}" padding="8px 0 0 0">${copyrightLine}</mj-text>`
     : '';
   const mjml = `<mjml>
   <mj-head>
@@ -77,7 +91,7 @@ export function buildEmailLayout(options: EmailLayoutOptions): string {
   <mj-body background-color="${brand.bgPage}">
     <mj-section background-color="${brand.primary}" border-top-left-radius="8px" border-top-right-radius="8px" border-left="1px solid ${brand.divider}" border-right="1px solid ${brand.divider}" border-top="1px solid ${brand.divider}" padding="24px 20px">
       <mj-column>
-        <mj-image href="${escapeHtml(base)}" src="${escapeHtml(logoUrl)}" width="110px" alt="${brandLabel}" padding="0" />
+        <mj-image href="${escapeHtml(base)}" src="${escapeHtml(logoUrl)}" width="${logoWidth}px" alt="${brandLabel}" padding="0" />
       </mj-column>
     </mj-section>
     <mj-section background-color="${brand.white}" border-left="1px solid ${brand.divider}" border-right="1px solid ${brand.divider}" padding="28px 24px 4px 24px">
@@ -92,6 +106,7 @@ export function buildEmailLayout(options: EmailLayoutOptions): string {
         ${signatureBlock}
         <mj-text font-size="13px" line-height="20px" color="${brand.textSecondary}" padding="0 0 8px 0"><a href="mailto:${safeSupport}" style="color:${brand.primary};font-weight:700;text-decoration:none;">${safeSupport}</a></mj-text>
         <mj-text font-size="13px" line-height="20px" color="${brand.textSecondary}" padding="0"><a href="${escapeHtml(base)}" style="color:${brand.primary};font-weight:700;text-decoration:none;">${hostLabel}</a></mj-text>
+        ${copyrightBlock}
       </mj-column>
     </mj-section>
   </mj-body>

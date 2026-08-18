@@ -18,6 +18,7 @@ type EnvMap = Record<string, string | undefined>;
 
 const emailTranslations: Record<string, string> = {
   'emails.footer.tagline': 'Platform for posting car sale listings in Moldova',
+  'emails.footer.copyright': '© 2025-2026 example. All rights reserved.',
   'emails.verification.subject': 'Confirm email',
   'emails.verification.heading': 'Confirm heading',
   'emails.verification.preheader': 'Confirm preheader',
@@ -182,6 +183,62 @@ describe('EmailService', () => {
       expect(sent.text).toContain('https://kupito.club/verify-email?token=jwt-token');
       expect(sent.html).toContain('https://kupito.club/verify-email?token=jwt-token');
       expect(sent.html).toContain('Platform for posting car sale listings in Moldova');
+      expect(sent.html).toContain('© 2025-2026 example. All rights reserved.');
+    });
+
+    it('passes SITE_NAME into the layout and prefixes non-default locale paths', async () => {
+      const service = createService({
+        ...env,
+        FRONTEND_URL: 'https://makinaguru.com',
+        SITE_NAME: 'MakinaGuru',
+        DEFAULT_LOCALE: 'sq',
+        SUPPORTED_LOCALES: 'sq,en',
+        SUPPORT_EMAIL: 'support@makinaguru.com',
+        SMTP_FROM: 'noreply@makinaguru.com',
+        EMAIL_LOGO_PATH: '/logo-email.png',
+      });
+
+      await service.sendVerificationEmail('user-1', 'test@example.com', 'en');
+
+      const sent = sendMailMock.mock.calls[0]?.[0];
+      expect(sent.from).toBe('noreply@makinaguru.com');
+      expect(sent.replyTo).toBe('support@makinaguru.com');
+      expect(sent.text).toContain('https://makinaguru.com/en/verify-email?token=jwt-token');
+      expect(sent.html).toContain('https://makinaguru.com/en/verify-email?token=jwt-token');
+      expect(sent.html).toContain('alt="MakinaGuru"');
+      expect(sent.html).toContain('/logo-email.png');
+    });
+
+    it('derives From and support addresses from FRONTEND_URL when SMTP_FROM and SUPPORT_EMAIL are unset', async () => {
+      const service = createService({
+        SMTP_HOST: 'smtp.mail.com',
+        SMTP_PORT: '587',
+        SMTP_USER: 'user@mail.com',
+        SMTP_PASSWORD: 'secret',
+        FRONTEND_URL: 'https://www.makinaguru.com',
+      });
+
+      await service.sendPasswordChangedNotification('test@example.com', 'en');
+
+      const sent = sendMailMock.mock.calls[0]?.[0];
+      expect(sent.from).toBe('noreply@makinaguru.com');
+      expect(sent.replyTo).toBe('support@makinaguru.com');
+      expect(sent.html).toContain('support@makinaguru.com');
+    });
+
+    it('maps unsupported preferred locales to DEFAULT_LOCALE and omits its URL prefix', async () => {
+      const service = createService({
+        ...env,
+        FRONTEND_URL: 'https://makinaguru.com',
+        DEFAULT_LOCALE: 'sq',
+        SUPPORTED_LOCALES: 'sq,en',
+      });
+
+      await service.sendVerificationEmail('user-1', 'test@example.com', 'ro');
+
+      const sent = sendMailMock.mock.calls[0]?.[0];
+      expect(sent.text).toContain('https://makinaguru.com/verify-email?token=jwt-token');
+      expect(sent.text).not.toContain('/ro/verify-email');
     });
 
     it('uses 72h JWT expiry for link tokens when EMAIL_VERIFICATION_TOKEN_EXPIRES_IN is unset', async () => {

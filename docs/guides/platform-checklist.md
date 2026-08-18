@@ -190,12 +190,13 @@ Validated at build/startup (`core/scripts/check-env.js`, `core/backend/src/commo
 Backend:
 
 ```
-COUNTRY, DEFAULT_LOCALE, DEFAULT_CURRENCY
+COUNTRY, DEFAULT_LOCALE, SUPPORTED_LOCALES, DEFAULT_CURRENCY
 NODE_ENV=production
 JWT_SECRET, CRON_SECRET
 DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME
 REDIS_HOST, REDIS_PORT
 FRONTEND_URL, API_URL
+SITE_NAME or PLATFORM_NAME        # email footer brand + Swagger title
 NEXT_PUBLIC_SITE_URL              # yes, on the backend too — used by the sitemap
 AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, AWS_REGION
 AWS_CLOUDFRONT_URL                # if using a CDN
@@ -203,6 +204,7 @@ WATERMARK_DOMAIN
 TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN
 TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM_NUMBER
 SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, SUPPORT_EMAIL
+EMAIL_LOGO_PATH                   # optional public path for the email header logo
 GOOGLE_CLIENT_ID
 FACEBOOK_APP_ID
 FACEBOOK_APP_SECRET
@@ -216,7 +218,6 @@ TELEGRAM_BOT_TOKEN
 AWS_MEDIACONVERT_ENDPOINT, AWS_MEDIACONVERT_QUEUE_ARN, AWS_MEDIACONVERT_ROLE_ARN
 AWS_MEDIACONVERT_SNS_TOPIC_ARN     # recommended when video is enabled
 LISTING_VIDEO_WATERMARK_S3_URI    # separate PNG; photo watermark wrong size (140px overlay)
-SITE_NAME or PLATFORM_NAME        # Swagger title branding
 ONNXRUNTIME_NODE_INSTALL=skip     # Render build
 GITHUB_PAT                        # Render build, private core submodule
 ```
@@ -234,7 +235,7 @@ NEXT_PUBLIC_SENTRY_DSN, SENTRY_ORG, SENTRY_PROJECT, SENTRY_AUTH_TOKEN
 NEXT_PUBLIC_IMAGE_CDN_URL                 # if using a CDN; also feeds CSP + remotePatterns
 ```
 
-**Gotcha — `SMTP_FROM` and `SUPPORT_EMAIL` default to `kupito.club`** (`core/backend/src/common/email/email.service.ts`). Set them explicitly.
+**Gotcha — `SMTP_FROM` and `SUPPORT_EMAIL` fall back to `noreply@` / `support@` plus the `FRONTEND_URL` hostname** (`core/backend/src/auth/infrastructure/services/email.service.ts`). Set them explicitly for production.
 
 **Logging needs no per-platform work.** Pino writes line-delimited JSON to stdout (`core/backend/src/common/logger/logger.module.ts`) and the host collects it per service; application events go through `log-user-event.ts` and carry nothing platform-specific. Phones, emails, tokens and cookies are stripped before anything reaches Sentry (`sentry-event-sanitize.utils.ts`). `/metrics` is behind `CRON_SECRET`.
 

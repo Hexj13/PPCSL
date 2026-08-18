@@ -21,8 +21,8 @@ How to enable **transactional email** (verification, email change, security noti
 - If any of those are missing, **no transporter is created**; `sendMail` is a no-op. API requests do not fail solely because SMTP is unset.
 - Link targets in messages use **`FRONTEND_URL`**. If unset, the backend falls back to `http://localhost:3000`.
 - Email layouts are rendered from MJML on send; avoid adding external webfonts for better cross-client consistency.
-- **`SMTP_FROM`** is optional. Default in code: `noreply@kupito.club`. Your provider may require `From` to match an allowed sender or domain.
-- `replyTo` is set from `SUPPORT_EMAIL` (or `support@kupito.club` by default).
+- **`SMTP_FROM`** is optional. Default in code: `noreply@{FRONTEND_URL hostname}`. Your provider may require `From` to match an allowed sender or domain.
+- `replyTo` is set from `SUPPORT_EMAIL` (or `support@{FRONTEND_URL hostname}` by default).
 - In `NODE_ENV=production`, backend validates email config on startup:
   - `FRONTEND_URL` is required and must be an absolute `http(s)` URL
   - `FRONTEND_URL` must not point to localhost and must not include a path
@@ -34,8 +34,8 @@ How to enable **transactional email** (verification, email change, security noti
 | `SMTP_PORT`     | Yes*     | Port (see below) |
 | `SMTP_USER`     | Yes*     | SMTP username (often full email) |
 | `SMTP_PASSWORD` | Yes*     | Password or app password |
-| `SMTP_FROM`     | No       | `From` header (e.g. `Kupito <noreply@yourdomain.com>`) |
-| `SUPPORT_EMAIL` | No       | `Reply-To` and support contact in email footer |
+| `SMTP_FROM`     | No       | `From` header (e.g. `MakinaGuru <noreply@yourdomain.com>`). Falls back to `noreply@{FRONTEND_URL host}` |
+| `SUPPORT_EMAIL` | No       | `Reply-To` and support contact in email footer. Falls back to `support@{FRONTEND_URL host}` |
 | `FRONTEND_URL`  | No       | Base URL for links in emails |
 | `EMAIL_VERIFICATION_TOKEN_EXPIRES_IN` | No | JWT lifetime for registration verification and email-change links (string accepted by `jsonwebtoken`, e.g. `72h`). Default: `72h`. For local UI testing of expired links, use e.g. `5s` (restart API after changing). |
 
@@ -59,7 +59,7 @@ How to enable **transactional email** (verification, email change, security noti
 SEND_TEST_EMAIL_TO="<address shown in Mailtrap inbox>" npm run send-test-emails
 ```
 
-Optional: `SEND_TEST_EMAIL_LOCALE=en|ro|ru` (defaults to `en` when unset). All sample bodies use backend `locales/backend/*.json` under `emails.*`.
+Optional: `SEND_TEST_EMAIL_LOCALE=en|sq|ro|ru` (defaults to `DEFAULT_LOCALE` or `en` when unset). All sample bodies use backend `locales/backend/*.json` under `emails.*`.
 
 This sends seven sample messages (verification, email change, password/phone/email notifications, listing refresh reminder, weekly views digest). The script refuses `NODE_ENV=production`. It spaces out sends and retries transient SMTP failures a few times with backoff (helps with Mailtrap rate limits).
 

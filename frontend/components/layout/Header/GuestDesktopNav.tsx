@@ -13,6 +13,7 @@ import { HeaderListingsNavLink } from './HeaderListingsNavLink';
 import { HeaderMoreDropdown } from './HeaderMoreDropdown';
 import { DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES } from './desktopNavLinkClasses';
 import { DESKTOP_HEADER_OUTLINE_LINK_CLASSES } from './desktopOutlineLinkClasses';
+import { UserIcon } from './icons';
 
 type GuestDesktopNavProps = {
   comparisonCount: number;
@@ -91,6 +92,7 @@ export function GuestDesktopNav({
         onClick={handleSignClick}
         className={DESKTOP_HEADER_OUTLINE_LINK_CLASSES}
       >
+        <UserIcon />
         <span suppressHydrationWarning>{t('header.loginAndRegister')}</span>
       </Link>
       <CreateListingButton variant="desktop" />
