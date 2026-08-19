@@ -31,6 +31,7 @@ Typeahead in the site header over the `brands` / `vehicle_models` catalog (brand
   - Year on the row writes **From** and **To** together (`year_gte` and `year_lte`). If the year is the current calendar year, `year_lte` is omitted from the URL (existing `handleYearLte`); parsed `FilterState` still has both fields equal to that year.
   - Year-only rows keep the current URL `vehicleType`, else default `car`.
 - From home the navigation is `replace`; from other pages it is `push`.
+- After a row is selected, `useListingGridScrollEffects` scrolls to `#listings-results` once the grid is ready, on every viewport including desktop when the page was already scrolled. An empty result set scrolls to the top of the page instead. On mobile the sheet overlay history is detached before navigation so closing the sheet does not `history.back()` onto the unfiltered URL.
 - Hidden on `/sign`, error pages, and `/admin`.
 
 ---
@@ -53,7 +54,7 @@ If the desktop search slot is **narrower than 200px** when the field is focused 
 
 While header auth is still initializing (`showSkeleton`), the catalog search slot is a pulse skeleton like the rest of the header: desktop input (`data-testid="header-catalog-search-skeleton"`), mobile icon (`data-testid="header-mobile-search-skeleton"`), and logo (`data-testid="header-logo-skeleton"`) sized to the SVG aspect boxes so the row does not shift when the image appears. The live field is not shown until auth is ready.
 
-Mobile and tablet (`< lg`, including 768–1023): search icon immediately left of the burger (`data-testid="header-mobile-search"`, 44px tap target). The icon opens a `BottomSheet` with `mobileOnly={false}` (header chrome switches at `lg`, independently of the compact-layout sheet cap). Custom header: input + clear + **Cancel** from `common.cancel`; grab-handle kept, default title+× replaced. Opening search closes the menu drawer and vice versa. Resizing to `lg+` closes the sheet.
+Mobile and tablet (`< lg`, including 768–1023): search icon immediately left of the burger (`data-testid="header-mobile-search"`, 44px tap target). The icon opens a `BottomSheet` with `mobileOnly={false}` (header chrome switches at `lg`, independently of the compact-layout sheet cap). Custom header: input + clear + **Cancel** from `common.cancel`; grab-handle kept, default title+× replaced. Opening search closes the menu drawer and vice versa. Resizing to `lg+` closes the sheet. The opening tap focuses the sheet input in the same user gesture (`flushSync` + `appearImmediately`) so the virtual keyboard opens without a second tap; this sheet skips the enter slide so the field is on-screen when focus runs.
 
 While suggest is in flight, the list area shows `Spinner` `inline size="md"` plus `header.catalogSearchLoading` (`data-testid="header-catalog-search-loading"`), deferred with `useLoadingState` / `SKELETON_DEFERRED`. The previous list is not kept.
 

@@ -1,4 +1,5 @@
 import {
+  detachTopOverlayHistory,
   getOverlayHistoryStackSizeForTests,
   registerOverlayHistory,
   resetOverlayHistoryForTests,
@@ -54,5 +55,20 @@ describe('overlay-history', () => {
     expect(closeA).not.toHaveBeenCalled();
     expect(back).not.toHaveBeenCalled();
     expect(getOverlayHistoryStackSizeForTests()).toBe(1);
+  });
+
+  it('does not history.back after the top overlay is detached for navigation', () => {
+    registerOverlayHistory('sheet', jest.fn());
+
+    expect(detachTopOverlayHistory()).toBe(true);
+    unregisterOverlayHistory('sheet', false);
+
+    expect(back).not.toHaveBeenCalled();
+    expect(getOverlayHistoryStackSizeForTests()).toBe(0);
+  });
+
+  it('returns false when no overlay is open', () => {
+    expect(detachTopOverlayHistory()).toBe(false);
+    expect(back).not.toHaveBeenCalled();
   });
 });

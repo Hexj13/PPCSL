@@ -61,6 +61,7 @@ Frontend-specific documentation for PPCSL Next.js application.
 - Proper H1 tags (semantic HTML)
 - Canonical URLs (absolute)
 - Meta descriptions (110-160 chars)
+- Root `app/not-found.tsx` takes locale from `x-url-pathname` (set in `proxy.ts` from `nextUrl.pathname`). Prefixed unknown paths (`/ru/...`, `/en/...`) render that locale’s copy and `html lang`.
 
 ## 📦 Key Components
 

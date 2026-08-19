@@ -17,7 +17,9 @@ export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, isActi
       );
 
     const focusables = getFocusable();
-    focusables[0]?.focus();
+    if (!container.contains(document.activeElement)) {
+      focusables[0]?.focus();
+    }
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Tab') return;

@@ -3,7 +3,11 @@ import type { Locale, Translations } from './i18n-types';
 export type { Locale, Translations } from './i18n-types';
 import { resolveLocaleRouting } from './locale-routing';
 import { loadSiteConfigSync } from './site-config';
-import { getLocaleFromPathname, isLanguageSwitcherEnabled } from './url-locale';
+import {
+  getLocaleFromPathname,
+  isLanguageSwitcherEnabled,
+  URL_PATHNAME_REQUEST_HEADER,
+} from './url-locale';
 import { getCountry } from './utils';
 
 const STORAGE_KEY = 'kupito-locale';
@@ -208,6 +212,21 @@ export async function getMetadataLocaleFromParams(
 
 export function getMetadataLocale(localeParam?: string | null): Locale {
   return resolveMetadataLocale(localeParam);
+}
+
+export async function getMetadataLocaleFromRequest(): Promise<Locale> {
+  if (!isLanguageSwitcherEnabled()) {
+    return getDefaultLocale();
+  }
+  try {
+    const { headers } = await import('next/headers');
+    const pathname = (await headers()).get(URL_PATHNAME_REQUEST_HEADER);
+    if (pathname) {
+      const fromUrl = getLocaleFromPathname(pathname);
+      if (fromUrl) return fromUrl;
+    }
+  } catch {}
+  return getDefaultLocale();
 }
 
 export function getTFromTranslations(translations: Translations): (_key: string) => string {

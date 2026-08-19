@@ -44,6 +44,14 @@ export function registerOverlayHistory(id: string, close: () => void): void {
   window.history.pushState({ ...(currentState ?? {}), [OVERLAY_HISTORY_KEY]: id }, '');
 }
 
+export function detachTopOverlayHistory(): boolean {
+  if (stack.length === 0) {
+    return false;
+  }
+  stack.pop();
+  return true;
+}
+
 export function unregisterOverlayHistory(id: string, closedByUserBack: boolean): void {
   const index = stack.findIndex((entry) => entry.id === id);
   if (index === -1) {

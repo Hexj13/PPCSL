@@ -28,6 +28,41 @@ test.describe('Header catalog search @p0', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
+  test('scrolls to listing results after applying a suggestion from a scrolled page', async ({
+    page,
+    searchHomePage,
+  }) => {
+    const steps: E2EStep[] = [
+      {
+        name: 'Open home and scroll down',
+        action: async () => {
+          await searchHomePage.openAndExpectPageView();
+          await searchHomePage.expectHomeReady();
+          if (!(await searchHomePage.hasListingResults())) {
+            throw new Error(
+              'E2E needs listing results on search home for header catalog scroll apply.',
+            );
+          }
+          await searchHomePage.scrollToY(900);
+          expect(await searchHomePage.getWindowScrollY()).toBeGreaterThan(400);
+        },
+      },
+      {
+        name: 'Apply a catalog suggestion and expect scroll to results',
+        action: async () => {
+          await searchHomePage.headerNav.fillCatalogSearch('ford');
+          await searchHomePage.headerNav.selectFirstCatalogSuggestion();
+          await expectPagePath(page, (path) => path === '/');
+          await expect(page).toHaveURL(/[?&](brand|model|year_gte)=/);
+          await searchHomePage.headerNav.expectCatalogSearchClosed();
+          await searchHomePage.expectScrolledToListingsResultsAfterHeaderApply();
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
   test('hides catalog search on the sign page', async ({ page, searchHomePage }) => {
     const steps: E2EStep[] = [
       {

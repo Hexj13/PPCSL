@@ -45,6 +45,7 @@ export function BottomSheetPanel({
 }: BottomSheetPanelProps) {
   return (
     <div
+      data-testid="bottom-sheet-slide"
       onTransitionEnd={onTransitionEnd}
       className={`pointer-events-none absolute bottom-0 left-0 right-0 flex justify-center motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform ${
         visible ? 'translate-y-0' : 'translate-y-full'

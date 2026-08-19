@@ -166,6 +166,28 @@ export abstract class SearchHomeScrollPage {
     }, scrollY);
   }
 
+  async expectScrolledToListingsResultsAfterHeaderApply(tolerancePx = 80): Promise<void> {
+    await this.expectResultsOrEmptyVisible();
+    await expect
+      .poll(
+        async () =>
+          this.page.evaluate((tolerance) => {
+            const el = document.getElementById('listings-results');
+            if (!el) {
+              return window.scrollY <= tolerance;
+            }
+            const headerEl = document.querySelector('header');
+            const measuredHeaderHeight = headerEl?.getBoundingClientRect().height ?? 0;
+            const fallbackHeaderHeight = window.innerWidth >= 1024 ? 72 : 110;
+            const headerOffset = (measuredHeaderHeight || fallbackHeaderHeight) + 60;
+            const targetTop = el.getBoundingClientRect().top + window.scrollY - headerOffset;
+            return Math.abs(window.scrollY - targetTop) <= tolerance;
+          }, tolerancePx),
+        { timeout: 20_000, intervals: [300, 500, 800, 1200] },
+      )
+      .toBe(true);
+  }
+
   async waitForHomeScrollRestoreSettled(
     targetScrollY?: number,
     tolerancePx = 32,

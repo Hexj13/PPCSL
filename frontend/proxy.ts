@@ -10,10 +10,19 @@ import { loadSiteConfigSync } from '@/lib/site-config';
 import {
   canonicalLowercasePrefixedPathname,
   getLocaleFromPathname,
+  headersWithUrlPathname,
   isLanguageSwitcherEnabled,
   stripPrefixedLocaleFromPathname,
 } from '@/lib/url-locale';
 import { getCountry } from '@/lib/utils';
+
+function withUrlPathnameRequest(request: NextRequest): {
+  request: { headers: Headers };
+} {
+  return {
+    request: { headers: headersWithUrlPathname(request.headers, request.nextUrl.pathname) },
+  };
+}
 
 function getRouting() {
   return resolveLocaleRouting(loadSiteConfigSync(getCountry()));
@@ -76,7 +85,7 @@ function rewriteUnprefixedToDefaultLocale(
   const suffix = pathname === '/' ? '' : pathname;
   url.pathname = `/${locale}${suffix}`;
   url.search = search;
-  return NextResponse.rewrite(url);
+  return NextResponse.rewrite(url, withUrlPathnameRequest(request));
 }
 
 function handleLanguageSwitcherDisabled(
@@ -208,7 +217,7 @@ export async function proxy(request: NextRequest) {
   if (caseFix) return caseFix;
 
   if (getLocaleFromPathname(pathname, routing)) {
-    return NextResponse.next();
+    return NextResponse.next(withUrlPathnameRequest(request));
   }
 
   const pref = redirectPreferredPrefixedLocale(request, pathname, search, routing);

@@ -64,14 +64,29 @@ export function useListingGridScrollEffects({
       !canAttemptSearchScroll ||
       isLoading ||
       !layoutReady ||
-      listingsCount === 0 ||
       !showContent
     ) {
       return;
     }
+
+    const forceFromHeader = shouldScroll === 'header';
+    if (listingsCount === 0) {
+      if (!forceFromHeader) {
+        return;
+      }
+      sessionStorageRemoveItem('scrollToResultsAfterLoad');
+      searchScrollHandledRef.current = true;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     sessionStorageRemoveItem('scrollToResultsAfterLoad');
     searchScrollHandledRef.current = true;
-    if (window.innerWidth >= DESKTOP_LAYOUT_MIN_WIDTH_PX && window.scrollY > 32) {
+    if (
+      !forceFromHeader &&
+      window.innerWidth >= DESKTOP_LAYOUT_MIN_WIDTH_PX &&
+      window.scrollY > 32
+    ) {
       return;
     }
     requestAnimationFrame(() => {

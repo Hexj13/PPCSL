@@ -10,7 +10,11 @@ jest.mock('jose', () => ({
   jwtVerify: jest.fn().mockResolvedValue({ payload: { phoneVerified: true } }),
 }));
 
-function mk(url: string, cookieMap: Record<string, string> = {}) {
+function mk(
+  url: string,
+  cookieMap: Record<string, string> = {},
+  extraHeaders: Record<string, string> = {},
+) {
   const u = new URL(url);
   const nextUrl = {
     get pathname() {
@@ -29,8 +33,12 @@ function mk(url: string, cookieMap: Record<string, string> = {}) {
           ? { value: cookieMap[name] }
           : undefined,
     },
-    headers: new Headers(),
+    headers: new Headers(extraHeaders),
   } as Parameters<typeof proxy>[0];
+}
+
+function requestPathnameHeader(res: Response): string | null {
+  return res.headers.get('x-middleware-request-x-url-pathname');
 }
 
 describe('proxy locale routing', () => {
@@ -89,6 +97,26 @@ describe('proxy locale routing', () => {
     const res = await proxy(mk('https://kupito.test/admin', { 'kupito-locale': 'ru' }));
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toBe('https://kupito.test/ru/admin');
+  });
+
+  it('forwards the request pathname on a prefixed locale next()', async () => {
+    const res = await proxy(mk('https://kupito.test/ru/unknown-page'));
+    expect(res.status).toBe(200);
+    expect(requestPathnameHeader(res)).toBe('/ru/unknown-page');
+  });
+
+  it('forwards the request pathname on an unprefixed rewrite', async () => {
+    const res = await proxy(mk('https://kupito.test/no-such-page'));
+    expect(res.status).toBe(200);
+    expect(requestPathnameHeader(res)).toBe('/no-such-page');
+  });
+
+  it('overwrites a client-supplied x-url-pathname header', async () => {
+    const res = await proxy(
+      mk('https://kupito.test/ru/unknown-page', {}, { 'x-url-pathname': '/en/spoofed' }),
+    );
+    expect(res.status).toBe(200);
+    expect(requestPathnameHeader(res)).toBe('/ru/unknown-page');
   });
 });
 

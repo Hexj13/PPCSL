@@ -2,13 +2,16 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 
 import { MOBILE_MENU_ENTER_ANIM_MS, useMenuDrawerPresence } from '@/hooks/useMenuDrawerPresence';
 import { forceReleaseScrollLockToTop, useScrollLock } from '@/hooks/useScrollLock';
 import { useComparisonStore } from '@/lib/store';
 
-import { HeaderCatalogSearch } from './Header/HeaderCatalogSearch';
+import {
+  HEADER_CATALOG_SEARCH_SHEET_INPUT_ID,
+  HeaderCatalogSearch,
+} from './Header/HeaderCatalogSearch';
 import { HeaderDesktopRow } from './Header/HeaderDesktopRow';
 import { HeaderLogo } from './Header/HeaderLogo';
 import { HeaderMobileCluster } from './Header/HeaderMobileCluster';
@@ -131,7 +134,10 @@ export function Header() {
 
   const handleOpenCatalogSearch = () => {
     handleMobileMenuClose();
-    setIsMobileCatalogSearchOpen(true);
+    flushSync(() => {
+      setIsMobileCatalogSearchOpen(true);
+    });
+    document.getElementById(HEADER_CATALOG_SEARCH_SHEET_INPUT_ID)?.focus();
   };
 
   const mobileMenuBackdrop =

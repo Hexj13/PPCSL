@@ -1,8 +1,10 @@
 import type { ResolvedLocaleRouting } from './locale-routing';
 import {
+  URL_PATHNAME_REQUEST_HEADER,
   absoluteUrlWithLocalePrefix,
   canonicalLowercaseRuPathname,
   canonicalForLocaleFromRo,
+  headersWithUrlPathname,
   hreflangLanguagesFromRoCanonical,
   localePrefixPath,
   roCanonicalToAbsoluteRu,
@@ -169,5 +171,29 @@ describe('url-locale', () => {
       expect(langs.ru).toBe(`${site}/ru/dacia`);
       expect(langs['x-default']).toBe(ro);
     });
+  });
+});
+
+describe('headersWithUrlPathname', () => {
+  it('copies the pathname onto the request header', () => {
+    const source = new Headers({ cookie: 'a=1' });
+    const next = headersWithUrlPathname(source, '/ru/listings1/honda');
+
+    expect(next.get(URL_PATHNAME_REQUEST_HEADER)).toBe('/ru/listings1/honda');
+    expect(next.get('cookie')).toBe('a=1');
+  });
+
+  it('does not mutate the original headers', () => {
+    const source = new Headers();
+    headersWithUrlPathname(source, '/en/missing');
+
+    expect(source.get(URL_PATHNAME_REQUEST_HEADER)).toBeNull();
+  });
+
+  it('overwrites a client-supplied pathname header', () => {
+    const source = new Headers({ [URL_PATHNAME_REQUEST_HEADER]: '/en/spoofed' });
+    const next = headersWithUrlPathname(source, '/ru/unknown');
+
+    expect(next.get(URL_PATHNAME_REQUEST_HEADER)).toBe('/ru/unknown');
   });
 });

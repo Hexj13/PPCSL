@@ -7,6 +7,14 @@ import {
 import { loadSiteConfigSync } from './site-config';
 import { getCountry } from './utils';
 
+export const URL_PATHNAME_REQUEST_HEADER = 'x-url-pathname';
+
+export function headersWithUrlPathname(source: Headers, pathname: string): Headers {
+  const next = new Headers(source);
+  next.set(URL_PATHNAME_REQUEST_HEADER, pathname);
+  return next;
+}
+
 function getRouting(): ResolvedLocaleRouting {
   return resolveLocaleRouting(loadSiteConfigSync(getCountry()));
 }

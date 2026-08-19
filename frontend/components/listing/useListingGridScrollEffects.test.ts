@@ -257,6 +257,70 @@ describe('useListingGridScrollEffects', () => {
     expect(window.scrollTo).not.toHaveBeenCalled();
   });
 
+  it('scrolls to listings-results on desktop from header search even when the page is not at the top', () => {
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'header');
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 100, writable: true });
+    setupResultsTarget();
+
+    const { rerender } = renderHook(
+      ({ isLoading, listingsCount }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount,
+          isLoading,
+        }),
+      { initialProps: { isLoading: true, listingsCount: 4 } },
+    );
+
+    rerender({ isLoading: false, listingsCount: 4 });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
+    expect(rafCallbacks).toHaveLength(1);
+    rafCallbacks.forEach((cb) => cb(0));
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 368, behavior: 'smooth' });
+  });
+
+  it('scrolls to top on empty header search results after load', () => {
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'header');
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 100, writable: true });
+
+    const { rerender } = renderHook(
+      ({ isLoading, listingsCount }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount,
+          isLoading,
+        }),
+      { initialProps: { isLoading: true, listingsCount: 0 } },
+    );
+
+    rerender({ isLoading: false, listingsCount: 0 });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
+    expect(rafCallbacks).toHaveLength(0);
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+  });
+
+  it('does not scroll to top on empty form search results after load', () => {
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 100, writable: true });
+
+    const { rerender } = renderHook(
+      ({ isLoading, listingsCount }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount,
+          isLoading,
+        }),
+      { initialProps: { isLoading: true, listingsCount: 0 } },
+    );
+
+    rerender({ isLoading: false, listingsCount: 0 });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBe('true');
+    expect(window.scrollTo).not.toHaveBeenCalled();
+  });
+
   it('scrolls to listings-results on tablet even when the page is not at the top', () => {
     window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
     Object.defineProperty(window, 'innerWidth', {

@@ -5,8 +5,6 @@ import { getE2ePlatform } from '../platform/contract';
 
 type LocaleTree = Record<string, unknown>;
 
-let cachedFrontendLocale: LocaleTree | null = null;
-let cachedFrontendLocaleCode: string | null = null;
 let cachedBackendLocale: LocaleTree | null = null;
 let cachedBackendLocaleCode: string | null = null;
 
@@ -25,15 +23,31 @@ function resolveLocaleValue(tree: LocaleTree, key: string, sourceLabel: string):
   return current;
 }
 
-function loadFrontendLocale(): LocaleTree {
-  const localeCode = getE2ePlatform().defaultLocale;
-  if (cachedFrontendLocale && cachedFrontendLocaleCode === localeCode) {
-    return cachedFrontendLocale;
+const frontendLocales = new Map<string, LocaleTree>();
+
+function assertSupportedLocale(localeCode: string): string {
+  const supported = getE2ePlatform().supportedLocales.map((item) => item.toLowerCase());
+  const normalized = localeCode.toLowerCase();
+  if (!supported.includes(normalized)) {
+    throw new Error(`E2E locale is not in platform supportedLocales: ${localeCode}`);
   }
-  const localePath = path.resolve(process.cwd(), `lib/locales/${localeCode}.json`);
-  cachedFrontendLocale = JSON.parse(fs.readFileSync(localePath, 'utf8')) as LocaleTree;
-  cachedFrontendLocaleCode = localeCode;
-  return cachedFrontendLocale;
+  return normalized;
+}
+
+function loadFrontendLocaleFor(localeCode: string): LocaleTree {
+  const locale = assertSupportedLocale(localeCode);
+  const cached = frontendLocales.get(locale);
+  if (cached) {
+    return cached;
+  }
+  const localePath = path.resolve(process.cwd(), `lib/locales/${locale}.json`);
+  const tree = JSON.parse(fs.readFileSync(localePath, 'utf8')) as LocaleTree;
+  frontendLocales.set(locale, tree);
+  return tree;
+}
+
+function loadFrontendLocale(): LocaleTree {
+  return loadFrontendLocaleFor(getE2ePlatform().defaultLocale);
 }
 
 function loadBackendLocale(): LocaleTree {
@@ -47,14 +61,27 @@ function loadBackendLocale(): LocaleTree {
   return cachedBackendLocale;
 }
 
-export function t(key: string, params?: Record<string, string | number>): string {
-  let value = resolveLocaleValue(loadFrontendLocale(), key, 'frontend');
-  if (params) {
-    for (const [paramKey, paramValue] of Object.entries(params)) {
-      value = value.replace(`{${paramKey}}`, String(paramValue));
-    }
+function interpolate(value: string, params?: Record<string, string | number>): string {
+  if (!params) {
+    return value;
   }
-  return value;
+  let result = value;
+  for (const [paramKey, paramValue] of Object.entries(params)) {
+    result = result.replace(`{${paramKey}}`, String(paramValue));
+  }
+  return result;
+}
+
+export function t(key: string, params?: Record<string, string | number>): string {
+  return interpolate(resolveLocaleValue(loadFrontendLocale(), key, 'frontend'), params);
+}
+
+export function tForLocale(
+  locale: string,
+  key: string,
+  params?: Record<string, string | number>,
+): string {
+  return interpolate(resolveLocaleValue(loadFrontendLocaleFor(locale), key, 'frontend'), params);
 }
 
 export function tb(key: string): string {

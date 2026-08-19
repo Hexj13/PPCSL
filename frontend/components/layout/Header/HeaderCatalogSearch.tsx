@@ -1,7 +1,15 @@
 'use client';
 
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
 
 import { BottomSheet } from '@/components/common/BottomSheet';
 import { HeaderCatalogSuggestList } from '@/components/layout/Header/HeaderCatalogSuggestList';
@@ -10,6 +18,8 @@ import { useHeaderCatalogSuggest } from '@/hooks/useHeaderCatalogSuggest';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { sessionStorageSetItem } from '@/lib/browser-session-storage';
+import { clearHomeScrollRestoreSession } from '@/lib/home-scroll-restore';
+import { detachTopOverlayHistory } from '@/lib/overlay-history';
 import { buildHeaderSuggestPath } from '@/lib/search/apply-header-suggest';
 import {
   hasMinHeaderSuggestChars,
@@ -21,6 +31,8 @@ import {
   HEADER_CATALOG_SEARCH_MIN_WIDTH_PX,
   HEADER_DESKTOP_MIN_WIDTH_PX,
 } from './headerBreakpoints';
+
+export const HEADER_CATALOG_SEARCH_SHEET_INPUT_ID = 'header-catalog-search-sheet-input';
 
 function currentVehicleTypeFromSearch(search: string): 'car' | 'truck' | 'moto' | undefined {
   const value = new URLSearchParams(search).get('vehicleType');
@@ -61,14 +73,16 @@ export function HeaderCatalogSearch({
     setActiveIndex(0);
   }, [items]);
 
-  useEffect(() => {
-    if (variant === 'mobile' && mobileOpen) {
-      window.setTimeout(() => inputRef.current?.focus(), 50);
+  useLayoutEffect(() => {
+    if (variant !== 'mobile') {
+      return;
     }
-    if (variant === 'mobile' && !mobileOpen) {
-      setQuery('');
+    if (mobileOpen) {
+      inputRef.current?.focus();
+      return;
     }
-  }, [variant, mobileOpen]);
+    setQuery('');
+  }, [mobileOpen, variant]);
 
   useEffect(() => {
     if (variant !== 'desktop' || !isOpen) {
@@ -105,9 +119,11 @@ export function HeaderCatalogSearch({
         currentYear,
         currentVehicleType: currentVehicleTypeFromSearch(searchParams.toString()),
       });
-      sessionStorageSetItem('scrollToResultsAfterLoad', 'true');
+      sessionStorageSetItem('scrollToResultsAfterLoad', 'header');
+      clearHomeScrollRestoreSession();
+      const hadOverlay = detachTopOverlayHistory();
       const { restPath } = stripLocalePrefixFromPathname(pathname ?? '/');
-      if (restPath === '/') {
+      if (hadOverlay || restPath === '/') {
         replace(path, { scroll: false });
       } else {
         push(path);
@@ -160,6 +176,7 @@ export function HeaderCatalogSearch({
         autoCorrect="off"
         spellCheck={false}
         value={query}
+        id={isSheet ? HEADER_CATALOG_SEARCH_SHEET_INPUT_ID : undefined}
         data-testid="header-catalog-search-input"
         aria-label={t('header.catalogSearch')}
         aria-autocomplete="list"
@@ -218,6 +235,7 @@ export function HeaderCatalogSearch({
         onClose={() => onMobileOpenChange?.(false)}
         title={t('header.catalogSearch')}
         lockSheetHeight
+        appearImmediately
         mobileOnly={false}
         dataTestId="header-catalog-search-sheet"
         header={

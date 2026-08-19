@@ -329,4 +329,34 @@ describe('BottomSheet', () => {
     expect(screen.getByTestId('custom-sheet-header')).toBeInTheDocument();
     expect(screen.getByText('Accessible title')).toHaveClass('sr-only');
   });
+
+  it('mounts content on the same update when opening', () => {
+    const { rerender } = render(
+      <BottomSheet isOpen={false} onClose={() => {}} title="Sync sheet">
+        <p>Sheet body</p>
+      </BottomSheet>,
+    );
+    expect(screen.queryByText('Sheet body')).not.toBeInTheDocument();
+
+    rerender(
+      <BottomSheet isOpen onClose={() => {}} title="Sync sheet">
+        <p>Sheet body</p>
+      </BottomSheet>,
+    );
+
+    expect(screen.getByText('Sheet body')).toBeInTheDocument();
+    expect(screen.getByTestId('bottom-sheet-slide')).toHaveClass('translate-y-full');
+  });
+
+  it('shows the panel without the enter transform when appearImmediately is set', () => {
+    render(
+      <BottomSheet isOpen appearImmediately onClose={() => {}} title="Immediate sheet">
+        <p>Immediate body</p>
+      </BottomSheet>,
+    );
+
+    expect(screen.getByText('Immediate body')).toBeInTheDocument();
+    expect(screen.getByTestId('bottom-sheet-slide')).toHaveClass('translate-y-0');
+    expect(screen.getByTestId('bottom-sheet-slide')).not.toHaveClass('translate-y-full');
+  });
 });

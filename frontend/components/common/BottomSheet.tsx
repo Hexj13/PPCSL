@@ -176,6 +176,7 @@ interface BottomSheetProps {
   lockSheetHeight?: boolean;
   dataTestId?: string;
   mobileOnly?: boolean;
+  appearImmediately?: boolean;
 }
 
 export function BottomSheet({
@@ -188,6 +189,7 @@ export function BottomSheet({
   lockSheetHeight = false,
   dataTestId,
   mobileOnly = true,
+  appearImmediately = false,
 }: BottomSheetProps) {
   const { t } = useTranslation();
   const onCloseRef = useRef(onClose);
@@ -354,12 +356,11 @@ export function BottomSheet({
     if (wantShow) {
       exitInProgressRef.current = false;
       notifyParentOnExitRef.current = false;
-      setMounted(true);
     }
   }, [wantShow]);
 
   useEffect(() => {
-    if (!mounted || !wantShow) {
+    if (!mounted || !wantShow || appearImmediately) {
       return undefined;
     }
     let innerRaf = 0;
@@ -372,7 +373,7 @@ export function BottomSheet({
         cancelAnimationFrame(innerRaf);
       }
     };
-  }, [mounted, wantShow]);
+  }, [appearImmediately, mounted, wantShow]);
 
   useEffect(() => {
     if (wantShow || !mounted) {
@@ -400,6 +401,13 @@ export function BottomSheet({
     },
     [clearExitFallback],
   );
+
+  if (wantShow && !mounted) {
+    setMounted(true);
+  }
+  if (wantShow && appearImmediately && !visible) {
+    setVisible(true);
+  }
 
   if (!mounted || (mobileOnly && !isMobileViewport) || typeof window === 'undefined') {
     return null;

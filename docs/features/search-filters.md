@@ -43,7 +43,7 @@ See [search-title-url.md](./search-title-url.md) for brand/model slugs and [tech
 - **Change detection:** `useFilterHandlers` compares current `FilterState` to `lastAppliedFilters` (including sort). `lastAppliedFilters` is set after a successful apply and on URL sync from external navigation.
 - **Available count:** `useAvailableListingsCount` uses current form fields (including pending sort), not only URL params.
 - **Components:** `SortDropdown.tsx` (shared); home wires `onSortChange` + `selectedSortKey` via `SearchFormActions` / `SearchFiltersForm`.
-- **Scroll to results:** applying search sets `scrollToResultsAfterLoad`. After the grid is ready, `useListingGridScrollEffects` scrolls to `#listings-results`. On compact viewports (`innerWidth < 1280`) this always runs. On desktop (`innerWidth >= 1280`) it runs only when the page is still near the top (`scrollY <= 32`); if the user has already scrolled, the flag is cleared and the current position is kept.
+- **Scroll to results:** applying search sets `scrollToResultsAfterLoad`. After the grid is ready, `useListingGridScrollEffects` scrolls to `#listings-results`. On compact viewports (`innerWidth < 1280`) this always runs. On desktop (`innerWidth >= 1280`) it runs only when the page is still near the top (`scrollY <= 32`); if the user has already scrolled, the flag is cleared and the current position is kept. Header catalog search is an exception: it always scrolls to `#listings-results` (or to the top when the result set is empty).
 
 ---
 

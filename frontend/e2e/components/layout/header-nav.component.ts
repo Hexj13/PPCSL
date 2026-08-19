@@ -180,12 +180,14 @@ export class HeaderNavComponent {
   }
 
   async openCatalogSearch(): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
     if (await pageUsesMobileLayout(this.page)) {
       await this.page.getByTestId(this.testIds.mobileSearch).click();
       await expect(this.page.getByTestId(this.testIds.catalogSearchSheet)).toBeVisible({
         timeout: 15_000,
       });
       await expect(this.page.getByTestId(this.testIds.catalogSearchCancel)).toBeVisible();
+      await expect(this.catalogSearchInput()).toBeFocused();
     }
     await expect(this.catalogSearchInput()).toBeVisible({ timeout: 15_000 });
   }
@@ -196,9 +198,17 @@ export class HeaderNavComponent {
   }
 
   async selectFirstCatalogSuggestion(): Promise<void> {
-    const item = this.page.getByTestId(this.testIds.catalogSearchItem).first();
+    const mobile = await pageUsesMobileLayout(this.page);
+    const item = mobile
+      ? this.page
+          .getByTestId(this.testIds.catalogSearchSheet)
+          .getByTestId(this.testIds.catalogSearchItem)
+          .first()
+      : this.page.getByTestId(this.testIds.catalogSearchItem).first();
     await expect(item).toBeVisible({ timeout: 20_000 });
-    await item.click();
+    await item.evaluate((element) => {
+      (element as HTMLButtonElement).click();
+    });
   }
 
   async expectCatalogSearchClosed(): Promise<void> {
