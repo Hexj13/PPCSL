@@ -26,16 +26,16 @@ export type CrossTabEvent =
 
 type CrossTabWire = CrossTabEvent & { sourceTabId: string };
 
-const CHANNEL_NAME = 'kupito-cross-tab';
-const STORAGE_SIGNAL_KEY = 'kupito-cross-tab-signal';
+const CHANNEL_NAME = 'ppcsl-cross-tab';
+const STORAGE_SIGNAL_KEY = 'ppcsl-cross-tab-signal';
 
 function getTabId(): string {
   if (typeof window === 'undefined') return '';
   try {
-    let id = sessionStorageGetItem('kupito_cross_tab_id');
+    let id = sessionStorageGetItem('ppcsl_cross_tab_id');
     if (!id) {
       id = crypto.randomUUID();
-      sessionStorageSetItem('kupito_cross_tab_id', id);
+      sessionStorageSetItem('ppcsl_cross_tab_id', id);
     }
     return id;
   } catch {

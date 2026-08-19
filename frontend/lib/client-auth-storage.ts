@@ -24,13 +24,13 @@ export function clearClientAuthLocalStorage(options?: {
   if (clearPendingMigrationAndFilters) {
     localStorageRemoveItem('pendingFavorites');
     localStorageRemoveItem('pendingComparisons');
-    sessionStorageRemoveItem('kupito_search_filters');
-    localStorageRemoveItem('kupito_search_filters');
+    sessionStorageRemoveItem('ppcsl_search_filters');
+    localStorageRemoveItem('ppcsl_search_filters');
     clearPendingRegistration();
     clearServiceWorkerUserCaches();
   }
   if (clearReturnUrl) {
     localStorageRemoveItem('returnUrl');
   }
-  document.cookie = 'kupito-preferred-locale=; path=/; max-age=0; SameSite=Lax';
+  document.cookie = 'ppcsl-preferred-locale=; path=/; max-age=0; SameSite=Lax';
 }

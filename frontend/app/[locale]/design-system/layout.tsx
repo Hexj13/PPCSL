@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
 
+import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
+
+const siteConfig = loadSiteConfigSync(getCountry());
+
 export const metadata: Metadata = {
-  title: 'Design System - Kupito',
+  title: `Design System - ${siteConfig.name}`,
   description: 'Interactive design system documentation',
   robots: {
     index: false,

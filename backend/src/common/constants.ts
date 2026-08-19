@@ -1,3 +1,5 @@
+import { resolveSmsBrandName } from './platform-name';
+
 export const userTypes = ['Individual', 'Business', 'Admin'] as const;
 
 export const preferredUiLocales = ['ro', 'ru', 'en', 'sq'] as const;
@@ -283,19 +285,9 @@ export const SortOrder = {
   DESC: sortOrders[1],
 } as const;
 
-function smsBrandName(): string {
-  const fromEnv = process.env.SMS_BRAND_NAME?.trim();
-  if (fromEnv) return fromEnv;
-  const country = (process.env.COUNTRY || process.env.NEXT_PUBLIC_COUNTRY || 'md')
-    .trim()
-    .toLowerCase();
-  if (country === 'al') return 'MakinaGuru';
-  return 'Kupito';
-}
-
 export const SMS_MESSAGES = {
-  VERIFICATION_CODE: (code: string) => `${smsBrandName()} verification code: ${code}`,
-  PASSWORD_RESET_CODE: (code: string) => `${smsBrandName()} password reset code: ${code}`,
+  VERIFICATION_CODE: (code: string) => `${resolveSmsBrandName()} verification code: ${code}`,
+  PASSWORD_RESET_CODE: (code: string) => `${resolveSmsBrandName()} password reset code: ${code}`,
 } as const;
 
 export const ACTIVE_LISTING_LIMIT_BUSINESS = 1000;

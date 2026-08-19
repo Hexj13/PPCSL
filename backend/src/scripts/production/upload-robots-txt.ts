@@ -3,13 +3,15 @@ import * as path from 'path';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import * as dotenv from 'dotenv';
 
+import { resolveS3BucketName } from '../../common/config/s3-bucket';
+
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
 
 async function uploadRobotsTxt() {
   const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
   const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
   const region = process.env.AWS_REGION || 'eu-north-1';
-  const bucketName = process.env.AWS_S3_BUCKET_NAME || 'kupito-uploads';
+  const bucketName = resolveS3BucketName('required');
 
   if (!accessKeyId || !secretAccessKey || !bucketName) {
     console.error('❌ Missing AWS credentials or bucket name');

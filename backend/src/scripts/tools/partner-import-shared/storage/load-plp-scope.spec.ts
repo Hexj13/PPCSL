@@ -24,13 +24,13 @@ function buildItem(overrides: Partial<Item> & Pick<Item, 'sourceListingId'>): It
 }
 
 describe('collectMonoMissingSnapshotMeta', () => {
-  it('lists missing candidates and source-only closed pending Kupito closure', () => {
+  it('lists missing candidates and source-only closed pending platform closure', () => {
     const items: Item[] = [
       buildItem({
         sourceListingId: 'pending-source-only',
         sourceStatus: 'closed',
         closeOutcome: 'source_only',
-        kupitoListingId: 'k-pending',
+        platformListingId: 'k-pending',
       }),
       buildItem({
         sourceListingId: 'fully-closed',
@@ -40,7 +40,7 @@ describe('collectMonoMissingSnapshotMeta', () => {
       buildItem({
         sourceListingId: 'gone',
         sourceStatus: 'missing_candidate',
-        kupitoListingId: 'k1',
+        platformListingId: 'k1',
       }),
       buildItem({ sourceListingId: 'active', sourceStatus: 'active' }),
     ];
@@ -57,7 +57,7 @@ describe('buildActivePlpSnapshot', () => {
       buildItem({
         sourceListingId: 'missing',
         sourceStatus: 'missing_candidate',
-        kupitoListingId: 'k1',
+        platformListingId: 'k1',
       }),
     ];
     const snapshot = buildActivePlpSnapshot(items);

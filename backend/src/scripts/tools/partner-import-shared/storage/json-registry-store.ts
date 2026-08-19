@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import type { ImportState } from '../import-workflow-types';
+import { migrateRegistryDataListingIds } from '../legacy-registry-fields';
 import type { BaseRegistryItem } from '../listing-types';
 
 export type JsonRegistryItemShape = BaseRegistryItem<string>;
@@ -116,6 +117,7 @@ export class JsonRegistryStore<TItem extends JsonRegistryItemShape> {
     }
 
     const parsed = JSON.parse(raw) as JsonRegistryData<TItem>;
+    migrateRegistryDataListingIds(parsed as { items?: Record<string, unknown> });
     return {
       items: parsed.items ?? {},
       meta: parsed.meta ?? { lastUpdatedAt: new Date().toISOString() },

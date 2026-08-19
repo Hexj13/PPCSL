@@ -26,9 +26,9 @@ describe('DiagnosticsController', () => {
 
   it('delegates to DiagnosticsService', async () => {
     service.getImageHeadStatus.mockResolvedValue({ status: 404 });
-    const result = await controller.imageStatus('https://cdn.kupito.club/uploads/x.webp');
+    const result = await controller.imageStatus('https://cdn.example.test/uploads/x.webp');
     expect(service.getImageHeadStatus).toHaveBeenCalledWith(
-      'https://cdn.kupito.club/uploads/x.webp',
+      'https://cdn.example.test/uploads/x.webp',
     );
     expect(result).toEqual({ status: 404 });
   });

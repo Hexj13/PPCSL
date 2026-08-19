@@ -1,6 +1,6 @@
 'use client';
 
-const OVERLAY_HISTORY_KEY = 'kupitoOverlay';
+const OVERLAY_HISTORY_KEY = 'ppcslOverlay';
 
 type OverlayHistoryState = Record<string, unknown> & {
   [OVERLAY_HISTORY_KEY]?: string;

@@ -69,9 +69,9 @@ const seoMockT = (key: string): string => {
     'metadata.listing.inCity': 'in',
     'metadata.listing.yearFormat': '{year}',
     'metadata.listing.pricePrefix': 'priced at',
-    'metadata.listing.siteSuffix': 'on Kupito.club',
-    'metadata.site.homeTitleTemplate': 'Kupito.club: buy and sell {category} in Moldova',
-    'metadata.site.homeBrandTitleTemplate': 'Buy or sell {value} in Moldova on Kupito.club',
+    'metadata.listing.siteSuffix': 'on Example.com',
+    'metadata.site.homeTitleTemplate': 'Example.com: buy and sell {category} in Moldova',
+    'metadata.site.homeBrandTitleTemplate': 'Buy or sell {value} in Moldova on Example.com',
     'metadata.site.categoryTitle.car': 'cars',
     'metadata.site.categoryTitle.truck': 'commercial vehicles',
     'metadata.site.categoryTitle.moto': 'motorcycles',
@@ -468,7 +468,7 @@ describe('utils', () => {
   describe('buildHomeCategoryTitle', () => {
     it('should build category title from template', () => {
       expect(buildHomeCategoryTitle(seoMockT, 'car')).toBe(
-        'Kupito.club: buy and sell cars in Moldova',
+        'Example.com: buy and sell cars in Moldova',
       );
     });
   });
@@ -476,7 +476,7 @@ describe('utils', () => {
   describe('buildHomeBrandTitle', () => {
     it('should build brand title from template', () => {
       expect(buildHomeBrandTitle(seoMockT, 'BMW')).toBe(
-        'Buy or sell BMW in Moldova on Kupito.club',
+        'Buy or sell BMW in Moldova on Example.com',
       );
     });
   });
@@ -536,7 +536,7 @@ describe('utils', () => {
       expect(title).toContain('Buy Hyundai Grand Starex I 2.5 (145 hp) diesel automatic');
       expect(title).toContain('in Chisinau');
       expect(title).toContain('minivan 2011 priced at 2 000 EUR');
-      expect(title).toContain('on Kupito.club');
+      expect(title).toContain('on Example.com');
     });
 
     it('should normalize engine volume from padded decimal string', () => {
@@ -631,7 +631,7 @@ describe('utils', () => {
       expect(title).not.toContain('hp');
       expect(title).not.toContain('priced at');
       expect(title).toContain('Buy BMW 320');
-      expect(title).toContain('on Kupito.club');
+      expect(title).toContain('on Example.com');
     });
   });
 });

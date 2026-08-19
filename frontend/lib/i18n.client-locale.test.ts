@@ -10,7 +10,7 @@ describe('getClientLocale', () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = 'true';
     localStorage.clear();
-    document.cookie = 'kupito-locale=; path=/; max-age=0';
+    document.cookie = 'ppcsl-locale=; path=/; max-age=0';
     delete (window as unknown as { location?: unknown }).location;
     (window as unknown as { location: Location }).location = {
       pathname: '/',
@@ -28,39 +28,39 @@ describe('getClientLocale', () => {
 
   it('prioritizes URL over cookie', () => {
     window.location.pathname = '/ru/listings/x';
-    document.cookie = 'kupito-locale=ro; path=/';
+    document.cookie = 'ppcsl-locale=ro; path=/';
     expect(getClientLocale()).toBe('ru');
   });
 
   it('uses pathname override for URL locale before window path and cookie', () => {
     window.location.pathname = '/dacia';
-    document.cookie = 'kupito-locale=ro; path=/';
+    document.cookie = 'ppcsl-locale=ro; path=/';
     expect(getClientLocale('/ru/sign')).toBe('ru');
   });
 
   it('returns ru from cookie when pathname has no locale prefix', () => {
     window.location.pathname = '/dacia';
-    document.cookie = 'kupito-locale=ru; path=/';
+    document.cookie = 'ppcsl-locale=ru; path=/';
     expect(getClientLocale()).toBe('ru');
   });
 
   it('returns ru from localStorage when pathname has no prefix and cookie is absent', () => {
     window.location.pathname = '/dacia';
-    localStorage.setItem('kupito-locale', 'ru');
+    localStorage.setItem('ppcsl-locale', 'ru');
     expect(getClientLocale()).toBe('ru');
   });
 
   it('prioritizes cookie over localStorage when pathname has no prefix', () => {
     window.location.pathname = '/compare';
-    document.cookie = 'kupito-locale=ro; path=/';
-    localStorage.setItem('kupito-locale', 'ru');
+    document.cookie = 'ppcsl-locale=ro; path=/';
+    localStorage.setItem('ppcsl-locale', 'ru');
     expect(getClientLocale()).toBe('ro');
   });
 
   it('returns default when switcher disabled', () => {
     process.env.NEXT_PUBLIC_ENABLE_LANGUAGE_SWITCHER = 'false';
     window.location.pathname = '/ru/foo';
-    localStorage.setItem('kupito-locale', 'ru');
+    localStorage.setItem('ppcsl-locale', 'ru');
     expect(getClientLocale()).toBe('ro');
   });
 });

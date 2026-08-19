@@ -1,11 +1,11 @@
 import type { ListingStatus, RegistrationType } from '../../../common/types';
 
-import type { CliStatus, RuntimeEnv } from './kupito-import-types';
 import type {
   ImportFailedItem,
   ImportManualReviewItem,
   RegistryImportState,
 } from './listing-types';
+import type { CliStatus, RuntimeEnv } from './platform-import-types';
 
 export type ImportState = RegistryImportState;
 
@@ -42,7 +42,7 @@ export interface ReportCommandOptions {
 export interface ImportDuplicateSkippedItem {
   sourceListingId: string;
   url: string;
-  matchedKupitoListingId: string;
+  matchedPlatformListingId: string;
   layer: string;
   reason: string;
 }

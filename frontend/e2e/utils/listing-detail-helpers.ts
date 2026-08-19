@@ -8,16 +8,33 @@ import { forceDefaultCanonicalLocaleCookies } from './e2e-locale';
 
 type ListingRow = {
   id?: string;
-  equipment?: string[];
+  equipment?: string[] | string | null;
   description?: string;
   description_ro?: string;
   description_ru?: string;
   description_en?: string;
+  description_sq?: string;
 };
 
 function descriptionLength(row: ListingRow): number {
-  const parts = [row.description, row.description_ro, row.description_ru, row.description_en];
-  return Math.max(0, ...parts.map((p) => (typeof p === 'string' ? p.length : 0)));
+  const parts = Object.entries(row)
+    .filter(([key]) => key === 'description' || key.startsWith('description_'))
+    .map(([, value]) => (typeof value === 'string' ? value.length : 0));
+  return Math.max(0, ...parts);
+}
+
+function listingEquipment(row: ListingRow): string[] {
+  const equipment = row.equipment;
+  if (Array.isArray(equipment)) {
+    return equipment.filter((item) => typeof item === 'string' && item.trim().length > 0);
+  }
+  if (typeof equipment === 'string' && equipment.trim()) {
+    return equipment
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
 }
 
 async function fetchListingRows(page: Page, maxPages = 15, limit = 50): Promise<ListingRow[]> {
@@ -146,12 +163,12 @@ export async function findVehicleListingIdsWithEquipment(page: Page, count = 2):
     if (!row.id) {
       continue;
     }
-    let equipment = row.equipment;
-    if (!equipment?.length) {
+    let equipment = listingEquipment(row);
+    if (!equipment.length) {
       const detail = await fetchListingDetail(page, row.id);
-      equipment = detail?.equipment;
+      equipment = detail ? listingEquipment(detail) : [];
     }
-    if (Array.isArray(equipment) && equipment.length > 0) {
+    if (equipment.length > 0) {
       ids.push(row.id);
       if (ids.length >= count) {
         return ids;
@@ -180,9 +197,13 @@ export async function addComparisonViaBrowserApi(page: Page, listingId: string):
 export async function ensureComparisonWithEquipmentListings(
   page: Page,
   minListings = 2,
+  createMissing?: () => Promise<string>,
 ): Promise<string[]> {
   await clearComparisonForSession(page);
   const ids = await findVehicleListingIdsWithEquipment(page, minListings);
+  while (ids.length < minListings && createMissing) {
+    ids.push(await createMissing());
+  }
   assert.ok(
     ids.length >= minListings,
     `E2E needs at least ${minListings} active listings with equipment in search data (stage seed).`,

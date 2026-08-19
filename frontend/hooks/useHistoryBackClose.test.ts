@@ -9,7 +9,7 @@ import {
 import { useHistoryBackClose } from './useHistoryBackClose';
 
 type OverlayHistoryState = Record<string, unknown> & {
-  kupitoOverlay?: string;
+  ppcslOverlay?: string;
 };
 
 describe('useHistoryBackClose', () => {
@@ -46,7 +46,7 @@ describe('useHistoryBackClose', () => {
     const { unmount } = renderHook(() => useHistoryBackClose(true, onClose, 'overlay-a'));
 
     expect(pushState).toHaveBeenCalledWith(
-      expect.objectContaining({ kupitoOverlay: 'overlay-a' }),
+      expect.objectContaining({ ppcslOverlay: 'overlay-a' }),
       '',
     );
     expect(getOverlayHistoryStackSizeForTests()).toBe(1);

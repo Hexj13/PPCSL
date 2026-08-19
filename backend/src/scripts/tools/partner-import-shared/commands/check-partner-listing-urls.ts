@@ -17,7 +17,7 @@ import {
 import { sleep } from '../utils/sleep';
 
 interface CheckRow {
-  kupitoListingId: string;
+  platformListingId: string;
   partner_listing_external_key: string | null;
   url: string;
   outcome: SourceCheckOutcome;
@@ -134,7 +134,7 @@ async function main(): Promise<void> {
       const key = listing.partner_listing_external_key ?? '';
       if (dryRun) {
         rows.push({
-          kupitoListingId: listing.id,
+          platformListingId: listing.id,
           partner_listing_external_key: listing.partner_listing_external_key,
           url,
           outcome: 'active',
@@ -146,7 +146,7 @@ async function main(): Promise<void> {
       console.log(`[partner:check-urls] ${progress} checking id=${listing.id} key=${key}`);
       const checked = await verifier.checkUrl(url);
       rows.push({
-        kupitoListingId: listing.id,
+        platformListingId: listing.id,
         partner_listing_external_key: listing.partner_listing_external_key,
         url,
         outcome: checked.outcome,
@@ -186,7 +186,7 @@ async function main(): Promise<void> {
 
   const csvLines = [
     [
-      'kupitoListingId',
+      'platformListingId',
       'partner_listing_external_key',
       'url',
       'outcome',
@@ -196,7 +196,7 @@ async function main(): Promise<void> {
     ].join(','),
     ...rows.map((r) =>
       [
-        csvEscape(r.kupitoListingId),
+        csvEscape(r.platformListingId),
         csvEscape(r.partner_listing_external_key ?? ''),
         csvEscape(r.url),
         csvEscape(r.outcome),

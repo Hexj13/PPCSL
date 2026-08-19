@@ -68,7 +68,7 @@ export function parseStrictUnsignedIntString(s: string): number | null {
   if (!/^\d+$/.test(t)) return null;
   return parseInt(t, 10);
 }
-export const SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY = 'kupito_search_filters_limit_error';
+export const SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY = 'ppcsl_search_filters_limit_error';
 
 export const SMS_HOURLY_QUOTA_RESEND_COOLDOWN_SECONDS = 3600;
 

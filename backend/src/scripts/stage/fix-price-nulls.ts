@@ -9,10 +9,10 @@ async function fixPriceNulls() {
     type: 'postgres',
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432'),
-    username: process.env.DB_USERNAME || 'kupito',
+    username: process.env.DB_USERNAME || 'ppcsl',
     password:
-      process.env.DB_PASSWORD || (process.env.NODE_ENV === 'production' ? undefined : 'kupito123'),
-    database: process.env.DB_NAME || 'kupito',
+      process.env.DB_PASSWORD || (process.env.NODE_ENV === 'production' ? undefined : 'ppcsl123'),
+    database: process.env.DB_NAME || 'ppcsl',
     synchronize: false,
   });
 

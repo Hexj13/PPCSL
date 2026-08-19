@@ -81,7 +81,7 @@ describe('api-client auth refresh guards', () => {
     localStorageGetItemMock = jest.fn((key: string) => {
       if (key === 'refresh_token') return 'refresh-token';
       if (key === 'token') return 'token';
-      if (key === 'kupito-locale') return 'ro';
+      if (key === 'ppcsl-locale') return 'ro';
       return null;
     });
     jest.clearAllMocks();

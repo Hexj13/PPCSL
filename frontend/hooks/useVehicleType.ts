@@ -9,7 +9,7 @@ import { isBrowser } from '@/lib/utils';
 
 import type { FilterState } from './useSearchFilters';
 
-const VEHICLE_TYPE_STORAGE_KEY = 'kupito_vehicle_type';
+const VEHICLE_TYPE_STORAGE_KEY = 'ppcsl_vehicle_type';
 
 const saveVehicleTypeToStorage = (vehicleType: 'car' | 'moto' | 'truck') => {
   if (isBrowser) {

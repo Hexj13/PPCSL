@@ -66,8 +66,8 @@ export function ListingPageBreadcrumbs({ listing, className = '' }: ListingPageB
     sessionStorageSetItem('scrollToResultsAfterLoad', '1');
     sessionStorageRemoveItem('homeScrollPosition');
     sessionStorageRemoveItem('homeScrollTimestamp');
-    sessionStorageRemoveItem('kupito_grid_state');
-    sessionStorageRemoveItem('kupito_grid_restore_state');
+    sessionStorageRemoveItem('ppcsl_grid_state');
+    sessionStorageRemoveItem('ppcsl_grid_restore_state');
     sessionStorageRemoveItem('forceHomeScrollTop');
   }, []);
 

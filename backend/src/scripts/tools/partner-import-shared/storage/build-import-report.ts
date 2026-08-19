@@ -1,5 +1,5 @@
 import type { ImportReport, ImportState } from '../import-workflow-types';
-import type { RuntimeEnv } from '../kupito-import-types';
+import type { RuntimeEnv } from '../platform-import-types';
 
 export interface ImportReportSourceItem {
   state: ImportState;
@@ -9,7 +9,7 @@ export interface ImportReportSourceItem {
   warnings?: string[];
   imageCount?: number;
   imageFailures?: number;
-  kupitoListingId?: string;
+  platformListingId?: string;
 }
 
 export interface BuildImportReportInput {
@@ -66,7 +66,7 @@ export function buildImportReport(input: BuildImportReportInput): ImportReport {
       duplicateSkippedItems.push({
         sourceListingId: item.sourceListingId,
         url: item.url,
-        matchedKupitoListingId: item.kupitoListingId ?? '',
+        matchedPlatformListingId: item.platformListingId ?? '',
         layer: layerMatch ? layerMatch[1] : 'unknown',
         reason: err,
       });

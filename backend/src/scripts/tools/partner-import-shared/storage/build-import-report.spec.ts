@@ -35,13 +35,13 @@ describe('buildImportReport', () => {
           sourceListingId: 's1',
           url: 'https://example.com/s1',
           error: 'DUPLICATE_MATCH:vin',
-          kupitoListingId: 'listing-uuid',
+          platformListingId: 'listing-uuid',
         },
       ],
     });
     expect(report.summary.duplicateSkipped).toBe(1);
     expect(report.duplicateSkippedItems).toHaveLength(1);
     expect(report.duplicateSkippedItems[0].layer).toBe('vin');
-    expect(report.duplicateSkippedItems[0].matchedKupitoListingId).toBe('listing-uuid');
+    expect(report.duplicateSkippedItems[0].matchedPlatformListingId).toBe('listing-uuid');
   });
 });

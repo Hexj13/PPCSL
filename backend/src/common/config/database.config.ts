@@ -3,9 +3,9 @@ import { registerAs } from '@nestjs/config';
 export const databaseConfig = registerAs('database', () => ({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432', 10),
-  username: process.env.DB_USERNAME || 'kupito',
-  password: process.env.DB_PASSWORD || (process.env.NODE_ENV === 'production' ? '' : 'kupito123'),
-  database: process.env.DB_NAME || 'kupito',
+  username: process.env.DB_USERNAME || 'ppcsl',
+  password: process.env.DB_PASSWORD || (process.env.NODE_ENV === 'production' ? '' : 'ppcsl123'),
+  database: process.env.DB_NAME || 'ppcsl',
   synchronize: process.env.DB_SYNC === 'true' || process.env.NODE_ENV === 'test',
   poolMax: parseInt(process.env.DB_POOL_MAX || '20', 10),
   poolMin: parseInt(process.env.DB_POOL_MIN || '0', 10),

@@ -1,6 +1,6 @@
 export interface MarkParsedRegistryItem {
   sourceListingId?: string | null;
-  kupitoListingId?: string | null;
+  platformListingId?: string | null;
 }
 
 export interface MarkParsedTargets {
@@ -16,7 +16,7 @@ export function collectMarkParsedTargets(
   const externalKeys = new Set<string>();
 
   for (const item of registryItems) {
-    const listingId = item.kupitoListingId?.trim();
+    const listingId = item.platformListingId?.trim();
     if (listingId) {
       listingIds.add(listingId);
     }

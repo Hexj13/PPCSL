@@ -1,3 +1,6 @@
+import { loadSiteConfigSync } from './site-config';
+import { getCountry } from './utils';
+
 export type AssetLinksStatement = {
   relation: string[];
   target: {
@@ -33,7 +36,11 @@ export function buildAndroidAssetLinks(
 }
 
 export function getAndroidAssetLinksFromEnv(): AssetLinksStatement[] {
-  const packageName = process.env.MOBILE_APP_PACKAGE_NAME || 'club.kupito.app';
+  const packageName =
+    process.env.MOBILE_APP_PACKAGE_NAME?.trim() ||
+    loadSiteConfigSync(getCountry()).mobileApp?.androidPackageName?.trim() ||
+    '';
+  if (!packageName) return [];
   const fingerprints = parseSha256Fingerprints(process.env.MOBILE_APP_SHA256_FINGERPRINTS);
   return buildAndroidAssetLinks(packageName, fingerprints);
 }

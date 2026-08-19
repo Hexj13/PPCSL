@@ -642,12 +642,12 @@ To cache optimized images (resized/recompressed by the backend) at the CDN edge,
 add a second origin and behavior to your existing CloudFront distribution:
 
 1. Origins → Create origin:
-   - Origin domain: your API server host (e.g. `kupito-backend.onrender.com`)
+   - Origin domain: your API server host (e.g. `ppcsl-backend.onrender.com`)
    - Protocol: HTTPS only
-   - Name: `kupito-api`
+   - Name: `platform-api`
 2. Behaviors → Create behavior:
    - Path pattern: `/api/upload/image/*`
-   - Origin: `kupito-api`
+   - Origin: `platform-api`
    - Viewer protocol: Redirect HTTP to HTTPS
    - Allowed HTTP methods: GET, HEAD
    - Cache policy: CachingOptimized (or custom with All query strings in cache key)
@@ -802,7 +802,7 @@ The application has built-in cron logic for closing old listings and expiring pr
 
 If you run **CipAuto** or **999.md** import CLI from Render Shell, the parser keeps a JSON registry, PLP snapshot, and run reports on disk. The default app filesystem is **ephemeral** on deploy unless you use a **Render persistent disk**.
 
-1. Attach a disk to `kupito-backend` (Render → **Disk** → **Add Disk**) and note the **mount path** (for example `/var/data`).
+1. Attach a disk to `ppcsl-backend` (Render → **Disk** → **Add Disk**) and note the **mount path** (for example `/var/data`).
 2. Add an environment variable on the same **backend web service**: **`PARSING_RUNTIME_DIR=<mount path>`** (must match the mount path exactly). Admin Parsing (manual runs and scheduler) spawns parser CLIs on that host and resolves catalog `plpDataPath` values relative to this root, so the variable must be set on the service—not only in one-off Render Shell sessions.
 3. After deploy, parser state is written under:
    - `<mount>/cipauto/cipauto-registry.json`, `cipauto-current-plp.json`, `reports/`
@@ -814,9 +814,9 @@ On first deploy after this change, copy an existing `cipauto-registry.json` into
 
 If `cipauto.md` returns Cloudflare managed challenges (HTTP 403 “Just a moment...”), run FlareSolverr next to the backend:
 
-1. Create a Render **Private Service** (Docker) from `ghcr.io/flaresolverr/flaresolverr:v3.5.0` in the **same workspace and region** as `kupito-backend`.
+1. Create a Render **Private Service** (Docker) from `ghcr.io/flaresolverr/flaresolverr:v3.5.0` in the **same workspace and region** as `ppcsl-backend`.
 2. Set `HOST=0.0.0.0`, `PORT=8191`, `LOG_LEVEL=info`. Health check path: `/health`. Do **not** attach a public URL.
-3. On `kupito-backend`, set `CIPAUTO_FLARESOLVERR_URL=http://<flaresolverr-service-name>:8191` (and optionally `CIPAUTO_FLARESOLVERR_TIMEOUT_MS=60000`).
+3. On `ppcsl-backend`, set `CIPAUTO_FLARESOLVERR_URL=http://<flaresolverr-service-name>:8191` (and optionally `CIPAUTO_FLARESOLVERR_TIMEOUT_MS=60000`).
 4. Prefer `ADMIN_PARSING_MAX_CONCURRENT_RUNS=1` until you confirm Chrome memory headroom.
 5. Locally: `docker compose up -d flaresolverr` from `core/`, then `CIPAUTO_FLARESOLVERR_URL=http://127.0.0.1:8191`.
 
@@ -1217,7 +1217,7 @@ sudo tail -f /var/log/nginx/ppcsl-api-error.log
 ```bash
 cd /var/www/ppcsl
 git pull origin main
-cd backend && npm install && npm run build && pm2 restart kupito-backend
+cd backend && npm install && npm run build && pm2 restart ppcsl-backend
 cd ../frontend && npm install && npm run build && pm2 restart kupito-frontend
 ```
 

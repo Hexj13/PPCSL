@@ -10,9 +10,9 @@ import {
 } from './url-locale';
 import { getCountry } from './utils';
 
-const STORAGE_KEY = 'kupito-locale';
-const COOKIE_KEY = 'kupito-locale';
-export const PREFERRED_LOCALE_COOKIE_KEY = 'kupito-preferred-locale';
+const STORAGE_KEY = 'ppcsl-locale';
+const COOKIE_KEY = 'ppcsl-locale';
+export const PREFERRED_LOCALE_COOKIE_KEY = 'ppcsl-preferred-locale';
 
 const translationCache = new Map<string, Translations>();
 

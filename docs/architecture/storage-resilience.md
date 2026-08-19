@@ -42,17 +42,17 @@ This strategy focuses on **practical, cost-effective improvements**. It does not
 
 | Domain | Storage keys | Impact without storage | Target | Effort | Action |
 |--------|-------------|----------------------|--------|--------|--------|
-| Auth session | `kupito_access_token`, `kupito_refresh_token` (httpOnly cookies); Zustand `auth-storage` holds `user` only | Session requires cookies + CORS credentials | Cookie session (implemented) | — | **Done.** Tokens are not in `localStorage`; see [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md). Legacy `token` / `refresh_token` keys may still exist until users re-login. |
+| Auth session | `ppcsl_access_token`, `ppcsl_refresh_token` (httpOnly cookies); Zustand `auth-storage` holds `user` only | Session requires cookies + CORS credentials | Cookie session (implemented) | — | **Done.** Tokens are not in `localStorage`; see [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md). Legacy `token` / `refresh_token` keys may still exist until users re-login. |
 | Post-login: `returnUrl` | `returnUrl` in localStorage (legacy) | User redirected to home instead of intended page | URL query parameter | Low | **Done.** Auth continuation now uses `?returnUrl=` in auth flows. |
 | Post-login: `pending*` keys | `pendingFavorites`, `pendingSavedFilter`, `pendingRegistration` | Guest pre-login actions lost | Server state or URL | High | **Partially done.** Safe storage access is in place; server-backed continuation remains future work. |
 | Consent | `cookie_consent` | Banner re-shown, analytics state unclear | Cookie-first | Low | **Done.** `useCookieConsent` writes consent to cookie as primary source with localStorage cache. |
-| Locale | `kupito-locale` | Falls back to default locale | Cookie (already partially done) | Low | **Already mostly done.** Cookie is written in `setStoredLocale`. Reads already use safe helper. |
-| Search filters | `kupito_search_filters` in session+local | Overflow filter restore fails | URL-first (already mostly done) | Low | **Done for resilience scope.** Storage access now goes through safe helpers. |
-| Vehicle type | `kupito_vehicle_type` | Resets to `car` | Best-effort storage | None | **Already done.** Uses safe helper. |
+| Locale | `ppcsl-locale` | Falls back to default locale | Cookie (already partially done) | Low | **Already mostly done.** Cookie is written in `setStoredLocale`. Reads already use safe helper. |
+| Search filters | `ppcsl_search_filters` in session+local | Overflow filter restore fails | URL-first (already mostly done) | Low | **Done for resilience scope.** Storage access now goes through safe helpers. |
+| Vehicle type | `ppcsl_vehicle_type` | Resets to `car` | Best-effort storage | None | **Already done.** Uses safe helper. |
 | Comparison (guest) | `comparison-storage`, migration buffers | Lost on reload | URL-backed compare (future feature) | Medium | **Partially done.** Safe helpers are used; URL-backed compare remains future feature. |
 | Favorites (guest) | `favorites-storage`, `pendingFavorites` | Lost on reload | Best-effort storage | None | Already uses `createPersistJSONStorage` with memory fallback. |
-| Cross-tab sync | `kupito_cross_tab_id`, `kupito-cross-tab-signal` | Degraded sync between tabs | `BroadcastChannel` first | Low | **Done for resilience scope.** Safe helpers are used for storage fallback path. |
-| Scroll and grid | `homeScrollPosition`, `kupito_grid_state`, `scrollPreserved`, etc. | Scroll resets, grid reloads | Best-effort storage | None | **Done for resilience scope.** Remaining direct access in app logic was migrated to safe helpers. |
+| Cross-tab sync | `ppcsl_cross_tab_id`, `ppcsl-cross-tab-signal` | Degraded sync between tabs | `BroadcastChannel` first | Low | **Done for resilience scope.** Safe helpers are used for storage fallback path. |
+| Scroll and grid | `homeScrollPosition`, `ppcsl_grid_state`, `scrollPreserved`, etc. | Scroll resets, grid reloads | Best-effort storage | None | **Done for resilience scope.** Remaining direct access in app logic was migrated to safe helpers. |
 | Toasts and UI flags | `showProfileSaveSuccess`, `listingCreatedToast`, etc. | Toast not shown | Best-effort storage | Low | **Done for resilience scope.** Storage calls were migrated to safe helpers. |
 | Admin preferences | `adminActiveTab`, `adminListingsSearchQuery` | Tab resets | Best-effort storage | Low | **Done for resilience scope.** Storage calls were migrated to safe helpers. |
 

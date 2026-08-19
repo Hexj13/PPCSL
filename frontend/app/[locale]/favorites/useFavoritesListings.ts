@@ -14,7 +14,7 @@ const FAVORITES_PAGE_SIZE = 20;
 function cacheListingIds(ids: string[]): void {
   if (ids.length === 0 || typeof window === 'undefined' || !('caches' in window)) return;
   void caches
-    .open('kupito-data-v1')
+    .open('ppcsl-data-v1')
     .then((cache) => {
       ids.forEach((id) => cache.add(`/listings/${id}`).catch(silentCatch('Favorites.cacheAdd')));
     })

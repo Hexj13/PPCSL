@@ -7,7 +7,7 @@ describe('AppController', () => {
   let appService: AppService;
 
   const mockAppService = {
-    getHello: jest.fn().mockReturnValue('Kupito API v1.0'),
+    getHello: jest.fn().mockReturnValue('Brand API v1.0'),
   };
 
   beforeEach(async () => {
@@ -27,7 +27,7 @@ describe('AppController', () => {
   describe('getHello', () => {
     it('should return API greeting message', () => {
       const result = controller.getHello();
-      expect(result).toBe('Kupito API v1.0');
+      expect(result).toBe('Brand API v1.0');
       expect(appService.getHello).toHaveBeenCalled();
     });
   });

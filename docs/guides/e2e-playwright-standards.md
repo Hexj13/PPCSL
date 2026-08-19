@@ -187,7 +187,7 @@ After every meaningful user action (submit, save, delete, toggle, navigate), ass
 1. **Network / mutation completed** — for create, update, promote, save-filter, favorite, compare: `waitForResponse(<mutation> OK)` before destination checks.
 2. **Navigation or query state** — `toHaveURL` / `waitForURL`, or unchanged URL when the page must not navigate.
 3. **Destination content rendered** — strong `expectPageView()` on the target page object: header + primary blocks + results grid, empty state, table, or list as the scenario requires.
-4. **Toast / notification** — when the app shows feedback: `expectSuccessToast` / `expectErrorToast` / `expectWarningToast` from `e2e/utils/toast.ts`, optionally matching text from `e2e/utils/i18n.ts` (`t('listings.changesSaved')` for UI copy; `tb('errors.invalidLoginCredentials')` when the API returns backend-translated messages). Toast nodes use stable marker classes (`kupito-toast--success`, `--error`, `--warning`) from `lib/toast.ts`.
+4. **Toast / notification** — when the app shows feedback: `expectSuccessToast` / `expectErrorToast` / `expectWarningToast` from `e2e/utils/toast.ts`, optionally matching text from `e2e/utils/i18n.ts` (`t('listings.changesSaved')` for UI copy; `tb('errors.invalidLoginCredentials')` when the API returns backend-translated messages). Toast nodes use stable marker classes (`ppcsl-toast--success`, `--error`, `--warning`) from `lib/toast.ts`.
 
 ### Paired `…AndExpect…` page-object methods
 

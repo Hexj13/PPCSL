@@ -48,7 +48,7 @@ async function seedRegistry() {
     console.error(
       'Alternative: npx ts-node src/scripts/tools/cipauto-import/commands/seed-registry.ts [--env prod] <userId>',
     );
-    console.error('  userId — UUID of the CipAuto partner user in Kupito DB');
+    console.error('  userId — UUID of the CipAuto partner user in platform DB');
     process.exit(1);
   }
 
@@ -74,10 +74,10 @@ async function seedRegistry() {
   const { registryPath, reportsDir } = configResolved;
   const registry = new RegistryStore(registryPath);
   const existingItems = registry.getAll();
-  const existingByKupitoId = new Map(
+  const existingByPlatformListingId = new Map(
     existingItems
-      .filter((item) => item.kupitoListingId)
-      .map((item) => [item.kupitoListingId!, item]),
+      .filter((item) => item.platformListingId)
+      .map((item) => [item.platformListingId!, item]),
   );
 
   let seeded = 0;
@@ -95,12 +95,12 @@ async function seedRegistry() {
     const sourceId = rawCod.toLowerCase();
 
     const existingBySource = registry.getBySourceId(sourceId);
-    if (existingBySource?.kupitoListingId) {
+    if (existingBySource?.platformListingId) {
       skippedAlreadyInRegistry++;
       continue;
     }
 
-    if (existingByKupitoId.has(listing.id)) {
+    if (existingByPlatformListingId.has(listing.id)) {
       skippedAlreadyInRegistry++;
       continue;
     }
@@ -126,7 +126,7 @@ async function seedRegistry() {
       price: listing.price || undefined,
       currency: listing.currency || undefined,
       state: existingBySource?.state ?? 'created',
-      kupitoListingId: listing.id,
+      platformListingId: listing.id,
       ownerUserId: userId,
       createdStatus: listing.status,
       lastSeenAt: existingBySource?.lastSeenAt ?? now,

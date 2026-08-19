@@ -30,6 +30,7 @@ Single reference for linting and formatting across the project (frontend and bac
 | Knip                | `npm run knip` (CI `frontend-check`) | —                                      |
 | Husky + lint-staged | Pre-commit hooks                    | Pre-commit hooks                       |
 | Custom plugins      | `no-hardcoded-text`                 | `no-hardcoded-text`, `require-vehicle-type` |
+| Platform-neutral    | `lint:platform-neutral` (script)    | `lint:platform-neutral` (script)          |
 
 ### ESLint plugins
 
@@ -57,7 +58,7 @@ Single reference for linting and formatting across the project (frontend and bac
 
 ```bash
 cd core/frontend
-npm run lint          # ESLint + translation sync
+npm run lint          # ESLint + translation sync + platform-neutral
 npm run lint:fix      # Auto-fix
 npm run lint:styles   # Stylelint check
 npm run lint:styles:fix
@@ -70,7 +71,7 @@ npm run format:check
 
 ```bash
 cd core/backend
-npm run lint:check    # Check
+npm run lint:check    # Check (ESLint + platform-neutral)
 npm run lint          # Auto-fix
 npm run format        # Prettier
 npm run format:check
@@ -82,7 +83,7 @@ npm run format:check
 npm run release-check
 ```
 
-Runs `prepare:build`, then frontend (`lint`, `lint:styles`, `format:check`, `test`, `build`), then backend (`lint:check`, `format:check`, `test`, `test:integration`, `build`).
+Runs `prepare:build`, then frontend (`lint` including platform-neutral, `lint:styles`, `format:check`, `test`, `build`), then backend (`lint:check` including platform-neutral, `format:check`, `test`, `test:integration`, `build`).
 
 `release-check` already unsets `devdir` internally, so no extra wrapper is needed.
 
@@ -116,6 +117,7 @@ Config: `.lintstagedrc.mjs`, `.husky/pre-commit`.
 | no-hardcoded-text (FE) | `core/frontend/config/eslint/eslint-plugin-no-hardcoded-text.mjs` |
 | no-hardcoded-text (BE) | `core/backend/config/eslint/eslint-plugin-no-hardcoded-text.cjs` |
 | require-vehicle-type | `core/backend/config/eslint/eslint-plugin-require-vehicle-type.cjs` |
+| platform-neutral     | `core/scripts/check-platform-neutral.cjs` |
 
 ---
 
@@ -166,6 +168,18 @@ toast.success(t('sms.codeSent'))
 
 **Guidance:** Prefer splitting large files and functions; extract helpers to lower complexity.
 
+### Platform-neutral core
+
+**Goal:** Shared core (`core/frontend`, `core/backend`) must not name a live platform (brand or domain). Brand copy lives in the platform overlay (`config/`, `locales/`, `theme/`, `assets/`). Identifiers use `ppcsl_*` / `ppcsl-`. User-facing name comes from `SITE_NAME` / overlay `config/site.ts` / `{siteName}`.
+
+Wired into frontend `npm run lint` and backend `npm run lint:check` as `lint:platform-neutral` (`core/scripts/check-platform-neutral.cjs`), so `npm run release-check` already runs it. Playwright e2e specs also forbid those literals via ESLint `no-restricted-syntax` (`e2e/platform/` is excluded — that folder holds real fixtures).
+
+This is a dedicated lint script rather than an ESLint plugin: backend ESLint skips specs, overlay `prepare:build` overwrites tracked locale/config files with platform copy, and CSS is outside ESLint. A new platform brand/domain must be added to `FORBIDDEN` in the script.
+
+**Allowed in core source:** Infocar affiliate `from=kupito`; deprecated `KUPITO_*` env aliases; `kupitoListingId` registry migration; `frontend/e2e/platform/contract.test.ts`. Per-line escape: `ppcsl-allow-platform-name`.
+
+**Not scanned (overlay slots):** `frontend/lib/locales/`, platform FAQ/legal under `frontend/lib/config/`, `backend/src/common/config/site.ts`, overlay i18n `en.json` / `sq.json`.
+
 ---
 
 ## Translations (frontend)
@@ -192,6 +206,7 @@ toast.success(t('sms.codeSent'))
 | Import order | Run `npm run lint:fix` (or `sort-imports` if configured). |
 | Backend lint command unexpectedly changes files | `npm run lint` is fix mode; use `npm run lint:check` for read-only verification. |
 | Frontend CSS violations | Run `npm run lint:styles` or `npm run lint:styles:fix`. |
+| Live platform name in core (`kupito`, `makinaguru`, …) | Use overlay / `SITE_NAME` / `{siteName}` / `ppcsl_*`. Do not widen `check-platform-neutral.cjs` without a documented exception. |
 
 `no-hardcoded-text` cannot be auto-fixed; add translation keys manually.
 

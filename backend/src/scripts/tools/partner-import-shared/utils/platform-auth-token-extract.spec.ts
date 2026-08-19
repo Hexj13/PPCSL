@@ -1,7 +1,7 @@
 import {
-  mergeKupitoAuthTokensFromBodyAndCookies,
-  readKupitoAuthTokensFromSetCookieHeaders,
-} from './kupito-auth-token-extract';
+  mergePlatformAuthTokensFromBodyAndCookies,
+  readPlatformAuthTokensFromSetCookieHeaders,
+} from './platform-auth-token-extract';
 
 function responseWithSetCookie(lines: string[]): Response {
   const headers = new Headers();
@@ -11,24 +11,24 @@ function responseWithSetCookie(lines: string[]): Response {
   return new Response(null, { status: 200, headers });
 }
 
-describe('readKupitoAuthTokensFromSetCookieHeaders', () => {
+describe('readPlatformAuthTokensFromSetCookieHeaders', () => {
   it('extracts access and refresh token values from Set-Cookie', () => {
     const response = responseWithSetCookie([
-      'kupito_access_token=aa.bb.cc; Path=/; HttpOnly',
-      'kupito_refresh_token=dd.ee.ff; Path=/api/auth; HttpOnly',
+      'ppcsl_access_token=aa.bb.cc; Path=/; HttpOnly',
+      'ppcsl_refresh_token=dd.ee.ff; Path=/api/auth; HttpOnly',
     ]);
-    expect(readKupitoAuthTokensFromSetCookieHeaders(response)).toEqual({
+    expect(readPlatformAuthTokensFromSetCookieHeaders(response)).toEqual({
       accessToken: 'aa.bb.cc',
       refreshToken: 'dd.ee.ff',
     });
   });
 });
 
-describe('mergeKupitoAuthTokensFromBodyAndCookies', () => {
+describe('mergePlatformAuthTokensFromBodyAndCookies', () => {
   it('prefers tokens from JSON body when both are present', () => {
-    const response = responseWithSetCookie(['kupito_access_token=cookie-a; Path=/']);
+    const response = responseWithSetCookie(['ppcsl_access_token=cookie-a; Path=/']);
     expect(
-      mergeKupitoAuthTokensFromBodyAndCookies(
+      mergePlatformAuthTokensFromBodyAndCookies(
         { access_token: 'json-a', refresh_token: 'json-r' },
         response,
       ),
@@ -37,10 +37,10 @@ describe('mergeKupitoAuthTokensFromBodyAndCookies', () => {
 
   it('uses Set-Cookie when JSON body omits tokens', () => {
     const response = responseWithSetCookie([
-      'kupito_access_token=jwt-value; Path=/; HttpOnly',
-      'kupito_refresh_token=refresh-value; Path=/api/auth; HttpOnly',
+      'ppcsl_access_token=jwt-value; Path=/; HttpOnly',
+      'ppcsl_refresh_token=refresh-value; Path=/api/auth; HttpOnly',
     ]);
-    expect(mergeKupitoAuthTokensFromBodyAndCookies({}, response)).toEqual({
+    expect(mergePlatformAuthTokensFromBodyAndCookies({}, response)).toEqual({
       access_token: 'jwt-value',
       refresh_token: 'refresh-value',
     });

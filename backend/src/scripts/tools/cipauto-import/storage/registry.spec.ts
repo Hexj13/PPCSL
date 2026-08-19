@@ -23,7 +23,7 @@ describe('RegistryStore', () => {
       '2026-06-18T09:00:00.000Z',
     );
     registry.markState(first.sourceListingId, 'created', {
-      kupitoListingId: 'kupito-1',
+      platformListingId: 'listing-1',
       createdStatus: 'Active',
     });
 
@@ -34,10 +34,10 @@ describe('RegistryStore', () => {
       canonicalUrl: 'https://cipauto.md/vehicul/222222-volkswagen-passat/',
     });
 
-    expect(existing?.kupitoListingId).toBe('kupito-1');
+    expect(existing?.platformListingId).toBe('listing-1');
   });
 
-  it('re-keys rotated slugs while preserving Kupito linkage', () => {
+  it('re-keys rotated slugs while preserving platform listing linkage', () => {
     const registry = new RegistryStore(makeRegistryPath());
     registry.upsertPlpItem(
       {
@@ -49,7 +49,7 @@ describe('RegistryStore', () => {
       '2026-06-18T09:00:00.000Z',
     );
     registry.markState('111111-volkswagen-passat', 'created', {
-      kupitoListingId: 'kupito-1',
+      platformListingId: 'listing-1',
       createdStatus: 'Active',
     });
 
@@ -64,7 +64,7 @@ describe('RegistryStore', () => {
     );
 
     expect(next.sourceListingId).toBe('222222-volkswagen-passat');
-    expect(next.kupitoListingId).toBe('kupito-1');
+    expect(next.platformListingId).toBe('listing-1');
     expect(registry.getBySourceId('111111-volkswagen-passat')).toBeUndefined();
     expect(registry.getBySourceId('222222-volkswagen-passat')).toBeDefined();
     expect(registry.getAll()).toHaveLength(1);

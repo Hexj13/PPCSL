@@ -346,7 +346,7 @@ export abstract class SearchHomeScrollPage {
 
   async getPersistedGridPage(): Promise<number> {
     return this.page.evaluate(() => {
-      for (const key of ['kupito_grid_state', 'kupito_grid_restore_state']) {
+      for (const key of ['ppcsl_grid_state', 'ppcsl_grid_restore_state']) {
         const raw = sessionStorage.getItem(key);
         if (!raw) {
           continue;
@@ -406,7 +406,7 @@ export abstract class SearchHomeScrollPage {
 
   async getPersistedGridListingCount(): Promise<number> {
     return this.page.evaluate(() => {
-      const fullRaw = sessionStorage.getItem('kupito_grid_state');
+      const fullRaw = sessionStorage.getItem('ppcsl_grid_state');
       if (!fullRaw) {
         return 0;
       }

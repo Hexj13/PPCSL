@@ -16,7 +16,7 @@ export class AppController {
       'text/plain': {
         schema: {
           type: 'string',
-          example: 'Kupito API v1.0',
+          example: 'API v1.0',
         },
       },
     },

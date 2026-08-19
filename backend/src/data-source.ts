@@ -5,6 +5,7 @@ import { AdminAuditLog } from './admin/entities/admin-audit-log.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { Brand } from './brands/entities/brand.entity';
 import { VehicleModel } from './brands/entities/vehicle-model.entity';
+import { loadBackendEnvFile } from './common/config/load-backend-env';
 import { TypeormSlowQueryLogger } from './common/typeorm-slow-query.logger';
 import { ComparisonItem } from './comparison/entities/comparison-item.entity';
 import { ExchangeRate } from './exchange-rates/entities/exchange-rate.entity';
@@ -23,6 +24,8 @@ import { TireModel } from './tires/entities/tire-model.entity';
 import { Tire } from './tires/entities/tire.entity';
 import { User } from './users/entities/user.entity';
 
+loadBackendEnvFile();
+
 function resolvePostgresSsl(): boolean | { rejectUnauthorized: false } {
   const raw = process.env.DB_SSL?.trim().toLowerCase();
   if (raw === 'true' || raw === '1' || raw === 'yes') {
@@ -38,16 +41,20 @@ function resolveTypeOrmLogging(): LoggerOptions {
   if (process.env.NODE_ENV === 'production') {
     return ['warn', 'error'];
   }
-  if (process.env.NODE_ENV !== 'development') {
-    return ['error'];
-  }
-  const raw = String(process.env.KUPITO_TYPEORM_QUERY_LOG ?? 'true')
+  const raw = String(
+    process.env.PPCSL_TYPEORM_QUERY_LOG ?? process.env.KUPITO_TYPEORM_QUERY_LOG ?? '',
+  )
     .trim()
     .toLowerCase();
-  if (raw === '0' || raw === 'false' || raw === 'no' || raw === 'off') {
-    return ['error'];
+  const queryLogOn = raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
+  if (queryLogOn) {
+    return true;
   }
-  return true;
+  // Default off: `logging: true` dumps every SQL line (cron, health, TypeORM bootstrap).
+  if (process.env.NODE_ENV === 'development') {
+    return ['warn', 'error'];
+  }
+  return ['error'];
 }
 
 function resolveSlowQueryMs(): number {
@@ -61,10 +68,10 @@ export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
-  username: process.env.DB_USERNAME || 'kupito',
+  username: process.env.DB_USERNAME || 'ppcsl',
   password:
-    process.env.DB_PASSWORD || (process.env.NODE_ENV === 'production' ? undefined : 'kupito123'),
-  database: process.env.DB_NAME || 'kupito',
+    process.env.DB_PASSWORD || (process.env.NODE_ENV === 'production' ? undefined : 'ppcsl123'),
+  database: process.env.DB_NAME || 'ppcsl',
   entities: [
     User,
     Listing,

@@ -6,13 +6,13 @@ import { resolveConfig as resolveCipautoConfig } from '../cipauto-import/config'
 import { CipautoHttpClient } from '../cipauto-import/http/cipauto-http-client';
 import { PdpParser } from '../cipauto-import/parsers/pdp-parser';
 
-import type { RuntimeEnv } from './kupito-import-types';
 import type { ParsedPdpData } from './listing-types';
 import {
   PARTNER_SOURCE_CODE_AUTOOUTLET,
   PARTNER_SOURCE_CODE_CIPAUTO,
   PARTNER_SOURCE_CODE_999MD,
 } from './partner-source-codes';
+import type { RuntimeEnv } from './platform-import-types';
 
 export type PartnerCode = 'cipauto' | '999md' | 'autooutlet';
 

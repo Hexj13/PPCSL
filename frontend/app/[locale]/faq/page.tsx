@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { useI18n } from '@/components/providers/I18nProvider';
 import { useTranslation } from '@/hooks/useTranslation';
+import { applySitePlaceholders } from '@/lib/apply-site-placeholders';
 import { loadFaqSync } from '@/lib/content/faq';
 import { loadSiteConfigSync } from '@/lib/site-config';
 import { getCountry } from '@/lib/utils';
@@ -31,9 +32,7 @@ export default function FAQPage() {
   };
 
   const normalizeText = (text: string) => {
-    return text
-      .replaceAll('support@kupito.club', siteConfig.supportEmail)
-      .replaceAll('kupito.club', siteConfig.domain);
+    return applySitePlaceholders(text, siteConfig);
   };
 
   return (

@@ -21,7 +21,7 @@ describe('optimized-delivery-cache.utils', () => {
   });
 
   it('normalizes original upload paths and rejects derived paths', () => {
-    expect(normalizeOriginalUploadPath('https://cdn.kupito.club/uploads/foo.webp')).toBe(
+    expect(normalizeOriginalUploadPath('https://cdn.example.test/uploads/foo.webp')).toBe(
       '/uploads/foo.webp',
     );
     expect(normalizeOriginalUploadPath('/uploads/optimized/foo_640_75.webp')).toBeNull();

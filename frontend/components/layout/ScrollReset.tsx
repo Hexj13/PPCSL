@@ -50,8 +50,8 @@ function setupHomeScrollRestoration(previousPath: string | null) {
   }
 
   clearHomeScrollRestoreSession();
-  sessionStorageRemoveItem('kupito_grid_state');
-  sessionStorageRemoveItem('kupito_grid_restore_state');
+  sessionStorageRemoveItem('ppcsl_grid_state');
+  sessionStorageRemoveItem('ppcsl_grid_restore_state');
   scrollWindowToTopWithFollowUp();
 }
 

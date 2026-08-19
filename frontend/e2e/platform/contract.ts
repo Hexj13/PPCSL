@@ -1,11 +1,11 @@
 import type { SiteConfig } from '@/lib/site-config';
 import { loadSiteConfigSync } from '@/lib/site-config';
 
-/** Matches `COOKIE_KEY` / `STORAGE_KEY` in `lib/i18n.ts` (legacy brand prefix). */
-export const E2E_LOCALE_COOKIE_NAME = 'kupito-locale';
+/** Matches `COOKIE_KEY` / `STORAGE_KEY` in `lib/i18n.ts`. */
+export const E2E_LOCALE_COOKIE_NAME = 'ppcsl-locale';
 
 /** Matches `PREFERRED_LOCALE_COOKIE_KEY` in `lib/i18n.ts`. */
-export const E2E_PREFERRED_LOCALE_COOKIE_NAME = 'kupito-preferred-locale';
+export const E2E_PREFERRED_LOCALE_COOKIE_NAME = 'ppcsl-preferred-locale';
 
 /**
  * Listing form description tabs keep legacy test ids (`-ro` / `-ru`) in the UI

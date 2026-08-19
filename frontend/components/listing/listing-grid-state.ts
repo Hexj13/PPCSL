@@ -11,8 +11,8 @@ import { LISTING_GRID_PAGE_SIZE } from '@/lib/constants';
 import { shouldRestoreHomeScrollAfterPath } from '@/lib/preserve-home-scroll';
 import { getParsedListingSearchParams } from '@/lib/search';
 
-export const GRID_STATE_KEY = 'kupito_grid_state';
-export const GRID_RESTORE_STATE_KEY = 'kupito_grid_restore_state';
+export const GRID_STATE_KEY = 'ppcsl_grid_state';
+export const GRID_RESTORE_STATE_KEY = 'ppcsl_grid_restore_state';
 const HOME_SCROLL_LAST_REST_PATH_KEY = 'homeScrollLastRestPath';
 
 const GRID_STATE_MAX_AGE_MS = 5 * 60 * 1000;

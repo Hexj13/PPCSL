@@ -6,7 +6,7 @@ import * as path from 'path';
 import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
 import { AuthClient } from '../../partner-import-shared/api/auth-client';
-import { KupitoApiClient } from '../../partner-import-shared/api/kupito-api';
+import { PlatformApiClient } from '../../partner-import-shared/api/platform-api';
 import { mapBodyType } from '../../partner-import-shared/mapping/body-type-mapper';
 import { BrandModelResolver } from '../../partner-import-shared/mapping/brand-model-resolver';
 import { mapColor } from '../../partner-import-shared/mapping/color-mapper';
@@ -38,7 +38,7 @@ interface SeedRow {
   sourceListingId: string;
   url: string;
   outcome: SeedOutcome;
-  kupitoListingId?: string;
+  platformListingId?: string;
   detail?: string;
 }
 
@@ -111,7 +111,7 @@ async function main(): Promise<void> {
     parseArgs();
   if (!login.trim() || !userId.trim()) {
     console.error(
-      'Usage: npm run 999md:seed-registry -- --login <999profile> --userId <kupitoUserUuid> [--env local|prod] [--dry-run] [--delay ms] [--price-tolerance-pct n] [--photo-count-tolerance n]',
+      'Usage: npm run 999md:seed-registry -- --login <999profile> --userId <platformUserUuid> [--env local|prod] [--dry-run] [--delay ms] [--price-tolerance-pct n] [--photo-count-tolerance n]',
     );
     process.exit(1);
   }
@@ -121,8 +121,8 @@ async function main(): Promise<void> {
   const plp = new PlpParser999(config);
   const pdp = new PdpParser999(config);
   const authClient = new AuthClient(config);
-  const kupitoApi = new KupitoApiClient(config, authClient);
-  const resolver = new BrandModelResolver(kupitoApi);
+  const platformApi = new PlatformApiClient(config, authClient);
+  const resolver = new BrandModelResolver(platformApi);
 
   await authClient.login();
   await AppDataSource.initialize();
@@ -132,7 +132,7 @@ async function main(): Promise<void> {
   const availableListingIds = new Set(vehicleListings.map((l) => l.id));
 
   console.log(
-    `[999md:seed-registry] login=${login} userId=${userId} kupitoVehicleListings=${vehicleListings.length} dryRun=${dryRun}`,
+    `[999md:seed-registry] login=${login} userId=${userId} platformVehicleListings=${vehicleListings.length} dryRun=${dryRun}`,
   );
 
   const plpItems = await plp.fetchAllProfileAds({
@@ -152,13 +152,13 @@ async function main(): Promise<void> {
 
     const sourceId = String(item.sourceListingId);
     const existingReg = registry.getBySourceId(sourceId);
-    if (existingReg?.kupitoListingId) {
+    if (existingReg?.platformListingId) {
       rows.push({
         sourceListingId: sourceId,
         url: item.url,
         outcome: 'skipped_registry',
-        kupitoListingId: existingReg.kupitoListingId,
-        detail: 'registry_already_has_kupitoListingId',
+        platformListingId: existingReg.platformListingId,
+        detail: 'registry_already_has_platformListingId',
       });
       continue;
     }
@@ -271,7 +271,7 @@ async function main(): Promise<void> {
         sourceListingId: sourceId,
         url: item.url,
         outcome,
-        kupitoListingId: matched.id,
+        platformListingId: matched.id,
       });
 
       availableListingIds.delete(matched.id);
@@ -293,7 +293,7 @@ async function main(): Promise<void> {
           price: parsed.price,
           currency: parsed.currency,
           state: 'created',
-          kupitoListingId: matched.id,
+          platformListingId: matched.id,
           ownerUserId: userId,
           createdStatus: matched.status,
           discoveredAt: existingReg?.discoveredAt ?? now,
@@ -338,13 +338,13 @@ async function main(): Promise<void> {
   fs.writeFileSync(jsonPath, JSON.stringify({ summary, rows }, null, 2), 'utf-8');
 
   const csvLines = [
-    ['sourceListingId', 'url', 'outcome', 'kupitoListingId', 'detail'].join(','),
+    ['sourceListingId', 'url', 'outcome', 'platformListingId', 'detail'].join(','),
     ...rows.map((r) =>
       [
         csvEscape(r.sourceListingId),
         csvEscape(r.url),
         csvEscape(r.outcome),
-        csvEscape(r.kupitoListingId ?? ''),
+        csvEscape(r.platformListingId ?? ''),
         csvEscape(r.detail ?? ''),
       ].join(','),
     ),

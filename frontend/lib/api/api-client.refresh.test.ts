@@ -54,6 +54,6 @@ describe('refreshAuthSession', () => {
     const { refreshAuthSession } = await import('./api-client');
     await refreshAuthSession();
 
-    expect(requestMock).toHaveBeenCalledWith('kupito-auth-refresh', expect.any(Function));
+    expect(requestMock).toHaveBeenCalledWith('ppcsl-auth-refresh', expect.any(Function));
   });
 });

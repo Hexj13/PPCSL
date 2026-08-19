@@ -53,7 +53,7 @@ const EMPTY_STATUS_COUNTS: MyListingsStatusCounts = {
 function preloadListingPages(listings: Listing[]) {
   if (!('caches' in window) || listings.length === 0) return;
   void caches
-    .open('kupito-data-v1')
+    .open('ppcsl-data-v1')
     .then((cache) => {
       listings.forEach((listing) => {
         cache.add(`/listings/${listing.id}`).catch(silentCatch('MyListings.cacheAdd'));

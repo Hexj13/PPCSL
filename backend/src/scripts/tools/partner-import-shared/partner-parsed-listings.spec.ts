@@ -7,9 +7,9 @@ describe('partner-parsed-listings helpers', () => {
     it('collects listing ids and source keys from registry and PLP', () => {
       const targets = collectMarkParsedTargets(
         [
-          { sourceListingId: '111', kupitoListingId: 'aaa' },
-          { sourceListingId: '222', kupitoListingId: ' ' },
-          { sourceListingId: null, kupitoListingId: 'bbb' },
+          { sourceListingId: '111', platformListingId: 'aaa' },
+          { sourceListingId: '222', platformListingId: ' ' },
+          { sourceListingId: null, platformListingId: 'bbb' },
         ],
         ['222', '333', ''],
       );

@@ -13,11 +13,11 @@ describe('browser-local-storage', () => {
     jest.resetModules();
     const { localStorageGetItem, localStorageRemoveItem, localStorageSetItem } =
       await import('@/lib/browser-local-storage');
-    localStorage.removeItem('kupito_ls_test_key');
-    localStorageSetItem('kupito_ls_test_key', 'v');
-    expect(localStorageGetItem('kupito_ls_test_key')).toBe('v');
-    localStorageRemoveItem('kupito_ls_test_key');
-    expect(localStorageGetItem('kupito_ls_test_key')).toBeNull();
+    localStorage.removeItem('ppcsl_ls_test_key');
+    localStorageSetItem('ppcsl_ls_test_key', 'v');
+    expect(localStorageGetItem('ppcsl_ls_test_key')).toBe('v');
+    localStorageRemoveItem('ppcsl_ls_test_key');
+    expect(localStorageGetItem('ppcsl_ls_test_key')).toBeNull();
   });
 
   it('uses in-memory storage when localStorage operations throw SecurityError', async () => {

@@ -38,12 +38,12 @@ describe('evaluateCloseGuard', () => {
       makeItem({
         sourceListingId: 'missing-1',
         sourceStatus: 'missing_candidate',
-        kupitoListingId: 'kupito-1',
+        platformListingId: 'listing-1',
       }),
       makeItem({
         sourceListingId: 'missing-2',
         sourceStatus: 'missing_candidate',
-        kupitoListingId: 'kupito-2',
+        platformListingId: 'listing-2',
       }),
       makeItem({
         sourceListingId: 'active-1',
@@ -61,7 +61,7 @@ describe('evaluateCloseGuard', () => {
       makeItem({
         sourceListingId: 'missing-1',
         sourceStatus: 'missing_candidate',
-        kupitoListingId: 'kupito-1',
+        platformListingId: 'listing-1',
       }),
     ];
 
@@ -75,18 +75,18 @@ describe('evaluateCloseGuard', () => {
 });
 
 describe('shouldReopenListing', () => {
-  it('returns true for listings that were closed in Kupito', () => {
+  it('returns true for listings that were closed in platform', () => {
     const item = makeItem({
-      kupitoListingId: 'kupito-1',
+      platformListingId: 'listing-1',
       createdStatus: ListingStatus.Closed,
     });
 
     expect(shouldReopenListing(item, 'active')).toBe(true);
   });
 
-  it('returns false for already active Kupito listings', () => {
+  it('returns false for already active platform listings', () => {
     const item = makeItem({
-      kupitoListingId: 'kupito-1',
+      platformListingId: 'listing-1',
       createdStatus: ListingStatus.Active,
     });
 

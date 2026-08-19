@@ -1,8 +1,9 @@
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
-import { I18nService } from '../common/i18n/i18n.service';
+import { I18nService, interpolateI18nTemplate } from '../common/i18n/i18n.service';
+import { resolvePlatformName } from '../common/platform-name';
 import { createSlug, slugMatches, slugToName } from '../common/utils/slug.utils';
 
 import {
@@ -23,6 +24,18 @@ import { VehicleModel } from './entities/vehicle-model.entity';
 
 const BRANDS_EXCLUDED_FROM_LIST: string[] = ['Другая марка'];
 
+function siteMeta(
+  i18n: I18nService,
+  key: string,
+  locale: string,
+  extra: Record<string, string> = {},
+): string {
+  return interpolateI18nTemplate(i18n.translate(key, locale), {
+    siteName: resolvePlatformName(),
+    ...extra,
+  });
+}
+
 @Injectable()
 export class BrandsService {
   private readonly logger = new Logger(BrandsService.name);
@@ -41,8 +54,12 @@ export class BrandsService {
   async findAll(vehicleType?: BrandVehicleType): Promise<Brand[]> {
     try {
       const cached = await this.brandsCache.getBrands(vehicleType);
-      if (cached) {
-        return cached.filter((b) => !BRANDS_EXCLUDED_FROM_LIST.includes(b.name));
+      if (cached && cached.length > 0) {
+        if (await this.isCachedBrandListFresh(cached)) {
+          return cached.filter((b) => !BRANDS_EXCLUDED_FROM_LIST.includes(b.name));
+        }
+        this.logger.warn('Brands cache IDs do not match the database; rebuilding');
+        await this.brandsCache.invalidateAll();
       }
     } catch (error) {
       this.logger.warn('Failed to get brands from cache', error);
@@ -77,6 +94,15 @@ export class BrandsService {
     }
 
     return filtered;
+  }
+
+  private async isCachedBrandListFresh(cached: Brand[]): Promise<boolean> {
+    const ids = cached.map((brand) => brand.id).filter(Boolean);
+    if (ids.length === 0) {
+      return false;
+    }
+    const existing = await this.brandsRepository.count({ where: { id: In(ids) } });
+    return existing === ids.length;
   }
 
   async findOne(id: string): Promise<Brand | null> {
@@ -210,7 +236,7 @@ export class BrandsService {
     if (!brandSlug || !brandSlug.trim()) {
       return {
         title: null,
-        description: this.i18nService.translate('metadata.site.homePageDescription', locale),
+        description: siteMeta(this.i18nService, 'metadata.site.homePageDescription', locale),
       };
     }
     const brandSlugs = brandSlug
@@ -220,7 +246,7 @@ export class BrandsService {
     if (brandSlugs.length === 0) {
       return {
         title: null,
-        description: this.i18nService.translate('metadata.site.homePageDescription', locale),
+        description: siteMeta(this.i18nService, 'metadata.site.homePageDescription', locale),
       };
     }
     const brands = await this.findAll(vehicleType);
@@ -234,7 +260,7 @@ export class BrandsService {
     if (foundBrands.length === 0) {
       return {
         title: null,
-        description: this.i18nService.translate('metadata.site.homePageDescription', locale),
+        description: siteMeta(this.i18nService, 'metadata.site.homePageDescription', locale),
       };
     }
 
@@ -249,10 +275,10 @@ export class BrandsService {
         foundBrands.length === 1 ? foundBrands[0].name : foundBrands.map((b) => b.name).join(', ');
       const brandName = foundBrands.length === 1 ? foundBrands[0].name : undefined;
       const description = brandName
-        ? this.i18nService
-            .translate('metadata.site.homePageDescriptionWithBrand', locale)
-            .replace('{brand}', brandName)
-        : this.i18nService.translate('metadata.site.homePageDescription', locale);
+        ? siteMeta(this.i18nService, 'metadata.site.homePageDescriptionWithBrand', locale, {
+            brand: brandName,
+          })
+        : siteMeta(this.i18nService, 'metadata.site.homePageDescription', locale);
       return { title, description, brandName };
     }
 
@@ -296,10 +322,10 @@ export class BrandsService {
         foundBrands.length === 1 ? foundBrands[0].name : foundBrands.map((b) => b.name).join(', ');
       const brandName = foundBrands.length === 1 ? foundBrands[0].name : undefined;
       const description = brandName
-        ? this.i18nService
-            .translate('metadata.site.homePageDescriptionWithBrand', locale)
-            .replace('{brand}', brandName)
-        : this.i18nService.translate('metadata.site.homePageDescription', locale);
+        ? siteMeta(this.i18nService, 'metadata.site.homePageDescriptionWithBrand', locale, {
+            brand: brandName,
+          })
+        : siteMeta(this.i18nService, 'metadata.site.homePageDescription', locale);
       return { title, description, brandName };
     }
 
@@ -308,14 +334,14 @@ export class BrandsService {
       foundBrands.length === 1 && modelNames.length === 1 ? modelNames[0] : undefined;
     const description = brandName
       ? modelName
-        ? this.i18nService
-            .translate('metadata.site.homePageDescriptionWithBrandModel', locale)
-            .replace('{brand}', brandName)
-            .replace('{model}', modelName)
-        : this.i18nService
-            .translate('metadata.site.homePageDescriptionWithBrand', locale)
-            .replace('{brand}', brandName)
-      : this.i18nService.translate('metadata.site.homePageDescription', locale);
+        ? siteMeta(this.i18nService, 'metadata.site.homePageDescriptionWithBrandModel', locale, {
+            brand: brandName,
+            model: modelName,
+          })
+        : siteMeta(this.i18nService, 'metadata.site.homePageDescriptionWithBrand', locale, {
+            brand: brandName,
+          })
+      : siteMeta(this.i18nService, 'metadata.site.homePageDescription', locale);
 
     return {
       title: parts.join(', '),

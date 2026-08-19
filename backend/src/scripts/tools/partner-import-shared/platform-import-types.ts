@@ -2,9 +2,9 @@ export type RuntimeEnv = 'local' | 'prod';
 
 export type CliStatus = 'active' | 'paused';
 
-export interface KupitoImportClientConfig {
+export interface PlatformImportClientConfig {
   env: RuntimeEnv;
-  kupitoApiUrl: string;
+  platformApiUrl: string;
   adminEmail: string;
   adminPassword: string;
   importSecret: string;
@@ -14,7 +14,7 @@ export interface KupitoImportClientConfig {
   imageStepDelayMs: number;
 }
 
-export interface BaseParserConfig extends KupitoImportClientConfig {
+export interface BaseParserConfig extends PlatformImportClientConfig {
   registryPath: string;
   reportsDir: string;
 }

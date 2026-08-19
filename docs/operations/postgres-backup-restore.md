@@ -55,7 +55,7 @@ Prefer PITR for accidental data loss; it is usually more recent than the last ex
 
 ## `pg_dump` from Render Shell
 
-On `kupito-backend` Shell (uses service env, internal host):
+On `ppcsl-backend` Shell (uses service env, internal host):
 
 ```bash
 pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d "$DB_NAME" -Fc -f /tmp/kupito.dump
@@ -71,11 +71,11 @@ Delete the file after copying it off the instance. Repo scripts for local / self
 Do not create a paid temporary database on Render for a routine drill. Use local Docker.
 
 ```bash
-docker exec kupito-postgres createdb -U kupito kupito_restore_drill || true
-docker exec kupito-postgres pg_dump -U kupito -d kupito -Fc -f /tmp/kupito_restore_drill.dump
-docker exec kupito-postgres pg_restore --clean --if-exists --no-owner --no-acl -U kupito -d kupito_restore_drill /tmp/kupito_restore_drill.dump
-docker exec kupito-postgres psql -U kupito -d kupito_restore_drill -c "SELECT count(*) FROM listings;"
-docker exec kupito-postgres dropdb -U kupito kupito_restore_drill
+docker exec kupito-postgres createdb -U ppcsl kupito_restore_drill || true
+docker exec kupito-postgres pg_dump -U ppcsl -d kupito -Fc -f /tmp/kupito_restore_drill.dump
+docker exec kupito-postgres pg_restore --clean --if-exists --no-owner --no-acl -U ppcsl -d kupito_restore_drill /tmp/kupito_restore_drill.dump
+docker exec kupito-postgres psql -U ppcsl -d kupito_restore_drill -c "SELECT count(*) FROM listings;"
+docker exec kupito-postgres dropdb -U ppcsl kupito_restore_drill
 docker exec kupito-postgres rm -f /tmp/kupito_restore_drill.dump
 ```
 

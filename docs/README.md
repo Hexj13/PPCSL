@@ -55,7 +55,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [search-filter-limits.md](./guides/search-filter-limits.md) — Brand/model selection limits in search
 - [quick-start-ru.md](./guides/quick-start-ru.md) — Quick start (Russian)
 - [MOBILE-APP-ru.md](./guides/MOBILE-APP-ru.md) — Android app via PWA + TWA (Bubblewrap, Google Play; Russian operators)
-- [linting.md](./engineering/linting.md) — Linting and code quality (single source)
+- [linting.md](./engineering/linting.md) — Linting and code quality (single source, including platform-neutral core)
 - [inp-validation.md](./engineering/inp-validation.md) — INP validation checklist
 
 **Order:** platform-checklist → platform-guide → deployment. Local: local-development → quick-start-ru.

@@ -62,10 +62,10 @@ describe('InfocarReportUrlProvider', () => {
     it('appends a= when an affiliate id is configured later', async () => {
       const url = await createProvider({
         ...env,
-        REPORT_PROVIDER_PARTNER_FROM: 'makinaguru',
+        REPORT_PROVIDER_PARTNER_FROM: 'partner-id',
         REPORT_PROVIDER_PARTNER_PARAM: 'a',
       }).generateUrl('ABC123', 'ro');
-      expect(url).toBe('https://www.carvertical.com/en?a=makinaguru&vin=ABC123');
+      expect(url).toBe('https://www.carvertical.com/en?a=partner-id&vin=ABC123');
     });
   });
 });

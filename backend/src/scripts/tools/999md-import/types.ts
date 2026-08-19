@@ -5,14 +5,14 @@ import type {
   ReportCommandOptions,
 } from '../partner-import-shared/import-workflow-types';
 import type {
-  KupitoImportClientConfig,
-  RuntimeEnv,
-} from '../partner-import-shared/kupito-import-types';
-import type {
   BaseRegistryItem,
   ParsedPdpData,
   ParsedPlpItem,
 } from '../partner-import-shared/listing-types';
+import type {
+  PlatformImportClientConfig,
+  RuntimeEnv,
+} from '../partner-import-shared/platform-import-types';
 
 export type {
   ImportCommandOptions,
@@ -52,7 +52,7 @@ export interface RegistryData999 {
   };
 }
 
-export interface Md999Config extends KupitoImportClientConfig {
+export interface Md999Config extends PlatformImportClientConfig {
   graphqlUrl: string;
   listingPathTemplate: string;
   imageBaseUrl: string;

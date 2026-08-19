@@ -18,38 +18,38 @@ describe('email-template', () => {
   describe('buildEmailLayout', () => {
     it('renders compiled html with brand footer and signature', () => {
       const html = buildEmailLayout({
-        siteBaseUrl: 'https://kupito.club',
+        siteBaseUrl: 'https://example.test',
         documentTitle: 'T',
         heading: 'H',
         bodyHtml: '',
-        supportEmail: 'support@kupito.club',
+        supportEmail: 'support@example.test',
         signatureLine: 'Platform for posting car sale listings in Moldova',
       });
       expect(html).toContain('<!doctype html>');
       expect(html).toContain('Arial, Helvetica, sans-serif');
-      expect(html).toContain('kupito.club');
-      expect(html).toContain('alt="kupito.club"');
+      expect(html).toContain('example.test');
+      expect(html).toContain('alt="example.test"');
       expect(html).toContain('Platform for posting car sale listings in Moldova');
-      expect(html).toContain('support@kupito.club');
+      expect(html).toContain('support@example.test');
       expect(html).toContain('/logo.png');
     });
 
     it('uses siteName, copyright and custom logo when provided', () => {
       const html = buildEmailLayout({
-        siteBaseUrl: 'https://makinaguru.com',
-        siteName: 'MakinaGuru',
+        siteBaseUrl: 'https://shop.example',
+        siteName: 'Example Market',
         documentTitle: 'T',
         heading: 'H',
         bodyHtml: '',
-        supportEmail: 'support@makinaguru.com',
-        copyrightLine: '© 2025-2026 MakinaGuru.com. All rights reserved.',
+        supportEmail: 'support@shop.example',
+        copyrightLine: '© 2025-2026 shop.example. All rights reserved.',
         logoSrc: '/logo-email.png',
         logoWidthPx: 180,
       });
-      expect(html).toContain('alt="MakinaGuru"');
-      expect(html).toContain('MakinaGuru');
-      expect(html).toContain('makinaguru.com');
-      expect(html).toContain('© 2025-2026 MakinaGuru.com. All rights reserved.');
+      expect(html).toContain('alt="Example Market"');
+      expect(html).toContain('Example Market');
+      expect(html).toContain('shop.example');
+      expect(html).toContain('© 2025-2026 shop.example. All rights reserved.');
       expect(html).toContain('/logo-email.png');
       expect(html).toContain('width="180"');
     });
@@ -65,8 +65,8 @@ describe('email-template', () => {
 
   describe('normalizeSiteBaseUrl', () => {
     it('trims trailing slashes', () => {
-      expect(normalizeSiteBaseUrl('https://kupito.club/')).toBe('https://kupito.club');
-      expect(normalizeSiteBaseUrl('https://kupito.club///')).toBe('https://kupito.club');
+      expect(normalizeSiteBaseUrl('https://example.test/')).toBe('https://example.test');
+      expect(normalizeSiteBaseUrl('https://example.test///')).toBe('https://example.test');
     });
   });
 });

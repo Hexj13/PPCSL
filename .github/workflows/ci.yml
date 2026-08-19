@@ -19,13 +19,13 @@ jobs:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_USER: kupito
-          POSTGRES_PASSWORD: kupito123
-          POSTGRES_DB: kupito_test
+          POSTGRES_USER: ppcsl
+          POSTGRES_PASSWORD: ppcsl123
+          POSTGRES_DB: ppcsl_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U kupito"
+          --health-cmd "pg_isready -U ppcsl"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -57,7 +57,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
-          until pg_isready -h localhost -p 5432 -U kupito; do
+          until pg_isready -h localhost -p 5432 -U ppcsl; do
             echo "Waiting for PostgreSQL..."
             sleep 2
           done
@@ -77,9 +77,9 @@ jobs:
           NODE_ENV: test
           DB_HOST: localhost
           DB_PORT: 5432
-          DB_USERNAME: kupito
-          DB_PASSWORD: kupito123
-          DB_NAME: kupito_test
+          DB_USERNAME: ppcsl
+          DB_PASSWORD: ppcsl123
+          DB_NAME: ppcsl_test
           JWT_SECRET: test-secret-key
           REDIS_HOST: localhost
           REDIS_PORT: 6379
@@ -91,9 +91,9 @@ jobs:
           NODE_ENV: test
           DB_HOST: localhost
           DB_PORT: 5432
-          DB_USERNAME: kupito
-          DB_PASSWORD: kupito123
-          DB_NAME: kupito_test
+          DB_USERNAME: ppcsl
+          DB_PASSWORD: ppcsl123
+          DB_NAME: ppcsl_test
           JWT_SECRET: test-secret-key
           REDIS_HOST: localhost
           REDIS_PORT: 6379

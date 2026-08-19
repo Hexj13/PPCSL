@@ -3,6 +3,7 @@
 import { CopyButton } from '@/components/common/CopyButton';
 import { useTranslation } from '@/hooks/useTranslation';
 import { loadSiteConfigSync } from '@/lib/site-config';
+import { telegramHandleFromUrl } from '@/lib/telegram-handle';
 import { getCountry } from '@/lib/utils';
 import { ExternalLinkIcon } from '@/ui';
 
@@ -26,7 +27,7 @@ export default function ContactsPage() {
             key: 'telegram' as const,
             href: socialLinks.telegram,
             labelKey: 'contacts.telegram' as const,
-            value: '@kupitoclub_bot',
+            value: telegramHandleFromUrl(socialLinks.telegram),
             copyText: socialLinks.telegram,
           },
         ]

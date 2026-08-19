@@ -43,7 +43,7 @@ export class RegistryStore999 extends JsonRegistryStore<RegistryItem999> {
       vehicleType: existing?.vehicleType,
       parsedData: existing?.parsedData,
       state: nextState,
-      kupitoListingId: existing?.kupitoListingId,
+      platformListingId: existing?.platformListingId,
       ownerUserId: existing?.ownerUserId,
       createdStatus: existing?.createdStatus,
       imageCount: existing?.imageCount,

@@ -7,11 +7,11 @@ import type { ListingStatus as ListingStatusValue } from '../../../common/types'
 import { AppDataSource } from '../../../data-source';
 import { Listing } from '../../../listings/entities/listing.entity';
 import { AuthClient } from '../partner-import-shared/api/auth-client';
-import { KupitoApiClient } from '../partner-import-shared/api/kupito-api';
+import { PlatformApiClient } from '../partner-import-shared/api/platform-api';
 import { UploadClient } from '../partner-import-shared/api/upload-client';
 import { uploadImportImagesSequentially } from '../partner-import-shared/api/upload-import-images';
 import { maybeImportPartnerListingVideo } from '../partner-import-shared/import/maybe-import-listing-video';
-import { getUpdateExistingRequiresKupitoListingIdError } from '../partner-import-shared/import/update-existing-guard';
+import { getUpdateExistingRequiresPlatformListingIdError } from '../partner-import-shared/import/update-existing-guard';
 import { mapBodyType } from '../partner-import-shared/mapping/body-type-mapper';
 import { BrandModelResolver } from '../partner-import-shared/mapping/brand-model-resolver';
 import { mapColor } from '../partner-import-shared/mapping/color-mapper';
@@ -115,7 +115,7 @@ program
   .option('--remove-closed')
   .option(
     '--max-close <number>',
-    'maximum missing active Kupito listings that may be closed in one run',
+    'maximum missing active platform listings that may be closed in one run',
   )
   .option('--force-close', 'override --max-close protection for trusted closure runs')
   .option('--only-failed')
@@ -250,7 +250,7 @@ async function runScan(options: ScanCommandOptions): Promise<void> {
         }
         knownBefore.add(item.sourceListingId);
 
-        if (existing?.kupitoListingId) {
+        if (existing?.platformListingId) {
           existingListings += 1;
         } else {
           readyForImport += 1;
@@ -327,9 +327,9 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const registry = new RegistryStore(config.registryPath);
   const reportStore = new ReportStore(config.reportsDir);
   const authClient = options.dryRun ? undefined : new AuthClient(config);
-  const kupitoApi = authClient ? new KupitoApiClient(config, authClient) : undefined;
-  const resolver = kupitoApi
-    ? new BrandModelResolver(kupitoApi, {
+  const platformApi = authClient ? new PlatformApiClient(config, authClient) : undefined;
+  const resolver = platformApi
+    ? new BrandModelResolver(platformApi, {
         autoCreateBrands: Boolean(options.autoCreateBrands),
         autoCreateModels: Boolean(options.autoCreateModels),
         log: (payload) => logger.info('IMPORT', JSON.stringify(payload)),
@@ -392,7 +392,7 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
         item,
         options,
         registry,
-        kupitoApi,
+        platformApi,
         resolver,
         pdpParser,
         uploadClient,
@@ -446,7 +446,7 @@ async function processSingleItem(params: {
   item: RegistryItem;
   options: ImportCommandOptions;
   registry: RegistryStore;
-  kupitoApi?: KupitoApiClient;
+  platformApi?: PlatformApiClient;
   resolver?: BrandModelResolver;
   pdpParser: PdpParser;
   uploadClient?: UploadClient;
@@ -457,7 +457,7 @@ async function processSingleItem(params: {
     item,
     options,
     registry,
-    kupitoApi,
+    platformApi,
     resolver,
     pdpParser,
     uploadClient,
@@ -504,7 +504,7 @@ async function processSingleItem(params: {
         item,
         options,
         registry,
-        kupitoApi,
+        platformApi,
         parsedData: parsed,
         warnings,
         reason: 'pdp_closed_template',
@@ -552,24 +552,24 @@ async function processSingleItem(params: {
       return;
     }
 
-    if (item.kupitoListingId && !options.updateExisting) {
-      if (!options.dryRun && kupitoApi) {
+    if (item.platformListingId && !options.updateExisting) {
+      if (!options.dryRun && platformApi) {
         const partnerMeta = buildCipautoPartnerListingMetadataPatch(
           parsed,
           sourceId,
           item.canonicalUrl,
         );
-        await kupitoApi.updateListing(item.kupitoListingId, partnerMeta);
+        await platformApi.updateListing(item.platformListingId, partnerMeta);
         logger.info(
           'IMPORT',
-          `[PARTNER_META][${sourceId}] kupitoId=${item.kupitoListingId} url=${partnerMeta.partner_listing_canonical_url}`,
+          `[PARTNER_META][${sourceId}] platformId=${item.platformListingId} url=${partnerMeta.partner_listing_canonical_url}`,
         );
         if (shouldReopenListing(item, previousSourceStatus)) {
           try {
-            await kupitoApi.enforceStatus(item.kupitoListingId, targetStatus);
+            await platformApi.enforceStatus(item.platformListingId, targetStatus);
             logger.info(
               'IMPORT',
-              `[REOPEN][${sourceId}] kupitoId=${item.kupitoListingId} status=${targetStatus}`,
+              `[REOPEN][${sourceId}] platformId=${item.platformListingId} status=${targetStatus}`,
             );
           } catch (error) {
             registry.markState(sourceId, 'manual_review', {
@@ -590,12 +590,12 @@ async function processSingleItem(params: {
       });
       logger.info(
         'IMPORT',
-        `[SKIP][${sourceId}] already has kupitoListingId=${item.kupitoListingId}`,
+        `[SKIP][${sourceId}] already has platformListingId=${item.platformListingId}`,
       );
       return;
     }
 
-    const updateOnlyError = getUpdateExistingRequiresKupitoListingIdError(options, item);
+    const updateOnlyError = getUpdateExistingRequiresPlatformListingIdError(options, item);
     if (updateOnlyError) {
       registry.markState(sourceId, 'manual_review', {
         warnings,
@@ -605,7 +605,7 @@ async function processSingleItem(params: {
       return;
     }
 
-    if (!resolver || !uploadClient || !kupitoApi) {
+    if (!resolver || !uploadClient || !platformApi) {
       throw new Error('Import clients are not initialized.');
     }
 
@@ -690,15 +690,15 @@ async function processSingleItem(params: {
       imageBlurHashes: uploadedImages.blurHashes,
     };
 
-    if (item.kupitoListingId && options.updateExisting) {
+    if (item.platformListingId && options.updateExisting) {
       const updatePayload = buildUpdateListingPayload(payloadInput);
       Object.assign(
         updatePayload,
         buildCipautoPartnerListingMetadataPatch(finalizedParsed, sourceId, item.canonicalUrl),
       );
-      const updated = await kupitoApi.updateListing(item.kupitoListingId, updatePayload);
+      const updated = await platformApi.updateListing(item.platformListingId, updatePayload);
       registry.markState(sourceId, 'updated', {
-        kupitoListingId: updated.id,
+        platformListingId: updated.id,
         ownerUserId: options.userId,
         createdStatus: targetStatus,
         warnings,
@@ -707,7 +707,7 @@ async function processSingleItem(params: {
         error: undefined,
         lastImportedAt: new Date().toISOString(),
       });
-      logger.info('IMPORT', `[OK][${sourceId}] updated kupitoId=${updated.id}`);
+      logger.info('IMPORT', `[OK][${sourceId}] updated platformId=${updated.id}`);
       await maybeImportPartnerListingVideo({
         videoUrl: finalizedParsed.videoUrl,
         listingId: updated.id,
@@ -735,7 +735,7 @@ async function processSingleItem(params: {
       if (dup.kind === 'duplicate') {
         registry.markState(sourceId, 'duplicate_skipped', {
           parsedData: finalizedParsed,
-          kupitoListingId: dup.listing.id,
+          platformListingId: dup.listing.id,
           ownerUserId: options.userId,
           warnings,
           imageCount: uploadedImages.urls.length,
@@ -745,7 +745,7 @@ async function processSingleItem(params: {
         });
         logger.info(
           'IMPORT',
-          `[DUPLICATE_SKIP][${sourceId}] kupitoId=${dup.listing.id} layer=${dup.layer}`,
+          `[DUPLICATE_SKIP][${sourceId}] platformId=${dup.listing.id} layer=${dup.layer}`,
         );
         return;
       }
@@ -756,9 +756,9 @@ async function processSingleItem(params: {
       createPayload,
       buildCipautoPartnerListingMetadataPatch(finalizedParsed, sourceId, item.canonicalUrl),
     );
-    const created = await kupitoApi.createListing(createPayload);
+    const created = await platformApi.createListing(createPayload);
     registry.markState(sourceId, 'created', {
-      kupitoListingId: created.id,
+      platformListingId: created.id,
       ownerUserId: options.userId,
       createdStatus: targetStatus,
       warnings,
@@ -767,7 +767,7 @@ async function processSingleItem(params: {
       error: undefined,
       lastImportedAt: new Date().toISOString(),
     });
-    logger.info('IMPORT', `[OK][${sourceId}] created kupitoId=${created.id}`);
+    logger.info('IMPORT', `[OK][${sourceId}] created platformId=${created.id}`);
     await maybeImportPartnerListingVideo({
       videoUrl: finalizedParsed.videoUrl,
       listingId: created.id,
@@ -790,7 +790,7 @@ async function processSingleItem(params: {
         item,
         options,
         registry,
-        kupitoApi,
+        platformApi,
         warnings: item.warnings ?? [],
         reason: closeReason,
       });
@@ -823,7 +823,7 @@ function getImportCandidates(items: RegistryItem[], options: ImportCommandOption
 }
 
 export function isCloseCandidate(item: RegistryItem): boolean {
-  return normalizeSourceStatus(item) === 'missing_candidate' && Boolean(item.kupitoListingId);
+  return normalizeSourceStatus(item) === 'missing_candidate' && Boolean(item.platformListingId);
 }
 
 export function evaluateCloseGuard(
@@ -878,12 +878,12 @@ async function closeSourceItem(params: {
   item: RegistryItem;
   options: ImportCommandOptions;
   registry: RegistryStore;
-  kupitoApi?: KupitoApiClient;
+  platformApi?: PlatformApiClient;
   parsedData?: ParsedPdpData;
   warnings: string[];
   reason: SourceCloseReason;
 }): Promise<void> {
-  const { item, options, registry, kupitoApi, parsedData, warnings, reason } = params;
+  const { item, options, registry, platformApi, parsedData, warnings, reason } = params;
   const sourceId = item.sourceListingId;
   const commonUpdates: Partial<RegistryItem> = {
     parsedData,
@@ -895,14 +895,14 @@ async function closeSourceItem(params: {
     retryCount: item.retryCount ?? 0,
   };
 
-  if (options.removeClosed && item.kupitoListingId && kupitoApi) {
-    const closed = await kupitoApi.closeListing(item.kupitoListingId);
+  if (options.removeClosed && item.platformListingId && platformApi) {
+    const closed = await platformApi.closeListing(item.platformListingId);
     registry.markClosed(sourceId, reason, 'listing_closed', {
       ...commonUpdates,
-      kupitoListingId: closed.id,
+      platformListingId: closed.id,
       createdStatus: closed.status,
     });
-    logger.info('IMPORT', `[CLOSED][${sourceId}] kupitoId=${closed.id} reason=${reason}`);
+    logger.info('IMPORT', `[CLOSED][${sourceId}] platformId=${closed.id} reason=${reason}`);
     return;
   }
 
@@ -918,7 +918,7 @@ async function runAuditBrandsModels(options: AuditBrandsModelsCommandOptions): P
   const registry = new RegistryStore(config.registryPath);
   const reportStore = new ReportStore(config.reportsDir);
   const authClient = new AuthClient(config);
-  const kupitoApi = new KupitoApiClient(config, authClient);
+  const platformApi = new PlatformApiClient(config, authClient);
 
   const startedAt = new Date().toISOString();
   await authClient.login();
@@ -927,7 +927,7 @@ async function runAuditBrandsModels(options: AuditBrandsModelsCommandOptions): P
     startedAt,
     env: options.env,
     registryItems: registry.getAll(),
-    kupitoApi,
+    platformApi,
     vehicleType: 'car',
   });
 

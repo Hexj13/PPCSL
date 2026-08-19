@@ -45,9 +45,9 @@ docker ps
 PORT=4000
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=kupito
-DB_PASSWORD=kupito123
-DB_NAME=kupito
+DB_USERNAME=ppcsl
+DB_PASSWORD=ppcsl123
+DB_NAME=ppcsl
 JWT_SECRET=your-secret-key-change-in-production
 FRONTEND_URL=http://localhost:3000
 NODE_ENV=development
@@ -161,9 +161,9 @@ cd ..
 PORT=4000
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=kupito
-DB_PASSWORD=kupito123
-DB_NAME=kupito
+DB_USERNAME=ppcsl
+DB_PASSWORD=ppcsl123
+DB_NAME=ppcsl
 JWT_SECRET=your-secret-key-change-in-production
 FRONTEND_URL=http://localhost:3000
 NODE_ENV=development

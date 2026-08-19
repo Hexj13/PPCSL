@@ -31,7 +31,7 @@ import { loadSourceIdsFromPlpFile } from '../storage/load-plp-source-ids';
 import { sleep } from '../utils/sleep';
 
 interface ReopenRow {
-  kupitoListingId: string;
+  platformListingId: string;
   partner_listing_external_key: string | null;
   url: string;
   outcome: SourceCheckOutcome;
@@ -283,7 +283,7 @@ async function main(): Promise<void> {
       let row: ReopenRow;
       if (checked.outcome === 'closed') {
         row = {
-          kupitoListingId: listing.id,
+          platformListingId: listing.id,
           partner_listing_external_key: listing.partner_listing_external_key,
           url,
           outcome: checked.outcome,
@@ -296,7 +296,7 @@ async function main(): Promise<void> {
         };
       } else if (checked.outcome === 'error') {
         row = {
-          kupitoListingId: listing.id,
+          platformListingId: listing.id,
           partner_listing_external_key: listing.partner_listing_external_key,
           url,
           outcome: checked.outcome,
@@ -310,7 +310,7 @@ async function main(): Promise<void> {
       } else if (remainingSlots <= 0 || hitLimit) {
         hitLimit = true;
         row = {
-          kupitoListingId: listing.id,
+          platformListingId: listing.id,
           partner_listing_external_key: listing.partner_listing_external_key,
           url,
           outcome: checked.outcome,
@@ -323,7 +323,7 @@ async function main(): Promise<void> {
         };
       } else if (dryRun) {
         row = {
-          kupitoListingId: listing.id,
+          platformListingId: listing.id,
           partner_listing_external_key: listing.partner_listing_external_key,
           url,
           outcome: checked.outcome,
@@ -359,7 +359,7 @@ async function main(): Promise<void> {
               : null;
 
         row = {
-          kupitoListingId: listing.id,
+          platformListingId: listing.id,
           partner_listing_external_key: listing.partner_listing_external_key,
           url,
           outcome: checked.outcome,
@@ -419,7 +419,7 @@ async function main(): Promise<void> {
 
   const csvLines = [
     [
-      'kupitoListingId',
+      'platformListingId',
       'partner_listing_external_key',
       'url',
       'outcome',
@@ -432,7 +432,7 @@ async function main(): Promise<void> {
     ].join(','),
     ...rows.map((r) =>
       [
-        csvEscape(r.kupitoListingId),
+        csvEscape(r.platformListingId),
         csvEscape(r.partner_listing_external_key ?? ''),
         csvEscape(r.url),
         csvEscape(r.outcome),

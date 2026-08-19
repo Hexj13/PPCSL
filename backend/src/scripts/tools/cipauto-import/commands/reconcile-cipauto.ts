@@ -785,7 +785,7 @@ async function backfillMetadata(actions: ReconcileAction[]): Promise<number> {
 function printPlan(plan: ReconcilePlan, listings: ReconcileListingInput[]): void {
   console.log('=== CIPAUTO RECONCILE PLAN ===');
   console.log(`  PLP live postIds:        ${plan.livePostIds}`);
-  console.log(`  Kupito listings:         ${plan.totalListings}`);
+  console.log(`  platform listings:         ${plan.totalListings}`);
   console.log(`  Grouped by postId:       ${plan.groupedListings}`);
   console.log(`  No postId:               ${plan.noPostIdListings.length}`);
   console.log(`  Backfills:               ${plan.backfills.length}`);
@@ -829,16 +829,16 @@ function formatLiveItem(item: LivePlpItem): string {
 
 function printLiveCoverage(coverage?: LiveCoverage): void {
   if (!coverage) return;
-  console.log('=== LIVE COVERAGE (cipauto -> Kupito) ===');
+  console.log('=== LIVE COVERAGE (cipauto -> platform) ===');
   console.log(`  Live cipauto cars:        ${coverage.liveTotal}`);
-  console.log(`  Active on Kupito:         ${coverage.activeCovered}`);
+  console.log(`  Active on platform:         ${coverage.activeCovered}`);
   console.log(`  Closed only (reopen):     ${coverage.closedOnlyCovered}`);
   console.log(`  Missing (need import):    ${coverage.missing.length}`);
   console.log(`  Projected after full run: ${coverage.projectedActive}`);
   console.log('');
 
   if (coverage.missing.length > 0) {
-    console.log(`=== MISSING ON KUPITO (${coverage.missing.length}) ===`);
+    console.log(`=== MISSING ON PLATFORM (${coverage.missing.length}) ===`);
     for (const item of coverage.missing) {
       console.log(`  ${formatLiveItem(item)}`);
     }
@@ -948,7 +948,7 @@ function printUsage(): void {
   );
   console.error('Flags:');
   console.error('  --env <local|prod>    Filesystem paths and DB env from resolveConfig');
-  console.error('  --userId <uuid>       UUID of the CipAuto partner user in Kupito DB');
+  console.error('  --userId <uuid>       UUID of the CipAuto partner user in platform DB');
   console.error(
     '  --plp-file <path>     PLP snapshot JSON; defaults to current prod/local PLP path',
   );

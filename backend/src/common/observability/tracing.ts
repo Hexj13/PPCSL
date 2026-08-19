@@ -27,7 +27,7 @@ export function initTracing(): void {
     };
 
     sdk = new NodeSDK({
-      serviceName: process.env.OTEL_SERVICE_NAME ?? 'kupito-backend',
+      serviceName: process.env.OTEL_SERVICE_NAME ?? 'ppcsl-backend',
       traceExporter: new OTLPTraceExporter({ url: `${endpoint.replace(/\/$/, '')}/v1/traces` }),
       instrumentations: [getNodeAutoInstrumentations()],
     });

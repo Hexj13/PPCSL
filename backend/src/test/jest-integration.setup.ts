@@ -18,13 +18,18 @@ if (!process.env.JEST_PRESERVE_COUNTRY) {
 
 /**
  * data-source options are evaluated at import (often before dotenv), so TypeORM
- * uses Kupito defaults. Redis is resolved later via ConfigModule and would pick
- * up platform .env (e.g. MakinaGuru :6380), poisoning brand IDs in cache.
- * Pin Redis to Kupito unless explicitly preserved.
+ * uses platform defaults. Redis is resolved later via ConfigModule and would pick
+ * up platform .env (e.g. overlay Redis :6380), poisoning brand IDs in cache.
+ * Pin Redis and Postgres to local PPCSL defaults unless explicitly preserved.
  */
 if (!process.env.JEST_PRESERVE_DB) {
   process.env.REDIS_HOST = 'localhost';
   process.env.REDIS_PORT = '6379';
+  process.env.DB_HOST = 'localhost';
+  process.env.DB_PORT = '5432';
+  process.env.DB_USERNAME = 'ppcsl';
+  process.env.DB_PASSWORD = 'ppcsl123';
+  process.env.DB_NAME = 'ppcsl';
 }
 
 beforeAll(async () => {

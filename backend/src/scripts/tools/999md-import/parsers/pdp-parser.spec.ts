@@ -8,7 +8,7 @@ import { PdpParser999 } from './pdp-parser';
 function mockConfig(): Md999Config {
   return {
     env: 'local',
-    kupitoApiUrl: 'http://localhost',
+    platformApiUrl: 'http://localhost',
     adminEmail: 'a@test',
     adminPassword: 'b',
     importSecret: 'c',

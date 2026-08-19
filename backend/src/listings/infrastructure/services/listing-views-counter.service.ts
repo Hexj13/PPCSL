@@ -23,7 +23,7 @@ export class ListingViewsCounterService implements OnModuleInit, OnModuleDestroy
   ) {}
 
   onModuleInit(): void {
-    this.metricsService.registerGauge('kupito_pending_view_counts', () =>
+    this.metricsService.registerGauge('ppcsl_pending_view_counts', () =>
       this.redisService.hlen(PENDING_VIEWS_HASH),
     );
   }

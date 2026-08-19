@@ -118,7 +118,7 @@ export interface BaseRegistryItem<TSource extends string> {
   currency?: string;
   parsedData?: ParsedPdpData;
   state: RegistryImportState;
-  kupitoListingId?: string;
+  platformListingId?: string;
   ownerUserId?: string;
   createdStatus?: ListingStatus;
   imageCount?: number;
@@ -213,7 +213,7 @@ export interface UploadResult {
   blurhash?: string | null;
 }
 
-export interface KupitoCreateListingPayload {
+export interface PlatformCreateListingPayload {
   price: number;
   currency?: Currency;
   partner_source_code?: string;
@@ -256,7 +256,7 @@ export interface KupitoCreateListingPayload {
   };
 }
 
-export interface KupitoListingResponse {
+export interface PlatformListingResponse {
   id: string;
   status: ListingStatus;
 }

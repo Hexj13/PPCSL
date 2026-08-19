@@ -14,7 +14,7 @@ Mobile browsers and installed PWAs/TWA expose a system **Back** control. Overlay
 
 ## Implementation
 
-- **Stack + history:** `core/frontend/lib/overlay-history.ts` keeps a LIFO stack of open overlays. Each open overlay calls `history.pushState` with a `kupitoOverlay` marker (URL unchanged). `popstate` closes the top overlay; programmatic close calls `history.back()` with suppression so the stack is not double-popped.
+- **Stack + history:** `core/frontend/lib/overlay-history.ts` keeps a LIFO stack of open overlays. Each open overlay calls `history.pushState` with a `ppcslOverlay` marker (URL unchanged). `popstate` closes the top overlay; programmatic close calls `history.back()` with suppression so the stack is not double-popped.
 - **Hook:** `core/frontend/hooks/useHistoryBackClose.ts` registers/unregisters one overlay id (React `useId()`).
 - **Consumers:**
   - `components/modals/Modal.tsx` — standard dialogs

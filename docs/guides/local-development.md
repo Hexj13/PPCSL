@@ -73,9 +73,9 @@ Use this approach when:
    PORT=4000
    DB_HOST=localhost
    DB_PORT=5432
-   DB_USERNAME=kupito
-   DB_PASSWORD=kupito123
-   DB_NAME=kupito
+   DB_USERNAME=ppcsl
+   DB_PASSWORD=ppcsl123
+   DB_NAME=ppcsl
    JWT_SECRET=your-secret-key-change-in-production
    FRONTEND_URL=http://localhost:3000
    NODE_ENV=development
@@ -215,6 +215,8 @@ Use this approach when:
    cd ..
    ```
 
+   Integration tests pin Postgres to `ppcsl` / `ppcsl123` / `ppcsl` on `localhost:5432` and Redis to `localhost:6379` so a platform `.env` (another user, port 5433, Redis 6380) cannot leak into the suite. If those default ports already belong to another stack, set `JEST_PRESERVE_DB=1` and export the `DB_*` / `REDIS_*` you want, or free 5432/6379 for `core/docker-compose.yml`.
+
 6. **Setup environment variables:**
 
    Create `core/backend/.env`:
@@ -223,9 +225,9 @@ Use this approach when:
    PORT=4000
    DB_HOST=localhost
    DB_PORT=5432
-   DB_USERNAME=kupito
-   DB_PASSWORD=kupito123
-   DB_NAME=kupito
+   DB_USERNAME=ppcsl
+   DB_PASSWORD=ppcsl123
+   DB_NAME=ppcsl
    JWT_SECRET=your-secret-key-change-in-production
    FRONTEND_URL=http://localhost:3000
    NODE_ENV=development

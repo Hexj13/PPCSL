@@ -9,11 +9,11 @@ import type { ListingStatus } from '../../../common/types';
 import { AppDataSource } from '../../../data-source';
 import { Listing } from '../../../listings/entities/listing.entity';
 import { AuthClient } from '../partner-import-shared/api/auth-client';
-import { KupitoApiClient } from '../partner-import-shared/api/kupito-api';
+import { PlatformApiClient } from '../partner-import-shared/api/platform-api';
 import { UploadClient } from '../partner-import-shared/api/upload-client';
 import { uploadImportImagesSequentially } from '../partner-import-shared/api/upload-import-images';
 import { maybeImportPartnerListingVideo } from '../partner-import-shared/import/maybe-import-listing-video';
-import { getUpdateExistingRequiresKupitoListingIdError } from '../partner-import-shared/import/update-existing-guard';
+import { getUpdateExistingRequiresPlatformListingIdError } from '../partner-import-shared/import/update-existing-guard';
 import type {
   ImportCommandOptions,
   ReportCommandOptions,
@@ -223,7 +223,7 @@ async function runScan(options: Scan999CommandOptions): Promise<void> {
     if (!existingBefore) {
       newItems += 1;
     }
-    if (existingBefore?.kupitoListingId) {
+    if (existingBefore?.platformListingId) {
       existingListings += 1;
     } else {
       readyForImport += 1;
@@ -316,9 +316,9 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
   const registry = new RegistryStore999(config.registryPath);
   const reportStore = new ReportStore999(config.reportsDir);
   const authClient = options.dryRun ? undefined : new AuthClient(config);
-  const kupitoApi = authClient ? new KupitoApiClient(config, authClient) : undefined;
-  const resolver = kupitoApi
-    ? new BrandModelResolver(kupitoApi, {
+  const platformApi = authClient ? new PlatformApiClient(config, authClient) : undefined;
+  const resolver = platformApi
+    ? new BrandModelResolver(platformApi, {
         autoCreateBrands: Boolean(options.autoCreateBrands),
         autoCreateModels: Boolean(options.autoCreateModels),
         log: (payload) => logger.info('IMPORT', JSON.stringify(payload)),
@@ -369,7 +369,7 @@ async function runImport(options: ImportCommandOptions): Promise<void> {
         item,
         options,
         registry,
-        kupitoApi,
+        platformApi,
         resolver,
         pdpParser,
         uploadClient,
@@ -415,7 +415,7 @@ async function processSingleItem(params: {
   item: RegistryItem999;
   options: ImportCommandOptions;
   registry: RegistryStore999;
-  kupitoApi?: KupitoApiClient;
+  platformApi?: PlatformApiClient;
   resolver?: BrandModelResolver;
   pdpParser: PdpParser999;
   uploadClient?: UploadClient;
@@ -427,7 +427,7 @@ async function processSingleItem(params: {
     item,
     options,
     registry,
-    kupitoApi,
+    platformApi,
     resolver,
     pdpParser,
     uploadClient,
@@ -451,11 +451,11 @@ async function processSingleItem(params: {
         return;
       }
       const now = new Date().toISOString();
-      if (options.removeClosed && item.kupitoListingId && kupitoApi) {
-        const closed = await kupitoApi.closeListing(item.kupitoListingId);
+      if (options.removeClosed && item.platformListingId && platformApi) {
+        const closed = await platformApi.closeListing(item.platformListingId);
         registry.markState(sourceId, 'closed', {
           sourceStatus: 'closed',
-          kupitoListingId: closed.id,
+          platformListingId: closed.id,
           createdStatus: closed.status,
           closedAt: now,
           closeReason: reason,
@@ -464,7 +464,7 @@ async function processSingleItem(params: {
           warnings,
           error: undefined,
         });
-        logger.info('IMPORT', `[CLOSED][${sourceId}] kupitoId=${closed.id} reason=${reason}`);
+        logger.info('IMPORT', `[CLOSED][${sourceId}] platformId=${closed.id} reason=${reason}`);
         return;
       }
       registry.markState(sourceId, 'closed', {
@@ -555,17 +555,17 @@ async function processSingleItem(params: {
       return;
     }
 
-    if (item.kupitoListingId && !options.updateExisting) {
-      if (!options.dryRun && kupitoApi) {
+    if (item.platformListingId && !options.updateExisting) {
+      if (!options.dryRun && platformApi) {
         const partnerMeta = build999mdPartnerListingMetadataPatch(
           parsed,
           sourceId,
           item.canonicalUrl,
         );
-        await kupitoApi.updateListing(item.kupitoListingId, partnerMeta);
+        await platformApi.updateListing(item.platformListingId, partnerMeta);
         logger.info(
           'IMPORT',
-          `[PARTNER_META][${sourceId}] kupitoId=${item.kupitoListingId} url=${partnerMeta.partner_listing_canonical_url}`,
+          `[PARTNER_META][${sourceId}] platformId=${item.platformListingId} url=${partnerMeta.partner_listing_canonical_url}`,
         );
       }
       registry.markState(sourceId, 'skipped', {
@@ -574,12 +574,12 @@ async function processSingleItem(params: {
       });
       logger.info(
         'IMPORT',
-        `[SKIP][${sourceId}] already has kupitoListingId=${item.kupitoListingId}`,
+        `[SKIP][${sourceId}] already has platformListingId=${item.platformListingId}`,
       );
       return;
     }
 
-    const updateOnlyError = getUpdateExistingRequiresKupitoListingIdError(options, item);
+    const updateOnlyError = getUpdateExistingRequiresPlatformListingIdError(options, item);
     if (updateOnlyError) {
       registry.markState(sourceId, 'manual_review', {
         warnings,
@@ -589,7 +589,7 @@ async function processSingleItem(params: {
       return;
     }
 
-    if (!resolver || !uploadClient || !kupitoApi) {
+    if (!resolver || !uploadClient || !platformApi) {
       throw new Error('Import clients are not initialized.');
     }
 
@@ -677,15 +677,15 @@ async function processSingleItem(params: {
       imageBlurHashes: uploadedImages.blurHashes,
     };
 
-    if (item.kupitoListingId && options.updateExisting) {
+    if (item.platformListingId && options.updateExisting) {
       const updatePayload = buildUpdateListingPayload(payloadInput);
       Object.assign(
         updatePayload,
         build999mdPartnerListingMetadataPatch(finalizedParsed, sourceId, item.canonicalUrl),
       );
-      const updated = await kupitoApi.updateListing(item.kupitoListingId, updatePayload);
+      const updated = await platformApi.updateListing(item.platformListingId, updatePayload);
       registry.markState(sourceId, 'updated', {
-        kupitoListingId: updated.id,
+        platformListingId: updated.id,
         ownerUserId: options.userId,
         createdStatus: targetStatus,
         warnings,
@@ -694,7 +694,7 @@ async function processSingleItem(params: {
         error: undefined,
         vehicleType,
       });
-      logger.info('IMPORT', `[OK][${sourceId}] updated kupitoId=${updated.id}`);
+      logger.info('IMPORT', `[OK][${sourceId}] updated platformId=${updated.id}`);
       await maybeImportPartnerListingVideo({
         videoUrl: finalizedParsed.videoUrl,
         listingId: updated.id,
@@ -737,7 +737,7 @@ async function processSingleItem(params: {
       if (dup.kind === 'duplicate') {
         registry.markState(sourceId, 'duplicate_skipped', {
           parsedData: finalizedParsed,
-          kupitoListingId: dup.listing.id,
+          platformListingId: dup.listing.id,
           ownerUserId: options.userId,
           warnings,
           imageCount: uploadedImages.urls.length,
@@ -747,7 +747,7 @@ async function processSingleItem(params: {
         });
         logger.info(
           'IMPORT',
-          `[DUPLICATE_SKIP][${sourceId}] kupitoId=${dup.listing.id} layer=${dup.layer}`,
+          `[DUPLICATE_SKIP][${sourceId}] platformId=${dup.listing.id} layer=${dup.layer}`,
         );
         return;
       }
@@ -758,9 +758,9 @@ async function processSingleItem(params: {
       createPayload,
       build999mdPartnerListingMetadataPatch(finalizedParsed, sourceId, item.canonicalUrl),
     );
-    const created = await kupitoApi.createListing(createPayload);
+    const created = await platformApi.createListing(createPayload);
     registry.markState(sourceId, 'created', {
-      kupitoListingId: created.id,
+      platformListingId: created.id,
       ownerUserId: options.userId,
       createdStatus: targetStatus,
       warnings,
@@ -769,7 +769,7 @@ async function processSingleItem(params: {
       error: undefined,
       vehicleType,
     });
-    logger.info('IMPORT', `[OK][${sourceId}] created kupitoId=${created.id}`);
+    logger.info('IMPORT', `[OK][${sourceId}] created platformId=${created.id}`);
     await maybeImportPartnerListingVideo({
       videoUrl: finalizedParsed.videoUrl,
       listingId: created.id,

@@ -5,14 +5,14 @@ set -e
 BACKUP_DIR="${BACKUP_DIR:-$(pwd)/backups}"
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
-DB_USERNAME="${DB_USERNAME:-kupito}"
-DB_NAME="${DB_NAME:-kupito}"
+DB_USERNAME="${DB_USERNAME:-ppcsl}"
+DB_NAME="${DB_NAME:-ppcsl}"
 KEEP_DAYS="${KEEP_DAYS:-30}"
 
 mkdir -p "$BACKUP_DIR"
 
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
-FILENAME="kupito_backup_${TIMESTAMP}.sql.gz"
+FILENAME="ppcsl_backup_${TIMESTAMP}.sql.gz"
 FILEPATH="${BACKUP_DIR}/${FILENAME}"
 
 echo "📦 Starting database backup..."
@@ -41,8 +41,8 @@ echo "   Size: ${SIZE}"
 
 if [ "$KEEP_DAYS" -gt 0 ]; then
     echo "🧹 Cleaning up old backups (keeping last ${KEEP_DAYS} days)..."
-    find "$BACKUP_DIR" -name "kupito_backup_*.sql.gz" -type f -mtime +${KEEP_DAYS} -delete
-    DELETED_COUNT=$(find "$BACKUP_DIR" -name "kupito_backup_*.sql.gz" -type f -mtime +${KEEP_DAYS} 2>/dev/null | wc -l)
+    find "$BACKUP_DIR" -name "ppcsl_backup_*.sql.gz" -type f -mtime +${KEEP_DAYS} -delete
+    DELETED_COUNT=$(find "$BACKUP_DIR" -name "ppcsl_backup_*.sql.gz" -type f -mtime +${KEEP_DAYS} 2>/dev/null | wc -l)
     if [ "$DELETED_COUNT" -gt 0 ]; then
         echo "   Cleaned up old backups"
     fi

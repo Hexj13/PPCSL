@@ -1,6 +1,6 @@
 'use client';
 
-const STORAGE_KEY = 'kupito_nav_count_v1';
+const STORAGE_KEY = 'ppcsl_nav_count_v1';
 
 export function incrementNavigationCount(): void {
   if (typeof sessionStorage === 'undefined') return;

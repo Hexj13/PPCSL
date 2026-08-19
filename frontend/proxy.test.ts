@@ -54,66 +54,66 @@ describe('proxy locale routing', () => {
   });
 
   it('redirects uppercase /RU path segment to lowercase /ru (308)', async () => {
-    const res = await proxy(mk('https://kupito.test/RU/dacia'));
+    const res = await proxy(mk('https://ppcsl.test/RU/dacia'));
     expect(res.status).toBe(308);
-    expect(res.headers.get('location')).toBe('https://kupito.test/ru/dacia');
+    expect(res.headers.get('location')).toBe('https://ppcsl.test/ru/dacia');
   });
 
-  it('redirects RO path to /ru when kupito-preferred-locale is ru', async () => {
-    const res = await proxy(mk('https://kupito.test/dacia', { 'kupito-preferred-locale': 'ru' }));
+  it('redirects RO path to /ru when ppcsl-preferred-locale is ru', async () => {
+    const res = await proxy(mk('https://ppcsl.test/dacia', { 'ppcsl-preferred-locale': 'ru' }));
     expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe('https://kupito.test/ru/dacia');
+    expect(res.headers.get('location')).toBe('https://ppcsl.test/ru/dacia');
   });
 
-  it('redirects RO path to /ru when kupito-locale is ru', async () => {
-    const res = await proxy(mk('https://kupito.test/compare', { 'kupito-locale': 'ru' }));
+  it('redirects RO path to /ru when ppcsl-locale is ru', async () => {
+    const res = await proxy(mk('https://ppcsl.test/compare', { 'ppcsl-locale': 'ru' }));
     expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe('https://kupito.test/ru/compare');
+    expect(res.headers.get('location')).toBe('https://ppcsl.test/ru/compare');
   });
 
-  it('does not redirect to /ru when kupito-locale is explicitly ro', async () => {
+  it('does not redirect to /ru when ppcsl-locale is explicitly ro', async () => {
     const res = await proxy(
-      mk('https://kupito.test/dacia', {
-        'kupito-locale': 'ro',
-        'kupito-preferred-locale': 'ru',
+      mk('https://ppcsl.test/dacia', {
+        'ppcsl-locale': 'ro',
+        'ppcsl-preferred-locale': 'ru',
       }),
     );
     expect(res.status).toBe(200);
   });
 
-  it('redirects /sign to /ru/sign when kupito-preferred-locale is ru', async () => {
-    const res = await proxy(mk('https://kupito.test/sign', { 'kupito-preferred-locale': 'ru' }));
+  it('redirects /sign to /ru/sign when ppcsl-preferred-locale is ru', async () => {
+    const res = await proxy(mk('https://ppcsl.test/sign', { 'ppcsl-preferred-locale': 'ru' }));
     expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe('https://kupito.test/ru/sign');
+    expect(res.headers.get('location')).toBe('https://ppcsl.test/ru/sign');
   });
 
-  it('redirects /verify-phone to /ru/verify-phone when kupito-locale is ru', async () => {
-    const res = await proxy(mk('https://kupito.test/verify-phone', { 'kupito-locale': 'ru' }));
+  it('redirects /verify-phone to /ru/verify-phone when ppcsl-locale is ru', async () => {
+    const res = await proxy(mk('https://ppcsl.test/verify-phone', { 'ppcsl-locale': 'ru' }));
     expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe('https://kupito.test/ru/verify-phone');
+    expect(res.headers.get('location')).toBe('https://ppcsl.test/ru/verify-phone');
   });
 
-  it('redirects /admin to /ru/admin when kupito-locale is ru', async () => {
-    const res = await proxy(mk('https://kupito.test/admin', { 'kupito-locale': 'ru' }));
+  it('redirects /admin to /ru/admin when ppcsl-locale is ru', async () => {
+    const res = await proxy(mk('https://ppcsl.test/admin', { 'ppcsl-locale': 'ru' }));
     expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe('https://kupito.test/ru/admin');
+    expect(res.headers.get('location')).toBe('https://ppcsl.test/ru/admin');
   });
 
   it('forwards the request pathname on a prefixed locale next()', async () => {
-    const res = await proxy(mk('https://kupito.test/ru/unknown-page'));
+    const res = await proxy(mk('https://ppcsl.test/ru/unknown-page'));
     expect(res.status).toBe(200);
     expect(requestPathnameHeader(res)).toBe('/ru/unknown-page');
   });
 
   it('forwards the request pathname on an unprefixed rewrite', async () => {
-    const res = await proxy(mk('https://kupito.test/no-such-page'));
+    const res = await proxy(mk('https://ppcsl.test/no-such-page'));
     expect(res.status).toBe(200);
     expect(requestPathnameHeader(res)).toBe('/no-such-page');
   });
 
   it('overwrites a client-supplied x-url-pathname header', async () => {
     const res = await proxy(
-      mk('https://kupito.test/ru/unknown-page', {}, { 'x-url-pathname': '/en/spoofed' }),
+      mk('https://ppcsl.test/ru/unknown-page', {}, { 'x-url-pathname': '/en/spoofed' }),
     );
     expect(res.status).toBe(200);
     expect(requestPathnameHeader(res)).toBe('/ru/unknown-page');
@@ -138,7 +138,7 @@ describe('proxy phone verification gate', () => {
 
   it('redirects to complete-profile with returnUrl when phone is not verified', async () => {
     const res = await proxy(
-      mk('https://kupito.test/ru/sell?tab=1', { kupito_access_token: 'any.jwt.value' }),
+      mk('https://ppcsl.test/ru/sell?tab=1', { ppcsl_access_token: 'any.jwt.value' }),
     );
     expect(res.status).toBe(307);
     const loc = res.headers.get('location') ?? '';
@@ -149,22 +149,20 @@ describe('proxy phone verification gate', () => {
   });
 
   it('does not redirect when access token cookie is missing', async () => {
-    const res = await proxy(mk('https://kupito.test/ru/sell'));
+    const res = await proxy(mk('https://ppcsl.test/ru/sell'));
     expect(res.status).toBe(200);
   });
 
   it('does not redirect when jwtVerify rejects', async () => {
     (jwtVerify as unknown as jest.Mock).mockRejectedValue(new Error('invalid token'));
-    const res = await proxy(
-      mk('https://kupito.test/ru/sell', { kupito_access_token: 'broken.jwt' }),
-    );
+    const res = await proxy(mk('https://ppcsl.test/ru/sell', { ppcsl_access_token: 'broken.jwt' }));
     expect(res.status).toBe(200);
   });
 
   it('does not redirect when phoneVerified claim is true', async () => {
     (jwtVerify as unknown as jest.Mock).mockResolvedValue({ payload: { phoneVerified: true } });
     const res = await proxy(
-      mk('https://kupito.test/ru/sell', { kupito_access_token: 'any.jwt.value' }),
+      mk('https://ppcsl.test/ru/sell', { ppcsl_access_token: 'any.jwt.value' }),
     );
     expect(res.status).toBe(200);
   });
@@ -172,7 +170,7 @@ describe('proxy phone verification gate', () => {
   it('redirects when phoneVerified claim is missing', async () => {
     (jwtVerify as unknown as jest.Mock).mockResolvedValue({ payload: {} });
     const res = await proxy(
-      mk('https://kupito.test/ru/sell', { kupito_access_token: 'any.jwt.value' }),
+      mk('https://ppcsl.test/ru/sell', { ppcsl_access_token: 'any.jwt.value' }),
     );
     expect(res.status).toBe(307);
     expect(res.headers.get('location') ?? '').toContain('/complete-profile');

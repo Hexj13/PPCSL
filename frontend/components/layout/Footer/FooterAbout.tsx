@@ -32,9 +32,9 @@ export function FooterAbout() {
         <Image
           src={logoUrl}
           alt={t('header.brandName')}
-          width={160}
-          height={52}
-          className="h-9 w-auto brightness-0 invert"
+          width={240}
+          height={64}
+          className="h-14 w-auto brightness-0 invert"
         />
       </Link>
       <FooterSocialLinks socialLinks={siteConfig.socialLinks} />

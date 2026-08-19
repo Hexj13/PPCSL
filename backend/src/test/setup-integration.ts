@@ -12,6 +12,7 @@ import { PhoneVerifiedGuard } from '../auth/infrastructure/guards/phone-verified
 import { EmailService } from '../auth/infrastructure/services/email.service';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 import { I18nService } from '../common/i18n/i18n.service';
+import { resolvePlatformName } from '../common/platform-name';
 
 let app: INestApplication;
 let swaggerDocument: OpenAPIObject;
@@ -57,19 +58,7 @@ export async function createTestApp(): Promise<INestApplication> {
     }),
   );
 
-  const swaggerSiteName = (() => {
-    const fromEnv = process.env.SITE_NAME?.trim() || process.env.PLATFORM_NAME?.trim();
-    if (fromEnv) return fromEnv;
-    const frontendUrl = process.env.FRONTEND_URL?.trim();
-    if (frontendUrl) {
-      try {
-        return new URL(frontendUrl).hostname;
-      } catch {
-        void 0;
-      }
-    }
-    return 'API';
-  })();
+  const swaggerSiteName = resolvePlatformName();
 
   const config = new DocumentBuilder()
     .setTitle(`${swaggerSiteName} API`)

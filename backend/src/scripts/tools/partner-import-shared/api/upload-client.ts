@@ -1,5 +1,5 @@
-import type { KupitoImportClientConfig } from '../kupito-import-types';
 import type { UploadResult } from '../listing-types';
+import type { PlatformImportClientConfig } from '../platform-import-types';
 import { requestBuffer } from '../utils/http';
 import { sleep } from '../utils/sleep';
 
@@ -7,7 +7,7 @@ import type { AuthClient } from './auth-client';
 
 export class UploadClient {
   constructor(
-    private readonly config: KupitoImportClientConfig,
+    private readonly config: PlatformImportClientConfig,
     private readonly authClient: AuthClient,
   ) {}
 
@@ -28,7 +28,7 @@ export class UploadClient {
   }
 
   async uploadVideoFromUrl(videoUrl: string, listingId: string): Promise<void> {
-    const uploadUrl = `${this.config.kupitoApiUrl}/api/upload/video/from-url`;
+    const uploadUrl = `${this.config.platformApiUrl}/api/upload/video/from-url`;
     const body = JSON.stringify({ listingId, videoUrl });
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.authClient.getAccessToken()}`,
@@ -103,7 +103,7 @@ export class UploadClient {
     const blob = new Blob([buffer], { type: mimeType });
     formData.append('file', blob, filename);
 
-    const uploadUrl = `${this.config.kupitoApiUrl}/api/upload/image`;
+    const uploadUrl = `${this.config.platformApiUrl}/api/upload/image`;
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.authClient.getAccessToken()}`,
     };

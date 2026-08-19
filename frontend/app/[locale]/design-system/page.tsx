@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
 import { Badge, Button, Card, Heading, Input, Select, Spinner, Textarea, Typography } from '@/ui';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -139,6 +141,7 @@ export default function DesignSystemPage() {
   const [inputValue, setInputValue] = useState('');
   const [textareaValue, setTextareaValue] = useState('');
   const [selectValue, setSelectValue] = useState('');
+  const siteName = loadSiteConfigSync(getCountry()).name;
 
   if (isProduction) return <DesignSystemNotFound />;
 
@@ -151,7 +154,7 @@ export default function DesignSystemPage() {
               href="/"
               className="text-2xl font-extrabold bg-linear-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent"
             >
-              Kupito
+              {siteName}
             </Link>
             <nav className="hidden md:flex gap-4">
               {sections.map((section) => (
@@ -173,7 +176,7 @@ export default function DesignSystemPage() {
       <div className="container mx-auto px-4 py-12 space-y-16 max-w-7xl">
         <div className="text-center mb-12">
           <Heading level={1} gradient className="mb-4">
-            Kupito Design System
+            {siteName} Design System
           </Heading>
           <Typography variant="body" className="text-gray-300">
             Interactive documentation for all UI components

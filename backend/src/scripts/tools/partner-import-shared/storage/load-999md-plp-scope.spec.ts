@@ -27,14 +27,14 @@ function buildItem(overrides: Partial<Item> & Pick<Item, 'sourceListingId'>): It
 }
 
 describe('collect999mdScopedMissingSnapshotMeta', () => {
-  it('also lists scoped source-only closed candidates pending Kupito closure', () => {
+  it('also lists scoped source-only closed candidates pending platform closure', () => {
     const items: Item[] = [
       buildItem({
         sourceListingId: 'pending-source-only',
         profileLogin: 'vito124',
         sourceStatus: 'closed',
         closeOutcome: 'source_only',
-        kupitoListingId: 'k-pending',
+        platformListingId: 'k-pending',
       }),
       buildItem({
         sourceListingId: 'fully-closed',
@@ -54,7 +54,7 @@ describe('collect999mdScopedMissingSnapshotMeta', () => {
         sourceListingId: 'gone',
         profileLogin: 'vito124',
         sourceStatus: 'missing_candidate',
-        kupitoListingId: 'k1',
+        platformListingId: 'k1',
       }),
       buildItem({
         sourceListingId: 'other-login',

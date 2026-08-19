@@ -17,6 +17,7 @@ import { AppModule } from './app.module';
 import { PrettyLogger } from './common/logger/pretty-logger';
 import { apiV1AliasMiddleware } from './common/middleware/api-v1-alias.middleware';
 import { requestIdMiddleware } from './common/middleware/request-id.middleware';
+import { resolvePlatformName } from './common/platform-name';
 
 async function bootstrap() {
   const isDev = process.env.NODE_ENV !== 'production';
@@ -148,19 +149,7 @@ async function bootstrap() {
     },
   });
 
-  const swaggerSiteName = (() => {
-    const fromEnv = process.env.SITE_NAME?.trim() || process.env.PLATFORM_NAME?.trim();
-    if (fromEnv) return fromEnv;
-    const frontendUrl = process.env.FRONTEND_URL?.trim();
-    if (frontendUrl) {
-      try {
-        return new URL(frontendUrl).hostname;
-      } catch {
-        void 0;
-      }
-    }
-    return 'API';
-  })();
+  const swaggerSiteName = resolvePlatformName();
 
   const config = new DocumentBuilder()
     .setTitle(`${swaggerSiteName} API`)

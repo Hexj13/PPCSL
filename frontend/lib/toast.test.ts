@@ -46,8 +46,8 @@ describe('toast className', () => {
     expect(mockHotToastSuccess).toHaveBeenCalledTimes(1);
     const options = mockHotToastSuccess.mock.calls[0]?.[1] as { className?: string } | undefined;
     expect(options?.className).toBe(toastClassNames.success);
-    expect(options?.className).toContain('kupito-toast');
-    expect(options?.className).toContain('kupito-toast--success');
+    expect(options?.className).toContain('ppcsl-toast');
+    expect(options?.className).toContain('ppcsl-toast--success');
     expect(options?.className).toContain('!min-w-[320px]');
     expect(options?.className).toContain('!max-w-[400px]');
     expect(options?.className).toContain('!bg-bg-card');
@@ -59,7 +59,7 @@ describe('toast className', () => {
     expect(mockHotToastError).toHaveBeenCalledTimes(1);
     const options = mockHotToastError.mock.calls[0]?.[1] as { className?: string } | undefined;
     expect(options?.className).toBe(toastClassNames.error);
-    expect(options?.className).toContain('kupito-toast--error');
+    expect(options?.className).toContain('ppcsl-toast--error');
     expect(options?.className).toContain('!min-w-[320px]');
   });
 
@@ -69,16 +69,16 @@ describe('toast className', () => {
     expect(mockHotToast).toHaveBeenCalledTimes(1);
     const options = mockHotToast.mock.calls[0]?.[1] as { className?: string } | undefined;
     expect(options?.className).toBe(toastClassNames.warning);
-    expect(options?.className).toContain('kupito-toast--warning');
+    expect(options?.className).toContain('ppcsl-toast--warning');
     expect(options?.className).toContain('!min-w-[320px]');
   });
 
   it('fills missing default classes when caller className only includes the base marker', () => {
-    toast.success('Saved', { className: 'kupito-toast custom-extra' });
+    toast.success('Saved', { className: 'ppcsl-toast custom-extra' });
 
     const options = mockHotToastSuccess.mock.calls[0]?.[1] as { className?: string } | undefined;
-    expect(options?.className).toContain('kupito-toast custom-extra');
-    expect(options?.className).toContain('kupito-toast--success');
+    expect(options?.className).toContain('ppcsl-toast custom-extra');
+    expect(options?.className).toContain('ppcsl-toast--success');
     expect(options?.className).toContain('!min-w-[320px]');
   });
 

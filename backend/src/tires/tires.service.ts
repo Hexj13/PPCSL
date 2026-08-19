@@ -2,7 +2,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 
-import { I18nService } from '../common/i18n/i18n.service';
+import { I18nService, interpolateI18nTemplate } from '../common/i18n/i18n.service';
+import { resolvePlatformName } from '../common/platform-name';
 
 import { ITiresCache, TIRES_CACHE } from './application/ports/tires-cache.port';
 import { TireBrand } from './entities/tire-brand.entity';
@@ -17,6 +18,18 @@ function parseTireUuidList(raw: string | undefined, max = 20): string[] {
     .map((s) => s.trim())
     .filter((id) => TIRE_UUID_RE.test(id));
   return [...new Set(ids)].slice(0, max);
+}
+
+function siteMeta(
+  i18n: I18nService,
+  key: string,
+  locale: string,
+  extra: Record<string, string> = {},
+): string {
+  return interpolateI18nTemplate(i18n.translate(key, locale), {
+    siteName: resolvePlatformName(),
+    ...extra,
+  });
 }
 
 @Injectable()
@@ -115,7 +128,7 @@ export class TiresService {
     const modelIds = parseTireUuidList(tireModelIdsRaw);
 
     const tiresHomeDescription = () =>
-      this.i18nService.translate('metadata.site.tiresHomePageDescription', locale);
+      siteMeta(this.i18nService, 'metadata.site.tiresHomePageDescription', locale);
 
     if (brandIds.length === 0 && modelIds.length === 0) {
       return { title: null, description: tiresHomeDescription() };
@@ -141,13 +154,20 @@ export class TiresService {
             : undefined;
         const description = brandName
           ? modelName
-            ? this.i18nService
-                .translate('metadata.site.tiresHomePageDescriptionWithBrandModel', locale)
-                .replace('{brand}', brandName)
-                .replace('{model}', modelName)
-            : this.i18nService
-                .translate('metadata.site.tiresHomePageDescriptionWithBrand', locale)
-                .replace('{brand}', brandName)
+            ? siteMeta(
+                this.i18nService,
+                'metadata.site.tiresHomePageDescriptionWithBrandModel',
+                locale,
+                { brand: brandName, model: modelName },
+              )
+            : siteMeta(
+                this.i18nService,
+                'metadata.site.tiresHomePageDescriptionWithBrand',
+                locale,
+                {
+                  brand: brandName,
+                },
+              )
           : tiresHomeDescription();
         return {
           title,
@@ -168,9 +188,9 @@ export class TiresService {
         const title = brands.length === 1 ? brands[0].name : brands.map((b) => b.name).join(', ');
         const brandName = brands.length === 1 ? brands[0].name : undefined;
         const description = brandName
-          ? this.i18nService
-              .translate('metadata.site.tiresHomePageDescriptionWithBrand', locale)
-              .replace('{brand}', brandName)
+          ? siteMeta(this.i18nService, 'metadata.site.tiresHomePageDescriptionWithBrand', locale, {
+              brand: brandName,
+            })
           : tiresHomeDescription();
         return { title, description, brandName };
       }

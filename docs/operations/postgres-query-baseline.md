@@ -14,7 +14,7 @@ Runbook after upgrading Render Postgres or when investigating slow queries, 503s
 
 ## Phase A: connectivity and pool
 
-1. **Internal URL** — Point `DATABASE_URL` (or `DB_HOST` / credentials) at the **internal** connection string from the Render database **Connect** panel. Same region as `kupito-backend` minimizes latency. See [Render: Create and Connect to Render Postgres](https://render.com/docs/postgresql-creating-connecting).
+1. **Internal URL** — Point `DATABASE_URL` (or `DB_HOST` / credentials) at the **internal** connection string from the Render database **Connect** panel. Same region as `ppcsl-backend` minimizes latency. See [Render: Create and Connect to Render Postgres](https://render.com/docs/postgresql-creating-connecting).
 2. **Connection limits** — Render caps max connections by instance RAM. Ensure `instances × DB_POOL_MAX` plus pgAdmin, scripts, and other clients stays below that limit.
 3. **Pool env** — Backend pool is configured in [`data-source.ts`](../../backend/src/data-source.ts) via `DB_POOL_MAX`, `DB_POOL_MIN`, `DB_POOL_IDLE_TIMEOUT`, `DB_POOL_CONNECTION_TIMEOUT`. After a DB upgrade, a small `DB_POOL_MIN` (e.g. 2–5) on a single web instance can reduce cold connection bursts if the DB limit allows it.
 4. **Dashboards** — Watch Postgres metrics: active connections, CPU, RAM, disk, Top Queries. Watch Redis: errors, memory, evictions (cache misses increase load on Postgres).

@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 
+import { resolveS3BucketName } from '../../common/config/s3-bucket';
 import { AppDataSource } from '../../data-source';
 import { Listing } from '../../listings/entities/listing.entity';
 import { checkEnvironment } from '../script-guard';
@@ -37,7 +38,7 @@ function imageUrlsForListing(listing: Listing, mode: WarmMode): string[] {
 async function warmCardVariants(mode: WarmMode) {
   console.log(`Mode: ${mode}`);
   const s3 = getS3ClientForBackfill();
-  const bucket = process.env.AWS_S3_BUCKET_NAME || 'kupito-uploads';
+  const bucket = resolveS3BucketName('required');
 
   if (!s3) {
     console.error('S3 not configured, cannot warm card variants');

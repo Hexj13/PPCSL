@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import type { Job } from 'bullmq';
 import { Repository } from 'typeorm';
 
+import { resolveS3BucketName } from '../../common/config/s3-bucket';
 import { Listing } from '../../listings/entities/listing.entity';
 import {
   encodeBlurhashFromBuffer,
@@ -47,8 +48,8 @@ export class UploadQueueProcessor extends WorkerHost {
     }
 
     const s3 = getS3ClientForBackfill();
-    const bucket = process.env.AWS_S3_BUCKET_NAME || 'kupito-uploads';
-    if (!s3) {
+    const bucket = resolveS3BucketName('optional');
+    if (!s3 || !bucket) {
       this.logger.warn('S3 not configured; skipping cover blurhash job');
       return;
     }

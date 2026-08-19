@@ -25,7 +25,7 @@
 ## Поведение в приложении
 
 - Скрипт `https://accounts.google.com/gsi/client` подключается на странице `/sign` (вкладки вход и регистрация). Инициализация GIS (`initialize` / `renderButton`) выполняется **после** `onReady` этого скрипта (Next.js `Script`) и при наличии `NEXT_PUBLIC_GOOGLE_CLIENT_ID`; иначе кнопка не появится. До готовности кнопки показывается skeleton; при remount проверяется `window.google?.accounts?.id`.
-- После успеха GIS фронт вызывает `POST /api/auth/google` с полем `idToken`; бэкенд проверяет токен через `google-auth-library`, выставляет httpOnly cookies `kupito_access_token` и `kupito_refresh_token` (path у refresh — `/api/auth`).
+- После успеха GIS фронт вызывает `POST /api/auth/google` с полем `idToken`; бэкенд проверяет токен через `google-auth-library`, выставляет httpOnly cookies `ppcsl_access_token` и `ppcsl_refresh_token` (path у refresh — `/api/auth`).
 - Дальнейшие запросы API идут с `withCredentials: true`; access JWT содержит `phoneVerified`; без подтверждённого телефона пользователь перенаправляется на `/complete-profile?mode=phone_required` (middleware + клиентский guard). Для юр. лица без названия компании в профиле действует отдельный клиентский гард на `/complete-profile?mode=business_onboarding` (см. [auth-onboarding-gates.md](../features/auth-onboarding-gates.md)).
 - На вкладке **регистрации** в теле `POST /api/auth/google` передаётся выбранный `type` (`Individual` | `Business`); на вкладке входа тип не отправляется (дефолт бэкенда).
 - `POST /api/auth/google` с `/sign` идёт с заголовками `X-Skip-Error-Handling` и `X-Skip-Auth-Redirect`; ошибка показывается **одним** toast на странице (ключи `errors.*` переводятся локально). См. [frontend-api-error-handling.md](./frontend-api-error-handling.md).

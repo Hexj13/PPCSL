@@ -105,7 +105,7 @@ export function PWAInstallButtonGray({ fullWidth = false }: PWAInstallButtonGray
     'Safari',
     'iPhone',
     'iPad',
-    'kupito.club',
+    siteConfig.domain,
     'Chrome',
     'Android',
     'Add to Home Screen',

@@ -26,9 +26,9 @@ async function backupDatabase(options: BackupOptions = {}) {
   const configService = new ConfigService();
   const dbHost = configService.get('DB_HOST', 'localhost');
   const dbPort = configService.get('DB_PORT', '5432');
-  const dbUsername = configService.get('DB_USERNAME', 'kupito');
+  const dbUsername = configService.get('DB_USERNAME', 'ppcsl');
   const dbPassword = configService.get('DB_PASSWORD');
-  const dbName = configService.get('DB_NAME', 'kupito');
+  const dbName = configService.get('DB_NAME', 'ppcsl');
 
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -38,7 +38,7 @@ async function backupDatabase(options: BackupOptions = {}) {
     new Date().toISOString().replace(/[:.]/g, '-').split('T')[0] +
     '_' +
     new Date().toISOString().replace(/[:.]/g, '-').split('T')[1].split('.')[0];
-  const filename = `kupito_backup_${timestamp}`;
+  const filename = `ppcsl_backup_${timestamp}`;
   const filepath = path.join(outputDir, filename);
   const sqlFile = `${filepath}.sql`;
 

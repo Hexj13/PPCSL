@@ -219,7 +219,7 @@ android/twa/
 
 ```text
 Application name: Kupito
-Package name: club.kupito.app
+Package name: com.example.app
 Host: kupito.club
 Start URL: https://kupito.club/
 Manifest URL: https://kupito.club/manifest.json
@@ -227,7 +227,7 @@ Display mode: standalone или fullscreen
 Fallback: customtabs
 ```
 
-Package name нельзя менять после публикации в Google Play без выпуска нового приложения. Перед созданием Play Console app нужно финально подтвердить `club.kupito.app`.
+Package name нельзя менять после публикации в Google Play без выпуска нового приложения. Перед созданием Play Console app нужно финально подтвердить `com.example.app`.
 
 `fallbackType` должен оставаться `customtabs`, а не `webview`. Если TWA verification не проходит, лучше увидеть Custom Tab с browser UI и исправить Digital Asset Links, чем скрывать проблему WebView fallback.
 
@@ -259,7 +259,7 @@ bubblewrap init --manifest=https://kupito.club/manifest.json
 
 - `name`: `Kupito`;
 - `launcherName`: `Kupito`;
-- `packageId`: `club.kupito.app`;
+- `packageId`: `com.example.app`;
 - `host`: `kupito.club`;
 - `startUrl`: `/`;
 - `themeColor` и `backgroundColor` соответствуют `theme/colors.ts`;
@@ -344,7 +344,7 @@ core/frontend/public/.well-known/assetlinks.json
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "club.kupito.app",
+      "package_name": "com.example.app",
       "sha256_cert_fingerprints": [
         "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99"
       ]
@@ -419,7 +419,7 @@ adb logcat -v brief | grep -e TWAProviderPicker -e cr_TrustedWebActivity
 Для Google Play Console понадобятся:
 
 - Google Play Developer account;
-- package name `club.kupito.app`;
+- package name `com.example.app`;
 - `.aab` файл из Bubblewrap;
 - название приложения;
 - короткое описание;
@@ -501,7 +501,7 @@ core/frontend/components/pwa/PWAInstallButtonGray.tsx
 ```typescript
 mobileApp: {
   enabled: true,
-  androidUrl: 'https://play.google.com/store/apps/details?id=club.kupito.app',
+  androidUrl: 'https://play.google.com/store/apps/details?id=com.example.app',
   iosUrl: null,
 }
 ```
@@ -596,7 +596,7 @@ Push-уведомления не являются обязательными д�
 
 - создать `android/twa/`;
 - запустить `bubblewrap init --manifest=https://kupito.club/manifest.json`;
-- подтвердить `club.kupito.app`;
+- подтвердить `com.example.app`;
 - собрать `app-release-signed.apk`;
 - установить APK на Android device;
 - проверить, что приложение открывает сайт и основные flows работают.

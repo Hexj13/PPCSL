@@ -45,7 +45,7 @@ Complete guide for creating new platforms and understanding where to make code c
 - ❌ Translations (text content)
 - ❌ Colors and themes
 - ❌ Site-specific configuration (domain, email, etc.)
-- ❌ Platform-specific branding
+- ❌ Platform-specific branding (names, domains, locale copy). Shared identifiers are `ppcsl_*` / `ppcsl-`; the visible name comes from overlay `config/site.ts` and `SITE_NAME`. See [linting.md](../engineering/linting.md) (platform-neutral core).
 
 ### Platform Repository (e.g., kupito.club)
 
@@ -282,7 +282,7 @@ The whole footer catalog block (“Popular car manufacturers” + “Car models�
 
 Frontend routing (PPCSL): pages live under `app/[locale]/...`. The Next.js proxy (`proxy.ts`) rewrites unprefixed URLs to `/<defaultLocale>/...` internally and leaves prefixed locales (for example `/ru/...`) unchanged. Locale for SSR metadata and translations comes from the `[locale]` path segment (not from `cookies()` / `headers()`), so document responses are not forced into `Cache-Control: no-store` solely because of locale resolution. Preferred-locale cookies are still used only in the proxy for redirects onto a prefixed path.
 
-When the switcher is enabled, the Next.js middleware may redirect a path **without** a locale prefix to a prefixed URL (for example `/ru/...`) using cookies: **`kupito-locale`** (explicit choice from the UI) takes precedence over **`kupito-preferred-locale`** (first-visit hint). If `kupito-locale` is the `defaultLocale`, that redirect does not run to the prefixed locale even when the preferred cookie suggests one.
+When the switcher is enabled, the Next.js middleware may redirect a path **without** a locale prefix to a prefixed URL (for example `/ru/...`) using cookies: **`ppcsl-locale`** (explicit choice from the UI) takes precedence over **`ppcsl-preferred-locale`** (first-visit hint). If `ppcsl-locale` is the `defaultLocale`, that redirect does not run to the prefixed locale even when the preferred cookie suggests one.
 
 ### Step 7: Create CI/CD Workflow
 

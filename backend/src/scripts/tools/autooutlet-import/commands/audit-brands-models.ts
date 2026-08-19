@@ -1,4 +1,4 @@
-import type { KupitoApiClient } from '../../partner-import-shared/api/kupito-api';
+import type { PlatformApiClient } from '../../partner-import-shared/api/platform-api';
 import {
   adaptSourceModelForBrand,
   buildBrandCandidateKeys,
@@ -18,7 +18,7 @@ interface AuditBrandsModelsInput {
   startedAt: string;
   env: RuntimeEnv;
   registryItems: RegistryItem[];
-  kupitoApi: KupitoApiClient;
+  platformApi: PlatformApiClient;
   vehicleType: VehicleType;
 }
 
@@ -63,7 +63,7 @@ export async function auditBrandsModels(
     }
   }
 
-  const ourBrands = await input.kupitoApi.getBrands(input.vehicleType);
+  const ourBrands = await input.platformApi.getBrands(input.vehicleType);
   const ourBrandByNorm = new Map<string, { id: string; name: string }>();
   const ourBrandById = new Map<string, { id: string; name: string }>();
   for (const brand of ourBrands) {
@@ -99,7 +99,7 @@ export async function auditBrandsModels(
 
   const modelsByBrandId = new Map<string, ModelInfo[]>();
   for (const brandId of neededBrandIds) {
-    const models = await input.kupitoApi.getModelsByBrand(brandId, input.vehicleType);
+    const models = await input.platformApi.getModelsByBrand(brandId, input.vehicleType);
     modelsByBrandId.set(brandId, models);
   }
 

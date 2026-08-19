@@ -1,7 +1,7 @@
 import { resolve999mdListingCity } from './listing-city';
 
 describe('resolve999mdListingCity', () => {
-  it('maps 999 region suffix to canonical Kupito city name', () => {
+  it('maps 999 region suffix to canonical platform city name', () => {
     expect(resolve999mdListingCity('Chișinău mun.', 'Bălți')).toBe('Chișinău');
   });
 

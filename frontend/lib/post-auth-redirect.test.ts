@@ -4,7 +4,7 @@ describe('buildPostAuthRedirect', () => {
   const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_SITE_URL = 'https://kupito.club';
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://example.test';
   });
 
   afterEach(() => {
@@ -16,8 +16,8 @@ describe('buildPostAuthRedirect', () => {
   });
 
   it('allows same-origin absolute URLs', () => {
-    expect(buildPostAuthRedirect('https://kupito.club/favorites', 'ro')).toBe(
-      'https://kupito.club/favorites',
+    expect(buildPostAuthRedirect('https://example.test/favorites', 'ro')).toBe(
+      'https://example.test/favorites',
     );
   });
 

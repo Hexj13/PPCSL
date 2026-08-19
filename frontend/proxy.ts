@@ -130,9 +130,9 @@ function redirectPreferredPrefixedLocale(
   if (getLocaleFromPathname(pathname, routing)) {
     return null;
   }
-  const localeCookie = request.cookies.get('kupito-locale')?.value?.toLowerCase() ?? null;
+  const localeCookie = request.cookies.get('ppcsl-locale')?.value?.toLowerCase() ?? null;
   const preferredCookie =
-    request.cookies.get('kupito-preferred-locale')?.value?.toLowerCase() ?? null;
+    request.cookies.get('ppcsl-preferred-locale')?.value?.toLowerCase() ?? null;
   const target = localeCookie ?? preferredCookie;
   if (!target) {
     return null;

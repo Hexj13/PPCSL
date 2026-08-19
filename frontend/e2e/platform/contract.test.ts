@@ -92,7 +92,7 @@ describe('e2e platform contract', () => {
       nationalDigits: 8,
       mobileNationalPrefix: '79',
     });
-    expect(platform.localeCookieName).toBe('kupito-locale');
+    expect(platform.localeCookieName).toBe('ppcsl-locale');
   });
 
   it('builds Albania platform defaults from site config', () => {

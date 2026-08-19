@@ -1,24 +1,24 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: kupito-postgres
+    container_name: ppcsl-postgres
     environment:
-      POSTGRES_USER: kupito
-      POSTGRES_PASSWORD: kupito123
-      POSTGRES_DB: kupito
+      POSTGRES_USER: ppcsl
+      POSTGRES_PASSWORD: ppcsl123
+      POSTGRES_DB: ppcsl
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kupito"]
+      test: ["CMD-SHELL", "pg_isready -U ppcsl"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: kupito-redis
+    container_name: ppcsl-redis
     ports:
       - "6379:6379"
     volumes:
@@ -31,7 +31,7 @@ services:
 
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:v3.5.0
-    container_name: kupito-flaresolverr
+    container_name: ppcsl-flaresolverr
     ports:
       - "127.0.0.1:8191:8191"
     environment:

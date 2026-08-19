@@ -62,7 +62,7 @@ function getConnectionMeta() {
 
 function classifyImageUrlKind(imageUrl: string): 'origin' | 'optimized' | 'unknown' {
   try {
-    const u = new URL(imageUrl, 'https://kupito.club');
+    const u = new URL(imageUrl, 'https://example.test');
     if (u.pathname.includes('/api/upload/image/')) return 'optimized';
     if (u.pathname.startsWith('/uploads/')) return 'origin';
     return 'unknown';
@@ -73,7 +73,7 @@ function classifyImageUrlKind(imageUrl: string): 'origin' | 'optimized' | 'unkno
 
 function imageHostFromUrl(imageUrl: string): string {
   try {
-    return new URL(imageUrl, 'https://kupito.club').hostname;
+    return new URL(imageUrl, 'https://example.test').hostname;
   } catch {
     return 'unknown';
   }

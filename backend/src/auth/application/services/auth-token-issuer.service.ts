@@ -9,8 +9,8 @@ import { User } from '../../../users/entities/user.entity';
 import { RefreshTokenService } from '../../infrastructure/services/refresh-token.service';
 import type { GoogleSignInResponse, LoginResponse } from '../auth.types';
 
-export const ACCESS_TOKEN_COOKIE = 'kupito_access_token';
-export const REFRESH_TOKEN_COOKIE = 'kupito_refresh_token';
+export const ACCESS_TOKEN_COOKIE = 'ppcsl_access_token';
+export const REFRESH_TOKEN_COOKIE = 'ppcsl_refresh_token';
 
 export type JwtUserPayload = {
   sub: string;

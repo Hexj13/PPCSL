@@ -44,7 +44,7 @@ Shared contracts live in `core/backend/src/scripts/tools/partner-import-shared/`
 `BaseRegistryItem` is the shared persistence shape for source items:
 
 - core identity and state (`source`, `sourceListingId`, `url`, `canonicalUrl`, `state`)
-- parsed and import metadata (`parsedData`, `kupitoListingId`, `ownerUserId`, `createdStatus`)
+- parsed and import metadata (`parsedData`, `platformListingId`, `ownerUserId`, `createdStatus`)
 - processing diagnostics (`error`, `warnings`, `retryCount`, image counters)
 - lifecycle fields (`sourceStatus`, `missingSince`, `missingCount`, `closedAt`, `closeReason`, `closeOutcome`)
 

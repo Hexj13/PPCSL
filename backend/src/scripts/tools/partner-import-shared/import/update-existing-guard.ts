@@ -1,12 +1,12 @@
-export const UPDATE_EXISTING_REQUIRES_KUPITO_LISTING_ID =
-  'UPDATE_EXISTING_REQUIRES_KUPITO_LISTING_ID';
+export const UPDATE_EXISTING_REQUIRES_PLATFORM_LISTING_ID =
+  'UPDATE_EXISTING_REQUIRES_PLATFORM_LISTING_ID';
 
-export function getUpdateExistingRequiresKupitoListingIdError(
+export function getUpdateExistingRequiresPlatformListingIdError(
   options: { updateExisting?: boolean; sourceId?: string },
-  item: { kupitoListingId?: string },
+  item: { platformListingId?: string },
 ): string | undefined {
-  if (options.updateExisting && options.sourceId?.trim() && !item.kupitoListingId) {
-    return UPDATE_EXISTING_REQUIRES_KUPITO_LISTING_ID;
+  if (options.updateExisting && options.sourceId?.trim() && !item.platformListingId) {
+    return UPDATE_EXISTING_REQUIRES_PLATFORM_LISTING_ID;
   }
   return undefined;
 }

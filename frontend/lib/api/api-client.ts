@@ -111,7 +111,7 @@ export function refreshAuthSession(data: unknown = {}): Promise<AxiosResponse<Lo
 
 function runExclusiveAuthRefresh<T>(fn: () => Promise<T>): Promise<T> {
   if (typeof navigator !== 'undefined' && navigator.locks?.request) {
-    return navigator.locks.request('kupito-auth-refresh', () => fn()) as Promise<T>;
+    return navigator.locks.request('ppcsl-auth-refresh', () => fn()) as Promise<T>;
   }
   return fn();
 }

@@ -1,4 +1,4 @@
-import type { KupitoCreateListingPayload, ParsedPdpData } from './listing-types';
+import type { PlatformCreateListingPayload, ParsedPdpData } from './listing-types';
 import {
   PARTNER_SOURCE_CODE_999MD,
   PARTNER_SOURCE_CODE_AUTOOUTLET,
@@ -25,7 +25,7 @@ export function buildCipautoPartnerListingMetadataPatch(
   sourceListingId: string,
   fallbackCanonicalUrl?: string,
 ): Pick<
-  KupitoCreateListingPayload,
+  PlatformCreateListingPayload,
   'partner_source_code' | 'partner_listing_external_key' | 'partner_listing_canonical_url'
 > {
   return {
@@ -40,7 +40,7 @@ export function build999mdPartnerListingMetadataPatch(
   sourceListingId: string,
   fallbackCanonicalUrl?: string,
 ): Pick<
-  KupitoCreateListingPayload,
+  PlatformCreateListingPayload,
   'partner_source_code' | 'partner_listing_external_key' | 'partner_listing_canonical_url'
 > {
   return {
@@ -55,7 +55,7 @@ export function buildAutooutletPartnerListingMetadataPatch(
   sourceListingId: string,
   fallbackCanonicalUrl?: string,
 ): Pick<
-  KupitoCreateListingPayload,
+  PlatformCreateListingPayload,
   'partner_source_code' | 'partner_listing_external_key' | 'partner_listing_canonical_url'
 > {
   return {

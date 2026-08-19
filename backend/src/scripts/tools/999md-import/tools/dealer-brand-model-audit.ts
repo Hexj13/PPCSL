@@ -11,7 +11,8 @@ import { resolveSubcategoryToVehicleType } from '../mapping/subcategory-vehicle-
 import type { AdvertRaw } from '../parsers/advert-types';
 
 const GQL = process.env.SITE999MD_GRAPHQL_URL ?? 'https://999.md/graphql';
-const DEFAULT_KUPITO = process.env.KUPITO_IMPORT_API_URL ?? 'http://localhost:4000';
+const DEFAULT_PLATFORM_API =
+  process.env.PPCSL_IMPORT_API_URL ?? process.env.KUPITO_IMPORT_API_URL ?? 'http://localhost:4000';
 
 const ADVERT_FRAGMENT = `
   id
@@ -173,7 +174,7 @@ function extractBrandModel(advert: AdvertRaw): { brand?: string; model?: string 
   return { brand, model };
 }
 
-async function kupitoFetchJson<T>(url: string): Promise<T> {
+async function platformFetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} ${url}`);
@@ -181,13 +182,13 @@ async function kupitoFetchJson<T>(url: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-async function loadKupitoCatalogue(
+async function loadPlatformCatalogue(
   baseUrl: string,
 ): Promise<Map<VehicleType, Map<string, { brand: BrandInfo; models: ModelInfo[] }>>> {
   const out = new Map<VehicleType, Map<string, { brand: BrandInfo; models: ModelInfo[] }>>();
   const vehicleTypes: VehicleType[] = ['car', 'truck', 'moto'];
   for (const vt of vehicleTypes) {
-    const brands = await kupitoFetchJson<BrandInfo[]>(
+    const brands = await platformFetchJson<BrandInfo[]>(
       `${baseUrl.replace(/\/+$/, '')}/api/brands?vehicleType=${vt}`,
     );
     const brandIds = brands.map((b) => b.id);
@@ -251,7 +252,7 @@ function sleep(ms: number): Promise<void> {
 function parseArgs(argv: string[]): {
   login: string;
   out: string;
-  kupitoApiUrl: string;
+  platformApiUrl: string;
   pageSize: number;
   batchSize: number;
   delayMs: number;
@@ -262,7 +263,7 @@ function parseArgs(argv: string[]): {
     process.cwd(),
     'src/scripts/tools/999md-import/reports/dealer-brand-model-audit.json',
   );
-  let kupitoApiUrl = DEFAULT_KUPITO;
+  let platformApiUrl = DEFAULT_PLATFORM_API;
   let pageSize = 100;
   let batchSize = 8;
   let delayMs = 400;
@@ -272,8 +273,8 @@ function parseArgs(argv: string[]): {
       login = a.slice('--login='.length);
     } else if (a.startsWith('--out=')) {
       out = path.resolve(a.slice('--out='.length));
-    } else if (a.startsWith('--kupitoApiUrl=')) {
-      kupitoApiUrl = a.slice('--kupitoApiUrl='.length);
+    } else if (a.startsWith('--platformApiUrl=')) {
+      platformApiUrl = a.slice('--platformApiUrl='.length);
     } else if (a.startsWith('--pageSize=')) {
       pageSize = parseInt(a.slice('--pageSize='.length), 10);
     } else if (a.startsWith('--batchSize=')) {
@@ -284,7 +285,7 @@ function parseArgs(argv: string[]): {
       maxAds = parseInt(a.slice('--maxAds='.length), 10);
     }
   }
-  return { login, out, kupitoApiUrl, pageSize, batchSize, delayMs, maxAds };
+  return { login, out, platformApiUrl, pageSize, batchSize, delayMs, maxAds };
 }
 
 async function main(): Promise<void> {
@@ -339,14 +340,14 @@ async function main(): Promise<void> {
     }
   }
 
-  console.error(`Loading Kupito catalogue from ${args.kupitoApiUrl}...`);
-  const catalogue = await loadKupitoCatalogue(args.kupitoApiUrl);
+  console.error(`Loading platform catalogue from ${args.platformApiUrl}...`);
+  const catalogue = await loadPlatformCatalogue(args.platformApiUrl);
 
   const pairsFrom999 = [...pairMap.values()].sort((a, b) =>
     `${a.brand} ${a.model}`.localeCompare(`${b.brand} ${b.model}`),
   );
 
-  const missingFromKupito: {
+  const missingFromPlatform: {
     brand: string;
     model: string;
     vehicleType: VehicleType;
@@ -359,8 +360,8 @@ async function main(): Promise<void> {
     brand: string;
     model: string;
     vehicleType: VehicleType;
-    kupitoBrandId: string;
-    kupitoModelId: string;
+    platformBrandId: string;
+    platformModelId: string;
     listingCount: number;
   }[] = [];
 
@@ -375,12 +376,12 @@ async function main(): Promise<void> {
         brand: p.brand,
         model: p.model,
         vehicleType: p.vehicleType,
-        kupitoBrandId: r.brandId,
-        kupitoModelId: r.modelId,
+        platformBrandId: r.brandId,
+        platformModelId: r.modelId,
         listingCount,
       });
     } else {
-      missingFromKupito.push({
+      missingFromPlatform.push({
         brand: p.brand,
         model: p.model,
         vehicleType: p.vehicleType,
@@ -394,13 +395,13 @@ async function main(): Promise<void> {
   const report = {
     generatedAt: new Date().toISOString(),
     dealerLogin: args.login,
-    kupitoApiUrl: args.kupitoApiUrl,
+    platformApiUrl: args.platformApiUrl,
     graphqlUrl: GQL,
     stats: {
       listingIdsFetched: adIds.length,
       uniqueBrandModelPairs: pairsFrom999.length,
       resolvedPairs: resolved.length,
-      missingPairs: missingFromKupito.length,
+      missingPairs: missingFromPlatform.length,
       skippedSubcategory: skippedAds.length,
       incompleteBrandModel: incompleteAds.length,
     },
@@ -410,7 +411,7 @@ async function main(): Promise<void> {
       model: p.model,
       listingCount: p.listingIds.length,
     })),
-    missingFromKupito,
+    missingFromPlatform,
     resolved,
     skippedSubcategory: skippedAds.slice(0, 200),
     incompleteBrandModel: incompleteAds.slice(0, 200),

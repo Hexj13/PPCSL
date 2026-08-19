@@ -40,6 +40,6 @@ export function resolveAiReportLanguage(params: {
   const fromBody = normalizeLang(params.bodyLanguage ?? undefined);
   if (fromBody) return fromBody;
 
-  // Kupito default when nothing is provided
+  // platform default when nothing is provided
   return 'ro';
 }

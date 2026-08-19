@@ -215,11 +215,7 @@ export default [
   },
   {
     ...testingLibrary.configs['flat/react'],
-    files: [
-      '**/*.test.{ts,tsx}',
-      '**/*.spec.{ts,tsx}',
-      '**/__tests__/**/*.{ts,tsx}',
-    ],
+    files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}'],
     rules: {
       ...testingLibrary.configs['flat/react'].rules,
       'max-lines': 'off',
@@ -258,27 +254,37 @@ export default [
         },
         {
           selector: "Literal[value='/locales/ro.json']",
-          message: 'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
+          message:
+            'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
         },
         {
           selector: "Literal[value='/locales/sq.json']",
-          message: 'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
+          message:
+            'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
         },
         {
           selector: "Literal[value='lib/locales/ro.json']",
-          message: 'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
+          message:
+            'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
         },
         {
           selector: "Literal[value='lib/locales/sq.json']",
-          message: 'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
+          message:
+            'Do not hardcode locale JSON paths. Use e2e/utils/i18n.ts (defaultLocale from getE2ePlatform()).',
         },
         {
           selector: "Identifier[name='buildUniqueMdPhone']",
-          message: 'Use buildUniquePlatformPhone from e2e/platform/contract.ts instead of buildUniqueMdPhone.',
+          message:
+            'Use buildUniquePlatformPhone from e2e/platform/contract.ts instead of buildUniqueMdPhone.',
         },
         {
           selector: "Identifier[name='buildAvailableMdPhone']",
           message: 'Use buildAvailablePlatformPhone instead of buildAvailableMdPhone.',
+        },
+        {
+          selector: 'Literal[value=/kupito|makinaguru/i]', // ppcsl-allow-platform-name — forbid live brands in e2e specs
+          message:
+            'Do not hardcode live platform brands in e2e. Use getE2ePlatform(). Real fixtures belong in e2e/platform/ only.',
         },
       ],
     },

@@ -29,6 +29,7 @@ import { encode as blurhashEncode } from 'blurhash';
 import { LRUCache } from 'lru-cache';
 import sharp from 'sharp';
 
+import { resolveS3BucketName } from '../common/config/s3-bucket';
 import { handleUploadError } from '../common/utils/error-handling.utils';
 
 import {
@@ -122,7 +123,7 @@ export class UploadService {
     const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
     const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
     const region = process.env.AWS_REGION || 'eu-north-1';
-    this.bucketName = process.env.AWS_S3_BUCKET_NAME || 'kupito-uploads';
+    this.bucketName = resolveS3BucketName();
 
     this.useS3 = !!(accessKeyId && secretAccessKey && this.bucketName);
 

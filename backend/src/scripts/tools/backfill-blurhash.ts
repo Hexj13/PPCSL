@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 
+import { resolveS3BucketName } from '../../common/config/s3-bucket';
 import { AppDataSource } from '../../data-source';
 import { Listing } from '../../listings/entities/listing.entity';
 import { checkEnvironment } from '../script-guard';
@@ -25,7 +26,7 @@ function parseMode(): BackfillMode {
 async function backfillCoverBlurHashOnly() {
   console.log('Mode: cover (first image only)');
   const s3 = getS3ClientForBackfill();
-  const bucket = process.env.AWS_S3_BUCKET_NAME || 'kupito-uploads';
+  const bucket = resolveS3BucketName('required');
 
   if (!s3) {
     console.error('S3 not configured, cannot backfill');
@@ -102,7 +103,7 @@ async function backfillCoverBlurHashOnly() {
 async function backfillAllImageBlurHashes() {
   console.log('Mode: all (image_blur_hashes per photo)');
   const s3 = getS3ClientForBackfill();
-  const bucket = process.env.AWS_S3_BUCKET_NAME || 'kupito-uploads';
+  const bucket = resolveS3BucketName('required');
 
   if (!s3) {
     console.error('S3 not configured, cannot backfill');

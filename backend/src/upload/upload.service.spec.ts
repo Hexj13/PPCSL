@@ -58,7 +58,7 @@ describe('UploadService', () => {
     expect(service.normalizeUploadPath('/uploads\\test.webp')).toBeNull();
   });
 
-  it('should size watermark domain text to fit makinaguru.com without clipping', async () => {
+  it('should size watermark domain text to fit a long hostname without clipping', async () => {
     if (!fs.existsSync(WATERMARK_LOGO_PATH)) {
       throw new Error(
         `Expected watermark logo at ${WATERMARK_LOGO_PATH}. Run npm run prepare:build from the platform repo root.`,
@@ -67,7 +67,7 @@ describe('UploadService', () => {
 
     const imageWidth = 1600;
     const imageHeight = 1200;
-    const domain = 'makinaguru.com';
+    const domain = 'long-brand.test';
     const service = createService({ WATERMARK_DOMAIN: domain });
     const composites = await (
       service as unknown as WatermarkCompositesAccess

@@ -1,17 +1,17 @@
-import type { KupitoImportClientConfig } from '../kupito-import-types';
 import type { LoginResponse } from '../listing-types';
+import type { PlatformImportClientConfig } from '../platform-import-types';
 import { requestJsonWithResponse } from '../utils/http';
-import { mergeKupitoAuthTokensFromBodyAndCookies } from '../utils/kupito-auth-token-extract';
+import { mergePlatformAuthTokensFromBodyAndCookies } from '../utils/platform-auth-token-extract';
 
 export class AuthClient {
   private accessToken = '';
   private refreshToken = '';
   private userType = '';
 
-  constructor(private readonly config: KupitoImportClientConfig) {}
+  constructor(private readonly config: PlatformImportClientConfig) {}
 
   async login(): Promise<void> {
-    const url = `${this.config.kupitoApiUrl}/api/auth/login`;
+    const url = `${this.config.platformApiUrl}/api/auth/login`;
     const { data, response } = await requestJsonWithResponse<LoginResponse>({
       url,
       method: 'POST',
@@ -23,7 +23,7 @@ export class AuthClient {
         password: this.config.adminPassword,
       }),
     });
-    const tokens = mergeKupitoAuthTokensFromBodyAndCookies(data, response);
+    const tokens = mergePlatformAuthTokensFromBodyAndCookies(data, response);
     this.accessToken = tokens.access_token;
     this.refreshToken = tokens.refresh_token;
     this.userType = data.user?.type ?? '';
@@ -48,7 +48,7 @@ export class AuthClient {
     if (!this.refreshToken) {
       throw new Error('Refresh token is empty. Call login() first.');
     }
-    const url = `${this.config.kupitoApiUrl}/api/auth/refresh`;
+    const url = `${this.config.platformApiUrl}/api/auth/refresh`;
     const { data, response } = await requestJsonWithResponse<LoginResponse>({
       url,
       method: 'POST',
@@ -60,7 +60,7 @@ export class AuthClient {
       }),
     });
 
-    const tokens = mergeKupitoAuthTokensFromBodyAndCookies(data, response);
+    const tokens = mergePlatformAuthTokensFromBodyAndCookies(data, response);
     this.accessToken = tokens.access_token;
     this.refreshToken = tokens.refresh_token;
     this.userType = data.user?.type ?? this.userType;

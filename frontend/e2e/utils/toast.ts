@@ -7,7 +7,7 @@ async function isToastVisible(
   variant: 'success' | 'error' | 'warning',
   message?: string | RegExp,
 ): Promise<boolean> {
-  const marker = `.kupito-toast--${variant}`;
+  const marker = `.ppcsl-toast--${variant}`;
   const role = variant === 'error' ? 'alert' : 'status';
   const locators = [
     page.locator(`${TOASTER} ${marker}`),

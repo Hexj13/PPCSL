@@ -14,11 +14,11 @@ describe('browser-session-storage', () => {
     const { sessionStorageGetItem, sessionStorageRemoveItem, sessionStorageSetItem } =
       await import('@/lib/browser-session-storage');
 
-    sessionStorage.removeItem('kupito_ss_test_key');
-    sessionStorageSetItem('kupito_ss_test_key', 'v');
-    expect(sessionStorageGetItem('kupito_ss_test_key')).toBe('v');
-    sessionStorageRemoveItem('kupito_ss_test_key');
-    expect(sessionStorageGetItem('kupito_ss_test_key')).toBeNull();
+    sessionStorage.removeItem('ppcsl_ss_test_key');
+    sessionStorageSetItem('ppcsl_ss_test_key', 'v');
+    expect(sessionStorageGetItem('ppcsl_ss_test_key')).toBe('v');
+    sessionStorageRemoveItem('ppcsl_ss_test_key');
+    expect(sessionStorageGetItem('ppcsl_ss_test_key')).toBeNull();
   });
 
   it('returns safe fallbacks when sessionStorage operations throw SecurityError', async () => {

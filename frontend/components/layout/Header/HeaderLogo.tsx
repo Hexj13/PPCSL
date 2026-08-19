@@ -19,7 +19,7 @@ import {
   HEADER_LOGO_WRAP_CLASSES,
 } from './headerLogoClasses';
 
-export const RESET_SEARCH_EVENT = 'kupito-reset-search';
+export const RESET_SEARCH_EVENT = 'ppcsl-reset-search';
 
 type HeaderLogoProps = {
   brandAlt: string;
@@ -104,8 +104,8 @@ export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
         slotClassName={HEADER_LOGO_DESKTOP_SLOT_CLASSES}
         src={desktopLogoUrl}
         alt={brandAlt}
-        width={200}
-        height={65}
+        width={180}
+        height={48}
         testId="header-logo-full"
       />
       <LogoSlot

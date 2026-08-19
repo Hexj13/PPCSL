@@ -5,6 +5,7 @@ import {
   findListingIdWithExpandableDescription,
   openListingDetailById,
 } from '../utils/listing-detail-helpers';
+import { createVehicleListing } from '../utils/listing-flow';
 import { ensureNonOwnListingDetailFromSearch } from '../utils/listings';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
@@ -67,17 +68,22 @@ test.describe('Listing detail interactions', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('expands and collapses long listing description', async ({ page, listingDetailPage }) => {
-    test.setTimeout(120_000);
+  test('expands and collapses long listing description', async ({
+    page,
+    listingCreatePage,
+    listingDetailPage,
+  }) => {
+    test.setTimeout(180_000);
     const steps: E2EStep[] = [
       {
         name: 'Open listing with long description',
         action: async () => {
-          const listingId = await findListingIdWithExpandableDescription(page);
+          let listingId = await findListingIdWithExpandableDescription(page);
           if (!listingId) {
-            throw new Error(
-              'E2E needs a listing with a long description in search data. Run stage seed or create listings with long HTML descriptions.',
-            );
+            await loginByUi(page, requireAuthCredentials());
+            listingId = await createVehicleListing(page, listingCreatePage, listingDetailPage, {
+              longDescription: true,
+            });
           }
           await openListingDetailById(page, listingId);
           await listingDetailPage.expectPageView();

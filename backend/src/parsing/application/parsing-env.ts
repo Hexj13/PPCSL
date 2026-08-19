@@ -30,36 +30,45 @@ export function resolveParsingSchedulerEnabled(): boolean {
 
 export function buildParsingChildProcessEnv(targetEnv: ParserTargetEnv): NodeJS.ProcessEnv {
   const apiUrl =
+    process.env.ADMIN_PARSING_PPCSL_API_URL?.trim() ||
     process.env.ADMIN_PARSING_KUPITO_API_URL?.trim() ||
+    process.env.PPCSL_IMPORT_API_URL?.trim() ||
     process.env.KUPITO_IMPORT_API_URL?.trim() ||
     process.env.CIPAUTO_API_URL?.trim() ||
     '';
   const adminEmail =
     process.env.ADMIN_PARSING_ADMIN_EMAIL?.trim() ||
+    process.env.PPCSL_IMPORT_ADMIN_EMAIL?.trim() ||
     process.env.KUPITO_IMPORT_ADMIN_EMAIL?.trim() ||
     process.env.CIPAUTO_ADMIN_EMAIL?.trim() ||
     '';
   const adminPassword =
     process.env.ADMIN_PARSING_ADMIN_PASSWORD?.trim() ||
+    process.env.PPCSL_IMPORT_ADMIN_PASSWORD?.trim() ||
     process.env.KUPITO_IMPORT_ADMIN_PASSWORD?.trim() ||
     process.env.CIPAUTO_ADMIN_PASSWORD?.trim() ||
     '';
   const importSecret =
     process.env.ADMIN_PARSING_IMPORT_SECRET?.trim() ||
+    process.env.PPCSL_IMPORT_SECRET?.trim() ||
     process.env.KUPITO_IMPORT_SECRET?.trim() ||
     process.env.CIPAUTO_IMPORT_SECRET?.trim() ||
     '';
   const out: NodeJS.ProcessEnv = { ...process.env };
   if (apiUrl) {
+    out.PPCSL_IMPORT_API_URL = apiUrl;
     out.KUPITO_IMPORT_API_URL = apiUrl;
   }
   if (adminEmail) {
+    out.PPCSL_IMPORT_ADMIN_EMAIL = adminEmail;
     out.KUPITO_IMPORT_ADMIN_EMAIL = adminEmail;
   }
   if (adminPassword) {
+    out.PPCSL_IMPORT_ADMIN_PASSWORD = adminPassword;
     out.KUPITO_IMPORT_ADMIN_PASSWORD = adminPassword;
   }
   if (importSecret) {
+    out.PPCSL_IMPORT_SECRET = importSecret;
     out.KUPITO_IMPORT_SECRET = importSecret;
   }
   out.ADMIN_PARSING_TARGET_ENV = targetEnv;
@@ -77,6 +86,7 @@ export function buildParsingChildProcessEnv(targetEnv: ParserTargetEnv): NodeJS.
       out[key] = value;
     }
   }
+  out.PPCSL_TYPEORM_QUERY_LOG = 'false';
   out.KUPITO_TYPEORM_QUERY_LOG = 'false';
   return out;
 }

@@ -127,7 +127,7 @@ jest.mock('@/hooks/useTranslation', () => ({
         'listings.loadError': 'Error loading',
         'listings.noMoreListings': 'No more listings',
         'listings.partnerPromo.titleQuestion': 'Do you sell many cars?',
-        'listings.partnerPromo.titlePartnerLead': 'Become a Kupito.club ',
+        'listings.partnerPromo.titlePartnerLead': 'Become an Example.com ',
         'listings.partnerPromo.titlePartnerEmphasis': 'partner',
         'listings.partnerPromo.titlePartnerTail': '',
         'listings.partnerPromo.description': 'Special partnership terms for professional sellers.',
@@ -135,10 +135,10 @@ jest.mock('@/hooks/useTranslation', () => ({
         'listings.partnerPromo.features.promotion': 'Free promotions',
         'listings.partnerPromo.features.visibility': 'Extra visibility on the platform',
         'listings.partnerPromo.sideTitle': 'Together — stronger',
-        'listings.partnerPromo.sideDescription': 'Grow your business with Kupito.club.',
+        'listings.partnerPromo.sideDescription': 'Grow your business with Example.com.',
         'listings.partnerPromo.cta': 'Details',
         'listings.partnerPromo.dismiss': "Don't show again",
-        'listings.partnerPromo.imageAlt': 'Cars for the Kupito partner program',
+        'listings.partnerPromo.imageAlt': 'Cars for the partner program',
         'common.error': 'Error',
         'common.loading': 'Loading...',
       })[key] ?? key,
@@ -531,7 +531,7 @@ describe('ListingGrid', () => {
 
     it('should not render partner promo banner when guest dismissed it in localStorage', async () => {
       (window.localStorage.getItem as jest.Mock).mockImplementation((key: string) =>
-        key === 'kupito_hide_partner_promo' ? '1' : null,
+        key === 'ppcsl_hide_partner_promo' ? '1' : null,
       );
 
       const listings = Array.from({ length: 12 }, (_, index) => ({

@@ -67,7 +67,7 @@ describe('SitemapService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    process.env.NEXT_PUBLIC_SITE_URL = 'https://kupito.club';
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://example.test';
     delete process.env.NEXT_PUBLIC_ENABLE_MODEL_CATALOG;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -117,10 +117,10 @@ describe('SitemapService', () => {
       expect(xml).toContain('hreflang="ru"');
       expect(xml).toContain('hreflang="en"');
       expect(xml).toContain('hreflang="x-default"');
-      expect(xml).toContain('https://kupito.club/ru"');
-      expect(xml).toContain('https://kupito.club/en"');
-      expect(xml).toContain('https://kupito.club/ru/listings"');
-      expect(xml).toContain('https://kupito.club/en/listings"');
+      expect(xml).toContain('https://example.test/ru"');
+      expect(xml).toContain('https://example.test/en"');
+      expect(xml).toContain('https://example.test/ru/listings"');
+      expect(xml).toContain('https://example.test/en/listings"');
       expect(xml).toContain('<priority>1</priority>');
       expect(xml).not.toContain('/catalog/models/');
     });
@@ -191,8 +191,8 @@ describe('SitemapService', () => {
       expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
       expect(xml).toContain('/listings/listing-1</loc>');
       expect(xml).toContain('/listings/listing-2</loc>');
-      expect(xml).toContain('https://kupito.club/ru/listings/listing-1"');
-      expect(xml).toContain('https://kupito.club/ru/listings/listing-2"');
+      expect(xml).toContain('https://example.test/ru/listings/listing-1"');
+      expect(xml).toContain('https://example.test/ru/listings/listing-2"');
       expect((xml!.match(/<url>/g) ?? []).length).toBe(2);
       expect(xml).toContain('<changefreq>hourly</changefreq>');
       expect(xml).toContain('<priority>0.9</priority>');

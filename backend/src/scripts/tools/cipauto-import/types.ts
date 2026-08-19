@@ -1,16 +1,16 @@
 import type { ListingStatus } from '../../../common/types';
 import type { ImportState } from '../partner-import-shared/import-workflow-types';
 import type {
-  CliStatus,
-  KupitoImportClientConfig,
-  RuntimeEnv,
-} from '../partner-import-shared/kupito-import-types';
-import type {
   ParsedPdpData,
   SourceCloseOutcome,
   SourceCloseReason,
   SourceStatus,
 } from '../partner-import-shared/listing-types';
+import type {
+  CliStatus,
+  PlatformImportClientConfig,
+  RuntimeEnv,
+} from '../partner-import-shared/platform-import-types';
 
 export type { CliStatus, RuntimeEnv };
 export type {
@@ -35,8 +35,8 @@ export type {
   SourceCloseReason,
   SourceStatus,
   UploadResult,
-  KupitoCreateListingPayload,
-  KupitoListingResponse,
+  PlatformCreateListingPayload,
+  PlatformListingResponse,
 } from '../partner-import-shared/listing-types';
 
 export interface ScanCommandOptions {
@@ -67,7 +67,7 @@ export interface RegistryItem {
   currency?: string;
   parsedData?: ParsedPdpData;
   state: ImportState;
-  kupitoListingId?: string;
+  platformListingId?: string;
   ownerUserId?: string;
   createdStatus?: ListingStatus;
   imageCount?: number;
@@ -118,7 +118,7 @@ export interface CipautoBrandsModelsAuditReport {
   missingModels: CipautoBrandModelPair[];
 }
 
-export interface CipautoConfig extends KupitoImportClientConfig {
+export interface CipautoConfig extends PlatformImportClientConfig {
   cipautoBaseUrl: string;
   registryPath: string;
   currentPlpPath: string;

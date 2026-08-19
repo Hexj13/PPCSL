@@ -34,7 +34,7 @@ export function collectMonoMissingSnapshotMeta<TItem extends BaseRegistryItem<st
   });
   const missingCandidateSourceIds = pendingClosure.map((item) => item.sourceListingId).sort();
   const closeEstimateSourceIds = pendingClosure
-    .filter((item) => typeof item.kupitoListingId === 'string')
+    .filter((item) => typeof item.platformListingId === 'string')
     .map((item) => item.sourceListingId)
     .sort();
   return { missingCandidateSourceIds, closeEstimateSourceIds };
@@ -126,7 +126,7 @@ export function finalizeRegistryAfterPlpScan<TItem extends BaseRegistryItem<stri
   const closeEstimate = nextItems.filter(
     (item) =>
       normalizeSourceStatus(item) === 'missing_candidate' &&
-      typeof item.kupitoListingId === 'string',
+      typeof item.platformListingId === 'string',
   ).length;
 
   return {

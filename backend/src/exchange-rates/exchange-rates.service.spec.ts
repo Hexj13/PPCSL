@@ -54,6 +54,8 @@ describe('ExchangeRatesService', () => {
     exchangeRateRepo = module.get(EXCHANGE_RATE_REPOSITORY);
     redisService = module.get(RedisService);
     jest.clearAllMocks();
+    delete process.env.EXCHANGE_RATE_EUR_ALL;
+    delete process.env.EXCHANGE_RATE_EUR_MDL;
   });
 
   it('should be defined', () => {

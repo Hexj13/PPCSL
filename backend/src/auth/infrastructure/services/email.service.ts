@@ -269,6 +269,8 @@ export class EmailService {
     const bodyHtml = [
       emailTextParagraph(
         interpolateEmailTemplate(bodyHtmlTemplate, {
+          siteName: escapeHtml(this.getSiteName() || 'platform'),
+          domain: escapeHtml(this.getFrontendHostname() || 'localhost'),
           count: `<strong>${escapeHtml(String(activeListingsCount))}</strong>`,
         }),
       ),
@@ -384,10 +386,11 @@ export class EmailService {
 
   private emailT(key: string, locale: EmailLocale, vars?: Record<string, string | number>): string {
     const raw = this.i18nService.translate(key, locale);
-    if (!vars) {
-      return raw;
-    }
-    return interpolateEmailTemplate(raw, vars);
+    return interpolateEmailTemplate(raw, {
+      siteName: this.getSiteName() || 'platform',
+      domain: this.getFrontendHostname() || 'localhost',
+      ...vars,
+    });
   }
 
   private resolveLocale(preferredLocale?: string | null): EmailLocale {

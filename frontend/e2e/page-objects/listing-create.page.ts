@@ -187,6 +187,7 @@ export class ListingCreatePage {
     if ((await checkbox.isChecked()) === checked) {
       return;
     }
+    await checkbox.scrollIntoViewIfNeeded();
     await checkbox.locator('xpath=ancestor::label[1]').click();
     if (checked) {
       await expect(checkbox).toBeChecked();
@@ -203,6 +204,9 @@ export class ListingCreatePage {
 
   async fillRequiredFields(): Promise<void> {
     await this.selectFirstDropdownOption(this.testIds.brandSelect);
+    await expect(this.page.getByTestId(this.testIds.modelSelect)).toBeEnabled({
+      timeout: 30_000,
+    });
     await this.selectFirstDropdownOption(this.testIds.modelSelect);
     await this.selectFirstDropdownOption(this.testIds.yearSelect);
     await this.selectFirstDropdownOption(this.testIds.fuelSelect);
@@ -232,6 +236,9 @@ export class ListingCreatePage {
   async fillExtendedFields(): Promise<{ description: string }> {
     const description = `E2E listing description ${Date.now()}`;
     await this.selectFirstDropdownOption(this.testIds.brandSelect);
+    await expect(this.page.getByTestId(this.testIds.modelSelect)).toBeEnabled({
+      timeout: 30_000,
+    });
     await this.selectFirstDropdownOption(this.testIds.modelSelect);
     await this.selectFirstDropdownOption(this.testIds.yearSelect);
     await this.page.getByTestId(this.testIds.vinInput).fill('WVWZZZ1JZXW000001');
@@ -272,7 +279,24 @@ export class ListingCreatePage {
     for (const key of equipmentKeys) {
       const testId = `listing-form-equipment-${key}`;
       const checkbox = this.page.getByTestId(testId);
-      await expect(checkbox).toBeVisible();
+      await expect(checkbox).toBeAttached();
+      const category = await checkbox.evaluate((el) => {
+        const content = el.closest('[id^="listing-form-equipment-category-"]');
+        return content?.id?.replace('listing-form-equipment-category-', '') ?? null;
+      });
+      if (category) {
+        const categoryToggle = this.page.getByTestId(
+          `listing-form-equipment-category-${category}-toggle`,
+        );
+        if (
+          (await categoryToggle.isVisible().catch(() => false)) &&
+          (await categoryToggle.getAttribute('aria-expanded')) !== 'true'
+        ) {
+          await categoryToggle.scrollIntoViewIfNeeded();
+          await categoryToggle.click();
+          await expect(categoryToggle).toHaveAttribute('aria-expanded', 'true');
+        }
+      }
       selectedLabels.push(await this.getCustomCheckboxLabel(testId));
       await this.setCustomCheckboxCheckedByTestId(testId, true);
     }

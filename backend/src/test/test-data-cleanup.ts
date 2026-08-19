@@ -14,7 +14,9 @@ import { User } from '../users/entities/user.entity';
 
 const TEST_PASSWORD = 'Test123!@#';
 const TEST_RUN_ID =
-  process.env.KUPITO_TEST_RUN_ID || `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  process.env.PPCSL_TEST_RUN_ID ||
+  process.env.KUPITO_TEST_RUN_ID ||
+  `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 const TEST_EMAIL_PREFIX = `it-${TEST_RUN_ID}`;
 let phoneSequence = 0;
 

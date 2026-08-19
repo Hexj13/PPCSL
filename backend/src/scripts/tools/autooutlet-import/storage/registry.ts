@@ -63,7 +63,7 @@ export class RegistryStore extends JsonRegistryStore<RegistryItem> {
       currency: item.currency,
       parsedData: existing?.parsedData,
       state: nextState,
-      kupitoListingId: existing?.kupitoListingId,
+      platformListingId: existing?.platformListingId,
       ownerUserId: existing?.ownerUserId,
       createdStatus: existing?.createdStatus,
       imageCount: existing?.imageCount,

@@ -1,7 +1,7 @@
 import { ConditionType, Currency, ListingStatus } from '../../../../common/types';
 import type {
   BuildListingPayloadInput,
-  KupitoCreateListingPayload,
+  PlatformCreateListingPayload,
   PartnerImportVehicleType,
 } from '../listing-types';
 
@@ -9,7 +9,7 @@ import { mapColor } from './color-mapper';
 
 export function buildCreateListingPayload(
   input: BuildListingPayloadInput,
-): KupitoCreateListingPayload {
+): PlatformCreateListingPayload {
   const year = validateYear(input.parsed.year);
   const price = validatePrice(input.parsed.price);
   const images = input.parsed.images.slice(0, 20);
@@ -21,7 +21,7 @@ export function buildCreateListingPayload(
   const description_ru = trimText(input.parsed.description_ru, 5000);
   const legacyDescription = trimText(input.parsed.description, 5000);
   const descriptionFields: Pick<
-    KupitoCreateListingPayload,
+    PlatformCreateListingPayload,
     'description' | 'description_ro' | 'description_ru'
   > =
     description_ro || description_ru
@@ -36,7 +36,7 @@ export function buildCreateListingPayload(
   const countryOfOrigin = normalizeCountryOfOrigin(input.parsed.countryOfOrigin);
   const ownersCount = normalizeOwnersCount(input.parsed.ownersCount);
 
-  const payload: KupitoCreateListingPayload = {
+  const payload: PlatformCreateListingPayload = {
     price,
     currency: input.parsed.currency ?? Currency.EUR,
     city: input.city,
@@ -91,8 +91,8 @@ export function buildCreateListingPayload(
 
 export function buildUpdateListingPayload(
   input: BuildListingPayloadInput,
-): Partial<KupitoCreateListingPayload> {
-  const payload = buildCreateListingPayload(input) as Partial<KupitoCreateListingPayload>;
+): Partial<PlatformCreateListingPayload> {
+  const payload = buildCreateListingPayload(input) as Partial<PlatformCreateListingPayload>;
   delete payload.status;
   return payload;
 }

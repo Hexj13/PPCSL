@@ -18,8 +18,8 @@ export function refreshTokenValueFromSetCookie(res: {
   if (!Array.isArray(raw)) return '';
   for (const line of raw) {
     const [pair] = line.split(';');
-    if (pair.startsWith('kupito_refresh_token=')) {
-      return pair.slice('kupito_refresh_token='.length);
+    if (pair.startsWith('ppcsl_refresh_token=')) {
+      return pair.slice('ppcsl_refresh_token='.length);
     }
   }
   return '';

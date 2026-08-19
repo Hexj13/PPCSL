@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 
 import type { ImportCommandOptions, ReportCommandOptions } from './import-workflow-types';
-import type { RuntimeEnv } from './kupito-import-types';
+import type { RuntimeEnv } from './platform-import-types';
 
 export interface BaseParserCliOptions {
   env: RuntimeEnv;

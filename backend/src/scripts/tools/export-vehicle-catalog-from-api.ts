@@ -3,7 +3,7 @@
  *
  * Usage:
  *   npm run export:vehicle-catalog
- *   npm run export:vehicle-catalog -- --api-url https://api.kupito.club
+ *   npm run export:vehicle-catalog -- --api-url http://localhost:4000
  *   npm run export:vehicle-catalog -- --out /tmp/vehicle-catalog.json
  */
 import * as fs from 'fs';
@@ -31,7 +31,8 @@ type ApiModel = {
   is_archived?: boolean;
 };
 
-const DEFAULT_API_URL = 'https://api.kupito.club';
+const DEFAULT_API_URL =
+  process.env.PPCSL_IMPORT_API_URL || process.env.KUPITO_IMPORT_API_URL || 'http://localhost:4000';
 const BATCH_SIZE = 25;
 const BATCH_DELAY_MS = 250;
 

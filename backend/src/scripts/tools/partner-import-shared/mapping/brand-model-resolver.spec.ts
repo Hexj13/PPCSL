@@ -1,4 +1,4 @@
-import type { KupitoApiClient } from '../api/kupito-api';
+import type { PlatformApiClient } from '../api/platform-api';
 
 import {
   BrandModelResolver,
@@ -19,7 +19,7 @@ describe('buildBrandCandidateKeys', () => {
 });
 
 describe('findBrandCandidates', () => {
-  it('resolves Mercedes to Mercedes-Benz brand in Kupito', () => {
+  it('resolves Mercedes to Mercedes-Benz brand in platform', () => {
     const brands = [
       { name: 'Mercedes-Benz', name_normalized: 'mercedesbenz' as string | null },
       { name: 'Other', name_normalized: 'other' },
@@ -53,7 +53,7 @@ describe('BrandModelResolver', () => {
       getModelsByBrand: jest.fn(),
       createBrand,
       createModel: jest.fn(),
-    } as unknown as KupitoApiClient;
+    } as unknown as PlatformApiClient;
     const resolver = new BrandModelResolver(api, {
       autoCreateBrands: false,
       autoCreateModels: true,
@@ -88,7 +88,7 @@ describe('BrandModelResolver', () => {
       ]),
       createBrand,
       createModel: jest.fn(),
-    } as unknown as KupitoApiClient;
+    } as unknown as PlatformApiClient;
     const resolver = new BrandModelResolver(api, {
       autoCreateBrands: true,
       autoCreateModels: true,
@@ -109,7 +109,7 @@ describe('BrandModelResolver', () => {
       getModelsByBrand: jest.fn().mockResolvedValue([]),
       createBrand: jest.fn(),
       createModel,
-    } as unknown as KupitoApiClient;
+    } as unknown as PlatformApiClient;
     const resolver = new BrandModelResolver(api, {
       autoCreateBrands: true,
       autoCreateModels: false,
@@ -138,7 +138,7 @@ describe('BrandModelResolver', () => {
       }),
       createBrand: jest.fn(),
       createModel,
-    } as unknown as KupitoApiClient;
+    } as unknown as PlatformApiClient;
     const resolver = new BrandModelResolver(api, {
       autoCreateBrands: false,
       autoCreateModels: true,
@@ -172,7 +172,7 @@ describe('BrandModelResolver', () => {
       }),
       createBrand: jest.fn(),
       createModel,
-    } as unknown as KupitoApiClient;
+    } as unknown as PlatformApiClient;
     const resolver = new BrandModelResolver(api, {
       autoCreateBrands: false,
       autoCreateModels: true,
@@ -199,7 +199,7 @@ describe('BrandModelResolver', () => {
       getModelsByBrand: jest.fn().mockResolvedValue([camryModel]),
       createBrand,
       createModel: jest.fn(),
-    } as unknown as KupitoApiClient;
+    } as unknown as PlatformApiClient;
     const resolver = new BrandModelResolver(api, {
       autoCreateBrands: true,
       autoCreateModels: true,
@@ -223,7 +223,7 @@ describe('BrandModelResolver', () => {
       }),
       createBrand: jest.fn(),
       createModel,
-    } as unknown as KupitoApiClient;
+    } as unknown as PlatformApiClient;
     const resolver = new BrandModelResolver(api, {
       autoCreateBrands: false,
       autoCreateModels: true,

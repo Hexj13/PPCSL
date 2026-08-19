@@ -1,6 +1,7 @@
 'use client';
 
 import { useI18n } from '@/components/providers/I18nProvider';
+import { applySitePlaceholders } from '@/lib/apply-site-placeholders';
 import type { LegalDocument } from '@/lib/content/legal';
 import { loadLegalConfigSync } from '@/lib/content/legal';
 import { loadSiteConfigSync } from '@/lib/site-config';
@@ -20,10 +21,7 @@ export default function TermsPage() {
   const currentTerms = termsData[language] || termsData[languages[0]]!;
 
   const normalizeText = (text: string) => {
-    return text
-      .replaceAll('support@kupito.club', siteConfig.supportEmail)
-      .replaceAll('https://kupito.club', siteConfig.siteUrl)
-      .replaceAll('kupito.club', siteConfig.domain);
+    return applySitePlaceholders(text, siteConfig);
   };
 
   const scrollToSection = (id: string) => {

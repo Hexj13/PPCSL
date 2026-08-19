@@ -25,7 +25,7 @@ export function collect999mdScopedMissingSnapshotMeta<
   });
   const missingCandidateSourceIds = scopedPendingClosure.map((i) => i.sourceListingId).sort();
   const closeEstimateSourceIds = scopedPendingClosure
-    .filter((i) => typeof i.kupitoListingId === 'string')
+    .filter((i) => typeof i.platformListingId === 'string')
     .map((i) => i.sourceListingId)
     .sort();
   return { missingCandidateSourceIds, closeEstimateSourceIds };

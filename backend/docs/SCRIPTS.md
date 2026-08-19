@@ -427,7 +427,7 @@ Parser implementation lives in the core submodule (`src/scripts/tools/cipauto-im
 
 When a partner already has listings in the Kupito database **before** the first PLP/PDP run, the parser registry is empty and all listings would be imported as duplicates. `seed-registry` prevents this by pre-populating the registry.
 
-The script reads all listings for a given user, extracts the CipAuto product code (`Cod Produs: XXXXX`) from descriptions, and writes `sourceListingId → kupitoListingId` mappings into the parser registry JSON. It also updates each matched Kupito row with `partner_source_code`, `partner_listing_external_key`, and `partner_listing_canonical_url` (derived listing URL). Subsequent PLP scans preserve these mappings, and PDP imports skip (or update) matched listings instead of creating duplicates.
+The script reads all listings for a given user, extracts the CipAuto product code (`Cod Produs: XXXXX`) from descriptions, and writes `sourceListingId → platformListingId` mappings into the parser registry JSON. It also updates each matched Kupito row with `partner_source_code`, `partner_listing_external_key`, and `partner_listing_canonical_url` (derived listing URL). Subsequent PLP scans preserve these mappings, and PDP imports skip (or update) matched listings instead of creating duplicates.
 
 ```bash
 npm run cipauto:seed-registry -- [--env prod] <userId>
@@ -445,7 +445,7 @@ The same logic is available from the admin **Parsing → PLP files → Sync regi
 
 #### 999.md registry seeding (`999md-import/commands/seed-registry.ts`)
 
-When a partner already has vehicle listings in Kupito but the **999.md JSON registry** (`999md-registry.json`) is missing or out of sync, `999md:seed-registry` rebuilds `sourceListingId → kupitoListingId` by matching live 999 profile ads (PLP + PDP) against DB rows: **VIN** first, then a strict **fingerprint** (brand/model via resolver, mapped fuel/color, year, mileage, engine volume, price+currency, image count). Only unambiguous single matches are written; outcomes are logged to `reports/999md-seed-*.{json,csv}`. By default it also sets `listings.partner_source_code` / `partner_listing_external_key` / `partner_listing_canonical_url` for matched listings (skipped with `--dry-run`). Requires PostgreSQL, the same Kupito import env as `999md:import`, and a backend migration that adds the partner columns to `listings`.
+When a partner already has vehicle listings in Kupito but the **999.md JSON registry** (`999md-registry.json`) is missing or out of sync, `999md:seed-registry` rebuilds `sourceListingId → platformListingId` by matching live 999 profile ads (PLP + PDP) against DB rows: **VIN** first, then a strict **fingerprint** (brand/model via resolver, mapped fuel/color, year, mileage, engine volume, price+currency, image count). Only unambiguous single matches are written; outcomes are logged to `reports/999md-seed-*.{json,csv}`. By default it also sets `listings.partner_source_code` / `partner_listing_external_key` / `partner_listing_canonical_url` for matched listings (skipped with `--dry-run`). Requires PostgreSQL, the same Kupito import env as `999md:import`, and a backend migration that adds the partner columns to `listings`.
 
 ```bash
 npm run 999md:seed-registry -- --login=AGMOTORS --userId=<UUID> [--env local|prod] [--dry-run] [--delay ms] [--price-tolerance-pct n] [--photo-count-tolerance n]
@@ -465,7 +465,7 @@ npm run partner:check-urls -- --partner cipauto|999md|autooutlet --userId=<UUID>
 
 #### Mark parsed listings (`partner:mark-parsed`)
 
-Sets `listings.is_parsed = true` for a partner user from the parser registry and the current PLP snapshots. Matches by `kupitoListingId` from the registry and/or `partner_source_code` + `partner_listing_external_key`. Status is not filtered (`Active` / `Paused` / `Closed`). Does not change `last_updated_at` or any other field. Use after a fresh PLP scan when backfill by `partner_source_code` is not enough (legacy rows).
+Sets `listings.is_parsed = true` for a partner user from the parser registry and the current PLP snapshots. Matches by `platformListingId` from the registry and/or `partner_source_code` + `partner_listing_external_key`. Status is not filtered (`Active` / `Paused` / `Closed`). Does not change `last_updated_at` or any other field. Use after a fresh PLP scan when backfill by `partner_source_code` is not enough (legacy rows).
 
 Snapshot defaults per partner: `cipauto` and `autooutlet` read the single `currentPlpPath` file, `999md` reads every `*.json` in `currentPlpDir` (one file per scanned login). A missing default snapshot is skipped (registry-only run); an explicit `--plp-file` that does not exist is an error.
 
@@ -536,7 +536,7 @@ The `--close` flag performs a full listing close matching the application behavi
 Both scripts are CipAuto-specific but follow a reusable pattern for any partner import:
 
 1. **Identifier extraction** — find a stable external ID in listing data (product code, external URL slug, etc.)
-2. **Registry seeding** — map `externalId → kupitoListingId` before the first automated import
+2. **Registry seeding** — map `externalId → platformListingId` before the first automated import
 3. **Stale audit** — cross-reference DB listings with the latest PLP, then verify on the source website
 
 For a new parser, create equivalent scripts under `src/scripts/tools/<parser>-import/commands/` following the same structure.

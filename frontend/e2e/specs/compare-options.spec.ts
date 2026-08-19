@@ -2,14 +2,17 @@ import { test } from '../fixtures/base';
 import { requireAuthCredentials } from '../fixtures/env';
 import { loginByUi } from '../utils/auth';
 import { ensureComparisonWithEquipmentListings } from '../utils/listing-detail-helpers';
+import { createVehicleListing } from '../utils/listing-flow';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Compare options comparison', () => {
   test('toggles vehicle equipment comparison table on compare page', async ({
     page,
     comparePage,
+    listingCreatePage,
+    listingDetailPage,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(180_000);
     let listingId = '';
 
     const steps: E2EStep[] = [
@@ -17,7 +20,9 @@ test.describe('Compare options comparison', () => {
         name: 'Login and prepare comparison with equipment listings',
         action: async () => {
           await loginByUi(page, requireAuthCredentials());
-          const listingIds = await ensureComparisonWithEquipmentListings(page, 2);
+          const listingIds = await ensureComparisonWithEquipmentListings(page, 2, () =>
+            createVehicleListing(page, listingCreatePage, listingDetailPage, { equipment: true }),
+          );
           listingId = listingIds[0] ?? '';
           if (!listingId) {
             throw new Error('Expected at least one listing id for compare options flow');

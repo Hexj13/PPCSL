@@ -1,6 +1,6 @@
 import { ListingStatus, RegistrationType } from '../../../common/types';
 
-import type { CliStatus, RuntimeEnv } from './kupito-import-types';
+import type { CliStatus, RuntimeEnv } from './platform-import-types';
 
 export function normalizeRuntimeEnv(value?: string): RuntimeEnv {
   if (!value) {

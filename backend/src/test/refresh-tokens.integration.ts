@@ -92,7 +92,7 @@ describe('Refresh Tokens Integration', () => {
 
       expect(typeof refreshToken).toBe('string');
       expect(refreshToken.length).toBeGreaterThan(100);
-      expect(accessCookie).toContain('kupito_access_token=');
+      expect(accessCookie).toContain('ppcsl_access_token=');
     });
 
     it('should refresh tokens successfully', async () => {

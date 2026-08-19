@@ -10,7 +10,7 @@ export type RegisterProfileData = {
 export function createRegisterProfileData(): RegisterProfileData {
   const uniqueSuffix = `${Date.now()}`;
   return {
-    companyName: `Kupito Test Company ${uniqueSuffix}`,
+    companyName: `Test Company ${uniqueSuffix}`,
     firstName: 'Ivan',
     lastName: 'Petrov',
     websiteUrl: 'https://example.com',

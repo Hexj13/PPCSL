@@ -69,7 +69,7 @@ describe('isInstalledWebApp', () => {
   it('returns true when referrer is android-app (TWA fallback)', () => {
     Object.defineProperty(document, 'referrer', {
       configurable: true,
-      value: 'android-app://club.kupito.app/https/kupito.club/',
+      value: 'android-app://com.example.app/https/example.test/',
       writable: true,
     });
 

@@ -82,9 +82,9 @@ export function buildEmailLayout(options: EmailLayoutOptions): string {
       <mj-button background-color="${brand.primary}" color="${brand.white}" font-size="16px" font-weight="700" border-radius="8px" />
     </mj-attributes>
     <mj-style inline="inline">
-      .kupito-raw-link a { color: ${brand.primary} !important; word-break: break-all; }
-      .kupito-card-title { color: ${brand.textPrimary}; font-size: 16px; font-weight: 700; line-height: 24px; }
-      .kupito-card-status { color: ${brand.textSecondary}; font-size: 14px; line-height: 20px; }
+      .ppcsl-raw-link a { color: ${brand.primary} !important; word-break: break-all; }
+      .ppcsl-card-title { color: ${brand.textPrimary}; font-size: 16px; font-weight: 700; line-height: 24px; }
+      .ppcsl-card-status { color: ${brand.textSecondary}; font-size: 14px; line-height: 20px; }
     </mj-style>
     ${pre ? `<mj-preview>${pre}</mj-preview>` : ''}
   </mj-head>
@@ -140,7 +140,7 @@ export function emailRawLink(href: string): string {
   const safeHref = escapeHtml(href);
   return `<mj-section background-color="${brand.white}" border-left="1px solid ${brand.divider}" border-right="1px solid ${brand.divider}" padding="0 24px 16px 24px">
     <mj-column>
-      <mj-text css-class="kupito-raw-link" font-size="14px" line-height="20px" padding="0"><a href="${safeHref}" style="color:${brand.primary};">${safeHref}</a></mj-text>
+      <mj-text css-class="ppcsl-raw-link" font-size="14px" line-height="20px" padding="0"><a href="${safeHref}" style="color:${brand.primary};">${safeHref}</a></mj-text>
     </mj-column>
   </mj-section>`;
 }
@@ -160,8 +160,8 @@ export function emailDigestListingCard(params: {
   const n = params.index + 1;
   return `<mj-section background-color="${brand.white}" border-left="1px solid ${brand.divider}" border-right="1px solid ${brand.divider}" padding="0 24px 12px 24px">
     <mj-column>
-      <mj-text css-class="kupito-card-title" padding="16px 16px 8px 16px" border-top="1px solid ${brand.divider}" border-left="1px solid ${brand.divider}" border-right="1px solid ${brand.divider}">${n}. ${title}</mj-text>
-      <mj-text css-class="kupito-card-status" padding="0 16px 16px 16px" border-left="1px solid ${brand.divider}" border-right="1px solid ${brand.divider}" border-bottom="1px solid ${brand.divider}">${statusLabel}: ${status} · ${viewsLabel}: ${params.views}</mj-text>
+      <mj-text css-class="ppcsl-card-title" padding="16px 16px 8px 16px" border-top="1px solid ${brand.divider}" border-left="1px solid ${brand.divider}" border-right="1px solid ${brand.divider}">${n}. ${title}</mj-text>
+      <mj-text css-class="ppcsl-card-status" padding="0 16px 16px 16px" border-left="1px solid ${brand.divider}" border-right="1px solid ${brand.divider}" border-bottom="1px solid ${brand.divider}">${statusLabel}: ${status} · ${viewsLabel}: ${params.views}</mj-text>
     </mj-column>
   </mj-section>`;
 }

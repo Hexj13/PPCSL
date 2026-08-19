@@ -7,6 +7,7 @@ import type { Readable } from 'stream';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { IsNull } from 'typeorm';
 
+import { resolveS3BucketName } from '../../../../common/config/s3-bucket';
 import { AppDataSource } from '../../../../data-source';
 import { Listing } from '../../../../listings/entities/listing.entity';
 import { PromotionHistory } from '../../../../listings/entities/promotion-history.entity';
@@ -51,10 +52,10 @@ async function tryReadPlpFromS3(
 ): Promise<string | null> {
   const accessKeyId = process.env.AWS_ACCESS_KEY_ID?.trim();
   const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY?.trim();
-  const bucketName = process.env.AWS_S3_BUCKET_NAME?.trim() || 'kupito-uploads';
+  const bucketName = resolveS3BucketName('optional');
   const region = process.env.AWS_REGION?.trim() || 'eu-north-1';
 
-  if (!accessKeyId || !secretAccessKey) {
+  if (!accessKeyId || !secretAccessKey || !bucketName) {
     return null;
   }
 
@@ -270,7 +271,7 @@ async function auditStaleListings() {
     console.error(
       'Alternative: npx ts-node src/scripts/tools/cipauto-import/commands/audit-stale-listings.ts [--env prod] <userId> [--close] [--skip-verify]',
     );
-    console.error('  userId — UUID of the CipAuto partner user in Kupito DB');
+    console.error('  userId — UUID of the CipAuto partner user in platform DB');
     console.error('Flags:');
     console.error('  --env <local|prod>      Filesystem paths from resolveConfig (default local)');
     console.error('  --close                 Close confirmed stale listings in DB');
@@ -294,7 +295,7 @@ async function auditStaleListings() {
     relations: ['vehicle', 'vehicle.brand', 'vehicle.model'],
   });
 
-  console.log(`[audit] Found ${listings.length} Kupito listings for user ${userId}`);
+  console.log(`[audit] Found ${listings.length} platform listings for user ${userId}`);
 
   const config = resolveConfig(env);
   const { registryPath } = config;

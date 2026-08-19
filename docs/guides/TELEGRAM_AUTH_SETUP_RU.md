@@ -43,7 +43,7 @@ Webhook поддержки (`/api/telegram/webhook`) остаётся отдел
   - строит `data_check_string` из всех полей кроме `hash`, отсортированных по ключу, в формате `key=value` через `\n`;
   - сравнивает `HMAC_SHA256(data_check_string, SHA256(bot_token))` с `hash` (constant-time);
   - проверяет свежесть `auth_date` (не старше 24 часов, с допуском на расхождение часов);
-  - при успехе выставляет httpOnly cookies `kupito_access_token` и `kupito_refresh_token` (как при Google).
+  - при успехе выставляет httpOnly cookies `ppcsl_access_token` и `ppcsl_refresh_token` (как при Google).
 - Login Widget **не** возвращает номер телефона, поэтому новый пользователь всегда проходит верификацию телефона:
   редирект на `/complete-profile?mode=phone_required&source=telegram_register`.
 - На вкладке **регистрации** в теле запроса передаётся выбранный `type` (`Individual` | `Business`); на вкладке входа тип не отправляется.

@@ -319,7 +319,9 @@ Only then remove `NEXT_PUBLIC_NOINDEX`, redeploy, submit the sitemap to Search C
 
 ### 15. Changing core for a new platform
 
-Core was originally written for a single platform, so some values are still hardcoded. Expect to find more. Known ones that should still be checked against `siteConfig` or env:
+Core must stay **platform-neutral**. Do not add a live brand, domain, or cookie/storage prefix to `core/frontend` or `core/backend`. Visible name and domain come from overlay `config/site.ts` and env (`SITE_NAME`, `PLATFORM_NAME`, `SMS_BRAND_NAME`). Shared keys are `ppcsl_*` / `ppcsl-`. `lint:platform-neutral` (part of frontend `lint` and backend `lint:check`) fails the build if a known platform token leaks into core; when you launch another platform, add its token to `core/scripts/check-platform-neutral.cjs`. Details: [linting.md](../engineering/linting.md).
+
+Some values are still environment- or locale-shaped rather than fully generic. Expect to find more. Known ones that should still be checked against `siteConfig` or env:
 
 - OG `siteName` on the listing page (`core/frontend/app/[locale]/listings/[id]/page.tsx`) — every other page already uses `siteConfig.name`
 - `/investors` page locales (`InvestorsPageClient.tsx`) — content follows the URL locale; the page language dropdown navigates to the matching locale path (same supported locales as the site switcher)
@@ -340,7 +342,7 @@ The listing description tabs are **not** in this list: they already read `descri
 
 Fallback values pointing at another platform are the dangerous subset, because everything looks fine until the variable is missing: sitemap base URL, watermark domain, S3 bucket name.
 
-Do **not** rename internal cookie names (`kupito_*`) or the locale storage key — invisible to users, and renaming logs everyone out.
+Internal cookie and locale keys are `ppcsl_access_token` / `ppcsl_refresh_token` / `ppcsl-locale`. Renaming them logs everyone out; that is expected when bumping a core that already shipped the `ppcsl_*` prefix. Do not introduce a dual-read of the old `kupito_*` names. Infocar’s affiliate query stays `from=kupito` (external partner id, not our cookie prefix).
 
 #### Impact on existing platforms
 
@@ -351,7 +353,7 @@ Before merging a core change that moves a hardcoded value into env:
 - [ ] Set the new variable on every existing platform (e.g. `NEXT_PUBLIC_GTM_ID`)
 - [ ] Verify existing platforms set explicitly any variable whose fallback you are removing — especially `AWS_S3_BUCKET_NAME`, `NEXT_PUBLIC_SITE_URL`, `WATERMARK_DOMAIN`
 - [ ] Note behaviour changes that need no env work but are user-visible, and confirm them with the platform owner
-- [ ] Run `lint` and `test` in both `core/frontend` and `core/backend`
+- [ ] Run `lint` and `test` in both `core/frontend` and `core/backend` (`lint` includes `lint:platform-neutral`)
 
 ### 16. CI/CD
 

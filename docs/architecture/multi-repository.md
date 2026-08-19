@@ -45,6 +45,7 @@ This architecture separates the core application code from locale-specific confi
 ### What PPCSL Does NOT Contain
 
 - **No hardcoded texts** - All user-facing text uses translation keys
+- **No hardcoded platform names** - Brand, domain, and cookie/storage prefixes are overlay/env/`ppcsl_*`; see [linting.md](../engineering/linting.md) (platform-neutral core)
 - **No hardcoded colors** - Colors loaded dynamically from theme files
 - **No hardcoded URLs/domains** - Site configuration loaded from config files
 - **No country-specific business logic** - All logic is generic and configurable

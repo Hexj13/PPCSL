@@ -104,10 +104,12 @@ describe('telegramAuthFlow helpers', () => {
 
   it('accepts oauth and same-origin message origins', () => {
     expect(
-      isTrustedTelegramMessageOrigin('https://oauth.telegram.org', 'https://kupito.club'),
+      isTrustedTelegramMessageOrigin('https://oauth.telegram.org', 'https://example.test'),
     ).toBe(true);
-    expect(isTrustedTelegramMessageOrigin('https://kupito.club', 'https://kupito.club')).toBe(true);
-    expect(isTrustedTelegramMessageOrigin('https://evil.example', 'https://kupito.club')).toBe(
+    expect(isTrustedTelegramMessageOrigin('https://example.test', 'https://example.test')).toBe(
+      true,
+    );
+    expect(isTrustedTelegramMessageOrigin('https://evil.example', 'https://example.test')).toBe(
       false,
     );
   });
@@ -115,11 +117,11 @@ describe('telegramAuthFlow helpers', () => {
   it('accepts same-origin messages even when source differs from popup', () => {
     const popup = { closed: false } as Window;
     const event = {
-      origin: 'https://kupito.club',
+      origin: 'https://example.test',
       source: null,
     } as MessageEvent;
 
-    expect(isTrustedTelegramMessageSource(event, popup, 'https://kupito.club')).toBe(true);
+    expect(isTrustedTelegramMessageSource(event, popup, 'https://example.test')).toBe(true);
   });
 });
 

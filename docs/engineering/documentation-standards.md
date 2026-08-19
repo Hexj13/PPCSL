@@ -19,7 +19,7 @@ tags:
 
 - **Frontmatter:** `title`, `owner`, `tags` (see tag taxonomy). Optional: `status`, `last_updated`.
 - **Headings:** One H1 per document (title); H2 for main sections; H3 for subsections. No heading level skipping.
-- **Style:** Short sentences, bullet lists where useful. No marketing speak. Facts only.
+- **Style:** Short sentences, bullet lists where useful. No marketing speak. Facts only. Shared core docs may name platforms as *examples* of overlay repos; application code in `core/frontend` and `core/backend` must not (see [linting.md](./linting.md) platform-neutral core).
 - **Code:** Use fenced code blocks with language. Paths and commands in backticks in prose.
 - **Links:** Prefer relative links to other docs. Link to core paths from platform repo.
 

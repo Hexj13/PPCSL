@@ -420,8 +420,8 @@ describe('SearchFilters', () => {
       })),
     });
 
-    window.sessionStorage.removeItem('kupito_popular_filters_open');
-    window.sessionStorage.removeItem('kupito_advanced_filters_open');
+    window.sessionStorage.removeItem('ppcsl_popular_filters_open');
+    window.sessionStorage.removeItem('ppcsl_advanced_filters_open');
     window.sessionStorage.removeItem('scrollPreserved');
 
     (brandsApi.getAll as jest.Mock).mockResolvedValue({

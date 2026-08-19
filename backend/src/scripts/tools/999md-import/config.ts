@@ -1,7 +1,7 @@
 import * as path from 'path';
 
 import { resolveParsingRuntimeRoot } from '../../../common/parsing-runtime-path';
-import { resolveKupitoImportCredentials } from '../partner-import-shared/kupito-env';
+import { resolvePlatformImportCredentials } from '../partner-import-shared/platform-import-env';
 
 import type { Md999Config, RuntimeEnv } from './types';
 
@@ -35,7 +35,7 @@ export function resolveMd999Config(
     requireImportSecret?: boolean;
   },
 ): Md999Config {
-  const creds = resolveKupitoImportCredentials(env, options);
+  const creds = resolvePlatformImportCredentials(env, options);
   const runtimeRoot = resolveParsingRuntimeRoot();
   const stateDir = resolve999mdStateDir(runtimeRoot);
 

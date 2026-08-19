@@ -15,7 +15,7 @@ describe('DiagnosticsService', () => {
   });
 
   it('rejects disallowed host', async () => {
-    process.env.API_URL = 'https://kupito.onrender.com';
+    process.env.API_URL = 'https://api.example.test';
     delete process.env.AWS_CLOUDFRONT_URL;
     const service = new DiagnosticsService();
     await expect(service.getImageHeadStatus('https://evil.example/uploads/a.webp')).rejects.toThrow(
@@ -24,43 +24,43 @@ describe('DiagnosticsService', () => {
   });
 
   it('rejects CDN host when AWS_CLOUDFRONT_URL is unset', async () => {
-    process.env.API_URL = 'https://kupito.onrender.com';
+    process.env.API_URL = 'https://api.example.test';
     delete process.env.AWS_CLOUDFRONT_URL;
     const service = new DiagnosticsService();
     await expect(
-      service.getImageHeadStatus('https://cdn.kupito.club/uploads/a.webp'),
+      service.getImageHeadStatus('https://cdn.example.test/uploads/a.webp'),
     ).rejects.toThrow(BadRequestException);
   });
 
   it('rejects path outside uploads on CDN host', async () => {
-    process.env.API_URL = 'https://kupito.onrender.com';
-    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.kupito.club';
+    process.env.API_URL = 'https://api.example.test';
+    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.example.test';
     const service = new DiagnosticsService();
     await expect(
-      service.getImageHeadStatus('https://cdn.kupito.club/other/a.webp'),
+      service.getImageHeadStatus('https://cdn.example.test/other/a.webp'),
     ).rejects.toThrow(BadRequestException);
   });
 
   it('returns status from HEAD on allowed CDN URL', async () => {
-    process.env.API_URL = 'https://kupito.onrender.com';
-    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.kupito.club';
+    process.env.API_URL = 'https://api.example.test';
+    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.example.test';
     global.fetch = jest.fn().mockResolvedValue({ status: 200 });
     const service = new DiagnosticsService();
     const result = await service.getImageHeadStatus(
-      'https://cdn.kupito.club/uploads/983d5801-c770-4a75-a6bb-5a1788051a6e.webp',
+      'https://cdn.example.test/uploads/983d5801-c770-4a75-a6bb-5a1788051a6e.webp',
     );
     expect(result).toEqual({ status: 200 });
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://cdn.kupito.club/uploads/983d5801-c770-4a75-a6bb-5a1788051a6e.webp',
+      'https://cdn.example.test/uploads/983d5801-c770-4a75-a6bb-5a1788051a6e.webp',
       expect.objectContaining({ method: 'HEAD' }),
     );
   });
 
   it('allows optimized image path on API host', async () => {
-    process.env.API_URL = 'https://kupito.onrender.com';
+    process.env.API_URL = 'https://api.example.test';
     global.fetch = jest.fn().mockResolvedValue({ status: 200 });
     const service = new DiagnosticsService();
-    const url = 'https://kupito.onrender.com/api/upload/image/foo.webp?quality=75&width=800';
+    const url = 'https://api.example.test/api/upload/image/foo.webp?quality=75&width=800';
     const result = await service.getImageHeadStatus(url);
     expect(result).toEqual({ status: 200 });
   });
@@ -75,10 +75,10 @@ describe('DiagnosticsService', () => {
   });
 
   it('rejects http URL when configured API host is https', async () => {
-    process.env.API_URL = 'https://kupito.onrender.com';
+    process.env.API_URL = 'https://api.example.test';
     const service = new DiagnosticsService();
     await expect(
-      service.getImageHeadStatus('http://kupito.onrender.com/api/upload/image/foo.webp'),
+      service.getImageHeadStatus('http://api.example.test/api/upload/image/foo.webp'),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -91,25 +91,25 @@ describe('DiagnosticsService', () => {
   });
 
   it('maps AbortError from HEAD to timeout reason', async () => {
-    process.env.API_URL = 'https://kupito.onrender.com';
-    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.kupito.club';
+    process.env.API_URL = 'https://api.example.test';
+    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.example.test';
     global.fetch = jest
       .fn()
       .mockRejectedValue(Object.assign(new Error('aborted'), { name: 'AbortError' }));
     const service = new DiagnosticsService();
     const result = await service.getImageHeadStatus(
-      'https://cdn.kupito.club/uploads/983d5801-c770-4a75-a6bb-5a1788051a6e.webp',
+      'https://cdn.example.test/uploads/983d5801-c770-4a75-a6bb-5a1788051a6e.webp',
     );
     expect(result).toEqual({ status: null, reason: 'timeout' });
   });
 
   it('maps generic fetch failure to network reason', async () => {
-    process.env.API_URL = 'https://kupito.onrender.com';
-    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.kupito.club';
+    process.env.API_URL = 'https://api.example.test';
+    process.env.AWS_CLOUDFRONT_URL = 'https://cdn.example.test';
     global.fetch = jest.fn().mockRejectedValue(new Error('socket'));
     const service = new DiagnosticsService();
     const result = await service.getImageHeadStatus(
-      'https://cdn.kupito.club/uploads/983d5801-c770-4a75-a6bb-5a1788051a6e.webp',
+      'https://cdn.example.test/uploads/983d5801-c770-4a75-a6bb-5a1788051a6e.webp',
     );
     expect(result).toEqual({ status: null, reason: 'network' });
   });

@@ -1,8 +1,8 @@
 import { sessionStorageRemoveItem } from '@/lib/browser-session-storage';
 import { clearFiltersFromStorage } from '@/lib/search';
 
-const GRID_STATE_KEY = 'kupito_grid_state';
-const GRID_RESTORE_STATE_KEY = 'kupito_grid_restore_state';
+const GRID_STATE_KEY = 'ppcsl_grid_state';
+const GRID_RESTORE_STATE_KEY = 'ppcsl_grid_restore_state';
 
 export function clearHomeSearchRestoreState(): void {
   if (typeof window === 'undefined') return;

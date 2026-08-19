@@ -43,7 +43,7 @@ const emailTranslations: Record<string, string> = {
   'emails.listingRefresh.subject': 'Listing refresh',
   'emails.listingRefresh.heading': 'Listing heading',
   'emails.listingRefresh.preheader': 'Listing preheader',
-  'emails.listingRefresh.bodyHtml': 'You have {count} listings',
+  'emails.listingRefresh.bodyHtml': 'You have {count} listings on {siteName}',
   'emails.listingRefresh.cta': 'Open listings',
   'emails.listingRefresh.textPlain': 'Listings {count} at {url}',
   'emails.weeklyDigest.subject': 'Weekly digest',
@@ -144,7 +144,7 @@ describe('EmailService', () => {
       expect(() =>
         createService({
           NODE_ENV: 'production',
-          FRONTEND_URL: 'https://kupito.club/app',
+          FRONTEND_URL: 'https://example.test/app',
         }),
       ).toThrow('FRONTEND_URL must not include a path in production');
     });
@@ -153,7 +153,7 @@ describe('EmailService', () => {
       expect(() =>
         createService({
           NODE_ENV: 'production',
-          FRONTEND_URL: 'https://kupito.club',
+          FRONTEND_URL: 'https://example.test',
         }),
       ).not.toThrow();
       expect(createTransportMock).not.toHaveBeenCalled();
@@ -166,9 +166,9 @@ describe('EmailService', () => {
       SMTP_PORT: '587',
       SMTP_USER: 'user@mail.com',
       SMTP_PASSWORD: 'secret',
-      FRONTEND_URL: 'https://kupito.club',
-      SUPPORT_EMAIL: 'support@kupito.club',
-      SMTP_FROM: 'noreply@kupito.club',
+      FRONTEND_URL: 'https://example.test',
+      SUPPORT_EMAIL: 'support@example.test',
+      SMTP_FROM: 'noreply@example.test',
     };
 
     it('sends verification email with verify-email link', async () => {
@@ -179,9 +179,9 @@ describe('EmailService', () => {
       const sent = sendMailMock.mock.calls[0]?.[0];
       expect(sent.to).toBe('test@example.com');
       expect(sent.subject).toBe('Confirm email');
-      expect(sent.replyTo).toBe('support@kupito.club');
-      expect(sent.text).toContain('https://kupito.club/verify-email?token=jwt-token');
-      expect(sent.html).toContain('https://kupito.club/verify-email?token=jwt-token');
+      expect(sent.replyTo).toBe('support@example.test');
+      expect(sent.text).toContain('https://example.test/verify-email?token=jwt-token');
+      expect(sent.html).toContain('https://example.test/verify-email?token=jwt-token');
       expect(sent.html).toContain('Platform for posting car sale listings in Moldova');
       expect(sent.html).toContain('© 2025-2026 example. All rights reserved.');
     });
@@ -189,23 +189,23 @@ describe('EmailService', () => {
     it('passes SITE_NAME into the layout and prefixes non-default locale paths', async () => {
       const service = createService({
         ...env,
-        FRONTEND_URL: 'https://makinaguru.com',
-        SITE_NAME: 'MakinaGuru',
+        FRONTEND_URL: 'https://shop.example',
+        SITE_NAME: 'Example Market',
         DEFAULT_LOCALE: 'sq',
         SUPPORTED_LOCALES: 'sq,en',
-        SUPPORT_EMAIL: 'support@makinaguru.com',
-        SMTP_FROM: 'noreply@makinaguru.com',
+        SUPPORT_EMAIL: 'support@shop.example',
+        SMTP_FROM: 'noreply@shop.example',
         EMAIL_LOGO_PATH: '/logo-email.png',
       });
 
       await service.sendVerificationEmail('user-1', 'test@example.com', 'en');
 
       const sent = sendMailMock.mock.calls[0]?.[0];
-      expect(sent.from).toBe('noreply@makinaguru.com');
-      expect(sent.replyTo).toBe('support@makinaguru.com');
-      expect(sent.text).toContain('https://makinaguru.com/en/verify-email?token=jwt-token');
-      expect(sent.html).toContain('https://makinaguru.com/en/verify-email?token=jwt-token');
-      expect(sent.html).toContain('alt="MakinaGuru"');
+      expect(sent.from).toBe('noreply@shop.example');
+      expect(sent.replyTo).toBe('support@shop.example');
+      expect(sent.text).toContain('https://shop.example/en/verify-email?token=jwt-token');
+      expect(sent.html).toContain('https://shop.example/en/verify-email?token=jwt-token');
+      expect(sent.html).toContain('alt="Example Market"');
       expect(sent.html).toContain('/logo-email.png');
     });
 
@@ -215,21 +215,21 @@ describe('EmailService', () => {
         SMTP_PORT: '587',
         SMTP_USER: 'user@mail.com',
         SMTP_PASSWORD: 'secret',
-        FRONTEND_URL: 'https://www.makinaguru.com',
+        FRONTEND_URL: 'https://www.shop.example',
       });
 
       await service.sendPasswordChangedNotification('test@example.com', 'en');
 
       const sent = sendMailMock.mock.calls[0]?.[0];
-      expect(sent.from).toBe('noreply@makinaguru.com');
-      expect(sent.replyTo).toBe('support@makinaguru.com');
-      expect(sent.html).toContain('support@makinaguru.com');
+      expect(sent.from).toBe('noreply@shop.example');
+      expect(sent.replyTo).toBe('support@shop.example');
+      expect(sent.html).toContain('support@shop.example');
     });
 
     it('maps unsupported preferred locales to DEFAULT_LOCALE and omits its URL prefix', async () => {
       const service = createService({
         ...env,
-        FRONTEND_URL: 'https://makinaguru.com',
+        FRONTEND_URL: 'https://shop.example',
         DEFAULT_LOCALE: 'sq',
         SUPPORTED_LOCALES: 'sq,en',
       });
@@ -237,7 +237,7 @@ describe('EmailService', () => {
       await service.sendVerificationEmail('user-1', 'test@example.com', 'ro');
 
       const sent = sendMailMock.mock.calls[0]?.[0];
-      expect(sent.text).toContain('https://makinaguru.com/verify-email?token=jwt-token');
+      expect(sent.text).toContain('https://shop.example/verify-email?token=jwt-token');
       expect(sent.text).not.toContain('/ro/verify-email');
     });
 
@@ -322,13 +322,13 @@ describe('EmailService', () => {
       expect(sent.to).toBe('new@example.com');
       expect(sent.subject).toBe('Change email');
       expect(sent.text).toContain(
-        'https://kupito.club/profile/confirm-email-change?token=jwt-token',
+        'https://example.test/profile/confirm-email-change?token=jwt-token',
       );
       expect(sent.text).toBe(
-        'Use link https://kupito.club/profile/confirm-email-change?token=jwt-token',
+        'Use link https://example.test/profile/confirm-email-change?token=jwt-token',
       );
       expect(sent.html).toContain(
-        'https://kupito.club/profile/confirm-email-change?token=jwt-token',
+        'https://example.test/profile/confirm-email-change?token=jwt-token',
       );
     });
 
@@ -351,9 +351,20 @@ describe('EmailService', () => {
       const sent = sendMailMock.mock.calls[0]?.[0];
       expect(sent.to).toBe('test@example.com');
       expect(sent.subject).toBe('Listing refresh');
-      expect(sent.text).toContain('Listings 3 at https://kupito.club/my-listings');
-      expect(sent.html).toContain('https://kupito.club/my-listings');
+      expect(sent.text).toContain('Listings 3 at https://example.test/my-listings');
+      expect(sent.html).toContain('https://example.test/my-listings');
       expect(sent.html).toContain('<strong>3</strong>');
+      expect(sent.html).toContain('listings on platform');
+    });
+
+    it('escapes SITE_NAME when interpolating listing refresh HTML', async () => {
+      const service = createService({ ...env, SITE_NAME: 'Brand <script>' });
+
+      await service.sendListingRefreshReminder('test@example.com', 1, 'en');
+
+      const sent = sendMailMock.mock.calls[0]?.[0];
+      expect(sent.html).toContain('Brand &lt;script&gt;');
+      expect(sent.html).not.toContain('Brand <script>');
     });
 
     it('sends weekly digest with translated statuses and my-listings link', async () => {
@@ -377,8 +388,8 @@ describe('EmailService', () => {
       expect(sent.subject).toBe('Weekly digest');
       expect(sent.text).toContain('1. BMW 320 (ACTIVE_LABEL) - 42 views');
       expect(sent.text).toContain('2. Dacia Logan (PAUSED_LABEL) - 10 views');
-      expect(sent.text).toContain('Open https://kupito.club/my-listings');
-      expect(sent.html).toContain('https://kupito.club/my-listings');
+      expect(sent.text).toContain('Open https://example.test/my-listings');
+      expect(sent.html).toContain('https://example.test/my-listings');
     });
 
     it('sends phone changed notification', async () => {
@@ -410,7 +421,7 @@ describe('EmailService', () => {
       SMTP_PORT: '587',
       SMTP_USER: 'user@mail.com',
       SMTP_PASSWORD: 'secret',
-      FRONTEND_URL: 'https://kupito.club',
+      FRONTEND_URL: 'https://example.test',
     };
 
     it('throws when resend cooldown key exists', async () => {

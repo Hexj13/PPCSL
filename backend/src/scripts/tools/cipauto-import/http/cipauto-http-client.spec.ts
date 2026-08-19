@@ -7,7 +7,7 @@ import { CipautoHttpClient, cloudflareBlockedError } from './cipauto-http-client
 function buildConfig(overrides?: Partial<CipautoConfig>): CipautoConfig {
   return {
     env: 'local',
-    kupitoApiUrl: 'http://localhost:4000',
+    platformApiUrl: 'http://localhost:4000',
     adminEmail: '',
     adminPassword: '',
     importSecret: '',

@@ -1,24 +1,24 @@
 import { ListingStatus, RegistrationType } from '../../../../common/types';
-import type { KupitoImportClientConfig } from '../kupito-import-types';
 import type {
   BrandInfo,
-  KupitoCreateListingPayload,
-  KupitoListingResponse,
+  PlatformCreateListingPayload,
+  PlatformListingResponse,
   ModelInfo,
 } from '../listing-types';
+import type { PlatformImportClientConfig } from '../platform-import-types';
 import { requestJson } from '../utils/http';
 
 import type { AuthClient } from './auth-client';
 
-export class KupitoApiClient {
+export class PlatformApiClient {
   constructor(
-    private readonly config: KupitoImportClientConfig,
+    private readonly config: PlatformImportClientConfig,
     private readonly authClient: AuthClient,
   ) {}
 
   async getBrands(vehicleType: 'car' | 'truck' | 'moto' = 'car'): Promise<BrandInfo[]> {
     return this.authorizedRequest<BrandInfo[]>(
-      `${this.config.kupitoApiUrl}/api/brands?vehicleType=${vehicleType}`,
+      `${this.config.platformApiUrl}/api/brands?vehicleType=${vehicleType}`,
       'GET',
     );
   }
@@ -28,7 +28,7 @@ export class KupitoApiClient {
     vehicleType: 'car' | 'truck' | 'moto' = 'car',
   ): Promise<ModelInfo[]> {
     return this.authorizedRequest<ModelInfo[]>(
-      `${this.config.kupitoApiUrl}/api/brands/${brandId}/models?vehicleType=${vehicleType}`,
+      `${this.config.platformApiUrl}/api/brands/${brandId}/models?vehicleType=${vehicleType}`,
       'GET',
     );
   }
@@ -38,7 +38,7 @@ export class KupitoApiClient {
     vehicleTypes: Array<'car' | 'truck' | 'moto' | 'tire'>;
   }): Promise<{ id: string; name: string }> {
     return this.authorizedRequest<{ id: string; name: string }>(
-      `${this.config.kupitoApiUrl}/api/admin/brands`,
+      `${this.config.platformApiUrl}/api/admin/brands`,
       'POST',
       payload,
     );
@@ -50,15 +50,15 @@ export class KupitoApiClient {
     vehicleTypes: Array<'car' | 'truck' | 'moto' | 'tire'>;
   }): Promise<{ id: string; name: string }> {
     return this.authorizedRequest<{ id: string; name: string }>(
-      `${this.config.kupitoApiUrl}/api/admin/models`,
+      `${this.config.platformApiUrl}/api/admin/models`,
       'POST',
       payload,
     );
   }
 
-  async createListing(payload: KupitoCreateListingPayload): Promise<KupitoListingResponse> {
-    return this.authorizedRequest<KupitoListingResponse>(
-      `${this.config.kupitoApiUrl}/api/listings`,
+  async createListing(payload: PlatformCreateListingPayload): Promise<PlatformListingResponse> {
+    return this.authorizedRequest<PlatformListingResponse>(
+      `${this.config.platformApiUrl}/api/listings`,
       'POST',
       payload,
     );
@@ -66,10 +66,10 @@ export class KupitoApiClient {
 
   async updateListing(
     listingId: string,
-    payload: Partial<KupitoCreateListingPayload>,
-  ): Promise<KupitoListingResponse> {
-    return this.authorizedRequest<KupitoListingResponse>(
-      `${this.config.kupitoApiUrl}/api/listings/${listingId}`,
+    payload: Partial<PlatformCreateListingPayload>,
+  ): Promise<PlatformListingResponse> {
+    return this.authorizedRequest<PlatformListingResponse>(
+      `${this.config.platformApiUrl}/api/listings/${listingId}`,
       'PATCH',
       payload,
     );
@@ -77,14 +77,14 @@ export class KupitoApiClient {
 
   async pauseListing(listingId: string): Promise<void> {
     await this.authorizedRequest(
-      `${this.config.kupitoApiUrl}/api/listings/${listingId}/pause`,
+      `${this.config.platformApiUrl}/api/listings/${listingId}/pause`,
       'POST',
     );
   }
 
-  async closeListing(listingId: string): Promise<KupitoListingResponse> {
-    return this.authorizedRequest<KupitoListingResponse>(
-      `${this.config.kupitoApiUrl}/api/admin/listings/${listingId}/status`,
+  async closeListing(listingId: string): Promise<PlatformListingResponse> {
+    return this.authorizedRequest<PlatformListingResponse>(
+      `${this.config.platformApiUrl}/api/admin/listings/${listingId}/status`,
       'PATCH',
       { status: ListingStatus.Closed },
     );
@@ -92,7 +92,7 @@ export class KupitoApiClient {
 
   async publishListing(listingId: string): Promise<void> {
     await this.authorizedRequest(
-      `${this.config.kupitoApiUrl}/api/listings/${listingId}/publish`,
+      `${this.config.platformApiUrl}/api/listings/${listingId}/publish`,
       'POST',
     );
   }

@@ -11,7 +11,7 @@ const VIRTUALIZED_RESTORE_MIN_LISTINGS = LISTING_GRID_PAGE_SIZE * 2 + 1;
 const SCROLL_HEIGHT_TOLERANCE_PX = 32;
 const POINTER_CANCEL_FALLBACK_MS = 750;
 
-const GRID_STATE_KEY = 'kupito_grid_state';
+const GRID_STATE_KEY = 'ppcsl_grid_state';
 
 export type HomeScrollRestoreSource = 'listing_return';
 
@@ -185,8 +185,8 @@ function readListingReturnScrollTarget(
   const savedTime = parseInt(timestamp, 10);
   if (Date.now() - savedTime >= HOME_SCROLL_MAX_AGE_MS) {
     clearHomeScrollRestoreSession();
-    sessionStorageRemoveItem('kupito_grid_state');
-    sessionStorageRemoveItem('kupito_grid_restore_state');
+    sessionStorageRemoveItem('ppcsl_grid_state');
+    sessionStorageRemoveItem('ppcsl_grid_restore_state');
     return null;
   }
   const scrollY = parseInt(savedScroll, 10);

@@ -1,4 +1,4 @@
-import type { KupitoApiClient } from '../api/kupito-api';
+import type { PlatformApiClient } from '../api/platform-api';
 import type { BrandInfo, ModelInfo } from '../listing-types';
 
 export type BrandModelVehicleType = 'car' | 'truck' | 'moto';
@@ -24,7 +24,7 @@ export class BrandModelResolver {
   private readonly modelsByBrandCache = new Map<string, ModelInfo[]>();
 
   constructor(
-    private readonly kupitoApi: KupitoApiClient,
+    private readonly platformApi: PlatformApiClient,
     private readonly autoCreate: BrandModelAutoCreateOptions = {
       autoCreateBrands: false,
       autoCreateModels: false,
@@ -66,10 +66,10 @@ export class BrandModelResolver {
     const brandCandidates = findBrandCandidates(brands, brandName, modelName);
     if (brandCandidates.length === 0) {
       if (!this.autoCreate.autoCreateBrands || state.retriedAfterBrandCreate) {
-        throw new Error(`Brand not found in Kupito: ${brandName}`);
+        throw new Error(`Brand not found in platform: ${brandName}`);
       }
       try {
-        const created = await this.kupitoApi.createBrand({
+        const created = await this.platformApi.createBrand({
           name: brandName.trim(),
           vehicleTypes: [vehicleType],
         });
@@ -116,13 +116,13 @@ export class BrandModelResolver {
     }
 
     if (!this.autoCreate.autoCreateModels || state.retriedAfterModelCreate) {
-      throw new Error(`Model not found in Kupito: ${brandName} ${modelName}`);
+      throw new Error(`Model not found in platform: ${brandName} ${modelName}`);
     }
     const primaryBrand = brandCandidates[0];
     const modelToCreate =
       adaptSourceModelForBrand(modelName, primaryBrand.name).trim() || modelName.trim();
     try {
-      const created = await this.kupitoApi.createModel({
+      const created = await this.platformApi.createModel({
         brandId: primaryBrand.id,
         name: modelToCreate,
         vehicleTypes: [vehicleType],
@@ -172,7 +172,7 @@ export class BrandModelResolver {
     if (cached) {
       return cached;
     }
-    const loaded = await this.kupitoApi.getBrands(vehicleType);
+    const loaded = await this.platformApi.getBrands(vehicleType);
     this.brandsByVehicleType.set(vehicleType, loaded);
     return loaded;
   }
@@ -190,7 +190,7 @@ export class BrandModelResolver {
     if (cached) {
       return cached;
     }
-    const models = await this.kupitoApi.getModelsByBrand(brandId, vehicleType);
+    const models = await this.platformApi.getModelsByBrand(brandId, vehicleType);
     this.modelsByBrandCache.set(key, models);
     return models;
   }

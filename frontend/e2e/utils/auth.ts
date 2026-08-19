@@ -7,7 +7,7 @@ import { getE2eBackendApiOrigin } from './api-origin';
 import { pathnameWithoutLocalePrefix } from './app-path';
 import { forceDefaultCanonicalLocaleCookies } from './e2e-locale';
 
-const ACCESS_TOKEN_COOKIE = 'kupito_access_token';
+const ACCESS_TOKEN_COOKIE = 'ppcsl_access_token';
 
 async function hasAccessTokenCookie(page: Page): Promise<boolean> {
   const cookies = await page.context().cookies();

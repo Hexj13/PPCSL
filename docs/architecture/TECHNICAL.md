@@ -114,16 +114,16 @@ If you see `Cannot connect to the Docker daemon`:
 ```bash
 brew install postgresql@15
 brew services start postgresql@15
-createdb kupito
+createdb ppcsl
 psql postgres
 ```
 
 In psql:
 
 ```sql
-CREATE USER kupito WITH PASSWORD 'kupito123';
-ALTER DATABASE kupito OWNER TO kupito;
-GRANT ALL PRIVILEGES ON DATABASE kupito TO kupito;
+CREATE USER ppcsl WITH PASSWORD 'ppcsl123';
+ALTER DATABASE ppcsl OWNER TO ppcsl;
+GRANT ALL PRIVILEGES ON DATABASE ppcsl TO ppcsl;
 \q
 ```
 
@@ -166,9 +166,9 @@ NODE_ENV=development
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=kupito
-DB_PASSWORD=kupito123
-DB_NAME=kupito
+DB_USERNAME=ppcsl
+DB_PASSWORD=ppcsl123
+DB_NAME=ppcsl
 
 # TLS to Postgres: true/false. Unset: enabled in production, disabled locally.
 # Use false when DB_HOST is the Render internal hostname.
@@ -415,7 +415,7 @@ See [ui-components.md](../features/ui-components.md) for props, behavior, and us
 - **Caching:** Redis for SMS codes, cache optimization (SCAN instead of KEYS), listing AI analysis generation locks and per-user hourly quotas (production; see `POST /api/listings/:id/ai-report` and `AI_REPORT_MAX_GENERATIONS_PER_HOUR`)
 - **Monitoring:** Health check endpoint (`/health`) with database and Redis connectivity checks; Prometheus text at `GET /metrics` (`MetricsModule`, protected by `CronSecretGuard` — scrapers must send `x-cron-secret: <CRON_SECRET>`)
 - **Listing views:** Pending view counts accumulate in Redis hash `listing:views:pending`; a cron flush every 5 minutes applies them to Postgres under Redis lock `listing:views:flush:lock` (single writer across instances); shutdown runs an unlocked flush
-- **Tracing (optional):** OpenTelemetry OTLP export when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (`OTEL_SERVICE_NAME`, default `kupito-backend`)
+- **Tracing (optional):** OpenTelemetry OTLP export when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (`OTEL_SERVICE_NAME`, default `ppcsl-backend`)
 - **Code Quality:** TypeScript strict mode, CI/CD automation, bundle optimization
 
 ---
@@ -443,7 +443,7 @@ POST /api/auth/request-password-reset # Request password reset
 POST /api/auth/reset-password         # Reset password
 ```
 
-Refresh tokens rotate on each successful refresh (the previous refresh token is revoked). Access and refresh tokens are stored in **httpOnly cookies** (`kupito_access_token`, `kupito_refresh_token`); API JSON responses do not include token fields. `POST /api/auth/change-password` revokes all refresh tokens except the one in the current browser’s `kupito_refresh_token` cookie (other devices are logged out; session cookies are unchanged). `POST /api/auth/reset-password` revokes refresh tokens and clears session cookies. Already-issued access JWTs remain valid until expiry (see [auth-jwt-invalidation-followup.md](./auth-jwt-invalidation-followup.md)). The Axios client calls `POST /api/auth/refresh` with credentials; Zustand holds the `user` snapshot only—see [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md) and [cross-tab-sync.md](../features/cross-tab-sync.md#auth-refresh-and-token-rotation).
+Refresh tokens rotate on each successful refresh (the previous refresh token is revoked). Access and refresh tokens are stored in **httpOnly cookies** (`ppcsl_access_token`, `ppcsl_refresh_token`); API JSON responses do not include token fields. `POST /api/auth/change-password` revokes all refresh tokens except the one in the current browser’s `ppcsl_refresh_token` cookie (other devices are logged out; session cookies are unchanged). `POST /api/auth/reset-password` revokes refresh tokens and clears session cookies. Already-issued access JWTs remain valid until expiry (see [auth-jwt-invalidation-followup.md](./auth-jwt-invalidation-followup.md)). The Axios client calls `POST /api/auth/refresh` with credentials; Zustand holds the `user` snapshot only—see [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md) and [cross-tab-sync.md](../features/cross-tab-sync.md#auth-refresh-and-token-rotation).
 
 **Profile password (`/profile`):** `GET /api/auth/me` exposes `hasPassword` (derived from the stored hash; the `password` column uses `select: false` in TypeORM). Accounts created via Google with no hash show **Set password** (new password only, `InfoBlock` hint); `POST /api/auth/change-password` accepts body `{ newPassword }` without `currentPassword`. After a password exists, the UI switches to **Change password** (current + new). Google Sign-In remains available; login by email or phone + password works once `hasPassword` is true. Password-only save does not require other profile fields (e.g. company website) to be valid. No separate “confirm new password” field—client validates length (max 100) and strength before submit.
 
@@ -783,9 +783,9 @@ npm run backup -- --keep-days 60
 ```bash
 export DB_HOST=localhost
 export DB_PORT=5432
-export DB_USERNAME=kupito
+export DB_USERNAME=ppcsl
 export DB_PASSWORD=your_password
-export DB_NAME=kupito
+export DB_NAME=ppcsl
 export BACKUP_DIR=/var/backups/ppcsl
 export KEEP_DAYS=30
 
@@ -1234,7 +1234,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
 - **Server-side data fetching:** Initial listings data loaded on server using Next.js Server Components and native `fetch` API, improving SEO and initial page load performance
 - **Request deduplication:** `React.cache()` wrapper for server-side functions (`fetchBrands`, `fetchModelsByBrands`, `getListings`) eliminates duplicate API calls, reducing initial page load time by ~40-50%
 - **Centralized search parameter parsing:** Shared `lib/search/search-params.ts` module provides `buildSearchQuery()` (URL construction, base64 encoding, localStorage fallback for long query strings), `getDefaultFilters()`, URL parameter parsing via `parseSearchParams()`, base64 encoding/decoding, and slug-to-ID conversion via `createBrandResolver` / `createModelResolver`
-- **Search filters:** `SearchFilters.tsx` delegates to `useSearchFiltersController` → `search-filters/SearchFiltersForm.tsx` (composed hooks include `useSearchFiltersSync`, `useVehicleType`, `useSearchTabs`, `useFilterHandlers`, `useFilterOptions`). On the home page, `useVehicleType` derives the active vehicle category from URL query params (and `body_types` when present), not from `kupito_vehicle_type` in localStorage; listing grid and search UI stay in sync.
+- **Search filters:** `SearchFilters.tsx` delegates to `useSearchFiltersController` → `search-filters/SearchFiltersForm.tsx` (composed hooks include `useSearchFiltersSync`, `useVehicleType`, `useSearchTabs`, `useFilterHandlers`, `useFilterOptions`). On the home page, `useVehicleType` derives the active vehicle category from URL query params (and `body_types` when present), not from `ppcsl_vehicle_type` in localStorage; listing grid and search UI stay in sync.
 - **Unified listing fetch logic:** Merged `fetchListings` and `handleLoadMore` functions into a single unified function, eliminating ~180 lines of duplicate code
 - **Virtualized results grid:** `ListingGrid` renders results through `VirtualizedListingGrid.tsx` using `@tanstack/react-virtual` (`useWindowVirtualizer`). SSR and the first client paint stay on a static grid for hydration safety; after mount, `listing-grid-measure.ts` reads row heights from that markup and `listing-grid-virtual-swap.ts` swaps to the virtualizer with those estimates (before user interaction). Rows are built by `buildVirtualRows.ts` (column count from `useGridColumns` matchMedia breakpoints; one breakpoint-aligned partner banner). Only visible rows plus overscan stay in the DOM, so DOM size no longer grows with the accumulated load-more list. Home scroll restore (`lib/home-scroll-restore.ts`) uses exact saved `scrollY` plus a `min-height` placeholder on `listing-grid-placeholder`; listing-return restore keeps a static grid until restore completes. A repeatable DOM-node/layout-shift audit lives in `scripts/perf/list-perf.mjs` (`npm run perf:list-grid`).
 - **Component memoization:** React.memo, useMemo, useCallback for preventing unnecessary re-renders
@@ -1634,7 +1634,7 @@ Pre-push hook (husky) runs `npm run release-check:fast` locally (prepare:build +
 2. **Never push directly to `main`** in either repo; configure branch protection (see `docs/deployment/branch-protection.md` in the platform repo).
 3. **`npm run prepare:build` is the single source of truth** for platform files. Do not add ad-hoc `cp -r`/`rm -rf` steps in CI or docs.
 4. **Pin Node with `.nvmrc`.** Both repos use `node-version-file: .nvmrc`; keep Render pinned to the same major.
-5. **Keep `release-check` and CI aligned.** If you add a validation step, add it to `release-check` too, and vice versa.
+5. **Keep `release-check` and CI aligned.** If you add a validation step, add it to `release-check` too, and vice versa. `lint:platform-neutral` is inside frontend `lint` and backend `lint:check`, so both local `release-check` and core CI already run it.
 6. **Let core changes propagate via PR**, not direct push. The auto-PR from `sync-to-locales` replaces any "push submodule bump" pattern.
 7. **Gate Render on CI.** Trigger deploys from the CI `deploy` job via Render Deploy Hooks; disable Render auto-deploy on the service so a red CI cannot ship.
 8. **Monitor the audit job.** `npm audit --omit=dev --audit-level=critical` runs on each push and blocks merges when critical vulnerabilities are found.

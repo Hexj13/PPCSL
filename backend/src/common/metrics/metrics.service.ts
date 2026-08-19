@@ -28,30 +28,30 @@ export class MetricsService {
 
   async renderPrometheus(): Promise<string> {
     const lines: string[] = [
-      '# HELP kupito_http_requests_total Total HTTP requests by method, path and status',
-      '# TYPE kupito_http_requests_total counter',
+      '# HELP ppcsl_http_requests_total Total HTTP requests by method, path and status',
+      '# TYPE ppcsl_http_requests_total counter',
     ];
     for (const [key, value] of this.httpRequestTotal.entries()) {
       const [method, path, status] = key.split(':');
       lines.push(
-        `kupito_http_requests_total{method="${method}",path="${path}",status="${status}"} ${value}`,
+        `ppcsl_http_requests_total{method="${method}",path="${path}",status="${status}"} ${value}`,
       );
     }
 
     lines.push(
-      '# HELP kupito_cache_hits_total Cache hits by cache name',
-      '# TYPE kupito_cache_hits_total counter',
+      '# HELP ppcsl_cache_hits_total Cache hits by cache name',
+      '# TYPE ppcsl_cache_hits_total counter',
     );
     for (const [cache, value] of this.cacheHitTotal.entries()) {
-      lines.push(`kupito_cache_hits_total{cache="${cache}"} ${value}`);
+      lines.push(`ppcsl_cache_hits_total{cache="${cache}"} ${value}`);
     }
 
     lines.push(
-      '# HELP kupito_cache_misses_total Cache misses by cache name',
-      '# TYPE kupito_cache_misses_total counter',
+      '# HELP ppcsl_cache_misses_total Cache misses by cache name',
+      '# TYPE ppcsl_cache_misses_total counter',
     );
     for (const [cache, value] of this.cacheMissTotal.entries()) {
-      lines.push(`kupito_cache_misses_total{cache="${cache}"} ${value}`);
+      lines.push(`ppcsl_cache_misses_total{cache="${cache}"} ${value}`);
     }
 
     for (const [name, provider] of this.gaugeProviders.entries()) {
@@ -66,9 +66,9 @@ export class MetricsService {
     }
 
     lines.push(
-      '# HELP kupito_process_uptime_seconds Process uptime',
-      '# TYPE kupito_process_uptime_seconds gauge',
-      `kupito_process_uptime_seconds ${process.uptime()}`,
+      '# HELP ppcsl_process_uptime_seconds Process uptime',
+      '# TYPE ppcsl_process_uptime_seconds gauge',
+      `ppcsl_process_uptime_seconds ${process.uptime()}`,
     );
     return `${lines.join('\n')}\n`;
   }
