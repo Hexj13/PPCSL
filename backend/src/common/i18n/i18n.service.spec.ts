@@ -1,4 +1,16 @@
-import { resolveI18nBundleLocales, resolveI18nLocalesToLoad } from './i18n.service';
+import {
+  interpolateI18nTemplate,
+  resolveI18nBundleLocales,
+  resolveI18nLocalesToLoad,
+} from './i18n.service';
+
+describe('interpolateI18nTemplate', () => {
+  it('replaces {siteName} placeholders', () => {
+    expect(interpolateI18nTemplate('Hello {siteName}', { siteName: 'Example Market' })).toBe(
+      'Hello Example Market',
+    );
+  });
+});
 
 describe('resolveI18nBundleLocales', () => {
   it('does not force Romanian when the platform default is another locale', () => {

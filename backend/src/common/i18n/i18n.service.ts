@@ -7,17 +7,94 @@ type Translations = Record<string, string | Record<string, unknown>>;
 
 const SUPPORTED_LOCALES = ['ro', 'ru', 'en', 'sq'] as const;
 
+type OverlayLocaleRouting = {
+  defaultLocale?: string;
+  supportedLocales?: string[];
+};
+
+function parseLocaleList(raw?: string | string[]): string[] {
+  const parts = Array.isArray(raw) ? raw : (raw ?? '').split(',');
+  return parts
+    .map((value) => value.trim().toLowerCase())
+    .filter((value) => (SUPPORTED_LOCALES as readonly string[]).includes(value));
+}
+
+export function loadOverlayLocaleRouting(): OverlayLocaleRouting {
+  try {
+    // Overlay copied by platform `prepare:build`; absent in a bare PPCSL checkout.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const loaded = require('../config/site') as {
+      default?: { localeRouting?: OverlayLocaleRouting };
+      localeRouting?: OverlayLocaleRouting;
+    };
+    const routing = loaded.default?.localeRouting ?? loaded.localeRouting;
+    return {
+      defaultLocale: routing?.defaultLocale?.toLowerCase(),
+      supportedLocales: routing?.supportedLocales?.map((locale) => locale.toLowerCase()),
+    };
+  } catch {
+    return {};
+  }
+}
+
+export function resolveI18nLocalesToLoad(options: {
+  defaultLocale: string;
+  supportedLocalesEnv?: string;
+  overlaySupportedLocales?: string[];
+}): string[] {
+  const fromEnv = parseLocaleList(options.supportedLocalesEnv);
+  const fromOverlay = parseLocaleList(options.overlaySupportedLocales);
+  const selected = fromEnv.length > 0 ? fromEnv : fromOverlay;
+  if (selected.length === 0) {
+    return [...SUPPORTED_LOCALES];
+  }
+  const set = new Set(selected);
+  if ((SUPPORTED_LOCALES as readonly string[]).includes(options.defaultLocale)) {
+    set.add(options.defaultLocale);
+  }
+  return SUPPORTED_LOCALES.filter((locale) => set.has(locale));
+}
+
+export function interpolateI18nTemplate(template: string, vars: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(vars)) {
+    result = result.split(`{${key}}`).join(value);
+  }
+  return result;
+}
+
+export function resolveI18nBundleLocales(requested: string, defaultLocale: string): string[] {
+  const locales: string[] = [];
+  for (const locale of [requested, defaultLocale, 'en']) {
+    if (locale && !locales.includes(locale)) {
+      locales.push(locale);
+    }
+  }
+  return locales;
+}
+
 @Injectable()
 export class I18nService {
   private translations: Map<string, Translations> = new Map();
   private defaultLocale: string;
 
   constructor() {
+    const overlay = loadOverlayLocaleRouting();
     const envLocale = process.env.DEFAULT_LOCALE?.toLowerCase();
     this.defaultLocale =
-      envLocale && (SUPPORTED_LOCALES as readonly string[]).includes(envLocale) ? envLocale : 'ro';
+      envLocale && (SUPPORTED_LOCALES as readonly string[]).includes(envLocale)
+        ? envLocale
+        : overlay.defaultLocale &&
+            (SUPPORTED_LOCALES as readonly string[]).includes(overlay.defaultLocale)
+          ? overlay.defaultLocale
+          : 'ro';
 
-    for (const locale of SUPPORTED_LOCALES) {
+    const localesToLoad = resolveI18nLocalesToLoad({
+      defaultLocale: this.defaultLocale,
+      supportedLocalesEnv: process.env.SUPPORTED_LOCALES,
+      overlaySupportedLocales: overlay.supportedLocales,
+    });
+    for (const locale of localesToLoad) {
       this.loadTranslations(locale);
     }
   }
@@ -45,15 +122,10 @@ export class I18nService {
   translate(key: string, locale?: string): string {
     const envLocale = process.env.DEFAULT_LOCALE?.toLowerCase();
     const effectiveLocale = locale || envLocale || this.defaultLocale;
-    let translations = this.translations.get(effectiveLocale);
-    if (!translations) {
-      translations = this.translations.get(this.defaultLocale);
-    }
-    if (!translations) {
-      translations = this.translations.get('ro');
-    }
-    if (!translations) {
-      translations = this.translations.get('en');
+    let translations: Translations | undefined;
+    for (const candidate of resolveI18nBundleLocales(effectiveLocale, this.defaultLocale)) {
+      translations = this.translations.get(candidate);
+      if (translations) break;
     }
 
     if (!translations) {
