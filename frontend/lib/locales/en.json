@@ -40,7 +40,14 @@
     "loginAndRegister": "Login and registration",
     "brandName": "Kupito",
     "toggleMenu": "Toggle Menu",
-    "more": "More"
+    "more": "More",
+    "catalogSearch": "Search",
+    "catalogSearchPlaceholder": "Brand, model or year",
+    "catalogSearchClear": "Clear search",
+    "catalogSearchLoading": "Searching…",
+    "catalogSearchEmpty": "No matches found",
+    "catalogSearchYearWithValue": "Year: {year}",
+    "openCatalogSearch": "Open catalog search"
   },
   "home": {
     "title": "Cars for Sale in Moldova",
@@ -1188,6 +1195,9 @@
     "showPreviousTabs": "Show previous tabs",
     "popularBodyTypes": "Popular Body Types",
     "categoryLabel": "Category:",
+    "vehicleTypeCar": "Car",
+    "vehicleTypeTruck": "Truck",
+    "vehicleTypeMoto": "Moto",
     "brand": "Brand",
     "model": "Model",
     "transmission": "Transmission",
