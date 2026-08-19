@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { getTabCenteredBetweenControlsScrollLeft } from '@/components/search/search-filters/SearchTabs';
 import { useTabIndicator } from '@/hooks/useTabIndicator';
+import { COMPACT_LAYOUT_MEDIA_QUERY } from '@/lib/layout-breakpoints';
 
 type SearchTab = 'basic' | 'advanced' | 'equipment' | 'popular';
 
@@ -179,7 +180,7 @@ export function useSearchTabs({
     if (!el) return;
 
     const isMobileTabsViewport =
-      typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+      typeof window !== 'undefined' && window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches;
     const maxScrollLeft = container.scrollWidth - container.clientWidth;
     const targetScrollLeft = isMobileTabsViewport
       ? getTabCenteredBetweenControlsScrollLeft(container, el)

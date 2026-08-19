@@ -1,5 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
+import { COMPACT_LAYOUT_MAX_WIDTH_PX } from '@/lib/layout-breakpoints';
+
 import { MobileSelectField } from './MobileSelectField';
 
 jest.mock('react-dom', () => ({
@@ -39,7 +41,9 @@ function mockMobileViewport() {
     writable: true,
     configurable: true,
     value: jest.fn().mockImplementation((query: string) => ({
-      matches: query.includes('max-width') && query.includes('767'),
+      matches:
+        query.includes('max-width') &&
+        (query.includes('767') || query.includes(String(COMPACT_LAYOUT_MAX_WIDTH_PX))),
       media: query,
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),

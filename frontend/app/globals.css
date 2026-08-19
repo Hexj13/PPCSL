@@ -407,6 +407,28 @@
     border-color: var(--color-primary-500) !important;
   }
 
+  &.header-catalog-search-input {
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    line-height: 38px !important;
+    padding-left: 2.5rem !important;
+    padding-right: 2.5rem !important;
+    font-size: 0.875rem !important;
+    background-color: #fff !important;
+  }
+
+  &.header-catalog-search-sheet-input {
+    padding-left: 2.5rem !important;
+    padding-right: 2.5rem !important;
+  }
+
+  &.header-catalog-search-input:-webkit-autofill,
+  &.header-catalog-search-input:autofill {
+    -webkit-text-fill-color: var(--color-text-primary) !important;
+    box-shadow: 0 0 0 1000px #fff inset !important;
+  }
+
   &:focus {
     border-color: var(--color-primary-500) !important;
   }

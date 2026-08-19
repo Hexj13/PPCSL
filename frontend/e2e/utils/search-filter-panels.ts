@@ -29,7 +29,7 @@ const TAB_BUTTON_TEST_IDS: Record<SearchFilterTab, string> = {
 function panelLocator(page: Page, tab: SearchFilterTab, mobile: boolean) {
   const form = visibleSearchFiltersForm(page);
   const testId = mobile ? MOBILE_PANEL_TEST_IDS[tab] : DESKTOP_PANEL_TEST_IDS[tab];
-  return mobile ? form.locator('.md\\:hidden').getByTestId(testId) : form.getByTestId(testId);
+  return mobile ? form.locator('.xl\\:hidden').getByTestId(testId) : form.getByTestId(testId);
 }
 
 export async function expectVehicleSearchTabPanelVisible(

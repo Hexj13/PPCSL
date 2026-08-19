@@ -17,6 +17,10 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { addCoalescedResizeListener } from '@/lib/resize-coalesced';
 
 import { DropdownMenu, DropdownTrigger } from './Dropdown.parts';
+import {
+  DROPDOWN_PORTAL_VIEWPORT_MARGIN_PX,
+  clampDropdownPortalLeft,
+} from './dropdown-portal-position';
 import type { DropdownOption } from './dropdown-types';
 
 const HEADER_OFFSET_PX = 108;
@@ -124,8 +128,10 @@ function DropdownComponent({
   const [portalPosition, setPortalPosition] = useState<{
     top: number;
     bottom: number;
-    left: number;
-    width: number;
+    triggerLeft: number;
+    triggerWidth: number;
+    menuLeft: number;
+    viewportWidth: number;
     openUp: boolean;
   } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -157,22 +163,31 @@ function DropdownComponent({
     if (!dropdownRef.current || !isOpen) return;
     const rect = dropdownRef.current.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
     const spaceBelow = viewportHeight - rect.bottom;
     const spaceAbove = rect.top;
     const openUp =
       (autoPosition || renderMenuInPortal) &&
       spaceBelow < PORTAL_MENU_MAX_HEIGHT &&
       spaceAbove > spaceBelow;
+    const menuWidth = menuRef.current?.offsetWidth ?? rect.width;
     setPortalPosition({
       top: rect.top,
       bottom: rect.bottom,
-      left: rect.left,
-      width: rect.width,
+      triggerLeft: rect.left,
+      triggerWidth: rect.width,
+      menuLeft: clampDropdownPortalLeft({
+        triggerLeft: rect.left,
+        triggerRight: rect.right,
+        menuWidth,
+        viewportWidth,
+      }),
+      viewportWidth,
       openUp,
     });
     if (renderMenuInPortal) {
       setOpenUpwards(openUp);
-      setIsPositioned(true);
+      setIsPositioned(Boolean(menuRef.current));
     }
   }, [isOpen, autoPosition, renderMenuInPortal]);
 
@@ -219,6 +234,13 @@ function DropdownComponent({
       setIsPositioned(true);
     }
   }, [autoPosition, isOpen, options.length, renderMenuInPortal, updatePortalPosition]);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !renderMenuInPortal || isPositioned || !portalPosition || !menuRef.current) {
+      return;
+    }
+    updatePortalPosition();
+  }, [isOpen, isPositioned, portalPosition, renderMenuInPortal, updatePortalPosition]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -435,10 +457,17 @@ function DropdownComponent({
                 dataTestId={dataTestId}
                 portalStyle={{
                   position: 'fixed',
-                  left: portalPosition.left,
+                  left: portalPosition.menuLeft,
+                  maxWidth: portalPosition.viewportWidth - DROPDOWN_PORTAL_VIEWPORT_MARGIN_PX * 2,
                   ...(menuExpandToContent
-                    ? { minWidth: portalPosition.width, width: 'max-content' }
-                    : { width: portalPosition.width }),
+                    ? {
+                        minWidth: Math.min(
+                          portalPosition.triggerWidth,
+                          portalPosition.viewportWidth - DROPDOWN_PORTAL_VIEWPORT_MARGIN_PX * 2,
+                        ),
+                        width: 'max-content',
+                      }
+                    : { width: portalPosition.triggerWidth }),
                   ...(portalPosition.openUp
                     ? { bottom: window.innerHeight - portalPosition.top + 4 }
                     : { top: portalPosition.bottom + 4 }),

@@ -13,6 +13,7 @@ type BottomSheetPanelProps = {
   title: string;
   closeLabel: string;
   lockSheetHeight: boolean;
+  header?: React.ReactNode;
   footer?: React.ReactNode;
   children: React.ReactNode;
   onRequestClose: () => void;
@@ -32,6 +33,7 @@ export function BottomSheetPanel({
   title,
   closeLabel,
   lockSheetHeight,
+  header,
   footer,
   children,
   onRequestClose,
@@ -70,20 +72,29 @@ export function BottomSheetPanel({
         >
           <span className="h-1 w-10 rounded-full bg-primary-500/35" aria-hidden />
         </div>
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-primary-500/20 px-4 pb-3">
-          <h2 id="bottom-sheet-title" className="truncate text-lg font-bold text-primary-900">
-            {title}
-          </h2>
-          <button
-            type="button"
-            data-testid="bottom-sheet-close"
-            onClick={onRequestClose}
-            className="shrink-0 p-1 text-3xl leading-none text-primary-700 hover-only:hover:text-primary-900"
-            aria-label={closeLabel}
-          >
-            ×
-          </button>
-        </div>
+        {header ? (
+          <>
+            <h2 id="bottom-sheet-title" className="sr-only">
+              {title}
+            </h2>
+            {header}
+          </>
+        ) : (
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-primary-500/20 px-4 pb-3">
+            <h2 id="bottom-sheet-title" className="truncate text-lg font-bold text-primary-900">
+              {title}
+            </h2>
+            <button
+              type="button"
+              data-testid="bottom-sheet-close"
+              onClick={onRequestClose}
+              className="shrink-0 p-1 text-3xl leading-none text-primary-700 hover-only:hover:text-primary-900"
+              aria-label={closeLabel}
+            >
+              ×
+            </button>
+          </div>
+        )}
         <div
           className={
             lockSheetHeight

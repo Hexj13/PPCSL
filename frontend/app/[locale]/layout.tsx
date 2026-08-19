@@ -13,6 +13,8 @@ import { WebsiteSearchSchema } from '@/components/analytics/WebsiteSearchSchema'
 import { AuthGuardsShell } from '@/components/auth/AuthGuardsShell';
 import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
 import { Header } from '@/components/layout/Header';
+import { NavSkeleton } from '@/components/layout/Header/NavSkeleton';
+import { HEADER_INNER_BAR_CLASSES } from '@/components/layout/Header/headerBarClasses';
 import { LocaleHtmlLang } from '@/components/layout/LocaleHtmlLang';
 import { LocaleHtmlLangScript } from '@/components/layout/LocaleHtmlLangScript';
 import { MainContentShell } from '@/components/layout/MainContentShell';
@@ -153,12 +155,20 @@ function HeaderFallback() {
   return (
     <header className="sticky top-0 z-50 flex flex-col bg-bg-base shadow-lg" aria-hidden>
       <div className="relative z-20 h-[72px] shrink-0 bg-bg-base">
-        <div className="container relative mx-auto h-full border-b border-primary-700 px-3 sm:px-4">
-          <div className="flex h-full w-full min-w-0 items-center justify-between gap-2">
-            <div className="h-6 w-16 rounded-sm bg-primary-700/20" />
-            <div className="flex items-center justify-end gap-2 xl:gap-4">
-              <div className="h-10 w-28 shrink-0 rounded-lg bg-primary-700/20" />
-              <div className="hidden h-10 w-44 rounded-lg bg-primary-700/20 lg:block" />
+        <div className={HEADER_INNER_BAR_CLASSES}>
+          <div className="flex h-full w-full min-w-0 items-center gap-2">
+            <NavSkeleton variant="logo" />
+            <div className="hidden min-w-0 flex-1 items-center gap-2 lg:flex xl:gap-4">
+              <NavSkeleton variant="desktopLinks" />
+              <div className="min-w-0 flex-1">
+                <NavSkeleton variant="desktopCatalogSearch" />
+              </div>
+              <NavSkeleton variant="desktopActions" />
+              <NavSkeleton variant="desktopSignGuest" />
+            </div>
+            <div className="ml-auto flex items-center gap-2 lg:hidden">
+              <NavSkeleton variant="mobileCatalogSearch" />
+              <div className="h-10 w-10 shrink-0 rounded-lg bg-primary-700/20 animate-pulse" />
             </div>
           </div>
         </div>

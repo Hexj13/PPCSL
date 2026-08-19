@@ -74,8 +74,8 @@ export function SearchFormActions({
 
   return (
     <div className="mt-4 relative -mx-3 sm:mx-0 px-3 sm:px-0">
-      <div className="flex flex-col lg:flex-row lg:flex-nowrap lg:justify-between gap-3 items-stretch lg:items-end">
-        <div className="w-full lg:w-[280px] lg:shrink-0 relative">
+      <div className="flex flex-col xl:flex-row xl:flex-nowrap xl:justify-between gap-3 items-stretch xl:items-end">
+        <div className="w-full xl:w-[280px] xl:shrink-0 relative">
           <div
             className="w-full flex justify-start items-center gap-2 pb-2 min-h-[1.5rem]"
             aria-live="polite"
@@ -97,12 +97,7 @@ export function SearchFormActions({
                 />
               </svg>
               <span className="text-sm text-primary-900 truncate">
-                <span className="inline [@media_(width:1024px)]:hidden">
-                  {t('searchFilters.availableListingsLabel')}
-                </span>
-                <span className="hidden [@media_(width:1024px)]:inline">
-                  {t('searchFilters.availableListingsLabelShort')}
-                </span>
+                {t('searchFilters.availableListingsLabel')}
               </span>
             </span>
             <span className="inline-flex items-center shrink-0">
@@ -121,14 +116,14 @@ export function SearchFormActions({
             onSortChange={onSortChange}
           />
         </div>
-        <div className="min-w-0 relative border-t border-primary-500/20 pt-3 lg:border-t-0 lg:pt-0">
-          <div ref={buttonsContainerRef} className="lg:overflow-x-auto lg:scrollbar-hide">
-            <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center lg:min-w-max">
+        <div className="min-w-0 relative border-t border-primary-500/20 pt-3 xl:border-t-0 xl:pt-0">
+          <div ref={buttonsContainerRef} className="xl:overflow-x-auto xl:scrollbar-hide">
+            <div className="flex flex-col xl:flex-row gap-3 items-stretch xl:items-center xl:min-w-max">
               {!isInitialized ? (
                 <button
                   type="button"
                   disabled
-                  className="w-full btn-secondary flex items-center justify-center gap-2 opacity-50 px-3! lg:px-6! text-primary-900!"
+                  className="w-full btn-secondary flex items-center justify-center gap-2 opacity-50 px-3! xl:px-6! text-primary-900!"
                 >
                   <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-primary-300 border-t-transparent rounded-full animate-spin shrink-0"></div>
                   <span className="whitespace-nowrap text-base">{t('common.loading')}</span>
@@ -138,7 +133,7 @@ export function SearchFormActions({
                   <button
                     type="button"
                     onClick={handleSmartSelectionClick}
-                    className="w-full btn-secondary flex items-center justify-center gap-2 px-3! lg:px-6! text-primary-900!"
+                    className="w-full btn-secondary flex items-center justify-center gap-2 px-3! xl:px-6! text-primary-900!"
                     title={!userForUi ? t('common.loginRequired') : ''}
                     data-testid="search-smart-selection"
                   >
@@ -151,7 +146,7 @@ export function SearchFormActions({
                     type="button"
                     onClick={onSaveClick}
                     disabled={Boolean(!canSaveFilter)}
-                    className="w-full btn-secondary flex items-center justify-center gap-2 px-3! lg:px-6! text-primary-900!"
+                    className="w-full btn-secondary flex items-center justify-center gap-2 px-3! xl:px-6! text-primary-900!"
                     title={!userForUi ? t('common.loginRequired') : ''}
                     data-testid="search-save-filter"
                   >

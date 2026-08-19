@@ -27,7 +27,6 @@ export const HEADER_CTA_BUTTON_CLASSES = `${HEADER_CTA_SURFACE_BASE} search-cont
 
 interface CreateListingButtonProps {
   variant?: 'mobile' | 'desktop';
-  shortLabel?: boolean;
   drawerCta?: boolean;
   className?: string;
   onClick?: () => void;
@@ -35,7 +34,6 @@ interface CreateListingButtonProps {
 
 export function CreateListingButton({
   variant = 'desktop',
-  shortLabel = false,
   drawerCta = false,
   className = '',
   onClick,
@@ -58,7 +56,7 @@ export function CreateListingButton({
     ? drawerCta
       ? `px-3 py-0 w-full text-[14px] ${MOBILE_NAV_CTA_HEIGHT_CLASSES}`
       : 'px-3 py-2 w-full text-[14px]'
-    : 'h-10 px-2.5 md:px-3';
+    : 'h-10 px-3';
 
   const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';
 
@@ -81,10 +79,15 @@ export function CreateListingButton({
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
       </svg>
-      {isMobile ? (
-        <span className="relative z-10">
-          {shortLabel ? t('header.createListingShort') : t('header.createListing')}
-        </span>
+      {isMobile && drawerCta ? (
+        <span className="relative z-10">{t('header.createListing')}</span>
+      ) : isMobile ? (
+        <>
+          <span className="relative z-10 max-[375px]:hidden">{t('header.createListing')}</span>
+          <span className="relative z-10 hidden max-[375px]:inline">
+            {t('header.createListingShort')}
+          </span>
+        </>
       ) : (
         <>
           <span className="relative z-10 hidden lg:inline">{t('header.createListing')}</span>

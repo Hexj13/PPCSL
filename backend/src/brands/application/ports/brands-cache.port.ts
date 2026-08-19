@@ -1,3 +1,4 @@
+import type { CatalogSuggestIndexDocument } from '../../catalog-suggest/catalog-suggest.types';
 import type { Brand } from '../../entities/brand.entity';
 import type { VehicleModel } from '../../entities/vehicle-model.entity';
 
@@ -14,6 +15,8 @@ export interface IBrandsCache {
     vehicleType: BrandVehicleType | undefined,
     models: VehicleModel[],
   ): Promise<void>;
+  getSuggestIndex(): Promise<CatalogSuggestIndexDocument[] | null>;
+  setSuggestIndex(documents: CatalogSuggestIndexDocument[]): Promise<void>;
   invalidateAll(): Promise<void>;
   invalidateModels(brandId: string): Promise<void>;
   invalidateBrandsList(): Promise<void>;

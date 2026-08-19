@@ -10,6 +10,14 @@ import {
   BRANDS_CACHE,
   BrandVehicleType,
 } from './application/ports/brands-cache.port';
+import { buildCatalogSuggestIndex } from './catalog-suggest/build-catalog-suggest-index';
+import { CATALOG_SUGGEST_LIMIT } from './catalog-suggest/catalog-suggest.types';
+import type {
+  CatalogSuggestIndexDocument,
+  CatalogSuggestItem,
+  CatalogSuggestVehicleType,
+} from './catalog-suggest/catalog-suggest.types';
+import { matchCatalogSuggest } from './catalog-suggest/match-catalog-suggest';
 import { Brand } from './entities/brand.entity';
 import { VehicleModel } from './entities/vehicle-model.entity';
 
@@ -18,6 +26,7 @@ const BRANDS_EXCLUDED_FROM_LIST: string[] = ['Другая марка'];
 @Injectable()
 export class BrandsService {
   private readonly logger = new Logger(BrandsService.name);
+  private suggestIndexInflight: Promise<CatalogSuggestIndexDocument[]> | null = null;
 
   constructor(
     @InjectRepository(Brand)
@@ -385,5 +394,58 @@ export class BrandsService {
       updated,
       total: totalModels,
     };
+  }
+
+  async suggest(
+    q: string,
+    vehicleType?: CatalogSuggestVehicleType,
+    limit: number = CATALOG_SUGGEST_LIMIT,
+  ): Promise<{ items: CatalogSuggestItem[] }> {
+    const index = await this.getSuggestIndex();
+    const items = matchCatalogSuggest(index, q, {
+      vehicleType,
+      limit,
+      nowYear: new Date().getFullYear(),
+    });
+    this.logger.debug(`catalog suggest qLen=${q.trim().length} results=${items.length}`);
+    return { items };
+  }
+
+  private async getSuggestIndex(): Promise<CatalogSuggestIndexDocument[]> {
+    try {
+      const cached = await this.brandsCache.getSuggestIndex();
+      if (cached) {
+        return cached;
+      }
+    } catch (error) {
+      this.logger.warn('Failed to get catalog suggest index from cache', error);
+    }
+
+    if (!this.suggestIndexInflight) {
+      this.suggestIndexInflight = this.loadSuggestIndex().finally(() => {
+        this.suggestIndexInflight = null;
+      });
+    }
+    return this.suggestIndexInflight;
+  }
+
+  private async loadSuggestIndex(): Promise<CatalogSuggestIndexDocument[]> {
+    const brands = await this.brandsRepository
+      .createQueryBuilder('brand')
+      .leftJoinAndSelect('brand.models', 'model', 'model.is_archived = :modelArchived', {
+        modelArchived: false,
+      })
+      .where('brand.is_archived = :archived', { archived: false })
+      .getMany();
+
+    const documents = buildCatalogSuggestIndex(brands);
+
+    try {
+      await this.brandsCache.setSuggestIndex(documents);
+    } catch (error) {
+      this.logger.warn('Failed to set catalog suggest index cache', error);
+    }
+
+    return documents;
   }
 }

@@ -1,10 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
-import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
-import { isSignRoutePathname } from '@/components/layout/header-flow-paths';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import type { User } from '@/lib/api';
@@ -76,31 +73,14 @@ export function UserDesktopNavLinks({
 
 type UserDesktopNavActionsProps = {
   user: User;
-  isAuthPage: boolean;
-  isErrorPage: boolean;
   onLogout: () => void;
   t: (key: string) => string;
 };
 
-export function UserDesktopNavActions({
-  user,
-  isAuthPage,
-  isErrorPage,
-  onLogout,
-  t,
-}: UserDesktopNavActionsProps) {
-  const pathname = usePathname();
-  const showLang = (!isAuthPage && !isErrorPage) || (isSignRoutePathname(pathname) && !isErrorPage);
-
+export function UserDesktopNavActions({ user, onLogout, t }: UserDesktopNavActionsProps) {
   return (
     <>
       <CreateListingButton variant="desktop" />
-      {showLang && (
-        <>
-          <div className="mx-1 h-6 w-px bg-primary-700/30 shrink-0" />
-          <LanguageSwitcher variant="desktop" context="header" />
-        </>
-      )}
       <HeaderProfileDropdown user={user} onLogout={onLogout} t={t} />
     </>
   );

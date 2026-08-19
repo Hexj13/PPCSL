@@ -132,7 +132,7 @@ export function VehicleTypeSelector({
         aria-busy={switchingLocked}
       >
         <span
-          className="hidden lg:inline text-base font-bold text-primary-900 shrink-0 flex items-center mr-2 xl:mr-2"
+          className="hidden lg:flex text-base font-bold text-primary-900 shrink-0 items-center mr-2"
           suppressHydrationWarning
         >
           {t('searchFilters.categoryLabel')}

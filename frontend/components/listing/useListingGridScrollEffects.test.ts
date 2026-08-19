@@ -257,6 +257,34 @@ describe('useListingGridScrollEffects', () => {
     expect(window.scrollTo).not.toHaveBeenCalled();
   });
 
+  it('scrolls to listings-results on tablet even when the page is not at the top', () => {
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 1024,
+      writable: true,
+    });
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 100, writable: true });
+    setupResultsTarget();
+
+    const { rerender } = renderHook(
+      ({ isLoading, listingsCount }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount,
+          isLoading,
+        }),
+      { initialProps: { isLoading: true, listingsCount: 4 } },
+    );
+
+    rerender({ isLoading: false, listingsCount: 4 });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
+    expect(rafCallbacks).toHaveLength(1);
+    rafCallbacks.forEach((cb) => cb(0));
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 368, behavior: 'smooth' });
+  });
+
   it('scrolls to listings-results on mobile even when the page is not at the top', () => {
     window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390, writable: true });

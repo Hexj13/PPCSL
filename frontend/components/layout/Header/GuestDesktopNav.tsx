@@ -1,9 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
-import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { isSignRoutePathname } from '@/components/layout/header-flow-paths';
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
@@ -15,42 +13,18 @@ import { DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES } from './desktopNavLinkClasses';
 import { DESKTOP_HEADER_OUTLINE_LINK_CLASSES } from './desktopOutlineLinkClasses';
 import { UserIcon } from './icons';
 
-type GuestDesktopNavProps = {
+type GuestDesktopNavLinksProps = {
   comparisonCount: number;
   navLinkClasses: string;
-  isAuthPage: boolean;
-  isErrorPage: boolean;
-  onSetReturnUrl: (url: string) => void;
   t: (key: string) => string;
 };
 
-export function GuestDesktopNav({
+export function GuestDesktopNavLinks({
   comparisonCount,
   navLinkClasses,
-  isAuthPage,
-  isErrorPage,
-  onSetReturnUrl,
   t,
-}: GuestDesktopNavProps) {
-  const pathname = usePathname();
+}: GuestDesktopNavLinksProps) {
   const { href } = useLocalizedNavigation();
-  const isSignPage = isSignRoutePathname(pathname);
-
-  if (isErrorPage) return null;
-
-  if (isSignPage) {
-    return <LanguageSwitcher variant="desktop" context="header" />;
-  }
-
-  if (isAuthPage) return null;
-
-  const handleSignClick = () => {
-    if (typeof window !== 'undefined') {
-      if (!isSignRoutePathname(window.location.pathname)) {
-        onSetReturnUrl(window.location.pathname + window.location.search);
-      }
-    }
-  };
 
   return (
     <>
@@ -86,7 +60,27 @@ export function GuestDesktopNav({
         navLinkClasses={navLinkClasses}
         t={t}
       />
-      <div className="h-6 w-px bg-primary-700/30 mx-1 shrink-0" aria-hidden />
+    </>
+  );
+}
+
+type GuestDesktopNavActionsProps = {
+  onSetReturnUrl: (url: string) => void;
+  t: (key: string) => string;
+};
+
+export function GuestDesktopNavActions({ onSetReturnUrl, t }: GuestDesktopNavActionsProps) {
+  const handleSignClick = () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    if (!isSignRoutePathname(window.location.pathname)) {
+      onSetReturnUrl(window.location.pathname + window.location.search);
+    }
+  };
+
+  return (
+    <>
       <Link
         href={buildSignPageHref({ tab: 'login' })}
         onClick={handleSignClick}
@@ -96,8 +90,6 @@ export function GuestDesktopNav({
         <span suppressHydrationWarning>{t('header.loginAndRegister')}</span>
       </Link>
       <CreateListingButton variant="desktop" />
-      <div className="h-6 w-px bg-primary-700/30 mx-1 shrink-0" aria-hidden />
-      <LanguageSwitcher variant="desktop" context="header" />
     </>
   );
 }

@@ -74,6 +74,20 @@ describe('VehicleTypeSelector', () => {
     expect(screen.getByTestId('search-listing-category-tire')).toBeDisabled();
   });
 
+  it('vertically centers the category label next to the type icons', () => {
+    render(
+      <VehicleTypeSelector
+        listingCategory="vehicle"
+        vehicleType="car"
+        onVehicleTypeChange={jest.fn()}
+        onTireCategorySelect={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText('searchFilters.categoryLabel')).toHaveClass('lg:flex', 'items-center');
+    expect(screen.getByText('searchFilters.categoryLabel')).not.toHaveClass('lg:inline');
+  });
+
   it('calls onTireCategorySelect when tire tab is clicked from vehicle mode', () => {
     const onTireCategorySelect = jest.fn();
     render(

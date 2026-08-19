@@ -90,6 +90,7 @@ Documentation for **PPCSL (Platform-Portable Car Sales Logic)** — universal co
 - [parsing-framework.md](./features/parsing-framework.md) — Generic parsing runtime in core (catalog contract, admin orchestration, schedules, parser CLI runner)
 - Platform parser docs (kupito.club): [docs/parsing/cipauto-import.md](../../docs/parsing/cipauto-import.md), [docs/parsing/999md-import.md](../../docs/parsing/999md-import.md), [docs/parsing/autooutlet-import.md](../../docs/parsing/autooutlet-import.md)
 - [search-filters.md](./features/search-filters.md) — Search and filters form (tabs, fields, layout)
+- [header-catalog-search.md](./features/header-catalog-search.md) — Header typeahead for brand / model / year
 - [smart-selection.md](./features/smart-selection.md) — Guided questionnaire that creates a saved search filter from car-use preferences
 - [tires-category.md](./features/tires-category.md) — Dev-ready spec for tire listings, taxonomy, create form, and search
 - [seller-listings-board.md](./features/seller-listings-board.md) — Seller listings board

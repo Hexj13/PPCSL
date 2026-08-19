@@ -1,0 +1,98 @@
+import { expect, test } from '../fixtures/base';
+import { expectPagePath } from '../utils/app-path';
+import { gotoWithDomContentLoadedRetry } from '../utils/session';
+import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
+
+test.describe('Header catalog search @p0', () => {
+  test('applies a catalog suggestion to a clean listings URL', async ({ page, searchHomePage }) => {
+    const steps: E2EStep[] = [
+      {
+        name: 'Open home and type a catalog query',
+        action: async () => {
+          await searchHomePage.openAndExpectPageView();
+          await searchHomePage.headerNav.expectCatalogSearchChrome();
+          await searchHomePage.headerNav.fillCatalogSearch('ford');
+        },
+      },
+      {
+        name: 'Select a suggestion and land on filtered home',
+        action: async () => {
+          await searchHomePage.headerNav.selectFirstCatalogSuggestion();
+          await expectPagePath(page, (path) => path === '/');
+          await expect(page).toHaveURL(/[?&](brand|model|year_gte)=/);
+          await searchHomePage.headerNav.expectCatalogSearchClosed();
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
+  test('hides catalog search on the sign page', async ({ page, searchHomePage }) => {
+    const steps: E2EStep[] = [
+      {
+        name: 'Open sign page without catalog search',
+        action: async () => {
+          await gotoWithDomContentLoadedRetry(page, '/sign');
+          await searchHomePage.headerNav.expectCatalogSearchHidden();
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
+  test('closes catalog search without applying filters', async ({ page, searchHomePage }) => {
+    const steps: E2EStep[] = [
+      {
+        name: 'Open catalog search and dismiss it',
+        action: async () => {
+          await searchHomePage.openAndExpectPageView();
+          const urlBefore = page.url();
+          await searchHomePage.headerNav.fillCatalogSearch('ford');
+          await searchHomePage.headerNav.dismissCatalogSearchWithoutApply('cancel');
+          await expect(page).toHaveURL(urlBefore);
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
+  test('closes catalog search from backdrop without applying', async ({ page, searchHomePage }) => {
+    const steps: E2EStep[] = [
+      {
+        name: 'Open catalog search and click outside',
+        action: async () => {
+          await searchHomePage.openAndExpectPageView();
+          const urlBefore = page.url();
+          await searchHomePage.headerNav.fillCatalogSearch('ford');
+          await searchHomePage.headerNav.dismissCatalogSearchWithoutApply('backdrop');
+          await expect(page).toHaveURL(urlBefore);
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
+  test('closes catalog search on history back without applying', async ({
+    page,
+    searchHomePage,
+  }) => {
+    const steps: E2EStep[] = [
+      {
+        name: 'Open catalog search and go back',
+        action: async () => {
+          await searchHomePage.openAndExpectPageView();
+          const urlBefore = page.url();
+          await searchHomePage.headerNav.fillCatalogSearch('ford');
+          await searchHomePage.headerNav.dismissCatalogSearchWithoutApply('back');
+          await expect(page).toHaveURL(urlBefore);
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+});

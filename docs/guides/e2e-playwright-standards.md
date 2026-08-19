@@ -113,15 +113,15 @@ Google account password setup (`profile-password.spec.ts`):
 - **Coverage:** every spec in `e2e/specs` runs on **both** viewports (no separate `mobile-*.spec.ts` smoke files unless documenting a one-off experiment).
 - **Mobile viewport:** `390×844` (`e2e/constants/viewport.ts`); Playwright project uses `Pixel 7` device profile (touch enabled).
 - **Desktop viewport:** `Desktop Chrome` profile from Playwright.
-- **Layout breakpoint:** app mobile sheets match `max-width: 767px` (`BottomSheet`, `MobileSelectField`, mobile search filters).
+- **Layout breakpoint:** listing-create mobile sheets (`MobileSelectField`) match `max-width: 767px`. Search-filter sheets and `BottomSheet` `mobileOnly` match `max-width: 1279px` (Tailwind `xl` − 1). E2E projects still use `390×844` vs `1280×720`; `pageUsesMobileLayout` stays at `≤767px`.
 
 ### Mobile vs desktop UI differences
 
-| Area | Desktop (`md+`) | Mobile (`≤767px`) |
+| Area | Desktop | Compact / mobile |
 | --- | --- | --- |
-| Search filters (brand, price, …) | Inline controls in tabs | `FilterRow` opens bottom sheets (`MobileVehicleSection`) |
+| Search filters (brand, price, …) | Inline controls in tabs (`xl+`, `≥1280px`) | `FilterRow` opens bottom sheets (`MobileVehicleSection`, `≤1279px`) |
 | Search vehicle type / tabs | Same top bar | Same top bar (still visible) |
-| Listing create selects | `Dropdown` menu | `MobileSelectField` bottom sheet; year uses scroll picker + **OK** |
+| Listing create selects | `Dropdown` menu (`md+`) | `MobileSelectField` bottom sheet (`≤767px`); year uses scroll picker + **OK** |
 | Modals (save filter, AI report) | `Modal` | `Modal` (unchanged) |
 
 Page objects must absorb these differences (`ListingCreatePage.pickDropdownOption`, `BottomSheetComponent`, `pageUsesMobileLayout`).
@@ -336,6 +336,7 @@ P0 is the minimum E2E subset that protects release readiness for the primary mar
 | --- | --- |
 | Search filters (shared + viewport sheets/tabs) | `search-filters.spec.ts`, `search-filters-mobile.spec.ts`, `search-filters-desktop.spec.ts` |
 | Search home scroll restore | `search-home-scroll.spec.ts` |
+| Header catalog search | `header-catalog-search.spec.ts` |
 | Listing detail view | `listing-view.spec.ts` |
 | Auth login | `auth-login.spec.ts` |
 | Auth registration (individual + business → home) | `auth-registration.spec.ts` (`e2e/utils/registration-flow.ts`); `auth-register.spec.ts` is tab/form smoke only |

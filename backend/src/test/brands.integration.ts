@@ -83,7 +83,24 @@ describe('Brands API Integration Tests', () => {
       });
       expect(response).toSatisfyApiSpec();
     });
+  });
 
+  describe('GET /api/brands/suggest', () => {
+    it('should return suggest items for a catalog query', async () => {
+      const response = await request.get('/api/brands/suggest').query({ q: 'ford' }).expect(200);
+
+      expect(Array.isArray(response.body.items)).toBe(true);
+      expect(response).toSatisfyApiSpec();
+    });
+
+    it('should reject queries shorter than 3 letters or digits', async () => {
+      const response = await request.get('/api/brands/suggest').query({ q: 'fo' }).expect(400);
+
+      expect(response.body).toHaveProperty('statusCode', 400);
+    });
+  });
+
+  describe('POST /api/brands/models/batch empty and invalid', () => {
     it('should return empty object for empty brandIds array', async () => {
       const response = await request
         .post('/api/brands/models/batch')

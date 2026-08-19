@@ -56,7 +56,7 @@ export class SearchFiltersMobileComponent {
   }
 
   private mobilePanel(testId: string) {
-    return this.searchFiltersForm().locator('.md\\:hidden').getByTestId(testId);
+    return this.searchFiltersForm().locator('.xl\\:hidden').getByTestId(testId);
   }
 
   private mobilePanelForTab(tab: SearchFilterTab) {
@@ -257,7 +257,7 @@ export class SearchFiltersMobileComponent {
   async selectFirstPopularChip(): Promise<void> {
     await this.selectTab('popular');
     const chip = this.searchFiltersForm()
-      .locator('.md\\:hidden')
+      .locator('.xl\\:hidden')
       .locator('[data-testid^="search-popular-chip-"]')
       .first();
     await expect(chip).toBeVisible({ timeout: 20_000 });
@@ -266,7 +266,7 @@ export class SearchFiltersMobileComponent {
 
   async expectFirstPopularChipSelected(): Promise<void> {
     const chip = this.searchFiltersForm()
-      .locator('.md\\:hidden')
+      .locator('.xl\\:hidden')
       .locator('[data-testid^="search-popular-chip-"]')
       .first();
     await expect(chip).toHaveClass(/is-selected/);

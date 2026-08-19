@@ -10,6 +10,7 @@ import {
   reportGridReady,
   subscribeHomeScrollRestoreState,
 } from '@/lib/home-scroll-restore';
+import { DESKTOP_LAYOUT_MIN_WIDTH_PX } from '@/lib/layout-breakpoints';
 
 type UseListingGridScrollEffectsArgs = {
   listingsCount: number;
@@ -70,7 +71,7 @@ export function useListingGridScrollEffects({
     }
     sessionStorageRemoveItem('scrollToResultsAfterLoad');
     searchScrollHandledRef.current = true;
-    if (window.innerWidth >= 768 && window.scrollY > 32) {
+    if (window.innerWidth >= DESKTOP_LAYOUT_MIN_WIDTH_PX && window.scrollY > 32) {
       return;
     }
     requestAnimationFrame(() => {

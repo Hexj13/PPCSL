@@ -4,17 +4,18 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
-import { isHideFooterPath, isSignRoutePathname } from '@/components/layout/header-flow-paths';
 import { MOBILE_MENU_ENTER_ANIM_MS, useMenuDrawerPresence } from '@/hooks/useMenuDrawerPresence';
 import { forceReleaseScrollLockToTop, useScrollLock } from '@/hooks/useScrollLock';
 import { useComparisonStore } from '@/lib/store';
 
-import { DesktopNavActions, DesktopNavMenuArea } from './Header/DesktopNav';
+import { HeaderCatalogSearch } from './Header/HeaderCatalogSearch';
+import { HeaderDesktopRow } from './Header/HeaderDesktopRow';
 import { HeaderLogo } from './Header/HeaderLogo';
+import { HeaderMobileCluster } from './Header/HeaderMobileCluster';
 import { MobileNavDrawer } from './Header/MobileNavDrawer';
-import { MobileToolbar } from './Header/MobileToolbar';
 import { NavSkeleton } from './Header/NavSkeleton';
+import { HEADER_INNER_BAR_CLASSES } from './Header/headerBarClasses';
+import { resolveHeaderSlots } from './Header/resolveHeaderSlots';
 import { useHeaderState } from './Header/useHeaderState';
 
 const MOBILE_DRAWER_ID = 'header-mobile-drawer';
@@ -22,6 +23,7 @@ const MOBILE_MENU_TOGGLE_ID = 'header-mobile-menu-toggle';
 
 export function Header() {
   const [isTelegramWebView, setIsTelegramWebView] = useState(false);
+  const [isMobileCatalogSearchOpen, setIsMobileCatalogSearchOpen] = useState(false);
   const comparisonCount = useComparisonStore((state) => state.count());
   const prevMenuOpenRef = useRef(false);
   const {
@@ -41,8 +43,15 @@ export function Header() {
   } = useHeaderState();
 
   const pathname = usePathname();
-  const showInlineMobileLanguage = isHideFooterPath(pathname) && !isErrorPage;
-  const hideMobileCreateListing = isHideFooterPath(pathname);
+  const {
+    isSignPage,
+    showInlineMobileLanguage,
+    hideMobileCreateListing,
+    showMenuSlot,
+    showActionsSlot,
+    showCatalogSearch,
+    showDesktopLanguage,
+  } = resolveHeaderSlots(pathname, showNav, isErrorPage);
 
   const menuWantOpen = isMobileMenuOpen && showNav;
   const { mounted: drawerMounted, exiting: drawerExiting } = useMenuDrawerPresence(menuWantOpen);
@@ -71,10 +80,14 @@ export function Header() {
   const isMenuToggleLocked = drawerExiting || enterAnimating;
 
   useEffect(() => {
-    if (isSignRoutePathname(pathname) && isMobileMenuOpen) {
+    if (isSignPage && isMobileMenuOpen) {
       handleMobileMenuClose();
     }
-  }, [pathname, isMobileMenuOpen, handleMobileMenuClose]);
+  }, [isSignPage, isMobileMenuOpen, handleMobileMenuClose]);
+
+  useEffect(() => {
+    setIsMobileCatalogSearchOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     forceReleaseScrollLockToTop();
@@ -111,6 +124,16 @@ export function Header() {
     handleMobileMenuClose();
   };
 
+  const handleMenuToggle = () => {
+    setIsMobileCatalogSearchOpen(false);
+    handleMobileMenuToggle();
+  };
+
+  const handleOpenCatalogSearch = () => {
+    handleMobileMenuClose();
+    setIsMobileCatalogSearchOpen(true);
+  };
+
   const mobileMenuBackdrop =
     drawerMounted &&
     showNav &&
@@ -131,74 +154,57 @@ export function Header() {
         className={`flex flex-col bg-bg-base z-50 ${drawerMounted ? '' : 'shadow-lg'} ${isTelegramWebView ? 'relative' : 'sticky top-0'}`}
       >
         <div className="relative z-20 shrink-0 h-[72px] bg-bg-base">
-          <div className="container relative mx-auto px-3 sm:px-4 h-full border-b border-primary-700">
-            <div className="flex justify-between items-center h-full w-full min-w-0 gap-2">
-              <HeaderLogo brandAlt={t('header.brandName')} />
-
-              <div className="flex items-center justify-end shrink-0 min-w-0 gap-2 xl:gap-4">
-                {showInlineMobileLanguage && (
-                  <div className="flex lg:hidden items-center shrink-0">
-                    {showSkeleton ? (
-                      <NavSkeleton variant="mobileSignGuest" />
-                    ) : (
-                      <LanguageSwitcher variant="mobile" context="header" />
-                    )}
-                  </div>
-                )}
-                {!showNav && !isErrorPage && (
-                  <div className="hidden lg:flex items-center shrink-0">
-                    {showSkeleton ? (
-                      <NavSkeleton variant="desktopSignGuest" />
-                    ) : (
-                      <LanguageSwitcher variant="desktop" context="header" />
-                    )}
-                  </div>
-                )}
-                {showNav && (
-                  <MobileToolbar
-                    showSkeleton={showSkeleton}
-                    isMobileMenuOpen={isMobileMenuOpen}
-                    isDrawerVisible={drawerMounted}
-                    isMenuToggleLocked={isMenuToggleLocked}
-                    onToggle={handleMobileMenuToggle}
-                    toggleAriaLabel={t('header.toggleMenu')}
-                    toggleId={MOBILE_MENU_TOGGLE_ID}
-                    drawerId={MOBILE_DRAWER_ID}
-                    showMenuToggle={!isSignRoutePathname(pathname)}
-                    showCreateListing={!hideMobileCreateListing}
-                  />
-                )}
-                <DesktopNavMenuArea
-                  user={user}
-                  showSkeleton={showSkeleton}
-                  showNav={showNav}
-                  comparisonCount={comparisonCount}
-                  navLinkClasses={navLinkClasses}
-                  t={t}
-                />
-                {showNav && user && (
-                  <div
-                    className="hidden lg:block mx-1 h-6 w-px shrink-0 bg-primary-700/30"
-                    aria-hidden
-                  />
-                )}
-                <DesktopNavActions
-                  user={user}
-                  showSkeleton={showSkeleton}
-                  showNav={showNav}
-                  comparisonCount={comparisonCount}
-                  navLinkClasses={navLinkClasses}
-                  isAuthPage={isAuthPage}
-                  isErrorPage={isErrorPage}
-                  onLogout={handleLogout}
-                  onSetReturnUrl={handleSetReturnUrl}
-                  t={t}
-                />
-              </div>
+          <div className={HEADER_INNER_BAR_CLASSES}>
+            <div className="flex items-center h-full w-full min-w-0 gap-2">
+              {showSkeleton ? (
+                <NavSkeleton variant="logo" />
+              ) : (
+                <HeaderLogo brandAlt={t('header.brandName')} />
+              )}
+              <HeaderDesktopRow
+                user={user}
+                showSkeleton={showSkeleton}
+                showNav={showNav}
+                showMenuSlot={showMenuSlot}
+                showActionsSlot={showActionsSlot}
+                showCatalogSearch={showCatalogSearch}
+                showDesktopLanguage={showDesktopLanguage}
+                isSignPage={isSignPage}
+                comparisonCount={comparisonCount}
+                navLinkClasses={navLinkClasses}
+                onLogout={handleLogout}
+                onSetReturnUrl={handleSetReturnUrl}
+                t={t}
+              />
+              <HeaderMobileCluster
+                showInlineMobileLanguage={showInlineMobileLanguage}
+                showSkeleton={showSkeleton}
+                showNav={showNav}
+                isMobileMenuOpen={isMobileMenuOpen}
+                isDrawerVisible={drawerMounted}
+                isMenuToggleLocked={isMenuToggleLocked}
+                onToggle={handleMenuToggle}
+                toggleAriaLabel={t('header.toggleMenu')}
+                toggleId={MOBILE_MENU_TOGGLE_ID}
+                drawerId={MOBILE_DRAWER_ID}
+                isSignPage={isSignPage}
+                hideMobileCreateListing={hideMobileCreateListing}
+                showCatalogSearch={showCatalogSearch}
+                catalogSearchOpen={isMobileCatalogSearchOpen}
+                catalogSearchAriaLabel={t('header.openCatalogSearch')}
+                onOpenCatalogSearch={handleOpenCatalogSearch}
+              />
             </div>
           </div>
         </div>
       </header>
+      {showCatalogSearch && (
+        <HeaderCatalogSearch
+          variant="mobile"
+          mobileOpen={isMobileCatalogSearchOpen}
+          onMobileOpenChange={setIsMobileCatalogSearchOpen}
+        />
+      )}
       <MobileNavDrawer
         id={MOBILE_DRAWER_ID}
         presenceMounted={drawerMounted}

@@ -28,6 +28,7 @@ import { I18nService } from '../common/i18n/i18n.service';
 import { BrandsService } from './brands.service';
 import { AddModelsToBrandDto } from './dto/add-models-to-brand.dto';
 import { GetBrandsQueryDto } from './dto/get-brands-query.dto';
+import { GetCatalogSuggestQueryDto } from './dto/get-catalog-suggest-query.dto';
 import { GetModelsBatchDto } from './dto/get-models-batch.dto';
 import { GetSearchMetadataQueryDto } from './dto/get-search-metadata-query.dto';
 
@@ -63,6 +64,38 @@ export class BrandsController {
   @Get()
   findAll(@Query() query: GetBrandsQueryDto) {
     return this.brandsService.findAll(query.vehicleType);
+  }
+
+  @ApiOperation({ summary: 'Suggest brands, models, and years for header search' })
+  @ApiResponse({
+    status: 200,
+    description: 'Catalog suggest rows',
+    schema: {
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              kind: { type: 'string' },
+              title: { type: 'string' },
+              brandName: { type: 'string', nullable: true },
+              vehicleType: { type: 'string', nullable: true },
+              logoUrl: { type: 'string', nullable: true },
+              brandSlug: { type: 'string', nullable: true },
+              modelSlug: { type: 'string', nullable: true },
+              year: { type: 'number', nullable: true },
+            },
+          },
+        },
+      },
+    },
+  })
+  @Throttle(getThrottleLimit(60, 10000))
+  @Get('suggest')
+  suggest(@Query() query: GetCatalogSuggestQueryDto) {
+    return this.brandsService.suggest(query.q, query.vehicleType, query.limit);
   }
 
   @ApiOperation({ summary: 'Get search page metadata (brand/model title)' })

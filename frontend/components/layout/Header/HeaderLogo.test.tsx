@@ -124,4 +124,18 @@ describe('HeaderLogo', () => {
     expect(mockReplace).not.toHaveBeenCalled();
     expect(mockScrollTo).not.toHaveBeenCalled();
   });
+
+  it('keeps a logo-sized pulse skeleton until the image loads', () => {
+    render(<HeaderLogo brandAlt="Kupito" />);
+    expect(screen.getByTestId('header-logo')).toHaveClass('mr-4');
+    expect(screen.getAllByTestId('header-logo-image-skeleton').length).toBeGreaterThan(0);
+  });
+
+  it('uses the short logo through 1024 desktop and the full wordmark from xl', () => {
+    render(<HeaderLogo brandAlt="Kupito" />);
+    expect(screen.getByTestId('header-logo-full')).toHaveClass('xl:block');
+    expect(screen.getByTestId('header-logo-full')).not.toHaveClass('lg:block');
+    expect(screen.getByTestId('header-logo-short')).toHaveClass('xl:hidden');
+    expect(screen.getByTestId('header-logo-short')).not.toHaveClass('lg:hidden');
+  });
 });

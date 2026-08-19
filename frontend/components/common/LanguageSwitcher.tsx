@@ -16,7 +16,7 @@ import { getCountry } from '@/lib/utils';
 import { Dropdown } from './Dropdown';
 
 const headerStyle =
-  'header-language-switcher bg-transparent! text-primary-900! font-medium text-sm hover-only:hover:text-primary-700! active:text-primary-700! transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:text-primary-900! hover-only:hover:[&_span]:text-primary-700! [&_svg]:text-primary-900! hover-only:hover:[&_svg]:text-primary-700!';
+  'header-language-switcher bg-transparent! text-primary-900! font-medium text-sm hover-only:hover:text-primary-700! active:text-primary-700! transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 px-2 rounded-lg select-none [&_span]:text-primary-900! hover-only:hover:[&_span]:text-primary-700! [&_svg]:text-primary-900! hover-only:hover:[&_svg]:text-primary-700!';
 
 const footerStyle =
   'header-language-switcher bg-transparent! text-white! font-medium text-sm hover-only:hover:text-primary-100! active:text-primary-300! transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 md:gap-2 rounded-lg select-none [&_span]:text-white! hover-only:hover:[&_span]:text-primary-100! [&_svg]:text-white! hover-only:hover:[&_svg]:text-primary-100!';

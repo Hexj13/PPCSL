@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { isAuthRequiredPathname } from './header-flow-paths';
+import { isAdminPathname, isAuthRequiredPathname } from './header-flow-paths';
 
 describe('isAuthRequiredPathname', () => {
   it('returns true for profile and favorites', () => {
@@ -22,5 +22,19 @@ describe('isAuthRequiredPathname', () => {
     expect(isAuthRequiredPathname('/ru/listings/some-id')).toBe(false);
     expect(isAuthRequiredPathname('/ru/compare')).toBe(false);
     expect(isAuthRequiredPathname('/sign')).toBe(false);
+  });
+});
+
+describe('isAdminPathname', () => {
+  it('returns true for admin routes with and without a locale prefix', () => {
+    expect(isAdminPathname('/admin')).toBe(true);
+    expect(isAdminPathname('/ru/admin')).toBe(true);
+    expect(isAdminPathname('/admin/brands')).toBe(true);
+  });
+
+  it('returns false for public and auth routes', () => {
+    expect(isAdminPathname('/')).toBe(false);
+    expect(isAdminPathname('/listings')).toBe(false);
+    expect(isAdminPathname('/sign')).toBe(false);
   });
 });

@@ -15,6 +15,12 @@ export class HeaderNavComponent {
     userLogout: 'header-user-logout',
     languageSwitcher: 'language-switcher',
     languageSwitcherMenu: 'language-switcher-menu',
+    mobileSearch: 'header-mobile-search',
+    catalogSearchInput: 'header-catalog-search-input',
+    catalogSearchItem: 'header-catalog-search-item',
+    catalogSearchSheet: 'header-catalog-search-sheet',
+    catalogSearchCancel: 'header-catalog-search-cancel',
+    catalogSearchDropdown: 'header-catalog-search-dropdown',
   } as const;
 
   constructor(private readonly page: Page) {}
@@ -107,5 +113,86 @@ export class HeaderNavComponent {
 
   get languageSwitcherMenu() {
     return this.page.getByTestId(this.testIds.languageSwitcherMenu);
+  }
+
+  private catalogSearchInput() {
+    return this.page.getByTestId(this.testIds.catalogSearchInput).locator('visible=true');
+  }
+
+  async expectCatalogSearchChrome(): Promise<void> {
+    if (await pageUsesMobileLayout(this.page)) {
+      const search = this.page.getByTestId(this.testIds.mobileSearch);
+      const burger = this.page.getByTestId(this.testIds.mobileMenuToggle);
+      await expect(search).toBeVisible({ timeout: 15_000 });
+      await expect(burger).toBeVisible({ timeout: 15_000 });
+      const searchBox = await search.boundingBox();
+      const burgerBox = await burger.boundingBox();
+      expect(searchBox).toBeTruthy();
+      expect(burgerBox).toBeTruthy();
+      expect((searchBox?.x ?? 0) + (searchBox?.width ?? 0)).toBeLessThanOrEqual(
+        (burgerBox?.x ?? 0) + 2,
+      );
+      return;
+    }
+    await expect(this.catalogSearchInput()).toBeVisible({ timeout: 15_000 });
+  }
+
+  async expectCatalogSearchHidden(): Promise<void> {
+    await expect(this.page.getByTestId(this.testIds.mobileSearch)).toHaveCount(0);
+    await expect(this.page.getByTestId(this.testIds.catalogSearchInput)).toHaveCount(0);
+  }
+
+  async openCatalogSearch(): Promise<void> {
+    if (await pageUsesMobileLayout(this.page)) {
+      await this.page.getByTestId(this.testIds.mobileSearch).click();
+      await expect(this.page.getByTestId(this.testIds.catalogSearchSheet)).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(this.page.getByTestId(this.testIds.catalogSearchCancel)).toBeVisible();
+    }
+    await expect(this.catalogSearchInput()).toBeVisible({ timeout: 15_000 });
+  }
+
+  async fillCatalogSearch(query: string): Promise<void> {
+    await this.openCatalogSearch();
+    await this.catalogSearchInput().fill(query);
+  }
+
+  async selectFirstCatalogSuggestion(): Promise<void> {
+    const item = this.page.getByTestId(this.testIds.catalogSearchItem).first();
+    await expect(item).toBeVisible({ timeout: 20_000 });
+    await item.click();
+  }
+
+  async expectCatalogSearchClosed(): Promise<void> {
+    if (await pageUsesMobileLayout(this.page)) {
+      await expect(this.page.getByTestId(this.testIds.catalogSearchSheet)).toBeHidden({
+        timeout: 15_000,
+      });
+      return;
+    }
+    await expect(this.page.getByTestId(this.testIds.catalogSearchDropdown)).toHaveCount(0);
+  }
+
+  async dismissCatalogSearchWithoutApply(method: 'cancel' | 'backdrop' | 'back'): Promise<void> {
+    const mobile = await pageUsesMobileLayout(this.page);
+    if (method === 'cancel') {
+      if (mobile) {
+        await this.page.getByTestId(this.testIds.catalogSearchCancel).click();
+      } else {
+        await this.page.keyboard.press('Escape');
+      }
+    } else if (method === 'backdrop') {
+      if (mobile) {
+        await this.page.getByTestId('bottom-sheet-backdrop').click({ position: { x: 12, y: 12 } });
+      } else {
+        await this.page.mouse.click(24, 160);
+      }
+    } else if (mobile) {
+      await this.page.goBack();
+    } else {
+      await this.page.keyboard.press('Escape');
+    }
+    await this.expectCatalogSearchClosed();
   }
 }

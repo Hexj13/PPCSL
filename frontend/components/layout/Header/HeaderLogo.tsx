@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useCallback, useState } from 'react';
 
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { getVersionedAssetPath } from '@/lib/assets';
@@ -11,11 +12,64 @@ import { loadSiteConfigSync } from '@/lib/site-config';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 import { getCountry } from '@/lib/utils';
 
+import {
+  HEADER_LOGO_DESKTOP_SLOT_CLASSES,
+  HEADER_LOGO_MOBILE_SLOT_CLASSES,
+  HEADER_LOGO_SKELETON_FILL_CLASSES,
+  HEADER_LOGO_WRAP_CLASSES,
+} from './headerLogoClasses';
+
 export const RESET_SEARCH_EVENT = 'kupito-reset-search';
 
 type HeaderLogoProps = {
   brandAlt: string;
 };
+
+function LogoSlot({
+  slotClassName,
+  src,
+  alt,
+  width,
+  height,
+  testId,
+}: {
+  slotClassName: string;
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  testId: string;
+}) {
+  const [isReady, setIsReady] = useState(false);
+  const markReady = useCallback(() => setIsReady(true), []);
+  const setImageNode = useCallback((node: HTMLImageElement | null) => {
+    if (node?.complete && node.naturalWidth > 0) {
+      setIsReady(true);
+    }
+  }, []);
+
+  return (
+    <span className={slotClassName} data-testid={testId}>
+      {!isReady ? (
+        <span
+          className={HEADER_LOGO_SKELETON_FILL_CLASSES}
+          data-testid="header-logo-image-skeleton"
+        />
+      ) : null}
+      <Image
+        ref={setImageNode}
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        className={`h-full w-full ${isReady ? 'opacity-100' : 'opacity-0'}`}
+        priority
+        suppressHydrationWarning
+        onLoad={markReady}
+      />
+    </span>
+  );
+}
 
 export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
   const pathname = usePathname();
@@ -43,28 +97,25 @@ export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
     <Link
       href={href('/')}
       onClick={handleClick}
-      className="flex shrink-0 items-center h-full min-h-[44px] hover-only:hover:opacity-90 transition-opacity duration-200 select-none mr-4 lg:mr-6"
+      data-testid="header-logo"
+      className={`${HEADER_LOGO_WRAP_CLASSES} hover-only:hover:opacity-90 transition-opacity duration-200`}
     >
-      <span className="flex items-center h-8 md:h-10">
-        <Image
-          src={desktopLogoUrl}
-          alt={brandAlt}
-          width={200}
-          height={65}
-          className="hidden lg:block h-8 md:h-10 w-auto"
-          priority
-          suppressHydrationWarning
-        />
-        <Image
-          src={mobileLogoUrl}
-          alt={brandAlt}
-          width={150}
-          height={48}
-          className="lg:hidden h-8 w-auto"
-          priority
-          suppressHydrationWarning
-        />
-      </span>
+      <LogoSlot
+        slotClassName={HEADER_LOGO_DESKTOP_SLOT_CLASSES}
+        src={desktopLogoUrl}
+        alt={brandAlt}
+        width={200}
+        height={65}
+        testId="header-logo-full"
+      />
+      <LogoSlot
+        slotClassName={HEADER_LOGO_MOBILE_SLOT_CLASSES}
+        src={mobileLogoUrl}
+        alt={brandAlt}
+        width={150}
+        height={48}
+        testId="header-logo-short"
+      />
     </Link>
   );
 }

@@ -43,7 +43,7 @@ See [search-title-url.md](./search-title-url.md) for brand/model slugs and [tech
 - **Change detection:** `useFilterHandlers` compares current `FilterState` to `lastAppliedFilters` (including sort). `lastAppliedFilters` is set after a successful apply and on URL sync from external navigation.
 - **Available count:** `useAvailableListingsCount` uses current form fields (including pending sort), not only URL params.
 - **Components:** `SortDropdown.tsx` (shared); home wires `onSortChange` + `selectedSortKey` via `SearchFormActions` / `SearchFiltersForm`.
-- **Scroll to results:** applying search sets `scrollToResultsAfterLoad`. After the grid is ready, `useListingGridScrollEffects` scrolls to `#listings-results`. On mobile (`innerWidth < 768`) this always runs. On desktop (`innerWidth >= 768`) it runs only when the page is still near the top (`scrollY <= 32`); if the user has already scrolled, the flag is cleared and the current position is kept.
+- **Scroll to results:** applying search sets `scrollToResultsAfterLoad`. After the grid is ready, `useListingGridScrollEffects` scrolls to `#listings-results`. On compact viewports (`innerWidth < 1280`) this always runs. On desktop (`innerWidth >= 1280`) it runs only when the page is still near the top (`scrollY <= 32`); if the user has already scrolled, the flag is cleared and the current position is kept.
 
 ---
 
@@ -172,9 +172,10 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 
 ---
 
-## Mobile layout
+## Compact layout (phone and tablet)
 
-- Below `md`, vehicle filters use `MobileSearchFilters` (bottom sheets for field editing).
+- Below `xl` (`< 1280px`), vehicle filters use `MobileSearchFilters` (bottom sheets for field editing). Desktop dropdowns start at `xl`.
+- Action buttons (`SearchFormActions`) stay stacked full-width until `xl`; the desktop sort+CTA row starts at 1280px.
 - All mobile search sheets use `components/common/BottomSheet.tsx` with a unified open/close lifecycle: slide-up on open, slide-down on close, regardless of whether the user dismisses via **OK**, the header close button, backdrop tap, Escape, swipe-down, or system **Back**.
 - Confirm (**OK**) applies draft values and closes the sheet with the same exit animation; dismiss actions do not apply draft changes.
 - Sheet height is derived from `visualViewport` (not static `vh`) and respects iOS safe areas (`viewport-fit=cover`, top inset on the handle/header, bottom inset on the footer).
@@ -307,6 +308,7 @@ The same floating-label and `search-control-border` primitives are reused in veh
 
 ## Related Documentation
 
+- [header-catalog-search.md](./header-catalog-search.md) — header typeahead for brand / model / year.
 - [search-title-url.md](./search-title-url.md) — URL slugs for brand/model, page title with diacritics.
 - [smart-selection.md](./smart-selection.md) — Guided questionnaire that creates saved filters.
 - [vehicle-type.md](./vehicle-type.md) — Vehicle type classification and usage in search/form.
@@ -315,4 +317,4 @@ The same floating-label and `search-control-border` primitives are reused in veh
 
 ---
 
-**Last updated:** 2026-07-14
+**Last updated:** 2026-08-19

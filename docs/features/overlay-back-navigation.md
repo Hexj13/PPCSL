@@ -18,7 +18,7 @@ Mobile browsers and installed PWAs/TWA expose a system **Back** control. Overlay
 - **Hook:** `core/frontend/hooks/useHistoryBackClose.ts` registers/unregisters one overlay id (React `useId()`).
 - **Consumers:**
   - `components/modals/Modal.tsx` — standard dialogs
-  - `components/common/BottomSheet.tsx` — mobile filter/select sheets and PWA update prompt (`mobileOnly={false}` when needed on desktop)
+  - `components/common/BottomSheet.tsx` — mobile filter/select sheets, header catalog search, and PWA update prompt (`mobileOnly={false}` when needed on desktop)
   - `components/modals/BottomSheet.tsx` — legacy sheet primitive (prefer `components/common/BottomSheet.tsx` for new work)
   - `components/ListingPage/useListingPageImageModal.ts` — listing photo viewer
 
@@ -40,3 +40,4 @@ After the grid reports readiness (`reportGridReady` + `reportBannerDecided` from
 
 - [image-preview.md](./image-preview.md) — photo viewer controls
 - [search-filters.md](./search-filters.md) — mobile bottom sheets for filters
+- [header-catalog-search.md](./header-catalog-search.md) — header catalog suggest sheet

@@ -2,7 +2,8 @@
 
 import { CreateListingButton } from '@/components/listing/CreateListingButton';
 
-import { CloseIcon, MenuIcon } from './icons';
+import { NavSkeleton } from './NavSkeleton';
+import { CloseIcon, MenuIcon, SearchIcon } from './icons';
 
 type MobileToolbarProps = {
   showSkeleton: boolean;
@@ -15,6 +16,10 @@ type MobileToolbarProps = {
   drawerId: string;
   showMenuToggle?: boolean;
   showCreateListing?: boolean;
+  showCatalogSearch?: boolean;
+  catalogSearchOpen?: boolean;
+  catalogSearchAriaLabel: string;
+  onOpenCatalogSearch?: () => void;
 };
 
 export function MobileToolbar({
@@ -28,6 +33,10 @@ export function MobileToolbar({
   drawerId,
   showMenuToggle = true,
   showCreateListing = true,
+  showCatalogSearch = false,
+  catalogSearchOpen = false,
+  catalogSearchAriaLabel,
+  onOpenCatalogSearch,
 }: MobileToolbarProps) {
   return (
     <div className="flex items-center lg:hidden gap-3">
@@ -36,8 +45,23 @@ export function MobileToolbar({
           <div className="h-9 w-20 bg-primary-700/20 rounded-sm animate-pulse" />
         ) : null
       ) : (
-        showCreateListing && !isDrawerVisible && <CreateListingButton variant="mobile" shortLabel />
+        showCreateListing && !isDrawerVisible && <CreateListingButton variant="mobile" />
       )}
+      {showCatalogSearch &&
+        (showSkeleton ? (
+          <NavSkeleton variant="mobileCatalogSearch" />
+        ) : (
+          <button
+            type="button"
+            data-testid="header-mobile-search"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center touch-manipulation text-primary-700 transition-colors duration-200 select-none hover-only:hover:text-primary-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base"
+            aria-label={catalogSearchAriaLabel}
+            aria-expanded={catalogSearchOpen}
+            onClick={onOpenCatalogSearch}
+          >
+            <SearchIcon className="h-6 w-6" />
+          </button>
+        ))}
       {showMenuToggle && (
         <button
           id={toggleId}

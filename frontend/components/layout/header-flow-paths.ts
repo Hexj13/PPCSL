@@ -26,6 +26,11 @@ export function isSignRoutePathname(pathname: string): boolean {
   return restPathMatchesPrefix(restPath, '/sign');
 }
 
+export function isAdminPathname(pathname: string): boolean {
+  const { restPath } = stripLocalePrefixFromPathname(pathname);
+  return restPathMatchesPrefix(restPath, '/admin');
+}
+
 export function isAuthRoutePathname(pathname: string): boolean {
   const { restPath } = stripLocalePrefixFromPathname(pathname);
   return AUTH_ROUTE_REST_PREFIXES.some((p) => restPathMatchesPrefix(restPath, p));

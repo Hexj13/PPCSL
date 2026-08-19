@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { RedisService } from '../../../common/redis.service';
 import { CACHE_PREFIXES, CACHE_TTL, generateCacheKey } from '../../../common/utils/cache.utils';
 import { IBrandsCache, BrandVehicleType } from '../../application/ports/brands-cache.port';
+import type { CatalogSuggestIndexDocument } from '../../catalog-suggest/catalog-suggest.types';
 import { Brand } from '../../entities/brand.entity';
 import { VehicleModel } from '../../entities/vehicle-model.entity';
 
@@ -46,6 +47,20 @@ export class RedisBrandsCache implements IBrandsCache {
     await this.redisService.setJson(cacheKey, models, CACHE_TTL.brands.models);
   }
 
+  async getSuggestIndex(): Promise<CatalogSuggestIndexDocument[] | null> {
+    return this.redisService.getJson<CatalogSuggestIndexDocument[]>(
+      CACHE_PREFIXES.brandsSuggestIndex,
+    );
+  }
+
+  async setSuggestIndex(documents: CatalogSuggestIndexDocument[]): Promise<void> {
+    await this.redisService.setJson(
+      CACHE_PREFIXES.brandsSuggestIndex,
+      documents,
+      CACHE_TTL.brands.suggestIndex,
+    );
+  }
+
   async invalidateAll(): Promise<void> {
     await this.redisService.invalidateByPrefix(CACHE_PREFIXES.brands);
   }
@@ -53,6 +68,7 @@ export class RedisBrandsCache implements IBrandsCache {
   async invalidateModels(brandId: string): Promise<void> {
     const prefix = `${CACHE_PREFIXES.brandsModels}:${brandId}`;
     await this.redisService.invalidateByPrefix(prefix);
+    await this.redisService.invalidateByPrefix(CACHE_PREFIXES.brandsSuggestIndex);
   }
 
   async invalidateBrandsList(): Promise<void> {

@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
+import { COMPACT_LAYOUT_MAX_WIDTH_PX } from '@/lib/layout-breakpoints';
 import { resetOverlayHistoryForTests, triggerOverlayPopStateForTests } from '@/lib/overlay-history';
 
 import { BottomSheet } from './BottomSheet';
@@ -20,7 +21,10 @@ function mockMobileViewport() {
     writable: true,
     configurable: true,
     value: jest.fn().mockImplementation((query: string) => ({
-      matches: typeof query === 'string' && query.includes('max-width') && query.includes('767'),
+      matches:
+        typeof query === 'string' &&
+        query.includes('max-width') &&
+        query.includes(String(COMPACT_LAYOUT_MAX_WIDTH_PX)),
       media: query,
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
@@ -307,5 +311,21 @@ describe('BottomSheet', () => {
       </BottomSheet>,
     );
     expect(screen.getByText('Desktop sheet')).toBeInTheDocument();
+  });
+
+  it('replaces the default title row when a custom header is provided', () => {
+    render(
+      <BottomSheet
+        isOpen
+        onClose={() => {}}
+        title="Accessible title"
+        header={<div data-testid="custom-sheet-header">Custom chrome</div>}
+      >
+        <p>Body</p>
+      </BottomSheet>,
+    );
+    expect(screen.queryByTestId('bottom-sheet-close')).not.toBeInTheDocument();
+    expect(screen.getByTestId('custom-sheet-header')).toBeInTheDocument();
+    expect(screen.getByText('Accessible title')).toHaveClass('sr-only');
   });
 });

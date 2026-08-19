@@ -40,6 +40,7 @@ export interface CacheTTL {
   brands: {
     all: number;
     models: number;
+    suggestIndex: number;
   };
   tireBrands: {
     all: number;
@@ -62,6 +63,7 @@ export const CACHE_TTL: CacheTTL = {
   brands: {
     all: 86400,
     models: 86400,
+    suggestIndex: 86400,
   },
   tireBrands: {
     all: 86400,
@@ -82,6 +84,7 @@ export const CACHE_PREFIXES = {
   listingsModelIndex: 'cache:listings:model-index',
   brands: 'cache:brands',
   brandsModels: 'cache:brands:models',
+  brandsSuggestIndex: 'cache:brands:suggest-index',
   tireBrands: 'cache:tire-brands',
   tireBrandsModels: 'cache:tire-brands:models',
   cities: 'cache:cities',

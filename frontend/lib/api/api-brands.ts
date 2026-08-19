@@ -1,3 +1,5 @@
+import type { CatalogSuggestItem } from '@/lib/search/header-catalog-suggest.types';
+
 import { api } from './api-client';
 import type { Brand, VehicleModel } from './api-types';
 
@@ -6,6 +8,12 @@ export const brandsApi = {
     const params = vehicleType ? { vehicleType } : {};
     return api.get<Brand[]>('/api/brands', { params });
   },
+  suggest: (q: string, options?: { signal?: AbortSignal }) =>
+    api.get<{ items: CatalogSuggestItem[] }>('/api/brands/suggest', {
+      params: { q },
+      signal: options?.signal,
+      headers: { 'X-Skip-Error-Handling': 'true' },
+    }),
   getModels: (brandId: string, vehicleType?: 'car' | 'truck' | 'moto') => {
     const params = vehicleType ? { vehicleType } : {};
     return api.get<VehicleModel[]>(`/api/brands/${brandId}/models`, { params });

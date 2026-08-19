@@ -162,7 +162,7 @@ export function SearchFiltersForm({
 
       {filters.listing_category === 'tire' && (
         <>
-          <div className="hidden md:block">
+          <div className="hidden xl:block">
             <TireSearchFilters
               activeTab={tabs.activeTab === 'popular' ? 'popular' : 'basic'}
               filters={filters}
@@ -179,7 +179,7 @@ export function SearchFiltersForm({
               updateMultiple={updateMultiple}
             />
           </div>
-          <div className="md:hidden">
+          <div className="xl:hidden">
             <MobileSearchFilters
               variant="tire"
               activeTab={tabs.activeTab === 'popular' ? 'popular' : 'basic'}
@@ -204,7 +204,7 @@ export function SearchFiltersForm({
       {filters.listing_category === 'vehicle' && (
         <>
           <div className={tabs.activeTab === 'basic' ? '' : 'hidden'}>
-            <div className="hidden md:block" data-testid="search-panel-basic">
+            <div className="hidden xl:block" data-testid="search-panel-basic">
               <BasicFilters
                 filters={filters}
                 onFilterChange={handlers.handleChange}
@@ -224,7 +224,7 @@ export function SearchFiltersForm({
           </div>
 
           <div className={tabs.activeTab === 'advanced' ? '' : 'hidden'}>
-            <div className="hidden md:block" data-testid="search-panel-advanced">
+            <div className="hidden xl:block" data-testid="search-panel-advanced">
               <AdvancedFilters
                 filters={filters}
                 onFilterChange={handlers.handleChange}
@@ -241,7 +241,7 @@ export function SearchFiltersForm({
           </div>
 
           <div className={tabs.activeTab === 'equipment' ? '' : 'hidden'}>
-            <div className="hidden md:block" data-testid="search-panel-equipment">
+            <div className="hidden xl:block" data-testid="search-panel-equipment">
               <EquipmentFilters
                 equipment={filters.equipment}
                 equipmentMatchMode={filters.equipment_match_mode}
@@ -255,7 +255,7 @@ export function SearchFiltersForm({
           </div>
 
           <div className={tabs.activeTab === 'popular' ? '' : 'hidden'}>
-            <div className="hidden md:block" data-testid="search-panel-popular">
+            <div className="hidden xl:block" data-testid="search-panel-popular">
               <PopularFilters
                 key={vehicleType}
                 brands={brands}
@@ -270,7 +270,7 @@ export function SearchFiltersForm({
             </div>
           </div>
 
-          <div className="md:hidden">
+          <div className="xl:hidden">
             <MobileSearchFilters
               variant="vehicle"
               activeTab={tabs.activeTab}

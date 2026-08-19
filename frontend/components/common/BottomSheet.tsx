@@ -16,9 +16,9 @@ import {
   computeBottomSheetLockMinHeightPx,
   computeBottomSheetMaxHeightPx,
 } from '@/lib/bottom-sheet-layout';
+import { COMPACT_LAYOUT_MEDIA_QUERY } from '@/lib/layout-breakpoints';
 import { designTokens } from '@/ui';
 
-const MOBILE_SHEET_MAX_WIDTH_PX = 767;
 const BOTTOM_SHEET_SCROLLABLE_SELECTOR = '[data-bottom-sheet-scrollable="true"]';
 
 function useMobileSheetViewport(): boolean {
@@ -26,11 +26,11 @@ function useMobileSheetViewport(): boolean {
     if (typeof window === 'undefined') {
       return false;
     }
-    return window.matchMedia(`(max-width: ${MOBILE_SHEET_MAX_WIDTH_PX}px)`).matches;
+    return window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY).matches;
   });
 
   useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${MOBILE_SHEET_MAX_WIDTH_PX}px)`);
+    const mq = window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY);
     const handler = () => setMatches(mq.matches);
     handler();
     mq.addEventListener('change', handler);
@@ -171,6 +171,7 @@ interface BottomSheetProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  header?: React.ReactNode;
   footer?: React.ReactNode;
   lockSheetHeight?: boolean;
   dataTestId?: string;
@@ -182,6 +183,7 @@ export function BottomSheet({
   onClose,
   title,
   children,
+  header,
   footer,
   lockSheetHeight = false,
   dataTestId,
@@ -439,6 +441,7 @@ export function BottomSheet({
         title={title}
         closeLabel={t('common.close')}
         lockSheetHeight={lockSheetHeight}
+        header={header}
         footer={footer}
         onRequestClose={requestCloseFromUser}
         onTransitionEnd={handleSheetPanelTransitionEnd}
