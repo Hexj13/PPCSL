@@ -423,8 +423,14 @@
     padding-right: 2.5rem !important;
   }
 
+  [data-bottom-sheet-overlay] & {
+    background-color: #fff !important;
+  }
+
   &.header-catalog-search-input:-webkit-autofill,
-  &.header-catalog-search-input:autofill {
+  &.header-catalog-search-input:autofill,
+  [data-bottom-sheet-overlay] &:-webkit-autofill,
+  [data-bottom-sheet-overlay] &:autofill {
     -webkit-text-fill-color: var(--color-text-primary) !important;
     box-shadow: 0 0 0 1000px #fff inset !important;
   }

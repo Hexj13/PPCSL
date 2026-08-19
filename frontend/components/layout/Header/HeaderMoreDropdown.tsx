@@ -8,6 +8,7 @@ import { designTokens, ChevronDownIcon } from '@/ui';
 import { DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES } from './desktopNavLinkClasses';
 
 type HeaderMoreDropdownProps = {
+  favoritesHref: string;
   compareHref: string;
   myListingsHref?: string;
   partnersHref?: string;
@@ -20,6 +21,7 @@ const menuItemClassName =
   'flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-text-primary transition-colors hover-only:hover:bg-primary-500/10';
 
 export function HeaderMoreDropdown({
+  favoritesHref,
   compareHref,
   myListingsHref,
   partnersHref,
@@ -65,6 +67,9 @@ export function HeaderMoreDropdown({
           data-testid="header-more-menu"
           role="menu"
         >
+          <Link href={favoritesHref} role="menuitem" onClick={close} className={menuItemClassName}>
+            <span suppressHydrationWarning>{t('header.favorites')}</span>
+          </Link>
           <Link href={compareHref} role="menuitem" onClick={close} className={menuItemClassName}>
             <span suppressHydrationWarning>{t('header.compare')}</span>
             {comparisonCount > 0 && (

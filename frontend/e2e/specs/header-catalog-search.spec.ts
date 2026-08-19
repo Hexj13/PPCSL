@@ -95,4 +95,19 @@ test.describe('Header catalog search @p0', () => {
 
     await runSteps(prependClearBrowserState(page, steps));
   });
+
+  test('does not overlap catalog search and login at 1024px', async ({ page, searchHomePage }) => {
+    const steps: E2EStep[] = [
+      {
+        name: 'Open home at 1024px and expect search not to overlap login',
+        action: async () => {
+          await page.setViewportSize({ width: 1024, height: 768 });
+          await searchHomePage.openAndExpectPageView();
+          await searchHomePage.headerNav.expectDesktopSearchDoesNotOverlapLogin();
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
 });

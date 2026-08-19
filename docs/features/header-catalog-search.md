@@ -47,7 +47,7 @@ Typeahead in the site header over the `brands` / `vehicle_models` catalog (brand
 
 ## Frontend / layout
 
-Desktop (`lg+`, 1024px and up): logo → nav links → divider → search input (full placeholder, fills leftover width) → divider → action buttons → divider → language. The header row is full viewport width with `20px` side padding (`px-5`); it does not use the page `container` max-width.
+Desktop (`lg+`, 1024px and up): logo → nav links → divider → search input (full placeholder, fills leftover width) → divider → action buttons → divider → language. The header row is full viewport width with `20px` side padding (`px-5`); it does not use the page `container` max-width. From `lg` until `xl` (1024–1279px) Favorites, Compare, My listings, and Partners sit in the More dropdown; they return as inline links from `xl`.
 
 If the desktop search slot is **narrower than 200px** when the field is focused (or the query changes), nav links collapse left of the input so the field grows toward the logo. The threshold is `HEADER_CATALOG_SEARCH_MIN_WIDTH_PX` and is measured once from the slot’s width before collapse; a later keystroke does not re-measure (that would restore the menu because the field is already wider). Fields already **200px or wider** leave the menu in place. Nav returns on click outside, Escape, or selecting a suggestion. While collapsed, the nav cluster is `inert` / `aria-hidden`, uses `overflow-hidden`, and animates `grid-template-columns` `1fr` → `0fr` (~300ms). At rest the cluster keeps `overflow-visible` so the More dropdown is not clipped.
 

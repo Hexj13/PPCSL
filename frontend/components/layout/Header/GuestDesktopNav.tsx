@@ -33,7 +33,7 @@ export function GuestDesktopNavLinks({
         labelClassName={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES}
         t={t}
       />
-      <Link href={buildSignInHref('/favorites')} className={navLinkClasses}>
+      <Link href={buildSignInHref('/favorites')} className={`${navLinkClasses} lg:hidden xl:flex`}>
         <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
           {t('header.favorites')}
         </span>
@@ -54,6 +54,7 @@ export function GuestDesktopNavLinks({
         </span>
       </Link>
       <HeaderMoreDropdown
+        favoritesHref={buildSignInHref('/favorites')}
         compareHref={href('/compare')}
         partnersHref={href('/partners')}
         comparisonCount={comparisonCount}

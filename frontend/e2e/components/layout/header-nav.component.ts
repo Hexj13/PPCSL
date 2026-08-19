@@ -2,6 +2,7 @@ import { expect, type Page } from '@playwright/test';
 
 import { expectPagePath } from '../../utils/app-path';
 import { expectLoggedOut } from '../../utils/auth';
+import { t } from '../../utils/i18n';
 import { dismissCookieConsentIfVisible } from '../../utils/session';
 import { pageUsesMobileLayout } from '../../utils/viewport';
 
@@ -121,20 +122,56 @@ export class HeaderNavComponent {
 
   async expectCatalogSearchChrome(): Promise<void> {
     if (await pageUsesMobileLayout(this.page)) {
+      const header = this.page.locator('header').first();
       const search = this.page.getByTestId(this.testIds.mobileSearch);
       const burger = this.page.getByTestId(this.testIds.mobileMenuToggle);
+      await expect(header).toBeVisible({ timeout: 15_000 });
       await expect(search).toBeVisible({ timeout: 15_000 });
       await expect(burger).toBeVisible({ timeout: 15_000 });
+      const headerBox = await header.boundingBox();
       const searchBox = await search.boundingBox();
       const burgerBox = await burger.boundingBox();
+      expect(headerBox).toBeTruthy();
       expect(searchBox).toBeTruthy();
       expect(burgerBox).toBeTruthy();
       expect((searchBox?.x ?? 0) + (searchBox?.width ?? 0)).toBeLessThanOrEqual(
         (burgerBox?.x ?? 0) + 2,
       );
+      this.expectBoxInsideHeader(searchBox, headerBox);
+      this.expectBoxInsideHeader(burgerBox, headerBox);
       return;
     }
     await expect(this.catalogSearchInput()).toBeVisible({ timeout: 15_000 });
+  }
+
+  async expectDesktopSearchDoesNotOverlapLogin(): Promise<void> {
+    const search = this.catalogSearchInput();
+    const login = this.page
+      .locator('header')
+      .first()
+      .getByRole('link', { name: t('header.loginAndRegister') });
+    await expect(search).toBeVisible({ timeout: 15_000 });
+    await expect(login).toBeVisible({ timeout: 15_000 });
+    const searchBox = await search.boundingBox();
+    const loginBox = await login.boundingBox();
+    expect(searchBox).toBeTruthy();
+    expect(loginBox).toBeTruthy();
+    expect((searchBox?.x ?? 0) + (searchBox?.width ?? 0)).toBeLessThanOrEqual(
+      (loginBox?.x ?? 0) + 1,
+    );
+  }
+
+  private expectBoxInsideHeader(
+    box: { x: number; y: number; width: number; height: number } | null,
+    headerBox: { x: number; y: number; width: number; height: number } | null,
+  ): void {
+    expect(box).toBeTruthy();
+    expect(headerBox).toBeTruthy();
+    if (!box || !headerBox) {
+      return;
+    }
+    expect(box.x).toBeGreaterThanOrEqual(headerBox.x - 1);
+    expect(box.x + box.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 1);
   }
 
   async expectCatalogSearchHidden(): Promise<void> {

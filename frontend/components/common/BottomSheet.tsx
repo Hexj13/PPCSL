@@ -414,6 +414,7 @@ export function BottomSheet({
 
   const content = (
     <div
+      data-bottom-sheet-overlay
       data-testid="bottom-sheet-overlay"
       className="fixed overscroll-none pointer-events-auto"
       style={overlayStyle}

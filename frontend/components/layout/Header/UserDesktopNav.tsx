@@ -32,7 +32,7 @@ export function UserDesktopNavLinks({
         labelClassName={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES}
         t={t}
       />
-      <Link href={href('/favorites')} className={navLinkClasses}>
+      <Link href={href('/favorites')} className={`${navLinkClasses} lg:hidden xl:flex`}>
         <span className={DESKTOP_HEADER_NAV_LINK_LABEL_CLASSES} suppressHydrationWarning>
           {t('header.favorites')}
         </span>
@@ -60,6 +60,7 @@ export function UserDesktopNavLinks({
         </Link>
       )}
       <HeaderMoreDropdown
+        favoritesHref={href('/favorites')}
         compareHref={href('/compare')}
         myListingsHref={href('/my-listings')}
         partnersHref={userType !== 'Individual' ? href('/partners') : undefined}

@@ -30,11 +30,11 @@ jest.mock('@/lib/store', () => ({
 import { CreateListingButton } from './CreateListingButton';
 
 describe('CreateListingButton', () => {
-  it('uses the short Post label only at 375px and below in the mobile toolbar', () => {
+  it('uses the short Post label in the mobile toolbar and hides it below 360px', () => {
     render(<CreateListingButton variant="mobile" />);
 
-    expect(screen.getByText('header.createListing')).toHaveClass('max-[375px]:hidden');
-    expect(screen.getByText('header.createListingShort')).toHaveClass('max-[375px]:inline');
+    expect(screen.queryByText('header.createListing')).toBeNull();
+    expect(screen.getByText('header.createListingShort')).toHaveClass('max-[359px]:hidden');
   });
 
   it('keeps the full Post Listing label in the mobile drawer', () => {
@@ -42,5 +42,12 @@ describe('CreateListingButton', () => {
 
     expect(screen.getByText('header.createListing')).toBeInTheDocument();
     expect(screen.queryByText('header.createListingShort')).toBeNull();
+  });
+
+  it('uses the short Post label below xl on desktop', () => {
+    render(<CreateListingButton variant="desktop" />);
+
+    expect(screen.getByText('header.createListing')).toHaveClass('hidden', 'xl:inline');
+    expect(screen.getByText('header.createListingShort')).toHaveClass('xl:hidden');
   });
 });

@@ -269,7 +269,7 @@ Automated coverage: `e2e/specs/search-filters-mobile.spec.ts` (sheet matrix + di
 | `search-filters/VehicleTypeSelector.tsx`    | Car / Truck / Moto selector                                                                |
 | `search-filters/PopularBodyTypesFilter.tsx` | Body type chips under Basic filters                                                        |
 | `hooks/usePopularModels.ts`                 | Popular tab: brand/model selection, mutual exclusion, selectedItems                         |
-| `app/globals.css`                           | `.paired-left`, `.paired-right`, `.input-field`, `.search-control-border`, `.search-field-floating*` |
+| `app/globals.css`                           | `.paired-left`, `.paired-right`, `.input-field`, `.search-control-border`, `.search-field-floating*`; `.input-field` inside `[data-bottom-sheet-overlay]` uses a white (`#fff`) background |
 
 ---
 

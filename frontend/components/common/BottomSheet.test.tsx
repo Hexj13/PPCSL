@@ -80,6 +80,7 @@ describe('BottomSheet', () => {
     );
     expect(screen.getByText('Test sheet')).toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();
+    expect(screen.getByTestId('bottom-sheet-overlay')).toHaveAttribute('data-bottom-sheet-overlay');
     fireEvent.click(screen.getByTestId('bottom-sheet-close'));
     expect(onClose).not.toHaveBeenCalled();
     act(() => {

@@ -55,7 +55,7 @@ export function CreateListingButton({
   const variantClasses = isMobile
     ? drawerCta
       ? `px-3 py-0 w-full text-[14px] ${MOBILE_NAV_CTA_HEIGHT_CLASSES}`
-      : 'px-3 py-2 w-full text-[14px]'
+      : 'px-3 py-2 min-w-0 shrink text-[14px]'
     : 'h-10 px-3';
 
   const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';
@@ -82,16 +82,11 @@ export function CreateListingButton({
       {isMobile && drawerCta ? (
         <span className="relative z-10">{t('header.createListing')}</span>
       ) : isMobile ? (
-        <>
-          <span className="relative z-10 max-[375px]:hidden">{t('header.createListing')}</span>
-          <span className="relative z-10 hidden max-[375px]:inline">
-            {t('header.createListingShort')}
-          </span>
-        </>
+        <span className="relative z-10 max-[359px]:hidden">{t('header.createListingShort')}</span>
       ) : (
         <>
-          <span className="relative z-10 hidden lg:inline">{t('header.createListing')}</span>
-          <span className="relative z-10 lg:hidden">{t('header.createListingShort')}</span>
+          <span className="relative z-10 hidden xl:inline">{t('header.createListing')}</span>
+          <span className="relative z-10 xl:hidden">{t('header.createListingShort')}</span>
         </>
       )}
     </Link>

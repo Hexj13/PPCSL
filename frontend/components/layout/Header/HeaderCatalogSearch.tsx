@@ -169,7 +169,7 @@ export function HeaderCatalogSearch({
         aria-haspopup="listbox"
         placeholder={t('header.catalogSearchPlaceholder')}
         className={`input-field search-control-border w-full [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:appearance-none ${
-          isSheet ? 'header-catalog-search-sheet-input' : 'header-catalog-search-input'
+          isSheet ? 'header-catalog-search-sheet-input' : 'header-catalog-search-input min-w-0'
         }`}
         onChange={(event) => {
           setQuery(event.target.value);

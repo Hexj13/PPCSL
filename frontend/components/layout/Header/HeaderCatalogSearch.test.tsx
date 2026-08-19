@@ -138,6 +138,11 @@ describe('HeaderCatalogSearch', () => {
     );
   });
 
+  it('allows the desktop catalog search input to shrink below its placeholder width', () => {
+    render(<HeaderCatalogSearch variant="desktop" />);
+    expect(screen.getByTestId('header-catalog-search-input')).toHaveClass('min-w-0');
+  });
+
   it('matches the desktop dropdown to the input width with a 200px minimum', () => {
     suggestMock.mockReturnValue({ items: [yearItem], isLoading: false });
     render(<HeaderCatalogSearch variant="desktop" />);
