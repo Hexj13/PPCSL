@@ -187,12 +187,10 @@ Use this approach when:
 
 3. **Copy platform files to core:**
 
+   Use `npm run prepare:build` from the platform root. It copies locales, theme, config, and assets, and writes gitignored backend `core/backend/src/common/config/site.ts` via `core/scripts/copy-backend-site-overlay.cjs`. Copying `config/` into `core/frontend/lib/config/` alone does not fill that backend slot.
+
    ```bash
-   # Translations are loaded directly from root, but copying provides fallback
-   # Theme and config files must be copied as they are TypeScript modules
-   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json locales/en.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/  # Frontend ro/ru/en + backend locales
-   cp -r theme core/frontend/lib/   # Required
-   cp -r config core/frontend/lib/  # Required
+   npm run prepare:build
    ```
 
 4. **Install dependencies:**
@@ -366,12 +364,10 @@ If you need to make changes to core while working in kupito.club:
 2. **Copy files to core for testing:**
 
    ```bash
-   mkdir -p core/frontend/lib/locales && cp locales/ro.json locales/ru.json locales/en.json core/frontend/lib/locales/ && cp locales/backend/*.json core/backend/src/common/i18n/  # Frontend ro/ru/en + backend locales (loaded from root)
-   cp -r theme core/frontend/lib/
-   cp -r config core/frontend/lib/
+   npm run prepare:build
    ```
 
-   **Note:** Frontend uses `locales/ro.json`, `locales/ru.json`, and `locales/en.json`; backend uses `locales/backend/*.json`. No `backend/` folder is created in `core/frontend/lib/locales/`.
+   Prefer this over a manual `cp` of locales/theme/config: backend overlay `core/backend/src/common/config/site.ts` is gitignored in PPCSL and is only written by `copy-backend-site-overlay.cjs`.
 
 3. **Test locally**
 
@@ -620,7 +616,7 @@ git status  # Check what's modified
    ls locales/en.json
    ```
 
-   Translations are copied to core at prepare:build (frontend ro/ru/en, backend from locales/backend).
+   Translations are copied to core at prepare:build (frontend ro/ru/en, backend from locales/backend). The same command writes backend overlay `config/site.ts`; that file is not in PPCSL git.
 
 2. Ensure theme and config files are copied to `core/frontend/lib/`:
    ```bash

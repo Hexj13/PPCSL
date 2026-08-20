@@ -647,10 +647,16 @@ Color scheme for your platform. Exports default object with primary, secondary, 
 
 #### `config/site.ts`
 
-Site-specific configuration:
+Site-specific configuration (`prepare:build` copies it to `core/frontend/lib/config/site.ts` and, via `core/scripts/copy-backend-site-overlay.cjs`, to `core/backend/src/common/config/site.ts`). The backend copy is gitignored in PPCSL — do not commit it to core. A platform sync script must invoke:
+
+```bash
+node core/scripts/copy-backend-site-overlay.cjs
+```
+
+from the platform repository root (cwd). Also copy every `locales/backend/*.json` you ship. Without those copies, a submodule bump leaves the API on English.
 
 - Domain name
-- Locale
+- Locale / `localeRouting`
 - Currency
 - Support email
 - Country code

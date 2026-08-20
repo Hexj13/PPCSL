@@ -37,6 +37,18 @@ export function loadOverlayLocaleRouting(): OverlayLocaleRouting {
   }
 }
 
+export function resolveI18nDefaultLocale(envLocale?: string, overlayDefault?: string): string {
+  const env = envLocale?.toLowerCase();
+  if (env && (SUPPORTED_LOCALES as readonly string[]).includes(env)) {
+    return env;
+  }
+  const overlay = overlayDefault?.toLowerCase();
+  if (overlay && (SUPPORTED_LOCALES as readonly string[]).includes(overlay)) {
+    return overlay;
+  }
+  return 'en';
+}
+
 export function resolveI18nLocalesToLoad(options: {
   defaultLocale: string;
   supportedLocalesEnv?: string;
@@ -45,10 +57,10 @@ export function resolveI18nLocalesToLoad(options: {
   const fromEnv = parseLocaleList(options.supportedLocalesEnv);
   const fromOverlay = parseLocaleList(options.overlaySupportedLocales);
   const selected = fromEnv.length > 0 ? fromEnv : fromOverlay;
-  if (selected.length === 0) {
-    return [...SUPPORTED_LOCALES];
-  }
   const set = new Set(selected);
+  if (selected.length === 0) {
+    set.add('en');
+  }
   if ((SUPPORTED_LOCALES as readonly string[]).includes(options.defaultLocale)) {
     set.add(options.defaultLocale);
   }
@@ -80,14 +92,10 @@ export class I18nService {
 
   constructor() {
     const overlay = loadOverlayLocaleRouting();
-    const envLocale = process.env.DEFAULT_LOCALE?.toLowerCase();
-    this.defaultLocale =
-      envLocale && (SUPPORTED_LOCALES as readonly string[]).includes(envLocale)
-        ? envLocale
-        : overlay.defaultLocale &&
-            (SUPPORTED_LOCALES as readonly string[]).includes(overlay.defaultLocale)
-          ? overlay.defaultLocale
-          : 'ro';
+    this.defaultLocale = resolveI18nDefaultLocale(
+      process.env.DEFAULT_LOCALE,
+      overlay.defaultLocale,
+    );
 
     const localesToLoad = resolveI18nLocalesToLoad({
       defaultLocale: this.defaultLocale,

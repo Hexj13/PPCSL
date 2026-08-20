@@ -1432,7 +1432,7 @@ Platform `frontend-check` runs `npm run typecheck` and `npm run knip` explicitly
 
 **Jobs:**
 
-1. **prepare** — checkout with submodules, `npm ci` at the root, `npm run prepare:build`, then verifies that all expected files exist in the submodule (locales RO/RU/EN, `theme.json`, `config/site.ts`, `config/parsers.ts`, frontend and backend parsers catalog, `public/logo.png`, `watermark/logo.png`).
+1. **prepare** — checkout with submodules, `npm ci` at the root, `npm run prepare:build`, then verifies that all expected files exist in the submodule (locales RO/RU/EN, `theme.json`, frontend and backend `config/site.ts`, `config/parsers.ts`, frontend and backend parsers catalog, `public/logo.png`, `watermark/logo.png`). Platform CI requires backend `site.ts` **after** `prepare:build`; PPCSL core CI does not — that overlay is gitignored and absent in a bare checkout.
 2. **frontend-check** (needs prepare) — `npm ci` in `core/frontend`, restores `actions/cache` for `core/frontend/.next/cache`, runs lint / lint:styles / format:check / typecheck / knip / test / `next build`, verifies `.next` directory exists.
 3. **backend-check** (needs prepare) — runs with Postgres + Redis services, `npm ci` in `core/backend`, runs lint:check / format:check / unit / integration / `nest build`, verifies `dist/main.js`.
 4. **audit** (needs prepare) — runs `npm audit --omit=dev --audit-level=critical` for frontend and backend (blocking).
@@ -1440,7 +1440,7 @@ Platform `frontend-check` runs `npm run typecheck` and `npm run knip` explicitly
 6. **frontend-e2e-p0** (optional, needs prepare + frontend-check, `if: vars.PLAYWRIGHT_BASE_URL != ''`) — `npm run test:e2e:p0 -- --project=mobile` with `PLAYWRIGHT_SKIP_WEBSERVER=1`.
 7. **deploy** (needs frontend-check + backend-check, `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`) — POSTs to `RENDER_FRONTEND_DEPLOY_HOOK` and `RENDER_BACKEND_DEPLOY_HOOK`. If a hook secret is missing, that step is skipped and Render's own auto-deploy is expected as a fallback.
 
-`prepare:build` is the single source of truth: the same script runs locally (`npm run release-check`, `release-check:fast`) and in every CI job. No inline copy script duplicates it anywhere. The script never uses `rm -rf` against `core/frontend/lib/config` or `core/frontend/lib/locales`, so core-only files in those directories (for example `parsers.ts` kept under `!frontend/lib/config/parsers.ts` in `core/.gitignore`) are never accidentally wiped.
+`prepare:build` is the single source of truth: the same script runs locally (`npm run release-check`, `release-check:fast`) and in every CI job. No inline copy script duplicates it anywhere. The script never uses `rm -rf` against `core/frontend/lib/config` or `core/frontend/lib/locales`, so core-only files in those directories (for example `parsers.ts` kept under `!frontend/lib/config/parsers.ts` in `core/.gitignore`) are never accidentally wiped. Backend overlay `config/site.ts` and i18n JSON except `en.json` are gitignored; platforms write them with `copy-backend-site-overlay.cjs` and locale copy.
 
 Caches:
 

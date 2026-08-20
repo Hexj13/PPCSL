@@ -77,6 +77,7 @@ storybook-static
 
 # Platform-specific files (should be in platform repositories, not in core)
 # Already-tracked files are not affected by this rule; only new files are ignored.
+# After adding a path here, run `git rm --cached` on files that were already tracked.
 # Ignore directory contents (not the directory itself) so negations below work.
 # To track a new config file in core, add a negation (!path) below.
 frontend/lib/config/*
@@ -86,6 +87,9 @@ frontend/lib/locales/*.json
 !frontend/lib/locales/en.json
 frontend/lib/theme/colors.ts
 frontend/next-env.d.ts
+backend/src/common/config/site.ts
+backend/src/common/i18n/*.json
+!backend/src/common/i18n/en.json
 
 # Platform-specific assets (copied from platform repos during build)
 frontend/public/favicon*.png

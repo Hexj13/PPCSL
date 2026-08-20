@@ -51,13 +51,12 @@ const SKIP_REL_EXACT = new Set([
   'frontend/lib/theme/colors.ts',
   'backend/src/common/config/site.ts',
   'backend/src/common/config/parsers.ts',
-  'backend/src/common/i18n/en.json',
-  'backend/src/common/i18n/sq.json',
 ]);
 
 const SKIP_REL_PREFIXES = [
   'frontend/lib/locales/',
   'frontend/public/',
+  'backend/src/common/i18n/',
   'backend/assets/watermark/',
 ];
 

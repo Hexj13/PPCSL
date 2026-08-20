@@ -50,6 +50,10 @@ platform-repo/
 
 `npm run prepare:build` (see `scripts/sync-platform-to-core.cjs`) copies the overlay over `core/`, **replacing whole files** — it is not a merge. Anything not present in the overlay keeps the core version.
 
+**Gotcha — backend `site.ts` and overlay i18n JSON are not in PPCSL git.** `prepare:build` must write `core/backend/src/common/config/site.ts` by running `node core/scripts/copy-backend-site-overlay.cjs` from the platform root (strips `SiteConfig`) and must copy **every** `locales/backend/*.json` the platform ships (including `sq.json` for Albania). PPCSL gitignores those slots except `backend/src/common/i18n/en.json`. Pulling a core bump without that copy leaves the backend on English and the name `API` / URL hostname. Never commit the copied overlay into `core/`.
+
+**MakinaGuru (before bumping this core):** add the helper call to `scripts/sync-platform-to-core.cjs` and confirm `locales/backend/sq.json` is copied. Kupito already copies `ro`/`ru`/`en` and calls the helper.
+
 ---
 
 ## Which resources are separate per platform

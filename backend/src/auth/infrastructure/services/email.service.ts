@@ -21,6 +21,7 @@ import {
   normalizeSiteBaseUrl,
 } from '../../../common/email/email-template';
 import { I18nService } from '../../../common/i18n/i18n.service';
+import { loadOverlaySiteName, resolvePlatformName } from '../../../common/platform-name';
 import { RedisService } from '../../../common/redis.service';
 
 const EMAIL_CHANGE_ATTEMPTS_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -269,7 +270,7 @@ export class EmailService {
     const bodyHtml = [
       emailTextParagraph(
         interpolateEmailTemplate(bodyHtmlTemplate, {
-          siteName: escapeHtml(this.getSiteName() || 'platform'),
+          siteName: escapeHtml(this.getSiteName()),
           domain: escapeHtml(this.getFrontendHostname() || 'localhost'),
           count: `<strong>${escapeHtml(String(activeListingsCount))}</strong>`,
         }),
@@ -387,7 +388,7 @@ export class EmailService {
   private emailT(key: string, locale: EmailLocale, vars?: Record<string, string | number>): string {
     const raw = this.i18nService.translate(key, locale);
     return interpolateEmailTemplate(raw, {
-      siteName: this.getSiteName() || 'platform',
+      siteName: this.getSiteName(),
       domain: this.getFrontendHostname() || 'localhost',
       ...vars,
     });
@@ -410,8 +411,16 @@ export class EmailService {
     return `${base}${localizedEmailPath(withQuery, locale, this.getRoutingDefaultLocale())}`;
   }
 
-  private getSiteName(): string | undefined {
-    return this.getEnvValue('SITE_NAME') || this.getEnvValue('PLATFORM_NAME');
+  private getSiteName(): string {
+    return resolvePlatformName({
+      env: {
+        SITE_NAME: this.getEnvValue('SITE_NAME'),
+        PLATFORM_NAME: this.getEnvValue('PLATFORM_NAME'),
+        FRONTEND_URL: this.getEnvValue('FRONTEND_URL'),
+        NEXT_PUBLIC_SITE_URL: this.getEnvValue('NEXT_PUBLIC_SITE_URL'),
+      },
+      overlayName: loadOverlaySiteName() ?? null,
+    });
   }
 
   private getEmailLogoSrc(): string | undefined {

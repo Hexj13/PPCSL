@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import nodemailer from 'nodemailer';
 
 import { I18nService } from '../../../common/i18n/i18n.service';
+import { loadOverlaySiteName } from '../../../common/platform-name';
 import { RedisService } from '../../../common/redis.service';
 import { EmailService } from './email.service';
 
@@ -13,6 +14,16 @@ jest.mock('nodemailer', () => ({
     createTransport: jest.fn(),
   },
 }));
+
+jest.mock('../../../common/platform-name', () => {
+  const actual = jest.requireActual<typeof import('../../../common/platform-name')>(
+    '../../../common/platform-name',
+  );
+  return {
+    ...actual,
+    loadOverlaySiteName: jest.fn(() => undefined),
+  };
+});
 
 type EnvMap = Record<string, string | undefined>;
 
@@ -109,6 +120,7 @@ describe('EmailService', () => {
     createTransportMock.mockReturnValue({
       sendMail: sendMailMock,
     });
+    jest.mocked(loadOverlaySiteName).mockReturnValue(undefined);
   });
 
   describe('configuration validation', () => {
@@ -354,7 +366,17 @@ describe('EmailService', () => {
       expect(sent.text).toContain('Listings 3 at https://example.test/my-listings');
       expect(sent.html).toContain('https://example.test/my-listings');
       expect(sent.html).toContain('<strong>3</strong>');
-      expect(sent.html).toContain('listings on platform');
+      expect(sent.html).toContain('listings on example.test');
+    });
+
+    it('uses overlay site name when SITE_NAME is unset', async () => {
+      jest.mocked(loadOverlaySiteName).mockReturnValue('Overlay Market');
+      const service = createService(env);
+
+      await service.sendListingRefreshReminder('test@example.com', 3, 'en');
+
+      const sent = sendMailMock.mock.calls[0]?.[0];
+      expect(sent.html).toContain('listings on Overlay Market');
     });
 
     it('escapes SITE_NAME when interpolating listing refresh HTML', async () => {

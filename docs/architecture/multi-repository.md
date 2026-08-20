@@ -217,7 +217,11 @@ return <h1>{t('header.addListing')}</h1>;
    - `locales/backend/*.json` → `core/backend/src/common/i18n/` (backend)
    - `theme/` → `core/frontend/lib/theme/`
    - `config/` → `core/frontend/lib/config/`
+   - `config/site.ts` → `core/backend/src/common/config/site.ts` via `core/scripts/copy-backend-site-overlay.cjs` (strips `SiteConfig`)
+   - `config/parsers.ts` → `core/backend/src/common/config/parsers.ts`
    - Assets: `assets/frontend/public/*`, `assets/backend/watermark/` → core
+
+   Overlay slots `backend/src/common/config/site.ts` and `backend/src/common/i18n/{ro,ru,sq}.json` are gitignored in PPCSL (tracked `en.json` stays). Never commit a live platform copy into core. A bare PPCSL checkout has no backend `site.ts`; `loadOverlayLocaleRouting` / `loadOverlaySiteName` return empty and the backend falls back to English.
 
 2. **Build** happens in `core/frontend` and `core/backend` using copied files
 
@@ -233,7 +237,7 @@ For complete CI/CD documentation, see **[Technical Documentation - CI/CD Configu
 
 **PPCSL (core):**
 
-- Runs tests, linters, type checking
+- Runs tests, linters, type checking without a platform overlay (`site.ts` and overlay i18n JSON are absent)
 - Updates submodules in platform repositories on success
 
 **Platform repositories:**

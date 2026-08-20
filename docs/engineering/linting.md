@@ -174,11 +174,11 @@ toast.success(t('sms.codeSent'))
 
 Wired into frontend `npm run lint` and backend `npm run lint:check` as `lint:platform-neutral` (`core/scripts/check-platform-neutral.cjs`), so `npm run release-check` already runs it. Playwright e2e specs also forbid those literals via ESLint `no-restricted-syntax` (`e2e/platform/` is excluded — that folder holds real fixtures).
 
-This is a dedicated lint script rather than an ESLint plugin: backend ESLint skips specs, overlay `prepare:build` overwrites tracked locale/config files with platform copy, and CSS is outside ESLint. A new platform brand/domain must be added to `FORBIDDEN` in the script.
+This is a dedicated lint script rather than an ESLint plugin: backend ESLint skips specs, overlay `prepare:build` writes gitignored locale/config slots (except tracked `en.json`), and CSS is outside ESLint. A new platform brand/domain must be added to `FORBIDDEN` in the script.
 
 **Allowed in core source:** Infocar affiliate `from=kupito`; deprecated `KUPITO_*` env aliases; `kupitoListingId` registry migration; `frontend/e2e/platform/contract.test.ts`. Per-line escape: `ppcsl-allow-platform-name`.
 
-**Not scanned (overlay slots):** `frontend/lib/locales/`, platform FAQ/legal under `frontend/lib/config/`, `backend/src/common/config/site.ts`, overlay i18n `en.json` / `sq.json`.
+**Not scanned (overlay slots):** `frontend/lib/locales/`, platform FAQ/legal under `frontend/lib/config/`, `backend/src/common/config/site.ts`, `backend/src/common/i18n/`.
 
 ---
 

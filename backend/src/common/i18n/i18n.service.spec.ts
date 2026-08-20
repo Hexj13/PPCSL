@@ -1,6 +1,7 @@
 import {
   interpolateI18nTemplate,
   resolveI18nBundleLocales,
+  resolveI18nDefaultLocale,
   resolveI18nLocalesToLoad,
 } from './i18n.service';
 
@@ -26,9 +27,29 @@ describe('resolveI18nBundleLocales', () => {
   });
 });
 
+describe('resolveI18nDefaultLocale', () => {
+  it('prefers DEFAULT_LOCALE env over overlay', () => {
+    expect(resolveI18nDefaultLocale('sq', 'ro')).toBe('sq');
+  });
+
+  it('uses overlay when env is missing or unsupported', () => {
+    expect(resolveI18nDefaultLocale(undefined, 'ro')).toBe('ro');
+    expect(resolveI18nDefaultLocale('xx', 'sq')).toBe('sq');
+  });
+
+  it('falls back to English in a bare core checkout', () => {
+    expect(resolveI18nDefaultLocale()).toBe('en');
+    expect(resolveI18nDefaultLocale('xx', 'yy')).toBe('en');
+  });
+});
+
 describe('resolveI18nLocalesToLoad', () => {
-  it('loads every bundled locale when no platform list is configured', () => {
-    expect(resolveI18nLocalesToLoad({ defaultLocale: 'ro' })).toEqual(['ro', 'ru', 'en', 'sq']);
+  it('loads default and English when no platform list is configured', () => {
+    expect(resolveI18nLocalesToLoad({ defaultLocale: 'ro' })).toEqual(['ro', 'en']);
+  });
+
+  it('loads only English when the default is English and no list is configured', () => {
+    expect(resolveI18nLocalesToLoad({ defaultLocale: 'en' })).toEqual(['en']);
   });
 
   it('loads only overlay locales so unused brand copies stay off disk', () => {
