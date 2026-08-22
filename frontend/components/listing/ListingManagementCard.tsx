@@ -298,7 +298,12 @@ export function ListingManagementCard({
   const [imageError, setImageError] = useState(false);
   const displayTitle = getListingDisplayTitle(listing, t);
   const vehicleType = getVehicleType(listing);
-  const newLabel = vehicleType === 'moto' ? t('listings.newMoto') : t('listings.new');
+  const newLabel =
+    vehicleType === 'moto'
+      ? t('listings.newMoto')
+      : vehicleType === 'truck'
+        ? t('listings.newTruck')
+        : t('listings.new');
 
   const imageUrl =
     listing.images?.length && listing.images[0] ? listing.images[0] : '/placeholder-car.jpg';

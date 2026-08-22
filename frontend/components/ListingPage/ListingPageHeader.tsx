@@ -141,7 +141,12 @@ export function ListingPageHeader({ listing, title }: ListingPageHeaderProps) {
   const { t } = useTranslation();
   const vehicleType = getVehicleType(listing);
   const showNewVehicleBadge = Boolean(listing.is_new && !isTireListing(listing));
-  const newLabel = vehicleType === 'moto' ? t('listingDetail.newMoto') : t('listingDetail.new');
+  const newLabel =
+    vehicleType === 'moto'
+      ? t('listingDetail.newMoto')
+      : vehicleType === 'truck'
+        ? t('listingDetail.newTruck')
+        : t('listingDetail.new');
   const tirePriceScopeLine =
     isTireListing(listing) &&
     listing.tire != null &&

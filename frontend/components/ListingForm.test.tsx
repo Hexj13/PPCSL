@@ -678,6 +678,30 @@ describe('ListingForm', () => {
         expect(getIsNewCheckbox(screen)).toBeInTheDocument();
       });
       expect(getIsNewCheckbox(screen) as HTMLInputElement).toBeChecked();
+      expect(screen.getByText('listings.new')).toBeInTheDocument();
+    });
+
+    it('shows newTruck label for commercial vehicle listings', async () => {
+      const onSuccess = jest.fn();
+      const truckListing = {
+        ...mockListing,
+        is_new: true,
+        vehicle: { ...mockListing.vehicle, body_type: 'Truck' },
+      };
+      render(
+        <ListingForm
+          mode="edit"
+          listingId="listing-1"
+          initialData={truckListing as Listing}
+          onSuccess={onSuccess}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(getIsNewCheckbox(screen)).toBeInTheDocument();
+      });
+      expect(screen.getByText('listings.newTruck')).toBeInTheDocument();
+      expect(screen.queryByText('listings.newMoto')).not.toBeInTheDocument();
     });
   });
 

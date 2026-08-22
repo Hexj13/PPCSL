@@ -172,6 +172,7 @@ function listingCardNewLabelText(
 ): string {
   if (isTireListing(listing)) return '';
   if (vehicleType === 'moto') return t('listings.newMoto');
+  if (vehicleType === 'truck') return t('listings.newTruck');
   return t('listings.new');
 }
 

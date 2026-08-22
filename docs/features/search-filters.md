@@ -121,7 +121,7 @@ Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | '
 
 | Column 1 | Column 2 | Column 3 |
 | -------- | -------- | -------- |
-| **Seller type** — `MultiSelectDropdown` (`Individual` / `Business`) with clear actions; empty selection means “any” | **Labels** — “Urgent” and “New” (or “New moto” for moto) checkboxes, badge styling | **Credit/installment** — “Available in credit” checkbox |
+| **Seller type** — `MultiSelectDropdown` (`Individual` / `Business`) with clear actions; empty selection means “any” | **Labels** — “Urgent” and “New” checkboxes (car: `searchFilters.new`, truck: `newTruck`, moto: `newMoto`), badge styling | **Credit/installment** — “Available in credit” checkbox |
 
 **Options:**
 
@@ -131,7 +131,7 @@ Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | '
 
 **URL / API:** `seller_types` is sent as a comma-separated list when one or more of `Individual` / `Business` are selected. Available in both vehicle advanced filters and tire search filters; applied by both `buildVehicleSearchQuery` and `buildTireSearchQuery` on the backend. Legacy `seller_type` (singular) is still accepted when reading URLs and by the API. See `build-fallback-listing-search-params.ts` and `SearchListingsDto.seller_types`.
 
-**Translation keys (examples):** `searchFilters.city`, `searchFilters.currency`, `searchFilters.registration`, `searchFilters.registrationTypeLabel`, `searchFilters.condition`, `searchFilters.engine`, `searchFilters.horsepower`, `searchFilters.color`, `searchFilters.doors`, `searchFilters.labels`, `searchFilters.sellerTypeLabel`, `searchFilters.sellerTypePlaceholder`, `searchFilters.sellerTypeIndividual`, `searchFilters.sellerTypeBusiness`, `searchFilters.urgent`, `searchFilters.new`, `searchFilters.newMoto`, plus placeholders.
+**Translation keys (examples):** `searchFilters.city`, `searchFilters.currency`, `searchFilters.registration`, `searchFilters.registrationTypeLabel`, `searchFilters.condition`, `searchFilters.engine`, `searchFilters.horsepower`, `searchFilters.color`, `searchFilters.doors`, `searchFilters.labels`, `searchFilters.sellerTypeLabel`, `searchFilters.sellerTypePlaceholder`, `searchFilters.sellerTypeIndividual`, `searchFilters.sellerTypeBusiness`, `searchFilters.urgent`, `searchFilters.new`, `searchFilters.newMoto`, `searchFilters.newTruck`, plus placeholders.
 
 ---
 

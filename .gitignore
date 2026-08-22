@@ -95,10 +95,13 @@ backend/src/common/i18n/*.json
 frontend/public/favicon*.png
 frontend/public/favicon.ico
 frontend/public/logo*.png
+frontend/public/logo*.svg
 frontend/public/og-image.jpg
 frontend/public/opengraph-image.png
 frontend/public/pwa192.png
 frontend/public/partners/
+frontend/app/favicon.ico
+frontend/app/icon.png
 backend/assets/watermark/logo.png
 
 # Legacy native app path — use platform android/twa/ instead

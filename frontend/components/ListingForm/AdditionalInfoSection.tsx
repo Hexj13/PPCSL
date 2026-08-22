@@ -13,7 +13,12 @@ export function AdditionalInfoSection({
   t,
   vehicleType,
 }: ListingFormSectionProps) {
-  const newLabel = vehicleType === 'moto' ? t('listings.newMoto') : t('listings.new');
+  const newLabel =
+    vehicleType === 'moto'
+      ? t('listings.newMoto')
+      : vehicleType === 'truck'
+        ? t('listings.newTruck')
+        : t('listings.new');
 
   return (
     <div className="border-t border-primary-700/30 pt-6 mb-6">

@@ -114,6 +114,7 @@ External parties gate these; everything else waits on nobody.
 - [ ] `supportEmail` set — **must be a real mailbox**, it appears in FAQ, legal texts and email footers
 - [ ] `siteUrl` set
 - [ ] `assetVersion` updated when public assets change
+- [ ] `headerLogo` viewBox sizes set if `logo-desktop.svg` / `logo-mobile.svg` are not the stock PPCSL wordmark pair (defaults: desktop 1905×508, mobile 839×329)
 - [ ] `footerPartners` configured, or left empty to hide the block
 - [ ] `socialLinks` configured, or left empty to hide the block
 - [ ] `reportProvider` — omit entirely to hide the vehicle-history section

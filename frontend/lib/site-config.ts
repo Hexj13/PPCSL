@@ -29,6 +29,16 @@ export interface SocialLinksConfig {
   whatsapp?: string | null;
 }
 
+export type HeaderLogoBox = {
+  width: number;
+  height: number;
+};
+
+export type HeaderLogoConfig = {
+  desktop: HeaderLogoBox;
+  mobile: HeaderLogoBox;
+};
+
 export interface SiteConfig {
   country: string;
   name: string;
@@ -41,6 +51,7 @@ export interface SiteConfig {
   siteUrl: string;
   localeRouting?: LocaleRoutingConfig;
   assetVersion?: string;
+  headerLogo?: HeaderLogoConfig;
   mobileApp?: MobileAppConfig;
   socialLinks?: SocialLinksConfig;
   footerPartnerLogoSurfaceDefault?: 'light' | 'transparent';

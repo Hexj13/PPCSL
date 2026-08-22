@@ -33,8 +33,18 @@ jest.mock('@/lib/clear-home-search-restore-state', () => ({
   clearHomeSearchRestoreState: () => mockClearHomeSearchRestoreState(),
 }));
 
+const mockLoadSiteConfigSync = jest.fn(
+  (): {
+    assetVersion: string;
+    headerLogo?: {
+      desktop: { width: number; height: number };
+      mobile: { width: number; height: number };
+    };
+  } => ({ assetVersion: '1' }),
+);
+
 jest.mock('@/lib/site-config', () => ({
-  loadSiteConfigSync: () => ({ assetVersion: '1' }),
+  loadSiteConfigSync: () => mockLoadSiteConfigSync(),
 }));
 
 jest.mock('@/lib/assets', () => ({
@@ -52,6 +62,7 @@ describe('HeaderLogo', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLoadSiteConfigSync.mockReturnValue({ assetVersion: '1' });
     mockPathname = '/';
     Object.defineProperty(window, 'scrollTo', {
       value: mockScrollTo,
@@ -137,5 +148,27 @@ describe('HeaderLogo', () => {
     expect(screen.getByTestId('header-logo-full')).not.toHaveClass('lg:block');
     expect(screen.getByTestId('header-logo-short')).toHaveClass('xl:hidden');
     expect(screen.getByTestId('header-logo-short')).not.toHaveClass('lg:hidden');
+  });
+
+  it('reserves the default PPCSL wordmark aspect when site config omits headerLogo', () => {
+    render(<HeaderLogo brandAlt="Brand" />);
+    const style = screen.getByTestId('header-logo').getAttribute('style') ?? '';
+    expect(style).toContain('--header-logo-desktop-aspect: 1905 / 508');
+    expect(style).toContain('--header-logo-mobile-aspect: 839 / 329');
+  });
+
+  it('uses headerLogo viewBox sizes from site config when provided', () => {
+    mockLoadSiteConfigSync.mockReturnValueOnce({
+      assetVersion: '1',
+      headerLogo: {
+        desktop: { width: 1612, height: 508 },
+        mobile: { width: 1612, height: 508 },
+      },
+    });
+
+    render(<HeaderLogo brandAlt="Brand" />);
+    const style = screen.getByTestId('header-logo').getAttribute('style') ?? '';
+    expect(style).toContain('--header-logo-desktop-aspect: 1612 / 508');
+    expect(style).toContain('--header-logo-mobile-aspect: 1612 / 508');
   });
 });

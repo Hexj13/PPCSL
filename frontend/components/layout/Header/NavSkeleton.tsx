@@ -1,5 +1,8 @@
 'use client';
 
+import { loadSiteConfigSync } from '@/lib/site-config';
+import { getCountry } from '@/lib/utils';
+
 import { DESKTOP_HEADER_CLUSTER_GAP_CLASSES } from './desktopHeaderGapClasses';
 import {
   HEADER_LOGO_DESKTOP_SLOT_CLASSES,
@@ -7,6 +10,7 @@ import {
   HEADER_LOGO_SKELETON_FILL_CLASSES,
   HEADER_LOGO_WRAP_CLASSES,
 } from './headerLogoClasses';
+import { headerLogoAspectVars, resolveHeaderLogo } from './headerLogoSize';
 
 type NavSkeletonProps = {
   variant:
@@ -22,8 +26,14 @@ type NavSkeletonProps = {
 
 export function NavSkeleton({ variant }: NavSkeletonProps) {
   if (variant === 'logo') {
+    const headerLogo = resolveHeaderLogo(loadSiteConfigSync(getCountry()).headerLogo);
     return (
-      <div className={HEADER_LOGO_WRAP_CLASSES} aria-hidden data-testid="header-logo-skeleton">
+      <div
+        className={HEADER_LOGO_WRAP_CLASSES}
+        style={headerLogoAspectVars(headerLogo)}
+        aria-hidden
+        data-testid="header-logo-skeleton"
+      >
         <span className={HEADER_LOGO_DESKTOP_SLOT_CLASSES}>
           <span className={HEADER_LOGO_SKELETON_FILL_CLASSES} />
         </span>

@@ -274,7 +274,11 @@ export function AdvancedFilters({
             checked={filters.is_new}
             onChange={(checked) => onCheckboxChange('is_new', checked)}
             label={renderSearchFilterLabelBadge(
-              vehicleType === 'moto' ? t('searchFilters.newMoto') : t('searchFilters.new'),
+              vehicleType === 'moto'
+                ? t('searchFilters.newMoto')
+                : vehicleType === 'truck'
+                  ? t('searchFilters.newTruck')
+                  : t('searchFilters.new'),
               SPARKLES_EMOJI,
               'border-newBadge',
               'before:bg-newBadge/10',

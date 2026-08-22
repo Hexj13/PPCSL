@@ -18,6 +18,7 @@ import {
   HEADER_LOGO_SKELETON_FILL_CLASSES,
   HEADER_LOGO_WRAP_CLASSES,
 } from './headerLogoClasses';
+import { headerLogoAspectVars, resolveHeaderLogo } from './headerLogoSize';
 
 export const RESET_SEARCH_EVENT = 'ppcsl-reset-search';
 
@@ -75,6 +76,7 @@ export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
   const pathname = usePathname();
   const { href, replace, push } = useLocalizedNavigation();
   const siteConfig = loadSiteConfigSync(getCountry());
+  const headerLogo = resolveHeaderLogo(siteConfig.headerLogo);
   const desktopLogoUrl = getVersionedAssetPath('/logo-desktop.svg', siteConfig.assetVersion);
   const mobileLogoUrl = getVersionedAssetPath('/logo-mobile.svg', siteConfig.assetVersion);
 
@@ -99,21 +101,22 @@ export function HeaderLogo({ brandAlt }: HeaderLogoProps) {
       onClick={handleClick}
       data-testid="header-logo"
       className={`${HEADER_LOGO_WRAP_CLASSES} hover-only:hover:opacity-90 transition-opacity duration-200`}
+      style={headerLogoAspectVars(headerLogo)}
     >
       <LogoSlot
         slotClassName={HEADER_LOGO_DESKTOP_SLOT_CLASSES}
         src={desktopLogoUrl}
         alt={brandAlt}
-        width={180}
-        height={48}
+        width={headerLogo.desktop.width}
+        height={headerLogo.desktop.height}
         testId="header-logo-full"
       />
       <LogoSlot
         slotClassName={HEADER_LOGO_MOBILE_SLOT_CLASSES}
         src={mobileLogoUrl}
         alt={brandAlt}
-        width={150}
-        height={48}
+        width={headerLogo.mobile.width}
+        height={headerLogo.mobile.height}
         testId="header-logo-short"
       />
     </Link>

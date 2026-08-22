@@ -18,7 +18,9 @@ Platform graphics resources (logos, icons, watermark).
 assets/
 ├── frontend/public/
 │   ├── favicon*.png      # All favicon sizes
-│   ├── logo*.png         # Platform logos
+│   ├── logo.png          # Square icon (PWA / schema)
+│   ├── logo-desktop.svg  # Header logo
+│   ├── logo-mobile.svg   # Header logo (same mark below xl)
 │   ├── og-image.jpg      # Open Graph image
 │   ├── partners/         # Footer partner logos
 │   └── pwa192.png        # PWA icon
@@ -35,8 +37,10 @@ Listing **video** watermark is **not** under `assets/backend/watermark/`. Upload
 3. **Usage:** Core uses the copied resources.
 
 ```bash
-assets/frontend/public/*     → core/frontend/public/
-assets/backend/watermark/   → core/backend/assets/watermark/
+assets/frontend/public/*                 → core/frontend/public/
+assets/frontend/public/favicon.ico       → core/frontend/app/favicon.ico
+assets/frontend/public/favicon-64.png    → core/frontend/app/icon.png
+assets/backend/watermark/                → core/backend/assets/watermark/
 ```
 
 ### App Router icons (`core/frontend/app/`)
@@ -53,7 +57,7 @@ Keep those source files in the platform overlay so both `public/` and `app/` sta
 ### Frontend (`frontend/public/`)
 
 - `favicon-16.png`, `favicon-32.png`, `favicon-64.png`, `favicon-192.png`, `favicon-512.png`, `favicon.ico`
-- `logo.png`, `logo-desktop.png`, `logo-mobile.png`
+- `logo.png`, `logo-desktop.svg`, `logo-mobile.svg`. Header slot aspect comes from optional `headerLogo` in `config/site.ts` (SVG viewBox width×height). Omit it to keep the stock PPCSL pair: desktop 1905×508 from `xl`, mobile 839×329 below `xl`.
 - `og-image.jpg` (1200x630px), `opengraph-image.png` (1200x630px)
 - `partners/*` for any logos referenced from `config/site.ts` (`footerPartners`)
 - `pwa192.png` (192x192px)
