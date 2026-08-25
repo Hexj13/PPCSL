@@ -43,6 +43,7 @@ npm run test:integration -- src/test/auth.integration.ts
 ## Test Structure
 
 - `src/test/setup-integration.ts` - Test app setup and Swagger document generation
+- `src/test/jest-integration-env.cjs` - Pins unset `DB_*` / Redis / country **before** TypeORM loads (so platform `backend/.env` cannot override; already-exported CI `DB_*` are kept)
 - `src/test/jest-integration.setup.ts` - Jest configuration for integration tests
 - `src/test/*.integration.ts` - Individual test files for each API module
 
@@ -51,7 +52,7 @@ npm run test:integration -- src/test/auth.integration.ts
 - Database must be running and accessible
 - Auth tests (`auth.integration.ts`) use a shared helper `registerTestUser(request)` that registers with unique phone and email and retries on 400 (e.g. phone already exists) and 429 (rate limit), so shared or persistent DB does not cause failures
 - Integration tests that verify SMS with code `000000` require `NODE_ENV=test` and `ALLOW_SMS_TEST_CODE=true` (set automatically in `src/test/jest-integration.setup.ts`)
-- Test database should be configured via environment variables:
+- Test database should be configured via environment variables (local PPCSL defaults; overlay `.env` is ignored unless `JEST_PRESERVE_DB=1`):
   - `DB_HOST` (default: localhost)
   - `DB_PORT` (default: 5432)
   - `DB_USERNAME` (default: ppcsl)

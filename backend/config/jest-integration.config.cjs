@@ -19,6 +19,7 @@ module.exports = {
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: path.join(projectRoot, 'coverage-integration'),
   testEnvironment: 'node',
+  setupFiles: [path.join(srcDir, 'test', 'jest-integration-env.cjs')],
   setupFilesAfterEnv: [path.join(srcDir, 'test', 'jest-integration.setup.ts')],
   testTimeout: 60000,
   maxWorkers: 1,
