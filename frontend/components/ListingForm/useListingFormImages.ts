@@ -6,6 +6,7 @@ import { uploadApi } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { isBrowser, silentCatch } from '@/lib/utils';
 
+import { isAllowedListingImageFile } from './listing-image-accept';
 import type { ListingFormImageFields } from './listingFormTypes';
 
 interface UploadedImageDeleteMeta {
@@ -270,7 +271,6 @@ export function useListingFormImages<T extends ListingFormImageFields>({
 
   const handleFileUpload = useCallback(
     (files: File[], currentImageCount: number) => {
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       const maxSize = 10 * 1024 * 1024;
       const validated: File[] = [];
 
@@ -279,7 +279,7 @@ export function useListingFormImages<T extends ListingFormImageFields>({
           toast.error(t('listings.imageMaxCountError'));
           break;
         }
-        if (!allowedTypes.includes(file.type)) {
+        if (!isAllowedListingImageFile(file)) {
           toast.error(t('listings.imageFormatError'));
           continue;
         }

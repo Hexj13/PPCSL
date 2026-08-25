@@ -32,6 +32,8 @@ import sharp from 'sharp';
 import { resolveS3BucketName } from '../common/config/s3-bucket';
 import { handleUploadError } from '../common/utils/error-handling.utils';
 
+import { decodeHeicToJpeg } from './heic-decode';
+import { normalizeListingImageBuffer } from './listing-image-format';
 import {
   DELIVERY_WARM_QUALITY,
   DELIVERY_WARM_WIDTHS,
@@ -58,6 +60,7 @@ const VIDEO_PART_SIZE_BYTES = 5 * 1024 * 1024;
 const PRESIGNED_PART_TTL_SECONDS = 3600;
 const WATERMARK_TEXT_CHAR_WIDTH_FACTOR = 0.7;
 const WATERMARK_MIN_FONT_SIZE = 10;
+const MAX_IMAGE_PIXEL_SIDE = 10000;
 
 export function buildPublicMediaUrl(filePath: string): string {
   const path = filePath.startsWith('/') ? filePath : `/${filePath}`;
@@ -98,22 +101,6 @@ export class UploadService {
   private readonly deleteTokenSecret: string;
   private readonly optimizedImageCache: LRUCache<string, Buffer>;
   private readonly optimizedImageInflight = new Map<string, Promise<Buffer>>();
-
-  private readonly imageMagicNumbers: { [key: string]: Buffer[] } = {
-    'image/jpeg': [
-      Buffer.from([0xff, 0xd8, 0xff]),
-      Buffer.from([0xff, 0xd8, 0xff, 0xe0]),
-      Buffer.from([0xff, 0xd8, 0xff, 0xe1]),
-    ],
-    'image/png': [Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])],
-    'image/gif': [
-      Buffer.from([0x47, 0x49, 0x46, 0x38, 0x37, 0x61]),
-      Buffer.from([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]),
-    ],
-    'image/webp': [
-      Buffer.from([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50]),
-    ],
-  };
 
   constructor(
     private configService: ConfigService,
@@ -174,27 +161,6 @@ export class UploadService {
       maxSize: cacheSizeMb * 1024 * 1024,
       sizeCalculation: (value) => value.length,
       ttl: 60 * 60 * 1000,
-    });
-  }
-
-  private validateFileSignature(buffer: Buffer, mimetype: string): boolean {
-    if (buffer.length < 12) {
-      return false;
-    }
-
-    const magicNumbers = this.imageMagicNumbers[mimetype];
-    if (!magicNumbers) {
-      return false;
-    }
-
-    return magicNumbers.some((magic) => {
-      if (mimetype === 'image/webp') {
-        return (
-          buffer.slice(0, 4).equals(magic.slice(0, 4)) &&
-          buffer.slice(8, 12).equals(magic.slice(8, 12))
-        );
-      }
-      return buffer.slice(0, magic.length).equals(magic);
     });
   }
 
@@ -394,23 +360,41 @@ export class UploadService {
       'VALIDATE',
       `size=${file.buffer.length}, mimetype=${file.mimetype}, hidePlates=${hidePlates}`,
     );
-    if (!this.validateFileSignature(file.buffer, file.mimetype)) {
-      this.logger.warn(`[${uploadId}] [VALIDATE] signature failed`);
-      throw new BadRequestException('errors.invalidFileType');
+
+    let workingBuffer: Buffer;
+    let workingMimetype: string;
+    try {
+      const normalized = await normalizeListingImageBuffer(
+        file.buffer,
+        file.mimetype,
+        decodeHeicToJpeg,
+      );
+      workingBuffer = normalized.buffer;
+      workingMimetype = normalized.mimetype;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        this.logger.warn(
+          `[${uploadId}] [VALIDATE] rejected: ${error.message}, mimetype=${file.mimetype}`,
+        );
+      }
+      throw error;
     }
+    log('VALIDATE', `normalized mimetype=${workingMimetype}, size=${workingBuffer.length}`);
 
     let plateMaskResult: PlateMaskResult = null;
 
     try {
       log('ROTATE', 'starting');
-      let image = sharp(file.buffer);
+      let image = sharp(workingBuffer, {
+        limitInputPixels: MAX_IMAGE_PIXEL_SIDE * MAX_IMAGE_PIXEL_SIDE,
+      });
       let metadata = await image.metadata();
       if (!metadata?.width || !metadata?.height) {
         throw new BadRequestException('errors.invalidImage');
       }
       this.validateAnimatedInput(metadata, uploadId);
-      if (metadata.width > 10000 || metadata.height > 10000) {
-        throw new BadRequestException('errors.fileTooLargePixels|10000');
+      if (metadata.width > MAX_IMAGE_PIXEL_SIDE || metadata.height > MAX_IMAGE_PIXEL_SIDE) {
+        throw new BadRequestException(`errors.fileTooLargePixels|${MAX_IMAGE_PIXEL_SIDE}`);
       }
 
       const rotated = await image.rotate().toBuffer({ resolveWithObject: true });
@@ -551,6 +535,9 @@ export class UploadService {
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ServiceUnavailableException) {
         throw error;
+      }
+      if (error instanceof Error && /pixel limit/i.test(error.message)) {
+        throw new BadRequestException(`errors.fileTooLargePixels|${MAX_IMAGE_PIXEL_SIDE}`);
       }
       handleUploadError(
         error,

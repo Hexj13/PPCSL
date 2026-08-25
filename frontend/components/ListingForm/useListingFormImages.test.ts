@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import { uploadApi } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 import type { ListingFormData } from '../ListingForm';
 
@@ -11,6 +12,13 @@ jest.mock('@/lib/api', () => ({
   uploadApi: {
     uploadImage: jest.fn(),
     deleteImage: jest.fn(),
+  },
+}));
+
+jest.mock('@/lib/toast', () => ({
+  toast: {
+    error: jest.fn(),
+    success: jest.fn(),
   },
 }));
 
@@ -178,5 +186,51 @@ describe('useListingFormImages', () => {
     const deleteAfterUnmount = (uploadApi.deleteImage as jest.Mock).mock.calls.length;
 
     expect(deleteAfterUnmount).toBe(deleteBeforeUnmount);
+  });
+
+  it('should queue a HEIC photo for upload', async () => {
+    const deferred = createDeferred<{
+      data: { url: string; path: string; deleteToken: string };
+    }>();
+    (uploadApi.uploadImage as jest.Mock).mockReturnValue(deferred.promise);
+
+    const setFormData = jest.fn();
+    const { result } = renderHook(() =>
+      useListingFormImages({
+        t: mockT,
+        setFormData: setFormData as unknown as Dispatch<SetStateAction<ListingFormData>>,
+      }),
+    );
+
+    await act(async () => {
+      result.current.handleFileUpload([new File(['x'], 'photo.heic', { type: 'image/heic' })], 0);
+    });
+
+    expect(result.current.uploadSlots).toHaveLength(1);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('should reject HEIC sequence and unknown mime types', async () => {
+    const setFormData = jest.fn();
+    const { result } = renderHook(() =>
+      useListingFormImages({
+        t: mockT,
+        setFormData: setFormData as unknown as Dispatch<SetStateAction<ListingFormData>>,
+      }),
+    );
+
+    await act(async () => {
+      result.current.handleFileUpload(
+        [new File(['x'], 'burst.heic', { type: 'image/heic-sequence' })],
+        0,
+      );
+    });
+    await act(async () => {
+      result.current.handleFileUpload([new File(['x'], 'photo.avif', { type: 'image/avif' })], 0);
+    });
+
+    expect(result.current.uploadSlots).toHaveLength(0);
+    expect(toast.error).toHaveBeenCalledWith('listings.imageFormatError');
+    expect(toast.error).toHaveBeenCalledTimes(2);
   });
 });

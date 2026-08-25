@@ -2,10 +2,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { ConfigService } from '@nestjs/config';
+import sharp from 'sharp';
 
+import { decodeHeicToJpeg } from './heic-decode';
 import { PlateDetectorService } from './plate-detector.service';
 import { PlateMaskService } from './plate-mask.service';
 import { UploadService } from './upload.service';
+
+jest.mock('./heic-decode', () => ({
+  decodeHeicToJpeg: jest.fn(),
+}));
 
 const WATERMARK_LOGO_PATH = path.join(process.cwd(), 'assets', 'watermark', 'logo.png');
 const WATERMARK_TEXT_CHAR_WIDTH_FACTOR = 0.7;
@@ -95,5 +101,72 @@ describe('UploadService', () => {
 
     expect(svgWidth).toBeGreaterThanOrEqual(estimatedTextWidth);
     expect((textOverlay.left ?? 0) + svgWidth).toBeLessThanOrEqual(imageWidth);
+  });
+
+  it('should decode HEIC then store a WebP via Sharp', async () => {
+    if (!fs.existsSync(WATERMARK_LOGO_PATH)) {
+      throw new Error(
+        `Expected watermark logo at ${WATERMARK_LOGO_PATH}. Run npm run prepare:build from the platform repo root.`,
+      );
+    }
+
+    const jpeg = await sharp({
+      create: { width: 48, height: 32, channels: 3, background: { r: 16, g: 32, b: 48 } },
+    })
+      .jpeg()
+      .toBuffer();
+    (decodeHeicToJpeg as jest.Mock).mockResolvedValue(jpeg);
+
+    const heicBuffer = Buffer.alloc(32);
+    heicBuffer.writeUInt32BE(16, 0);
+    heicBuffer.write('ftyp', 4, 'ascii');
+    heicBuffer.write('heic', 8, 'ascii');
+
+    const previousAccessKey = process.env.AWS_ACCESS_KEY_ID;
+    const previousSecret = process.env.AWS_SECRET_ACCESS_KEY;
+    delete process.env.AWS_ACCESS_KEY_ID;
+    delete process.env.AWS_SECRET_ACCESS_KEY;
+
+    const service = createService();
+    let savedPath: string | undefined;
+    try {
+      const result = await service.saveFile({
+        originalname: 'photo.heic',
+        mimetype: 'image/heic',
+        size: heicBuffer.length,
+        buffer: heicBuffer,
+      } as Express.Multer.File);
+
+      savedPath = result.path;
+      expect(result.path).toMatch(/^\/uploads\/.+\.webp$/);
+      expect(decodeHeicToJpeg).toHaveBeenCalledTimes(1);
+
+      const stored = fs.readFileSync(path.join(process.cwd(), result.path.replace(/^\//, '')));
+      expect(stored.subarray(0, 4).toString('ascii')).toBe('RIFF');
+      expect(stored.subarray(8, 12).toString('ascii')).toBe('WEBP');
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    } finally {
+      if (previousAccessKey === undefined) {
+        delete process.env.AWS_ACCESS_KEY_ID;
+      } else {
+        process.env.AWS_ACCESS_KEY_ID = previousAccessKey;
+      }
+      if (previousSecret === undefined) {
+        delete process.env.AWS_SECRET_ACCESS_KEY;
+      } else {
+        process.env.AWS_SECRET_ACCESS_KEY = previousSecret;
+      }
+      if (savedPath) {
+        const relative = savedPath.replace(/^\//, '');
+        const fullPath = path.join(process.cwd(), relative);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+        const thumbPath = path.join(process.cwd(), 'uploads', 'thumb', path.basename(relative));
+        if (fs.existsSync(thumbPath)) {
+          fs.unlinkSync(thumbPath);
+        }
+      }
+    }
   });
 });

@@ -63,7 +63,7 @@ Core application framework for creating car marketplace platforms for different 
 - **Backend:** NestJS, PostgreSQL, TypeORM, Redis
 - **Database:** PostgreSQL 15 with comprehensive indexing and triggers
 - **Search:** PostgreSQL Full-Text Search
-- **Image Processing:** Sharp library for optimization and WebP conversion
+- **Image Processing:** Sharp library for optimization and WebP conversion; HEIC/HEIF is decoded to JPEG with `heic-convert` before Sharp
 - **File Storage:** AWS S3 for images and optional listing video (using AWS SDK v3), AWS CloudFront CDN for delivery when configured
 - **Authentication:** JWT tokens (1 hour expiration), Refresh tokens (7 days)
 - **Task Scheduling:** NestJS Schedule module (cron jobs)
@@ -847,11 +847,11 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 
 #### File Upload Security
 
-- Magic byte validation (file signature checking for JPEG, PNG, GIF, WebP)
+- Magic byte validation (file signature checking for JPEG, PNG, GIF, WebP; HEIC/HEIF via ISO BMFF `ftyp` brands, then WASM decode to JPEG before Sharp)
 - MIME type validation
 - File size limits (10MB per image)
 - Image metadata validation (width, height)
-- Maximum dimension limits (10000x10000 pixels)
+- Maximum dimension limits (10000x10000 pixels), including Sharp `limitInputPixels` during decode
 - Empty file detection
 - Authentication required (JWT)
 

@@ -31,7 +31,7 @@ Automatic license plate masking on listing photo upload. When the user uploads p
 
 ### Pipeline (`UploadService.saveFile`)
 
-1. **Validate file** — magic bytes and mimetype.
+1. **Validate file** — magic bytes and mimetype. HEIC/HEIF still images are decoded to JPEG (`heic-convert`) before Sharp; HEIC sequences (`msf1` / `image/heic-sequence`) are rejected like animated GIF/WebP.
 2. **Read metadata** — animated images are rejected when `metadata.pages > 1`.
 3. **Rotate / normalize** — `sharp(...).rotate()` to apply EXIF orientation.
 4. **Bounds check** — reject images larger than `10000 x 10000`.

@@ -35,6 +35,7 @@ import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
 import { handleUploadError } from '../common/utils/error-handling.utils';
 
+import { listingImageMulterFileFilter } from './listing-image-format';
 import { UploadService } from './upload.service';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -142,12 +143,7 @@ export class UploadController {
       limits: {
         fileSize: 10 * 1024 * 1024,
       },
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
-          return cb(new BadRequestException('errors.onlyImagesSupported'), false);
-        }
-        cb(null, true);
-      },
+      fileFilter: listingImageMulterFileFilter,
     }),
   )
   async uploadImage(

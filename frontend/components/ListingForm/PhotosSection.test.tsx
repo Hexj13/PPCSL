@@ -179,6 +179,13 @@ describe('PhotosSection', () => {
     expect(onImageDelete).toHaveBeenCalledWith('https://example.com/img1.webp');
   });
 
+  it('should accept HEIC files on the photos input', () => {
+    render(<PhotosSection {...defaultProps} />);
+    const input = screen.getByTestId('listing-form-photos-input');
+    expect(input.getAttribute('accept')).toContain('image/heic');
+    expect(input.getAttribute('accept')).toContain('image/heif');
+  });
+
   it('should render upload slots when provided', () => {
     render(
       <PhotosSection

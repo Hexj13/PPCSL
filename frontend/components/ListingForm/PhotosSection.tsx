@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { ListingPageImageModal } from '@/components/ListingPage/ListingPageImageModal';
 import { Checkbox, HintTooltip } from '@/ui';
 
+import { LISTING_IMAGE_ACCEPT } from './listing-image-accept';
 import { ListingPhotosVideoSection } from './photos-section/listing-photos-video-section';
 import { PhotosGrid } from './photos-section/photos-grid';
 import { useIsMobile } from './photos-section/use-is-mobile';
@@ -83,7 +84,7 @@ export function PhotosSection({
       <div className="mb-4">
         <input
           type="file"
-          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+          accept={LISTING_IMAGE_ACCEPT}
           multiple
           onChange={handleFileChange}
           disabled={uploading || formData.images.length >= 20}
