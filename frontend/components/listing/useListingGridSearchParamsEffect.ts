@@ -17,7 +17,7 @@ type UseListingGridSearchParamsEffectArgs = {
   searchParamsString: string;
   returningWithSavedScroll: boolean;
   skipClientFetchOnMount: boolean;
-  fetchListingsRef: MutableRef<(page: number, append?: boolean) => Promise<void>>;
+  fetchListingsRef: MutableRef<(page: number, append?: boolean, cursor?: string) => Promise<void>>;
   fetchControllerRef: MutableRef<AbortController | null>;
   appendTimeoutRef: MutableRef<ReturnType<typeof setTimeout> | null>;
   setCurrentPage: (_page: number) => void;

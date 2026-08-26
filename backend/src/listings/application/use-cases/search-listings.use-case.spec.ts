@@ -62,13 +62,27 @@ describe('SearchListingsUseCase', () => {
 
   it('returns cached search results when cache hits', async () => {
     const cachedListing = { id: 'listing-1', price: 1000, currency: 'EUR' } as Listing;
-    listingCache.getSearchResults.mockResolvedValue({ data: [cachedListing], total: 1 });
+    listingCache.getSearchResults.mockResolvedValue({
+      data: [cachedListing],
+      total: 1,
+      nextCursor: 'cached-cursor',
+    });
 
     const result = await useCase.execute({ page: 1, limit: 20 });
 
     expect(listingRepo.search).not.toHaveBeenCalled();
     expect(result.meta.total).toBe(1);
+    expect(result.meta.nextCursor).toBe('cached-cursor');
     expect(result.data[0]).toMatchObject({ approxPriceDefaultCurrency: 1000 });
+  });
+
+  it('returns cached search results without nextCursor for legacy payloads', async () => {
+    const cachedListing = { id: 'listing-1', price: 1000, currency: 'EUR' } as Listing;
+    listingCache.getSearchResults.mockResolvedValue({ data: [cachedListing], total: 1 });
+
+    const result = await useCase.execute({ page: 1, limit: 20 });
+
+    expect(result.meta.nextCursor).toBeUndefined();
   });
 
   it('queries repository and stores masked results in cache on miss', async () => {
@@ -80,13 +94,21 @@ describe('SearchListingsUseCase', () => {
       images: ['a', 'b', 'c', 'd', 'e', 'f'],
       user: { phone: '+37360123456', email: 'seller@example.com' },
     } as Listing;
-    listingRepo.search.mockResolvedValue({ data: [listing], total: 1 });
+    listingRepo.search.mockResolvedValue({
+      data: [listing],
+      total: 1,
+      nextCursor: 'repo-cursor',
+    });
 
     const result = await useCase.execute({ page: 1, limit: 20, sortBy: 'created_at' });
 
-    expect(listingCache.setSearchResults).toHaveBeenCalled();
+    expect(listingCache.setSearchResults).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 1, limit: 20 }),
+      expect.objectContaining({ nextCursor: 'repo-cursor', total: 1 }),
+    );
     expect(result.data).toHaveLength(1);
     expect(result.data[0].images).toHaveLength(5);
     expect(result.meta.total).toBe(1);
+    expect(result.meta.nextCursor).toBe('repo-cursor');
   });
 });

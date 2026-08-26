@@ -348,6 +348,7 @@ export interface SearchParams {
   seller_types?: string[];
   page?: number;
   limit?: number;
+  cursor?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
 }

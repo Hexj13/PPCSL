@@ -6,13 +6,18 @@ import { startTransition, useCallback, useRef, type Dispatch, type SetStateActio
 import { analytics, listingToViewItemListEntry } from '@/lib/analytics';
 import type { Listing, PaginationMeta } from '@/lib/api';
 import { sessionStorageSetItem } from '@/lib/browser-session-storage';
-import { SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY } from '@/lib/constants';
+import { LISTING_GRID_PAGE_SIZE, SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY } from '@/lib/constants';
 
 import {
   LISTING_CARD_APPEND_PRELOAD_COUNT,
   prewarmListingCardCoverImages,
 } from './listing-card-image';
-import { buildFetchParams, fetchListingsPage, saveGridState } from './listing-grid-state';
+import {
+  buildFetchParams,
+  fetchListingsPage,
+  fetchUniqueListingAppendPages,
+  saveGridState,
+} from './listing-grid-state';
 
 type MutableRef<T> = { current: T };
 
@@ -50,6 +55,13 @@ function dispatchAnalyticsForNewListings(newListings: Listing[]) {
   }
 }
 
+function resolveListingGridLimit(params: Record<string, string | number | boolean>): number {
+  const limitFromParams = Number(params.limit);
+  return Number.isFinite(limitFromParams) && limitFromParams > 0
+    ? limitFromParams
+    : LISTING_GRID_PAGE_SIZE;
+}
+
 type UseListingGridFetchArgs = {
   searchParamsString: string;
   t: (key: string) => string;
@@ -66,6 +78,174 @@ type UseListingGridFetchArgs = {
   setListingsQueryKey: Dispatch<SetStateAction<string>>;
   listingsRef: MutableRef<Listing[]>;
 };
+
+type ListingGridFetchSetters = Pick<
+  UseListingGridFetchArgs,
+  | 'setListings'
+  | 'setLoading'
+  | 'setLoadingMore'
+  | 'setAppendSkeletonCount'
+  | 'setMeta'
+  | 'setCurrentPage'
+  | 'setError'
+  | 'setHasLoadedWithFilters'
+  | 'setListingsQueryKey'
+  | 'listingsRef'
+>;
+
+async function replaceListingGridPage({
+  params,
+  page,
+  signal,
+  searchParamsString,
+  checkFavorites,
+  setters,
+}: {
+  params: Record<string, string | number | boolean>;
+  page: number;
+  signal: AbortSignal;
+  searchParamsString: string;
+  checkFavorites: (listingIds: string[]) => Promise<void>;
+  setters: ListingGridFetchSetters;
+}): Promise<boolean> {
+  const firstRes = await fetchListingsPage(params, page, signal);
+  if (signal.aborted) return false;
+  const allNewListings = firstRes.data;
+
+  await checkFavorites(allNewListings.map((listing) => listing.id));
+  if (signal.aborted) return false;
+
+  startTransition(() => {
+    setters.setListings(allNewListings);
+    setters.listingsRef.current = allNewListings;
+    setters.setCurrentPage(1);
+    setters.setLoading(false);
+    setters.setLoadingMore(false);
+    setters.setAppendSkeletonCount(0);
+    setters.setMeta(firstRes.meta);
+    setters.setError(null);
+    setters.setHasLoadedWithFilters(true);
+    setters.setListingsQueryKey(searchParamsString);
+    dispatchAnalyticsForNewListings(allNewListings);
+  });
+  return true;
+}
+
+async function appendListingGridPages({
+  params,
+  page,
+  cursor,
+  signal,
+  searchParamsString,
+  checkFavorites,
+  appendInFlightRef,
+  setters,
+}: {
+  params: Record<string, string | number | boolean>;
+  page: number;
+  cursor?: string;
+  signal: AbortSignal;
+  searchParamsString: string;
+  checkFavorites: (listingIds: string[]) => Promise<void>;
+  appendInFlightRef: MutableRef<boolean>;
+  setters: ListingGridFetchSetters;
+}): Promise<boolean> {
+  const appended = await fetchUniqueListingAppendPages({
+    params,
+    startPage: page,
+    cursor,
+    existing: setters.listingsRef.current,
+    limit: resolveListingGridLimit(params),
+    signal,
+  });
+  if (!appended || signal.aborted) return false;
+
+  prewarmListingCardCoverImages(
+    appended.uniqueNew
+      .slice(0, LISTING_CARD_APPEND_PRELOAD_COUNT)
+      .map((listing) => listing.images?.[0])
+      .filter((url): url is string => Boolean(url)),
+  );
+
+  await checkFavorites(appended.uniqueNew.map((listing) => listing.id));
+  if (signal.aborted) return false;
+
+  startTransition(() => {
+    setters.setListings(appended.listings);
+    setters.listingsRef.current = appended.listings;
+    setters.setCurrentPage(appended.page);
+    setters.setMeta(appended.meta);
+    saveGridState(appended.listings, appended.page, appended.meta, searchParamsString);
+    setters.setLoadingMore(false);
+    setters.setAppendSkeletonCount(0);
+    appendInFlightRef.current = false;
+  });
+  return true;
+}
+
+function handleListingGridFetchError({
+  error,
+  append,
+  searchParamsString,
+  replaceLocalized,
+  t,
+  setters,
+}: {
+  error: unknown;
+  append: boolean;
+  searchParamsString: string;
+  replaceLocalized: (_path: string) => void;
+  t: (key: string) => string;
+  setters: ListingGridFetchSetters;
+}): void {
+  if (handleSearchLimitOverflowError(error, searchParamsString, replaceLocalized)) return;
+  if (append) {
+    setters.setAppendSkeletonCount(0);
+    return;
+  }
+  setters.setListings([]);
+  setters.setError(t('listings.loadError'));
+  setters.setHasLoadedWithFilters(true);
+  setters.setListingsQueryKey(searchParamsString);
+}
+
+function finalizeListingGridFetch({
+  aborted,
+  append,
+  appendCommitted,
+  replaceCommitted,
+  appendInFlightRef,
+  setters,
+}: {
+  aborted: boolean;
+  append: boolean;
+  appendCommitted: boolean;
+  replaceCommitted: boolean;
+  appendInFlightRef: MutableRef<boolean>;
+  setters: ListingGridFetchSetters;
+}): void {
+  if (aborted) {
+    if (append) {
+      appendInFlightRef.current = false;
+      setters.setLoadingMore(false);
+      setters.setAppendSkeletonCount(0);
+    }
+    return;
+  }
+  if (appendCommitted) return;
+  setters.setLoadingMore(false);
+  if (append) {
+    appendInFlightRef.current = false;
+    setters.setAppendSkeletonCount(0);
+    return;
+  }
+  if (!replaceCommitted) {
+    setters.setLoading(false);
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('searchComplete'));
+  }
+}
 
 export function useListingGridFetch({
   searchParamsString,
@@ -88,7 +268,7 @@ export function useListingGridFetch({
   const appendInFlightRef = useRef(false);
 
   const fetchListings = useCallback(
-    async (page: number, append: boolean = false) => {
+    async (page: number, append: boolean = false, cursor?: string) => {
       if (append && appendInFlightRef.current) {
         return;
       }
@@ -110,90 +290,60 @@ export function useListingGridFetch({
       }
       let appendCommitted = false;
       let replaceCommitted = false;
+      const setters: ListingGridFetchSetters = {
+        setListings,
+        setLoading,
+        setLoadingMore,
+        setAppendSkeletonCount,
+        setMeta,
+        setCurrentPage,
+        setError,
+        setHasLoadedWithFilters,
+        setListingsQueryKey,
+        listingsRef,
+      };
 
       try {
-        const firstRes = await fetchListingsPage(params, page, controller.signal);
-        if (controller.signal.aborted) return;
-        const allNewListings = firstRes.data;
-        const finalMeta = firstRes.meta;
-
         if (append) {
-          prewarmListingCardCoverImages(
-            allNewListings
-              .slice(0, LISTING_CARD_APPEND_PRELOAD_COUNT)
-              .map((listing) => listing.images?.[0])
-              .filter((url): url is string => Boolean(url)),
-          );
-        }
-
-        await checkFavorites(allNewListings.map((l) => l.id));
-        if (controller.signal.aborted) return;
-
-        if (!append) {
-          replaceCommitted = true;
-          startTransition(() => {
-            setListings(allNewListings);
-            listingsRef.current = allNewListings;
-            setCurrentPage(1);
-            setLoading(false);
-            setLoadingMore(false);
-            setAppendSkeletonCount(0);
-            setMeta(finalMeta);
-            setError(null);
-            setHasLoadedWithFilters(true);
-            setListingsQueryKey(searchParamsString);
-            dispatchAnalyticsForNewListings(allNewListings);
+          appendCommitted = await appendListingGridPages({
+            params,
+            page,
+            cursor,
+            signal: controller.signal,
+            searchParamsString,
+            checkFavorites,
+            appendInFlightRef,
+            setters,
           });
         } else {
-          appendCommitted = true;
-          startTransition(() => {
-            setListings((prev) => {
-              const updated = [...prev, ...allNewListings];
-              listingsRef.current = updated;
-              setCurrentPage(page);
-              setMeta(finalMeta);
-              saveGridState(updated, page, finalMeta, searchParamsString);
-              return updated;
-            });
-            setLoadingMore(false);
-            setAppendSkeletonCount(0);
-            appendInFlightRef.current = false;
+          replaceCommitted = await replaceListingGridPage({
+            params,
+            page,
+            signal: controller.signal,
+            searchParamsString,
+            checkFavorites,
+            setters,
           });
         }
       } catch (error) {
         if (controller.signal.aborted) return;
-        if (handleSearchLimitOverflowError(error, searchParamsString, replaceLocalized)) return;
-        if (append) {
-          setAppendSkeletonCount(0);
-        }
-        if (!append) {
-          setListings([]);
-          setError(t('listings.loadError'));
-          setHasLoadedWithFilters(true);
-          setListingsQueryKey(searchParamsString);
-        }
+        handleListingGridFetchError({
+          error,
+          append,
+          searchParamsString,
+          replaceLocalized,
+          t,
+          setters,
+        });
       } finally {
-        if (controller.signal.aborted) {
-          if (append) {
-            appendInFlightRef.current = false;
-            setLoadingMore(false);
-            setAppendSkeletonCount(0);
-          }
-        } else if (!appendCommitted) {
-          setLoadingMore(false);
-          if (append) {
-            appendInFlightRef.current = false;
-            setAppendSkeletonCount(0);
-          }
-          if (!append) {
-            if (!replaceCommitted) {
-              setLoading(false);
-            }
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('searchComplete'));
-            }
-          }
-        }
+        finalizeListingGridFetch({
+          aborted: controller.signal.aborted,
+          append,
+          appendCommitted,
+          replaceCommitted,
+          appendInFlightRef,
+          setters,
+        });
       }
     },
     [

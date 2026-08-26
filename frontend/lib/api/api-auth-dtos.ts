@@ -41,6 +41,7 @@ export interface PaginationMeta {
   limit?: number;
   total?: number;
   totalPages?: number;
+  nextCursor?: string;
   activeTotal?: number;
   inactiveTotal?: number;
   totalAll?: number;

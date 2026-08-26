@@ -48,6 +48,7 @@ export class SearchListingsUseCase {
           page,
           limit,
           totalPages: Math.ceil(cached.total / limit),
+          nextCursor: cached.nextCursor,
         },
       };
     }
@@ -68,7 +69,7 @@ export class SearchListingsUseCase {
       await this.listingCache.setSearchCount(criteria, total);
     }
     if (!criteria.cursor) {
-      await this.listingCache.setSearchResults(criteria, { data: masked, total });
+      await this.listingCache.setSearchResults(criteria, { data: masked, total, nextCursor });
     }
 
     return {

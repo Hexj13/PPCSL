@@ -19,7 +19,7 @@ import { useAuthStore, useFavoritesStore } from '@/lib/store';
 
 import { ListingGridView } from './ListingGridView';
 import { updateListingGridReturnSnapshot } from './listing-grid-return-bridge';
-import { shouldRestoreGridStateOnMount } from './listing-grid-state';
+import { listingGridHasMore, shouldRestoreGridStateOnMount } from './listing-grid-state';
 import { useListingGridFetch } from './useListingGridFetch';
 import { useListingGridHomeScrollRestoreLayout } from './useListingGridHomeScrollRestoreLayout';
 import { useListingGridInitialDataEffect } from './useListingGridInitialDataEffect';
@@ -31,10 +31,6 @@ import { useListingGridWiderCategory } from './useListingGridWiderCategory';
 
 interface ListingGridProps {
   initialData?: { data: Listing[]; meta: PaginationMeta };
-}
-
-function listingGridHasMore(meta: PaginationMeta | null, currentPage: number): boolean {
-  return Boolean(meta?.totalPages && currentPage < meta.totalPages);
 }
 
 function getAppendSkeletonCount(meta: PaginationMeta | null, visibleListingsCount: number): number {
@@ -176,11 +172,11 @@ export function ListingGrid({ initialData }: ListingGridProps) {
   useListingGridInitialDataEffect({ initialData, user, isInitialized });
 
   const handleLoadMore = useCallback(async () => {
-    if (loadingMore || !meta || !meta.totalPages || currentPage >= meta.totalPages) {
+    if (loadingMore || !listingGridHasMore(meta, currentPage)) {
       return;
     }
     setAppendSkeletonCount(getAppendSkeletonCount(meta, uniqueListings.length));
-    await fetchListings(currentPage + 1, true);
+    await fetchListings(currentPage + 1, true, meta?.nextCursor);
   }, [loadingMore, meta, currentPage, uniqueListings.length, fetchListings]);
 
   const resultsStale = searchParamsString !== listingsQueryKey && !returningWithSavedScroll;

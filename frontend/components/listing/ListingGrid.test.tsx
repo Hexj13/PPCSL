@@ -125,6 +125,8 @@ jest.mock('@/hooks/useTranslation', () => ({
         'listings.notFound': 'No listings found',
         'listings.viewAllListings': 'View all listings',
         'listings.loadError': 'Error loading',
+        'listings.loadMore': 'Load more',
+        'listings.showMore': 'Show more',
         'listings.noMoreListings': 'No more listings',
         'listings.partnerPromo.titleQuestion': 'Do you sell many cars?',
         'listings.partnerPromo.titlePartnerLead': 'Become an Example.com ',
@@ -235,6 +237,15 @@ const mockListing2: Listing = {
   },
   views: 5,
 };
+
+function createGridListing(index: number): Listing {
+  return {
+    ...mockListing1,
+    id: `listing-${index}`,
+    title: `Test Car ${index}`,
+    images: [`/test-image-${index}.jpg`],
+  };
+}
 
 const mockMeta: PaginationMeta = {
   page: 1,
@@ -655,6 +666,81 @@ describe('ListingGrid', () => {
         jest.useRealTimers();
         (useLoadingState as jest.Mock).mockImplementation(() => ({ visible: false }));
       }
+    });
+
+    it('uses cursor on load more and backfills overlapping unique listings', async () => {
+      const firstPage = Array.from({ length: 20 }, (_, index) => createGridListing(index + 1));
+      const overlappingPage = [
+        createGridListing(19),
+        createGridListing(20),
+        ...Array.from({ length: 18 }, (_, index) => createGridListing(index + 21)),
+      ];
+      const backfillPage = [createGridListing(39), createGridListing(40)];
+      const initialData = {
+        data: firstPage,
+        meta: {
+          page: 1,
+          limit: LISTING_GRID_PAGE_SIZE,
+          total: 60,
+          totalPages: 3,
+          nextCursor: 'cursor-page-1',
+        },
+      };
+
+      (listingsApi.getAll as jest.Mock).mockImplementation((params: { cursor?: string }) => {
+        if (params.cursor === 'cursor-page-1') {
+          return Promise.resolve({
+            data: {
+              data: overlappingPage,
+              meta: {
+                page: 2,
+                limit: LISTING_GRID_PAGE_SIZE,
+                total: 60,
+                totalPages: 3,
+                nextCursor: 'cursor-page-2',
+              },
+            },
+          });
+        }
+        if (params.cursor === 'cursor-page-2') {
+          return Promise.resolve({
+            data: {
+              data: backfillPage,
+              meta: {
+                page: 3,
+                limit: LISTING_GRID_PAGE_SIZE,
+                total: 60,
+                totalPages: 3,
+                nextCursor: 'cursor-page-3',
+              },
+            },
+          });
+        }
+        return Promise.resolve({ data: { data: [] as Listing[], meta: initialData.meta } });
+      });
+
+      render(<ListingGrid initialData={initialData} />);
+
+      expect(await screen.findByTestId('listing-listing-1')).toBeInTheDocument();
+      fireEvent.click(await screen.findByTestId('listings-load-more'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('listing-listing-40')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('listing-listing-21')).toBeInTheDocument();
+      expect(screen.getAllByTestId(/^listing-listing-/)).toHaveLength(40);
+
+      expect(listingsApi.getAll).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ cursor: 'cursor-page-1' }),
+        expect.anything(),
+      );
+      expect((listingsApi.getAll as jest.Mock).mock.calls[0][0].page).toBeUndefined();
+      expect(listingsApi.getAll).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ cursor: 'cursor-page-2' }),
+        expect.anything(),
+      );
     });
   });
 

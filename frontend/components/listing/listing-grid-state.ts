@@ -13,6 +13,7 @@ import { getParsedListingSearchParams } from '@/lib/search';
 
 export const GRID_STATE_KEY = 'ppcsl_grid_state';
 export const GRID_RESTORE_STATE_KEY = 'ppcsl_grid_restore_state';
+export const LISTING_GRID_APPEND_MAX_EXTRA_FETCHES = 2;
 const HOME_SCROLL_LAST_REST_PATH_KEY = 'homeScrollLastRestPath';
 
 const GRID_STATE_MAX_AGE_MS = 5 * 60 * 1000;
@@ -167,13 +168,117 @@ export async function buildFetchParams(searchParamsString: string) {
   } as Record<string, string | number | boolean>;
 }
 
+export function mergeUniqueListings(
+  existing: Listing[],
+  incoming: Listing[],
+): { listings: Listing[]; uniqueNew: Listing[] } {
+  const listings: Listing[] = [];
+  const seen = new Set<string>();
+  for (const listing of existing) {
+    if (seen.has(listing.id)) continue;
+    seen.add(listing.id);
+    listings.push(listing);
+  }
+  const uniqueNew: Listing[] = [];
+  for (const listing of incoming) {
+    if (seen.has(listing.id)) continue;
+    seen.add(listing.id);
+    listings.push(listing);
+    uniqueNew.push(listing);
+  }
+  return { listings, uniqueNew };
+}
+
+export function listingGridHasMore(meta: PaginationMeta | null, currentPage: number): boolean {
+  if (!meta) return false;
+  if (meta.nextCursor) return true;
+  return Boolean(meta.totalPages && currentPage < meta.totalPages);
+}
+
+export function shouldBackfillListingAppend({
+  uniqueNewCount,
+  limit,
+  extraFetchesUsed,
+  hasMore,
+  maxExtraFetches = LISTING_GRID_APPEND_MAX_EXTRA_FETCHES,
+}: {
+  uniqueNewCount: number;
+  limit: number;
+  extraFetchesUsed: number;
+  hasMore: boolean;
+  maxExtraFetches?: number;
+}): boolean {
+  return hasMore && uniqueNewCount < limit && extraFetchesUsed < maxExtraFetches;
+}
+
 export async function fetchListingsPage(
   params: Record<string, string | number | boolean>,
   page: number,
   signal?: AbortSignal,
+  cursor?: string,
 ): Promise<{ data: Listing[]; meta: PaginationMeta }> {
-  const res = await listingsApi.getAll({ ...params, page }, signal ? { signal } : undefined);
+  const paramsWithoutPage = { ...params };
+  delete paramsWithoutPage.page;
+  const requestParams = cursor ? { ...paramsWithoutPage, cursor } : { ...paramsWithoutPage, page };
+  const res = await listingsApi.getAll(requestParams, signal ? { signal } : undefined);
   return { data: res.data.data, meta: res.data.meta };
+}
+
+export async function fetchUniqueListingAppendPages({
+  params,
+  startPage,
+  cursor,
+  existing,
+  limit,
+  signal,
+}: {
+  params: Record<string, string | number | boolean>;
+  startPage: number;
+  cursor?: string;
+  existing: Listing[];
+  limit: number;
+  signal: AbortSignal;
+}): Promise<{
+  listings: Listing[];
+  uniqueNew: Listing[];
+  meta: PaginationMeta | null;
+  page: number;
+} | null> {
+  const originalUnique = mergeUniqueListings([], existing).listings;
+  let combined = originalUnique;
+  let lastMeta: PaginationMeta | null = null;
+  let lastPage = startPage;
+  let extraFetchesUsed = 0;
+  let nextCursor = cursor;
+
+  while (true) {
+    const pageRes = await fetchListingsPage(params, lastPage, signal, nextCursor);
+    if (signal.aborted) return null;
+    combined = mergeUniqueListings(combined, pageRes.data).listings;
+    lastMeta = pageRes.meta;
+    const uniqueAdded = combined.length - originalUnique.length;
+    const hasMore = listingGridHasMore(pageRes.meta, lastPage);
+    if (
+      !shouldBackfillListingAppend({
+        uniqueNewCount: uniqueAdded,
+        limit,
+        extraFetchesUsed,
+        hasMore,
+      })
+    ) {
+      break;
+    }
+    extraFetchesUsed += 1;
+    lastPage += 1;
+    nextCursor = pageRes.meta.nextCursor;
+  }
+
+  return {
+    listings: combined,
+    uniqueNew: combined.slice(originalUnique.length),
+    meta: lastMeta,
+    page: lastPage,
+  };
 }
 
 export async function fetchListingsThroughPage(

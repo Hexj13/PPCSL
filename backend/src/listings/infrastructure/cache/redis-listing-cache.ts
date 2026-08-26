@@ -7,7 +7,10 @@ import {
   generateCacheKey,
   generateCacheKeyWithHash,
 } from '../../../common/utils/cache.utils';
-import { IListingCache } from '../../application/ports/listing-cache.port';
+import {
+  IListingCache,
+  type ListingSearchCachePayload,
+} from '../../application/ports/listing-cache.port';
 import { SearchCriteria } from '../../application/ports/listing.repository.port';
 import type { ModelIndexData } from '../../domain/model-index.types';
 import type { PopularListingsData } from '../../domain/popular-listings.types';
@@ -21,16 +24,14 @@ export class RedisListingCache implements IListingCache {
     return generateCacheKey({ prefix: CACHE_PREFIXES.listingsPopular, parts: ['v3', 'car'] });
   }
 
-  async getSearchResults(
-    criteria: SearchCriteria,
-  ): Promise<{ data: Listing[]; total: number } | null> {
+  async getSearchResults(criteria: SearchCriteria): Promise<ListingSearchCachePayload | null> {
     const key = generateCacheKeyWithHash(CACHE_PREFIXES.listingsSearch, criteria);
-    return this.redisService.getJson<{ data: Listing[]; total: number }>(key);
+    return this.redisService.getJson<ListingSearchCachePayload>(key);
   }
 
   async setSearchResults(
     criteria: SearchCriteria,
-    results: { data: Listing[]; total: number },
+    results: ListingSearchCachePayload,
   ): Promise<void> {
     const key = generateCacheKeyWithHash(CACHE_PREFIXES.listingsSearch, criteria);
     await this.redisService.setJson(key, results, CACHE_TTL.listings.search);

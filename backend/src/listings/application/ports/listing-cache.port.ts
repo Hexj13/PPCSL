@@ -6,12 +6,15 @@ import type { SearchCriteria } from './listing.repository.port';
 
 export const LISTING_CACHE = Symbol('LISTING_CACHE');
 
+export type ListingSearchCachePayload = {
+  data: Listing[];
+  total: number;
+  nextCursor?: string;
+};
+
 export interface IListingCache {
-  getSearchResults(criteria: SearchCriteria): Promise<{ data: Listing[]; total: number } | null>;
-  setSearchResults(
-    criteria: SearchCriteria,
-    results: { data: Listing[]; total: number },
-  ): Promise<void>;
+  getSearchResults(criteria: SearchCriteria): Promise<ListingSearchCachePayload | null>;
+  setSearchResults(criteria: SearchCriteria, results: ListingSearchCachePayload): Promise<void>;
   getSearchCount(criteria: SearchCriteria): Promise<number | null>;
   setSearchCount(criteria: SearchCriteria, total: number): Promise<void>;
   getSingle(id: string): Promise<Listing | null>;
