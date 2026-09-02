@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react';
 import { HomeHeroDescription } from './HomeHeroDescription';
 
 const HERO_LIST_ITEM_CLASS_NAME =
-  "relative before:absolute before:left-[-1.05rem] before:top-[0.55em] before:h-1.5 before:w-1.5 before:rounded-full before:bg-primary-700 before:content-['']";
+  "relative before:absolute before:left-[-1.05rem] before:top-[calc(0.5lh-0.1875rem)] before:h-1.5 before:w-1.5 before:rounded-full before:bg-primary-700 before:content-['']";
 
 export interface HomeHeroProps extends ComponentProps<'div'> {
   title: string;
