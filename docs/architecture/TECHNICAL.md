@@ -1417,7 +1417,7 @@ Platform `frontend-check` runs `npm run typecheck` and `npm run knip` explicitly
 
 **Jobs:**
 
-1. **backend-test** — installs deps, runs ESLint (`lint:check`), prettier (`format:check`), unit tests (`npm test`) and integration tests (`npm run test:integration`) against service containers (Postgres 15, Redis 7).
+1. **backend-test** — installs deps, runs ESLint (`lint:check`), prettier (`format:check`), unit tests (`npm test`) and integration tests (`npm run test:integration`) against service containers (Postgres 15, Redis 7). Overlay files such as `backend/assets/watermark/logo.png` are gitignored and absent in a bare checkout; `upload.service.spec.ts` writes a temporary PNG when the file is missing so core CI does not need `prepare:build`.
 2. **frontend-test** — installs deps, runs ESLint (`lint`), Stylelint (`lint:styles`), prettier (`format:check`), Jest (`npm test -- --passWithNoTests`).
 3. **typecheck** — depends on both tests; runs `npx tsc --noEmit` for frontend and backend (sanity check; builds live in platform repos).
 4. **sync-to-locales** — depends on typecheck; only on `push: main`. Opens a pull request in each registered platform repo with the new submodule pointer, a commit list (`git log --oneline PREV..CURRENT`) inlined in the PR body, and a branch name `chore/update-core-<short-sha>`. No direct push to `main`, so platform `main` branch protection stays intact.

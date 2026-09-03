@@ -27,6 +27,29 @@ type WatermarkCompositesAccess = {
 };
 
 describe('UploadService', () => {
+  let createdWatermarkLogo = false;
+
+  beforeAll(async () => {
+    if (fs.existsSync(WATERMARK_LOGO_PATH)) {
+      return;
+    }
+
+    fs.mkdirSync(path.dirname(WATERMARK_LOGO_PATH), { recursive: true });
+    const png = await sharp({
+      create: { width: 32, height: 32, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 1 } },
+    })
+      .png()
+      .toBuffer();
+    fs.writeFileSync(WATERMARK_LOGO_PATH, png);
+    createdWatermarkLogo = true;
+  });
+
+  afterAll(() => {
+    if (createdWatermarkLogo && fs.existsSync(WATERMARK_LOGO_PATH)) {
+      fs.unlinkSync(WATERMARK_LOGO_PATH);
+    }
+  });
+
   const createService = (overrides: Record<string, string | undefined> = {}) =>
     new UploadService(
       {
@@ -65,12 +88,6 @@ describe('UploadService', () => {
   });
 
   it('should size watermark domain text to fit a long hostname without clipping', async () => {
-    if (!fs.existsSync(WATERMARK_LOGO_PATH)) {
-      throw new Error(
-        `Expected watermark logo at ${WATERMARK_LOGO_PATH}. Run npm run prepare:build from the platform repo root.`,
-      );
-    }
-
     const imageWidth = 1600;
     const imageHeight = 1200;
     const domain = 'long-brand.test';
@@ -104,12 +121,6 @@ describe('UploadService', () => {
   });
 
   it('should decode HEIC then store a WebP via Sharp', async () => {
-    if (!fs.existsSync(WATERMARK_LOGO_PATH)) {
-      throw new Error(
-        `Expected watermark logo at ${WATERMARK_LOGO_PATH}. Run npm run prepare:build from the platform repo root.`,
-      );
-    }
-
     const jpeg = await sharp({
       create: { width: 48, height: 32, channels: 3, background: { r: 16, g: 32, b: 48 } },
     })
