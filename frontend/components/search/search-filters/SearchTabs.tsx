@@ -22,6 +22,7 @@ interface SearchTabsProps {
   indicatorStyle: { left: number; width: number };
   tabsContainerRef: React.RefObject<HTMLDivElement | null>;
   switchingLocked?: boolean;
+  layoutKey: string;
 }
 
 const tabButtonClass =
@@ -207,7 +208,13 @@ function useTabScrollAffordance(
       updateScrollState();
     };
 
-    handleLayoutChange();
+    updateScrollState();
+
+    let rafId2 = 0;
+    const rafId1 = requestAnimationFrame(() => {
+      rafId2 = requestAnimationFrame(handleLayoutChange);
+    });
+
     container.addEventListener('scroll', updateScrollState, { passive: true });
 
     const resizeObserver = new ResizeObserver(handleLayoutChange);
@@ -219,6 +226,8 @@ function useTabScrollAffordance(
     }
 
     return () => {
+      cancelAnimationFrame(rafId1);
+      cancelAnimationFrame(rafId2);
       container.removeEventListener('scroll', updateScrollState);
       resizeObserver.disconnect();
     };
@@ -262,6 +271,7 @@ export function SearchTabs({
   indicatorStyle,
   tabsContainerRef,
   switchingLocked = false,
+  layoutKey,
 }: SearchTabsProps) {
   const { t } = useTranslation();
 
@@ -278,7 +288,7 @@ export function SearchTabs({
     tabRefs,
     basicTabRef,
     activeTab,
-    `${variant}-${activeTab}-${t('searchFilters.basicCriteria')}-${t('searchFilters.additionalCriteria')}-${t('searchFilters.equipment')}-${t('searchFilters.popularFilters')}`,
+    `${layoutKey}-${variant}-${activeTab}-${t('searchFilters.basicCriteria')}-${t('searchFilters.additionalCriteria')}-${t('searchFilters.equipment')}-${t('searchFilters.popularFilters')}`,
   );
 
   const handleTabClick = (tab: 'basic' | 'advanced' | 'equipment' | 'popular') => {

@@ -345,18 +345,6 @@ describe('BottomSheet', () => {
     );
 
     expect(screen.getByText('Sheet body')).toBeInTheDocument();
-    expect(screen.getByTestId('bottom-sheet-slide')).toHaveClass('translate-y-full');
-  });
-
-  it('shows the panel without the enter transform when appearImmediately is set', () => {
-    render(
-      <BottomSheet isOpen appearImmediately onClose={() => {}} title="Immediate sheet">
-        <p>Immediate body</p>
-      </BottomSheet>,
-    );
-
-    expect(screen.getByText('Immediate body')).toBeInTheDocument();
-    expect(screen.getByTestId('bottom-sheet-slide')).toHaveClass('translate-y-0');
-    expect(screen.getByTestId('bottom-sheet-slide')).not.toHaveClass('translate-y-full');
+    expect(screen.getByTestId('bottom-sheet-slide')).toHaveStyle({ transform: 'translateY(100%)' });
   });
 });

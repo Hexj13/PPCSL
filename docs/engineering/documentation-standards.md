@@ -31,7 +31,7 @@ tags:
 
 ## Naming
 
-- **Files:** kebab-case (e.g. `popular-brands-sync.md`, `sentry-launch-checklist.md`). No `notes.md`, `temp.md`, `new-doc.md`. Use `-ru` suffix only for intentional Russian-language docs.
+- **Files:** kebab-case (e.g. `popular-brands-sync.md`, `sentry-launch-checklist.md`) or `README.md` for section indexes. No `notes.md`, `temp.md`, `new-doc.md`. Use `-ru` suffix only for intentional Russian-language docs. Enforced by `core/scripts/check-doc-filenames.cjs` (`lint:doc-filenames` in frontend and backend lint).
 - **Tags:** Use taxonomy: `type/*`, `domain/*`, `scope/core` or `scope/platform`, `status/active` or `status/deprecated`.
 
 ## Tags (Obsidian-compatible)

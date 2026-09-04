@@ -138,7 +138,7 @@ describe('HeaderLogo', () => {
 
   it('keeps a logo-sized pulse skeleton until the image loads', () => {
     render(<HeaderLogo brandAlt="Brand" />);
-    expect(screen.getByTestId('header-logo')).toHaveClass('mr-4');
+    expect(screen.getByTestId('header-logo')).toHaveClass('mr-2', 'lg:mr-6');
     expect(screen.getAllByTestId('header-logo-image-skeleton').length).toBeGreaterThan(0);
   });
 

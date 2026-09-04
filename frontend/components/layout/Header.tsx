@@ -137,7 +137,7 @@ export function Header() {
     flushSync(() => {
       setIsMobileCatalogSearchOpen(true);
     });
-    document.getElementById(HEADER_CATALOG_SEARCH_SHEET_INPUT_ID)?.focus();
+    document.getElementById(HEADER_CATALOG_SEARCH_SHEET_INPUT_ID)?.focus({ preventScroll: true });
   };
 
   const mobileMenuBackdrop =

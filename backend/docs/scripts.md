@@ -566,7 +566,7 @@ Database migrations are handled separately and are located in:
 
 For automated database backups, see:
 
-- **Documentation**: `../../docs/guides/DEPLOYMENT.md` (Database Backups section)
+- **Documentation**: `../../docs/guides/deployment.md` (Database Backups section)
 - **TypeScript script**: `src/scripts/production/backup-database.ts`
 - **Bash script**: `config/scripts/backup-database.sh` (for cron)
 

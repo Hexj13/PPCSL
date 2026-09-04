@@ -12,7 +12,7 @@ tags:
 
 ## Scope
 
-This guide defines how we attach **structured context** to Sentry (errors and logs) for PPCSL and platform deployments. It complements **[SENTRY.md](./SENTRY.md)** (SDK setup).
+This guide defines how we attach **structured context** to Sentry (errors and logs) for PPCSL and platform deployments. It complements **[sentry.md](./sentry.md)** (SDK setup).
 
 ## Principles
 

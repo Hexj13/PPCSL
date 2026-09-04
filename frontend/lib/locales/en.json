@@ -630,7 +630,7 @@
     "registrationDateFormatError": "Date must be in format month.year (e.g., 05.2025). Month must be two digits.",
     "brandAndModelRequired": "Brand and model selection is required",
     "yearRangeErrorForm": "Year must be between 1940 and {maxYear}",
-    "imageFormatError": "Only images are supported (JPEG, PNG, GIF, WebP)",
+    "imageFormatError": "Only images are supported (JPEG, PNG, GIF, WebP, HEIC)",
     "imageSizeError": "Maximum file size is 10MB",
     "imageEmptyError": "File is empty",
     "imageMaxCountError": "Maximum 20 photos",

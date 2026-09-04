@@ -54,7 +54,7 @@ If the desktop search slot is **narrower than 200px** when the field is focused 
 
 While header auth is still initializing (`showSkeleton`), the catalog search slot is a pulse skeleton like the rest of the header: desktop input (`data-testid="header-catalog-search-skeleton"`), mobile icon (`data-testid="header-mobile-search-skeleton"`), and logo (`data-testid="header-logo-skeleton"`) sized to the SVG aspect boxes so the row does not shift when the image appears. The live field is not shown until auth is ready.
 
-Mobile and tablet (`< lg`, including 768–1023): search icon immediately left of the burger (`data-testid="header-mobile-search"`, 44px tap target). The icon opens a `BottomSheet` with `mobileOnly={false}` (header chrome switches at `lg`, independently of the compact-layout sheet cap). Custom header: input + clear + **Cancel** from `common.cancel`; grab-handle kept, default title+× replaced. Opening search closes the menu drawer and vice versa. Resizing to `lg+` closes the sheet. The opening tap focuses the sheet input in the same user gesture (`flushSync` + `appearImmediately`) so the virtual keyboard opens without a second tap; this sheet skips the enter slide so the field is on-screen when focus runs.
+Mobile and tablet (`< lg`, including 768–1023): search icon immediately left of the burger (`data-testid="header-mobile-search"`, 44px tap target). The icon opens a `BottomSheet` with `mobileOnly={false}` (header chrome switches at `lg`, independently of the compact-layout sheet cap). Custom header: input + clear + **Cancel** from `common.cancel`; grab-handle kept, default title+× replaced. Opening search closes the menu drawer and vice versa. Resizing to `lg+` closes the sheet. The sheet uses the same enter/exit slide as other `BottomSheet` panels. The opening tap focuses the sheet input in the same user gesture (`flushSync` + `focus({ preventScroll: true })`) so the virtual keyboard opens without a second tap; the field is mounted on that same update, before the slide finishes.
 
 While suggest is in flight, the list area shows `Spinner` `inline size="md"` plus `header.catalogSearchLoading` (`data-testid="header-catalog-search-loading"`), deferred with `useLoadingState` / `SKELETON_DEFERRED`. The previous list is not kept.
 
@@ -70,4 +70,4 @@ Combobox keyboard: Arrow Up/Down, Enter, Escape, click outside. Desktop suggesti
 
 ---
 
-**Last updated:** 2026-08-19
+**Last updated:** 2026-09-04

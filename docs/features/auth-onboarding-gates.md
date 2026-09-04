@@ -61,7 +61,7 @@ OAuth providers (Google, Telegram) without a password use the same set-password 
 
 ## Related docs
 
-- Google GIS and env: [GOOGLE_OAUTH_SETUP_RU.md](../guides/GOOGLE_OAUTH_SETUP_RU.md)
-- Telegram Login (Login Widget) and env: [TELEGRAM_AUTH_SETUP_RU.md](../guides/TELEGRAM_AUTH_SETUP_RU.md)
-- Cookies and JWT alignment: [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md)
+- Google GIS and env: [google-oauth-setup-ru.md](../guides/google-oauth-setup-ru.md)
+- Telegram Login (Login Widget) and env: [telegram-auth-setup-ru.md](../guides/telegram-auth-setup-ru.md)
+- Cookies and JWT alignment: [auth-cookie-session.md](../guides/auth-cookie-session.md)
 - E2E login helper: [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md) (`loginByUi` throws if mandatory profile URL is hit)

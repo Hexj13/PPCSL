@@ -143,6 +143,33 @@ describe('useListingGridScrollEffects', () => {
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 268, behavior: 'smooth' });
   });
 
+  it('scrolls to listings-results when layout becomes ready after initial render', () => {
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'header');
+    setupResultsTarget();
+
+    const { rerender } = renderHook(
+      ({ layoutReady }) =>
+        useListingGridScrollEffects({
+          ...defaultProps,
+          listingsCount: 4,
+          isLoading: false,
+          layoutReady,
+        }),
+      { initialProps: { layoutReady: false } },
+    );
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBe('header');
+    expect(window.scrollTo).not.toHaveBeenCalled();
+    expect(rafCallbacks).toHaveLength(0);
+
+    rerender({ layoutReady: true });
+
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
+    expect(rafCallbacks).toHaveLength(1);
+    rafCallbacks.forEach((cb) => cb(0));
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 268, behavior: 'smooth' });
+  });
+
   it('scrolls to listings-results when loading finishes after search', () => {
     window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
     setupResultsTarget();

@@ -186,6 +186,7 @@ describe('HeaderCatalogSearch', () => {
     mockMatchMedia(() => false);
     render(<HeaderCatalogSearch variant="mobile" mobileOpen onMobileOpenChange={jest.fn()} />);
     expect(screen.getByTestId('header-catalog-search-sheet')).toBeInTheDocument();
+    expect(screen.getByTestId('bottom-sheet-slide')).toHaveStyle({ transform: 'translateY(100%)' });
     expect(screen.getByTestId('header-catalog-search-input')).toHaveClass(
       'header-catalog-search-sheet-input',
     );
@@ -203,6 +204,29 @@ describe('HeaderCatalogSearch', () => {
       'id',
       HEADER_CATALOG_SEARCH_SHEET_INPUT_ID,
     );
+  });
+
+  it('keeps the mobile sheet mounted after parent close so the exit animation can run', () => {
+    mockSheetViewport();
+    mockMatchMedia(() => false);
+    const onMobileOpenChange = jest.fn();
+    const { rerender } = render(
+      <HeaderCatalogSearch variant="mobile" mobileOpen onMobileOpenChange={onMobileOpenChange} />,
+    );
+
+    fireEvent.click(screen.getByTestId('header-catalog-search-cancel'));
+    expect(onMobileOpenChange).toHaveBeenCalledWith(false);
+
+    rerender(
+      <HeaderCatalogSearch
+        variant="mobile"
+        mobileOpen={false}
+        onMobileOpenChange={onMobileOpenChange}
+      />,
+    );
+
+    expect(screen.getByTestId('header-catalog-search-sheet')).toBeInTheDocument();
+    expect(screen.getByTestId('bottom-sheet-slide')).toHaveStyle({ transform: 'translateY(100%)' });
   });
 
   it('closes the mobile sheet when the viewport reaches desktop', () => {

@@ -125,6 +125,6 @@ SEND_TEST_EMAIL_TO="<адрес из Mailtrap inbox>" npm run send-test-emails
 
 ## Связанные документы
 
-- Обзор переменных окружения: [../architecture/TECHNICAL.md](../architecture/TECHNICAL.md) (блок SMTP в секции бэкенда).
-- Пример деплоя на VPS: [../guides/DEPLOYMENT.md](../guides/DEPLOYMENT.md).
+- Обзор переменных окружения: [../architecture/technical.md](../architecture/technical.md) (блок SMTP в секции бэкенда).
+- Пример деплоя на VPS: [../guides/deployment.md](../guides/deployment.md).
 - Чеклист Render для платформы Молдова: `docs/deployment/production-deployment.md` (корень платформенного репозитория).

@@ -25,11 +25,11 @@ tags:
 
 1. [quick-start-ru.md](./quick-start-ru.md)
 2. [local-development.md](./local-development.md)
-3. [SCRIPTS.md](../../backend/docs/SCRIPTS.md)
+3. [scripts.md](../../backend/docs/scripts.md)
 4. [e2e-playwright-standards.md](./e2e-playwright-standards.md)
 5. [e2e-test-architecture.md](../architecture/e2e-test-architecture.md)
 6. [playwright.config.ts](../../frontend/playwright.config.ts) — projects, `testIgnore`, reporters
-7. [backend integration tests](../../backend/docs/TESTING.md)
+7. [backend integration tests](../../backend/docs/testing.md)
 8. [linting.md](../engineering/linting.md)
 
 ## 3) Настройка локального окружения
@@ -107,7 +107,7 @@ npm run reset-and-seed
 - `E2E_USER_LOGIN=admin@admin.com`
 - `E2E_USER_PASSWORD=GGGgggTEST777`
 
-Детали по скриптам и ограничениям смотрите в [SCRIPTS.md](../../backend/docs/SCRIPTS.md).
+Детали по скриптам и ограничениям смотрите в [scripts.md](../../backend/docs/scripts.md).
 
 ## 5) E2E (Playwright + Allure)
 
@@ -160,7 +160,7 @@ npm run test
 npm run test:integration
 ```
 
-Детали по backend integration — в [TESTING.md](../../backend/docs/TESTING.md).
+Детали по backend integration — в [testing.md](../../backend/docs/testing.md).
 
 ## 7) Обязательная проверка перед PR
 

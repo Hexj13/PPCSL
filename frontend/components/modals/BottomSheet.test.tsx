@@ -37,6 +37,7 @@ describe('BottomSheet', () => {
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
+    expect(screen.getByRole('dialog')).toHaveStyle({ transform: 'translateY(100%)' });
     expect(screen.getByText('Update available')).toBeInTheDocument();
     expect(screen.getByText('Update description')).toBeInTheDocument();
   });

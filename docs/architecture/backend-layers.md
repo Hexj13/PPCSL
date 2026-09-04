@@ -91,5 +91,5 @@ Overview of monolith, stack, and all NestJS modules: [backend-overview.md](./bac
 ## Related documentation
 
 - [backend-overview.md](./backend-overview.md) — monolith, stack, modules, background jobs
-- [TECHNICAL.md](./TECHNICAL.md) — project structure, API, database, testing
+- [technical.md](./technical.md) — project structure, API, database, testing
 - [scripts-architecture.md](./scripts-architecture.md) — platform scripts and configs

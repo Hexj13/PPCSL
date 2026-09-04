@@ -16,7 +16,7 @@ This document describes the current state of Google Analytics 4 integration. GA4
 
 **Related documents:**
 
-- **[SENTRY.md](../guides/SENTRY.md)** — setup and monitoring
+- **[sentry.md](../guides/sentry.md)** — setup and monitoring
 - **[platform-guide.md](../guides/platform-guide.md#6-analytics-and-monitoring-configuration-ga-gtm-sentry)** — GA, GTM, Sentry configuration
 
 ## Implemented events

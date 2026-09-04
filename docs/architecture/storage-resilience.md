@@ -42,7 +42,7 @@ This strategy focuses on **practical, cost-effective improvements**. It does not
 
 | Domain | Storage keys | Impact without storage | Target | Effort | Action |
 |--------|-------------|----------------------|--------|--------|--------|
-| Auth session | `ppcsl_access_token`, `ppcsl_refresh_token` (httpOnly cookies); Zustand `auth-storage` holds `user` only | Session requires cookies + CORS credentials | Cookie session (implemented) | — | **Done.** Tokens are not in `localStorage`; see [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md). Legacy `token` / `refresh_token` keys may still exist until users re-login. |
+| Auth session | `ppcsl_access_token`, `ppcsl_refresh_token` (httpOnly cookies); Zustand `auth-storage` holds `user` only | Session requires cookies + CORS credentials | Cookie session (implemented) | — | **Done.** Tokens are not in `localStorage`; see [auth-cookie-session.md](../guides/auth-cookie-session.md). Legacy `token` / `refresh_token` keys may still exist until users re-login. |
 | Post-login: `returnUrl` | `returnUrl` in localStorage (legacy) | User redirected to home instead of intended page | URL query parameter | Low | **Done.** Auth continuation now uses `?returnUrl=` in auth flows. |
 | Post-login: `pending*` keys | `pendingFavorites`, `pendingSavedFilter`, `pendingRegistration` | Guest pre-login actions lost | Server state or URL | High | **Partially done.** Safe storage access is in place; server-backed continuation remains future work. |
 | Consent | `cookie_consent` | Banner re-shown, analytics state unclear | Cookie-first | Low | **Done.** `useCookieConsent` writes consent to cookie as primary source with localStorage cache. |

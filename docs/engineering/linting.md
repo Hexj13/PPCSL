@@ -31,6 +31,7 @@ Single reference for linting and formatting across the project (frontend and bac
 | Husky + lint-staged | Pre-commit hooks                    | Pre-commit hooks                       |
 | Custom plugins      | `no-hardcoded-text`                 | `no-hardcoded-text`, `require-vehicle-type` |
 | Platform-neutral    | `lint:platform-neutral` (script)    | `lint:platform-neutral` (script)          |
+| Doc filenames       | `lint:doc-filenames` (script)       | `lint:doc-filenames` (script)             |
 
 ### ESLint plugins
 
@@ -58,7 +59,7 @@ Single reference for linting and formatting across the project (frontend and bac
 
 ```bash
 cd core/frontend
-npm run lint          # ESLint + translation sync + platform-neutral
+npm run lint          # ESLint + translation sync + platform-neutral + doc filenames
 npm run lint:fix      # Auto-fix
 npm run lint:styles   # Stylelint check
 npm run lint:styles:fix
@@ -71,7 +72,7 @@ npm run format:check
 
 ```bash
 cd core/backend
-npm run lint:check    # Check (ESLint + platform-neutral)
+npm run lint:check    # Check (ESLint + platform-neutral + doc filenames)
 npm run lint          # Auto-fix
 npm run format        # Prettier
 npm run format:check
@@ -83,7 +84,7 @@ npm run format:check
 npm run release-check
 ```
 
-Runs `prepare:build`, then frontend (`lint` including platform-neutral, `lint:styles`, `format:check`, `test`, `build`), then backend (`lint:check` including platform-neutral, `format:check`, `test`, `test:integration`, `build`).
+Runs `prepare:build`, then frontend (`lint` including platform-neutral and doc filenames, `lint:styles`, `format:check`, `test`, `build`), then backend (`lint:check` including platform-neutral and doc filenames, `format:check`, `test`, `test:integration`, `build`).
 
 `release-check` already unsets `devdir` internally, so no extra wrapper is needed.
 
@@ -97,6 +98,7 @@ Husky runs lint-staged on commit. Staged files are linted/formatted by pattern:
 | `core/frontend/**/*.css`          | Stylelint fix          |
 | `core/backend/src/**/*.ts`        | ESLint fix + Prettier  |
 | `locales/**/*.json`, `config/**`, `theme/**` | Prettier |
+| `docs/**/*.md`, `core/**/docs/**/*.md` | `check-doc-filenames.cjs` |
 
 Config: `.lintstagedrc.mjs`, `.husky/pre-commit`.
 
@@ -118,6 +120,7 @@ Config: `.lintstagedrc.mjs`, `.husky/pre-commit`.
 | no-hardcoded-text (BE) | `core/backend/config/eslint/eslint-plugin-no-hardcoded-text.cjs` |
 | require-vehicle-type | `core/backend/config/eslint/eslint-plugin-require-vehicle-type.cjs` |
 | platform-neutral     | `core/scripts/check-platform-neutral.cjs` |
+| doc filenames        | `core/scripts/check-doc-filenames.cjs` |
 
 ---
 
@@ -180,6 +183,12 @@ This is a dedicated lint script rather than an ESLint plugin: backend ESLint ski
 
 **Not scanned (overlay slots):** `frontend/lib/locales/`, platform FAQ/legal under `frontend/lib/config/`, `backend/src/common/config/site.ts`, `backend/src/common/i18n/`.
 
+### Doc filenames
+
+**Goal:** Markdown docs use kebab-case filenames (`popular-brands-sync.md`, `quick-start-ru.md`) or `README.md`. Placeholder names `notes.md`, `temp.md`, and `new-doc.md` are forbidden.
+
+Wired into frontend `npm run lint` and backend `npm run lint:check` as `lint:doc-filenames` (`core/scripts/check-doc-filenames.cjs`), so `npm run release-check` already runs it. The script scans `core/docs/`, `core/backend/docs/`, `core/frontend/docs/`, and the platform overlay `docs/` when the core is used as a submodule.
+
 ---
 
 ## Translations (frontend)
@@ -207,6 +216,7 @@ This is a dedicated lint script rather than an ESLint plugin: backend ESLint ski
 | Backend lint command unexpectedly changes files | `npm run lint` is fix mode; use `npm run lint:check` for read-only verification. |
 | Frontend CSS violations | Run `npm run lint:styles` or `npm run lint:styles:fix`. |
 | Live platform name in core (`kupito`, `makinaguru`, …) | Use overlay / `SITE_NAME` / `{siteName}` / `ppcsl_*`. Do not widen `check-platform-neutral.cjs` without a documented exception. |
+| Invalid doc filename (`SETUP.md`, `TECHNICAL.md`, `notes.md`) | Rename to kebab-case or `README.md`. Do not add `notes.md` / `temp.md` / `new-doc.md`. |
 
 `no-hardcoded-text` cannot be auto-fixed; add translation keys manually.
 

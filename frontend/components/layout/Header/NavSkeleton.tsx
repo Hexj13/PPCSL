@@ -77,7 +77,7 @@ export function NavSkeleton({ variant }: NavSkeletonProps) {
   if (variant === 'mobileCatalogSearch') {
     return (
       <div
-        className="h-10 w-10 shrink-0 bg-primary-700/20 rounded-lg animate-pulse"
+        className="h-9 w-9 shrink-0 bg-primary-700/20 rounded-lg animate-pulse"
         aria-hidden
         data-testid="header-mobile-search-skeleton"
       />

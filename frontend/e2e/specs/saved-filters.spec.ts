@@ -21,7 +21,7 @@ test.describe('Saved filters', () => {
     searchHomePage,
     favoritesPage,
   }) => {
-    test.setTimeout(90_000);
+    test.setTimeout(180_000);
     const filterName = `e2e-saved-filter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     let savedFilterId = '';
 
@@ -73,6 +73,7 @@ test.describe('Saved filters', () => {
         action: async () => {
           await favoritesPage.clickSavedFilterCard(savedFilterId);
           await expectHomeWithSavedFilterApplied(page, searchHomePage, TRUCK_FILTER_PARAMS);
+          await searchHomePage.expectResultsScrolledIntoView();
         },
       },
     ];

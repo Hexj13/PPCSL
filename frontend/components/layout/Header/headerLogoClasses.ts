@@ -1,6 +1,6 @@
 /** Matches the rendered logo box so skeletons do not shift when the image appears. */
 export const HEADER_LOGO_WRAP_CLASSES =
-  'flex h-full min-h-[44px] shrink-0 select-none items-center mr-4 lg:mr-6';
+  'flex h-full min-h-[44px] shrink-0 select-none items-center mr-2 lg:mr-6';
 
 /** Full mark: from `xl` (1280px). Aspect from `--header-logo-desktop-aspect`. */
 export const HEADER_LOGO_DESKTOP_SLOT_CLASSES =

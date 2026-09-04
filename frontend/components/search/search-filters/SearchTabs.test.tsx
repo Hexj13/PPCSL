@@ -60,6 +60,7 @@ function createDefaultProps() {
     indicatorStyle: { left: 0, width: 120 },
     tabsContainerRef: createRef<HTMLDivElement>(),
     switchingLocked: false,
+    layoutKey: 'vehicle-car',
   };
 }
 
@@ -205,6 +206,118 @@ describe('SearchTabs scroll affordance', () => {
       left: 54,
       behavior: 'instant',
     });
+  });
+
+  it('re-centers the basic tab when layoutKey changes', () => {
+    const props = createDefaultProps();
+    const { rerender } = render(<SearchTabs {...props} variant="vehicle" />);
+    const scrollContainer = screen.getByTestId('search-tabs-scroll-container');
+    props.tabsContainerRef.current = scrollContainer;
+
+    Object.defineProperty(scrollContainer, 'clientWidth', {
+      configurable: true,
+      value: 300,
+    });
+    Object.defineProperty(scrollContainer, 'scrollWidth', {
+      configurable: true,
+      value: 600,
+    });
+    Object.defineProperty(scrollContainer, 'scrollLeft', {
+      configurable: true,
+      writable: true,
+      value: 0,
+    });
+    scrollContainer.scrollTo = jest.fn();
+    mockTabGeometry([screen.getByTestId('search-tab-basic')], [{ width: 160, offsetLeft: 124 }]);
+
+    triggerResizeObserver();
+    expect(scrollContainer.scrollTo).toHaveBeenCalledWith({
+      left: 54,
+      behavior: 'instant',
+    });
+
+    (scrollContainer.scrollTo as jest.Mock).mockClear();
+    rerender(<SearchTabs {...props} variant="vehicle" layoutKey="vehicle-truck" />);
+    triggerResizeObserver();
+
+    expect(scrollContainer.scrollTo).toHaveBeenCalledWith({
+      left: 54,
+      behavior: 'instant',
+    });
+  });
+
+  it('re-centers the basic tab when switching from vehicle to tire tabs', () => {
+    const props = createDefaultProps();
+    const { rerender } = render(<SearchTabs {...props} variant="vehicle" />);
+    const scrollContainer = screen.getByTestId('search-tabs-scroll-container');
+    props.tabsContainerRef.current = scrollContainer;
+
+    Object.defineProperty(scrollContainer, 'clientWidth', {
+      configurable: true,
+      value: 300,
+    });
+    Object.defineProperty(scrollContainer, 'scrollWidth', {
+      configurable: true,
+      value: 600,
+    });
+    Object.defineProperty(scrollContainer, 'scrollLeft', {
+      configurable: true,
+      writable: true,
+      value: 0,
+    });
+    scrollContainer.scrollTo = jest.fn();
+    mockTabGeometry([screen.getByTestId('search-tab-basic')], [{ width: 160, offsetLeft: 124 }]);
+
+    triggerResizeObserver();
+    expect(scrollContainer.scrollTo).toHaveBeenCalledWith({
+      left: 54,
+      behavior: 'instant',
+    });
+
+    (scrollContainer.scrollTo as jest.Mock).mockClear();
+    Object.defineProperty(scrollContainer, 'scrollWidth', {
+      configurable: true,
+      value: 400,
+    });
+    rerender(<SearchTabs {...props} variant="tire" layoutKey="tire-car" />);
+    mockTabGeometry([screen.getByTestId('search-tab-basic')], [{ width: 140, offsetLeft: 100 }]);
+    triggerResizeObserver();
+
+    expect(scrollContainer.scrollTo).toHaveBeenCalledWith({
+      left: 20,
+      behavior: 'instant',
+    });
+  });
+
+  it('does not re-center after a later resize when syncKey is unchanged', () => {
+    const props = createDefaultProps();
+    render(<SearchTabs {...props} variant="vehicle" />);
+    const scrollContainer = screen.getByTestId('search-tabs-scroll-container');
+    props.tabsContainerRef.current = scrollContainer;
+
+    Object.defineProperty(scrollContainer, 'clientWidth', {
+      configurable: true,
+      value: 300,
+    });
+    Object.defineProperty(scrollContainer, 'scrollWidth', {
+      configurable: true,
+      value: 600,
+    });
+    Object.defineProperty(scrollContainer, 'scrollLeft', {
+      configurable: true,
+      writable: true,
+      value: 0,
+    });
+    scrollContainer.scrollTo = jest.fn();
+    mockTabGeometry([screen.getByTestId('search-tab-basic')], [{ width: 160, offsetLeft: 124 }]);
+
+    triggerResizeObserver();
+    expect(scrollContainer.scrollTo).toHaveBeenCalledTimes(1);
+
+    (scrollContainer.scrollTo as jest.Mock).mockClear();
+    triggerResizeObserver();
+
+    expect(scrollContainer.scrollTo).not.toHaveBeenCalled();
   });
 
   it('shows the right scroll control when tabs overflow at the start', () => {

@@ -43,7 +43,7 @@ See [search-title-url.md](./search-title-url.md) for brand/model slugs and [tech
 - **Change detection:** `useFilterHandlers` compares current `FilterState` to `lastAppliedFilters` (including sort). `lastAppliedFilters` is set after a successful apply and on URL sync from external navigation.
 - **Available count:** `useAvailableListingsCount` uses current form fields (including pending sort), not only URL params.
 - **Components:** `SortDropdown.tsx` (shared); home wires `onSortChange` + `selectedSortKey` via `SearchFormActions` / `SearchFiltersForm`.
-- **Scroll to results:** applying search sets `scrollToResultsAfterLoad`. After the grid is ready, `useListingGridScrollEffects` scrolls to `#listings-results`. On compact viewports (`innerWidth < 1280`) this always runs. On desktop (`innerWidth >= 1280`) it runs only when the page is still near the top (`scrollY <= 32`); if the user has already scrolled, the flag is cleared and the current position is kept. Header catalog search is an exception: it always scrolls to `#listings-results` (or to the top when the result set is empty).
+- **Scroll to results:** applying search sets `scrollToResultsAfterLoad`. After the grid is ready, `useListingGridScrollEffects` scrolls to `#listings-results`. On compact viewports (`innerWidth < 1280`) this always runs. On desktop (`innerWidth >= 1280`) it runs only when the page is still near the top (`scrollY <= 32`); if the user has already scrolled, the flag is cleared and the current position is kept. Header catalog search and applying a saved filter from `/favorites` are exceptions: they set `scrollToResultsAfterLoad=header` and always scroll to `#listings-results` (or to the top when the result set is empty).
 
 ---
 
@@ -66,6 +66,8 @@ See [search-title-url.md](./search-title-url.md) for brand/model slugs and [tech
 | Popular             | `searchFilters.popularFilters`     | Quick links for popular brands and models                                                                  |
 
 Only one tab panel is visible at a time (`activeTab === 'basic' | 'advanced' | 'equipment' | 'popular'`). Inactive panels stay mounted and use CSS `hidden` so filter values persist when switching tabs. Tab state is managed by `useSearchTabs`.
+
+On compact viewports the tab row is horizontally scrollable. It centers on **Basic criteria** on first load and again after switching vehicle type or the tire category. Edge chevrons (`lg:hidden`) scroll to the previous or next tab.
 
 ---
 
@@ -176,7 +178,7 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 
 - Below `xl` (`< 1280px`), vehicle filters use `MobileSearchFilters` (bottom sheets for field editing). Desktop dropdowns start at `xl`.
 - Action buttons (`SearchFormActions`) stay stacked full-width until `xl`; the desktop sort+CTA row starts at 1280px.
-- All mobile search sheets use `components/common/BottomSheet.tsx` with a unified open/close lifecycle: slide-up on open, slide-down on close, regardless of whether the user dismisses via **OK**, the header close button, backdrop tap, Escape, swipe-down, or system **Back**.
+- All mobile search sheets use `components/common/BottomSheet.tsx` with a unified open/close lifecycle: the same 300ms slide-up/slide-down as other common sheets (`getBottomSheetSlideStyle`), regardless of whether the user dismisses via **OK**, the header close button, backdrop tap, Escape, swipe-down, or system **Back**.
 - Confirm (**OK**) applies draft values and closes the sheet with the same exit animation; dismiss actions do not apply draft changes.
 - Sheet height is derived from `visualViewport` (not static `vh`) and respects iOS safe areas (`viewport-fit=cover`, top inset on the handle/header, bottom inset on the footer).
 - Background scroll is blocked while the sheet is open via `useBlockBackgroundScroll` (event interception), not by locking `body` overflow — this keeps the `position: sticky` page header anchored to the viewport instead of scrolling out of view. Scrolling inside the sheet list still works and the page position stays put.
@@ -317,4 +319,4 @@ The same floating-label and `search-control-border` primitives are reused in veh
 
 ---
 
-**Last updated:** 2026-08-19
+**Last updated:** 2026-09-04

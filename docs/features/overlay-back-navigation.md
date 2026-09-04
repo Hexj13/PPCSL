@@ -30,6 +30,12 @@ Most overlays (`Modal`, `modals/BottomSheet`, the mobile menu drawer, the listin
 
 `components/common/BottomSheet.tsx` intentionally does **not** use `useScrollLock`: setting `overflow: hidden` on `body` re-anchors the `position: sticky` page header to the document top, so it scrolls out of view when a sheet opens on a scrolled page. Instead it blocks background scroll with `useBlockBackgroundScroll` (capture-phase `wheel`/`touchmove` `preventDefault`, allowing scroll only inside `[data-bottom-sheet-scrollable]`), which keeps the page position fixed without touching `body`/`html` styles or the sticky header. Overlay history stays active until the sheet portal unmounts after the exit animation, so programmatic close (for example **OK**) does not pop history mid-transition. Header catalog search calls `detachTopOverlayHistory()` before `replace`/`push` so that delayed overlay `history.back()` does not undo the new search URL.
 
+## Bottom sheet motion
+
+`components/common/BottomSheet.tsx` (search filters, listing form selects, header catalog search, PWA update) and `components/modals/BottomSheet.tsx` (legacy primitive) share the same enter/exit slide: `translateY(100%)` → `translateY(0%)` over 300ms with `cubic-bezier(0.32, 0.72, 0, 1)`, via `getBottomSheetSlideStyle` in `lib/bottom-sheet-layout.ts`. Backdrop opacity uses the same 300ms with `ease-out`. New sheets should use `components/common/BottomSheet.tsx`.
+
+The mobile nav drawer is a side panel (`mobile-nav-drawer-enter` / `mobile-nav-drawer-leave`, 0.24s) and is not a bottom sheet. Cookie consent is a floating card (`translate-y-4`), not a sheet.
+
 ## Home scroll after Back from listing
 
 Home scroll restoration is coordinated by a state machine in `lib/home-scroll-restore.ts` (`idle → pending → scrolled → correcting → done/cancelled`). `ScrollReset.tsx` reads the restore target on `/` and calls `beginHomeScrollRestore`, which performs one instant `scrollTo` in `useLayoutEffect` before paint. While restore is active, `ListingGrid` reserves the saved grid height as `minHeight` on the results container (persisted with `scrollY` as `homeReloadGridHeight`/`homeReloadViewportW`, applied only when the viewport width matches), so the footer stays in place and no skeleton flash occurs.

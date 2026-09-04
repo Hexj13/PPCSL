@@ -70,7 +70,7 @@ The VIN field on the listing form (create and edit) uses `listings.vinHint`. The
 |----------|-------------|
 | `INFOCAR_SECRET_KEY` | Secret key from Infocar.md partner agreement. Used to encrypt VIN (AES-256-CBC, key = SHA256(secret), IV 16 bytes random, output base64url(IV \|\| ciphertext)). If unset, `GET /api/listings/:id/report-url` returns 404 and the frontend opens the fallback URL (Infocar base without VIN). |
 
-Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md` for RO), `INFOCAR_BASE_URL_RU` (default `https://ru.infocar.md` for RU), `INFOCAR_PARTNER_FROM` (default `kupito`). See also [TECHNICAL.md](../architecture/TECHNICAL.md#3-environment-variables) and [platform-checklist.md](../guides/platform-checklist.md).
+Optional overrides: `INFOCAR_BASE_URL` (default `https://infocar.md` for RO), `INFOCAR_BASE_URL_RU` (default `https://ru.infocar.md` for RU), `INFOCAR_PARTNER_FROM` (default `kupito`). See also [technical.md](../architecture/technical.md#3-environment-variables) and [platform-checklist.md](../guides/platform-checklist.md).
 
 ## Implementation
 

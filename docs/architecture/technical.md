@@ -443,7 +443,7 @@ POST /api/auth/request-password-reset # Request password reset
 POST /api/auth/reset-password         # Reset password
 ```
 
-Refresh tokens rotate on each successful refresh (the previous refresh token is revoked). Access and refresh tokens are stored in **httpOnly cookies** (`ppcsl_access_token`, `ppcsl_refresh_token`); API JSON responses do not include token fields. `POST /api/auth/change-password` revokes all refresh tokens except the one in the current browser’s `ppcsl_refresh_token` cookie (other devices are logged out; session cookies are unchanged). `POST /api/auth/reset-password` revokes refresh tokens and clears session cookies. Already-issued access JWTs remain valid until expiry (see [auth-jwt-invalidation-followup.md](./auth-jwt-invalidation-followup.md)). The Axios client calls `POST /api/auth/refresh` with credentials; Zustand holds the `user` snapshot only—see [AUTH_COOKIE_SESSION.md](../guides/AUTH_COOKIE_SESSION.md) and [cross-tab-sync.md](../features/cross-tab-sync.md#auth-refresh-and-token-rotation).
+Refresh tokens rotate on each successful refresh (the previous refresh token is revoked). Access and refresh tokens are stored in **httpOnly cookies** (`ppcsl_access_token`, `ppcsl_refresh_token`); API JSON responses do not include token fields. `POST /api/auth/change-password` revokes all refresh tokens except the one in the current browser’s `ppcsl_refresh_token` cookie (other devices are logged out; session cookies are unchanged). `POST /api/auth/reset-password` revokes refresh tokens and clears session cookies. Already-issued access JWTs remain valid until expiry (see [auth-jwt-invalidation-followup.md](./auth-jwt-invalidation-followup.md)). The Axios client calls `POST /api/auth/refresh` with credentials; Zustand holds the `user` snapshot only—see [auth-cookie-session.md](../guides/auth-cookie-session.md) and [cross-tab-sync.md](../features/cross-tab-sync.md#auth-refresh-and-token-rotation).
 
 **Profile password (`/profile`):** `GET /api/auth/me` exposes `hasPassword` (derived from the stored hash; the `password` column uses `select: false` in TypeORM). Accounts created via Google with no hash show **Set password** (new password only, `InfoBlock` hint); `POST /api/auth/change-password` accepts body `{ newPassword }` without `currentPassword`. After a password exists, the UI switches to **Change password** (current + new). Google Sign-In remains available; login by email or phone + password works once `hasPassword` is true. Password-only save does not require other profile fields (e.g. company website) to be valid. No separate “confirm new password” field—client validates length (max 100) and strength before submit.
 
@@ -484,7 +484,7 @@ GET    /api/listings/promotion-access  # Get promotion access status (no auth re
 
 **Listing detail — seller phones (frontend):** For guests and non-owner viewers, masked numbers from `GET /api/listings/:id` are shown with a reveal control; `GET /api/listings/:id/phones` runs on reveal. A **Contact** action card (when promote card is not shown) scrolls to the seller block and triggers the same reveal flow. Copy is available after reveal for that flow. Listing owner and Admin see full numbers from `GET /api/listings/:id` with copy and no reveal control (no `GET .../phones` needed for display). Visibility rules: `listingPagePromoteCard.ts` (`listingPageShowsContactCard`, `listingPageShowsPromoteCard`).
 
-**Listing images / blurhash:** Listings store `cover_blur_hash` (first photo, for cards) and optional `image_blur_hashes` (JSON array aligned with `images`, entries may be `null`). `POST /api/listings` and `PATCH /api/listings/:id` accept `image_blur_hashes` when its length matches `images`. For existing rows without the array, run `npm run backfill:blurhash:all` (see `core/backend/docs/SCRIPTS.md`). The listing UI shows blur placeholders only when these fields are populated; a local DB without blurhash data will not show them compared to production—see `core/docs/features/image-preview.md` (Local development vs production).
+**Listing images / blurhash:** Listings store `cover_blur_hash` (first photo, for cards) and optional `image_blur_hashes` (JSON array aligned with `images`, entries may be `null`). `POST /api/listings` and `PATCH /api/listings/:id` accept `image_blur_hashes` when its length matches `images`. For existing rows without the array, run `npm run backfill:blurhash:all` (see `core/backend/docs/scripts.md`). The listing UI shows blur placeholders only when these fields are populated; a local DB without blurhash data will not show them compared to production—see `core/docs/features/image-preview.md` (Local development vs production).
 
 **Filter Parameters:**
 
@@ -827,7 +827,7 @@ Backups are saved to `backend/backups/` by default with format: `ppcsl_backup_YY
 - `POST /api/auth/request-password-reset`: 30 requests per hour per IP (supplementary; per-phone SMS quota enforced in Redis)
 - `POST /api/upload/image`: 20 requests per minute
 
-**Excluded from throttling:** `GET /api/upload/image/:filename` (image delivery) uses `@SkipThrottle()` so viewing listing photos is not rate-limited by NestJS; edge caching (see [DEPLOYMENT.md](../guides/DEPLOYMENT.md)) reduces origin load.
+**Excluded from throttling:** `GET /api/upload/image/:filename` (image delivery) uses `@SkipThrottle()` so viewing listing photos is not rate-limited by NestJS; edge caching (see [deployment.md](../guides/deployment.md)) reduces origin load.
 
 #### SMS Verification
 
@@ -1077,7 +1077,7 @@ All scripts are located in `backend/src/scripts/` and can be executed via npm co
   - Brand and brand+model landing pages in `brands-car.xml`, `brands-truck.xml`, `brands-moto.xml` (listed directly in the root index; no nested sitemap index)
   - Seller board pages (`/board/{slug}`) for active sellers with active listings
   - Active listings by month in `listings-YYYY-MM.xml` — one `<url>` per listing; default-locale canonical in `<loc>`, Russian locale via `xhtml:link` alternates (`hreflang` ro / ru / x-default); `/sitemap.txt` lists both locale URL forms derived from each `<loc>`
-  - Cached in Redis under prefix `sitemap:v3:` (1 hour TTL; prefix bumped when XML shape changes); proper XML escaping and Cache-Control headers. Detail: [SITEMAP.md](../features/SITEMAP.md).
+  - Cached in Redis under prefix `sitemap:v3:` (1 hour TTL; prefix bumped when XML shape changes); proper XML escaping and Cache-Control headers. Detail: [sitemap.md](../features/sitemap.md).
 - **Image optimization** - WebP format, lazy loading, proper alt text
 - **Performance** - Compression, security headers, optimized image sizes
 
@@ -1211,7 +1211,7 @@ The backend has `trust proxy: true` configured, which correctly identifies real 
 5. Enable SSL/TLS (Full strict mode)
 6. Enable WAF and Bot Protection
 
-See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFront CDN setup instructions (CloudFront is AWS's CDN service, similar to Cloudflare).
+See [deployment.md](../guides/deployment.md#72-rendercom-deployment) for CloudFront CDN setup instructions (CloudFront is AWS's CDN service, similar to Cloudflare).
 
 ---
 
@@ -1262,7 +1262,7 @@ See [DEPLOYMENT.md](../guides/DEPLOYMENT.md#72-rendercom-deployment) for CloudFr
   - **Modal viewer:** Full-screen photo viewer with keyboard navigation and swipe gestures
   - **Performance:** 80% code reduction, instant cache switching, no artificial delays
   - See [image-preview.md](../features/image-preview.md) for complete documentation
-  - **Image load Sentry diagnostics:** After retry exhaustion, `reportImageLoadFailure` calls `GET /api/diagnostics/image-status` (Nest `DiagnosticsModule`) for an allowlisted server-side `HEAD` to the failing URL; see `image-preview.md` and `DEPLOYMENT.md` (CloudFront CORS for `/uploads/*`).
+  - **Image load Sentry diagnostics:** After retry exhaustion, `reportImageLoadFailure` calls `GET /api/diagnostics/image-status` (Nest `DiagnosticsModule`) for an allowlisted server-side `HEAD` to the failing URL; see `image-preview.md` and `deployment.md` (CloudFront CORS for `/uploads/*`).
 - **Race condition prevention:** Loading states and request guards to prevent duplicate API calls
   - Favorite toggle button disabled during operation with visual feedback
   - Ref-based guards to prevent concurrent requests
@@ -1360,8 +1360,8 @@ Or use `npm run dev` in root - it will start both servers.
 
 - **API Documentation:** Swagger available at `/api/docs` (when running in non-production). Title/description use `SITE_NAME` or `PLATFORM_NAME`, else the hostname from `FRONTEND_URL`
 - **Project README:** See [README.md](../../README.md) in project root
-- **Deployment Guide:** See [DEPLOYMENT.md](../guides/DEPLOYMENT.md) for production deployment
-- **Feature docs:** [seller-listings-board.md](../features/seller-listings-board.md), [paid-promotion.md](../features/paid-promotion.md), [image-preview.md](../features/image-preview.md), [smart-selection.md](../features/smart-selection.md), [ui-components.md](../features/ui-components.md), [TODO.md](../features/TODO.md)
+- **Deployment Guide:** See [deployment.md](../guides/deployment.md) for production deployment
+- **Feature docs:** [seller-listings-board.md](../features/seller-listings-board.md), [paid-promotion.md](../features/paid-promotion.md), [image-preview.md](../features/image-preview.md), [smart-selection.md](../features/smart-selection.md), [ui-components.md](../features/ui-components.md), [TODO.md](../features/todo.md)
 
 ---
 
@@ -1489,7 +1489,7 @@ cd core/frontend && npm start
 3. Copy platform-specific files via `npm run prepare:build` (frontend locales ro/ru/en, backend locales, theme, config, assets)
 4. Install dependencies and build the application
 
-**Memory tuning (Next.js frontend):** To avoid out-of-memory restarts on Render.com (e.g. when traffic is low but health checks run frequently), the app uses: `cacheMaxMemorySize: 25MB` in next.config.js, `minimumCacheTTL: 86400` for image optimization, and Sentry server `tracesSampleRate: 0.2`. See [SENTRY.md](../guides/SENTRY.md) for Sentry server config.
+**Memory tuning (Next.js frontend):** To avoid out-of-memory restarts on Render.com (e.g. when traffic is low but health checks run frequently), the app uses: `cacheMaxMemorySize: 25MB` in next.config.js, `minimumCacheTTL: 86400` for image optimization, and Sentry server `tracesSampleRate: 0.2`. See [sentry.md](../guides/sentry.md) for Sentry server config.
 
 ### 13.4.2. Render.com Backend Deployment Configuration
 

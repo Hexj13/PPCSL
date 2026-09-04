@@ -20,7 +20,7 @@ Env vars, permissions, glossary, scripts reference, analytics.
 - [documentation-todo.md](./documentation-todo.md) — single master TODO (documentation and product backlog)
 - [npm-audit-and-deprecations.md](./npm-audit-and-deprecations.md) — dependency audit and deprecation status
 - [seo-audit.md](./seo-audit.md) — canonical SEO audit entry
-- Scripts: [../../backend/docs/SCRIPTS.md](../../backend/docs/SCRIPTS.md)
+- Scripts: [../../backend/docs/scripts.md](../../backend/docs/scripts.md)
 - Analytics: [../analytics/](../analytics/)
 - Transitional folders: [../scripts/](../scripts/), [../audits/](../audits/)
 

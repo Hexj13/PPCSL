@@ -12,7 +12,7 @@ tags:
 
 Спецификация для разработки и для настройки промптов: не чат, один структурированный **результат ИИ-анализа** на связку **объявление + язык ИИ-анализа + актуальность входных данных**, быстрый UX на странице объявления.
 
-**Точки входа в коде:** бэкенд — [`listing-ai-report.service.ts`](../../backend/src/listings/application/listing-ai-report.service.ts), [`gemini-listing-ai-report.client.ts`](../../backend/src/listings/infrastructure/gemini-listing-ai-report.client.ts), DTO [`post-listing-ai-report.dto.ts`](../../backend/src/listings/presentation/dto/post-listing-ai-report.dto.ts); фронт — [`ListingPageAiReportModal.tsx`](../../frontend/app/listings/[id]/ListingPageAiReportModal.tsx), [`useListingAiReport.ts`](../../frontend/app/listings/[id]/useListingAiReport.ts), карточки на PDP — [`ListingPageActions.tsx`](../../frontend/components/ListingPage/ListingPageActions.tsx) (через [`useListingPageClient.ts`](../../frontend/app/listings/[id]/useListingPageClient.ts)). Справочник API и env: [`TECHNICAL.md`](../architecture/TECHNICAL.md). См. также [`infocar-history-section.md`](./infocar-history-section.md) для паттернов PDP.
+**Точки входа в коде:** бэкенд — [`listing-ai-report.service.ts`](../../backend/src/listings/application/listing-ai-report.service.ts), [`gemini-listing-ai-report.client.ts`](../../backend/src/listings/infrastructure/gemini-listing-ai-report.client.ts), DTO [`post-listing-ai-report.dto.ts`](../../backend/src/listings/presentation/dto/post-listing-ai-report.dto.ts); фронт — [`ListingPageAiReportModal.tsx`](../../frontend/app/listings/[id]/ListingPageAiReportModal.tsx), [`useListingAiReport.ts`](../../frontend/app/listings/[id]/useListingAiReport.ts), карточки на PDP — [`ListingPageActions.tsx`](../../frontend/components/ListingPage/ListingPageActions.tsx) (через [`useListingPageClient.ts`](../../frontend/app/listings/[id]/useListingPageClient.ts)). Справочник API и env: [`technical.md`](../architecture/technical.md). См. также [`infocar-history-section.md`](./infocar-history-section.md) для паттернов PDP.
 
 ---
 
@@ -446,7 +446,7 @@ flowchart TD
 - **Stage / dev / test** (из каталога `core/backend`): `npm run clear-listing-ai-reports`
 - **Production**: `npm run clear-listing-ai-reports:prod`
 
-Подробности и ограничения скриптов: [`SCRIPTS.md`](../../backend/docs/SCRIPTS.md). Пошагово на Render: [`production-deployment.md`](../../../docs/deployment/production-deployment.md) (§ 2.3).
+Подробности и ограничения скриптов: [`scripts.md`](../../backend/docs/scripts.md). Пошагово на Render: [`production-deployment.md`](../../../docs/deployment/production-deployment.md) (§ 2.3).
 
 ---
 
@@ -466,5 +466,5 @@ flowchart TD
 ## Связанные материалы
 
 - Карточки и паттерны PDP: [`infocar-history-section.md`](./infocar-history-section.md)
-- Технические переменные и справочник API: [`TECHNICAL.md`](../architecture/TECHNICAL.md)
+- Технические переменные и справочник API: [`technical.md`](../architecture/technical.md)
 - При изменении обработки персональных данных или субпроцессоров — обновить [`config/legal.ts`](../../../config/legal.ts) и выполнить `npm run prepare:build` в корне платформы.

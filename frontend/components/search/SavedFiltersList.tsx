@@ -14,7 +14,9 @@ import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { SavedFilter } from '@/lib/api';
 import { brandsApi, savedFiltersApi } from '@/lib/api';
+import { sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { CARD_EXIT_ANIMATION_MS, MAX_SAVED_FILTERS } from '@/lib/constants';
+import { clearHomeScrollRestoreSession } from '@/lib/home-scroll-restore';
 import { toast } from '@/lib/toast';
 import { createSlug, formatDateLong } from '@/lib/utils';
 
@@ -331,6 +333,8 @@ export function SavedFiltersList({ onFiltersChange }: SavedFiltersListProps = {}
     });
 
     const queryString = params.toString();
+    sessionStorageSetItem('scrollToResultsAfterLoad', 'header');
+    clearHomeScrollRestoreSession();
     localizedPush(`/?${queryString}`);
   };
 

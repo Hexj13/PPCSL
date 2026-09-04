@@ -120,10 +120,6 @@ export function useSearchFiltersController({
     preserveTabOnNextSyncRef: preserveTabOnResetRef,
   });
 
-  const scrollTabsToStart = useCallback(() => {
-    tabs.tabsContainerRef.current?.scrollTo({ left: 0, behavior: 'instant' });
-  }, [tabs.tabsContainerRef]);
-
   const { isCategorySwitching, withCategorySwitchLock } = useCategorySwitchLock();
 
   const { vehicleType, setVehicleTypeWithStorage, handleVehicleTypeChange } = useVehicleType({
@@ -131,7 +127,7 @@ export function useSearchFiltersController({
     resetToVehicleSearchDefaults,
     setLastAppliedFilters,
     setActiveTab: tabs.setActiveTab,
-    scrollTabsToStart,
+    scrollTabsToStart: tabs.scrollTabsToStart,
   });
 
   const handleTireCategorySelect = useCallback(() => {
@@ -139,7 +135,7 @@ export function useSearchFiltersController({
       setFilters(getDefaultTireFilters(currentYear) as FilterState);
       setLastAppliedFilters(null);
       tabs.setActiveTab('basic');
-      scrollTabsToStart();
+      tabs.scrollTabsToStart();
       startTransition(() => {
         localizedReplace('/?category=tire', { scroll: false });
       });
@@ -147,7 +143,6 @@ export function useSearchFiltersController({
   }, [
     currentYear,
     localizedReplace,
-    scrollTabsToStart,
     setFilters,
     setLastAppliedFilters,
     tabs,
@@ -300,7 +295,7 @@ export function useSearchFiltersController({
     resetToVehicleSearchDefaults,
     tabs,
     setVehicleTypeWithStorage,
-    scrollTabsToStart,
+    scrollTabsToStart: tabs.scrollTabsToStart,
   });
 
   const filtersForSave = useMemo(

@@ -43,7 +43,7 @@ export function HeaderMobileCluster({
   onOpenCatalogSearch,
 }: HeaderMobileClusterProps) {
   return (
-    <div className="ml-auto flex lg:hidden items-center min-w-0 gap-2">
+    <div className="ml-auto flex lg:hidden items-center min-w-0 gap-1">
       {showInlineMobileLanguage && (
         <div className="flex items-center shrink-0">
           {showSkeleton ? (

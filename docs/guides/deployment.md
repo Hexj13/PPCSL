@@ -490,7 +490,7 @@ pm2 status
 
 ### Step 10: Database Backups
 
-See [postgres-backup-restore.md](../operations/postgres-backup-restore.md) for Render PITR, logical exports, and `pg_dump`. Self-hosted cron scripts remain in [TECHNICAL.md](../architecture/TECHNICAL.md#backups).
+See [postgres-backup-restore.md](../operations/postgres-backup-restore.md) for Render PITR, logical exports, and `pg_dump`. Self-hosted cron scripts remain in [technical.md](../architecture/technical.md#backups).
 
 ---
 
@@ -663,7 +663,7 @@ for optimized images, so CloudFront will cache them for up to one year.
 - `/uploads/{uuid}.webp` — full processed upload (max 2048px); the resize source for `GET /api/upload/image`
 - `/uploads/optimized/{uuid}_{width}_{quality}.webp` — persistent on-disk/S3 cache of `GET /api/upload/image` variants, written only for standard responsive widths/qualities so the unthrottled endpoint cannot be abused to fill storage (survives deploys; deleted best-effort when the original is removed)
 - **Upload warm-up:** After each image upload, the backend asynchronously writes card-delivery variants at widths **640, 750, 828, 1080, 1200** and quality **75** (`UploadService.warmDeliveryVariants`). Partner imports use the same upload endpoint, so new photos are covered automatically.
-- **Legacy warm-up:** One-off `npm run warm:card-variants:cover:prod` (covers only) or `warm:card-variants:all:prod` (all gallery photos) from `core/backend` on Render shell after deploy; idempotent via S3 `HeadObject` before encode. See `core/backend/docs/SCRIPTS.md`.
+- **Legacy warm-up:** One-off `npm run warm:card-variants:cover:prod` (covers only) or `warm:card-variants:all:prod` (all gallery photos) from `core/backend` on Render shell after deploy; idempotent via S3 `HeadObject` before encode. See `core/backend/docs/scripts.md`.
 
 Optional S3 lifecycle rules can expire old `/uploads/optimized/` objects if storage growth needs control; originals should be retained. Expect roughly **+200–300 KB** of optimized objects per uploaded photo (five widths per file when warm-up runs on every upload).
 
@@ -842,9 +842,9 @@ Use POST (GET returns 404). To remove: `curl -X POST "https://api.telegram.org/b
 
 **Behaviour:** POST `/api/telegram/webhook` receives Telegram updates. Replies to the user are in Romanian + Russian (one message, separator `—`). Rate limit: 20 messages per hour per user (Redis key `telegram:ratelimit:{userId}`). If `TELEGRAM_BOT_TOKEN` or `TELEGRAM_SUPPORT_CHAT_ID` are not set, the bot does nothing and the webhook still returns 200.
 
-**Telegram Sign-In (Login Widget):** For Telegram Sign-In on `/sign`, bind the site domain in BotFather (`/setdomain`) and set `NEXT_PUBLIC_TELEGRAM_CLIENT_ID` (numeric bot id) on the frontend and `TELEGRAM_BOT_TOKEN` on the backend. The backend verifies the Login Widget payload via HMAC-SHA256 with the bot token and checks `auth_date` freshness; the same `TELEGRAM_BOT_TOKEN` is reused for the support webhook. Telegram does not return a phone number, so new users always go through phone verification. See [TELEGRAM_AUTH_SETUP_RU.md](./TELEGRAM_AUTH_SETUP_RU.md).
+**Telegram Sign-In (Login Widget):** For Telegram Sign-In on `/sign`, bind the site domain in BotFather (`/setdomain`) and set `NEXT_PUBLIC_TELEGRAM_CLIENT_ID` (numeric bot id) on the frontend and `TELEGRAM_BOT_TOKEN` on the backend. The backend verifies the Login Widget payload via HMAC-SHA256 with the bot token and checks `auth_date` freshness; the same `TELEGRAM_BOT_TOKEN` is reused for the support webhook. Telegram does not return a phone number, so new users always go through phone verification. See [telegram-auth-setup-ru.md](./telegram-auth-setup-ru.md).
 
-**Facebook Login:** Set `NEXT_PUBLIC_FACEBOOK_APP_ID` on the frontend and `FACEBOOK_APP_ID` + `FACEBOOK_APP_SECRET` on the backend (same App ID). Configure App Domains / JavaScript SDK domains in Meta Developer Console; Live mode and App Review for `email` as required. New users always go through SMS phone verification. See [FACEBOOK_LOGIN_SETUP_RU.md](./FACEBOOK_LOGIN_SETUP_RU.md).
+**Facebook Login:** Set `NEXT_PUBLIC_FACEBOOK_APP_ID` on the frontend and `FACEBOOK_APP_ID` + `FACEBOOK_APP_SECRET` on the backend (same App ID). Configure App Domains / JavaScript SDK domains in Meta Developer Console; Live mode and App Review for `email` as required. New users always go through SMS phone verification. See [facebook-login-setup-ru.md](./facebook-login-setup-ru.md).
 
 ### 3.11. Frontend Service Setup (if deployed separately)
 
@@ -875,7 +875,7 @@ NEXT_PUBLIC_COUNTRY=<country>
 # NEXT_PUBLIC_GOOGLE_VERIFICATION=
 ```
 
-**Note:** `onrender.com` is on the Public Suffix List — host-only `sameSite=lax` auth cookies do **not** work between two `*.onrender.com` services. Use a custom domain for auth acceptance; see [AUTH_COOKIE_SESSION.md](./AUTH_COOKIE_SESSION.md).
+**Note:** `onrender.com` is on the Public Suffix List — host-only `sameSite=lax` auth cookies do **not** work between two `*.onrender.com` services. Use a custom domain for auth acceptance; see [auth-cookie-session.md](./auth-cookie-session.md).
 
 ### 3.12. Troubleshooting
 

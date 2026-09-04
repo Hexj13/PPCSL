@@ -138,6 +138,7 @@ export function SearchFiltersForm({
           />
           <SearchTabs
             variant={filters.listing_category === 'tire' ? 'tire' : 'vehicle'}
+            layoutKey={`${filters.listing_category}-${vehicleType}`}
             activeTab={tabs.activeTab}
             onTabChange={(tab) => {
               if (isCategorySwitching) return;

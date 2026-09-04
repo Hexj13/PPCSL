@@ -6,7 +6,17 @@ import { createPortal } from 'react-dom';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useHistoryBackClose } from '@/hooks/useHistoryBackClose';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { BOTTOM_SHEET_TRANSITION_MS, getBottomSheetSlideStyle } from '@/lib/bottom-sheet-layout';
 import { designTokens } from '@/ui';
+
+const BOTTOM_SHEET_SLIDE_CLASS =
+  'motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform';
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -16,8 +26,6 @@ interface BottomSheetProps {
   className?: string;
   dataTestId?: string;
 }
-
-const TRANSITION_MS = 300;
 
 export function BottomSheet({
   isOpen,
@@ -44,12 +52,24 @@ export function BottomSheet({
   useEffect(() => {
     if (isOpen) {
       setIsRendered(true);
-      const frame = requestAnimationFrame(() => setIsVisible(true));
-      return () => cancelAnimationFrame(frame);
+      let innerRaf = 0;
+      const outerRaf = requestAnimationFrame(() => {
+        innerRaf = requestAnimationFrame(() => setIsVisible(true));
+      });
+      return () => {
+        cancelAnimationFrame(outerRaf);
+        if (innerRaf) {
+          cancelAnimationFrame(innerRaf);
+        }
+      };
     }
 
     setIsVisible(false);
-    const timer = setTimeout(() => setIsRendered(false), TRANSITION_MS);
+    if (prefersReducedMotion()) {
+      setIsRendered(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setIsRendered(false), BOTTOM_SHEET_TRANSITION_MS);
     return () => clearTimeout(timer);
   }, [isOpen]);
 
@@ -75,8 +95,8 @@ export function BottomSheet({
 
   const sheetContent = (
     <div
-      className={`fixed inset-0 flex items-end justify-center px-4 transition-colors duration-300 ${
-        isVisible ? 'bg-black/70' : 'bg-black/0'
+      className={`fixed inset-0 flex items-end justify-center px-4 bg-black/70 motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-out ${
+        isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
         zIndex: designTokens.zIndex.modal,
@@ -99,9 +119,8 @@ export function BottomSheet({
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         data-testid={dataTestId}
-        className={`w-full max-w-lg bg-bg-base rounded-t-2xl border border-primary-700/30 border-b-0 shadow-xl transition-transform duration-300 ease-out ${
-          isVisible ? 'translate-y-0' : 'translate-y-full'
-        } ${className}`}
+        className={`w-full max-w-lg bg-bg-base rounded-t-2xl border border-primary-700/30 border-b-0 shadow-xl ${BOTTOM_SHEET_SLIDE_CLASS} ${className}`}
+        style={getBottomSheetSlideStyle(isVisible)}
         onPointerDown={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-3 pb-1" aria-hidden="true">

@@ -29,6 +29,7 @@ export function useListingGridScrollEffects({
 }: UseListingGridScrollEffectsArgs) {
   const prevIsLoadingRef = useRef(isLoading);
   const prevShowContentRef = useRef(showContent);
+  const prevLayoutReadyRef = useRef(layoutReady);
   const hasMountedRef = useRef(false);
   const homeScrollRestoreAttemptedRef = useRef(false);
   const searchScrollHandledRef = useRef(false);
@@ -49,15 +50,17 @@ export function useListingGridScrollEffects({
     const loadingJustFinished = prevIsLoadingRef.current && !isLoading;
     const isInitialEffect = !hasMountedRef.current;
     const contentJustBecameVisible = !prevShowContentRef.current && showContent;
+    const layoutJustBecameReady = !prevLayoutReadyRef.current && layoutReady;
     prevIsLoadingRef.current = isLoading;
     prevShowContentRef.current = showContent;
+    prevLayoutReadyRef.current = layoutReady;
     hasMountedRef.current = true;
 
     const shouldScroll = sessionStorageGetItem('scrollToResultsAfterLoad');
     if (!shouldScroll) return;
 
     const canAttemptSearchScroll =
-      loadingJustFinished || isInitialEffect || contentJustBecameVisible;
+      loadingJustFinished || isInitialEffect || contentJustBecameVisible || layoutJustBecameReady;
 
     if (
       typeof window === 'undefined' ||

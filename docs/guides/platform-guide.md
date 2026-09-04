@@ -341,7 +341,7 @@ jobs:
         run: npm run build
 
       # Add deployment steps here (Render.com, VPS, etc.)
-      # See DEPLOYMENT.md for details
+      # See deployment.md for details
 ```
 
 **Required Secrets:**
@@ -421,7 +421,7 @@ npm run dev
 
 ### Step 10: Deploy
 
-Follow instructions in [DEPLOYMENT.md](./DEPLOYMENT.md) for:
+Follow instructions in [deployment.md](./deployment.md) for:
 
 - VPS deployment
 - Render.com deployment
@@ -774,7 +774,7 @@ All settings are configured **only via environment variables**. Each platform ha
 - **Frontend:** `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
 - **Backend:** `SENTRY_DSN` (required for events). Sentry `environment` comes from **`NODE_ENV`** in `sentry.config.ts`. `SENTRY_ENVIRONMENT` and `SENTRY_RELEASE` are **not** read by the current backend init.
 
-Detailed setup and integration: [SENTRY.md](./SENTRY.md).
+Detailed setup and integration: [sentry.md](./sentry.md).
 
 ### Example (Moldova, Frontend)
 
@@ -790,14 +790,14 @@ SENTRY_PROJECT=kupito-frontend
 
 - [ ] GA4: separate property; set `NEXT_PUBLIC_GA_ID`; verify `gtag/js` + collect hits and GA4 Realtime / DebugView
 - [ ] GTM (optional): set `NEXT_PUBLIC_GTM_ID` for this platform’s container — no duplicate GA4 auto page_view while gtag.js is enabled; leave unset to skip GTM
-- [ ] Sentry: Frontend + Backend projects, DSN and `NODE_ENV=production` on backend; see [SENTRY.md](./SENTRY.md) if needed
+- [ ] Sentry: Frontend + Backend projects, DSN and `NODE_ENV=production` on backend; see [sentry.md](./sentry.md) if needed
 
 ### Important
 
 - Do not use one GA/Sentry project for multiple platforms.
 - No fallback: core does not set default GA/GTM/Sentry IDs.
 
-**See also:** [ga4-events.md](../analytics/ga4-events.md), [SENTRY.md](./SENTRY.md), [platform-checklist.md](./platform-checklist.md).
+**See also:** [ga4-events.md](../analytics/ga4-events.md), [sentry.md](./sentry.md), [platform-checklist.md](./platform-checklist.md).
 
 ---
 
@@ -805,6 +805,6 @@ SENTRY_PROJECT=kupito-frontend
 
 - [multi-repository.md](../architecture/multi-repository.md) - Architecture overview
 - [local-development.md](./local-development.md) - Local development guide
-- [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment instructions
-- [SENTRY.md](./SENTRY.md) - Sentry setup and monitoring
+- [deployment.md](./deployment.md) - Deployment instructions
+- [sentry.md](./sentry.md) - Sentry setup and monitoring
 - [technical.md](../architecture/technical.md#13-cicd-configuration) - CI/CD configuration

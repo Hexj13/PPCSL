@@ -78,7 +78,7 @@ export function HeaderCatalogSearch({
       return;
     }
     if (mobileOpen) {
-      inputRef.current?.focus();
+      inputRef.current?.focus({ preventScroll: true });
       return;
     }
     setQuery('');
@@ -235,7 +235,6 @@ export function HeaderCatalogSearch({
         onClose={() => onMobileOpenChange?.(false)}
         title={t('header.catalogSearch')}
         lockSheetHeight
-        appearImmediately
         mobileOnly={false}
         dataTestId="header-catalog-search-sheet"
         header={

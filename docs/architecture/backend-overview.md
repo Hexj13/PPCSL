@@ -10,7 +10,7 @@ tags:
 
 # Backend overview
 
-High-level description of the NestJS backend in `core/backend/`: deployment model, stack, modules, and architectural choices. For layer conventions and DDD structure, see [backend-layers.md](./backend-layers.md). For API endpoints and env vars, see [TECHNICAL.md](./TECHNICAL.md).
+High-level description of the NestJS backend in `core/backend/`: deployment model, stack, modules, and architectural choices. For layer conventions and DDD structure, see [backend-layers.md](./backend-layers.md). For API endpoints and env vars, see [technical.md](./technical.md).
 
 ## Deployment model: monolith
 
@@ -52,7 +52,7 @@ New code in core domains should follow the layered layout; older modules are mig
 | Database | PostgreSQL 15, **TypeORM** (not Prisma) |
 | Migrations | `src/migrations/*.ts`, `npm run migration:run` |
 | Cache | Redis (`common/redis.service.ts`) |
-| Search | PostgreSQL queries + FTS (see [TECHNICAL.md](./TECHNICAL.md)) |
+| Search | PostgreSQL queries + FTS (see [technical.md](./technical.md)) |
 | Auth | JWT + Passport, refresh tokens (cookie), Google OAuth, Telegram Login Widget, SMS (Twilio) |
 | Files | Local `/uploads/` in dev; **AWS S3** + optional CloudFront in production; `sharp`, blurhash |
 | Video | AWS MediaConvert + webhooks (`listings/video/`) |
@@ -149,20 +149,20 @@ Frontend/backend UI strings: platform root `locales/` and `locales/backend/`. Se
 | Listing AI report | Generation locks and hourly quotas (production) |
 | Telegram | Per-user message rate limit |
 
-Clear caches after catalog mutations: `npm run clear-cache:brands` (see platform rules and [SCRIPTS.md](../../backend/docs/SCRIPTS.md)).
+Clear caches after catalog mutations: `npm run clear-cache:brands` (see platform rules and [scripts.md](../../backend/docs/scripts.md)).
 
 ## Authentication (summary)
 
 - Access token: JWT in httpOnly cookie (short-lived); API JSON returns `user` only (no token fields in body)
 - Refresh token: HTTP-only cookie, rotated on refresh, stored in DB; `change-password` revokes other refresh tokens (current browser session kept); `reset-password` revokes all refresh tokens and clears cookies (access JWT until expiry — see [auth-jwt-invalidation-followup.md](./auth-jwt-invalidation-followup.md))
 - Strategies: `JwtStrategy`, `LocalStrategy`; guards: `JwtAuthGuard`, `OptionalJwtAuthGuard`, `AdminGuard`, `PhoneVerifiedGuard`, `IpBlockGuard`, `CronSecretGuard` (cron jobs and `GET /metrics`)
-- Google Sign-In (`POST /api/auth/google`, GIS idToken): links active users by `googleId`/email; self-deleted accounts (`isSelfDeletedUser`, `googleId` cleared on `DELETE /api/auth/profile`) can register again with the same Google; admin-deactivated users return `errors.userDeactivated` without creating a new row. Operators: [GOOGLE_OAUTH_SETUP_RU.md](../guides/GOOGLE_OAUTH_SETUP_RU.md)
-- Facebook Login (`POST /api/auth/facebook`, user access token): matches by `facebookId`; does not implicitly link by email because Meta provides no reliable `email_verified` signal; requires Meta App + App Secret; operators: [FACEBOOK_LOGIN_SETUP_RU.md](../guides/FACEBOOK_LOGIN_SETUP_RU.md)
-- Telegram Sign-In (`POST /api/auth/telegram`, Login Widget HMAC): matches users by `telegram_id` only; sets `telegram: true` on registration; phone gate required. Operators: [TELEGRAM_AUTH_SETUP_RU.md](../guides/TELEGRAM_AUTH_SETUP_RU.md)
+- Google Sign-In (`POST /api/auth/google`, GIS idToken): links active users by `googleId`/email; self-deleted accounts (`isSelfDeletedUser`, `googleId` cleared on `DELETE /api/auth/profile`) can register again with the same Google; admin-deactivated users return `errors.userDeactivated` without creating a new row. Operators: [google-oauth-setup-ru.md](../guides/google-oauth-setup-ru.md)
+- Facebook Login (`POST /api/auth/facebook`, user access token): matches by `facebookId`; does not implicitly link by email because Meta provides no reliable `email_verified` signal; requires Meta App + App Secret; operators: [facebook-login-setup-ru.md](../guides/facebook-login-setup-ru.md)
+- Telegram Sign-In (`POST /api/auth/telegram`, Login Widget HMAC): matches users by `telegram_id` only; sets `telegram: true` on registration; phone gate required. Operators: [telegram-auth-setup-ru.md](../guides/telegram-auth-setup-ru.md)
 - SMS verification, email (MJML templates in `common/email/`)
 - Global throttling: 600 req/min per IP in production (configurable per route on auth)
 
-Detail: [TECHNICAL.md](./TECHNICAL.md) § API Reference → Authentication.
+Detail: [technical.md](./technical.md) § API Reference → Authentication.
 
 ## Testing
 
@@ -171,15 +171,15 @@ Detail: [TECHNICAL.md](./TECHNICAL.md) § API Reference → Authentication.
 | Unit | `**/*.spec.ts` under `src/` | `npm test` |
 | Integration | `src/test/*.integration.ts` | `npm run test:integration` (Jest + Supertest + jest-openapi) |
 
-See [backend/docs/TESTING.md](../../backend/docs/TESTING.md) and [TECHNICAL.md](./TECHNICAL.md) §8 Testing.
+See [backend/docs/testing.md](../../backend/docs/testing.md) and [technical.md](./technical.md) §8 Testing.
 
 ## Related documentation
 
 - [backend-layers.md](./backend-layers.md) — layers, use cases, ports, module folder layout
 - [multi-repository.md](./multi-repository.md) — core vs platform repo, `prepare:build`
 - [scripts-architecture.md](./scripts-architecture.md) — `COUNTRY`, platform configs, CLI scripts
-- [TECHNICAL.md](./TECHNICAL.md) — env vars, API reference, database, CI
-- [backend/docs/SCRIPTS.md](../../backend/docs/SCRIPTS.md) — npm script catalog
+- [technical.md](./technical.md) — env vars, API reference, database, CI
+- [backend/docs/scripts.md](../../backend/docs/scripts.md) — npm script catalog
 - [features/parsing-framework.md](../features/parsing-framework.md) — parsing runtime
 
 **Last updated:** 2026-05

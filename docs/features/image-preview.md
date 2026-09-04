@@ -308,7 +308,7 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
 
 - **Quality:** 75% (`CARD_IMAGE_QUALITY` in `listing-card-image.ts`)
 - **Responsive widths:** `next/image` + custom CDN loader; `sizes` `(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 360px`; browser srcset comes from global `deviceSizes` in `next.config.js` (card requests typically land on 640–1200px widths)
-- **Delivery warm-up:** On each upload (`UploadService.saveFile`), the backend pre-generates persistent `/uploads/optimized/{uuid}_{width}_75.webp` variants for widths **640, 750, 828, 1080, 1200** in the background so listing-card cover requests avoid on-the-fly `sharp` resize. Constants: `DELIVERY_WARM_WIDTHS` / `DELIVERY_WARM_QUALITY` in `core/backend/src/upload/optimized-delivery-cache.utils.ts`. Legacy listings: `npm run warm:card-variants:cover` (see `core/backend/docs/SCRIPTS.md`).
+- **Delivery warm-up:** On each upload (`UploadService.saveFile`), the backend pre-generates persistent `/uploads/optimized/{uuid}_{width}_75.webp` variants for widths **640, 750, 828, 1080, 1200** in the background so listing-card cover requests avoid on-the-fly `sharp` resize. Constants: `DELIVERY_WARM_WIDTHS` / `DELIVERY_WARM_QUALITY` in `core/backend/src/upload/optimized-delivery-cache.utils.ts`. Legacy listings: `npm run warm:card-variants:cover` (see `core/backend/docs/scripts.md`).
 - **Preload:** Adjacent card photos and load-more append use the same srcset/sizes as slides so browser cache hits on navigation (`prewarmListingCardCoverImages` in `listing-card-image.ts`)
 
 ### Preview Images
@@ -337,7 +337,7 @@ The **modal** does not use `useLoadingState`. It uses a simple delay:
 - **Navigation blur cache:** On SPA navigation from a card to the listing detail page, `loading.tsx` (route-level Suspense fallback) can show a blur placeholder in the hero area instead of a gray skeleton. `ListingCard` and `ListingManagementCard` save `cover_blur_hash` to an in-memory LRU cache (`core/frontend/lib/blur-navigation-cache.ts`, max 50 entries) on click; `loading.tsx` (`'use client'`) reads the cache via `useParams()` and renders the decoded blur as a CSS `background-image`. When no cached blur exists (direct navigation, SEO, shared links), the fallback is the original gray pulse skeleton.
 - **Create/update:** Form sends `image_blur_hashes` in parallel with `images` (length must match). Upload response includes `blurhash` per file.
 - **Partner imports:** The import pipeline (CipAuto, 999.md) collects `blurhash` from each upload response and includes `image_blur_hashes` in the create-listing payload, so imported listings have blur placeholders immediately.
-- **Backfill (legacy data):** `npm run backfill:blurhash:cover` (cover only) and `npm run backfill:blurhash:all` (full array) from `core/backend`; requires DB + S3 access. Only needed for listings created before blurhash was integrated into the import pipeline. See `core/backend/docs/SCRIPTS.md`.
+- **Backfill (legacy data):** `npm run backfill:blurhash:cover` (cover only) and `npm run backfill:blurhash:all` (full array) from `core/backend`; requires DB + S3 access. Only needed for listings created before blurhash was integrated into the import pipeline. See `core/backend/docs/scripts.md`.
 
 ### Local development vs production
 

@@ -20,7 +20,7 @@ Written against the second platform launch (MakinaGuru, Albania) after Kupito (M
 - [scripts-architecture.md](../architecture/scripts-architecture.md) — Scripts architecture
 - [known-issues.md](../architecture/known-issues.md) — Known issues
 - [platform-guide.md](./platform-guide.md) — Where to make changes, analytics config
-- [DEPLOYMENT.md](./DEPLOYMENT.md) — Render and Namecheap steps
+- [deployment.md](./deployment.md) — Render and Namecheap steps
 
 ---
 
@@ -183,7 +183,7 @@ Each of these is visible or reachable by default and fails confusingly if left u
 - [ ] **Listing video** — **there is no flag to hide it.** `PhotosSection.tsx` renders the uploader unconditionally and neither `site.ts` nor any env var gates it, so without AWS MediaConvert users upload a clip and hit `errors.video.transcodingUnavailable`. Either configure MediaConvert (`AWS_MEDIACONVERT_ENDPOINT`, `_QUEUE_ARN`, `_ROLE_ARN`, EventBridge → SNS → `POST /api/webhooks/mediaconvert`, plus `mediaconvert:CreateJob/GetJob/DescribeEndpoints` on the app's IAM user) or add the flag to core. Set `AWS_MEDIACONVERT_SNS_TOPIC_ARN` as well: without it the webhook accepts validly signed events from **any** SNS topic. A separate PNG in the bucket via `LISTING_VIDEO_WATERMARK_S3_URI` puts the logo on clips — the photo watermark is the wrong size, the overlay is inserted 140 px wide. Full walkthrough: [listing-video-production-setup-ru.md](./listing-video-production-setup-ru.md)
 - [ ] **Telegram** — the login widget and the support bot are separate decisions. The widget needs a bot in BotFather with `/setdomain` (**one domain per bot**), `NEXT_PUBLIC_TELEGRAM_CLIENT_ID` and `TELEGRAM_BOT_TOKEN`; it sends no messages, so platform locales do not matter. The support bot additionally needs `TELEGRAM_SUPPORT_CHAT_ID` and a webhook, and replies in **ro + ru only** (`core/backend/src/telegram/telegram.service.ts`) regardless of platform locales
 - [ ] **Google sign-in** — set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_ID` to the **same** Web client ID, and list the production origins (apex and `www`) under Authorized JavaScript origins. The `Cross-Origin-Opener-Policy: same-origin-allow-popups` header and the CSP entries for `accounts.google.com` are already in core
-- [ ] **Facebook Login** — set `NEXT_PUBLIC_FACEBOOK_APP_ID`, `FACEBOOK_APP_ID`, and `FACEBOOK_APP_SECRET`; configure App Domains / JavaScript SDK domains in Meta Developer Console; Live mode + App Review for `email` as required. See [FACEBOOK_LOGIN_SETUP_RU.md](./FACEBOOK_LOGIN_SETUP_RU.md). CSP entries for `connect.facebook.net` / `www.facebook.com` / `graph.facebook.com` are in core
+- [ ] **Facebook Login** — set `NEXT_PUBLIC_FACEBOOK_APP_ID`, `FACEBOOK_APP_ID`, and `FACEBOOK_APP_SECRET`; configure App Domains / JavaScript SDK domains in Meta Developer Console; Live mode + App Review for `email` as required. See [facebook-login-setup-ru.md](./facebook-login-setup-ru.md). CSP entries for `connect.facebook.net` / `www.facebook.com` / `graph.facebook.com` are in core
 - [ ] **Promotions** — set `PROMOTION_ACCESS` explicitly (`disabled` / `admin` / `all`). There is no payment provider in the project; promotions are an internal mechanic
 - [ ] **Vehicle history** — omit `reportProvider` from `site.ts` to keep the section hidden. See the gotcha in section 15
 - [ ] **Email** — decide before launch. Password reset does not work without SMTP, which leaves locked-out users with no recovery path
@@ -412,5 +412,5 @@ npm run dev
 - [Scripts Architecture](../architecture/scripts-architecture.md)
 - [Known Issues](../architecture/known-issues.md)
 - [Platform Guide](./platform-guide.md)
-- [Deployment](./DEPLOYMENT.md)
+- [Deployment](./deployment.md)
 - [Parsers multiplatform migration](../architecture/parsers-multiplatform-migration.md)

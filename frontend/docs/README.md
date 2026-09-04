@@ -15,7 +15,7 @@ Frontend-specific documentation for PPCSL Next.js application.
 ## 📄 Available Documentation
 
 - **[design-system.md](./design-system.md)** - Design system and UI components
-- **[STORYBOOK.md](./STORYBOOK.md)** - Storybook setup guide
+- **[storybook.md](./storybook.md)** - Storybook setup guide
 - **[e2e-playwright.md](./e2e-playwright.md)** - Playwright end-to-end testing guide
 - **[linting.md](../../docs/engineering/linting.md)** - ESLint configuration and rules
 
@@ -89,7 +89,7 @@ Frontend-specific documentation for PPCSL Next.js application.
 For core documentation (this repo):
 - **[Core docs](../../docs/README.md)** — Main documentation entry point
 - **[Architecture](../../docs/architecture/)** — System architecture
-- **[Deployment](../../docs/guides/DEPLOYMENT.md)** — Deployment guides
+- **[Deployment](../../docs/guides/deployment.md)** — Deployment guides
 
 ---
 

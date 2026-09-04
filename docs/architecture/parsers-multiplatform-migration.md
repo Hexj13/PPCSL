@@ -57,7 +57,7 @@ The active platform is selected by the `COUNTRY` env var (matches existing `scri
 5. Update `CliParserRunnerService.resolveCliEntrypoint()` only if the relative path layout changes (it already resolves `dist/` vs `src/` generically).
 6. Update `nest-cli.json` / `tsconfig.json` `include` globs if tests or scripts live under new paths.
 7. Update `prepare:build` in the platform root to stop copying `config/parsers.ts` into backend (backend config becomes core-owned per platform).
-8. Update docs: `architecture.mdc`, `README`, `DEPLOYMENT.md`.
+8. Update docs: `architecture.mdc`, `README`, `deployment.md`.
 9. Run `npm run release-check` and deploy to each platform separately to confirm parsers load only the intended set.
 
 ## What stays unchanged

@@ -115,7 +115,7 @@ Indexes on: `listing_id`, `user_id`, `started_at`, `ended_at`, `created_at`
 
 - Cron endpoint to clear expired promotions (`is_promoted = false` when `promoted_until < NOW()`)
 - Protected by `CRON_SECRET` (header `x-cron-secret`)
-- Recommended schedule: hourly (e.g. `0 * * * *`), see DEPLOYMENT.md § 3.9
+- Recommended schedule: hourly (e.g. `0 * * * *`), see deployment.md § 3.9
 
 #### Admin endpoints
 

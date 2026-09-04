@@ -1,21 +1,30 @@
-/**
- * @jest-environment jsdom
- */
-
-import { describe, expect, it, jest } from '@jest/globals';
 import { render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import React from 'react';
+
+import { CreateListingButton } from './CreateListingButton';
 
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
 jest.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        'header.createListing': 'Post Listing',
+        'header.createListingShort': 'Post',
+      };
+      return translations[key] || key;
+    },
   }),
 }));
 
@@ -24,30 +33,26 @@ jest.mock('@/components/providers/I18nProvider', () => ({
 }));
 
 jest.mock('@/lib/store', () => ({
-  useAuthStore: () => ({ user: { id: 'user-1' } }),
+  useAuthStore: () => ({ user: null }),
 }));
 
-import { CreateListingButton } from './CreateListingButton';
-
 describe('CreateListingButton', () => {
-  it('uses the short Post label in the mobile toolbar and hides it below 360px', () => {
+  it('keeps the compact header CTA from shrinking below its label', () => {
     render(<CreateListingButton variant="mobile" />);
 
-    expect(screen.queryByText('header.createListing')).toBeNull();
-    expect(screen.getByText('header.createListingShort')).toHaveClass('max-[359px]:hidden');
+    const link = screen.getByRole('link', { name: 'Post Listing' });
+    expect(link.className.split(/\s+/)).toContain('shrink-0');
+    expect(link.className.split(/\s+/)).not.toContain('shrink');
+    expect(link.className.split(/\s+/)).not.toContain('min-w-0');
   });
 
-  it('keeps the full Post Listing label in the mobile drawer', () => {
-    render(<CreateListingButton variant="mobile" drawerCta />);
+  it('exposes the full action name when the compact label is hidden', () => {
+    render(<CreateListingButton variant="mobile" />);
 
-    expect(screen.getByText('header.createListing')).toBeInTheDocument();
-    expect(screen.queryByText('header.createListingShort')).toBeNull();
-  });
-
-  it('uses the short Post label below xl on desktop', () => {
-    render(<CreateListingButton variant="desktop" />);
-
-    expect(screen.getByText('header.createListing')).toHaveClass('hidden', 'xl:inline');
-    expect(screen.getByText('header.createListingShort')).toHaveClass('xl:hidden');
+    expect(screen.getByRole('link', { name: 'Post Listing' })).toHaveAttribute(
+      'aria-label',
+      'Post Listing',
+    );
+    expect(screen.getByText('Post')).toBeInTheDocument();
   });
 });

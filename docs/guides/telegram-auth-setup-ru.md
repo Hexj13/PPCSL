@@ -80,10 +80,10 @@ Webhook поддержки (`/api/telegram/webhook`) остаётся отдел
 - **telegramSignInUnavailable** — на API не задан `TELEGRAM_BOT_TOKEN`.
 - **telegramAuthExpired** — устаревший `auth_date` (повторите вход).
 - **Popup не открывается** — проверить `Cross-Origin-Opener-Policy: same-origin-allow-popups` (уже настроено в Next).
-- **CORS / cookies** — см. [AUTH_COOKIE_SESSION.md](./AUTH_COOKIE_SESSION.md) и [GOOGLE_OAUTH_SETUP_RU.md](./GOOGLE_OAUTH_SETUP_RU.md).
+- **CORS / cookies** — см. [auth-cookie-session.md](./auth-cookie-session.md) и [google-oauth-setup-ru.md](./google-oauth-setup-ru.md).
 
 ## Связанные документы
 
-- Cookie-сессия: [AUTH_COOKIE_SESSION.md](./AUTH_COOKIE_SESSION.md)
+- Cookie-сессия: [auth-cookie-session.md](./auth-cookie-session.md)
 - Onboarding gates: [auth-onboarding-gates.md](../features/auth-onboarding-gates.md)
-- Support-бот (webhook): [DEPLOYMENT.md](./DEPLOYMENT.md) § Telegram
+- Support-бот (webhook): [deployment.md](./deployment.md) § Telegram

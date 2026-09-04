@@ -125,6 +125,6 @@ For production, your domain’s **SPF** and **DKIM** (and DMARC, if used) should
 
 ## Related documentation
 
-- Environment overview: [../architecture/TECHNICAL.md](../architecture/TECHNICAL.md) (SMTP block in backend env section).
-- VPS-style deploy example: [../guides/DEPLOYMENT.md](../guides/DEPLOYMENT.md).
+- Environment overview: [../architecture/technical.md](../architecture/technical.md) (SMTP block in backend env section).
+- VPS-style deploy example: [../guides/deployment.md](../guides/deployment.md).
 - Moldova platform Render checklist: `docs/deployment/production-deployment.md` (platform repo).

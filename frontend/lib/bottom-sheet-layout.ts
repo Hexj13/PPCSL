@@ -2,6 +2,16 @@ export const BOTTOM_SHEET_TRANSITION_MS = 300;
 
 export const BOTTOM_SHEET_TRANSITION_FALLBACK_MS = 380;
 
+export function getBottomSheetSlideStyle(visible: boolean): {
+  transform: 'translateY(0%)' | 'translateY(100%)';
+  transitionDuration: string;
+} {
+  return {
+    transform: visible ? 'translateY(0%)' : 'translateY(100%)',
+    transitionDuration: `${BOTTOM_SHEET_TRANSITION_MS}ms`,
+  };
+}
+
 export const BOTTOM_SHEET_MAX_HEIGHT_CAP_PX = 900;
 
 export const BOTTOM_SHEET_LOCK_MIN_HEIGHT_CAP_PX = 860;

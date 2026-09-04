@@ -55,10 +55,10 @@ export function CreateListingButton({
   const variantClasses = isMobile
     ? drawerCta
       ? `px-3 py-0 w-full text-[14px] ${MOBILE_NAV_CTA_HEIGHT_CLASSES}`
-      : 'px-3 py-2 min-w-0 shrink text-[14px]'
+      : 'h-8 px-2.5 shrink-0'
     : 'h-10 px-3';
 
-  const iconSize = isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5 md:w-4 md:h-4';
+  const iconSize = isMobile ? (drawerCta ? 'w-4 h-4' : 'w-3.5 h-3.5') : 'w-3.5 h-3.5 md:w-4 md:h-4';
 
   const newListingPath = '/listings/new';
   const href = user
@@ -69,6 +69,7 @@ export function CreateListingButton({
     <Link
       href={href}
       onClick={handleClick}
+      aria-label={t('header.createListing')}
       className={`${baseClasses} ${variantClasses} ${className}`}
     >
       <svg
@@ -76,6 +77,7 @@ export function CreateListingButton({
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
+        aria-hidden
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
       </svg>
