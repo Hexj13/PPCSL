@@ -118,7 +118,7 @@ export function VehicleTypeSelector({
   }, [listingCategory, onTireCategorySelect, switchingLocked]);
 
   const buttonBaseClass =
-    'h-full min-h-12 w-16 text-base font-semibold transition-[background-color,border-radius,color] duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-60';
+    'h-12 w-16 text-base font-semibold transition-[background-color,border-radius,color] duration-300 relative z-10 shrink-0 whitespace-nowrap flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-60';
 
   return (
     <div
@@ -127,7 +127,7 @@ export function VehicleTypeSelector({
     >
       <div
         ref={vehicleIconsContainerRef}
-        className="relative flex h-full justify-start xl:justify-end items-stretch gap-1 overflow-x-auto overflow-y-visible scrollbar-hide pr-5 xl:pr-2"
+        className="relative flex h-12 justify-start xl:h-full xl:justify-end items-stretch gap-1 overflow-x-auto overflow-y-visible scrollbar-hide pr-5 xl:pr-2"
         suppressHydrationWarning
         aria-busy={switchingLocked}
       >

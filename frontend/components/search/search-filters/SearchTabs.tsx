@@ -26,7 +26,7 @@ interface SearchTabsProps {
 }
 
 const tabButtonClass =
-  'px-4 py-3 text-base font-semibold transition-[background-color,border-radius,color] duration-300 relative z-10 shrink-0 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60';
+  'inline-flex h-12 items-center px-4 text-sm font-semibold transition-[background-color,border-radius,color] duration-300 relative z-10 shrink-0 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60';
 
 const SCROLL_EPSILON = 1;
 const SCROLL_EDGE_PADDING = 8;
@@ -384,7 +384,7 @@ export function SearchTabs({
   const indicator = (
     <div
       ref={indicatorRef}
-      className="pointer-events-none absolute bottom-0 left-0 h-0.5 bg-primary-700 transition-[transform,width] duration-300 ease-in-out will-change-transform"
+      className="pointer-events-none absolute bottom-0 left-0 h-0.5 bg-primary-400 transition-[transform,width] duration-300 ease-in-out will-change-transform"
       style={{
         transform: `translate3d(${indicatorStyle.left}px, 0, 0)`,
         width: `${indicatorStyle.width}px`,

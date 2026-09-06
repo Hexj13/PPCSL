@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 import { COMPACT_LAYOUT_MAX_WIDTH_PX } from '@/lib/layout-breakpoints';
 
@@ -320,5 +320,59 @@ describe('MobileSelectField', () => {
     expect(
       screen.queryByTestId('listing-create-brand-select-clear-selection'),
     ).not.toBeInTheDocument();
+  });
+
+  it('keeps required options enabled and commits the new value on OK', async () => {
+    const onChange = jest.fn();
+    render(
+      <MobileSelectField
+        value="toyota"
+        onChange={onChange}
+        options={[
+          { value: 'toyota', label: 'Toyota' },
+          { value: 'bmw', label: 'BMW' },
+        ]}
+        sheetTitle="Sort"
+        allowEmpty={false}
+        dataTestId="search-sort-select"
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('search-sort-select'));
+    const toyotaOption = screen.getByTestId('search-sort-select-option-0');
+    const bmwOption = screen.getByTestId('search-sort-select-option-1');
+
+    expect(toyotaOption).not.toBeDisabled();
+    expect(bmwOption).not.toBeDisabled();
+
+    fireEvent.click(toyotaOption);
+    expect(toyotaOption).not.toBeDisabled();
+    expect(bmwOption).not.toBeDisabled();
+
+    fireEvent.click(bmwOption);
+    fireEvent.click(screen.getByTestId('search-sort-select-confirm'));
+
+    expect(onChange).toHaveBeenCalledWith('bmw');
+    await waitFor(() => {
+      expect(screen.getByTestId('search-sort-select')).toHaveAttribute('aria-expanded', 'false');
+    });
+  });
+
+  it('shows the leading icon in the mobile sheet heading', () => {
+    render(
+      <MobileSelectField
+        value="toyota"
+        onChange={jest.fn()}
+        options={[{ value: 'toyota', label: 'Toyota' }]}
+        sheetTitle="Sort"
+        leadingIcon={<svg data-testid="sort-leading-icon" />}
+        dataTestId="search-sort-select"
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('search-sort-select'));
+    expect(
+      within(screen.getByRole('heading', { name: 'Sort' })).getByTestId('sort-leading-icon'),
+    ).toBeInTheDocument();
   });
 });

@@ -113,12 +113,14 @@ export interface MobileSelectFieldProps {
   error?: boolean;
   autoPosition?: boolean;
   menuMaxHeight?: number;
+  menuExpandToContent?: boolean;
   dataTestId?: string;
   leadingIcon?: React.ReactNode;
   requiredAsteriskFilled?: boolean;
   rightIcon?: React.ReactNode;
   mobileValueOnlyTrigger?: boolean;
   clearable?: boolean;
+  allowEmpty?: boolean;
 }
 
 export function MobileSelectField({
@@ -134,12 +136,14 @@ export function MobileSelectField({
   error = false,
   autoPosition = false,
   menuMaxHeight,
+  menuExpandToContent = false,
   dataTestId,
   leadingIcon,
   requiredAsteriskFilled,
   rightIcon,
   mobileValueOnlyTrigger = false,
   clearable = false,
+  allowEmpty = true,
 }: MobileSelectFieldProps) {
   const isMdUp = useIsMdUp();
   const { t } = useTranslation();
@@ -207,10 +211,17 @@ export function MobileSelectField({
   const handleSelectOption = (optionValue: string) => {
     if (optionValue.startsWith('__category__')) return;
     if (optionValue === CLEAR_OPTION_VALUE) {
-      setDraftValue('');
+      if (allowEmpty) {
+        setDraftValue('');
+      }
       return;
     }
-    setDraftValue((current) => (current === optionValue ? '' : optionValue));
+    setDraftValue((current) => {
+      if (!allowEmpty) {
+        return optionValue;
+      }
+      return current === optionValue ? '' : optionValue;
+    });
   };
 
   const closeSheet = () => {
@@ -256,7 +267,7 @@ export function MobileSelectField({
             option.value === '' ? normalizedValue === '' : option.value === normalizedValue;
           const isCategory =
             Boolean(option.category) && (!option.value || option.value.startsWith('__category__'));
-          const optionDisabled = Boolean(normalizedValue) && !selected;
+          const optionDisabled = allowEmpty && Boolean(normalizedValue) && !selected;
           const prevOption = index > 0 ? optionsToRender[index - 1] : null;
           const showCategoryHeader =
             Boolean(option.category) && prevOption?.category !== option.category && !isCategory;
@@ -366,6 +377,7 @@ export function MobileSelectField({
           error={error}
           autoPosition={autoPosition}
           menuMaxHeight={menuMaxHeight}
+          menuExpandToContent={menuExpandToContent}
           dataTestId={dataTestId}
           rightIcon={rightIcon}
           fieldLabel={sheetTitle}
@@ -403,12 +415,15 @@ export function MobileSelectField({
         isOpen={isSheetOpen}
         onClose={closeSheet}
         title={sheetTitle}
+        titleIcon={leadingIcon}
         lockSheetHeight={searchable}
+        dataTestId={dataTestId ? `${dataTestId}-menu` : undefined}
         footer={
           <button
             type="button"
             onClick={confirmSelection}
             className="btn-primary w-full py-3 rounded-lg"
+            data-testid={dataTestId ? `${dataTestId}-confirm` : undefined}
           >
             {t('common.ok')}
           </button>

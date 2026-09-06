@@ -1,7 +1,15 @@
 'use client';
 
 import type { Listing } from '@/lib/api';
-import { formatTireSize, isTireListing } from '@/lib/utils';
+import {
+  formatBodyType,
+  formatDriveType,
+  formatEngineVolume,
+  formatFuel,
+  formatMileage,
+  formatTireSize,
+  isTireListing,
+} from '@/lib/utils';
 
 const SPARKLES_EMOJI = '\u2728';
 
@@ -11,13 +19,42 @@ export function ListingCardBadges({
   t,
   carouselBrowsingCompact = false,
   allowCollapsedBadgesHoverExpand = true,
+  compactCard = false,
 }: {
   listing: Listing;
   newLabel: string;
   t: (_key: string) => string;
   carouselBrowsingCompact?: boolean;
   allowCollapsedBadgesHoverExpand?: boolean;
+  compactCard?: boolean;
 }) {
+  if (compactCard) {
+    if (!listing.is_promoted) return null;
+    return (
+      <div className="absolute top-2 left-2 z-10">
+        <span
+          aria-label={t('listings.promoted')}
+          className="relative inline-flex items-center h-5 gap-0.5 px-1.5 rounded text-[10px] font-semibold bg-white/90 border border-accent text-text-secondary shadow-md whitespace-nowrap w-fit before:absolute before:inset-0 before:rounded before:bg-accent/10 before:pointer-events-none"
+        >
+          <svg
+            className="relative z-10 w-2.5 h-2.5 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+            />
+          </svg>
+          <span className="relative z-10">{t('listings.promoted')}</span>
+        </span>
+      </div>
+    );
+  }
+
   const showNewVehicleBadge = Boolean(listing.is_new && !isTireListing(listing));
   const showVideoBadge = Boolean(listing.has_video || listing.video?.status === 'published');
   const badgeCount =
@@ -131,6 +168,58 @@ export function ListingCardTireSpecs({
       <div>
         {t('listings.tireForm.quantityLabel')}: {tire.quantity}
       </div>
+    </div>
+  );
+}
+
+function compactSpecParts(
+  listing: Listing,
+  t: (_key: string, _params?: Record<string, string | number>) => string,
+): string[] {
+  if (isTireListing(listing) && listing.tire) {
+    const tire = listing.tire;
+    return [
+      t(`searchFilters.tireTreadOption.${tire.season}`),
+      t(`searchFilters.tireConditionOption.${tire.condition}`),
+      formatTireSize(tire),
+      t(`listings.vehicleType.${tire.tire_vehicle_type}`),
+      String(tire.quantity),
+    ].filter((part) => part.trim() !== '');
+  }
+
+  const vehicle = listing.vehicle;
+  if (!vehicle) return [];
+  const parts: string[] = [];
+  if (vehicle.engine_displ_l != null) {
+    parts.push(`${formatEngineVolume(vehicle.engine_displ_l)} ${t('listings.liters')}`);
+  }
+  if (vehicle.fuel) {
+    parts.push(formatFuel(vehicle.fuel, t));
+  }
+  if (vehicle.mileage_km !== null && vehicle.mileage_km !== undefined) {
+    parts.push(`${formatMileage(vehicle.mileage_km)} ${t('listings.km')}`);
+  }
+  if (vehicle.drive_type) {
+    parts.push(formatDriveType(vehicle.drive_type, t));
+  }
+  if (vehicle.body_type) {
+    parts.push(formatBodyType(vehicle.body_type, t));
+  }
+  return parts.filter((part) => part.trim() !== '');
+}
+
+export function ListingCardCompactSpecs({
+  listing,
+  t,
+}: {
+  listing: Listing;
+  t: (_key: string, _params?: Record<string, string | number>) => string;
+}) {
+  const parts = compactSpecParts(listing, t);
+  if (parts.length === 0) return null;
+  return (
+    <div className="text-xs line-clamp-2" style={{ color: 'rgb(var(--text-secondary-rgb))' }}>
+      {parts.join(' · ')}
     </div>
   );
 }

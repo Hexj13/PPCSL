@@ -112,7 +112,14 @@ export function GuestMobileNav({
           <span suppressHydrationWarning>{t('header.forBusiness')}</span>
         </Link>
         <div className="w-full border-t border-primary-700 pt-4">
-          <LanguageSwitcher variant="mobile" context="header" />
+          <LanguageSwitcher
+            variant="mobile"
+            context="header"
+            onNavigate={() => {
+              prepareScrollLockReleaseToTop();
+              onClose();
+            }}
+          />
         </div>
       </div>
     </div>

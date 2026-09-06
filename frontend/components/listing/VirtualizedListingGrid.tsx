@@ -3,7 +3,7 @@
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { useGridColumns } from '@/hooks/useGridColumns';
+import { useListingGridColumns } from '@/hooks/useGridColumns';
 import type { Listing } from '@/lib/api';
 import {
   applyHomeScrollRestoreScrollPosition,
@@ -24,6 +24,7 @@ import {
 import { LISTING_GRID_PRIORITY_CARD_COUNT } from './listing-card-image';
 import {
   ListingGridCriticalStyles,
+  listingGridResponsiveClassName,
   listingGridRowCriticalStyle,
 } from './listing-grid-critical-layout';
 import {
@@ -55,7 +56,7 @@ function StaticListingGrid({
   showPartnerPromoBanner,
   onDismissPartnerPromoBanner,
 }: VirtualizedListingGridProps) {
-  const columns = useGridColumns();
+  const { columns, compactCards } = useListingGridColumns();
   const partnerPromoPosition = showPartnerPromoBanner
     ? columns >= 4
       ? 12
@@ -63,13 +64,14 @@ function StaticListingGrid({
         ? 9
         : 6
     : null;
+  const cardVariant = compactCards ? 'compact' : 'default';
 
   return (
     <>
       <ListingGridCriticalStyles />
       <div
         id="listings-results"
-        className="listing-grid-critical-responsive grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch"
+        className={listingGridResponsiveClassName(compactCards)}
         data-testid="listings-results-grid"
       >
         {listings.map((listing, index) => {
@@ -79,6 +81,7 @@ function StaticListingGrid({
             <Fragment key={listing.id}>
               <ListingCard
                 listing={listing}
+                variant={cardVariant}
                 priority={index < LISTING_GRID_PRIORITY_CARD_COUNT}
                 linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
                 enableCarouselPreload={index < LISTING_GRID_PRIORITY_CARD_COUNT}
@@ -134,7 +137,7 @@ function VirtualizedListingGridContent({
   onDismissPartnerPromoBanner,
   swapMetrics,
 }: VirtualizedListingGridContentProps) {
-  const columns = useGridColumns();
+  const { columns, compactCards } = useListingGridColumns();
   const parentRef = useRef<HTMLDivElement>(null);
   const renderedInnerRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(swapMetrics.gridOffsetTop);
@@ -153,7 +156,7 @@ function VirtualizedListingGridContent({
         index,
         rows.length,
         swapMetrics.rowHeights[index],
-        getVirtualRowEstimateSize(rows[index], columns),
+        getVirtualRowEstimateSize(rows[index], columns, compactCards),
       ),
     gap: LISTING_GRID_ROW_GAP_PX,
     overscan: 4,
@@ -184,6 +187,7 @@ function VirtualizedListingGridContent({
   }, [rows.length]);
 
   const gridColsClass = GRID_COLS_CLASS[columns] ?? 'grid-cols-1';
+  const cardVariant = compactCards ? 'compact' : 'default';
 
   const virtualRows = virtualizer.getVirtualItems();
   const firstVirtualRow = virtualRows[0];
@@ -274,13 +278,14 @@ function VirtualizedListingGridContent({
                     </div>
                   ) : (
                     <div
-                      className={`grid ${gridColsClass} gap-6 items-stretch`}
-                      style={listingGridRowCriticalStyle(columns)}
+                      className={`grid ${gridColsClass} gap-6 items-stretch${compactCards ? ' gap-x-3' : ''}`}
+                      style={listingGridRowCriticalStyle(columns, compactCards)}
                     >
                       {row.items.map(({ listing, index }) => (
                         <ListingCard
                           key={listing.id}
                           listing={listing}
+                          variant={cardVariant}
                           priority={index < LISTING_GRID_PRIORITY_CARD_COUNT}
                           linkPrefetch={index < LISTING_GRID_LINK_PREFETCH_COUNT}
                           enableCarouselPreload={index < LISTING_GRID_PRIORITY_CARD_COUNT}
@@ -299,7 +304,7 @@ function VirtualizedListingGridContent({
 }
 
 export function VirtualizedListingGrid(props: VirtualizedListingGridProps) {
-  const columns = useGridColumns();
+  const { columns } = useListingGridColumns();
   const [virtualized, setVirtualized] = useState(false);
   const swapMetricsRef = useRef<StaticGridSwapMetrics | null>(null);
 

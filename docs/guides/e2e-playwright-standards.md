@@ -121,6 +121,7 @@ Google account password setup (`profile-password.spec.ts`):
 | --- | --- | --- |
 | Search filters (brand, price, …) | Inline controls in tabs (`xl+`, `≥1280px`) | `FilterRow` opens bottom sheets (`MobileVehicleSection`, `≤1279px`) |
 | Search vehicle type / tabs | Same top bar | Same top bar (still visible) |
+| Home / board sort | `Dropdown` menu (`md+`) | `MobileSelectField` bottom sheet (`≤767px`) + **OK** |
 | Listing create selects | `Dropdown` menu (`md+`) | `MobileSelectField` bottom sheet (`≤767px`); year uses scroll picker + **OK** |
 | Modals (save filter, AI report) | `Modal` | `Modal` (unchanged) |
 

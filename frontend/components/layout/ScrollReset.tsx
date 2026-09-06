@@ -10,10 +10,12 @@ import {
 } from '@/lib/browser-session-storage';
 import {
   beginHomeScrollRestore,
+  cancelHomeScrollRestore,
   clearHomeScrollRestoreSession,
   ensureHomeScrollRestoreInteractionListeners,
   readHomeScrollRestoreTarget,
 } from '@/lib/home-scroll-restore';
+import { isHomeLocaleOnlyPathnameChange } from '@/lib/preserve-home-scroll';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
 const SCROLL_TOP_ON_ENTER_PATHS = new Set(['/favorites', '/compare']);
@@ -121,6 +123,17 @@ export function ScrollReset() {
     }
 
     if (restPath === '/') {
+      const lastRest = sessionStorageGetItem(LAST_REST_PATH_KEY);
+      const localeOnlyFromRef = isHomeLocaleOnlyPathnameChange(previousPath, pathname);
+      const alreadyOnHomeRemount = !previousPath && lastRest === '/';
+      if (localeOnlyFromRef || alreadyOnHomeRemount) {
+        cancelHomeScrollRestore();
+        clearHomeScrollRestoreSession();
+        sessionStorageRemoveItem('scrollToResultsAfterLoad');
+        scrollWindowToTopWithFollowUp();
+        rememberCurrentPath();
+        return;
+      }
       setupHomeScrollRestoration(previousPath);
       rememberCurrentPath();
       return;

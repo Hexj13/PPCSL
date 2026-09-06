@@ -1,6 +1,7 @@
 'use client';
 
 import { SmartSelectionIcon } from '@/components/layout/Header/icons';
+import { ListingViewModeToggle } from '@/components/listing/ListingViewModeToggle';
 import {
   isSavedFiltersLimitReached,
   resolveSavedFiltersCount,
@@ -110,6 +111,7 @@ export function SearchFormActions({
               )}
             </span>
           </div>
+          <ListingViewModeToggle />
           <SortDropdown
             selectedSortKey={selectedSortKey}
             isInternalSearchRef={isInternalSearchRef}

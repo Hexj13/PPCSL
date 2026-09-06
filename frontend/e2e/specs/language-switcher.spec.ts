@@ -18,8 +18,15 @@ test.describe('Language switcher', () => {
       {
         name: 'Switch locale and expect applied content',
         action: async () => {
+          await page.evaluate(() => {
+            sessionStorage.setItem('homeScrollPosition', '9000');
+            sessionStorage.setItem('homeScrollTimestamp', String(Date.now()));
+            sessionStorage.setItem('homeScrollListingId', 'locale-switch-restore-bait');
+            sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
+          });
           await languageSwitcherPage.expectSwitcherVisible();
           await languageSwitcherPage.switchToAnotherLocaleAndExpectApplied(searchHomePage);
+          await searchHomePage.expectWindowNearTop();
         },
       },
     ];

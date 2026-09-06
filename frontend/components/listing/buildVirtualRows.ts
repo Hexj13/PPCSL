@@ -74,8 +74,15 @@ export function buildVirtualRows(
   return { rows, listingRowIndexById };
 }
 
-export function getVirtualRowEstimateSize(row: VirtualRow, columns = 1): number {
+export function getVirtualRowEstimateSize(
+  row: VirtualRow,
+  columns = 1,
+  compactCards = false,
+): number {
   if (row.kind === 'banner') {
+    return 320;
+  }
+  if (compactCards) {
     return 320;
   }
   return columns === 1 ? 500 : 570;

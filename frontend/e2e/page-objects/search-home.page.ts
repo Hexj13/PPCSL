@@ -26,6 +26,8 @@ export class SearchHomePage extends SearchHomeScrollPage {
     resultsGrid: 'listings-results-grid',
     emptyState: 'listings-empty-state',
     listingCardLinkPrefix: 'listing-card-link-',
+    viewModeLarge: 'listing-view-mode-large',
+    viewModeCompact: 'listing-view-mode-compact',
   } as const;
 
   readonly bottomSheet: BottomSheetComponent;
@@ -43,6 +45,12 @@ export class SearchHomePage extends SearchHomeScrollPage {
 
   protected listingCardLinks(): Locator {
     return this.page.locator(`[data-testid^="${this.testIds.listingCardLinkPrefix}"]`);
+  }
+
+  protected listingCards(): Locator {
+    return this.page.locator(
+      '[data-testid^="listing-card-"]:not([data-testid^="listing-card-link-"])',
+    );
   }
 
   async open(path = '/'): Promise<void> {
@@ -249,6 +257,45 @@ export class SearchHomePage extends SearchHomeScrollPage {
 
   async expectResultsOrEmptyVisible(): Promise<void> {
     await expect(this.resultsGrid.or(this.emptyState)).toBeVisible({ timeout: 20_000 });
+  }
+
+  async switchListingViewMode(mode: 'large' | 'compact'): Promise<void> {
+    const testId = mode === 'large' ? this.testIds.viewModeLarge : this.testIds.viewModeCompact;
+    await this.page.getByTestId(testId).click();
+    await this.expectListingViewMode(mode);
+  }
+
+  async expectListingViewMode(mode: 'large' | 'compact'): Promise<void> {
+    await expect(this.page.getByTestId(this.testIds.viewModeLarge)).toHaveAttribute(
+      'aria-pressed',
+      mode === 'large' ? 'true' : 'false',
+    );
+    await expect(this.page.getByTestId(this.testIds.viewModeCompact)).toHaveAttribute(
+      'aria-pressed',
+      mode === 'compact' ? 'true' : 'false',
+    );
+  }
+
+  async expectListingCardsInTwoColumns(): Promise<void> {
+    const cards = this.listingCards();
+    await expect(cards.nth(0)).toBeVisible({ timeout: 20_000 });
+    await expect(cards.nth(1)).toBeVisible();
+    const first = await cards.nth(0).boundingBox();
+    const second = await cards.nth(1).boundingBox();
+    expect(first).toBeTruthy();
+    expect(second).toBeTruthy();
+    expect(Math.abs((first?.y ?? 0) - (second?.y ?? 0))).toBeLessThan(8);
+  }
+
+  async expectListingCardsStacked(): Promise<void> {
+    const cards = this.listingCards();
+    await expect(cards.nth(0)).toBeVisible({ timeout: 20_000 });
+    await expect(cards.nth(1)).toBeVisible();
+    const first = await cards.nth(0).boundingBox();
+    const second = await cards.nth(1).boundingBox();
+    expect(first).toBeTruthy();
+    expect(second).toBeTruthy();
+    expect(second?.y ?? 0).toBeGreaterThan((first?.y ?? 0) + (first?.height ?? 0) / 2);
   }
 
   async hasListingResults(): Promise<boolean> {

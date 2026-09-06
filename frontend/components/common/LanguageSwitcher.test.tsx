@@ -99,6 +99,9 @@ describe('LanguageSwitcher', () => {
   });
 
   it('calls router.push and router.refresh when switching away from current locale', async () => {
+    const scrollTo = jest.fn();
+    window.scrollTo = scrollTo as unknown as typeof window.scrollTo;
+
     render(
       <Tree initialLocale="ru">
         <LanguageSwitcher />
@@ -109,6 +112,46 @@ describe('LanguageSwitcher', () => {
 
     expect(pushMock).toHaveBeenCalledWith('/dacia');
     expect(refreshMock).toHaveBeenCalled();
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' });
+  });
+
+  it('calls onNavigate before pushing the locale path', () => {
+    const onNavigate = jest.fn();
+    const scrollTo = jest.fn();
+    window.scrollTo = scrollTo as unknown as typeof window.scrollTo;
+
+    render(
+      <Tree initialLocale="ru">
+        <LanguageSwitcher onNavigate={onNavigate} />
+      </Tree>,
+    );
+
+    fireEvent.click(screen.getByTestId('lang-ro'));
+
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(pushMock).toHaveBeenCalledWith('/dacia');
+  });
+
+  it('clears home scroll restore keys when switching locale on home', () => {
+    window.location.pathname = '/ru';
+    window.sessionStorage.setItem('homeScrollPosition', '9000');
+    window.sessionStorage.setItem('homeScrollTimestamp', String(Date.now()));
+    window.sessionStorage.setItem('homeScrollListingId', 'locale-switch-restore-bait');
+    window.sessionStorage.setItem('scrollToResultsAfterLoad', 'true');
+    window.scrollTo = jest.fn() as unknown as typeof window.scrollTo;
+
+    render(
+      <Tree initialLocale="ru">
+        <LanguageSwitcher />
+      </Tree>,
+    );
+
+    fireEvent.click(screen.getByTestId('lang-ro'));
+
+    expect(pushMock).toHaveBeenCalledWith('/');
+    expect(window.sessionStorage.getItem('homeScrollPosition')).toBeNull();
+    expect(window.sessionStorage.getItem('homeScrollListingId')).toBeNull();
+    expect(window.sessionStorage.getItem('scrollToResultsAfterLoad')).toBeNull();
   });
 
   it('passes locale flag emoji only in dropdown options', () => {

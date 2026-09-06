@@ -28,6 +28,8 @@ export {
   MotoIcon,
   TruckIcon,
   TireCategoryIcon,
+  ViewLargeCardsIcon,
+  ViewCompactCardsIcon,
   ExternalLinkIcon,
   CoinsIcon,
   EyeIcon,

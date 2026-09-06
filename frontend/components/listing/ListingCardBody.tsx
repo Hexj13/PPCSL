@@ -2,6 +2,7 @@
 
 import type { useListingGridCities } from '@/components/listing/CitiesProvider';
 import {
+  ListingCardCompactSpecs,
   ListingCardTireSpecs,
   ListingCardVehicleSpecs,
 } from '@/components/listing/ListingCardParts';
@@ -26,6 +27,7 @@ export function ListingCardBody({
   cities,
   isHydrated,
   t,
+  variant = 'default',
 }: {
   listing: Listing;
   displayTitle: string;
@@ -33,52 +35,67 @@ export function ListingCardBody({
   cities: ReturnType<typeof useListingGridCities>['cities'];
   isHydrated: boolean;
   t: (key: string, params?: Record<string, string | number>) => string;
+  variant?: 'default' | 'compact';
 }) {
   const { user, isInitialized } = useAuthStore();
+  const isCompact = variant === 'compact';
   const showViews =
-    shouldShowListingViews(user, isInitialized) && listing.views !== undefined && listing.views > 0;
+    !isCompact &&
+    shouldShowListingViews(user, isInitialized) &&
+    listing.views !== undefined &&
+    listing.views > 0;
   const tireCard = isTireListing(listing);
   return (
-    <div className="p-4 md:p-5 grow flex flex-col">
-      <h3 className="font-bold text-base md:text-lg mb-3 line-clamp-2 text-primary-900">
+    <div className={`${isCompact ? 'p-3' : 'p-4 md:p-5'} grow flex flex-col`}>
+      <h3
+        className={`${isCompact ? 'font-semibold text-sm mb-1.5' : 'font-bold text-base md:text-lg mb-3'} line-clamp-2 text-primary-900`}
+      >
         {displayTitle}
       </h3>
-      <div className="flex items-baseline justify-between gap-2 mb-3 flex-wrap">
+      <div
+        className={`flex items-baseline justify-between gap-2 ${isCompact ? 'mb-1.5' : 'mb-3'} flex-wrap`}
+      >
         <div className="flex items-baseline gap-2 flex-wrap min-w-0">
           {listing.price !== undefined ? (
             <>
               <PriceDisplay
                 price={listing.price}
                 currency={listing.currency ?? listing.defaultCurrencyCode ?? 'EUR'}
-                approxPrice={listing.approxPriceDefaultCurrency}
+                approxPrice={isCompact ? undefined : listing.approxPriceDefaultCurrency}
                 defaultCurrencyCode={listing.defaultCurrencyCode}
-                size="small"
+                size={isCompact ? 'xs' : 'small'}
                 priceClassName="text-primary-500"
                 currencyStyle={{ color: 'rgb(var(--text-secondary-rgb))' }}
               />
               <TireListingPriceSuffix
                 listing={listing}
                 t={t}
-                className="text-xs md:text-sm font-medium shrink-0"
+                className={`${isCompact ? 'text-[11px]' : 'text-xs md:text-sm'} font-medium shrink-0`}
               />
             </>
           ) : (
-            <span className="text-xl md:text-2xl font-extrabold text-primary-400">••••</span>
+            <span
+              className={`${isCompact ? 'text-base' : 'text-xl md:text-2xl'} font-extrabold text-primary-400`}
+            >
+              ••••
+            </span>
           )}
         </div>
         {listing.status === 'Closed' && (
           <ListingClosedStatusBadge label={t('listingDetail.closed')} className="shrink-0" />
         )}
       </div>
-      <div className="grow mb-3">
-        {tireCard ? (
+      <div className={`grow ${isCompact ? 'mb-1.5' : 'mb-3'}`}>
+        {isCompact ? (
+          <ListingCardCompactSpecs listing={listing} t={t} />
+        ) : tireCard ? (
           <ListingCardTireSpecs listing={listing} t={t} />
         ) : (
           listing.vehicle && <ListingCardVehicleSpecs vehicle={listing.vehicle} t={t} />
         )}
       </div>
       <div
-        className="flex justify-between items-center gap-2 text-sm font-medium mt-auto pt-3 border-t border-primary-500/20"
+        className={`flex justify-between items-center gap-2 ${isCompact ? 'text-[10px]' : 'text-sm'} font-medium mt-auto ${isCompact ? 'pt-2' : 'pt-3'} border-t border-primary-500/20`}
         style={{ color: 'rgb(var(--text-secondary-rgb))' }}
       >
         <span className="min-w-0 truncate">{getCityName(listing.city, locale, cities)}</span>

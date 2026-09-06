@@ -49,6 +49,7 @@ interface ListingCardProps {
   priority?: boolean;
   linkPrefetch?: boolean;
   enableCarouselPreload?: boolean;
+  variant?: 'default' | 'compact';
 }
 
 const RESET_TO_FIRST_DELAY_MS = 10000;
@@ -186,6 +187,106 @@ function listingCardFavoriteAriaLabelText(
   return t('listings.favoriteAddAria');
 }
 
+function ListingCardImageOverlayActions({
+  compact,
+  showCarouselNav,
+  isAutoRewinding,
+  isCarouselBusy,
+  onPrevPhoto,
+  onNextPhoto,
+  prevLabel,
+  nextLabel,
+  favoriteDisabled,
+  favoriteButtonClass,
+  favoriteAriaLabel,
+  isFavorite,
+  onToggleFavorite,
+  showCompareButton,
+  compareTopClassName,
+  compareButtonClass,
+  compareAriaLabel,
+  isInComparison,
+  onToggleComparison,
+}: {
+  compact: boolean;
+  showCarouselNav: boolean;
+  isAutoRewinding: boolean;
+  isCarouselBusy: boolean;
+  onPrevPhoto: (e: React.MouseEvent) => void;
+  onNextPhoto: (e: React.MouseEvent) => void;
+  prevLabel: string;
+  nextLabel: string;
+  favoriteDisabled: boolean;
+  favoriteButtonClass: string;
+  favoriteAriaLabel: string;
+  isFavorite: boolean;
+  onToggleFavorite: React.MouseEventHandler;
+  showCompareButton: boolean;
+  compareTopClassName: string;
+  compareButtonClass: string;
+  compareAriaLabel: string;
+  isInComparison: boolean;
+  onToggleComparison: React.MouseEventHandler;
+}) {
+  if (compact) return null;
+  return (
+    <>
+      {showCarouselNav && (
+        <ListingPhotoCarouselNavButtons
+          variant="card"
+          disabled={isAutoRewinding || isCarouselBusy}
+          onPrev={onPrevPhoto}
+          onNext={onNextPhoto}
+          prevLabel={prevLabel}
+          nextLabel={nextLabel}
+        />
+      )}
+      <button
+        onClick={onToggleFavorite}
+        disabled={favoriteDisabled}
+        className={`absolute top-3 right-3 z-10 box-border flex h-10 w-10 items-center justify-center rounded-full border-2 border-transparent bg-primary-500 shadow-lg transition-[opacity,border-color] duration-300 ease-out pointer-events-auto ${favoriteButtonClass}`}
+        aria-label={favoriteAriaLabel}
+      >
+        <svg
+          className={`w-6 h-6 ${isFavorite ? 'text-red-400' : 'text-white'}`}
+          fill={isFavorite ? 'currentColor' : 'none'}
+          stroke={isFavorite ? 'white' : 'currentColor'}
+          strokeWidth={isFavorite ? 1.5 : 2}
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+          />
+        </svg>
+      </button>
+      {showCompareButton && (
+        <button
+          type="button"
+          onClick={onToggleComparison}
+          className={`absolute right-3 z-10 box-border flex h-10 w-10 items-center justify-center rounded-full border-2 border-transparent bg-primary-500 shadow-lg transition-[top,opacity,border-color] duration-300 ease-out pointer-events-auto ${compareTopClassName} ${compareButtonClass}`}
+          aria-label={compareAriaLabel}
+        >
+          <svg
+            className={`w-6 h-6 ${isInComparison ? 'text-red-400' : 'text-white'}`}
+            fill={isInComparison ? 'currentColor' : 'none'}
+            stroke={isInComparison ? 'white' : 'currentColor'}
+            strokeWidth={isInComparison ? 1.5 : 2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
+            />
+          </svg>
+        </button>
+      )}
+    </>
+  );
+}
+
 function ListingCardComponent({
   listing,
   forceFavorite = false,
@@ -193,6 +294,7 @@ function ListingCardComponent({
   priority = false,
   linkPrefetch = false,
   enableCarouselPreload = true,
+  variant = 'default',
 }: ListingCardProps) {
   const { t } = useTranslation();
   const { locale } = useI18n();
@@ -428,6 +530,7 @@ function ListingCardComponent({
     if (isInComparison) return 'top-14 lg:top-3 lg:group-hover:top-14';
     return 'top-14';
   }, [isFavorite, isInComparison]);
+  const isCompact = variant === 'compact';
 
   return (
     <div
@@ -458,8 +561,8 @@ function ListingCardComponent({
           style={{
             position: 'relative',
             overflow: 'hidden',
-            aspectRatio: '16/9',
-            minHeight: '240px',
+            aspectRatio: isCompact ? '4/3' : '16/9',
+            minHeight: isCompact ? '0' : '240px',
           }}
         >
           {images.length > 1 ? (
@@ -493,59 +596,29 @@ function ListingCardComponent({
             t={t}
             carouselBrowsingCompact={images.length > 1 && carouselIndex !== 0}
             allowCollapsedBadgesHoverExpand={!suppressBadgeHoverExpand}
+            compactCard={isCompact}
           />
-          {images.length > 1 && (
-            <ListingPhotoCarouselNavButtons
-              variant="card"
-              disabled={isAutoRewinding || isCarouselBusy}
-              onPrev={handlePrevPhoto}
-              onNext={handleNextPhoto}
-              prevLabel={t('listings.previousPhoto')}
-              nextLabel={t('listings.nextPhoto')}
-            />
-          )}
-          <button
-            onClick={handleToggleFavorite}
-            disabled={favoriteDisabled}
-            className={`absolute top-3 right-3 z-10 box-border flex h-10 w-10 items-center justify-center rounded-full border-2 border-transparent bg-primary-500 shadow-lg transition-[opacity,border-color] duration-300 ease-out pointer-events-auto ${favoriteButtonClass}`}
-            aria-label={favoriteAriaLabel}
-          >
-            <svg
-              className={`w-6 h-6 ${isFavorite ? 'text-red-400' : 'text-white'}`}
-              fill={isFavorite ? 'currentColor' : 'none'}
-              stroke={isFavorite ? 'white' : 'currentColor'}
-              strokeWidth={isFavorite ? 1.5 : 2}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-              />
-            </svg>
-          </button>
-          {showCompareButton && (
-            <button
-              type="button"
-              onClick={handleToggleComparison}
-              className={`absolute right-3 z-10 box-border flex h-10 w-10 items-center justify-center rounded-full border-2 border-transparent bg-primary-500 shadow-lg transition-[top,opacity,border-color] duration-300 ease-out pointer-events-auto ${compareTopClassName} ${compareButtonClass}`}
-              aria-label={compareAriaLabel}
-            >
-              <svg
-                className={`w-6 h-6 ${isInComparison ? 'text-red-400' : 'text-white'}`}
-                fill={isInComparison ? 'currentColor' : 'none'}
-                stroke={isInComparison ? 'white' : 'currentColor'}
-                strokeWidth={isInComparison ? 1.5 : 2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
-                />
-              </svg>
-            </button>
-          )}
+          <ListingCardImageOverlayActions
+            compact={isCompact}
+            showCarouselNav={images.length > 1}
+            isAutoRewinding={isAutoRewinding}
+            isCarouselBusy={isCarouselBusy}
+            onPrevPhoto={handlePrevPhoto}
+            onNextPhoto={handleNextPhoto}
+            prevLabel={t('listings.previousPhoto')}
+            nextLabel={t('listings.nextPhoto')}
+            favoriteDisabled={favoriteDisabled}
+            favoriteButtonClass={favoriteButtonClass}
+            favoriteAriaLabel={favoriteAriaLabel}
+            isFavorite={isFavorite}
+            onToggleFavorite={handleToggleFavorite}
+            showCompareButton={showCompareButton}
+            compareTopClassName={compareTopClassName}
+            compareButtonClass={compareButtonClass}
+            compareAriaLabel={compareAriaLabel}
+            isInComparison={isInComparison}
+            onToggleComparison={handleToggleComparison}
+          />
         </div>
         <ListingCardBody
           listing={listing}
@@ -554,6 +627,7 @@ function ListingCardComponent({
           cities={cities}
           isHydrated={isHydrated}
           t={t}
+          variant={variant}
         />
       </div>
     </div>

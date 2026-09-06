@@ -3,8 +3,9 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, startTransition, useState, useEffect } from 'react';
 
-import { Dropdown } from '@/components/common/Dropdown';
+import { MobileSelectField } from '@/components/ListingForm/MobileSelectField';
 import { useI18n } from '@/components/providers/I18nProvider';
+import { SearchFilterSortIcon } from '@/components/search/search-filters/search-filter-field-icons';
 import { useTranslation } from '@/hooks/useTranslation';
 import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { localizedHref } from '@/lib/localized-href';
@@ -93,25 +94,31 @@ export function SortDropdown({
     [searchParams, router, resolvedBasePath, isInternalSearchRef, onSortChange],
   );
 
+  const handleSortValueChange = useCallback(
+    (value: string) => {
+      if (!isListingSortKey(value) || value === currentSortKey) {
+        return;
+      }
+      const { sortBy, sortOrder } = LISTING_SORTS[value];
+      updateSortParams(sortBy, sortOrder);
+    },
+    [currentSortKey, updateSortParams],
+  );
+
   return (
-    <div className="w-full sm:min-w-[260px]">
-      <Dropdown
-        dataTestId={dataTestId}
-        value={currentSortKey}
-        onChange={(value) => {
-          if (!isListingSortKey(value) || value === currentSortKey) {
-            return;
-          }
-          const { sortBy, sortOrder } = LISTING_SORTS[value];
-          updateSortParams(sortBy, sortOrder);
-        }}
-        fieldLabel={t('common.sortingLabel')}
-        placeholder={t('common.selectSorting')}
-        options={sortOptions}
-        autoPosition={true}
-        menuExpandToContent
-        disabled={!mounted}
-      />
-    </div>
+    <MobileSelectField
+      className="w-full sm:min-w-[260px]"
+      value={currentSortKey}
+      onChange={handleSortValueChange}
+      options={sortOptions}
+      sheetTitle={t('common.sortingLabel')}
+      leadingIcon={<SearchFilterSortIcon />}
+      placeholder={t('common.selectSorting')}
+      dataTestId={dataTestId}
+      autoPosition
+      menuExpandToContent
+      allowEmpty={false}
+      disabled={!mounted}
+    />
   );
 }

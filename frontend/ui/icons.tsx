@@ -428,3 +428,23 @@ export function TireCategoryIcon({ className = 'w-10 h-10' }: IconProps) {
     </svg>
   );
 }
+
+export function ViewLargeCardsIcon({ className = 'w-5 h-5' }: IconProps) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+      <rect x="4" y="3" width="16" height="8" rx="1.5" strokeWidth={2} />
+      <rect x="4" y="13" width="16" height="8" rx="1.5" strokeWidth={2} />
+    </svg>
+  );
+}
+
+export function ViewCompactCardsIcon({ className = 'w-5 h-5' }: IconProps) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+      <rect x="3" y="3" width="8" height="8" rx="1" strokeWidth={2} />
+      <rect x="13" y="3" width="8" height="8" rx="1" strokeWidth={2} />
+      <rect x="3" y="13" width="8" height="8" rx="1" strokeWidth={2} />
+      <rect x="13" y="13" width="8" height="8" rx="1" strokeWidth={2} />
+    </svg>
+  );
+}
