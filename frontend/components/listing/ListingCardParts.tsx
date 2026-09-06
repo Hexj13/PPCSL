@@ -366,6 +366,7 @@ export const ListingCardImageCarousel = React.forwardRef<
 
 export {
   ListingCardBadges,
+  ListingCardCompactSpecs,
   ListingCardTireSpecs,
   ListingCardVehicleSpecs,
 } from './ListingCardBadgesAndSpecs';

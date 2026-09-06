@@ -1,8 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 import type { ListingSortKey } from '../../lib/search/listingSort';
-import { BottomSheetComponent } from '../components/common/bottom-sheet.component';
-import { listingSortOptionIndex } from '../test-data/listing-sort';
+import { SortSelectComponent } from '../components/search/sort-select.component';
 import { expectPagePath } from '../utils/app-path';
 import { dismissCookieConsentIfVisible } from '../utils/session';
 import { pageUsesMobileLayout } from '../utils/viewport';
@@ -15,13 +14,13 @@ export class BoardPage {
     emptyState: 'board-empty',
   } as const;
 
-  readonly bottomSheet: BottomSheetComponent;
+  readonly sortSelect: SortSelectComponent;
 
   constructor(
     private readonly page: Page,
     private readonly boardSlug: string,
   ) {
-    this.bottomSheet = new BottomSheetComponent(page);
+    this.sortSelect = new SortSelectComponent(page);
   }
 
   async open(): Promise<void> {
@@ -57,41 +56,15 @@ export class BoardPage {
       .toBe(true);
   }
 
-  private async openSortDropdownMenu(
-    trigger: ReturnType<Page['getByTestId']>,
-    menu: ReturnType<Page['getByTestId']>,
-    useMobile: boolean,
-  ): Promise<void> {
-    await expect(trigger).toBeVisible({ timeout: 15_000 });
-    await expect(trigger).toBeEnabled({ timeout: 15_000 });
-    await expect
-      .poll(
-        async () => {
-          if (!(await menu.isVisible().catch(() => false))) {
-            await trigger.click({ force: useMobile });
-          }
-          return menu.isVisible().catch(() => false);
-        },
-        { timeout: 15_000, intervals: [300, 500, 800, 1200] },
-      )
-      .toBe(true);
-  }
-
   async selectSort(sortKey: ListingSortKey): Promise<void> {
     await dismissCookieConsentIfVisible(this.page);
     const testId = this.testIds.sortSelect;
     const trigger = this.page.getByTestId(testId);
-    const menu = this.page.getByTestId(`${testId}-menu`);
-    const option = this.page.getByTestId(`${testId}-option-${listingSortOptionIndex(sortKey)}`);
     const useMobile = await pageUsesMobileLayout(this.page);
     if (!useMobile) {
       await trigger.scrollIntoViewIfNeeded();
     }
-    await this.openSortDropdownMenu(trigger, menu, useMobile);
-    await expect(option).toBeVisible({ timeout: 15_000 });
-    await option.evaluate((element) => {
-      (element as HTMLButtonElement).click();
-    });
+    await this.sortSelect.select(trigger, sortKey, testId, { forceClickTrigger: useMobile });
   }
 
   async selectSortAndWaitForListings(sortKey: ListingSortKey): Promise<void> {

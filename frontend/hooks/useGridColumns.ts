@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { useListingViewMode } from '@/lib/listing-view-mode';
+
 const COLUMN_BREAKPOINTS = [
   { query: '(min-width: 1280px)', columns: 4 },
   { query: '(min-width: 1024px)', columns: 3 },
@@ -43,4 +45,14 @@ export function useGridColumns(): number {
   }, []);
 
   return columns;
+}
+
+export function useListingGridColumns(): { columns: number; compactCards: boolean } {
+  const base = useGridColumns();
+  const viewMode = useListingViewMode();
+  const compactCards = base === 1 && viewMode === 'compact';
+  return {
+    columns: compactCards ? 2 : base,
+    compactCards,
+  };
 }

@@ -173,6 +173,7 @@ interface BottomSheetProps {
   children: React.ReactNode;
   header?: React.ReactNode;
   footer?: React.ReactNode;
+  titleIcon?: React.ReactNode;
   lockSheetHeight?: boolean;
   dataTestId?: string;
   mobileOnly?: boolean;
@@ -185,6 +186,7 @@ export function BottomSheet({
   children,
   header,
   footer,
+  titleIcon,
   lockSheetHeight = false,
   dataTestId,
   mobileOnly = true,
@@ -443,6 +445,7 @@ export function BottomSheet({
         exiting={exiting}
         visible={visible}
         title={title}
+        titleIcon={titleIcon}
         closeLabel={t('common.close')}
         lockSheetHeight={lockSheetHeight}
         header={header}

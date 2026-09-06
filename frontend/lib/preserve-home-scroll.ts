@@ -19,3 +19,15 @@ export function shouldRestoreHomeScrollAfterPath(previousPath: string | null): b
   const { restPath } = stripLocalePrefixFromPathname(previousPath);
   return restPath.startsWith('/listings/') || restPath.startsWith('/partners');
 }
+
+export function isHomeLocaleOnlyPathnameChange(
+  previousPath: string | null,
+  nextPathname: string,
+): boolean {
+  if (!previousPath || previousPath === nextPathname) {
+    return false;
+  }
+  const prevRest = stripLocalePrefixFromPathname(previousPath).restPath;
+  const nextRest = stripLocalePrefixFromPathname(nextPathname).restPath;
+  return prevRest === '/' && nextRest === '/';
+}

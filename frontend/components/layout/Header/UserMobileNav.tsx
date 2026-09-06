@@ -110,7 +110,7 @@ export function UserMobileNav({
       </button>
       {showLang && (
         <div className="w-full border-t border-primary-700 pt-4">
-          <LanguageSwitcher variant="mobile" context="header" />
+          <LanguageSwitcher variant="mobile" context="header" onNavigate={() => handleNavClick()} />
         </div>
       )}
     </div>

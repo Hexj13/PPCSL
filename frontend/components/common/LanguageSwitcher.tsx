@@ -4,8 +4,11 @@ import { useRouter } from 'next/navigation';
 import { startTransition, useMemo } from 'react';
 
 import { useI18n } from '@/components/providers/I18nProvider';
+import { prepareScrollLockReleaseToTop } from '@/hooks/useScrollLock';
 import { useTranslation } from '@/hooks/useTranslation';
 import { authApi } from '@/lib/api';
+import { sessionStorageRemoveItem } from '@/lib/browser-session-storage';
+import { cancelHomeScrollRestore, clearHomeScrollRestoreSession } from '@/lib/home-scroll-restore';
 import { setStoredLocale, type Locale } from '@/lib/i18n';
 import { resolveLocaleRouting, shouldShowLanguageSwitcher } from '@/lib/locale-routing';
 import { loadSiteConfigSync } from '@/lib/site-config';
@@ -31,9 +34,11 @@ const LOCALE_FLAG_EMOJI: Readonly<Record<string, string>> = {
 export function LanguageSwitcher({
   variant = 'desktop',
   context = 'footer',
+  onNavigate,
 }: {
   variant?: 'desktop' | 'mobile';
   context?: 'header' | 'footer';
+  onNavigate?: () => void;
 }) {
   const { locale } = useI18n();
   const { t } = useTranslation();
@@ -71,6 +76,17 @@ export function LanguageSwitcher({
     const search = window.location.search;
     const { restPath } = stripLocalePrefixFromPathname(path);
     const nextPath = localePrefixPath(restPath, localeValue);
+    if (restPath === '/') {
+      cancelHomeScrollRestore();
+      clearHomeScrollRestoreSession();
+      sessionStorageRemoveItem('scrollToResultsAfterLoad');
+    }
+    onNavigate?.();
+    prepareScrollLockReleaseToTop();
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
     setStoredLocale(localeValue);
     startTransition(() => {
       router.push(`${nextPath}${search}`);

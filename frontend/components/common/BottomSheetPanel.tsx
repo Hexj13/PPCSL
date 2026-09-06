@@ -1,6 +1,6 @@
 'use client';
 
-import type { RefObject } from 'react';
+import type { ReactNode, RefObject } from 'react';
 
 import { getBottomSheetSlideStyle } from '@/lib/bottom-sheet-layout';
 
@@ -14,6 +14,7 @@ type BottomSheetPanelProps = {
   exiting: boolean;
   visible: boolean;
   title: string;
+  titleIcon?: ReactNode;
   closeLabel: string;
   lockSheetHeight: boolean;
   header?: React.ReactNode;
@@ -34,6 +35,7 @@ export function BottomSheetPanel({
   exiting,
   visible,
   title,
+  titleIcon,
   closeLabel,
   lockSheetHeight,
   header,
@@ -83,8 +85,16 @@ export function BottomSheetPanel({
           </>
         ) : (
           <div className="flex shrink-0 items-center justify-between gap-3 border-b border-primary-500/20 px-4 pb-3">
-            <h2 id="bottom-sheet-title" className="truncate text-lg font-bold text-primary-900">
-              {title}
+            <h2
+              id="bottom-sheet-title"
+              className="flex min-w-0 flex-1 items-center gap-2 text-lg font-bold text-primary-900"
+            >
+              {titleIcon ? (
+                <span className="shrink-0 text-primary-700 [&_svg]:block" aria-hidden>
+                  {titleIcon}
+                </span>
+              ) : null}
+              <span className="truncate">{title}</span>
             </h2>
             <button
               type="button"

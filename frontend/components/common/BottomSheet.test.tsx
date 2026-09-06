@@ -89,6 +89,22 @@ describe('BottomSheet', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('renders a title icon next to the sheet heading', () => {
+    render(
+      <BottomSheet
+        isOpen
+        onClose={jest.fn()}
+        title="Sort"
+        titleIcon={<svg data-testid="sort-title-icon" />}
+      >
+        <p>Content</p>
+      </BottomSheet>,
+    );
+    expect(screen.getByRole('heading', { name: 'Sort' })).toContainElement(
+      screen.getByTestId('sort-title-icon'),
+    );
+  });
+
   it('closes when the user navigates back in history', () => {
     jest.useFakeTimers();
     const onClose = jest.fn();

@@ -1,14 +1,19 @@
 'use client';
 
+import { useListingGridColumns } from '@/hooks/useGridColumns';
 import type { Listing } from '@/lib/api';
 import { sessionStorageRemoveItem } from '@/lib/browser-session-storage';
+import { useListingViewMode } from '@/lib/listing-view-mode';
 import { buildMinimalCategorySearchUrl } from '@/lib/search';
 
 import { CitiesProvider } from './CitiesProvider';
 import { ListingCardSkeleton } from './ListingCardSkeleton';
 import { ListingGridPaginationFooter } from './ListingGridPaginationFooter';
 import { VirtualizedListingGrid } from './VirtualizedListingGrid';
-import { ListingGridCriticalStyles } from './listing-grid-critical-layout';
+import {
+  ListingGridCriticalStyles,
+  listingGridResponsiveClassName,
+} from './listing-grid-critical-layout';
 import { GRID_RESTORE_STATE_KEY, GRID_STATE_KEY } from './listing-grid-state';
 
 type ListingGridViewProps = {
@@ -54,14 +59,18 @@ export function ListingGridView({
   onLoadMore,
   t,
 }: ListingGridViewProps) {
+  const viewMode = useListingViewMode();
+  const { compactCards } = useListingGridColumns();
+  const gridClassName = listingGridResponsiveClassName(compactCards);
+  const skeletonVariant = compactCards ? 'compact' : 'default';
   return (
     <>
       <ListingGridCriticalStyles />
       <div id="home-listings" data-testid="listing-grid-placeholder" style={gridPlaceholderStyle}>
         {showSkeletonOverlay && (
-          <div className="listing-grid-critical-responsive grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+          <div className={gridClassName}>
             {Array.from({ length: 8 }).map((_, index) => (
-              <ListingCardSkeleton key={`skeleton-${index}`} />
+              <ListingCardSkeleton key={`skeleton-${index}`} variant={skeletonVariant} />
             ))}
           </div>
         )}
@@ -113,15 +122,18 @@ export function ListingGridView({
             {!error && listings.length > 0 && (
               <CitiesProvider>
                 <VirtualizedListingGrid
-                  key={`${searchParamsString}-${gridVirtualEpoch}`}
+                  key={`${searchParamsString}-${gridVirtualEpoch}-${viewMode}`}
                   listings={uniqueListings}
                   showPartnerPromoBanner={showPartnerPromoBanner}
                   onDismissPartnerPromoBanner={dismissPartnerPromoBanner}
                 />
                 {loadingMore && appendSkeletonCount > 0 && (
-                  <div className="listing-grid-critical-responsive grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch mt-6">
+                  <div className={`${gridClassName} mt-6`}>
                     {Array.from({ length: appendSkeletonCount }).map((_, index) => (
-                      <ListingCardSkeleton key={`append-skeleton-${currentPage + 1}-${index}`} />
+                      <ListingCardSkeleton
+                        key={`append-skeleton-${currentPage + 1}-${index}`}
+                        variant={skeletonVariant}
+                      />
                     ))}
                   </div>
                 )}

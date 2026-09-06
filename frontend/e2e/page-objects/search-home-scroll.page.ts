@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page, type Response } from '@playwright/test';
 
 import type { ListingSortKey } from '../../lib/search/listingSort';
-import { listingSortOptionIndex } from '../test-data/listing-sort';
+import { SortSelectComponent } from '../components/search/sort-select.component';
 import { dismissCookieConsentIfVisible } from '../utils/session';
 import { pageUsesMobileLayout } from '../utils/viewport';
 
@@ -26,7 +26,11 @@ function isListingsSearchGetResponse(response: Response): boolean {
 }
 
 export abstract class SearchHomeScrollPage {
-  constructor(protected readonly page: Page) {}
+  protected readonly sortSelect: SortSelectComponent;
+
+  constructor(protected readonly page: Page) {
+    this.sortSelect = new SortSelectComponent(page);
+  }
 
   protected abstract searchFiltersForm(): Locator;
 
@@ -96,40 +100,8 @@ export abstract class SearchHomeScrollPage {
     return { listingId, scrollY };
   }
 
-  private async openSortDropdownMenu(
-    trigger: ReturnType<Page['getByTestId']>,
-    menu: ReturnType<Page['getByTestId']>,
-    useMobile: boolean,
-  ): Promise<void> {
-    await expect(trigger).toBeVisible({ timeout: 15_000 });
-    await expect(trigger).toBeEnabled({ timeout: 15_000 });
-    await expect
-      .poll(
-        async () => {
-          if (!(await menu.isVisible().catch(() => false))) {
-            await trigger.click({ force: useMobile });
-          }
-          return menu.isVisible().catch(() => false);
-        },
-        { timeout: 15_000, intervals: [300, 500, 800, 1200] },
-      )
-      .toBe(true);
-  }
-
-  private async dismissOpenSortMenuIfNeeded(testId = 'search-sort-select'): Promise<void> {
-    const menu = this.page.getByTestId(`${testId}-menu`);
-    if (!(await menu.isVisible().catch(() => false))) {
-      return;
-    }
-    const heading = this.page.getByRole('heading', { level: 1 }).first();
-    if (await heading.isVisible().catch(() => false)) {
-      await heading.click({ position: { x: 8, y: 8 } });
-    } else {
-      await this.searchFiltersForm().getByTestId(testId).click();
-    }
-    await expect
-      .poll(async () => !(await menu.isVisible().catch(() => false)), { timeout: 15_000 })
-      .toBe(true);
+  protected async dismissOpenSortMenuIfNeeded(testId = 'search-sort-select'): Promise<void> {
+    await this.sortSelect.dismissIfOpen(testId);
   }
 
   async selectSort(
@@ -140,23 +112,26 @@ export abstract class SearchHomeScrollPage {
     await dismissCookieConsentIfVisible(this.page);
     await this.waitForHomeScrollRestoreSettled();
     const trigger = this.searchFiltersForm().getByTestId(testId);
-    const menu = this.page.getByTestId(`${testId}-menu`);
-    const optionIndex = listingSortOptionIndex(sortKey);
-    const option = this.page.getByTestId(`${testId}-option-${optionIndex}`);
     const useMobile = await pageUsesMobileLayout(this.page);
     if (!useMobile && options?.scrollTrigger !== false) {
       await trigger.scrollIntoViewIfNeeded();
     }
-    await this.openSortDropdownMenu(trigger, menu, useMobile || options?.scrollTrigger === false);
-    await expect(option).toBeVisible({ timeout: 15_000 });
-    await option.evaluate((element) => {
-      (element as HTMLButtonElement).click();
+    await this.sortSelect.select(trigger, sortKey, testId, {
+      forceClickTrigger: useMobile || options?.scrollTrigger === false,
     });
-    await this.dismissOpenSortMenuIfNeeded(testId);
   }
 
   async getWindowScrollY(): Promise<number> {
     return this.page.evaluate(() => window.scrollY);
+  }
+
+  async expectWindowNearTop(tolerancePx = 80): Promise<void> {
+    await expect
+      .poll(async () => this.getWindowScrollY(), {
+        timeout: 10_000,
+        intervals: [200, 400, 800],
+      })
+      .toBeLessThanOrEqual(tolerancePx);
   }
 
   async scrollToY(scrollY: number): Promise<void> {
@@ -295,8 +270,6 @@ export abstract class SearchHomeScrollPage {
     const testId = 'search-sort-select';
     const trigger = this.searchFiltersForm().getByTestId(testId);
     const menu = this.page.getByTestId(`${testId}-menu`);
-    const optionIndex = listingSortOptionIndex(sortKey);
-    const option = this.page.getByTestId(`${testId}-option-${optionIndex}`);
     await dismissCookieConsentIfVisible(this.page);
     await expect(trigger).toBeVisible({ timeout: 15_000 });
     await expect
@@ -316,10 +289,8 @@ export abstract class SearchHomeScrollPage {
         { timeout: 15_000, intervals: [300, 500, 800, 1200] },
       )
       .toBe(true);
-    await expect(option).toBeVisible({ timeout: 15_000 });
-    await option.evaluate((element) => {
-      (element as HTMLButtonElement).click();
-    });
+    await this.sortSelect.selectOption(testId, sortKey);
+    await this.sortSelect.confirmIfMobile(testId);
     await this.dismissOpenSortMenuIfNeeded(testId);
   }
 

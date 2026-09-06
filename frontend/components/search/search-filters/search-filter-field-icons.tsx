@@ -1,3 +1,26 @@
+export function SearchFilterSortIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="shrink-0"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      data-testid="search-sort-icon"
+    >
+      <path
+        d="M4 7h16M4 12h11M4 17h6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function SearchFilterYearIcon() {
   return (
     <svg

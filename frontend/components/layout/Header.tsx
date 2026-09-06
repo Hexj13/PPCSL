@@ -90,11 +90,9 @@ export function Header() {
 
   useEffect(() => {
     setIsMobileCatalogSearchOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
+    handleMobileMenuClose();
     forceReleaseScrollLockToTop();
-  }, [pathname]);
+  }, [pathname, handleMobileMenuClose]);
 
   useEffect(() => {
     if (!drawerMounted) return;
@@ -107,7 +105,7 @@ export function Header() {
 
   useEffect(() => {
     if (prevMenuOpenRef.current && !isMobileMenuOpen) {
-      document.getElementById(MOBILE_MENU_TOGGLE_ID)?.focus();
+      document.getElementById(MOBILE_MENU_TOGGLE_ID)?.focus({ preventScroll: true });
     }
     prevMenuOpenRef.current = isMobileMenuOpen;
   }, [isMobileMenuOpen]);

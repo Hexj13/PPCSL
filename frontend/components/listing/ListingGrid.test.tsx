@@ -100,6 +100,7 @@ jest.mock('@tanstack/react-virtual', () => ({
 jest.mock('@/hooks/useGridColumns', () => ({
   useGridColumns: () => 4,
   resolveGridColumns: () => 4,
+  useListingGridColumns: () => ({ columns: 4, compactCards: false }),
 }));
 
 jest.mock('./ListingCard', () => ({
@@ -124,6 +125,9 @@ jest.mock('@/hooks/useTranslation', () => ({
       ({
         'listings.notFound': 'No listings found',
         'listings.viewAllListings': 'View all listings',
+        'listings.viewModeLabel': 'Card view',
+        'listings.viewModeLarge': 'Regular view',
+        'listings.viewModeCompact': 'Compact',
         'listings.loadError': 'Error loading',
         'listings.loadMore': 'Load more',
         'listings.showMore': 'Show more',

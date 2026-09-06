@@ -56,6 +56,7 @@ Layered architecture for Playwright E2E in `core/frontend/e2e`.
   - `components/auth/register-form.component.ts`
   - `components/auth/verify-phone-form.component.ts`
   - `components/profile/complete-profile-form.component.ts`
+  - `components/search/sort-select.component.ts`
 
 ### Utilities
 

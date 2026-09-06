@@ -7,7 +7,7 @@ interface PriceDisplayProps {
   currency: string;
   approxPrice?: number | null;
   defaultCurrencyCode?: string;
-  size?: 'small' | 'medium' | 'large';
+  size?: 'xs' | 'small' | 'medium' | 'large';
   showCurrency?: boolean;
   urgent?: boolean;
   approxPriceBelow?: boolean;
@@ -33,12 +33,14 @@ export function PriceDisplay({
 }: PriceDisplayProps) {
   const { t } = useTranslation();
   const sizeClasses = {
+    xs: 'text-base',
     small: 'text-xl md:text-2xl',
     medium: 'text-2xl md:text-3xl',
     large: 'text-3xl sm:text-4xl md:text-5xl',
   };
 
   const currencySizeClasses = {
+    xs: 'text-[11px]',
     small: 'text-xs md:text-sm',
     medium: 'text-sm',
     large: 'text-lg md:text-xl',

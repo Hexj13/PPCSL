@@ -1,7 +1,7 @@
 import type { Listing } from '@/lib/api';
 import { Currency } from '@/lib/constants';
 
-import { buildVirtualRows } from './buildVirtualRows';
+import { buildVirtualRows, getVirtualRowEstimateSize } from './buildVirtualRows';
 
 function createListing(id: string): Listing {
   return {
@@ -100,5 +100,14 @@ describe('buildVirtualRows', () => {
     expect(listingRowIndexById.get('listing-2')).toBe(0);
     expect(listingRowIndexById.get('listing-3')).toBe(1);
     expect(listingRowIndexById.get('listing-4')).toBe(1);
+  });
+
+  it('estimates shorter rows for compact mobile cards', () => {
+    const listings = [createListing('listing-1')];
+    const { rows } = buildVirtualRows(listings, 2, { showPartnerPromoBanner: false });
+
+    expect(getVirtualRowEstimateSize(rows[0], 1)).toBe(500);
+    expect(getVirtualRowEstimateSize(rows[0], 2)).toBe(570);
+    expect(getVirtualRowEstimateSize(rows[0], 2, true)).toBe(320);
   });
 });

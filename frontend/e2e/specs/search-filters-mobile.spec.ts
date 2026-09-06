@@ -6,6 +6,7 @@ import {
   VEHICLE_SEARCH_TABS,
 } from '../test-data/search-filter-sheets';
 import { expectVehicleSearchTabPanelVisible } from '../utils/search-filter-panels';
+import { dismissCookieConsentIfVisible } from '../utils/session';
 import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps';
 
 test.describe('Search: mobile filters and sheets @p0', () => {
@@ -222,6 +223,59 @@ test.describe('Search: mobile filters and sheets @p0', () => {
           await expect(page).toHaveURL(/fuels=Petrol/);
           await searchHomePage.expectPageView();
           await searchHomePage.expectResultsOrEmptyVisible();
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
+  test('toggles compact two-column listing cards and persists the choice', async ({
+    page,
+    searchHomePage,
+  }) => {
+    const steps: E2EStep[] = [
+      {
+        name: 'Open search home',
+        action: async () => {
+          await searchHomePage.openAndExpectPageView();
+        },
+      },
+      {
+        name: 'Wait for listing cards',
+        action: async () => {
+          expect(await searchHomePage.hasListingResults()).toBe(true);
+        },
+      },
+      {
+        name: 'Default is large cards in one column',
+        action: async () => {
+          await searchHomePage.expectListingViewMode('large');
+          await searchHomePage.expectListingCardsStacked();
+        },
+      },
+      {
+        name: 'Switch to compact two-column view',
+        action: async () => {
+          await searchHomePage.switchListingViewMode('compact');
+          await searchHomePage.expectListingCardsInTwoColumns();
+        },
+      },
+      {
+        name: 'Reload keeps compact view',
+        action: async () => {
+          await page.reload({ waitUntil: 'domcontentloaded' });
+          await dismissCookieConsentIfVisible(page);
+          await searchHomePage.expectPageView();
+          await searchHomePage.expectListingViewMode('compact');
+          await searchHomePage.expectListingCardsInTwoColumns();
+        },
+      },
+      {
+        name: 'Switch back to large stacked cards',
+        action: async () => {
+          await searchHomePage.switchListingViewMode('large');
+          await searchHomePage.expectListingCardsStacked();
         },
       },
     ];
