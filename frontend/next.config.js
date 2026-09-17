@@ -118,6 +118,7 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   trailingSlash: false,
+  agentRules: false,
 
   async redirects() {
     return [
