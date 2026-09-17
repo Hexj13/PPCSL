@@ -92,6 +92,8 @@ const searchFiltersTranslations: Record<string, string> = {
   'searchFilters.selectCities': 'Select cities',
   'searchFilters.showAdvanced': 'Show',
   'searchFilters.hideAdvanced': 'Hide',
+  'searchFilters.showMore': 'Show more',
+  'searchFilters.showLess': 'Show less',
   'searchFilters.search': 'Search',
   'searchFilters.reset': 'Reset',
   'searchFilters.addToFavorites': 'Add to favorites',
@@ -275,6 +277,7 @@ jest.mock('./search-filters/PopularBodyTypesFilter', () => {
         {bodyTypes.map((type) => (
           <button
             key={type}
+            type="button"
             data-testid={`body-type-${type}`}
             onClick={() => {
               const isSelected = selectedBodyTypes.includes(type);
@@ -406,6 +409,11 @@ describe('SearchFilters', () => {
     Object.defineProperty(window, 'scrollTo', {
       value: jest.fn(),
       writable: true,
+    });
+    Object.defineProperty(window, 'innerWidth', {
+      value: 1280,
+      writable: true,
+      configurable: true,
     });
 
     Object.defineProperty(window, 'matchMedia', {
@@ -753,15 +761,16 @@ describe('SearchFilters', () => {
         expect(brandsApi.getAll).toHaveBeenCalled();
       });
 
-      const suvButton = screen.getByTestId('body-type-SUV');
-      const sedanButton = screen.getByTestId('body-type-Sedan');
+      fireEvent.click(screen.getByTestId('body-type-SUV'));
+      await waitFor(() => {
+        expect(screen.getByTestId('body-type-SUV')).toHaveAttribute('aria-pressed', 'true');
+      });
 
-      fireEvent.click(suvButton);
-      fireEvent.click(sedanButton);
+      fireEvent.click(screen.getByTestId('body-type-Sedan'));
 
       await waitFor(() => {
-        expect(suvButton).toHaveAttribute('aria-pressed', 'true');
-        expect(sedanButton).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByTestId('body-type-SUV')).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByTestId('body-type-Sedan')).toHaveAttribute('aria-pressed', 'true');
       });
     });
 

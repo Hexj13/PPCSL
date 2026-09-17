@@ -10,7 +10,8 @@ import {
 
 import { RESET_SEARCH_EVENT } from '@/components/layout/Header/HeaderLogo';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
-import type { FilterState } from '@/hooks/useSearchFilters';
+import { clearInternalSearchNavigation } from '@/hooks/useSearchFilters';
+import type { FilterState, InternalSearchNavigationState } from '@/hooks/useSearchFilters';
 import type { useSearchTabs } from '@/hooks/useSearchTabs';
 import type { User } from '@/lib/api';
 import { buildMinimalCategorySearchUrl } from '@/lib/search';
@@ -30,6 +31,7 @@ type UseSearchFiltersControllerLifecycleParams = {
   tabs: SearchTabsApi;
   setVehicleTypeWithStorage: (type: 'car' | 'truck' | 'moto') => void;
   scrollTabsToStart: () => void;
+  internalSearchNavigationRef: MutableRefObject<InternalSearchNavigationState>;
 };
 
 export function useSearchFiltersControllerLifecycle({
@@ -45,12 +47,14 @@ export function useSearchFiltersControllerLifecycle({
   tabs,
   setVehicleTypeWithStorage,
   scrollTabsToStart,
+  internalSearchNavigationRef,
 }: UseSearchFiltersControllerLifecycleParams): void {
   const { replace: localizedReplace } = useLocalizedNavigation();
   const prevUserRef = useRef<User | null>(user);
 
   useEffect(() => {
     const handler = () => {
+      clearInternalSearchNavigation(internalSearchNavigationRef);
       resetToVehicleSearchDefaults();
       setLastAppliedFilters(null);
       tabs.setActiveTab('basic');
@@ -65,6 +69,7 @@ export function useSearchFiltersControllerLifecycle({
     setVehicleTypeWithStorage,
     scrollTabsToStart,
     setLastAppliedFilters,
+    internalSearchNavigationRef,
   ]);
 
   useEffect(() => {
@@ -84,6 +89,7 @@ export function useSearchFiltersControllerLifecycle({
     prevUserRef.current = user;
 
     if (prevUser && !user) {
+      clearInternalSearchNavigation(internalSearchNavigationRef);
       resetFilters();
       if (searchParams.toString()) {
         startTransition(() => {
@@ -91,10 +97,11 @@ export function useSearchFiltersControllerLifecycle({
         });
       }
     }
-  }, [user, localizedReplace, searchParams, resetFilters]);
+  }, [user, localizedReplace, searchParams, resetFilters, internalSearchNavigationRef]);
 
   useEffect(() => {
     const handleResetEvent = () => {
+      clearInternalSearchNavigation(internalSearchNavigationRef);
       resetFilters();
       setLastAppliedFilters(null);
       const nextPath = buildMinimalCategorySearchUrl(new URLSearchParams(window.location.search));
@@ -114,5 +121,5 @@ export function useSearchFiltersControllerLifecycle({
         window.removeEventListener('resetFiltersFromListingGrid', handleResetEvent);
       };
     }
-  }, [localizedReplace, resetFilters, setLastAppliedFilters]);
+  }, [localizedReplace, resetFilters, setLastAppliedFilters, internalSearchNavigationRef]);
 }

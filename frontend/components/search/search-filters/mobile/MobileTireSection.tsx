@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -40,24 +40,31 @@ export function MobileTireSection(props: MobileSearchFiltersTireProps) {
     onCheckboxChange,
     onPriceBlur,
     updateMultiple,
+    onCompactSearchCommit,
   } = props;
 
   const [openSheet, setOpenSheet] = useState<string | null>(null);
   const [mobileDraft, setMobileDraft] = useState<Partial<FilterState> | null>(null);
+  const mobileDraftRef = useRef<Partial<FilterState> | null>(null);
 
   const patchMobileDraft = useCallback((patch: Partial<FilterState>) => {
-    setMobileDraft((prev) => ({ ...(prev ?? {}), ...patch }));
+    const next = { ...(mobileDraftRef.current ?? {}), ...patch };
+    mobileDraftRef.current = next;
+    setMobileDraft(next);
   }, []);
 
   const openSheetForEdit = useCallback(
     (id: string) => {
-      setMobileDraft(createMobileSheetDraft(id, filters));
+      const draft = createMobileSheetDraft(id, filters);
+      mobileDraftRef.current = draft;
+      setMobileDraft(draft);
       setOpenSheet(id);
     },
     [filters],
   );
 
   const dismissSheet = useCallback(() => {
+    mobileDraftRef.current = null;
     setOpenSheet(null);
     setMobileDraft(null);
   }, []);
@@ -200,22 +207,57 @@ export function MobileTireSection(props: MobileSearchFiltersTireProps) {
   const sellerSummary = summarizeMulti(filters.seller_types, sellerTypeOptions, t);
 
   const confirmTireSheet = useCallback(() => {
-    runTireSheetConfirm(openSheet, mobileDraft, {
+    const patch = runTireSheetConfirm(openSheet, mobileDraftRef.current, {
       dismissSheet,
       onMultiSelectChange,
       onFilterChange,
       onPriceBlur,
       updateMultiple,
     });
+    if (Object.keys(patch).length > 0) {
+      onCompactSearchCommit?.(patch);
+    }
   }, [
     openSheet,
-    mobileDraft,
     dismissSheet,
     onMultiSelectChange,
     onFilterChange,
     onPriceBlur,
     updateMultiple,
+    onCompactSearchCommit,
   ]);
+
+  const handleTireFilterChangeAndSearch = useCallback(
+    (key: keyof FilterState, value: string) => {
+      onFilterChange(key, value);
+      onCompactSearchCommit?.({ [key]: value } as Partial<FilterState>);
+    },
+    [onFilterChange, onCompactSearchCommit],
+  );
+
+  const handleTireCheckboxChangeAndSearch = useCallback(
+    (key: keyof FilterState, checked: boolean) => {
+      onCheckboxChange(key, checked);
+      onCompactSearchCommit?.({ [key]: checked } as Partial<FilterState>);
+    },
+    [onCheckboxChange, onCompactSearchCommit],
+  );
+
+  const handlePopularMultiSelectAndSearch = useCallback(
+    (key: keyof FilterState, values: string[]) => {
+      onMultiSelectChange(key, values);
+      onCompactSearchCommit?.({ [key]: values } as Partial<FilterState>);
+    },
+    [onMultiSelectChange, onCompactSearchCommit],
+  );
+
+  const handlePopularUpdateMultipleAndSearch = useCallback(
+    (updates: Partial<FilterState>) => {
+      updateMultiple(updates);
+      onCompactSearchCommit?.(updates);
+    },
+    [updateMultiple, onCompactSearchCommit],
+  );
 
   if (activeTab === 'popular') {
     return (
@@ -223,8 +265,8 @@ export function MobileTireSection(props: MobileSearchFiltersTireProps) {
         <TirePopularPanel
           filters={filters}
           tireBrands={tireBrands}
-          onMultiSelectChange={onMultiSelectChange}
-          updateMultiple={updateMultiple}
+          onMultiSelectChange={handlePopularMultiSelectAndSearch}
+          updateMultiple={handlePopularUpdateMultipleAndSearch}
         />
       </div>
     );
@@ -247,8 +289,8 @@ export function MobileTireSection(props: MobileSearchFiltersTireProps) {
         quantitySummary={quantitySummary}
         sellerSummary={sellerSummary}
         openSheetForEdit={openSheetForEdit}
-        onFilterChange={onFilterChange}
-        onCheckboxChange={onCheckboxChange}
+        onFilterChange={handleTireFilterChangeAndSearch}
+        onCheckboxChange={handleTireCheckboxChangeAndSearch}
       />
 
       <MobileTireSheets

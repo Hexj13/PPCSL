@@ -218,7 +218,10 @@ test.describe('Home scroll restore', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('scrolls to results after applying filters', async ({ page, searchHomePage }) => {
+  test('uses viewport-specific scroll behavior after applying filters', async ({
+    page,
+    searchHomePage,
+  }) => {
     test.setTimeout(120_000);
 
     const steps: E2EStep[] = [
@@ -231,9 +234,9 @@ test.describe('Home scroll restore', () => {
         },
       },
       {
-        name: 'Expect results grid moved into viewport after filter apply',
+        name: 'Expect viewport-specific scroll behavior after filter apply',
         action: async () => {
-          await searchHomePage.expectResultsScrolledIntoView();
+          await searchHomePage.expectSearchApplyScrollBehavior();
         },
       },
     ];

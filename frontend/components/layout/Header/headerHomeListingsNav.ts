@@ -1,7 +1,7 @@
 import type { MouseEvent } from 'react';
 
 import { RESET_SEARCH_EVENT } from '@/components/layout/Header/HeaderLogo';
-import { isScrollLockActive, prepareScrollLockReleaseTo } from '@/hooks/useScrollLock';
+import { isScrollLockActive, prepareScrollLockReleaseThen } from '@/hooks/useScrollLock';
 import { clearHomeSearchRestoreState } from '@/lib/clear-home-search-restore-state';
 import { stripLocalePrefixFromPathname } from '@/lib/url-locale';
 
@@ -56,7 +56,7 @@ export function handleHeaderListingsNavClick(
   if (isHomePathname(pathname)) {
     const scrollLockWasActive = isScrollLockActive();
     if (scrollLockWasActive) {
-      prepareScrollLockReleaseTo(getHomeListingsScrollTargetY());
+      prepareScrollLockReleaseThen(scrollToHomeListings);
     }
     onBeforeNavigate?.();
     if (!scrollLockWasActive) {

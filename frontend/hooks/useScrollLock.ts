@@ -6,6 +6,7 @@ let scrollLockDepth = 0;
 let lockedScrollY = 0;
 let releaseToTopNext = false;
 let releaseToYNext: number | null = null;
+let releaseThenNext: (() => void) | null = null;
 let bodyStyleSnapshot: {
   position: string;
   top: string;
@@ -67,10 +68,22 @@ function releaseScrollLock() {
   }
 
   restoreBodyStyles();
+  const thenCb = releaseThenNext;
+  releaseThenNext = null;
   const targetY = releaseToYNext ?? (releaseToTopNext ? 0 : lockedScrollY);
   releaseToYNext = null;
   releaseToTopNext = false;
   window.scrollTo(0, targetY);
+  if (thenCb) {
+    if (typeof window.requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        thenCb();
+      });
+    } else {
+      thenCb();
+    }
+    return;
+  }
   if (typeof window.requestAnimationFrame === 'function') {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -90,12 +103,22 @@ export function prepareScrollLockReleaseToTop() {
   if (scrollLockDepth > 0) {
     releaseToTopNext = true;
     releaseToYNext = null;
+    releaseThenNext = null;
   }
 }
 
 export function prepareScrollLockReleaseTo(scrollY: number) {
   if (scrollLockDepth > 0) {
     releaseToYNext = scrollY;
+    releaseToTopNext = false;
+    releaseThenNext = null;
+  }
+}
+
+export function prepareScrollLockReleaseThen(callback: () => void) {
+  if (scrollLockDepth > 0) {
+    releaseThenNext = callback;
+    releaseToYNext = null;
     releaseToTopNext = false;
   }
 }
@@ -108,6 +131,7 @@ export function forceReleaseScrollLockToTop() {
   restoreBodyStyles();
   releaseToTopNext = false;
   releaseToYNext = null;
+  releaseThenNext = null;
   window.scrollTo(0, 0);
 }
 

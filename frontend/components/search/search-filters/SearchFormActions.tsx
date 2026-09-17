@@ -194,38 +194,40 @@ export function SearchFormActions({
                 </svg>
                 {t('searchFilters.reset')}
               </button>
-              <LoadingButton
-                type="submit"
-                loading={showSearchLoader}
-                loadingText={t('searchFilters.searching')}
-                data-testid="search-submit"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.blur();
-                }}
-                className={`relative box-border h-[52px] max-h-[52px] min-h-[52px] w-full overflow-hidden rounded-lg px-6 font-semibold text-base outline-hidden select-none border-2 transition-colors duration-200 text-primary-900! ${
-                  isSearchReady
-                    ? 'border-primary-700 bg-primary-500/12'
-                    : 'border-primary-700/30 bg-bg-secondary hover-only:hover:border-primary-700'
-                }`}
-              >
-                <span className="relative z-10 inline-flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                  {t('searchFilters.search')}
-                </span>
-              </LoadingButton>
+              <div className="hidden xl:contents" data-testid="search-submit-wrap">
+                <LoadingButton
+                  type="submit"
+                  loading={showSearchLoader}
+                  loadingText={t('searchFilters.searching')}
+                  data-testid="search-submit"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }}
+                  className={`relative box-border h-[52px] max-h-[52px] min-h-[52px] w-full overflow-hidden rounded-lg px-6 font-semibold text-base outline-hidden select-none border-2 transition-colors duration-200 text-primary-900! ${
+                    isSearchReady
+                      ? 'border-primary-700 bg-primary-500/12'
+                      : 'border-primary-700/30 bg-bg-secondary hover-only:hover:border-primary-700'
+                  }`}
+                >
+                  <span className="relative z-10 inline-flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                    {t('searchFilters.search')}
+                  </span>
+                </LoadingButton>
+              </div>
             </div>
           </div>
         </div>

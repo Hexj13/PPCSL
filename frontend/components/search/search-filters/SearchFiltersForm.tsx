@@ -197,6 +197,7 @@ export function SearchFiltersForm({
               onPriceBlur={handlers.handlePriceBlur}
               onWheel={handlers.handleWheel}
               updateMultiple={updateMultiple}
+              onCompactSearchCommit={handlers.commitCompactSearch}
             />
           </div>
         </>
@@ -295,6 +296,7 @@ export function SearchFiltersForm({
               onPriceBlur={handlers.handlePriceBlur}
               onWheel={handlers.handleWheel}
               updateMultiple={updateMultiple}
+              onCompactSearchCommit={handlers.commitCompactSearch}
               popularData={popularData}
               popularLoading={popularLoading}
               popularError={popularError}
@@ -304,9 +306,10 @@ export function SearchFiltersForm({
           <div className={tabs.activeTab === 'basic' ? '' : 'hidden'}>
             <PopularBodyTypesFilter
               selectedBodyTypes={filters.body_types}
-              onSelectionChange={(bodyTypes) =>
-                handlers.handleMultiSelectChange('body_types', bodyTypes)
-              }
+              onSelectionChange={(bodyTypes) => {
+                handlers.handleMultiSelectChange('body_types', bodyTypes);
+                handlers.commitCompactSearch({ body_types: bodyTypes });
+              }}
               vehicleType={vehicleType}
             />
           </div>
@@ -329,7 +332,10 @@ export function SearchFiltersForm({
         availableListingsTotal={availableListingsTotal}
         isAvailableListingsLoading={showAvailableListingsLoader}
         selectedSortKey={resolveListingSortKey(filters.sortBy, filters.sortOrder)}
-        onSortChange={(sortBy, sortOrder) => updateMultiple({ sortBy, sortOrder })}
+        onSortChange={(sortBy, sortOrder) => {
+          updateMultiple({ sortBy, sortOrder });
+          handlers.commitCompactSearch({ sortBy, sortOrder });
+        }}
       />
 
       <SaveFilterModal

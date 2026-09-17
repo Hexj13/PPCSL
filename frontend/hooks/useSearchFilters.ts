@@ -13,6 +13,18 @@ import {
 
 export type { FilterState } from '@/lib/search/filter-state';
 
+export type InternalSearchNavigationState = {
+  latestSearchParams: string | null;
+  searchParamsHistory: Set<string>;
+};
+
+export function clearInternalSearchNavigation(
+  navigationRef: React.MutableRefObject<InternalSearchNavigationState>,
+): void {
+  navigationRef.current.latestSearchParams = null;
+  navigationRef.current.searchParamsHistory.clear();
+}
+
 const loadFiltersFromStorage = (): Record<string, unknown> | null => {
   try {
     const stored =
@@ -29,7 +41,10 @@ const getDefaultFilters = (currentYear: string): FilterState =>
 const getTireDefaults = (currentYear: string): FilterState =>
   getDefaultTireFilters(currentYear) as FilterState;
 
-export function useSearchFilters() {
+export function useSearchFilters(
+  isInternalSearchRef?: React.MutableRefObject<boolean>,
+  internalSearchNavigationRef?: React.MutableRefObject<InternalSearchNavigationState>,
+) {
   const searchParams = useSearchParams();
   const currentYear = useMemo(() => new Date().getUTCFullYear().toString(), []);
 
@@ -58,6 +73,16 @@ export function useSearchFilters() {
       return;
     }
     prevUrlParamsRef.current = currentUrlParams;
+    const navigationState = internalSearchNavigationRef?.current;
+    const headerSearchPending = sessionStorageGetItem('scrollToResultsAfterLoad') === 'header';
+    const isStaleInternalNavigation =
+      !headerSearchPending &&
+      navigationState?.latestSearchParams !== null &&
+      currentUrlParams !== navigationState?.latestSearchParams &&
+      navigationState?.searchParamsHistory.has(currentUrlParams);
+    if (isInternalSearchRef?.current || isStaleInternalNavigation) {
+      return;
+    }
     setFilters(getInitialFilters());
     const hasStorageFlag = searchParams.get('_f') === '1';
     if (!hasStorageFlag) {
@@ -67,7 +92,7 @@ export function useSearchFilters() {
     if (storedFilters) {
       setFilters(getInitialFilters(storedFilters));
     }
-  }, [searchParams, getInitialFilters]);
+  }, [searchParams, getInitialFilters, isInternalSearchRef, internalSearchNavigationRef]);
 
   const updateFilter = useCallback(<K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

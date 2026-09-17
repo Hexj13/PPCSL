@@ -1,5 +1,5 @@
 import type { useSearchParams } from 'next/navigation';
-import { useCallback, useMemo, startTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, startTransition } from 'react';
 
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import type { useTranslation } from '@/hooks/useTranslation';
@@ -8,6 +8,7 @@ import type { Brand, VehicleModel, City } from '@/lib/api';
 import { sessionStorageRemoveItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 import { MAX_SEARCH_BRAND_SELECTIONS, MAX_SEARCH_MODEL_SELECTIONS } from '@/lib/constants';
 import { clearHomeScrollRestoreSession } from '@/lib/home-scroll-restore';
+import { DESKTOP_LAYOUT_MIN_WIDTH_PX } from '@/lib/layout-breakpoints';
 import { buildSearchQuery, clearFiltersFromStorage, saveFiltersToStorage } from '@/lib/search';
 import { buildDeferredSearchFiltersPayload } from '@/lib/search/build-deferred-search-filters-payload';
 import { toast } from '@/lib/toast';
@@ -18,9 +19,161 @@ import {
   PRICE_RANGE,
 } from '@/lib/validation';
 
-import type { FilterState } from './useSearchFilters';
+import { clearInternalSearchNavigation } from './useSearchFilters';
+import type { FilterState, InternalSearchNavigationState } from './useSearchFilters';
 
 type TranslationFunction = ReturnType<typeof useTranslation>['t'];
+
+export type ApplySearchOptions = {
+  scrollToResults?: boolean;
+  fromAppliedBase?: boolean;
+};
+
+const SEARCH_FILTER_ARRAY_KEYS: (keyof FilterState)[] = [
+  'brand_ids',
+  'model_ids',
+  'cities',
+  'transmissions',
+  'fuels',
+  'drive_types',
+  'body_types',
+  'colors',
+  'doors',
+  'conditions',
+  'registration_types',
+  'seller_types',
+  'equipment',
+  'tire_brand_ids',
+  'tire_model_ids',
+  'tire_seasons',
+  'tire_conditions',
+  'tire_quantities',
+];
+
+function normalizeTireSizeSelections(filters: FilterState): void {
+  const { tire_widths, tire_profiles, tire_diameters } = filters;
+  if (
+    tire_widths.length !== tire_profiles.length ||
+    tire_profiles.length !== tire_diameters.length
+  ) {
+    return;
+  }
+
+  const tireSizes = tire_widths
+    .map(
+      (width, index) => [width, tire_profiles[index] ?? '', tire_diameters[index] ?? ''] as const,
+    )
+    .sort((a, b) => a.join('\0').localeCompare(b.join('\0')));
+
+  filters.tire_widths = tireSizes.map(([width]) => width);
+  filters.tire_profiles = tireSizes.map(([, profile]) => profile);
+  filters.tire_diameters = tireSizes.map(([, , diameter]) => diameter);
+}
+
+export function normalizeSearchFilterState(filters: FilterState): FilterState {
+  const normalized = { ...filters };
+  SEARCH_FILTER_ARRAY_KEYS.forEach((key) => {
+    if (Array.isArray(normalized[key])) {
+      const sortedArray = [...(normalized[key] as string[])].sort();
+      (normalized as Record<string, unknown>)[key] = sortedArray;
+    }
+  });
+  normalizeTireSizeSelections(normalized);
+  return normalized;
+}
+
+function haveSearchFiltersChanged(current: FilterState, lastApplied: FilterState): boolean {
+  return (
+    JSON.stringify(normalizeSearchFilterState(current)) !==
+    JSON.stringify(normalizeSearchFilterState(lastApplied))
+  );
+}
+
+function mergeFiltersWithYearDefault(
+  source: FilterState,
+  overrides: Partial<FilterState>,
+  currentYear: string,
+): FilterState {
+  const merged = { ...source, ...overrides };
+  if (merged.year_lte === '') {
+    merged.year_lte = currentYear;
+  }
+  return merged;
+}
+
+function rememberInternalSearchParams(
+  navigationState: InternalSearchNavigationState,
+  urlString: string,
+): void {
+  navigationState.latestSearchParams = urlString;
+  navigationState.searchParamsHistory.add(urlString);
+  if (navigationState.searchParamsHistory.size <= 20) {
+    return;
+  }
+  const oldestSearchParams = navigationState.searchParamsHistory.values().next().value;
+  if (oldestSearchParams !== undefined) {
+    navigationState.searchParamsHistory.delete(oldestSearchParams);
+  }
+}
+
+function commitCompactSearchOverrides(
+  overrides: Partial<FilterState>,
+  sourceFilters: FilterState,
+  currentYear: string,
+  lastAppliedFilters: FilterState | null,
+  isSearching: boolean,
+  pendingCompactSearchRef: React.MutableRefObject<Partial<FilterState> | null>,
+  applySearchWithOverrides: (overrides: Partial<FilterState>, options?: ApplySearchOptions) => void,
+): void {
+  if (isSearching) {
+    const pendingOverrides = {
+      ...(pendingCompactSearchRef.current ?? {}),
+      ...overrides,
+    };
+    const pendingFilters = mergeFiltersWithYearDefault(
+      sourceFilters,
+      pendingOverrides,
+      currentYear,
+    );
+    pendingCompactSearchRef.current = haveSearchFiltersChanged(pendingFilters, sourceFilters)
+      ? pendingOverrides
+      : null;
+    return;
+  }
+
+  if (pendingCompactSearchRef.current) {
+    const pendingOverrides = {
+      ...pendingCompactSearchRef.current,
+      ...overrides,
+    };
+    pendingCompactSearchRef.current = null;
+    const pendingFilters = mergeFiltersWithYearDefault(
+      sourceFilters,
+      pendingOverrides,
+      currentYear,
+    );
+    if (!haveSearchFiltersChanged(pendingFilters, sourceFilters)) {
+      return;
+    }
+    applySearchWithOverrides(pendingOverrides, {
+      scrollToResults: false,
+      fromAppliedBase: true,
+    });
+    return;
+  }
+
+  const merged = mergeFiltersWithYearDefault(sourceFilters, overrides, currentYear);
+
+  if (lastAppliedFilters) {
+    if (!haveSearchFiltersChanged(merged, lastAppliedFilters)) {
+      return;
+    }
+  } else if (Object.keys(overrides).length === 0) {
+    return;
+  }
+
+  applySearchWithOverrides(overrides, { scrollToResults: false });
+}
 
 interface UseFilterHandlersParams {
   filters: FilterState;
@@ -39,6 +192,7 @@ interface UseFilterHandlersParams {
   setIsSearching: React.Dispatch<React.SetStateAction<boolean>>;
   setLastAppliedFilters: React.Dispatch<React.SetStateAction<FilterState | null>>;
   isInternalSearchRef: React.MutableRefObject<boolean>;
+  internalSearchNavigationRef: React.MutableRefObject<InternalSearchNavigationState>;
   getBrandOptions: () => Array<{ value: string; label: string; category?: string }>;
   getModelOptions: () => Array<{ value: string; label: string; category?: string }>;
   getCityOptions: () => Array<{ value: string; label: string; category?: string }>;
@@ -62,6 +216,7 @@ export function useFilterHandlers({
   setIsSearching,
   setLastAppliedFilters,
   isInternalSearchRef,
+  internalSearchNavigationRef,
   getBrandOptions,
   getModelOptions,
   getCityOptions,
@@ -167,9 +322,7 @@ export function useFilterHandlers({
         analytics.selectContentDeferred(contentType, value, option?.category);
       });
 
-      startTransition(() => {
-        updateFilter(key, filteredValues);
-      });
+      updateFilter(key, filteredValues);
     },
     [updateFilter, filters, getBrandOptions, getModelOptions, getCityOptions, t],
   );
@@ -226,16 +379,27 @@ export function useFilterHandlers({
     [handleChange, t],
   );
 
-  const validateRanges = useCallback((): boolean => {
-    const errorKey = getFilterRangesValidationError(
-      filters as unknown as Record<string, string | undefined>,
-    );
-    if (errorKey) {
-      toast.error(t(errorKey));
-      return false;
-    }
-    return true;
-  }, [filters, t]);
+  const isSearchingRef = useRef(isSearching);
+  if (!isSearching) {
+    isSearchingRef.current = false;
+  }
+  const appliedFiltersRef = useRef<FilterState | null>(lastAppliedFilters);
+  const pendingCompactSearchRef = useRef<Partial<FilterState> | null>(null);
+  const flushPendingCompactSearchRef = useRef<() => void>(() => undefined);
+
+  const validateRanges = useCallback(
+    (candidate: FilterState = filters): boolean => {
+      const errorKey = getFilterRangesValidationError(
+        candidate as unknown as Record<string, string | undefined>,
+      );
+      if (errorKey) {
+        toast.error(t(errorKey));
+        return false;
+      }
+      return true;
+    },
+    [filters, t],
+  );
 
   const handleWheel = useCallback((_e: React.WheelEvent<HTMLInputElement>) => {
     const target = _e.currentTarget;
@@ -245,9 +409,13 @@ export function useFilterHandlers({
   }, []);
 
   const applySearchWithOverrides = useCallback(
-    (overrides: Partial<FilterState>) => {
-      if (isSearching) return;
-      if (!validateRanges()) return;
+    (overrides: Partial<FilterState>, options?: ApplySearchOptions) => {
+      if (isSearchingRef.current) return;
+
+      const sourceFilters =
+        options?.fromAppliedBase && appliedFiltersRef.current ? appliedFiltersRef.current : filters;
+      const merged = mergeFiltersWithYearDefault(sourceFilters, overrides, currentYear);
+      if (!validateRanges(merged)) return;
 
       if (typeof document !== 'undefined') {
         const active = document.activeElement;
@@ -256,22 +424,19 @@ export function useFilterHandlers({
         }
       }
 
-      const merged = { ...filters, ...overrides };
-      if (merged.year_lte === '') {
-        merged.year_lte = currentYear;
-      }
+      isSearchingRef.current = true;
       setIsSearching(true);
       isInternalSearchRef.current = true;
+      appliedFiltersRef.current = merged;
       setLastAppliedFilters({ ...merged });
-      if (merged.year_lte !== filters.year_lte) {
-        setFilters((prev) => ({ ...prev, year_lte: merged.year_lte }));
-      }
+      setFilters(merged);
 
       const result = buildSearchQuery(merged, brands, models, cities, {
         currentYear,
         vehicleType,
         searchParams,
       });
+      rememberInternalSearchParams(internalSearchNavigationRef.current, result.urlString);
 
       if (result.storageData) {
         saveFiltersToStorage(result.storageData);
@@ -286,12 +451,20 @@ export function useFilterHandlers({
       const urlUnchanged = result.urlString === searchParams.toString();
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
       sessionStorageSetItem('scrollPreserved', 'true');
-      sessionStorageSetItem('scrollToResultsAfterLoad', 'true');
+      if (options?.scrollToResults !== false) {
+        sessionStorageSetItem('scrollToResultsAfterLoad', 'true');
+      } else {
+        sessionStorageRemoveItem('scrollToResultsAfterLoad');
+      }
       clearHomeScrollRestoreSession();
       startTransition(() => {
         replace(newUrl, { scroll: false });
         if (urlUnchanged) {
+          isSearchingRef.current = false;
+          isInternalSearchRef.current = false;
+          clearInternalSearchNavigation(internalSearchNavigationRef);
           setIsSearching(false);
+          queueMicrotask(() => flushPendingCompactSearchRef.current());
         }
         if (typeof window !== 'undefined') {
           requestAnimationFrame(() => {
@@ -314,57 +487,67 @@ export function useFilterHandlers({
       replace,
       validateRanges,
       setFilters,
-      isSearching,
       vehicleType,
       setIsSearching,
       setLastAppliedFilters,
       isInternalSearchRef,
+      internalSearchNavigationRef,
     ],
   );
+
+  const commitCompactSearch = useCallback(
+    (overrides: Partial<FilterState>) => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+      if (window.innerWidth >= DESKTOP_LAYOUT_MIN_WIDTH_PX) {
+        return;
+      }
+
+      commitCompactSearchOverrides(
+        overrides,
+        appliedFiltersRef.current ?? filters,
+        currentYear,
+        lastAppliedFilters,
+        isSearchingRef.current,
+        pendingCompactSearchRef,
+        applySearchWithOverrides,
+      );
+    },
+    [applySearchWithOverrides, currentYear, filters, lastAppliedFilters],
+  );
+
+  const flushPendingCompactSearch = useCallback(() => {
+    const pending = pendingCompactSearchRef.current;
+    if (!pending || isSearchingRef.current) {
+      return;
+    }
+    pendingCompactSearchRef.current = null;
+    applySearchWithOverrides(pending, {
+      scrollToResults: false,
+      fromAppliedBase: true,
+    });
+  }, [applySearchWithOverrides]);
+
+  flushPendingCompactSearchRef.current = flushPendingCompactSearch;
+
+  useEffect(() => {
+    if (isSearching) {
+      return;
+    }
+    if (pendingCompactSearchRef.current) {
+      flushPendingCompactSearch();
+      return;
+    }
+    appliedFiltersRef.current = lastAppliedFilters;
+  }, [flushPendingCompactSearch, isSearching, lastAppliedFilters]);
 
   const hasFiltersChanged = useMemo(() => {
     if (!lastAppliedFilters) {
       return hasActiveFilters;
     }
 
-    const normalizeFilters = (f: typeof filters) => {
-      const normalized = { ...f };
-      const arrayKeys: (keyof typeof filters)[] = [
-        'brand_ids',
-        'model_ids',
-        'cities',
-        'transmissions',
-        'fuels',
-        'drive_types',
-        'body_types',
-        'colors',
-        'doors',
-        'conditions',
-        'equipment',
-        'tire_brand_ids',
-        'tire_model_ids',
-        'tire_widths',
-        'tire_profiles',
-        'tire_diameters',
-        'tire_seasons',
-        'tire_conditions',
-        'tire_quantities',
-      ];
-
-      arrayKeys.forEach((key) => {
-        if (Array.isArray(normalized[key])) {
-          const sortedArray = [...(normalized[key] as string[])].sort();
-          (normalized as Record<string, unknown>)[key] = sortedArray;
-        }
-      });
-
-      return normalized;
-    };
-
-    const normalizedFilters = normalizeFilters(filters);
-    const normalizedLastFilters = normalizeFilters(lastAppliedFilters);
-
-    return JSON.stringify(normalizedFilters) !== JSON.stringify(normalizedLastFilters);
+    return haveSearchFiltersChanged(filters, lastAppliedFilters);
   }, [filters, lastAppliedFilters, hasActiveFilters]);
 
   const handleSubmit = useCallback(
@@ -381,6 +564,8 @@ export function useFilterHandlers({
       clearFiltersFromStorage();
       resetFilters();
       setLastAppliedFilters(null);
+      appliedFiltersRef.current = null;
+      clearInternalSearchNavigation(internalSearchNavigationRef);
       if (typeof window !== 'undefined') {
         sessionStorageRemoveItem('scrollToResultsAfterLoad');
         clearHomeScrollRestoreSession();
@@ -409,7 +594,14 @@ export function useFilterHandlers({
         }
       });
     },
-    [resetFilters, setLastAppliedFilters, vehicleType, replace, filters.listing_category],
+    [
+      resetFilters,
+      setLastAppliedFilters,
+      vehicleType,
+      replace,
+      filters.listing_category,
+      internalSearchNavigationRef,
+    ],
   );
 
   return {
@@ -423,6 +615,7 @@ export function useFilterHandlers({
     handleWheel,
     handleSubmit,
     applySearchWithOverrides,
+    commitCompactSearch,
     handleReset,
     hasFiltersChanged,
   };

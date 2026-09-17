@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import type { Brand, VehicleModel } from '@/lib/api';
-import { sessionStorageSetItem } from '@/lib/browser-session-storage';
+import { sessionStorageGetItem, sessionStorageSetItem } from '@/lib/browser-session-storage';
 import {
   MAX_SEARCH_BRAND_SELECTIONS,
   MAX_SEARCH_MODEL_SELECTIONS,
@@ -11,7 +11,8 @@ import {
 } from '@/lib/constants';
 import { createSlug } from '@/lib/utils';
 
-import type { FilterState } from './useSearchFilters';
+import { clearInternalSearchNavigation } from './useSearchFilters';
+import type { FilterState, InternalSearchNavigationState } from './useSearchFilters';
 
 interface UseSearchFiltersSyncParams {
   searchParams: ReturnType<typeof useSearchParams>;
@@ -22,6 +23,7 @@ interface UseSearchFiltersSyncParams {
   setLastAppliedFilters: React.Dispatch<React.SetStateAction<FilterState | null>>;
   hasActiveFilters: boolean;
   isInternalSearchRef?: React.MutableRefObject<boolean>;
+  internalSearchNavigationRef: React.MutableRefObject<InternalSearchNavigationState>;
 }
 
 function countCommaSeparatedParam(param: string | null): number {
@@ -50,6 +52,134 @@ function clearSyncTimeout(
   }
 }
 
+const SYNC_TIMEOUT_MS = 5000;
+
+function reportUrlSelectionLimitExceeded(
+  brandParam: string | null,
+  modelParam: string | null,
+  currentUrl: string,
+  replace: (_path: string) => void,
+): void {
+  sessionStorageSetItem(
+    SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY,
+    'searchFilters.invalidUrlSelectionLimits',
+  );
+  console.warn('Search filters URL exceeds allowed limits', {
+    brandCount: countCommaSeparatedParam(brandParam),
+    modelCount: countCommaSeparatedParam(modelParam),
+    currentUrl,
+  });
+  replace('/');
+}
+
+function shouldRestoreLatestInternalUrl(
+  headerSearchPending: boolean,
+  isInternalSearch: boolean,
+  navigationState: InternalSearchNavigationState,
+  currentUrl: string,
+): boolean {
+  return (
+    !headerSearchPending &&
+    !isInternalSearch &&
+    navigationState.latestSearchParams !== null &&
+    currentUrl !== navigationState.latestSearchParams &&
+    navigationState.searchParamsHistory.has(currentUrl)
+  );
+}
+
+function areVehicleSlugParamsSynced(
+  shouldSyncVehicleSlugParams: boolean,
+  brandParam: string | null,
+  modelParam: string | null,
+  brands: Brand[],
+  models: VehicleModel[],
+  filters: FilterState,
+  processedModelParam: string | null,
+): boolean {
+  const brandSynced =
+    !shouldSyncVehicleSlugParams ||
+    !brandParam ||
+    (brands.length > 0 && filters.brand_ids.length > 0);
+  const modelsMatchBrand =
+    models.length > 0 && models.every((m) => filters.brand_ids.includes(m.brand_id));
+  const modelSynced =
+    !shouldSyncVehicleSlugParams ||
+    !modelParam ||
+    !brandParam ||
+    (models.length > 0 && filters.model_ids.length > 0) ||
+    (modelsMatchBrand && processedModelParam === modelParam);
+  return brandSynced && modelSynced;
+}
+
+type UrlChangeSyncRefs = {
+  currentUrl: string;
+  filters: FilterState;
+  hasActiveFilters: boolean;
+  shouldSyncVehicleSlugParams: boolean;
+  replace: (_path: string, _options?: { scroll?: boolean }) => void;
+  setIsSyncingFromUrl: React.Dispatch<React.SetStateAction<boolean>>;
+  setLastAppliedFilters: React.Dispatch<React.SetStateAction<FilterState | null>>;
+  isInternalSearchRef: React.MutableRefObject<boolean>;
+  internalSearchNavigationRef: React.MutableRefObject<InternalSearchNavigationState>;
+  prevUrlForSyncRef: React.MutableRefObject<string>;
+  processedBrandParamRef: React.MutableRefObject<string | null>;
+  processedModelParamRef: React.MutableRefObject<string | null>;
+  hasInitializedRef: React.MutableRefObject<boolean>;
+  syncTimeoutRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
+};
+
+function handleUrlChangeForSearchSync(refs: UrlChangeSyncRefs): 'return' | 'continue' {
+  clearSyncTimeout(refs.syncTimeoutRef);
+  const navigationState = refs.internalSearchNavigationRef.current;
+  const headerSearchPending = sessionStorageGetItem('scrollToResultsAfterLoad') === 'header';
+  const isKnownInternalUrl = navigationState.searchParamsHistory.has(refs.currentUrl);
+  if (
+    shouldRestoreLatestInternalUrl(
+      headerSearchPending,
+      refs.isInternalSearchRef.current,
+      navigationState,
+      refs.currentUrl,
+    )
+  ) {
+    refs.prevUrlForSyncRef.current = refs.currentUrl;
+    refs.isInternalSearchRef.current = true;
+    refs.setIsSyncingFromUrl(false);
+    const latestPath = navigationState.latestSearchParams
+      ? `/?${navigationState.latestSearchParams}`
+      : '/';
+    refs.replace(latestPath, { scroll: false });
+    return 'return';
+  }
+  if (!refs.isInternalSearchRef.current && (headerSearchPending || !isKnownInternalUrl)) {
+    clearInternalSearchNavigation(refs.internalSearchNavigationRef);
+  }
+  if (refs.isInternalSearchRef.current) {
+    refs.isInternalSearchRef.current = false;
+    refs.prevUrlForSyncRef.current = refs.currentUrl;
+    refs.processedBrandParamRef.current = null;
+    refs.processedModelParamRef.current = null;
+    refs.setIsSyncingFromUrl(false);
+    refs.hasInitializedRef.current = true;
+    return 'return';
+  }
+
+  if (refs.shouldSyncVehicleSlugParams) {
+    refs.processedBrandParamRef.current = null;
+    refs.processedModelParamRef.current = null;
+    refs.setIsSyncingFromUrl(true);
+    refs.syncTimeoutRef.current = setTimeout(() => {
+      refs.syncTimeoutRef.current = null;
+      refs.setIsSyncingFromUrl(false);
+      refs.hasInitializedRef.current = true;
+    }, SYNC_TIMEOUT_MS);
+  } else {
+    refs.setLastAppliedFilters(refs.hasActiveFilters ? { ...refs.filters } : null);
+    refs.hasInitializedRef.current = true;
+  }
+  refs.prevUrlForSyncRef.current = refs.currentUrl;
+  return 'continue';
+}
+
 export function useSearchFiltersSync({
   searchParams,
   filters,
@@ -59,6 +189,7 @@ export function useSearchFiltersSync({
   setLastAppliedFilters,
   hasActiveFilters,
   isInternalSearchRef: isInternalSearchRefParam,
+  internalSearchNavigationRef,
 }: UseSearchFiltersSyncParams) {
   const { replace } = useLocalizedNavigation();
   const [isSyncingFromUrl, setIsSyncingFromUrl] = useState(false);
@@ -72,85 +203,56 @@ export function useSearchFiltersSync({
   const lastModelEffectUrlRef = useRef<string>('');
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const SYNC_TIMEOUT_MS = 5000;
-
   useEffect(() => {
     const currentUrl = searchParams.toString();
     const brandParam = searchParams.get('brand');
     const modelParam = searchParams.get('model');
     const shouldSyncVehicleSlugParams =
-      filters.listing_category === 'vehicle' && (brandParam || modelParam);
+      filters.listing_category === 'vehicle' && Boolean(brandParam || modelParam);
     if (urlSelectionExceedsLimits(brandParam, modelParam)) {
-      sessionStorageSetItem(
-        SEARCH_FILTERS_LIMIT_ERROR_TOAST_KEY,
-        'searchFilters.invalidUrlSelectionLimits',
-      );
-      console.warn('Search filters URL exceeds allowed limits', {
-        brandCount: countCommaSeparatedParam(brandParam),
-        modelCount: countCommaSeparatedParam(modelParam),
-        currentUrl,
-      });
-      replace('/');
+      reportUrlSelectionLimitExceeded(brandParam, modelParam, currentUrl, replace);
       return;
     }
-    const urlChanged = currentUrl !== prevUrlForSyncRef.current;
 
-    if (urlChanged) {
-      clearSyncTimeout(syncTimeoutRef);
-      if (isInternalSearchRef.current) {
-        isInternalSearchRef.current = false;
-        prevUrlForSyncRef.current = currentUrl;
-        processedBrandParamRef.current = null;
-        processedModelParamRef.current = null;
-        setIsSyncingFromUrl(false);
-        hasInitializedRef.current = true;
+    if (currentUrl !== prevUrlForSyncRef.current) {
+      const urlChangeResult = handleUrlChangeForSearchSync({
+        currentUrl,
+        filters,
+        hasActiveFilters,
+        shouldSyncVehicleSlugParams,
+        replace,
+        setIsSyncingFromUrl,
+        setLastAppliedFilters,
+        isInternalSearchRef,
+        internalSearchNavigationRef,
+        prevUrlForSyncRef,
+        processedBrandParamRef,
+        processedModelParamRef,
+        hasInitializedRef,
+        syncTimeoutRef,
+      });
+      if (urlChangeResult === 'return') {
         return;
       }
-
-      if (shouldSyncVehicleSlugParams) {
-        processedBrandParamRef.current = null;
-        processedModelParamRef.current = null;
-        setIsSyncingFromUrl(true);
-        syncTimeoutRef.current = setTimeout(() => {
-          syncTimeoutRef.current = null;
-          setIsSyncingFromUrl(false);
-          hasInitializedRef.current = true;
-        }, SYNC_TIMEOUT_MS);
-      } else {
-        if (hasActiveFilters) {
-          setLastAppliedFilters({ ...filters });
-        } else {
-          setLastAppliedFilters(null);
-        }
-        hasInitializedRef.current = true;
-      }
-      prevUrlForSyncRef.current = currentUrl;
     }
 
     if (!isSyncingFromUrl) {
       return;
     }
 
-    const brandSynced =
-      !shouldSyncVehicleSlugParams ||
-      !brandParam ||
-      (brands.length > 0 && filters.brand_ids.length > 0);
-    const modelsMatchBrand =
-      models.length > 0 && models.every((m) => filters.brand_ids.includes(m.brand_id));
-    const modelSynced =
-      !shouldSyncVehicleSlugParams ||
-      !modelParam ||
-      !brandParam ||
-      (models.length > 0 && filters.model_ids.length > 0) ||
-      (modelsMatchBrand && processedModelParamRef.current === modelParam);
-
-    if (brandSynced && modelSynced) {
+    if (
+      areVehicleSlugParamsSynced(
+        shouldSyncVehicleSlugParams,
+        brandParam,
+        modelParam,
+        brands,
+        models,
+        filters,
+        processedModelParamRef.current,
+      )
+    ) {
       clearSyncTimeout(syncTimeoutRef);
-      if (hasActiveFilters) {
-        setLastAppliedFilters({ ...filters });
-      } else {
-        setLastAppliedFilters(null);
-      }
+      setLastAppliedFilters(hasActiveFilters ? { ...filters } : null);
       setIsSyncingFromUrl(false);
       hasInitializedRef.current = true;
     }
@@ -163,14 +265,14 @@ export function useSearchFiltersSync({
     isSyncingFromUrl,
     setLastAppliedFilters,
     isInternalSearchRef,
+    internalSearchNavigationRef,
     replace,
   ]);
 
   useEffect(() => {
+    const timeoutRef = syncTimeoutRef;
     return () => {
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current);
-      }
+      clearSyncTimeout(timeoutRef);
     };
   }, []);
 

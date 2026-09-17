@@ -44,6 +44,9 @@ export class SortSelectComponent {
     await option.evaluate((element) => {
       (element as HTMLButtonElement).click();
     });
+    if (await pageUsesMobileLayout(this.page)) {
+      await expect(option).toHaveClass(/bg-primary-500\/15/);
+    }
   }
 
   async confirmIfMobile(testId: string): Promise<void> {

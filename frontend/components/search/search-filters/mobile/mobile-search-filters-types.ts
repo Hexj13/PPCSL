@@ -12,6 +12,7 @@ export type MobileSearchFiltersSharedHandlers = {
   onPriceBlur: (_key: string, _value: string) => void;
   onWheel: (_e: React.WheelEvent<HTMLInputElement>) => void;
   updateMultiple: (_updates: Partial<FilterState>) => void;
+  onCompactSearchCommit?: (_overrides: Partial<FilterState>) => void;
 };
 
 export interface MobileSearchFiltersVehicleProps extends MobileSearchFiltersSharedHandlers {

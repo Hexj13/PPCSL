@@ -35,6 +35,45 @@ test.describe('Search: mobile filters and sheets @p0', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
+  test('hides extra basic criteria until Show more is expanded', async ({
+    page,
+    searchHomePage,
+  }) => {
+    const mobileFilters = new SearchFiltersMobileComponent(page);
+
+    const steps: E2EStep[] = [
+      {
+        name: 'Open search home',
+        action: async () => {
+          await searchHomePage.openAndExpectPageView();
+        },
+      },
+      {
+        name: 'Verify extra basic rows are collapsed',
+        action: async () => {
+          await mobileFilters.selectTab('basic');
+          await mobileFilters.expectBasicMoreCollapsed();
+        },
+      },
+      {
+        name: 'Expand Show more and reveal fuel row',
+        action: async () => {
+          await mobileFilters.setBasicMoreOpen(true);
+          await mobileFilters.expectFilterRowVisible('vehicle_fuel', 'basic');
+        },
+      },
+      {
+        name: 'Collapse Show more and hide fuel row',
+        action: async () => {
+          await mobileFilters.setBasicMoreOpen(false);
+          await mobileFilters.expectBasicMoreCollapsed();
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
   test('opens each basic tab bottom sheet, selects values, and reflects them in filter rows', async ({
     page,
     searchHomePage,
@@ -174,7 +213,7 @@ test.describe('Search: mobile filters and sheets @p0', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
-  test('submits search with fuel filter and listings API response', async ({
+  test('applies fuel filter on sheet confirm without scrolling to results', async ({
     page,
     searchHomePage,
   }) => {
@@ -206,23 +245,18 @@ test.describe('Search: mobile filters and sheets @p0', () => {
         },
       },
       {
-        name: 'Verify submit is enabled',
+        name: 'Verify search submit is hidden on compact layout',
         action: async () => {
-          await mobileFilters.expectSubmitEnabled();
+          await mobileFilters.expectSubmitHidden();
         },
       },
       {
-        name: 'Submit search and wait for listings API',
-        action: async () => {
-          await mobileFilters.submitSearchAndWaitForListingsApi();
-        },
-      },
-      {
-        name: 'Verify URL includes fuels param and results render',
+        name: 'Verify URL includes fuels param and results render without jumping to listings',
         action: async () => {
           await expect(page).toHaveURL(/fuels=Petrol/);
           await searchHomePage.expectPageView();
           await searchHomePage.expectResultsOrEmptyVisible();
+          await searchHomePage.expectSearchDidNotScrollToListingsResults();
         },
       },
     ];

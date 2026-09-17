@@ -42,6 +42,144 @@ function MobileSelectChevron() {
   );
 }
 
+function nextMobileDraftValue(
+  optionValue: string,
+  currentDraft: string,
+  allowEmpty: boolean,
+): string | undefined {
+  if (optionValue.startsWith('__category__')) {
+    return undefined;
+  }
+  if (optionValue === CLEAR_OPTION_VALUE) {
+    return allowEmpty ? '' : undefined;
+  }
+  return allowEmpty && currentDraft === optionValue ? '' : optionValue;
+}
+
+function getMobileTriggerPrimaryText(
+  displaySummary: string,
+  placeholder: string,
+  sheetTitle: string,
+): string {
+  if (displaySummary.trim() !== '') {
+    return displaySummary;
+  }
+  if (placeholder.trim() !== '') {
+    return placeholder;
+  }
+  return sheetTitle;
+}
+
+function MobileSelectOptionList({
+  clearable,
+  clearDisabled,
+  clearLabel,
+  dataTestId,
+  optionsToRender,
+  draftValue,
+  allowEmpty,
+  noResultsLabel,
+  onSelect,
+}: {
+  clearable: boolean;
+  clearDisabled: boolean;
+  clearLabel: string;
+  dataTestId?: string;
+  optionsToRender: Array<DropdownOption & { lowerLabel: string }>;
+  draftValue: string;
+  allowEmpty: boolean;
+  noResultsLabel: string;
+  onSelect: (_value: string) => void;
+}) {
+  const normalizedValue = draftValue ?? '';
+
+  return (
+    <>
+      {clearable ? (
+        <>
+          <button
+            type="button"
+            disabled={clearDisabled}
+            onClick={() => onSelect(CLEAR_OPTION_VALUE)}
+            data-testid={dataTestId ? `${dataTestId}-clear-selection` : undefined}
+            className="flex w-full items-center px-4 py-3.5 text-left text-sm text-text-primary transition-colors disabled:cursor-not-allowed disabled:opacity-50 hover:enabled:bg-primary-500/10"
+          >
+            {clearLabel}
+          </button>
+          <div className="my-0.5 border-b border-primary-500/20" aria-hidden />
+        </>
+      ) : null}
+      {optionsToRender.length > 0 ? (
+        optionsToRender.map((option, index) => {
+          const selected =
+            option.value === '' ? normalizedValue === '' : option.value === normalizedValue;
+          const isCategory =
+            Boolean(option.category) && (!option.value || option.value.startsWith('__category__'));
+          const optionDisabled = allowEmpty && Boolean(normalizedValue) && !selected;
+          const prevOption = index > 0 ? optionsToRender[index - 1] : null;
+          const showCategoryHeader =
+            Boolean(option.category) && prevOption?.category !== option.category && !isCategory;
+
+          if (isCategory) {
+            return (
+              <div
+                key={`category-${option.category}-${index}`}
+                className="pointer-events-none sticky top-0 z-10 border-b border-primary-500/20 bg-bg-base px-4 py-2 text-sm font-semibold text-primary-500"
+              >
+                {option.label}
+              </div>
+            );
+          }
+
+          return (
+            <React.Fragment key={option.value || `option-${index}`}>
+              {showCategoryHeader ? (
+                <div className="pointer-events-none sticky top-0 z-10 border-b border-primary-500/20 bg-bg-base px-4 py-2 text-sm font-semibold text-primary-500">
+                  {option.category}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                disabled={optionDisabled}
+                onClick={() => onSelect(option.value)}
+                data-testid={dataTestId ? `${dataTestId}-option-${index}` : undefined}
+                className={`flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                  optionDisabled ? '' : 'hover:bg-primary-500/10'
+                } ${
+                  selected ? 'bg-primary-500/15 font-semibold' : ''
+                } ${option.category ? 'pl-8' : ''}`}
+              >
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <MultiSelectOptionLeadingLogo src={option.logoSrc} />
+                  <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
+                    {option.label}
+                  </span>
+                </span>
+                {selected ? (
+                  <svg
+                    className="h-5 w-5 shrink-0 text-primary-900"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    aria-hidden
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ) : null}
+              </button>
+            </React.Fragment>
+          );
+        })
+      ) : (
+        <div className="px-4 py-6 text-center text-sm text-text-secondary">{noResultsLabel}</div>
+      )}
+    </>
+  );
+}
+
 function MobileSelectTriggerContent({
   mobileValueOnlyTrigger,
   triggerIcon,
@@ -150,6 +288,7 @@ export function MobileSelectField({
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [draftValue, setDraftValue] = useState(value ?? '');
+  const draftValueRef = React.useRef(value ?? '');
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const selectedOption = useMemo(
@@ -192,7 +331,9 @@ export function MobileSelectField({
   useEffect(() => {
     if (!isSheetOpen) {
       setSearchQuery('');
-      setDraftValue(value ?? '');
+      const nextValue = value ?? '';
+      draftValueRef.current = nextValue;
+      setDraftValue(nextValue);
     }
   }, [isSheetOpen, value]);
 
@@ -204,24 +345,19 @@ export function MobileSelectField({
 
   const openSheet = () => {
     if (disabled) return;
-    setDraftValue(value ?? '');
+    const nextValue = value ?? '';
+    draftValueRef.current = nextValue;
+    setDraftValue(nextValue);
     setIsSheetOpen(true);
   };
 
   const handleSelectOption = (optionValue: string) => {
-    if (optionValue.startsWith('__category__')) return;
-    if (optionValue === CLEAR_OPTION_VALUE) {
-      if (allowEmpty) {
-        setDraftValue('');
-      }
+    const nextValue = nextMobileDraftValue(optionValue, draftValueRef.current, allowEmpty);
+    if (nextValue === undefined) {
       return;
     }
-    setDraftValue((current) => {
-      if (!allowEmpty) {
-        return optionValue;
-      }
-      return current === optionValue ? '' : optionValue;
-    });
+    draftValueRef.current = nextValue;
+    setDraftValue(nextValue);
   };
 
   const closeSheet = () => {
@@ -230,116 +366,34 @@ export function MobileSelectField({
   };
 
   const confirmSelection = () => {
-    if (draftValue !== (value ?? '')) {
-      onChange(draftValue);
+    if (draftValueRef.current !== (value ?? '')) {
+      onChange(draftValueRef.current);
     }
     closeSheet();
   };
 
   const clearDisabled = !(draftValue ?? '');
   const clearLabel = t('common.clearSelection');
-
-  const renderClearOption = () => {
-    if (!clearable) return null;
-    return (
-      <>
-        <button
-          type="button"
-          disabled={clearDisabled}
-          onClick={() => handleSelectOption(CLEAR_OPTION_VALUE)}
-          data-testid={dataTestId ? `${dataTestId}-clear-selection` : undefined}
-          className="flex w-full items-center px-4 py-3.5 text-left text-sm text-text-primary transition-colors disabled:cursor-not-allowed disabled:opacity-50 hover:enabled:bg-primary-500/10"
-        >
-          {clearLabel}
-        </button>
-        <div className="my-0.5 border-b border-primary-500/20" aria-hidden />
-      </>
-    );
-  };
-
-  const renderOptionList = () => (
-    <>
-      {renderClearOption()}
-      {optionsToRender.length > 0 ? (
-        optionsToRender.map((option, index) => {
-          const normalizedValue = draftValue ?? '';
-          const selected =
-            option.value === '' ? normalizedValue === '' : option.value === normalizedValue;
-          const isCategory =
-            Boolean(option.category) && (!option.value || option.value.startsWith('__category__'));
-          const optionDisabled = allowEmpty && Boolean(normalizedValue) && !selected;
-          const prevOption = index > 0 ? optionsToRender[index - 1] : null;
-          const showCategoryHeader =
-            Boolean(option.category) && prevOption?.category !== option.category && !isCategory;
-
-          if (isCategory) {
-            return (
-              <div
-                key={`category-${option.category}-${index}`}
-                className="pointer-events-none sticky top-0 z-10 border-b border-primary-500/20 bg-bg-base px-4 py-2 text-sm font-semibold text-primary-500"
-              >
-                {option.label}
-              </div>
-            );
-          }
-
-          return (
-            <React.Fragment key={option.value || `option-${index}`}>
-              {showCategoryHeader ? (
-                <div className="pointer-events-none sticky top-0 z-10 border-b border-primary-500/20 bg-bg-base px-4 py-2 text-sm font-semibold text-primary-500">
-                  {option.category}
-                </div>
-              ) : null}
-              <button
-                type="button"
-                disabled={optionDisabled}
-                onClick={() => handleSelectOption(option.value)}
-                data-testid={dataTestId ? `${dataTestId}-option-${index}` : undefined}
-                className={`flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                  optionDisabled ? '' : 'hover:bg-primary-500/10'
-                } ${
-                  selected ? 'bg-primary-500/15 font-semibold' : ''
-                } ${option.category ? 'pl-8' : ''}`}
-              >
-                <span className="flex min-w-0 flex-1 items-center gap-2">
-                  <MultiSelectOptionLeadingLogo src={option.logoSrc} />
-                  <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
-                    {option.label}
-                  </span>
-                </span>
-                {selected ? (
-                  <svg
-                    className="h-5 w-5 shrink-0 text-primary-900"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    aria-hidden
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ) : null}
-              </button>
-            </React.Fragment>
-          );
-        })
-      ) : (
-        <div className="px-4 py-6 text-center text-sm text-text-secondary">
-          {t('searchFilters.noResults')}
-        </div>
-      )}
-    </>
+  const optionList = (
+    <MobileSelectOptionList
+      clearable={clearable}
+      clearDisabled={clearDisabled}
+      clearLabel={clearLabel}
+      dataTestId={dataTestId}
+      optionsToRender={optionsToRender}
+      draftValue={draftValue}
+      allowEmpty={allowEmpty}
+      noResultsLabel={t('searchFilters.noResults')}
+      onSelect={handleSelectOption}
+    />
   );
 
   const triggerIcon = leadingIcon ?? rightIcon;
-  const mobileTriggerPrimaryText =
-    displaySummary.trim() !== ''
-      ? displaySummary
-      : placeholder.trim() !== ''
-        ? placeholder
-        : sheetTitle;
+  const mobileTriggerPrimaryText = getMobileTriggerPrimaryText(
+    displaySummary,
+    placeholder,
+    sheetTitle,
+  );
   const mobileTriggerAriaLabel = mobileValueOnlyTrigger
     ? `${sheetTitle}: ${mobileTriggerPrimaryText}`
     : undefined;
@@ -441,7 +495,7 @@ export function MobileSelectField({
               />
             </div>
             <div data-bottom-sheet-scrollable="true" className={BOTTOM_SHEET_LIST_SCROLL_CLASS}>
-              {renderOptionList()}
+              {optionList}
             </div>
           </div>
         ) : (
@@ -449,7 +503,7 @@ export function MobileSelectField({
             data-bottom-sheet-scrollable="true"
             className={`${BOTTOM_SHEET_LIST_SCROLL_CLASS} max-h-full`}
           >
-            {renderOptionList()}
+            {optionList}
           </div>
         )}
       </BottomSheet>

@@ -91,7 +91,7 @@ describe('headerHomeListingsNav', () => {
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 504, behavior: 'smooth' });
   });
 
-  it('prepares scroll lock release to listings target when menu is open on home', () => {
+  it('smooth-scrolls to home listings after the menu scroll lock releases', () => {
     const { unmount } = renderHook(() => useScrollLock(true));
     const onBeforeNavigate = jest.fn();
 
@@ -109,7 +109,13 @@ describe('headerHomeListingsNav', () => {
       unmount();
     });
 
-    expect(window.scrollTo).toHaveBeenCalledWith(0, 504);
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 100);
+
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
+
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 504, behavior: 'smooth' });
   });
 
   it('navigates to home and scrolls to top from a non-home page', () => {

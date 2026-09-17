@@ -222,7 +222,7 @@ export function ScrollSnapDualPicker({
   ) => (
     <div className={columnShellClass} style={columnShellStyle}>
       <div
-        className="pointer-events-none absolute inset-x-1.5 top-1/2 z-0 -translate-y-1/2 rounded-lg bg-bg-base/80 ring-1 ring-text-secondary/15"
+        className="pointer-events-none absolute inset-x-1.5 top-1/2 z-0 -translate-y-1/2 rounded-lg bg-bg-base/80"
         style={{ height: ITEM_PX }}
         aria-hidden
       />

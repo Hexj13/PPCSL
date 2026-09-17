@@ -15,10 +15,10 @@ export const VEHICLE_SEARCH_TABS: readonly SearchFilterTab[] = [
 export const VEHICLE_BASIC_SHEETS: VehicleSheetCase[] = [
   { tab: 'basic', sheetId: 'vehicle_brand', kind: 'multi' },
   { tab: 'basic', sheetId: 'vehicle_model', kind: 'multi' },
-  { tab: 'basic', sheetId: 'vehicle_fuel', kind: 'multi', optionValue: 'Petrol' },
-  { tab: 'basic', sheetId: 'vehicle_body', kind: 'multi', optionValue: 'Sedan' },
   { tab: 'basic', sheetId: 'vehicle_year', kind: 'range-select' },
   { tab: 'basic', sheetId: 'vehicle_price', kind: 'range-wheel', wheelValue: '5000' },
+  { tab: 'basic', sheetId: 'vehicle_fuel', kind: 'multi', optionValue: 'Petrol' },
+  { tab: 'basic', sheetId: 'vehicle_body', kind: 'multi', optionValue: 'Sedan' },
   { tab: 'basic', sheetId: 'vehicle_transmission', kind: 'multi', optionValue: 'Automatic' },
   { tab: 'basic', sheetId: 'vehicle_drive', kind: 'multi', optionValue: 'FWD' },
   { tab: 'basic', sheetId: 'vehicle_mileage', kind: 'range-wheel', wheelValue: '50000' },

@@ -31,7 +31,7 @@ export function PopularBodyTypesFilter({
   };
 
   return (
-    <div className="mt-6 mb-4 select-none">
+    <div className="mt-0 mb-4 select-none xl:mt-6">
       <label className="block text-sm font-medium mb-3 text-primary-900 flex items-center gap-2">
         <svg
           width="16"
