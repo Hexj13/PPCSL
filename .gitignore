@@ -105,5 +105,5 @@ frontend/app/icon.png
 backend/assets/watermark/logo.png
 
 # Legacy native app path — use platform android/twa/ instead
-mobile/
+/mobile/
 

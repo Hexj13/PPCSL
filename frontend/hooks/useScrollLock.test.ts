@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 
 import {
   forceReleaseScrollLockToTop,
+  prepareScrollLockReleaseThen,
   prepareScrollLockReleaseTo,
   prepareScrollLockReleaseToTop,
   useScrollLock,
@@ -88,6 +89,23 @@ describe('useScrollLock', () => {
 
     expect(window.scrollTo).toHaveBeenCalledWith(0, 400);
     expect(window.scrollTo).toHaveBeenCalledTimes(2);
+  });
+
+  it('runs a deferred callback after restoring locked scroll when prepareScrollLockReleaseThen was called', () => {
+    const { unmount } = renderHook(() => useScrollLock(true));
+    const thenCb = jest.fn();
+    prepareScrollLockReleaseThen(thenCb);
+
+    act(() => {
+      unmount();
+    });
+
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 400);
+    expect(thenCb).not.toHaveBeenCalled();
+
+    flushRequestAnimationFrames(1);
+
+    expect(thenCb).toHaveBeenCalledTimes(1);
   });
 
   it('force-releases immediately to the top', () => {

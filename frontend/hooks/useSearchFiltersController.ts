@@ -22,7 +22,12 @@ import { SKELETON_PAGE, useLoadingState } from '@/hooks/useLoadingState';
 import { useLocalizedNavigation } from '@/hooks/useLocalizedNavigation';
 import { usePopularListingsData } from '@/hooks/usePopularListingsData';
 import { useSearchFilterFlags } from '@/hooks/useSearchFilterFlags';
-import { useSearchFilters, type FilterState } from '@/hooks/useSearchFilters';
+import {
+  clearInternalSearchNavigation,
+  useSearchFilters,
+  type FilterState,
+  type InternalSearchNavigationState,
+} from '@/hooks/useSearchFilters';
 import { useSearchFiltersControllerLifecycle } from '@/hooks/useSearchFiltersControllerLifecycle';
 import { useModelsForBrands, useVehicleTypeFromUrl } from '@/hooks/useSearchFiltersEffects';
 import {
@@ -79,6 +84,10 @@ export function useSearchFiltersController({
   const prevSearchParamsRef = useRef<string>('');
   const [lastAppliedFilters, setLastAppliedFilters] = useState<FilterState | null>(null);
   const isInternalSearchRef = useRef(false);
+  const internalSearchNavigationRef = useRef<InternalSearchNavigationState>({
+    latestSearchParams: null,
+    searchParamsHistory: new Set(),
+  });
   const preserveTabOnResetRef = useRef(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
 
@@ -91,7 +100,7 @@ export function useSearchFiltersController({
     reset: resetFilters,
     hasActiveFilters,
     setFilters,
-  } = useSearchFilters();
+  } = useSearchFilters(isInternalSearchRef, internalSearchNavigationRef);
 
   const deferredFilters = useDeferredValue(filters);
 
@@ -132,6 +141,7 @@ export function useSearchFiltersController({
 
   const handleTireCategorySelect = useCallback(() => {
     withCategorySwitchLock(() => {
+      clearInternalSearchNavigation(internalSearchNavigationRef);
       setFilters(getDefaultTireFilters(currentYear) as FilterState);
       setLastAppliedFilters(null);
       tabs.setActiveTab('basic');
@@ -147,15 +157,17 @@ export function useSearchFiltersController({
     setLastAppliedFilters,
     tabs,
     withCategorySwitchLock,
+    internalSearchNavigationRef,
   ]);
 
   const onVehicleTypeChange = useCallback(
     (type: 'car' | 'moto' | 'truck') => {
       withCategorySwitchLock(() => {
+        clearInternalSearchNavigation(internalSearchNavigationRef);
         handleVehicleTypeChange(type);
       });
     },
-    [handleVehicleTypeChange, withCategorySwitchLock],
+    [handleVehicleTypeChange, internalSearchNavigationRef, withCategorySwitchLock],
   );
 
   const {
@@ -222,6 +234,7 @@ export function useSearchFiltersController({
     setLastAppliedFilters,
     hasActiveFilters,
     isInternalSearchRef,
+    internalSearchNavigationRef,
   });
 
   const { visible: showSearchLoader } = useLoadingState({
@@ -254,6 +267,7 @@ export function useSearchFiltersController({
     setIsSearching,
     setLastAppliedFilters,
     isInternalSearchRef,
+    internalSearchNavigationRef,
     getBrandOptions: () =>
       filters.listing_category === 'tire'
         ? tireBrandOptionsForHandlers
@@ -296,6 +310,7 @@ export function useSearchFiltersController({
     tabs,
     setVehicleTypeWithStorage,
     scrollTabsToStart: tabs.scrollTabsToStart,
+    internalSearchNavigationRef,
   });
 
   const filtersForSave = useMemo(

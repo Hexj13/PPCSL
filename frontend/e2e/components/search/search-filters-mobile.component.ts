@@ -16,6 +16,14 @@ export type VehicleSheetCase = {
   wheelValue?: string;
 };
 
+const BASIC_EXTRA_SHEET_IDS = new Set([
+  'vehicle_fuel',
+  'vehicle_body',
+  'vehicle_transmission',
+  'vehicle_drive',
+  'vehicle_mileage',
+]);
+
 export class SearchFiltersMobileComponent {
   private readonly bottomSheet: BottomSheetComponent;
 
@@ -29,6 +37,8 @@ export class SearchFiltersMobileComponent {
     panelEquipment: 'search-panel-mobile-equipment',
     panelPopular: 'search-panel-mobile-popular',
     filterRowPrefix: 'search-filter-row-',
+    basicMoreToggle: 'search-basic-more-toggle',
+    basicMoreContent: 'search-basic-more-content',
     sheetConfirm: 'search-sheet-confirm',
     submit: 'search-submit',
     equipmentAbs: 'search-equipment-abs',
@@ -98,7 +108,56 @@ export class SearchFiltersMobileComponent {
     await expect(this.mobilePanelForTab(tab)).toBeVisible({ timeout: 15_000 });
   }
 
+  async ensureBasicMoreOpen(): Promise<void> {
+    await this.setBasicMoreOpen(true);
+  }
+
+  async setBasicMoreOpen(open: boolean): Promise<void> {
+    await dismissCookieConsentIfVisible(this.page);
+    const toggle = this.mobilePanelForTab('basic').getByTestId(this.testIds.basicMoreToggle);
+    const expected = open ? 'true' : 'false';
+    await expect(toggle).toBeVisible({ timeout: 15_000 });
+    await expect
+      .poll(async () => {
+        if ((await toggle.getAttribute('aria-expanded')) === expected) {
+          return true;
+        }
+        await toggle.scrollIntoViewIfNeeded().catch(() => undefined);
+        await toggle.click();
+        return (await toggle.getAttribute('aria-expanded')) === expected;
+      })
+      .toBe(true);
+    await expect(
+      this.mobilePanelForTab('basic').getByTestId(this.testIds.basicMoreContent),
+    ).toHaveClass(open ? /grid-rows-\[1fr\]/ : /grid-rows-\[0fr\]/);
+  }
+
+  async expectBasicMoreCollapsed(): Promise<void> {
+    const panel = this.mobilePanelForTab('basic');
+    const content = panel.getByTestId(this.testIds.basicMoreContent);
+    await expect(panel.getByTestId(this.testIds.basicMoreToggle)).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    await expect(content).toHaveClass(/grid-rows-\[0fr\]/);
+    await expect
+      .poll(async () => {
+        const box = await content.boundingBox();
+        return Math.round(box?.height ?? 0);
+      })
+      .toBeLessThan(8);
+  }
+
+  async expectFilterRowVisible(sheetId: string, tab: SearchFilterTab): Promise<void> {
+    await expect(
+      this.mobilePanelForTab(tab).getByTestId(`${this.testIds.filterRowPrefix}${sheetId}`),
+    ).toBeVisible({ timeout: 15_000 });
+  }
+
   async openFilterRow(sheetId: string, tab: SearchFilterTab): Promise<void> {
+    if (tab === 'basic' && BASIC_EXTRA_SHEET_IDS.has(sheetId)) {
+      await this.ensureBasicMoreOpen();
+    }
     const row = this.mobilePanelForTab(tab).getByTestId(
       `${this.testIds.filterRowPrefix}${sheetId}`,
     );
@@ -114,8 +173,12 @@ export class SearchFiltersMobileComponent {
   }
 
   async confirmSheet(): Promise<void> {
+    const urlBefore = this.page.url();
     await this.page.getByTestId(this.testIds.sheetConfirm).click();
     await this.bottomSheet.expectHidden();
+    await this.page
+      .waitForURL((url) => url.href !== urlBefore, { timeout: 8_000 })
+      .catch(() => undefined);
   }
 
   async dismissSheetViaCloseButton(): Promise<void> {
@@ -147,9 +210,10 @@ export class SearchFiltersMobileComponent {
   }
 
   async selectSheetOption(optionValue: string): Promise<void> {
-    const option = this.page.getByTestId(`search-sheet-option-${optionValue}`);
-    await expect(option.first()).toBeVisible();
-    await option.first().click();
+    const option = this.page.getByTestId(`search-sheet-option-${optionValue}`).first();
+    await expect(option).toBeVisible();
+    await option.click();
+    await expect(option).toHaveClass(/bg-primary-500\/15/);
   }
 
   async selectFirstSheetOption(): Promise<string | null> {
@@ -170,6 +234,7 @@ export class SearchFiltersMobileComponent {
       } catch {
         await option.click({ force: true });
       }
+      await expect(option).toHaveClass(/bg-primary-500\/15/);
       return value;
     }
     return null;
@@ -193,7 +258,7 @@ export class SearchFiltersMobileComponent {
   async expectFilterRowHasSelection(sheetId: string, tab: SearchFilterTab): Promise<void> {
     await expect(
       this.mobilePanelForTab(tab).getByTestId(`${this.testIds.filterRowPrefix}${sheetId}`),
-    ).toHaveAttribute('data-has-selection', 'true');
+    ).toHaveAttribute('data-has-selection', 'true', { timeout: 15_000 });
   }
 
   async expectFilterRowHasNoSelection(sheetId: string, tab: SearchFilterTab): Promise<void> {
@@ -273,25 +338,7 @@ export class SearchFiltersMobileComponent {
     await expect(chip).toHaveClass(/bg-primary-500\/10/);
   }
 
-  async expectSubmitEnabled(): Promise<void> {
-    await expect(this.searchFiltersForm().getByTestId(this.testIds.submit)).toBeEnabled({
-      timeout: 20_000,
-    });
-  }
-
-  async submitSearchAndWaitForListingsApi(): Promise<void> {
-    const listingsResponse = this.page.waitForResponse(
-      (r) => {
-        if (r.request().method() !== 'GET' || !r.ok()) {
-          return false;
-        }
-        const u = r.url();
-        return u.includes('/api/listings') && !u.includes('/api/listings/');
-      },
-      { timeout: 45_000 },
-    );
-    await this.searchFiltersForm().getByTestId(this.testIds.submit).click();
-    const response = await listingsResponse;
-    expect(response.ok(), `GET listings search failed: HTTP ${response.status()}`).toBe(true);
+  async expectSubmitHidden(): Promise<void> {
+    await expect(this.searchFiltersForm().getByTestId(this.testIds.submit)).toBeHidden();
   }
 }

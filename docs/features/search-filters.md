@@ -24,9 +24,9 @@ The search form is split into:
 
 1. **Vehicle type selector** — Car / Truck / Moto (above tabs).
 2. **Four tabs:** Basic criteria, Additional criteria, Equipment, Popular.
-3. **Actions:** Sort dropdown, available-count label, Search, Reset, Smart selection, (Save filter), Log in.
+3. **Actions:** Sort dropdown, available-count label, Reset, Smart selection, (Save filter), Log in. **Search** is shown only from `xl` (1280px).
 
-Filter state is held in React until the user applies search. The URL and listings grid update only when the user clicks **Search** (or submits the form with Enter in a field). If the form matches the last applied state, Search does nothing (no navigation, no listings refetch). The Search button stays enabled; it is visually highlighted when there are pending changes.
+On compact viewports (`< 1280px`) a committed change (bottom-sheet **OK**, popular body-type tile, equipment/checkbox, popular chip, sort, tire vehicle-type tile) updates the URL and listings grid immediately. Draft values inside an open sheet do not search until **OK**. Dismissing a sheet without **OK** does not search. On desktop (`>= 1280px`) filter state is held in React until the user clicks **Search** (or submits the form with Enter in a field). If the form matches the last applied state, Search and compact commit do nothing (no navigation, no listings refetch). The desktop Search button stays enabled; it is visually highlighted when there are pending changes.
 
 See [search-title-url.md](./search-title-url.md) for brand/model slugs and [technical.md](../architecture/technical.md) for API and URL parameters.
 
@@ -36,14 +36,15 @@ See [search-title-url.md](./search-title-url.md) for brand/model slugs and [tech
 
 | Surface | Sort behaviour | When results refresh |
 | --- | --- | --- |
-| Home search form (`/`) | `SortDropdown` updates `filters.sortBy` / `filters.sortOrder` only (`selectedSortKey` from form state) | On **Search** when `hasFiltersChanged` |
+| Home search form (`/`), compact (`< 1280px`) | `SortDropdown` updates `filters.sortBy` / `filters.sortOrder` and applies search | Immediately on sort commit |
+| Home search form (`/`), desktop (`>= 1280px`) | `SortDropdown` updates `filters.sortBy` / `filters.sortOrder` only (`selectedSortKey` from form state) | On **Search** when `hasFiltersChanged` |
 | Seller board (`/board/:slug`) | `SortDropdown` without `onSortChange`; writes `sortBy` / `sortOrder` to the URL | Immediately on sort change |
 
-- **Pending edits:** Tab fields, mobile sheets, and home sort use the same deferred-apply model as Basic/Advanced filters.
+- **Pending edits:** Desktop tab fields and home sort use deferred apply until **Search**. Compact sheets keep a draft until **OK**, then apply immediately. Compact tiles, checkboxes, popular chips, and sort apply on commit.
 - **Change detection:** `useFilterHandlers` compares current `FilterState` to `lastAppliedFilters` (including sort). `lastAppliedFilters` is set after a successful apply and on URL sync from external navigation.
 - **Available count:** `useAvailableListingsCount` uses current form fields (including pending sort), not only URL params.
-- **Components:** `SortDropdown.tsx` (shared); home wires `onSortChange` + `selectedSortKey` via `SearchFormActions` / `SearchFiltersForm`.
-- **Scroll to results:** applying search sets `scrollToResultsAfterLoad`. After the grid is ready, `useListingGridScrollEffects` scrolls to `#listings-results`. On compact viewports (`innerWidth < 1280`) this always runs. On desktop (`innerWidth >= 1280`) it runs only when the page is still near the top (`scrollY <= 32`); if the user has already scrolled, the flag is cleared and the current position is kept. Header catalog search and applying a saved filter from `/favorites` are exceptions: they set `scrollToResultsAfterLoad=header` and always scroll to `#listings-results` (or to the top when the result set is empty).
+- **Components:** `SortDropdown.tsx` (shared); home wires `onSortChange` + `selectedSortKey` via `SearchFormActions` / `SearchFiltersForm`. Compact apply uses `commitCompactSearch` (`scrollToResults: false`).
+- **Scroll to results:** desktop **Search** sets `scrollToResultsAfterLoad`. After the grid is ready, `useListingGridScrollEffects` scrolls to `#listings-results`. Compact search apply does **not** set that flag, so the page stays put. On desktop (`innerWidth >= 1280`) the flag still only scrolls when the page is near the top (`scrollY <= 32`); if the user has already scrolled, the flag is cleared and the current position is kept. Header catalog search and applying a saved filter from `/favorites` are exceptions: they set `scrollToResultsAfterLoad=header` and always scroll to `#listings-results` (or to the top when the result set is empty). The header burger **Listings** item on home scrolls smoothly to `#home-listings` after the mobile drawer finish-close animation (`prepareScrollLockReleaseThen`).
 
 ---
 
@@ -155,7 +156,7 @@ On compact viewports the tab row is horizontally scrollable. It centers on **Bas
 
 - **Popular brands block:** Grid of brand tiles (logo + name), multi-select. Shown **only for cars** (`vehicleType === 'car'`); hidden for truck and moto. Data from `lib/content/popular-brands.ts` (and `getPopularBrands(vehicleType)`). Selection syncs with Basic criteria; affects “You selected” and search when applied.
 - **Popular models block:** Chips for “most popular” model per brand, then “Show more” reveals additional models. Multi-select. Mutual exclusion: selecting a brand tile clears that brand’s model chips; selecting a model chip clears that brand’s tile. Clicking an active brand tile that has models selected switches to brand-only (removes models, keeps brand). “You selected” lists brand-only items as brand name only, model items as “Brand Model”.
-- **Apply behaviour:** Selections update filter state and “You selected” immediately; search runs only when the user clicks Search (same as other filters).
+- **Apply behaviour:** On desktop, selections update filter state and “You selected” immediately; search runs when the user clicks Search. On compact viewports, the same selections apply search immediately.
 - **Mobile:** When collapsing the expanded model list (“Show less”), the page scrolls to the start of the “Popular models” block with `scroll-mt-20` so the fixed header is accounted for.
 - **URL:** Slug-based (`?brand=...&model=...`), built via `createSlug`; see [search-title-url.md](./search-title-url.md). When multiple models share the same name (e.g. Dacia Logan, Renault Logan), the URL stores a single slug (e.g. `logan`); parsing resolves to all matching model IDs per selected brands.
 
@@ -177,9 +178,10 @@ For full behavior and edge-case flow, see [search-filter-limits.md](../guides/se
 ## Compact layout (phone and tablet)
 
 - Below `xl` (`< 1280px`), vehicle filters use `MobileSearchFilters` (bottom sheets for field editing). Desktop dropdowns start at `xl`.
-- Action buttons (`SearchFormActions`) stay stacked full-width until `xl`; the desktop sort+CTA row starts at 1280px.
+- On the vehicle **Basic criteria** tab, mobile rows are: Brand, Model, Year, Price, then Fuel, Body, Transmission, Drive, Mileage. The last five rows start collapsed behind a full-width **Show more** divider (hairline `primary-500/20` rules, `text-xs font-semibold text-primary-700`, chevron) that matches equipment category headers. When collapsed, a smaller `bg-accent` dot (`h-1.5 w-1.5`) sits to the right of the label if any extra field has a value — the same accent as the search-tab active dots (`h-2 w-2`). Expanding/collapsing uses the same 300ms `grid-template-rows` + opacity reveal as equipment/popular accordions; the label switches to **Show less** and the dot is hidden. Extra field values stay in form state while collapsed. Popular body type chips below the form stay visible.
+- Action buttons (`SearchFormActions`) stay stacked full-width until `xl`; the desktop sort+CTA row starts at 1280px. The **Search** button is `hidden` below `xl`.
 - All mobile search sheets use `components/common/BottomSheet.tsx` with a unified open/close lifecycle: the same 300ms slide-up/slide-down as other common sheets (`getBottomSheetSlideStyle`), regardless of whether the user dismisses via **OK**, the header close button, backdrop tap, Escape, swipe-down, or system **Back**.
-- Confirm (**OK**) applies draft values and closes the sheet with the same exit animation; dismiss actions do not apply draft changes.
+- Confirm (**OK**) applies draft values, closes the sheet with the same exit animation, and runs search (`commitCompactSearch`). Dismiss actions do not apply draft changes and do not search.
 - Sheet height is derived from `visualViewport` (not static `vh`) and respects iOS safe areas (`viewport-fit=cover`, top inset on the handle/header, bottom inset on the footer).
 - Background scroll is blocked while the sheet is open via `useBlockBackgroundScroll` (event interception), not by locking `body` overflow — this keeps the `position: sticky` page header anchored to the viewport instead of scrolling out of view. Scrolling inside the sheet list still works and the page position stays put.
 - System **Back** on Android/PWA closes the open bottom sheet first (shared overlay stack — see [overlay-back-navigation.md](./overlay-back-navigation.md)). Overlay history cleanup runs when the sheet portal unmounts, after the exit animation.
@@ -239,7 +241,7 @@ Automated coverage: `e2e/specs/search-filters-mobile.spec.ts` (sheet matrix + di
 
 - **Filter state:** `useSearchFilters` — holds all filter fields (brand_ids, model_ids, year_gte/lte, price_gte/lte, cities, currency, etc.).
 - **URL sync:** `useSearchFiltersSync` — reads/writes URL search params and applies initial state from URL.
-- **Handlers:** `useFilterHandlers` — change handlers, validation (year/price/mileage/engine/horsepower ranges and brand/model selection limits), submit, reset. Submit runs `applySearchWithOverrides` only when `hasFiltersChanged`; otherwise no-op. On apply, blurs the active input so formatted values (e.g. mileage with spaces) are committed before building the URL.
+- **Handlers:** `useFilterHandlers` — change handlers, validation (year/price/mileage/engine/horsepower ranges and brand/model selection limits), submit, reset, compact commit. Submit runs `applySearchWithOverrides` only when `hasFiltersChanged`; otherwise no-op. Compact commit uses `applySearchWithOverrides(overrides, { scrollToResults: false })`. On apply, blurs the active input so formatted values (e.g. mileage with spaces) are committed before building the URL.
 - **Options:** `useFilterOptions` — brand/model options (with popular/other categories), city options, colors, doors, condition, registration type, registration yes/no, currency list.
 - **Tabs:** `useSearchTabs` — active tab, refs for indicator and scroll.
 - **Vehicle type:** `useVehicleType` — from URL or default `car`.
@@ -257,6 +259,7 @@ Automated coverage: `e2e/specs/search-filters-mobile.spec.ts` (sheet matrix + di
 | `search-filters/searchFiltersDynamics.tsx`  | `dynamic()` imports for mobile/tire panels and save modal (code-split). Desktop `AdvancedFilters`, `EquipmentFilters`, `TireSearchFilters`, and `SaveFilterModal` use `{ ssr: false }`; `MobileSearchFilters` is SSR’d (mobile equipment panel imports `EquipmentFilters` statically inside `MobileVehicleSection`) |
 | `hooks/useSearchFiltersController.ts`       | Composes filter state, URL sync, handlers, and form props |
 | `search-filters/mobile/MobileSearchFilters.tsx` | Mobile vehicle/tire filter UI and sheets |
+| `search-filters/mobile/MobileVehicleBasicTab.tsx` | Mobile basic rows; Show more for fuel/body/transmission/drive/mileage |
 | `search-filters/BasicFilters.tsx`           | Basic criteria grid + PopularBodyTypesFilter                                               |
 | `search-filters/AdvancedFilters.tsx`        | Additional criteria grid + labels                                                          |
 | `search-filters/SearchFilterInput.tsx`      | Desktop floating-label wrapper for native search inputs                                    |
@@ -286,12 +289,13 @@ Stable `data-testid` values used by `search-filters-mobile.spec.ts` and `search-
 | Desktop panels | `search-panel-basic`, `search-panel-advanced`, `search-panel-equipment`, `search-panel-popular` |
 | Mobile panels | `search-panel-mobile-basic`, `search-panel-mobile-advanced`, `search-panel-mobile-equipment`, `search-panel-mobile-popular` |
 | Mobile sheet rows | `search-filter-row-{sheetId}` (e.g. `vehicle_brand`); `data-has-selection` on the row |
+| Mobile basic extra | `search-basic-more-toggle`, `search-basic-more-content`, `search-basic-more-active` (collapsed extra-value dot) |
 | Sheet UI | `search-sheet-option-{value}`, `search-sheet-confirm` |
 | Mobile equipment / popular | `search-equipment-{key}` (mobile layout only), `search-equipment-category-{category}-toggle` / `-content`, `search-popular-chip-{brand}-{model}` |
 | Actions | `search-submit`, `search-reset`, `search-smart-selection`, `search-save-filter` |
 | Sort (home) | `search-sort-select`, `search-sort-select-menu`, `search-sort-select-option-{index}` |
 
-E2E: `listing-sort.spec.ts` — home selects sort then `submitSearch()`; board applies sort immediately. See [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md) for project layout and flow rules.
+E2E: `listing-sort.spec.ts` — home uses `selectSortAndApply()` (compact applies immediately; desktop still submits Search); board applies sort immediately. See [e2e-playwright-standards.md](../guides/e2e-playwright-standards.md) for project layout and flow rules.
 
 ---
 
@@ -319,4 +323,4 @@ The same floating-label and `search-control-border` primitives are reused in veh
 
 ---
 
-**Last updated:** 2026-09-04
+**Last updated:** 2026-09-17

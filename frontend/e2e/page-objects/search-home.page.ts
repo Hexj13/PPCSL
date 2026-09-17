@@ -459,6 +459,13 @@ export class SearchHomePage extends SearchHomeScrollPage {
   }
 
   async selectSortAndApply(sortKey: ListingSortKey, testId = 'search-sort-select'): Promise<void> {
+    const useMobile = await pageUsesMobileLayout(this.page);
+    if (useMobile) {
+      await this.selectSort(sortKey, testId, { scrollTrigger: false });
+      await expect(this.page).toHaveURL(/sortBy=/, { timeout: 20_000 });
+      await this.expectResultsOrEmptyVisible();
+      return;
+    }
     await this.selectSort(sortKey, testId, { scrollTrigger: false });
     await this.scrollToY(0);
     await this.submitSearch({ preserveScroll: true });

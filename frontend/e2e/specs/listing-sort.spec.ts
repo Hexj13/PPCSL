@@ -6,6 +6,7 @@ import { prependClearBrowserState, runSteps, type E2EStep } from '../utils/steps
 
 test.describe('Listing sort', () => {
   test('updates sort query on search home', async ({ page, searchHomePage }) => {
+    test.setTimeout(90_000);
     const steps: E2EStep[] = [
       {
         name: 'Open search home',
@@ -16,14 +17,7 @@ test.describe('Listing sort', () => {
       {
         name: 'Select price ascending sort and apply search',
         action: async () => {
-          await searchHomePage.selectSort('price_ASC');
-          await expect(page).not.toHaveURL(/sortBy=price/);
-          const listingsResponse = page.waitForResponse(
-            (r) => r.url().includes('/api/listings') && r.request().method() === 'GET',
-            { timeout: 45_000 },
-          );
-          await searchHomePage.submitSearch();
-          await listingsResponse;
+          await searchHomePage.selectSortAndApply('price_ASC');
           await expect(page).toHaveURL(/sortBy=price/);
           await expect(page).toHaveURL(/sortOrder=ASC/);
           await searchHomePage.expectPageView();

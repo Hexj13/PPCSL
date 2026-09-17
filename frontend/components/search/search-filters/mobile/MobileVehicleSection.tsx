@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { FilterState } from '@/hooks/useSearchFilters';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -70,6 +70,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
     onPriceBlur,
     onWheel: _onWheel,
     updateMultiple,
+    onCompactSearchCommit,
     popularData = null,
     popularLoading = false,
     popularError = false,
@@ -77,9 +78,12 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
 
   const [openSheet, setOpenSheet] = useState<string | null>(null);
   const [mobileDraft, setMobileDraft] = useState<Partial<FilterState> | null>(null);
+  const mobileDraftRef = useRef<Partial<FilterState> | null>(null);
 
   const patchMobileDraft = useCallback((patch: Partial<FilterState>) => {
-    setMobileDraft((prev) => ({ ...(prev ?? {}), ...patch }));
+    const next = { ...(mobileDraftRef.current ?? {}), ...patch };
+    mobileDraftRef.current = next;
+    setMobileDraft(next);
   }, []);
 
   const brandLogoPreloadKey = useMemo(
@@ -99,13 +103,16 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
       if (id === 'vehicle_brand' && brandLogoPreloadKey) {
         preloadImageUrls(brandLogoPreloadKey.split('|'));
       }
-      setMobileDraft(createMobileSheetDraft(id, filters));
+      const draft = createMobileSheetDraft(id, filters);
+      mobileDraftRef.current = draft;
+      setMobileDraft(draft);
       setOpenSheet(id);
     },
     [filters, brandLogoPreloadKey],
   );
 
   const dismissSheet = useCallback(() => {
+    mobileDraftRef.current = null;
     setOpenSheet(null);
     setMobileDraft(null);
   }, []);
@@ -277,7 +284,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
   );
 
   const confirmVehicleSheet = useCallback(() => {
-    runVehicleSheetConfirm(openSheet, mobileDraft, {
+    const patch = runVehicleSheetConfirm(openSheet, mobileDraftRef.current, {
       dismissSheet,
       onMultiSelectChange,
       onFilterChange,
@@ -287,9 +294,11 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
       handleEngineBlur,
       handleHorsepowerBlur,
     });
+    if (Object.keys(patch).length > 0) {
+      onCompactSearchCommit?.(patch);
+    }
   }, [
     openSheet,
-    mobileDraft,
     dismissSheet,
     onMultiSelectChange,
     onFilterChange,
@@ -298,10 +307,32 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
     handleMileageBlur,
     handleEngineBlur,
     handleHorsepowerBlur,
+    onCompactSearchCommit,
   ]);
 
+  const handleCheckboxChangeAndSearch = useCallback(
+    (key: keyof FilterState, checked: boolean) => {
+      onCheckboxChange(key, checked);
+      onCompactSearchCommit?.({ [key]: checked } as Partial<FilterState>);
+    },
+    [onCheckboxChange, onCompactSearchCommit],
+  );
+
+  const setFiltersAndCommitSearch = useCallback(
+    (update: FilterState | ((_prev: FilterState) => FilterState)) => {
+      const prev = filters;
+      const next = typeof update === 'function' ? update(prev) : update;
+      setFilters(next);
+      onCompactSearchCommit?.({
+        brand_ids: next.brand_ids,
+        model_ids: next.model_ids,
+      });
+    },
+    [filters, onCompactSearchCommit, setFilters],
+  );
+
   return (
-    <div className="flex flex-col gap-3 mb-4">
+    <div className={`flex flex-col gap-3 ${activeTab === 'basic' ? '' : 'mb-4'}`}>
       <div
         data-testid="search-panel-mobile-basic"
         className={`flex flex-col gap-3 ${activeTab === 'basic' ? '' : 'hidden'}`}
@@ -340,7 +371,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
           doorsSummary={doorsSummary}
           sellerSummary={sellerSummary}
           openSheetForEdit={openSheetForEdit}
-          onCheckboxChange={onCheckboxChange}
+          onCheckboxChange={handleCheckboxChangeAndSearch}
         />
       </div>
 
@@ -351,8 +382,14 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
         <EquipmentFilters
           equipment={filters.equipment}
           equipmentMatchMode={filters.equipment_match_mode}
-          onEquipmentMatchModeChange={(mode) => onFilterChange('equipment_match_mode', mode)}
-          onChange={(keys) => updateMultiple({ equipment: keys })}
+          onEquipmentMatchModeChange={(mode) => {
+            onFilterChange('equipment_match_mode', mode);
+            onCompactSearchCommit?.({ equipment_match_mode: mode });
+          }}
+          onChange={(keys) => {
+            updateMultiple({ equipment: keys });
+            onCompactSearchCommit?.({ equipment: keys });
+          }}
           vehicleType={vehicleType}
           enableE2eTestIds
         />
@@ -367,7 +404,7 @@ export function MobileVehicleSection(props: MobileSearchFiltersVehicleProps) {
           brands={brands}
           models={models}
           filters={filters}
-          setFilters={setFilters}
+          setFilters={setFiltersAndCommitSearch}
           vehicleType={vehicleType}
           enableE2eTestIds
           popularData={popularData}
