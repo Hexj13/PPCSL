@@ -6,6 +6,7 @@ import { act, renderHook } from '@testing-library/react';
 import type { useSearchParams } from 'next/navigation';
 
 import { getDefaultFilters } from '@/lib/search/search-params-parse';
+import { toast } from '@/lib/toast';
 
 import { useFilterHandlers } from './useFilterHandlers';
 import type { FilterState } from './useSearchFilters';
@@ -74,9 +75,15 @@ function createProps(overrides: Partial<Parameters<typeof useFilterHandlers>[0]>
   };
 }
 
+function searchParamsFromReplaceUrl(url: string): URLSearchParams {
+  const query = url.includes('?') ? url.slice(url.indexOf('?') + 1) : '';
+  return new URLSearchParams(query);
+}
+
 describe('useFilterHandlers compact search', () => {
   beforeEach(() => {
     mockReplace.mockClear();
+    jest.mocked(toast.error).mockClear();
     window.sessionStorage.clear();
     Object.defineProperty(window, 'innerWidth', {
       value: 390,
@@ -289,5 +296,52 @@ describe('useFilterHandlers compact search', () => {
     );
 
     expect(result.current.hasFiltersChanged).toBe(false);
+  });
+
+  it('swaps inverted mileage on compact commit and does not toast', () => {
+    const { result } = renderHook(() => useFilterHandlers(createProps()));
+
+    act(() => {
+      result.current.commitCompactSearch({ mileage_gte: '150000', mileage_lte: '50000' });
+    });
+
+    expect(mockReplace).toHaveBeenCalled();
+    const params = searchParamsFromReplaceUrl(String(mockReplace.mock.calls[0][0]));
+    expect(params.get('mileage_gte')).toBe('50000');
+    expect(params.get('mileage_lte')).toBe('150000');
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('swaps inverted price on compact commit and does not toast', () => {
+    const { result } = renderHook(() => useFilterHandlers(createProps()));
+
+    act(() => {
+      result.current.commitCompactSearch({ price_gte: '8000', price_lte: '2000' });
+    });
+
+    expect(mockReplace).toHaveBeenCalled();
+    const params = searchParamsFromReplaceUrl(String(mockReplace.mock.calls[0][0]));
+    expect(params.get('price_gte')).toBe('2000');
+    expect(params.get('price_lte')).toBe('8000');
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('swaps inverted price on desktop apply and does not toast', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      value: 1280,
+      writable: true,
+      configurable: true,
+    });
+    const { result } = renderHook(() => useFilterHandlers(createProps()));
+
+    act(() => {
+      result.current.applySearchWithOverrides({ price_gte: '8000', price_lte: '2000' });
+    });
+
+    expect(mockReplace).toHaveBeenCalled();
+    const params = searchParamsFromReplaceUrl(String(mockReplace.mock.calls[0][0]));
+    expect(params.get('price_gte')).toBe('2000');
+    expect(params.get('price_lte')).toBe('8000');
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

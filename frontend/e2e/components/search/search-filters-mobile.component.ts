@@ -341,4 +341,20 @@ export class SearchFiltersMobileComponent {
   async expectSubmitHidden(): Promise<void> {
     await expect(this.searchFiltersForm().getByTestId(this.testIds.submit)).toBeHidden();
   }
+
+  async applyInvertedMileageWheelRange(): Promise<void> {
+    await this.selectTab('basic');
+    await this.openFilterRow('vehicle_mileage', 'basic');
+    await this.selectWheelOption('150000', 'from');
+    await this.selectWheelOption('50000', 'to');
+    await this.confirmSheet();
+  }
+
+  async expectMileageRangeOrderedInUrl(): Promise<void> {
+    await expect(this.page).toHaveURL((url) => {
+      const gte = Number(url.searchParams.get('mileage_gte'));
+      const lte = Number(url.searchParams.get('mileage_lte'));
+      return Number.isFinite(gte) && Number.isFinite(lte) && gte <= lte;
+    });
+  }
 }

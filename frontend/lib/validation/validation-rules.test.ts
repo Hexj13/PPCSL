@@ -4,6 +4,7 @@ import {
   PRICE_RANGE,
   clampToRange,
   isInRange,
+  normalizeFilterRangeOrder,
   validateMinMax,
 } from './validation-rules';
 
@@ -104,6 +105,111 @@ describe('validation-rules', () => {
         price_lte: '100',
       };
       expect(getFilterRangesValidationError(filters)).toBe('searchFilters.yearFromGreaterThanTo');
+    });
+  });
+
+  describe('normalizeFilterRangeOrder', () => {
+    it('swaps inverted mileage, price, year, engine, and horsepower pairs', () => {
+      expect(
+        normalizeFilterRangeOrder({
+          mileage_gte: '150000',
+          mileage_lte: '50000',
+        }),
+      ).toEqual({
+        mileage_gte: '50000',
+        mileage_lte: '150000',
+      });
+      expect(
+        normalizeFilterRangeOrder({
+          price_gte: '8000',
+          price_lte: '2000',
+        }),
+      ).toEqual({
+        price_gte: '2000',
+        price_lte: '8000',
+      });
+      expect(
+        normalizeFilterRangeOrder({
+          year_gte: '2024',
+          year_lte: '2020',
+        }),
+      ).toEqual({
+        year_gte: '2020',
+        year_lte: '2024',
+      });
+      expect(
+        normalizeFilterRangeOrder({
+          engine_displ_l_gte: '3.0',
+          engine_displ_l_lte: '1.6',
+        }),
+      ).toEqual({
+        engine_displ_l_gte: '1.6',
+        engine_displ_l_lte: '3.0',
+      });
+      expect(
+        normalizeFilterRangeOrder({
+          horsepower_gte: '300',
+          horsepower_lte: '120',
+        }),
+      ).toEqual({
+        horsepower_gte: '120',
+        horsepower_lte: '300',
+      });
+    });
+
+    it('parses spaced thousand separators so invert still swaps', () => {
+      expect(
+        normalizeFilterRangeOrder({
+          mileage_gte: '150 000',
+          mileage_lte: '50 000',
+        }),
+      ).toEqual({
+        mileage_gte: '50000',
+        mileage_lte: '150000',
+      });
+      expect(
+        normalizeFilterRangeOrder({
+          price_gte: '100 000',
+          price_lte: '50 000',
+        }),
+      ).toEqual({
+        price_gte: '50000',
+        price_lte: '100000',
+      });
+    });
+
+    it('does not swap when only one side is filled', () => {
+      expect(
+        normalizeFilterRangeOrder({
+          mileage_gte: '150000',
+          mileage_lte: '',
+        }),
+      ).toEqual({
+        mileage_gte: '150000',
+        mileage_lte: '',
+      });
+    });
+
+    it('copies unrelated fields and leaves ordered ranges in place', () => {
+      expect(
+        normalizeFilterRangeOrder({
+          fuels: ['Petrol'],
+          mileage_gte: '50000',
+          mileage_lte: '150000',
+        }),
+      ).toEqual({
+        fuels: ['Petrol'],
+        mileage_gte: '50000',
+        mileage_lte: '150000',
+      });
+    });
+
+    it('clears the range-order error after swap', () => {
+      const ordered = normalizeFilterRangeOrder({
+        mileage_gte: '150000',
+        mileage_lte: '50000',
+      });
+      expect(getFilterRangesValidationError(ordered)).toBeNull();
     });
   });
 });

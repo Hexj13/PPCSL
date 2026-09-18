@@ -264,6 +264,41 @@ test.describe('Search: mobile filters and sheets @p0', () => {
     await runSteps(prependClearBrowserState(page, steps));
   });
 
+  test('swaps inverted mileage on sheet confirm and applies search', async ({
+    page,
+    searchHomePage,
+  }) => {
+    test.setTimeout(120_000);
+    const mobileFilters = new SearchFiltersMobileComponent(page);
+
+    const steps: E2EStep[] = [
+      {
+        name: 'Open search home',
+        action: async () => {
+          await searchHomePage.openAndExpectPageView();
+        },
+      },
+      {
+        name: 'Confirm inverted mileage wheels',
+        action: async () => {
+          await mobileFilters.applyInvertedMileageWheelRange();
+        },
+      },
+      {
+        name: 'Verify swapped mileage is applied without submit or scroll jump',
+        action: async () => {
+          await mobileFilters.expectMileageRangeOrderedInUrl();
+          await mobileFilters.expectSubmitHidden();
+          await searchHomePage.expectPageView();
+          await searchHomePage.expectResultsOrEmptyVisible();
+          await searchHomePage.expectSearchDidNotScrollToListingsResults();
+        },
+      },
+    ];
+
+    await runSteps(prependClearBrowserState(page, steps));
+  });
+
   test('toggles compact two-column listing cards and persists the choice', async ({
     page,
     searchHomePage,
