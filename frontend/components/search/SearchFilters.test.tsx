@@ -598,7 +598,7 @@ describe('SearchFilters', () => {
       mockGet.mockReturnValue(null);
     });
 
-    it('should validate price range (from <= to)', async () => {
+    it('should swap inverted price range on search and not toast order error', async () => {
       const { toast } = require('@/lib/toast');
       renderWithProviders(<SearchFilters />);
 
@@ -616,10 +616,18 @@ describe('SearchFilters', () => {
       fireEvent.submit(screen.getByRole('form', { name: /search filters/i }));
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('Price "from" cannot be greater than price "to"'),
-        );
+        expect(mockReplace).toHaveBeenCalled();
       });
+      const replacedUrl = String(mockReplace.mock.calls[0][0]);
+      const query = replacedUrl.includes('?')
+        ? replacedUrl.slice(replacedUrl.indexOf('?') + 1)
+        : '';
+      const params = new URLSearchParams(query);
+      expect(params.get('price_gte')).toBe('100000');
+      expect(params.get('price_lte')).toBe('500000');
+      expect(toast.error).not.toHaveBeenCalledWith(
+        expect.stringContaining('Price "from" cannot be greater than price "to"'),
+      );
     });
 
     it('should validate price is within valid range (0-999999999)', async () => {

@@ -16,6 +16,7 @@ import {
   getFilterRangesValidationError,
   getYearRange,
   isInRange,
+  normalizeFilterRangeOrder,
   PRICE_RANGE,
 } from '@/lib/validation';
 
@@ -98,7 +99,7 @@ function mergeFiltersWithYearDefault(
   if (merged.year_lte === '') {
     merged.year_lte = currentYear;
   }
-  return merged;
+  return normalizeFilterRangeOrder(merged);
 }
 
 function rememberInternalSearchParams(

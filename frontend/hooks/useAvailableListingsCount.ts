@@ -10,7 +10,7 @@ import {
   isGetParsedListingSearchParamsFailure,
 } from '@/lib/search';
 import { buildSearchQuery } from '@/lib/search/search-params';
-import { getFilterRangesValidationError } from '@/lib/validation';
+import { getFilterRangesValidationError, normalizeFilterRangeOrder } from '@/lib/validation';
 
 interface UseAvailableListingsCountParams {
   filters: FilterState;
@@ -70,7 +70,7 @@ export function useAvailableListingsCount({
       return;
     }
 
-    const filtersNow = filtersRef.current;
+    const filtersNow = normalizeFilterRangeOrder(filtersRef.current);
     const hasRangeError = Boolean(
       getFilterRangesValidationError(filtersNow as unknown as Record<string, string | undefined>),
     );
