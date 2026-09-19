@@ -48,6 +48,7 @@ Use `sanitizeForSentryExtra` on the backend (`core/backend/src/common/utils/sent
 
 - Backend: `core/backend/src/common/utils/sentry-event-sanitize.utils.ts`, wired in `core/backend/src/common/sentry.config.ts`
 - Frontend: `core/frontend/lib/sentry-event-sanitize.ts`, wired in `core/frontend/lib/sentry-before-send.ts`
+- Frontend client noise (dropped before sanitization): `core/frontend/lib/sentry-client-noise.ts` via `instrumentation-client.ts`. Server request errors skip client-aborted RSC streams in `instrumentation.ts` (`lib/sentry-request-error.ts`). See [sentry.md](./sentry.md#error-filtering).
 
 Request URLs keep redacted query values as `[REDACTED]` (URL-encoded in the stored string).
 
