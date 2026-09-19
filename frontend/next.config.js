@@ -243,28 +243,6 @@ const nextConfig = {
         ],
       },
       {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: isDev
-              ? 'no-store, no-cache, must-revalidate'
-              : 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/_next/image',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: isDev
-              ? 'no-store, no-cache, must-revalidate'
-              : 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
         source: '/images/:path*',
         headers: [
           {
@@ -304,15 +282,35 @@ const nextConfig = {
     ];
 
     if (!isDev) {
-      headers.push({
-        source: '/listings/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=30, stale-while-revalidate=120',
-          },
-        ],
-      });
+      headers.push(
+        {
+          source: '/_next/static/:path*',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable',
+            },
+          ],
+        },
+        {
+          source: '/_next/image',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable',
+            },
+          ],
+        },
+        {
+          source: '/listings/:path*',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, s-maxage=30, stale-while-revalidate=120',
+            },
+          ],
+        },
+      );
     }
 
     return headers;

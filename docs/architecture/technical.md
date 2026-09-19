@@ -1489,7 +1489,7 @@ cd core/frontend && npm start
 3. Copy platform-specific files via `npm run prepare:build` (frontend locales ro/ru/en, backend locales, theme, config, assets)
 4. Install dependencies and build the application
 
-**Memory tuning (Next.js frontend):** To avoid out-of-memory restarts on Render.com (e.g. when traffic is low but health checks run frequently), the app uses: `cacheMaxMemorySize: 25MB` in next.config.js, `minimumCacheTTL: 86400` for image optimization, and Sentry server `tracesSampleRate: 0.2`. See [sentry.md](../guides/sentry.md) for Sentry server config.
+**Memory tuning (Next.js frontend):** To avoid out-of-memory restarts on Render.com (e.g. when traffic is low but health checks run frequently), the app uses: `cacheMaxMemorySize: 25MB` in next.config.js, `minimumCacheTTL: 86400` for image optimization, and Sentry server `tracesSampleRate: 0.2`. Production `headers()` also set `Cache-Control: public, max-age=31536000, immutable` on `/_next/static` and `/_next/image`; development uses the catch-all `no-store`. See [sentry.md](../guides/sentry.md) for Sentry server config.
 
 ### 13.4.2. Render.com Backend Deployment Configuration
 

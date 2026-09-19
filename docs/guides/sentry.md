@@ -409,9 +409,15 @@ providers: [
 
 ## Error filtering
 
+### Client-aborted RSC streams (Next.js 16.3)
+
+`core/frontend/instrumentation.ts` `onRequestError` skips `The destination stream closed early.` before `Sentry.captureRequestError`. Next.js 16.3 reports that generic Error when the client cancels a streaming RSC response (prefetch, navigation, tab close). Upstream: [vercel/next.js#96704](https://github.com/vercel/next.js/issues/96704). Remove the filter after Next.js ships [vercel/next.js#96715](https://github.com/vercel/next.js/pull/96715).
+
 ### Ignoring known errors
 
 #### Frontend
+
+Client `beforeSend` in `instrumentation-client.ts` drops two known browser/bundler noise shapes via `lib/sentry-client-noise.ts` before sanitization: stackless WebKit `Error: Xd` unhandled rejections on Chrome Mobile iOS, and `SyntaxError` / `Unexpected non-whitespace character after JSON` when a stack frame is a `turbopack-worker-*` chunk. Other JSON parse errors are still sent.
 
 ```typescript
 Sentry.init({
